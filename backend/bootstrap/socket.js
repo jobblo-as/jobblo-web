@@ -10,14 +10,28 @@ const { allowedOrigins, originCheck } = require('../config/cors');
  * With REDIS_URL the redis adapter is attached in bootstrap/index.js, so events emitted on
  * one instance reach sockets connected to another.
  */
+/** The request's Origin is this server itself (a browser on another site can't set Host). */
+function isSameOrigin(req) {
+  const origin = req.headers.origin;
+  if (!origin || !req.headers.host) return false;
+  try {
+    return new URL(origin).host === req.headers.host;
+  } catch {
+    return false;
+  }
+}
+
 function setupSockets(server, app) {
   const origins = allowedOrigins();
   const io = new Server(server, {
     cors: { origin: originCheck(origins), credentials: true },
     // CORS only adds headers; browsers do not apply it to WebSockets, so a page on another site
     // could open a socket with the visitor's cookie. Refuse the handshake itself for a foreign
-    // Origin. No Origin (mobile app, server-to-server) passes, as for HTTP.
-    allowRequest: (req, callback) => originCheck(origins)(req.headers.origin, callback),
+    // Origin. No Origin (server-to-server) passes, as for HTTP. Same-origin passes too: React
+    // Native's WebSocket on Android always sends Origin = the API's own address, which is not a
+    // web origin in the allowlist, so the mobile chat socket was refused ("websocket error").
+    allowRequest: (req, callback) =>
+      isSameOrigin(req) ? callback(null, true) : originCheck(origins)(req.headers.origin, callback),
     // Clients send ids and chat text (max 5,000 characters); the 1 MB default let every
     // event carry a megabyte to parse.
     maxHttpBufferSize: 64 * 1024,

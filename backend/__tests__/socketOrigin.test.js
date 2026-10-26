@@ -41,3 +41,10 @@ it('accepts a request without an Origin (mobile app)', async () => {
   expect(res.status).toBe(200);
   expect(res.text).toMatch(/^0\{"sid"/);
 });
+
+it('accepts the API own origin (React Native on Android sends it) but not another site with that Host', async () => {
+  const at = (origin) => request(server).get('/socket.io/?EIO=4&transport=polling').set('Host', 'api.jobblo.test:5001').set('Origin', origin);
+  expect((await at('http://api.jobblo.test:5001')).status).toBe(200);
+  expect((await at('http://evil.example')).status).toBe(403);
+  expect((await at('http://api.jobblo.test:5002')).status).toBe(403);
+});
