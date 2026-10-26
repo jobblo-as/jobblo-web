@@ -16,6 +16,7 @@ import {
   Zap,
 } from 'lucide-react';
 import { Slider } from 'antd';
+import { AntdTheme } from '../../theme/AntdTheme';
 import { JobCard } from '../../components/component/jobCard/JobCard';
 import { JobCardSkeleton } from '../../components/Loading/JobCardSkeleton';
 import { CARD, GREEN, LINE, MICRO_LABEL, PILL_PRIMARY } from '../../theme/brand';
@@ -422,7 +423,7 @@ const ServiceListing = () => {
   };
 
   // Infinite scroll logic using Intersection Observer
-  const observer = useRef<IntersectionObserver>();
+  const observer = useRef<IntersectionObserver>(undefined);
   const lastJobElementRef = (node: HTMLDivElement) => {
     if (isLoading) return;
     if (observer.current) observer.current.disconnect();
@@ -861,28 +862,30 @@ const ServiceListing = () => {
         </div>
 
         <div className="px-1">
-          <Slider
-            range
-            min={0}
-            max={50000}
-            step={100}
-            value={[priceRange.min, priceRange.max > 50000 ? 50000 : priceRange.max]}
-            onChange={(value: number[]) => {
-              setPriceRange({
-                min: value[0],
-                max: value[1] === 50000 ? 100000 : value[1],
-              });
-            }}
-            styles={{
-              rail: { background: LINE },
-              track: { background: GREEN },
-              handle: {
-                borderColor: GREEN,
-                backgroundColor: '#fff',
-                boxShadow: `0 0 0 2px ${GREEN}`,
-              },
-            }}
-          />
+          <AntdTheme>
+            <Slider
+              range
+              min={0}
+              max={50000}
+              step={100}
+              value={[priceRange.min, priceRange.max > 50000 ? 50000 : priceRange.max]}
+              onChange={(value: number[]) => {
+                setPriceRange({
+                  min: value[0],
+                  max: value[1] === 50000 ? 100000 : value[1],
+                });
+              }}
+              styles={{
+                rail: { background: LINE },
+                track: { background: GREEN },
+                handle: {
+                  borderColor: GREEN,
+                  backgroundColor: '#fff',
+                  boxShadow: `0 0 0 2px ${GREEN}`,
+                },
+              }}
+            />
+          </AntdTheme>
           <div className="mt-5 flex gap-3">
             <label className="flex-1">
               <span className={`${MICRO_LABEL} mb-1.5 block`}>Fra</span>

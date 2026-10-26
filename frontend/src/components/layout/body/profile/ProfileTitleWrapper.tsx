@@ -1,6 +1,7 @@
 import styles from './ProfileTitleWrapper.module.css';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
+import { ArrowLeft } from 'lucide-react';
 
 export function ProfileTitleWrapper({ title, buttonText }: { title: string; buttonText: string }) {
   const nav = useNavigate();
@@ -13,7 +14,7 @@ export function ProfileTitleWrapper({ title, buttonText }: { title: string; butt
     <>
       <div className={styles.container}>
         <button onClick={() => nav(-1)} className={styles.button}>
-          <span className="material-symbols-outlined">arrow_back</span>
+          <ArrowLeft size={20} aria-hidden />
           {buttonText}
         </button>
       </div>
