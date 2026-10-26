@@ -2,14 +2,16 @@ const mongoose = require('mongoose');
 
 const MAX_LIMIT = 100;
 const DEFAULT_LIMIT = 20;
+// A deep page is a slow server-side skip over the whole collection; nobody pages past this.
+const MAX_PAGE = 1000;
 
 /**
  * Parse and validate pagination params from query string.
  * Enforces a maximum page size to prevent full-collection fetches.
  */
-const parsePagination = (query) => {
-  const page = Math.max(1, parseInt(query.page, 10) || 1);
-  const limit = Math.min(MAX_LIMIT, Math.max(1, parseInt(query.limit, 10) || DEFAULT_LIMIT));
+const parsePagination = (query = {}, { defaultLimit = DEFAULT_LIMIT, maxLimit = MAX_LIMIT } = {}) => {
+  const page = Math.min(MAX_PAGE, Math.max(1, parseInt(query.page, 10) || 1));
+  const limit = Math.min(maxLimit, Math.max(1, parseInt(query.limit, 10) || defaultLimit));
   const skip = (page - 1) * limit;
   return { page, limit, skip };
 };
@@ -46,4 +48,4 @@ const parseDate = (value) => {
   return isNaN(d.getTime()) ? null : d;
 };
 
-module.exports = { parsePagination, parseObjectId, parseSort, parseDate, MAX_LIMIT, DEFAULT_LIMIT };
+module.exports = { parsePagination, parseObjectId, parseSort, parseDate, MAX_LIMIT, DEFAULT_LIMIT, MAX_PAGE };

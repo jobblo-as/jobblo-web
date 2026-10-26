@@ -3,6 +3,7 @@ const router = express.Router();
 const serviceController = require('../controllers/serviceController');
 const jobReportController = require('../controllers/jobReportController');
 const { authenticate, optionalAuthenticate } = require('../middleware/auth');
+const { cacheJson } = require('../utils/cache');
 const upload = require('../middleware/upload');
 
 /**
@@ -129,7 +130,8 @@ const upload = require('../middleware/upload');
  *               items:
  *                 $ref: '#/components/schemas/Service'
  */
-router.get('/', serviceController.getAllServices);
+// Same answer for every caller, so cached per URL; any Service write clears it (models/Service.js).
+router.get('/', cacheJson('services', 30), serviceController.getAllServices);
 
 /**
  * -------------------------------------------------------
@@ -164,7 +166,7 @@ router.get('/my-posted', authenticate, serviceController.getMyPostedServices);
  *     summary: Get services nearby using coordinates
  *     tags: [Tjenester]
  */
-router.get('/nearby', serviceController.getNearbyServices);
+router.get('/nearby', cacheJson('services', 30), serviceController.getNearbyServices);
 
 /**
  * @swagger
@@ -296,7 +298,17 @@ router.get('/:id', optionalAuthenticate, serviceController.getServiceById);
  *     summary: Update a service
  *     tags: [Tjenester]
  */
-router.put('/:id', authenticate, upload.array('images', 6), serviceController.updateService);
+// Ownership BEFORE the upload middleware, so a refused edit leaves no files in storage.
+// updateService repeats the full check (status gates etc.).
+async function ownsService(req, res, next) {
+  if (!require('mongoose').isValidObjectId(req.params.id))
+    return res.status(400).json({ error: 'Invalid service ID format' });
+  const service = await require('../models/Service').findById(req.params.id).select('userId').lean();
+  if (!service) return res.status(404).json({ error: 'Service not found' });
+  if (String(service.userId) !== String(req.userId)) return res.status(403).json({ error: 'Unauthorized' });
+  next();
+}
+router.put('/:id', authenticate, ownsService, upload.array('images', 6), serviceController.updateService);
 
 /**
  * -------------------------------------------------------

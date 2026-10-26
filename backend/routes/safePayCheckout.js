@@ -4,6 +4,7 @@ const multer = require('multer');
 const SafePayCheckoutController = require('../controllers/SafePayCheckoutController');
 const safePayController = require('../controllers/safepayController');
 const { authenticate } = require('../middleware/auth');
+const { checkFileTypes, IMAGE_TYPES, uploadLimiter, MULTIPART_LIMITS } = require('../middleware/upload');
 
 router.get('/details/:orderId', authenticate, SafePayCheckoutController.getCheckoutDetails);
 router.post('/create-session', authenticate, SafePayCheckoutController.createSafePaySession);
@@ -22,7 +23,7 @@ router.get('/mobile-return', SafePayCheckoutController.mobileReturn);
 // something other than the web form is calling.
 const reviewPhotoUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 8 * 1024 * 1024, files: 6 },
+  limits: { ...MULTIPART_LIMITS, fileSize: 8 * 1024 * 1024, files: 6 },
   fileFilter: (_req, file, cb) => {
     const ALLOWED = ['image/jpeg', 'image/png', 'image/webp'];
     if (ALLOWED.includes(file.mimetype)) return cb(null, true);
@@ -35,7 +36,9 @@ const reviewPhotoUpload = multer({
 router.post(
   '/review-photos/:orderId',
   authenticate,
+  uploadLimiter,
   reviewPhotoUpload.array('photos', 6),
+  checkFileTypes(IMAGE_TYPES),
   SafePayCheckoutController.uploadReviewPhotos
 );
 router.post('/approve', authenticate, SafePayCheckoutController.approveAndPayout);

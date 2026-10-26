@@ -8,6 +8,7 @@ const Notification = require('../../models/Notification');
 const { asyncHandler, sendSuccess, sendError, buildPagination } = require('../../utils/apiResponse');
 const { parsePagination, parseObjectId, parseSort, parseDate } = require('../../utils/pagination');
 const { logActivity } = require('../../services/admin/activityService');
+const { queryString } = require('../../utils/devQuery');
 
 // ── Chat list ──────────────────────────────────────────────────────────────────
 const CHAT_SORT_FIELDS = ['createdAt', 'updatedAt'];
@@ -93,7 +94,7 @@ const getChats = asyncHandler(async (req, res) => {
 
   // Text search across service title, customer name, provider name
   if (req.query.search) {
-    const esc = req.query.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const esc = queryString(req.query.search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const regex = { $regex: esc, $options: 'i' };
 
     // Search service by title first, then use IDs in chat query

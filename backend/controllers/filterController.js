@@ -1,6 +1,6 @@
 const Service = require('../models/Service');
 const Category = require('../models/Category');
-const { getSortOptionsForClient, resolveSort } = require('../utils/serviceSort');
+const { getSortOptionsForClient } = require('../utils/serviceSort');
 
 /**
  * @desc Hent tilgjengelige filtervalg
@@ -9,8 +9,9 @@ const { getSortOptionsForClient, resolveSort } = require('../utils/serviceSort')
  */
 exports.getFilterOptions = async (req, res) => {
   try {
+    // The four reads are independent: run them together (they ran one after another).
     // 1. Get Job counts per category (only for 'open' services)
-    const categoryCounts = await Service.aggregate([
+    const categoryCountsP = Service.aggregate([
       { $match: { status: 'open' } },
       { $unwind: '$categories' },
       {
@@ -19,6 +20,24 @@ exports.getFilterOptions = async (req, res) => {
           count: { $sum: 1 },
         },
       },
+    ]);
+    // 2. Get Job counts per location (city)
+    const locationCountsP = Service.aggregate([
+      { $match: { status: 'open', 'location.city': { $ne: null } } },
+      {
+        $group: {
+          _id: { $trim: { input: '$location.city' } },
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+    // 3. Get Job counts for Urgent (Fiks ferdig)
+    const urgentCountP = Service.countDocuments({ status: 'open', urgent: true });
+    const [categoryCounts, locationCounts, urgentCount, activeCategories] = await Promise.all([
+      categoryCountsP,
+      locationCountsP,
+      urgentCountP,
+      Category.find({ isActive: true }).lean(),
     ]);
 
     // Create a map with normalized keys (lowercase and trimmed)
@@ -29,29 +48,13 @@ exports.getFilterOptions = async (req, res) => {
       }
     });
 
-    // 2. Get Job counts per location (city)
-    const locationCounts = await Service.aggregate([
-      { $match: { status: 'open', 'location.city': { $ne: null } } },
-      {
-        $group: {
-          _id: { $trim: { input: '$location.city' } },
-          count: { $sum: 1 },
-        },
-      },
-    ]);
     const locCountMap = locationCounts.map((l) => ({
       name: l._id,
       count: l.count,
     }));
 
-    // 3. Get Job counts for Urgent (Fiks ferdig)
-    const urgentCount = await Service.countDocuments({
-      status: 'open',
-      urgent: true,
-    });
-
     // Fetch all top-level categories and their subcategories
-    let allCategories = await Category.find({ isActive: true }).lean();
+    let allCategories = activeCategories;
 
     let categoryTree = [];
     if (allCategories.length > 0) {
@@ -108,118 +111,6 @@ exports.getFilterOptions = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Could not fetch filter options',
-      error: error.message,
-    });
-  }
-};
-
-/**
- * @desc Bruk valgte filter og hent resultater
- * @route POST /api/filter/apply
- * @access Public
- */
-exports.applyFilters = async (req, res) => {
-  try {
-    const {
-      categories,
-      locations,
-      priceRange,
-      urgentOnly,
-      verifiedProvidersOnly,
-      searchKeyword,
-      sortBy,
-      countyCodes,
-      municipalityCodes,
-      areaCodes,
-      page = 1,
-      limit = 20,
-    } = req.body;
-
-    const query = {};
-
-    // KATEGORIER (handles both category names and subcategories)
-    if (Array.isArray(categories) && categories.length > 0) {
-      query.categories = { $in: categories };
-    }
-
-    // LOCATIONS (Cities - backward compatibility)
-    if (Array.isArray(locations) && locations.length > 0) {
-      query['location.city'] = { $in: locations };
-    }
-
-    // LOCATIONS BY CODES
-    const locationQueries = [];
-
-    if (Array.isArray(areaCodes) && areaCodes.length > 0) {
-      locationQueries.push({ areaCode: { $in: areaCodes } });
-    }
-
-    if (Array.isArray(municipalityCodes) && municipalityCodes.length > 0) {
-      locationQueries.push({ municipalityCode: { $in: municipalityCodes } });
-    }
-
-    if (Array.isArray(countyCodes) && countyCodes.length > 0) {
-      locationQueries.push({ countyCode: { $in: countyCodes } });
-    }
-
-    if (locationQueries.length > 0) {
-      query.$or = locationQueries;
-    }
-
-    // PRIS
-    if (priceRange && (priceRange.min != null || priceRange.max != null)) {
-      query.price = {};
-      if (priceRange.min != null) query.price.$gte = priceRange.min;
-      if (priceRange.max != null) query.price.$lte = priceRange.max;
-    }
-
-    // URGENT FILTER
-    if (urgentOnly === true) {
-      query.urgent = true;
-    }
-
-    // SØKEORD (Search within category or globally)
-    if (searchKeyword && typeof searchKeyword === 'string') {
-      const regex = new RegExp(searchKeyword, 'i');
-      query.$or = [
-        { title: regex },
-        { description: regex },
-        { categories: regex },
-        { tags: regex },
-      ];
-    }
-
-    // SORT LOGIC — shared with GET /api/services so the two endpoints cannot answer
-    // the same `sortBy` differently. This hand-rolled copy already omitted the
-    // createdAt tiebreaker on price sorts, which made paginated price results
-    // unstable: equal-priced listings could repeat on one page and be skipped on
-    // the next.
-    const { sort: sortQuery } = resolveSort(sortBy);
-
-    const skip = (page - 1) * limit;
-
-    const services = await Service.find(query)
-      .populate('userId', 'name avatarUrl verified')
-      .sort(sortQuery)
-      .skip(skip)
-      .limit(limit);
-
-    const total = await Service.countDocuments(query);
-
-    return res.status(200).json({
-      success: true,
-      count: services.length,
-      total,
-      page: Number(page),
-      totalPages: Math.ceil(total / limit),
-      results: services,
-    });
-  } catch (error) {
-    console.error('APPLY FILTER ERROR:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Kunne ikke hente filtrerte resultater',
-      error: error.message,
     });
   }
 };

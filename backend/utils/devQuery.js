@@ -24,6 +24,8 @@ function parseRange(query) {
 const bucketExpr = (field, bucketMs) => ({ $toDate: { $subtract: [{ $toLong: field }, { $mod: [{ $toLong: field }, bucketMs] }] } });
 
 const escapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+/** A query value as a string: repeated keys (`?q=a&q=b`) or brackets (`?q[x]=1`) parse to an array/object → ''. */
+const queryString = (v) => (typeof v === 'string' ? v : '');
 /** Case-insensitive "contains" match on user input, regex-escaped (no ReDoS, no `.*` scans). */
 const rx = (v) => ({ $regex: escapeRegex(v), $options: 'i' });
 const isId = (v) => mongoose.isValidObjectId(v) && String(v).length === 24;
@@ -44,4 +46,4 @@ const audit = (req, description, metadata, targetModel = 'other', targetId = nul
 
 const pagination = (page, limit, total) => ({ page, limit, total, totalPages: Math.ceil(total / limit), hasNextPage: page < Math.ceil(total / limit), hasPreviousPage: page > 1 });
 
-module.exports = { MINUTE, HOUR, DAY, RANGES, parseRange, bucketExpr, escapeRegex, rx, isId, pageParams, pagination, countBy, groupCount, audit };
+module.exports = { MINUTE, HOUR, DAY, RANGES, parseRange, bucketExpr, escapeRegex, queryString, rx, isId, pageParams, pagination, countBy, groupCount, audit };

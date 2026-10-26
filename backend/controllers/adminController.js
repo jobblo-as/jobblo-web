@@ -1,8 +1,11 @@
-const bcrypt = require('bcryptjs');
+const { hashPassword } = require('../utils/passwordUtils');
 const Service = require('../models/Service');
 const User = require('../models/User');
 const Order = require('../models/Order');
 const Notification = require('../models/Notification');
+const { serverError } = require('../utils/serverError');
+const { queryString } = require('../utils/devQuery');
+const { parsePagination } = require('../utils/pagination');
 
 /**
  * Legacy admin controller — kept for backward compatibility with existing routes.
@@ -12,13 +15,11 @@ const Notification = require('../models/Notification');
 // Authentication handled by middleware - req.user and req.userId available
 exports.getAllUsers = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = Math.min(100, parseInt(req.query.limit) || 10);
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = parsePagination(req.query, { defaultLimit: 10 });
 
     let query = { isDeleted: { $ne: true } };
     if (req.query.search) {
-      const escaped = req.query.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const escaped = queryString(req.query.search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       query.$or = [
         { name: { $regex: escaped, $options: 'i' } },
         { email: { $regex: escaped, $options: 'i' } },
@@ -69,7 +70,7 @@ exports.createUser = async (req, res) => {
         .json({ message: `Ugyldig rolle. Tillatte roller: ${ASSIGNABLE_ROLES.join(', ')}.` });
     }
 
-    const hashed = await bcrypt.hash(password, 12);
+    const hashed = await hashPassword(password);
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'E-postadressen er allerede registrert.' });
@@ -88,16 +89,14 @@ exports.createUser = async (req, res) => {
     delete safeUser.password;
     res.status(201).json({ message: 'Bruker opprettet.', user: safeUser });
   } catch (error) {
-    console.error('[Admin] createUser error');
-    res.status(500).json({ message: 'Kunne ikke opprette bruker.' });
+    // serverError answers 503 when the password-hash queue is full, a safe 500 otherwise.
+    serverError(res, error, 'Kunne ikke opprette bruker.');
   }
 };
 
 exports.getAllOrders = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = Math.min(100, parseInt(req.query.limit) || 20);
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = parsePagination(req.query);
 
     const total = await Order.countDocuments();
     const orders = await Order.find()
@@ -129,9 +128,7 @@ exports.getAllOrders = async (req, res) => {
 
 exports.getAllServices = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
+    const { page, limit, skip } = parsePagination(req.query, { defaultLimit: 10 });
 
     const totalServices = await Service.countDocuments();
     const services = await Service.find().skip(skip).limit(limit).sort({ createdAt: -1 });
@@ -150,9 +147,7 @@ exports.getAllServices = async (req, res) => {
 // Admin control for viewing broadcast history
 exports.getSystemNotificationsHistory = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
-
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const { page, limit, skip } = parsePagination(req.query, { defaultLimit: 10 });
 
     // Filter: Sirf system-wide alerts (global broadcasts)
     const query = { userId: null, isSystem: true };
@@ -171,7 +166,7 @@ exports.getSystemNotificationsHistory = async (req, res) => {
       data: notifications,
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    serverError(res, error);
   }
 };
 
@@ -239,6 +234,8 @@ exports.deleteUser = async (req, res) => {
       deletedAt: new Date(),
       accountStatus: 'inactive',
     });
+    // End its sessions (the Session hook also disconnects its sockets).
+    await require('../models/Session').deleteMany({ userId: req.params.id });
 
     res.json({ message: 'Bruker deaktivert og arkivert.' });
   } catch (err) {

@@ -6,10 +6,11 @@ const disputeController = require('../controllers/disputeController');
 const providerWorkController = require('../controllers/providerWorkController');
 const financeController = require('../controllers/safepayFinanceController');
 const { authenticate } = require('../middleware/auth');
+const { checkFileTypes, DOCUMENT_TYPES, uploadLimiter, MULTIPART_LIMITS } = require('../middleware/upload');
 
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { ...MULTIPART_LIMITS, fileSize: 10 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     const ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
     if (ALLOWED.includes(file.mimetype)) return cb(null, true);
@@ -27,7 +28,7 @@ router.get('/orders/:orderId', authenticate, providerWorkController.getOrderDeta
 // ── Provider actions ──────────────────────────────────────────────────────────
 router.post('/orders/:orderId/start', authenticate, providerWorkController.startJob);
 router.post('/orders/:orderId/ready-for-review', authenticate, providerWorkController.markReadyForReview);
-router.post('/orders/:orderId/evidence', authenticate, upload.array('files', 10), providerWorkController.uploadEvidence);
+router.post('/orders/:orderId/evidence', authenticate, uploadLimiter, upload.array('files', 10), checkFileTypes(DOCUMENT_TYPES), providerWorkController.uploadEvidence);
 router.delete('/orders/:orderId/evidence', authenticate, providerWorkController.deleteEvidence);
 router.patch('/orders/:orderId/provider-checklist/:itemId', authenticate, providerWorkController.updateProviderChecklist);
 

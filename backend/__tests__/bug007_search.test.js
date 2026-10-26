@@ -1,5 +1,6 @@
 jest.mock('../models/Service', () => {
   const mockQuery = {
+    select: jest.fn().mockReturnThis(),
     populate: jest.fn().mockReturnThis(),
     lean: jest.fn().mockReturnThis(),
     skip: jest.fn().mockReturnThis(),

@@ -7,6 +7,7 @@ const {
 } = require('../../utils/apiResponse');
 const { parsePagination, parseObjectId, parseSort, parseDate } = require('../../utils/pagination');
 const { logActivity } = require('../../services/admin/activityService');
+const { queryString } = require('../../utils/devQuery');
 
 const SORT_FIELDS = ['createdAt', 'updatedAt', 'price', 'title', 'views'];
 const VALID_STATUSES = [
@@ -31,7 +32,7 @@ const getServices = asyncHandler(async (req, res) => {
   const query = {};
 
   if (req.query.search) {
-    const esc = req.query.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const esc = queryString(req.query.search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     query.$or = [
       { title: { $regex: esc, $options: 'i' } },
       { description: { $regex: esc, $options: 'i' } },

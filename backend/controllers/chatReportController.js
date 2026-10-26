@@ -123,12 +123,14 @@ const submitChatReport = async (req, res) => {
       });
     }
 
-    // Process evidence files (uploaded via multer, available on req.files)
+    // Evidence: multer only buffered it (type already checked from the bytes). Upload now,
+    // after every check above, so a refused report leaves nothing in storage.
     const evidence = [];
     if (req.files && Array.isArray(req.files)) {
+      const { uploadToAzure } = require('../utils/azureUpload');
       for (const file of req.files.slice(0, 5)) {
         evidence.push({
-          fileUrl: file.path || file.location || file.filename,
+          fileUrl: await uploadToAzure(file, 'report-evidence', { private: true }),
           fileType: file.mimetype,
           description: '',
           uploadedAt: new Date(),

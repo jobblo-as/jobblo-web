@@ -1,4 +1,4 @@
-const bcrypt = require('bcryptjs');
+const { hashPassword } = require('../../utils/passwordUtils');
 const User = require('../../models/User');
 const Session = require('../../models/Session');
 const {
@@ -9,9 +9,12 @@ const {
 } = require('../../utils/apiResponse');
 const { parsePagination, parseObjectId, parseSort, parseDate } = require('../../utils/pagination');
 const { logActivity } = require('../../services/admin/activityService');
+const { queryString } = require('../../utils/devQuery');
 
-// Allowed role values — canonical set. All roles assignable via admin.
+// Allowed role values — canonical set (used for filtering).
 const ALL_ROLES = ['user', 'provider', 'company', 'superAdmin', 'developer'];
+// What an admin may hand out: superAdmin is never granted through the panel (no step-up here).
+const ASSIGNABLE_ROLES = ALL_ROLES.filter((r) => r !== 'superAdmin');
 
 // Fields never returned in user lists or details
 const SENSITIVE_SELECT = '-password -passwordResetToken -passwordResetExpires';
@@ -30,7 +33,7 @@ const getUsers = asyncHandler(async (req, res) => {
   const query = { isDeleted: { $ne: true } };
 
   if (req.query.search) {
-    const escaped = req.query.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const escaped = queryString(req.query.search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     query.$or = [
       { name: { $regex: escaped, $options: 'i' } },
       { email: { $regex: escaped, $options: 'i' } },
@@ -85,8 +88,8 @@ const createUser = asyncHandler(async (req, res) => {
     return sendError(res, 'Navn, e-post og passord er påkrevd.', 400);
   }
 
-  if (role && !ALL_ROLES.includes(role)) {
-    return sendError(res, `Ugyldig rolle. Tillatte roller: ${ALL_ROLES.join(', ')}.`, 400);
+  if (role && !ASSIGNABLE_ROLES.includes(role)) {
+    return sendError(res, `Ugyldig rolle. Tillatte roller: ${ASSIGNABLE_ROLES.join(', ')}.`, 400);
   }
 
   const existing = await User.findOne({ email: email.toLowerCase().trim() });
@@ -94,7 +97,7 @@ const createUser = asyncHandler(async (req, res) => {
     return sendError(res, 'E-postadressen er allerede registrert.', 409);
   }
 
-  const hashed = await bcrypt.hash(password, 12);
+  const hashed = await hashPassword(password);
   const newUser = await User.create({
     name: name.trim(),
     email: email.toLowerCase().trim(),
@@ -149,8 +152,8 @@ const changeUserRole = asyncHandler(async (req, res) => {
   if (!id) return sendError(res, 'Ugyldig bruker-ID.', 400);
 
   const { role } = req.body;
-  if (!role || !ALL_ROLES.includes(role)) {
-    return sendError(res, `Ugyldig rolle. Tilgjengelige roller: ${ALL_ROLES.join(', ')}.`, 400);
+  if (!role || !ASSIGNABLE_ROLES.includes(role)) {
+    return sendError(res, `Ugyldig rolle. Tilgjengelige roller: ${ASSIGNABLE_ROLES.join(', ')}.`, 400);
   }
 
   // Prevent demoting self

@@ -1,4 +1,5 @@
 const UpcomingFeature = require('../models/UpcomingFeature');
+const { serverError, inputOrServerError } = require('../utils/serverError');
 
 // Get all features
 exports.getAllFeatures = async (req, res) => {
@@ -6,7 +7,7 @@ exports.getAllFeatures = async (req, res) => {
     const features = await UpcomingFeature.find().sort({ createdAt: -1 });
     res.json(features);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 };
 
@@ -17,7 +18,7 @@ exports.createFeature = async (req, res) => {
     await feature.save();
     res.status(201).json(feature);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    inputOrServerError(res, err);
   }
 };
 
@@ -29,7 +30,7 @@ exports.updateFeature = async (req, res) => {
     if (!feature) return res.status(404).json({ error: 'Feature not found' });
     res.json(feature);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    inputOrServerError(res, err);
   }
 };
 
@@ -41,6 +42,6 @@ exports.deleteFeature = async (req, res) => {
     if (!feature) return res.status(404).json({ error: 'Feature not found' });
     res.json({ message: 'Feature deleted' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 };

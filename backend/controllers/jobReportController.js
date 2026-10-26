@@ -1,5 +1,6 @@
 const JobReport = require('../models/JobReport');
 const Service = require('../models/Service');
+const { inputOrServerError } = require('../utils/serverError');
 
 // POST /api/services/:serviceId/reports
 exports.submitJobReport = async (req, res) => {
@@ -52,6 +53,6 @@ exports.submitJobReport = async (req, res) => {
       },
     });
   } catch (err) {
-    return res.status(400).json({ error: err.message });
+    return inputOrServerError(res, err);
   }
 };

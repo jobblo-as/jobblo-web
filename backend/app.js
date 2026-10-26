@@ -24,6 +24,7 @@ if (process.env.NODE_ENV === 'production' && origins.length === 0) {
 }
 
 const app = express();
+app.disable('x-powered-by');
 
 // Trust X-Forwarded-For only from the known reverse proxy: production runs nginx on the same
 // host, so loopback by default. Trusting any hop let a client reaching the port forge its IP
@@ -41,6 +42,12 @@ const rawJson = express.raw({ type: 'application/json' });
 app.post('/api/stripe/webhook', rawJson, faults.webhookGuard, stripeWebhook);
 app.post('/api/safepay-checkout/webhook', rawJson, faults.webhookGuard, stripeWebhook);
 
+// req.ip is a getter that re-runs proxy-addr on every read (rate limiter, metrics, security
+// events, ip blocks read it several times per request): resolve it once per request.
+app.use((req, res, next) => {
+  Object.defineProperty(req, 'ip', { value: req.ip, writable: true, configurable: true, enumerable: true });
+  next();
+});
 app.use(cors(corsOptions(origins)));
 // CSRF: refuse state-changing requests from other sites' browsers, before body parsing.
 app.use(require('./middleware/csrfOrigin').createCsrfOriginGuard(origins));
@@ -50,15 +57,32 @@ app.use(require('./services/monitoring/contracts').contractSampler); // response
 app.use(require('./services/monitoring/ipBlocks').ipBlockGuard); // after metrics so blocked attempts count
 app.use(apiLimiter);
 if (process.env.NODE_ENV !== 'production') app.use(logger('dev'));
+// The anonymous client-error ingest gets 32 kb, whatever the content type; parsed here, the
+// global 12 mb parsers below skip it.
+app.use('/api/errors/client', express.json({ limit: '32kb', type: () => true }));
 // Review photos arrive as base64 data URLs in JSON (SafePayApproval): 100kb killed every real
 // phone photo in the body parser.
-app.use(express.json({ limit: '12mb' }));
-app.use(express.urlencoded({ extended: false, limit: '12mb' }));
+// 256 kb: photos are multipart uploads now (base64 review photos are refused), and a 12 MB
+// JSON body of nested brackets kept the event loop busy for ~4 s per anonymous request.
+app.use(express.json({ limit: '256kb' }));
+app.use(express.urlencoded({ extended: false, limit: '256kb' }));
 app.use(cookieParser());
+// cookie-parser turns `j:{...}` values into objects: `refreshToken=j:{"$ne":null}` became a
+// Mongo operator in Session queries. Every cookie we read is a plain string, so keep only those.
+app.use((req, _res, next) => {
+  for (const jar of [req.cookies, req.signedCookies]) {
+    for (const key of Object.keys(jar || {})) if (typeof jar[key] !== 'string') delete jar[key];
+  }
+  next();
+});
 app.use(requestId);
-app.use(sessionMiddleware());
+app.use(require('./utils/azureUpload').signPrivateUrls); // private evidence URLs -> 15-min SAS links
 app.use(passport.initialize());
-app.use(passport.session());
+// express-session holds OAuth / BankID transaction state only, and every reader of req.session
+// (config/passport.js Google state store, utils/iduraTransaction, utils/oauthReturn) sits under
+// /api/auth (routes/auth, webOAuth, mobileOAuth). Globally it cost ~8% CPU per request
+// (session id + cookie + hash on every hit, saveUninitialized or not).
+app.use('/api/auth', sessionMiddleware(), passport.session());
 
 // Swagger UI: off in production unless ENABLE_API_DOCS=true (it publishes the whole API surface).
 if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_API_DOCS === 'true') {

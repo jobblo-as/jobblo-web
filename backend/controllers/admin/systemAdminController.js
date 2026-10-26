@@ -2,6 +2,7 @@ const os = require('os');
 const mongoose = require('mongoose');
 const { sendSuccess, sendError } = require('../../utils/apiResponse');
 const { asyncHandler } = require('../../utils/apiResponse');
+const { escapeRegex, queryString } = require('../../utils/devQuery');
 const AdminActivity = require('../../models/AdminActivity');
 const User = require('../../models/User');
 const Session = require('../../models/Session');
@@ -128,9 +129,9 @@ const getSystemErrors = asyncHandler(async (req, res) => {
     // Filter by optional query params: severity, code, route, date range.
     const ErrorLog = require('../../models/ErrorLog');
     const query = {};
-    if (req.query.severity) query.severity = req.query.severity;
-    if (req.query.code) query.errorCode = req.query.code;
-    if (req.query.route) query.route = { $regex: req.query.route, $options: 'i' };
+    if (queryString(req.query.severity)) query.severity = queryString(req.query.severity);
+    if (queryString(req.query.code)) query.errorCode = queryString(req.query.code);
+    if (req.query.route) query.route = { $regex: escapeRegex(queryString(req.query.route).slice(0, 100)), $options: 'i' };
 
     if (req.query.dateFrom || req.query.dateTo) {
       query.createdAt = {};

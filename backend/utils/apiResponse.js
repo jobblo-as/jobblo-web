@@ -40,6 +40,10 @@ const sendError = (res, message = 'Internal server error.', statusCode = 500, er
  */
 const asyncHandler = (fn) => (req, res, next) => {
   return Promise.resolve(fn(req, res, next)).catch((err) => {
+    if (err?.code === 'PASSWORD_HASH_BUSY') {
+      res.set('Retry-After', '5');
+      return sendError(res, 'Serveren er opptatt. Prøv igjen om litt.', 503);
+    }
     // Log to server, never expose to client
     console.error('[Admin Controller Error]', err.message);
     return sendError(res, 'Internal server error.', 500);

@@ -8,7 +8,8 @@ const net = require('net');
 const express = require('express');
 const request = require('supertest');
 
-const URL_ = process.env.REDIS_TEST_URL || 'redis://127.0.0.1:6379';
+// Its own database (15): on a shared Redis with many keys a bounded SCAN never reached the test's.
+const URL_ = process.env.REDIS_TEST_URL || 'redis://127.0.0.1:6379/15';
 process.env.REDIS_URL = URL_;
 process.env.REDIS_IN_TESTS = 'true';
 process.env.REDIS_PREFIX = `jobblo-test-rm-${process.pid}`;

@@ -18,7 +18,8 @@ exports.uploadEvidence = asyncHandler(async (req, res) => {
     return sendError(res, 'Ingen filer lastet opp.', 400);
   }
 
-  const allowedMimes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'];
+  // mimetype is the real type here: the route's checkFileTypes set it from the file's bytes.
+  const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
   const maxSize = 5 * 1024 * 1024; // 5MB
 
   const evidenceItems = [];
@@ -27,7 +28,7 @@ exports.uploadEvidence = asyncHandler(async (req, res) => {
     if (!allowedMimes.includes(file.mimetype)) {
       return sendError(
         res,
-        `Ugyldig filtype: ${file.mimetype}. Tillatte: JPEG, PNG, GIF, WebP, PDF.`,
+        `Ugyldig filtype: ${file.mimetype}. Tillatte: JPEG, PNG, WebP, PDF.`,
         400
       );
     }
@@ -35,7 +36,7 @@ exports.uploadEvidence = asyncHandler(async (req, res) => {
       return sendError(res, `Fil ${file.originalname} er for stor (maks 5MB).`, 400);
     }
 
-    const fileUrl = await uploadToAzure(file, 'report-evidence');
+    const fileUrl = await uploadToAzure(file, 'report-evidence', { private: true });
 
     evidenceItems.push({
       fileUrl,

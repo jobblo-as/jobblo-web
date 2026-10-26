@@ -1,7 +1,7 @@
 const AdminActivity = require('../models/AdminActivity');
 const ErrorLog = require('../models/ErrorLog');
 const { generateReference } = require('./generateReferenceId');
-const { redactSensitive } = require('./sanitizer');
+const { redactSensitive, redactText } = require('./sanitizer');
 
 /**
  * Logs an application error to AdminActivity with type='error'.
@@ -31,8 +31,10 @@ async function logApplicationError({
   source = null,
 }) {
   try {
+    // The path can carry an e-mail or token (/verify/<token>); route and description are stored.
+    if (requestPath) requestPath = redactText(String(requestPath));
     const errorName = error?.name || 'UnknownError';
-    const errorMessage = error?.message || String(error || 'Unknown');
+    const errorMessage = redactText(error?.message || String(error || 'Unknown'));
 
     // Map severity default
     const requestedAction = errorCode || 'error_500';
@@ -53,10 +55,12 @@ async function logApplicationError({
 
     // Extract safe stack trace (first 10 lines for admin debugging)
     const safeStack =
-      error.stack
-        ?.split('\n')
-        .slice(0, 10)
-        .join('\n') || null;
+      redactText(
+        error?.stack
+          ?.split('\n')
+          .slice(0, 10)
+          .join('\n')
+      ) || null;
 
     // Build safe metadata — sanitize request context
     const safeMeta = { correlationId, userId, ...metadata };

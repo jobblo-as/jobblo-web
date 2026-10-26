@@ -2,6 +2,7 @@ const JobbloShop = require('../../models/JobbloShop');
 const { sendSuccess, sendError, asyncHandler, buildPagination } = require('../../utils/apiResponse');
 const { parsePagination } = require('../../utils/pagination');
 const { logActivity } = require('../../services/admin/activityService');
+const { queryString } = require('../../utils/devQuery');
 
 const getLogBase = (req) => ({
   adminId: req.user._id,
@@ -14,7 +15,7 @@ const getShopItems = asyncHandler(async (req, res) => {
 
   const query = {};
   if (req.query.search) {
-    const esc = req.query.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const esc = queryString(req.query.search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     query.title = { $regex: esc, $options: 'i' };
   }
 

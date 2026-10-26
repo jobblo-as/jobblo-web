@@ -61,8 +61,11 @@ const {
   containerName,
 } = require('../utils/azureUpload');
 
-const file = (name = 'photo.png', mimetype = 'image/png') => ({
-  buffer: Buffer.from('bytes'),
+// Real signatures: the stored type comes from these bytes, not from name/mimetype.
+const PNG = Buffer.from('89504e470d0a1a0a0000000d49484452', 'hex');
+const WEBP = Buffer.from('RIFF\0\0\0\0WEBPVP8 ', 'latin1');
+const file = (name = 'photo.png', mimetype = 'image/png', buffer = PNG) => ({
+  buffer,
   originalname: name,
   mimetype,
 });
@@ -94,17 +97,25 @@ describe('uploadBufferToAzure', () => {
     expect(profile.blobName.startsWith('profile_images/user123/')).toBe(true);
   });
 
-  it('preserves the content type on the stored blob', async () => {
-    const { blobName } = await uploadBufferToAzure(file('x.webp', 'image/webp'), 'hero');
+  it('stores the content type the bytes prove, not the one the client sent', async () => {
+    const { blobName } = await uploadBufferToAzure(file('x.png', 'image/png', WEBP), 'hero');
     expect(store.get(blobName).contentType).toBe('image/webp');
+    expect(blobName.endsWith('.webp')).toBe(true);
   });
 
-  it('falls back to a safe extension when the filename has none or is hostile', async () => {
+  it('never takes the extension from the file name', async () => {
     const noExt = await uploadBufferToAzure(file('noext'), 'hero');
-    expect(noExt.blobName.endsWith('.bin')).toBe(true);
-    // A filename trying to smuggle a path/odd extension must not leak into the key.
-    const weird = await uploadBufferToAzure(file('a.b/../c'), 'hero');
-    expect(weird.blobName).toMatch(/^hero\/[0-9a-f-]{36}\.bin$/);
+    expect(noExt.blobName).toMatch(/^hero\/[0-9a-f-]{36}\.png$/);
+    const weird = await uploadBufferToAzure(file('a.b/../c.html'), 'hero');
+    expect(weird.blobName).toMatch(/^hero\/[0-9a-f-]{36}\.png$/);
+  });
+
+  it('refuses bytes that are not JPEG/PNG/WebP/PDF (SVG labelled image/png)', async () => {
+    const svg = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
+    await expect(uploadBufferToAzure(file('a.png', 'image/png', svg), 'hero')).rejects.toMatchObject({
+      code: 'INVALID_FILE_TYPE',
+    });
+    expect(store.size).toBe(0);
   });
 });
 
