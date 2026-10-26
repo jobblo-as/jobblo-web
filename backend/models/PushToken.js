@@ -7,6 +7,8 @@ const pushTokenSchema = new mongoose.Schema(
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     platform: { type: String, enum: ['ios', 'android'], required: true },
     deviceId: { type: String, trim: true },
+    // The login session that registered it: logout deactivates the session's tokens server-side.
+    sessionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Session', index: true },
     active: { type: Boolean, default: true, index: true },
     lastSeenAt: { type: Date, default: Date.now },
   },

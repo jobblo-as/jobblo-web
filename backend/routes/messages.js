@@ -108,37 +108,6 @@ router.get('/:id', authenticate, messageController.getMessageById);
 
 /**
  * @swagger
- * /api/messages:
- *   post:
- *     summary: Send melding (senderId hentes fra token)
- *     tags: [Messages]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required: [orderId, receiverId, content]
- *             properties:
- *               orderId:
- *                 type: string
- *                 example: "65ab1234ffd2e1a9b3c11d90"
- *               receiverId:
- *                 type: string
- *                 example: "65ab12ff1122bb9912ac33ae"
- *               content:
- *                 type: string
- *                 example: "Hei! Jeg er på vei."
- *     responses:
- *       201:
- *         description: Melding sendt
- */
-router.post('/', authenticate, messageController.createMessage);
-
-/**
- * @swagger
  * /api/messages/{id}/read:
  *   patch:
  *     summary: Marker en melding som lest

@@ -4,6 +4,8 @@ const notificationController = require('./notificationController');
 const Order = require('../models/Order');
 const User = require('../models/User');
 const mongoose = require('mongoose');
+const { serverError } = require('../utils/serverError');
+const { parsePagination } = require('../utils/pagination');
 
 // Helper to validate ObjectId
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
@@ -36,16 +38,20 @@ exports.getAllMessages = async (req, res) => {
 
     const orderIds = orders.map((o) => o._id);
 
+    const { skip, limit } = parsePagination(req.query, { defaultLimit: 100 });
     const messages = await Message.find({
       orderId: { $in: orderIds },
       deletedFor: { $ne: userId },
     })
-      .populate('senderId', 'name email')
+      .sort({ createdAt: 1 })
+      .skip(skip)
+      .limit(limit)
+      .populate('senderId', 'name avatarUrl')
       .populate('orderId', 'serviceId customerId providerId status');
 
     res.json(messages);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    serverError(res, error);
   }
 };
 
@@ -67,14 +73,19 @@ exports.getMessagesForOrder = async (req, res) => {
     if (!isUserRelatedToOrder({ userId: req.userId, order }))
       return res.status(403).json({ error: 'Not authorized' });
 
+    const { skip, limit } = parsePagination(req.query, { defaultLimit: 100 });
     const messages = await Message.find({
       orderId,
       deletedFor: { $ne: req.userId },
-    }).populate('senderId', 'name email');
+    })
+      .sort({ createdAt: 1 })
+      .skip(skip)
+      .limit(limit)
+      .populate('senderId', 'name avatarUrl');
 
     res.json(messages);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    serverError(res, error);
   }
 };
 
@@ -90,7 +101,7 @@ exports.getMessageById = async (req, res) => {
     }
 
     const message = await Message.findById(id)
-      .populate('senderId', 'name email')
+      .populate('senderId', 'name avatarUrl')
       .populate('orderId', 'serviceId customerId providerId status');
 
     if (!message) return res.status(404).json({ error: 'Message not found' });
@@ -107,54 +118,7 @@ exports.getMessageById = async (req, res) => {
 
     res.json(message);
   } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-};
-
-/**
- * POST /api/messages
- */
-exports.createMessage = async (req, res) => {
-  try {
-    const { orderId, content, images, type } = req.body;
-    const senderId = req.userId;
-
-    if (!orderId) return res.status(400).json({ error: 'Order ID is required' });
-
-    if (!content && (!images || images.length === 0))
-      return res.status(400).json({ error: 'Message must contain text or images' });
-
-    if (!isValidId(orderId)) return res.status(400).json({ error: 'Invalid order ID format' });
-
-    const order = await Order.findById(orderId);
-    if (!order) return res.status(404).json({ error: 'Order not found' });
-
-    if (order.customerId.toString() !== senderId && order.providerId.toString() !== senderId) {
-      return res.status(403).json({ error: 'Not authorized' });
-    }
-
-    const message = await Message.create({
-      orderId,
-      senderId,
-      message: content,
-      images: images || [],
-      type: type || 'text',
-    });
-
-    await message.populate('senderId', 'name email');
-
-    const otherUser =
-      order.customerId.toString() === senderId ? order.providerId : order.customerId;
-
-    // Emit message for real-time delivery to connected users
-    const io = req.app.get('io');
-    if (io) {
-      io.to(`chat-${orderId}`).emit('message:new', message);
-    }
-
-    res.status(201).json(message);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    serverError(res, error);
   }
 };
 
@@ -174,6 +138,12 @@ exports.markAsRead = async (req, res) => {
     const message = await Message.findById(id);
     if (!message) return res.status(404).json({ error: 'Message not found' });
 
+    // Any user could mark any order message as read. Only a party to its order may.
+    const order = message.orderId && (await Order.findById(message.orderId).select('customerId providerId'));
+    if (!order || !isUserRelatedToOrder({ userId: req.userId, order })) {
+      return res.status(403).json({ error: 'Not authorized' });
+    }
+
     // Check if already read
     const alreadyRead =
       Array.isArray(message.readReceipts) &&
@@ -189,7 +159,7 @@ exports.markAsRead = async (req, res) => {
 
     res.json({ success: true, message: 'Message marked as read' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 };
 
@@ -222,7 +192,7 @@ exports.markOrderMessagesAsRead = async (req, res) => {
 
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 };
 
@@ -251,13 +221,14 @@ exports.deleteForMe = async (req, res) => {
 
     res.json({ success: true, message: 'Message hidden' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 };
 
 /**
  * DELETE /api/messages/:id
- * Permanent delete — only for sender
+ * Hides the sender's own message for the sender. It used to hard-delete it, even while the
+ * order was in dispute, so the sender could remove evidence the other party relies on.
  */
 exports.deleteMessage = async (req, res) => {
   try {
@@ -273,10 +244,10 @@ exports.deleteMessage = async (req, res) => {
     if (message.senderId.toString() !== req.userId)
       return res.status(403).json({ error: 'Not allowed' });
 
-    await Message.findByIdAndDelete(id);
+    await Message.updateOne({ _id: id }, { $addToSet: { deletedFor: req.userId } });
 
     res.status(204).end();
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    serverError(res, error);
   }
 };

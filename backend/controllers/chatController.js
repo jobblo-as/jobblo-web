@@ -1,14 +1,16 @@
 const User = require('../models/User');
 const { ensureProviderConnectReady } = require('../middleware/requireProviderConnect');
 const { acquireServiceContractLock } = require('../services/order/contractLock');
+const { liveContractOrderId } = require('../services/order/releaseListing');
 const Chat = require('../models/ChatMessage');
 const Order = require('../models/Order');
 const Service = require('../models/Service');
-const Dispute = require('../models/Dispute');
 const JobRequest = require('../models/JobRequest');
 const mongoose = require('mongoose');
 const { notify } = require('../services/notifications');
 const { identityVerificationSummary } = require('../utils/userProjections');
+const { serverError } = require('../utils/serverError');
+const { parsePagination } = require('../utils/pagination');
 
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
 
@@ -17,6 +19,7 @@ const MAX_AGREED_PRICE = 1000000;
 
 /** Longest single chat message. Guards the 16 MB per-document limit — see sendMessage. */
 const MAX_MESSAGE_LENGTH = 5000;
+exports.MAX_MESSAGE_LENGTH = MAX_MESSAGE_LENGTH;
 
 /** Ceiling on how many messages one request may pull from a thread. */
 const MAX_MESSAGE_PAGE = 200;
@@ -42,6 +45,9 @@ exports.createOrGetChat = async (req, res) => {
     const provider = await User.findById(providerId).select('role name');
     if (!provider) {
       return res.status(404).json({ message: 'Provider not found.' });
+    }
+    if (await isBlockedBetween(id, providerId)) {
+      return res.status(BLOCKED.status).json({ message: BLOCKED.error, code: BLOCKED.code });
     }
 
     // Both people must have a real relationship to this job.
@@ -138,13 +144,15 @@ exports.createOrGetChat = async (req, res) => {
 
     res.status(created ? 201 : 200).json(chat);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    serverError(res, error);
   }
 };
 
 exports.getMyChats = async (req, res) => {
   try {
     const { id } = req.user;
+    // Still a plain array (both clients read one); the newest 100 unless ?page/?limit ask.
+    const { skip, limit } = parsePagination(req.query, { defaultLimit: 100 });
 
     // The inbox needs the last message, not every message ever sent.
     //
@@ -162,11 +170,13 @@ exports.getMyChats = async (req, res) => {
       .populate('providerId', 'name role avatarUrl')
       .populate('serviceId', 'title description images price categories userId')
       .populate('orderId')
-      .sort({ updatedAt: -1 });
+      .sort({ updatedAt: -1 })
+      .skip(skip)
+      .limit(limit);
 
     res.json(chats);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    serverError(res, error);
   }
 };
 
@@ -188,7 +198,12 @@ exports.getChatById = async (req, res) => {
     const offset = Math.max(parseInt(req.query.offset, 10) || 0, 0);
 
     // Authorize before reading the messages at all.
-    const meta = await Chat.findById(chatId).select('clientId providerId messages');
+    // Counted in the database: loading the whole messages array just to read its length
+    // cost as much as the unpaginated response this replaced.
+    const [meta] = await Chat.aggregate([
+      { $match: { _id: new mongoose.Types.ObjectId(chatId) } },
+      { $project: { clientId: 1, providerId: 1, total: { $size: { $ifNull: ['$messages', []] } } } },
+    ]);
     if (!meta) {
       return res.status(404).json({ message: 'Chat not found' });
     }
@@ -196,10 +211,15 @@ exports.getChatById = async (req, res) => {
       return res.status(403).json({ message: 'Unauthorized: You are not part of this chat.' });
     }
 
-    const totalMessages = meta.messages?.length || 0;
+    const totalMessages = meta.total;
+    // `$slice: [-(offset + limit), limit]` clamps a negative skip to the start, so a
+    // page past the oldest message repeated messages from earlier pages. Slice from the
+    // front instead, and return nothing once offset passes the start.
+    const count = Math.min(limit, totalMessages - offset);
+    const slice = count > 0 ? [totalMessages - offset - count, count] : [totalMessages, 1];
 
     const chat = await Chat.findById(chatId)
-      .select({ messages: { $slice: [-(offset + limit), limit] } })
+      .select({ messages: { $slice: slice } })
       .populate('clientId', 'name avatarUrl verified identityVerification')
       .populate('providerId', 'name avatarUrl verified identityVerification')
       .populate('serviceId', 'title description images price categories userId')
@@ -223,78 +243,126 @@ exports.getChatById = async (req, res) => {
 
     res.json(payload);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    serverError(res, error);
   }
 };
 
+/**
+ * A chat is one document, and MongoDB refuses to write one past 16 MB, after which every
+ * save on it fails for good (messages, contract, payment confirmation). Messages are only
+ * appended while the document is under this; the headroom is for system messages.
+ */
+const MAX_CHAT_BYTES = 15 * 1024 * 1024;
+
+/** Messages one user may send into one chat per minute. */
+const SEND_LIMIT = { max: 30, windowMs: 60 * 1000 };
+const sendCounts = new Map(); // `${chatId}:${userId}` -> { n, resetAt }
+
+/**
+ * Fixed-window send counter shared by HTTP and socket sends: in Redis when configured (one
+ * limit across instances), in memory otherwise.
+ * ponytail: fails open when Redis errors; the in-memory map is cleared wholesale past 10k
+ * keys instead of pruned.
+ */
+async function overSendLimit(chatId, userId) {
+  const key = `${chatId}:${userId}`;
+  const redisConfig = require('../config/redis');
+  const redis = redisConfig.getRedis();
+  if (redis) {
+    try {
+      const k = `${redisConfig.PREFIX}:chat-send:${key}`;
+      const n = await redis.incr(k);
+      if (n === 1) await redis.pexpire(k, SEND_LIMIT.windowMs);
+      return n > SEND_LIMIT.max;
+    } catch {
+      return false;
+    }
+  }
+  const now = Date.now();
+  let entry = sendCounts.get(key);
+  if (!entry || entry.resetAt <= now) {
+    if (sendCounts.size > 10000) sendCounts.clear();
+    entry = { n: 0, resetAt: now + SEND_LIMIT.windowMs };
+    sendCounts.set(key, entry);
+  }
+  entry.n += 1;
+  return entry.n > SEND_LIMIT.max;
+}
+
+/** True when either user has blocked the other. */
+const isBlockedBetween = async (a, b) =>
+  Boolean(await User.exists({ $or: [{ _id: a, blockedUsers: b }, { _id: b, blockedUsers: a }] }));
+exports.isBlockedBetween = isBlockedBetween;
+
+const BLOCKED = { status: 403, error: 'Du kan ikke sende meldinger til denne brukeren.', code: 'user_blocked' };
+/** 403 body for a deal step (price, contract, accepting an application) between blocked users. */
+const BLOCKED_DEAL = { error: 'Dette er ikke mulig fordi en av dere har blokkert den andre.', code: 'user_blocked' };
+exports.BLOCKED_DEAL = BLOCKED_DEAL;
+
+/**
+ * The one way a user message enters a chat, for the HTTP route and the socket alike (the
+ * socket path skipped the type, length, emptiness and block checks). Returns `{ message }`
+ * or `{ status, error, code? }`.
+ */
+async function postChatMessage({ chatId, userId, text }) {
+  if (!isValidId(chatId)) return { status: 400, error: 'Invalid chat ID format' };
+  // Empty text wrote a blank unread row; no length cap let a few messages fill the document.
+  if (typeof text !== 'string' || !text.trim()) return { status: 400, error: 'Meldingen kan ikke være tom.' };
+  if (text.length > MAX_MESSAGE_LENGTH) {
+    return { status: 400, error: `Meldingen er for lang (maks ${MAX_MESSAGE_LENGTH} tegn).` };
+  }
+
+  const chat = await Chat.findById(chatId).select('clientId providerId');
+  if (!chat) return { status: 404, error: 'Chat not found' };
+  const uid = String(userId);
+  if (String(chat.clientId) !== uid && String(chat.providerId) !== uid) {
+    return { status: 403, error: 'Unauthorized: You are not part of this chat.' };
+  }
+  const otherId = String(chat.clientId) === uid ? chat.providerId : chat.clientId;
+  if (await isBlockedBetween(uid, otherId)) return BLOCKED;
+  if (await overSendLimit(chatId, uid)) {
+    return { status: 429, error: 'Du sender meldinger for raskt. Vent litt.', code: 'chat_send_rate_limited' };
+  }
+
+  const trimmed = text.trim();
+  const message = {
+    _id: new mongoose.Types.ObjectId(),
+    senderId: uid,
+    text: trimmed,
+    type: 'text',
+    createdAt: new Date(),
+    seenBy: [uid],
+  };
+  // Atomic append, only while the document has room. A new message also brings the
+  // conversation back for anyone who had hidden it.
+  const result = await Chat.updateOne(
+    { _id: chatId, $expr: { $lt: [{ $bsonSize: '$$ROOT' }, MAX_CHAT_BYTES] } },
+    { $push: { messages: message }, $set: { lastMessage: trimmed, deletedFor: [] } }
+  );
+  if (!result.modifiedCount) {
+    return { status: 409, error: 'Samtalen er full. Start en ny samtale.', code: 'chat_full' };
+  }
+  return { message };
+}
+exports.postChatMessage = postChatMessage;
+
 exports.sendMessage = async (req, res) => {
   try {
-    const { text } = req.body;
-    const { id } = req.user;
     const { chatId } = req.params;
-
-    if (!isValidId(chatId)) return res.status(400).json({ error: 'Invalid chat ID format' });
-
-    const chat = await Chat.findById(chatId);
-
-    if (!chat) {
-      return res.status(404).json({ message: 'Chat not found' });
+    const result = await postChatMessage({ chatId, userId: req.user.id, text: req.body?.text });
+    if (result.error) {
+      return res.status(result.status).json({ message: result.error, error: result.error, code: result.code });
     }
-
-    // 🔒 Authorization check: user must be either client or provider of this chat
-    if (chat.clientId._id.toString() !== id && chat.providerId._id.toString() !== id) {
-      return res.status(403).json({ message: 'Unauthorized: You are not part of this chat.' });
-    }
-
-    // `text` was stored with no validation at all. Two consequences: an empty body
-    // wrote a message with `text: undefined` and set `lastMessage: undefined`, showing
-    // a blank unread row in the inbox; and with no length cap, the 12 MB JSON body
-    // limit meant two messages could push the chat document past MongoDB's 16 MB
-    // ceiling — after which every save on that conversation fails, permanently
-    // breaking messaging, contract creation and payment confirmation for that job.
-    if (typeof text !== 'string' || !text.trim()) {
-      return res.status(400).json({ message: 'Meldingen kan ikke være tom.' });
-    }
-    if (text.length > MAX_MESSAGE_LENGTH) {
-      return res
-        .status(400)
-        .json({ message: `Meldingen er for lang (maks ${MAX_MESSAGE_LENGTH} tegn).` });
-    }
-
-    const trimmed = text.trim();
-    const message = {
-      senderId: id,
-      text: trimmed,
-      createdAt: new Date(),
-      seenBy: [id],
-    };
-
-    chat.messages.push(message);
-    chat.lastMessage = trimmed;
-    // A new message brings the conversation back for anyone who had hidden it —
-    // otherwise a reply landed in an inbox the recipient could no longer see, and the
-    // chat stayed invisible to them forever.
-    chat.deletedFor = [];
-
-    await chat.save();
-
-    const savedMessage = chat.messages[chat.messages.length - 1];
-    const messagePayload = typeof savedMessage.toObject === 'function'
-      ? savedMessage.toObject()
-      : savedMessage;
 
     // Emit socket event to notify users in the chat room
     const io = req.app.get('io');
     if (io) {
-      io.to(`chat-${chatId}`).emit('receive-message', {
-        chatId,
-        message: messagePayload,
-      });
+      io.to(`chat-${chatId}`).emit('receive-message', { chatId, message: result.message });
     }
 
-    res.status(201).json(messagePayload);
+    res.status(201).json(result.message);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    serverError(res, error);
   }
 };
 
@@ -325,7 +393,7 @@ exports.deleteForMe = async (req, res) => {
 
     res.json({ success: true, message: 'Chat hidden' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 };
 
@@ -396,9 +464,10 @@ exports.createContract = async (req, res) => {
         error: 'Bare oppdragsgiveren kan opprette kontrakten',
       });
     }
+    if (await isBlockedBetween(chat.clientId, chat.providerId)) return res.status(403).json(BLOCKED_DEAL);
 
-    // Check if contract/order already exists
-    if (chat.orderId) {
+    // Check if a live contract already exists (a cancelled one frees the chat)
+    if (await liveContractOrderId(chat)) {
       return res.status(400).json({ error: 'Contract already exists for this chat' });
     }
 
@@ -516,7 +585,7 @@ exports.createContract = async (req, res) => {
     res.status(201).json(updatedChat);
   } catch (error) {
     console.error('Error creating contract:', error);
-    res.status(500).json({ error: error.message });
+    serverError(res, error);
   }
 };
 
@@ -532,19 +601,33 @@ exports.updateAgreedPrice = async (req, res) => {
     // in createContract and createPaymentSession silently fell back to the listing
     // price while the chat displayed "Pris avtalt: 0 kr". And there was no ceiling, so
     // a huge number overflowed Stripe's maximum unit_amount and 500'd at checkout.
-    if (typeof agreedPrice !== 'number' || !Number.isFinite(agreedPrice) || agreedPrice <= 0) {
-      return res.status(400).json({ error: 'Prisen må være et positivt beløp.' });
+    // Whole kroner: decimals were accepted and shown as "Pris avtalt: 0.5 kr".
+    if (!Number.isInteger(agreedPrice) || agreedPrice <= 0) {
+      return res.status(400).json({ error: 'Prisen må være et positivt helt beløp i kroner.' });
     }
     if (agreedPrice > MAX_AGREED_PRICE) {
       return res.status(400).json({ error: `Prisen kan ikke overstige ${MAX_AGREED_PRICE} kr.` });
     }
 
-    const chat = await Chat.findById(chatId);
+    const chat = await Chat.findById(chatId).populate('serviceId', 'userId');
     if (!chat) return res.status(404).json({ error: 'Chat not found' });
 
     // Authorization check: user must be part of the chat
     if (chat.clientId.toString() !== id && chat.providerId.toString() !== id)
       return res.status(403).json({ error: 'Not allowed' });
+
+    // The job owner pays this price and alone creates the contract from it (createContract).
+    // Either participant could set it, so the worker could raise the price the owner then
+    // contracted at. Only the payer sets it.
+    if (!chat.serviceId?.userId || String(chat.serviceId.userId) !== String(id)) {
+      return res.status(403).json({ error: 'Bare oppdragsgiveren kan sette prisen.', code: 'price_owner_only' });
+    }
+    if (await isBlockedBetween(chat.clientId, chat.providerId)) return res.status(403).json(BLOCKED_DEAL);
+    // Each change posts a system message, so it shares the chat send limit: repeated price
+    // changes could otherwise grow the document toward MongoDB's 16 MB ceiling.
+    if (await overSendLimit(chatId, id)) {
+      return res.status(429).json({ error: 'Du endrer prisen for ofte. Vent litt.', code: 'chat_send_rate_limited' });
+    }
 
     // Once a contract exists the price is settled — the Order carries it, and escrow
     // is calculated from it.
@@ -555,7 +638,7 @@ exports.updateAgreedPrice = async (req, res) => {
     // paid — the provider is later released `order.agreedPrice - fee` that the
     // platform never collected. The UI hides the edit control once an order exists;
     // this is the server-side half of that rule.
-    if (chat.orderId) {
+    if (await liveContractOrderId(chat)) {
       return res.status(409).json({
         error: 'Prisen kan ikke endres etter at kontrakten er opprettet.',
         code: 'price_locked_by_contract',
@@ -591,7 +674,7 @@ exports.updateAgreedPrice = async (req, res) => {
     res.json(updatedChat);
   } catch (error) {
     console.error('Error updating agreed price:', error);
-    res.status(500).json({ error: error.message });
+    serverError(res, error);
   }
 };
 
@@ -604,69 +687,21 @@ exports.deleteChat = async (req, res) => {
 
     if (!isValidId(chatId)) return res.status(400).json({ error: 'Invalid chat ID format' });
 
-    const chat = await Chat.findById(chatId);
+    const chat = await Chat.findById(chatId).select('clientId providerId');
     if (!chat) return res.status(404).json({ error: 'Chat not found' });
 
     if (chat.clientId.toString() !== id && chat.providerId.toString() !== id)
       return res.status(403).json({ error: 'Not allowed' });
 
-    // A conversation attached to money — or to an open dispute — is the record an
-    // adjudication rests on. This was a hard delete available to EITHER party at any
-    // order state, which meant the accused could destroy the evidence, along with the
-    // contract and payment system messages. `deleteForMe` still hides it from their
-    // own list without removing it for anyone else.
-    if (chat.orderId) {
-      const order = await Order.findById(chat.orderId).select('status paymentStatus').lean();
-      const PROTECTED_ORDER_STATUSES = [
-        'awaiting_payment',
-        'paid',
-        'in_progress',
-        'ready_for_review',
-        'disputed',
-      ];
-      if (
-        order &&
-        (PROTECTED_ORDER_STATUSES.includes(order.status) || order.paymentStatus === 'paid')
-      ) {
-        return res.status(409).json({
-          error:
-            'Samtalen er knyttet til et aktivt oppdrag med betaling og kan ikke slettes. Du kan skjule den for deg selv i stedet.',
-          code: 'chat_locked_by_order',
-        });
-      }
-
-      const activeDispute = await Dispute.findOne({
-        orderId: chat.orderId,
-        status: { $nin: ['resolved', 'closed', 'cancelled'] },
-      }).select('_id');
-      if (activeDispute) {
-        return res.status(409).json({
-          error: 'Samtalen er bevis i en aktiv tvist og kan ikke slettes.',
-          code: 'chat_locked_by_dispute',
-        });
-      }
-    }
-
-    // An abuse report points at this conversation, and the common harassment /
-    // off-platform-payment case has NO order — so the order guard above did not cover
-    // it. The reported user could delete the thread and leave the admin opening a
-    // report that resolves to null.
-    const ChatReport = require('../models/ChatReport');
-    const openReport = await ChatReport.findOne({
-      chatId,
-      status: { $nin: ['resolved', 'dismissed', 'closed'] },
-    }).select('_id');
-    if (openReport) {
-      return res.status(409).json({
-        error: 'Samtalen er under vurdering etter en rapport og kan ikke slettes.',
-        code: 'chat_locked_by_report',
-      });
-    }
-
-    await Chat.findByIdAndDelete(chatId);
+    // The conversation is shared: it is the other party's record too, and the evidence for
+    // a report or dispute they may not have filed yet. This hard-deleted it for both, and
+    // only active orders, disputes and open reports were protected, so a harasser could
+    // wipe the thread before the victim reported it. Deleting now hides it for the caller
+    // (as delete-for-me does); a new message brings it back.
+    await Chat.updateOne({ _id: chatId }, { $addToSet: { deletedFor: id } });
 
     res.status(204).end();
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    serverError(res, error);
   }
 };

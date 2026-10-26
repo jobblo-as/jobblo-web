@@ -22,6 +22,7 @@ exports.register = async (req, res) => {
         userId: req.userId,
         platform,
         deviceId: typeof deviceId === 'string' ? deviceId : undefined,
+        sessionId: req.sessionId,
         active: true,
         lastSeenAt: new Date(),
       },
