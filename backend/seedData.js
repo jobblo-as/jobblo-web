@@ -13,6 +13,7 @@ const connectDB = async () => {
       throw new Error('MONGO_URI is not defined in environment variables');
     }
 
+    require('./seeds/guard').guardOrExit({ uri: MONGODB_URI }); // never on production; asks for --yes-wipe=<db>
     await mongoose.connect(MONGODB_URI, {
       retryWrites: false,
       maxIdleTimeMS: 120000,

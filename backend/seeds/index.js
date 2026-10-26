@@ -14,8 +14,8 @@ const seedJobbloShop = require('./jobbloShop..seed');
 async function run() {
   try {
     console.log('Seeder started');
-    console.log('DB:', process.env.MONGO_URI);
 
+    require('./guard').guardOrExit({ uri: process.env.MONGO_URI }); // never on production; asks for --yes-wipe=<db>
     await mongoose.connect(process.env.MONGO_URI);
     console.log('✅ MongoDB connected');
 

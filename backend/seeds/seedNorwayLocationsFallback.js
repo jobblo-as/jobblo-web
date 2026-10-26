@@ -322,6 +322,7 @@ const areasData = [
 
 async function seedLocations() {
   try {
+    require('./guard').guardOrExit({ uri: process.env.MONGO_URI || 'mongodb://localhost:27017/jobblo' }); // never on production; asks for --yes-wipe=<db>
     await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/jobblo');
     console.log('Connected to MongoDB');
 
