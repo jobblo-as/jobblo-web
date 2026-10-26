@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Order = require('../models/Order');
 const Dispute = require('../models/Dispute');
 const { openDispute } = require('../services/admin/safePayStateService');
+const { serverError } = require('../utils/serverError');
 
 /**
  * POST /api/safepay/contract/:orderId/dispute
@@ -46,6 +47,9 @@ exports.openDisputeByUser = async (req, res) => {
 
     return res.status(201).json({ success: true, message: 'Tvist åpnet.', disputeId: dispute._id });
   } catch (err) {
+    // openDispute refuses with plain Errors carrying a Norwegian reason; anything else
+    // (a database failure) must not reach the client as raw text.
+    if (err?.name !== 'Error') return serverError(res, err);
     return res.status(400).json({ success: false, message: err.message || 'Serverfeil.' });
   }
 };
@@ -119,20 +123,22 @@ exports.addUserDisputeMessage = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Tvisten er avsluttet.' });
     }
 
-    dispute.messages.push({
-      senderId: userId,
-      senderRole: isCustomer ? 'customer' : 'provider',
-      message: message.trim(),
-      isInternal: false,
-    });
-
-    if (dispute.status === 'waiting_for_customer' && isCustomer) {
-      dispute.status = 'evidence_submitted';
-    } else if (dispute.status === 'waiting_for_provider' && isProvider) {
-      dispute.status = 'evidence_submitted';
-    }
-
-    await dispute.save();
+    const answersRequest =
+      (dispute.status === 'waiting_for_customer' && isCustomer) ||
+      (dispute.status === 'waiting_for_provider' && isProvider);
+    // Compare-and-swap on the status read above: a load-then-save wrote it back over a
+    // concurrent `resolved`, leaving a settled dispute active.
+    const updated = await Dispute.findOneAndUpdate(
+      { _id: dispute._id, status: dispute.status },
+      {
+        $push: {
+          messages: { senderId: userId, senderRole: isCustomer ? 'customer' : 'provider', message: message.trim(), isInternal: false },
+        },
+        ...(answersRequest ? { $set: { status: 'evidence_submitted' } } : {}),
+      },
+      { runValidators: true }
+    );
+    if (!updated) return res.status(409).json({ success: false, message: 'Tvisten ble endret samtidig. Prøv igjen.' });
     return res.json({ success: true, message: 'Melding sendt.' });
   } catch {
     return res.status(500).json({ success: false, message: 'Serverfeil.' });

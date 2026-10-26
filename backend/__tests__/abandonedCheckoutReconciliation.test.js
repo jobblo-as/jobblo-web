@@ -2,6 +2,7 @@ jest.mock('../models/Order', () => ({
   find: jest.fn(),
   findOneAndUpdate: jest.fn(),
   findOne: jest.fn(),
+  updateMany: jest.fn(),
 }));
 jest.mock('../models/Payment', () => ({}));
 jest.mock('../models/Payout', () => ({}));
@@ -38,8 +39,10 @@ const checkoutOrder = {
 
 function setupOrder(order = checkoutOrder) {
   Order.find.mockReturnValue({
-    select: jest.fn().mockReturnValue({
-      limit: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue([order]) }),
+    sort: jest.fn().mockReturnValue({
+      select: jest.fn().mockReturnValue({
+        limit: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue([order]) }),
+      }),
     }),
   });
 }

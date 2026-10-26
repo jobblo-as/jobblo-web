@@ -6,10 +6,11 @@ jest.mock('../models/JobRequest', () => ({
   create: jest.fn(),
   exists: jest.fn(),
   findById: jest.fn(),
+  findOneAndUpdate: jest.fn(async () => ({})),
 }));
 jest.mock('../models/Notification', () => ({}));
 jest.mock('../models/Payment', () => ({}));
-jest.mock('../models/User', () => ({}));
+jest.mock('../models/User', () => ({ exists: jest.fn(async () => null) }));
 jest.mock('../utils/points', () => ({ calculatePointsFromService: jest.fn() }));
 jest.mock('../middleware/requireProviderConnect', () => ({
   ensureProviderConnectReady: jest.fn(async () => true),
@@ -150,6 +151,17 @@ describe('contact usage is tied only to successful JobRequests', () => {
     expect(firstRequestId).not.toEqual(secondRequestId);
     expect(consumeApplicationContact.mock.calls.map(([call]) => call.jobRequestId))
       .toEqual([firstRequestId, secondRequestId]);
+  });
+
+  test('a block between applicant and owner refuses the application: no request, chat or contact used', async () => {
+    require('../models/User').exists.mockResolvedValueOnce({ _id: ownerId });
+    const res = response();
+    await orderController.createJobRequest(request(), res);
+    expect(res.statusCode).toBe(403);
+    expect(res.body.code).toBe('user_blocked');
+    expect(JobRequest.create).not.toHaveBeenCalled();
+    expect(Chat.create).not.toHaveBeenCalled();
+    expect(consumeApplicationContact).not.toHaveBeenCalled();
   });
 
   test('invalid and duplicate pending applications consume nothing', async () => {
@@ -320,5 +332,43 @@ describe('contact usage is tied only to successful JobRequests', () => {
 
     expect(jobRequest.status).toBe(status);
     expect(consumeApplicationContact).not.toHaveBeenCalled();
+  });
+});
+
+// Second review: S12 (first message unchecked) and S6 (accepting opened a chat with a blocked user).
+describe('application message and block checks', () => {
+  beforeEach(() => setup());
+
+  test.each([
+    ['too long', 'a'.repeat(5001)],
+    ['not a string', { $gt: '' }],
+  ])('S12: refuses a %s application message before anything is stored', async (_label, message) => {
+    const res = response();
+    await orderController.createJobRequest({ userId: String(applicantId), body: { serviceId: String(serviceId), message } }, res);
+    expect(res.statusCode).toBe(400);
+    expect(JobRequest.create).not.toHaveBeenCalled();
+    expect(Chat.create).not.toHaveBeenCalled();
+  });
+
+  test('S6: accepting is refused between blocked users; declining still works', async () => {
+    const User = require('../models/User');
+    const pending = () => ({ _id: new mongoose.Types.ObjectId(), customerId: applicantId, providerId: ownerId, serviceId, status: 'pending', populate: jest.fn(async function () { this.serviceId = { title: 'x' }; return this; }) });
+    User.exists.mockResolvedValue({ _id: ownerId });
+    try {
+      JobRequest.findById.mockResolvedValue(pending());
+      const res = response();
+      await orderController.updateJobRequestStatus({ userId: String(ownerId), params: { id: 'r' }, body: { status: 'accepted' } }, res);
+      expect(res.statusCode).toBe(403);
+      expect(res.body.code).toBe('user_blocked');
+      expect(JobRequest.findOneAndUpdate).not.toHaveBeenCalled();
+      expect(Chat.create).not.toHaveBeenCalled();
+
+      JobRequest.findById.mockResolvedValue(pending());
+      const declined = response();
+      await orderController.updateJobRequestStatus({ userId: String(ownerId), params: { id: 'r' }, body: { status: 'declined' } }, declined);
+      expect(declined.statusCode).toBe(200);
+    } finally {
+      User.exists.mockResolvedValue(null);
+    }
   });
 });

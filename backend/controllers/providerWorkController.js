@@ -283,7 +283,7 @@ exports.uploadEvidence = async (req, res) => {
     const { uploadBufferToAzure } = require('../utils/azureUpload');
     const urls = [];
     for (const file of files) {
-      const { url } = await uploadBufferToAzure(file, `orders/${orderId}/evidence`);
+      const { url } = await uploadBufferToAzure(file, `orders/${orderId}/evidence`, { private: true });
       urls.push(url);
     }
     const upd = {
@@ -340,7 +340,9 @@ exports.uploadEvidence = async (req, res) => {
 exports.deleteEvidence = async (req, res) => {
   try {
     const { orderId } = req.params;
-    const { url, evidenceType = 'after' } = req.body;
+    const { evidenceType = 'after' } = req.body;
+    // Responses carry private evidence URLs signed (?sv=…); the order stores them unsigned.
+    const url = typeof req.body.url === 'string' ? req.body.url.split('?')[0] : req.body.url;
     const userId = req.userId;
     if (!isValidId(orderId)) return res.status(400).json({ error: 'Ugyldig orderId' });
     if (!url) return res.status(400).json({ error: 'URL mangler' });
@@ -407,7 +409,8 @@ exports.markReadyForReview = async (req, res) => {
     const updated = await Order.findOneAndUpdate(
       { _id: orderId, status: 'in_progress' },
       {
-        $set: { status: 'ready_for_review', readyForReviewAt: now },
+        // Re-entering review (after changes were requested) restarts the window and its warning.
+        $set: { status: 'ready_for_review', readyForReviewAt: now, autoReleaseWarnedAt: null },
         $push: {
           history: {
             action: 'ready_for_review',

@@ -9,6 +9,7 @@ jest.mock('../models/User', () => ({ findById: jest.fn() }));
 jest.mock('../models/SubscriptionUsagePeriod', () => ({ updateOne: jest.fn() }));
 jest.mock('../config/stripe', () => ({ getStripeConfiguration: jest.fn(), getStripeForMode: jest.fn() }));
 jest.mock('../services/stripe/customers', () => ({ resolveStripeCustomer: jest.fn() }));
+jest.mock('../utils/errorLogger', () => ({ logApplicationError: jest.fn() }));
 
 const mongoose = require('mongoose');
 const Service = require('../models/Service');
@@ -184,6 +185,10 @@ describe('confirmExtraContactSession (Stripe-verified only)', () => {
   ])('refuses %s', async (_l, over) => {
     await expect(confirmExtraContactSession(session(over), Model, UsageModel)).resolves.toEqual({ handled: 'extra_contact_mismatch' });
     expect(Model.rows[0].status).toBe('pending');
+    // A mismatched (possibly paid) session raises an incident for manual review.
+    expect(require('../utils/errorLogger').logApplicationError).toHaveBeenCalledWith(
+      expect.objectContaining({ errorCode: 'EXTRA_CONTACT_PAYMENT_MISMATCH', httpStatus: 500 })
+    );
   });
   it('does nothing for an unpaid session', async () => {
     await expect(confirmExtraContactSession(session({ payment_status: 'unpaid' }), Model, UsageModel)).resolves.toEqual({ handled: 'extra_contact_unpaid' });

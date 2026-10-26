@@ -330,29 +330,54 @@ exports.reverseChargebackTransfer = async (req, res) => {
     // provider. Count every other recovery already started or done for this incident;
     // a retry of the SAME amount (same key) is the idempotent case and is not counted.
     const operationKey = `chargeback:${incident._id}:reversal:${transferId}:${amount}`;
-    const priorRecoveries = await StripeFinancialOperation.find({
-      incidentId: incident._id,
-      type: 'transfer_reversal',
-      status: { $in: ['pending', 'succeeded', 'reconciliation_required'] },
-      operationKey: { $ne: operationKey },
-    }).select('amount').lean();
-    const alreadyRecovered = priorRecoveries.reduce((sum, op) => sum + Number(op.amount || 0), 0);
-    if (amount > incident.amount - alreadyRecovered) {
-      return res.status(409).json({ code: 'chargeback_recovery_exceeds_incident', alreadyRecovered });
-    }
+    // Every charge.dispute.* event (created, funds_withdrawn, closed) opens its own incident
+    // for the same Stripe dispute; counting this incident alone let each of them recover
+    // the chargeback again. The cap covers all incidents of one Stripe dispute.
+    const siblingIds = incident.stripeDisputeId
+      ? (await StripePaymentIncident.find({ stripeDisputeId: incident.stripeDisputeId }).select('_id').lean()).map((i) => i._id)
+      : [incident._id];
+    // The cap is read-then-create, so two concurrent approvals both passed it. One lease
+    // lock per Stripe dispute (on its lowest incident id) serialises them until the
+    // reversal's operation record exists, which every later cap read then counts.
+    // ponytail: a request outliving the 5-minute lease can overlap the next; upgrade: a transaction.
+    const lockId = siblingIds.map(String).sort()[0];
+    const lockedAt = new Date();
+    const locked = await StripePaymentIncident.findOneAndUpdate(
+      {
+        _id: lockId,
+        $or: [{ recoveryLockedAt: null }, { recoveryLockedAt: { $lte: new Date(lockedAt.getTime() - 5 * 60 * 1000) } }],
+      },
+      { $set: { recoveryLockedAt: lockedAt } }
+    );
+    if (!locked) return res.status(409).json({ code: 'chargeback_recovery_in_progress' });
+    let result;
+    try {
+      const priorRecoveries = await StripeFinancialOperation.find({
+        incidentId: { $in: siblingIds },
+        type: 'transfer_reversal',
+        status: { $in: ['pending', 'succeeded', 'reconciliation_required'] },
+        operationKey: { $ne: operationKey },
+      }).select('amount').lean();
+      const alreadyRecovered = priorRecoveries.reduce((sum, op) => sum + Number(op.amount || 0), 0);
+      if (amount > incident.amount - alreadyRecovered) {
+        return res.status(409).json({ code: 'chargeback_recovery_exceeds_incident', alreadyRecovered });
+      }
 
-    const result = await executeTransferReversal(stripe, {
-      operationKey,
-      orderId: order._id,
-      paymentId: payment._id,
-      incidentId: incident._id,
-      stripeMode: incident.livemode ? 'live' : 'test',
-      paymentIntentId: incident.paymentIntentId,
-      chargeId: incident.chargeId,
-      transferId,
-      amount,
-      currency: incident.currency,
-    });
+      result = await executeTransferReversal(stripe, {
+        operationKey,
+        orderId: order._id,
+        paymentId: payment._id,
+        incidentId: incident._id,
+        stripeMode: incident.livemode ? 'live' : 'test',
+        paymentIntentId: incident.paymentIntentId,
+        chargeId: incident.chargeId,
+        transferId,
+        amount,
+        currency: incident.currency,
+      });
+    } finally {
+      await StripePaymentIncident.updateOne({ _id: lockId, recoveryLockedAt: lockedAt }, { $set: { recoveryLockedAt: null } });
+    }
     incident.providerTransferId = transferId;
     incident.resolutionOperationId = result.operation._id;
     incident.lastError = null;
@@ -367,9 +392,17 @@ exports.reverseChargebackTransfer = async (req, res) => {
         return res.status(202).json({ status: 'reconciliation_required' });
       }
       incident.transferReversedAmount = updatedTransfer.amount_reversed;
-      if (updatedTransfer.amount_reversed >= incident.amount) {
+      // At most the transfer can be recovered: a full-charge chargeback (103) against a
+      // net transfer (97) never reached incident.amount, so it never reconciled.
+      if (updatedTransfer.amount_reversed >= Math.min(incident.amount, transfer.amount)) {
         incident.status = 'reconciled';
         incident.reason = 'Stripe confirmed transfer recovery for the recorded chargeback amount.';
+        if (incident.stripeDisputeId) {
+          await StripePaymentIncident.updateMany(
+            { stripeDisputeId: incident.stripeDisputeId, _id: { $ne: incident._id }, status: 'manual_review' },
+            { $set: { status: 'reconciled', reason: incident.reason } }
+          );
+        }
       }
     }
     await incident.save();
@@ -398,6 +431,96 @@ exports.reverseChargebackTransfer = async (req, res) => {
     return res.status(503).json({
       code: error?.code || 'chargeback_recovery_unresolved',
       message: 'Gjenoppretting av overføringen krever ny avstemming eller manuell kontroll.',
+    });
+  }
+};
+
+/**
+ * A chargeback lost BEFORE any payout: the bank already returned the money to the
+ * customer and the provider was never paid, so there is no transfer to recover and
+ * reverseChargebackTransfer could only answer chargeback_transfer_not_found. The
+ * incident stayed in review and the order `disputed` for good. This closes it the way a
+ * full refund ends: payout cancelled, payment refunded, order cancelled.
+ */
+exports.closeLostChargebackWithoutTransfer = async (req, res) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ code: 'invalid_incident_id' });
+    }
+    const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : '';
+    if (reason.length < 8) {
+      return res.status(400).json({ code: 'invalid_close_request', message: 'Angi en begrunnelse på minst 8 tegn.' });
+    }
+    const incident = await StripePaymentIncident.findById(req.params.id);
+    if (!incident || incident.kind !== 'charge_dispute' || incident.status !== 'manual_review' || !incident.stripeDisputeId) {
+      return res.status(409).json({ code: 'chargeback_not_closable' });
+    }
+    const [order, payment, payout, transferRecord] = await Promise.all([
+      Order.findById(incident.orderId),
+      Payment.findOne({ orderId: incident.orderId }),
+      Payout.findOne({ orderId: incident.orderId }).lean(),
+      StripeTransferRecord.findOne({ orderId: incident.orderId }).lean(),
+    ]);
+    if (!order || !payment || payment.stripePaymentIntentId !== incident.paymentIntentId) {
+      return res.status(409).json({ code: 'chargeback_payment_mismatch' });
+    }
+    // Any transfer, or an attempt whose outcome is unknown, goes through the reversal path.
+    if (transferRecord || payout?.stripeTransferId || (payout && !['pending', 'failed', 'released_internal', 'cancelled'].includes(payout.status))) {
+      return res.status(409).json({ code: 'chargeback_transfer_exists' });
+    }
+
+    const stripe = await getStripeForMode(incident.livemode === false);
+    const dispute = await stripe.disputes.retrieve(incident.stripeDisputeId);
+    const charge = await stripe.charges.retrieve(incident.chargeId);
+    if (
+      dispute.id !== incident.stripeDisputeId ||
+      dispute.livemode !== incident.livemode ||
+      dispute.status !== 'lost' ||
+      idOf(dispute.charge) !== incident.chargeId ||
+      idOf(dispute.payment_intent) !== incident.paymentIntentId ||
+      charge.id !== incident.chargeId ||
+      idOf(charge.payment_intent) !== incident.paymentIntentId ||
+      // Only a chargeback of the whole remaining charge returned all of the customer's money.
+      dispute.amount !== charge.amount - Number(charge.amount_refunded || 0)
+    ) {
+      return res.status(409).json({ code: 'chargeback_not_final_or_partial' });
+    }
+
+    // Payout first: while the incident is still in review no new transfer can start.
+    if (payout) {
+      const cancelled = await Payout.updateOne(
+        { _id: payout._id, status: { $in: ['pending', 'failed', 'released_internal', 'cancelled'] }, stripeTransferId: null },
+        { $set: { status: 'cancelled', failureReason: 'Stripe chargeback lost; the customer was refunded by the bank.' } }
+      );
+      if (!cancelled.matchedCount) return res.status(409).json({ code: 'chargeback_transfer_exists' });
+    }
+    await Payment.updateOne({ _id: payment._id }, { $set: { status: 'refunded' } });
+    await Order.updateOne(
+      { _id: order._id, status: { $ne: 'cancelled' } },
+      {
+        $set: { status: 'cancelled', paymentStatus: 'refunded' },
+        $push: { history: { action: 'stripe_chargeback_lost', userId: req.user._id, timestamp: new Date(), data: { stripeDisputeId: incident.stripeDisputeId, reason } } },
+      }
+    );
+    await StripePaymentIncident.updateMany(
+      { stripeDisputeId: incident.stripeDisputeId, status: 'manual_review' },
+      { $set: { status: 'reconciled', disputeStatus: 'lost', reason: `Chargeback lost before any payout; closed by admin: ${reason}` } }
+    );
+    await logActivity({
+      adminId: req.user._id,
+      action: 'other',
+      targetModel: 'Order',
+      targetId: order._id,
+      description: `Admin closed a lost Stripe chargeback with no provider transfer: ${reason}`,
+      metadata: { incidentId: String(incident._id), stripeDisputeId: incident.stripeDisputeId, amountMinor: dispute.amount },
+      ip: req.ip,
+      userAgent: req.get?.('user-agent') || 'unknown',
+    });
+    return res.json({ status: 'reconciled' });
+  } catch (error) {
+    return res.status(503).json({
+      code: error?.code || 'chargeback_close_unresolved',
+      message: 'Avslutning av tilbakeføringen krever ny avstemming eller manuell kontroll.',
     });
   }
 };

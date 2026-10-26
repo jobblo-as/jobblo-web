@@ -4,6 +4,7 @@ const User = require('../models/User');
 const Order = require('../models/Order');
 const mongoose = require('mongoose');
 const { normaliseReviewPhotos } = require('../utils/reviewPhotos');
+const { parsePagination } = require('../utils/pagination');
 
 // Helper to validate ObjectId
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
@@ -18,8 +19,10 @@ function authorizeReviewAction(req, review) {
 
 exports.createReview = async (req, res) => {
   try {
-    const { orderId, serviceId, revieweeId, revieweeRole, rating, comment, recommendWorker } =
-      req.body;
+    // revieweeRole is NOT read from the body: it is part of the one-review-per-order unique
+    // index, so letting the client choose it allowed two ratings of the same person per order
+    // (once as 'seeker', once as 'poster'). It is derived from the order below (review H4).
+    const { orderId, revieweeId, rating, comment, recommendWorker } = req.body;
     const reviewerId = req.userId;
 
     // Photos are Azure blob URLs, never image bytes — see utils/reviewPhotos.js.
@@ -66,6 +69,8 @@ exports.createReview = async (req, res) => {
     }
 
     const counterpartyId = isCustomer ? order.providerId : order.customerId;
+    // Same (backwards) naming as SafePay approval: see the note on Review.revieweeRole.
+    const revieweeRole = isCustomer ? 'poster' : 'seeker';
     if (!counterpartyId || String(revieweeId) !== String(counterpartyId)) {
       return res.status(400).json({ error: 'Du kan bare vurdere den andre parten i oppdraget.' });
     }
@@ -150,7 +155,7 @@ exports.updateReview = async (req, res) => {
     if (photos !== undefined) {
       // Same rule as create: URLs only. Without this, editing a review was a way back in
       // for the base64 payloads the create path now refuses.
-      const photoResult = normaliseReviewPhotos(photos);
+      const photoResult = normaliseReviewPhotos(photos, review.photos || []);
       if (!photoResult.ok) {
         return res.status(400).json({ error: photoResult.error });
       }
@@ -195,10 +200,14 @@ exports.getUserReviews = async (req, res) => {
       query.revieweeRole = role;
     }
 
+    // The profile renders the whole array, so the page is generous — but no longer unbounded.
+    const { limit, skip } = parsePagination(req.query, { defaultLimit: 100 });
     const reviews = await Review.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .populate('reviewerId', 'name lastName username avatarUrl')
-      .populate('serviceId', 'title')
-      .sort({ createdAt: -1 });
+      .populate('serviceId', 'title');
 
     res.json(reviews);
   } catch (err) {
@@ -244,7 +253,11 @@ exports.getReviewByOrderId = async (req, res) => {
 
 exports.getAllReviews = async (req, res) => {
   try {
+    const { limit, skip } = parsePagination(req.query);
     const reviews = await Review.find({})
+      .sort({ _id: -1 })
+      .skip(skip)
+      .limit(limit)
       .populate('reviewerId', 'name lastName avatarUrl')
       .populate('serviceId', 'title');
 
@@ -298,7 +311,7 @@ exports.deleteReview = async (req, res) => {
 // Get latest reviews across the platform
 exports.getLatestReviews = async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 5; // Default 5 reviews
+    const { limit } = parsePagination(req.query, { defaultLimit: 5, maxLimit: 50 }); // public: small pages
 
     const reviews = await Review.find()
       .sort({ _id: -1 }) // Sort by newest first

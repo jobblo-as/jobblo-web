@@ -1,5 +1,6 @@
 const JobbloShop = require('../models/JobbloShop');
 const User = require('../models/User');
+const { serverError } = require('../utils/serverError');
 
 exports.getjobbloShop = async (req, res) => {
   try {
@@ -35,26 +36,25 @@ exports.buyItem = async (req, res) => {
       return res.status(500).json({ error: 'Item ki price model mein defined nahi hai' });
     }
 
-    const user = await User.findById(userId);
+    // One conditional update: the balance check and the debit are atomic, so two
+    // concurrent purchases cannot both spend the same points.
+    const user = await User.findOneAndUpdate(
+      { _id: userId, pointsBalance: { $gte: cost } },
+      {
+        $inc: { pointsBalance: -cost },
+        $push: {
+          pointsHistory: { points: -cost, type: 'spend', reason: item.title, shopItemId: item._id, createdAt: new Date() },
+        },
+      },
+      { new: true, projection: { pointsBalance: 1 } }
+    );
 
     if (!user) {
-      return res.status(404).json({ error: 'User profile nahi mili' });
-    }
-
-    if (user.pointsBalance < cost) {
+      if (!(await User.exists({ _id: userId }))) {
+        return res.status(404).json({ error: 'User profile nahi mili' });
+      }
       return res.status(400).json({ error: 'Aapke paas kaafi points nahi hain!' });
     }
-
-    user.pointsBalance -= cost;
-
-    user.pointsHistory.push({
-      points: -cost,
-      type: 'spend',
-      reason: item.title,
-      shopItemId: item._id,
-      createdAt: new Date(),
-    });
-    await user.save();
 
     res.status(200).json({
       success: true,
@@ -66,6 +66,6 @@ exports.buyItem = async (req, res) => {
     if (err.name === 'CastError') {
       return res.status(400).json({ error: 'Invalid ID format' });
     }
-    res.status(500).json({ error: 'Server Error: ' + err.message });
+    serverError(res, err);
   }
 };

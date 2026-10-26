@@ -41,6 +41,60 @@ function daysAgo(n) {
 }
 
 /**
+ * Sweeps read least-recently-tried first and stamp what they read, so an order that is
+ * skipped or throws every run moves to the back instead of filling the batch forever.
+ */
+async function stampAutoAttempt(orders) {
+  if (orders.length === 0) return;
+  await Order.updateMany(
+    { _id: { $in: orders.map((o) => o._id) } },
+    { $set: { lastAutoAttemptAt: new Date() } },
+    { timestamps: false }
+  );
+}
+
+/**
+ * Moves a paid-out order from `ready_for_review` to `completed` and tells both sides.
+ * Compare-and-swap, so it is a no-op for any order a customer or a dispute already moved.
+ */
+async function completeAutoReleasedOrder(order, autoReleaseDays = config().autoReleaseDays) {
+  const moved = await Order.findOneAndUpdate(
+    { _id: order._id, status: 'ready_for_review' },
+    {
+      $set: { status: 'completed' },
+      $push: {
+        history: {
+          action: 'auto_released',
+          userId: null,
+          timestamp: new Date(),
+          data: { reason: `Automatisk frigitt etter ${autoReleaseDays} dager uten svar` },
+        },
+      },
+    },
+    { new: true }
+  );
+  if (!moved) return false;
+  await Payment.updateOne({ orderId: order._id }, { $set: { status: 'released' } });
+  await notify({
+    userId: order.customerId,
+    type: 'payment',
+    content: `Oppdraget ble automatisk godkjent etter ${autoReleaseDays} dager, og betalingen er utbetalt.`,
+    orderId: order._id,
+    event: 'order_completed',
+    payload: { orderId: String(order._id), automatic: true },
+  });
+  await notify({
+    userId: order.providerId,
+    type: 'payment',
+    content: 'Betalingen din er frigitt automatisk.',
+    orderId: order._id,
+    event: 'payout_sent',
+    payload: { orderId: String(order._id), automatic: true },
+  });
+  return true;
+}
+
+/**
  * Orders the customer never got round to approving.
  *
  * Releases to the provider after the review window. This is the single most
@@ -59,23 +113,29 @@ async function autoReleaseStaleReviews() {
     status: 'ready_for_review',
     readyForReviewAt: { $lte: cutoff },
   })
+    .sort({ lastAutoAttemptAt: 1, _id: 1 })
     .select('_id customerId providerId serviceId agreedPrice chatId')
     .limit(50)
     .lean();
+  await stampAutoAttempt(candidates);
 
   let released = 0;
 
   for (const order of candidates) {
     try {
-      // Never move money on a disputed order.
+      // Never move money on a disputed order. A dispute closed inside the window (a
+      // no_action ruling returns the order with its OLD readyForReviewAt) restarts it.
       const dispute = await Dispute.findOne({
         orderId: order._id,
-        status: { $nin: ['resolved', 'closed', 'cancelled'] },
+        $or: [{ status: { $nin: ['resolved', 'closed', 'cancelled'] } }, { closedAt: { $gt: cutoff } }],
       }).select('_id');
       if (dispute) continue;
 
+      // `released` too: retryFailedPayouts may already have paid a failed auto-release.
+      // Skipping it left the order `ready_for_review` (and disputable) for good; the call
+      // below then just returns the existing transfer.
       const payment = await Payment.findOne({ orderId: order._id });
-      if (!payment || payment.status !== 'completed') continue;
+      if (!payment || !['completed', 'released'].includes(payment.status)) continue;
 
       const gross = order.agreedPrice || 0;
       if (gross <= 0) continue;
@@ -95,43 +155,7 @@ async function autoReleaseStaleReviews() {
       });
 
       // Only now is completion money-safe.
-      const moved = await Order.findOneAndUpdate(
-        { _id: order._id, status: 'ready_for_review' },
-        {
-          $set: { status: 'completed' },
-          $push: {
-            history: {
-              action: 'auto_released',
-              userId: null,
-              timestamp: new Date(),
-              data: { reason: `Automatisk frigitt etter ${autoReleaseDays} dager uten svar` },
-            },
-          },
-        },
-        { new: true }
-      );
-
-      if (moved) {
-        payment.status = 'released';
-        await payment.save();
-        released += 1;
-        await notify({
-          userId: order.customerId,
-          type: 'payment',
-          content: `Oppdraget ble automatisk godkjent etter ${autoReleaseDays} dager, og betalingen er utbetalt.`,
-          orderId: order._id,
-          event: 'order_completed',
-          payload: { orderId: String(order._id), automatic: true },
-        });
-        await notify({
-          userId: order.providerId,
-          type: 'payment',
-          content: 'Betalingen din er frigitt automatisk.',
-          orderId: order._id,
-          event: 'payout_sent',
-          payload: { orderId: String(order._id), automatic: true },
-        });
-      }
+      if (await completeAutoReleasedOrder(order, autoReleaseDays)) released += 1;
     } catch (err) {
       await logApplicationError({
         error: err,
@@ -183,15 +207,23 @@ async function warnBeforeAutoRelease() {
 }
 
 /**
- * Transfers that failed. releasePayoutToProvider already refuses to create a second
- * transfer for an order, so retrying is safe.
+ * Transfers that failed, and transfers whose outcome is unknown. releasePayoutToProvider
+ * refuses to create a second transfer for an order, and for an unknown outcome it only
+ * looks the transfer up at Stripe (recording it if it happened), so retrying is safe.
+ * `reconciliation_required` used to be skipped here, and nothing else ever retried it.
  */
 async function retryFailedPayouts() {
   const releasePayoutToProvider = require('../payout/releasePayoutToProvider');
 
   // Least-recently-tried first: an unsorted .limit(25) re-read the same 25 permanently
   // failing payouts every run and starved everything behind them.
-  const failed = await Payout.find({ status: 'failed' })
+  // A failed DISPUTE payout is left to the admin's resolve: paying it here skipped the
+  // dispute's refund leg and raced an admin changing the outcome (provider paid AND
+  // customer refunded). Its unknown-outcome case still comes here, for the lookup only.
+  const failed = await Payout.find({
+    status: { $in: ['failed', 'reconciliation_required'] },
+    $or: [{ releaseSource: { $ne: 'dispute_release' } }, { status: 'reconciliation_required' }],
+  })
     .sort({ lastAttemptedAt: 1, _id: 1 })
     .select('orderId providerId customerId serviceId grossAmount platformFee releaseSource releasedBy disputeId')
     .limit(25)
@@ -217,13 +249,19 @@ async function retryFailedPayouts() {
         stripePaymentIntentId: payment?.stripePaymentIntentId,
         stripeCheckoutSessionId: payment?.stripeSessionId,
       });
+      // Only auto-release pays out of `ready_for_review` (approval and disputes move the
+      // order first), so finish that order now instead of leaving it open to a dispute.
+      await completeAutoReleasedOrder({ _id: payout.orderId, customerId: payout.customerId, providerId: payout.providerId });
       retried += 1;
     } catch (err) {
       // Expected for a provider who still has not finished Connect onboarding —
       // logged, not escalated, so it does not drown the error log.
       console.error('retryFailedPayouts: order %s still failing: %s', payout.orderId, err.message);
       // Rotate it to the back of the queue (several failures throw before any write).
-      await Payout.updateOne({ _id: payout._id, status: 'failed' }, { $set: { lastAttemptedAt: new Date() } });
+      await Payout.updateOne(
+        { _id: payout._id, status: { $in: ['failed', 'reconciliation_required'] } },
+        { $set: { lastAttemptedAt: new Date() } }
+      );
     }
   }
 
@@ -235,8 +273,7 @@ async function retryFailedPayouts() {
  * can award it again — before this, an abandoned contract blocked the job.
  */
 async function cleanupAbandonedOrders() {
-  const Service = require('../../models/Service');
-  const JobRequest = require('../../models/JobRequest');
+  const { releaseListingAfterCancel } = require('../order/releaseListing');
   const { abandonedOrderHours } = config();
   const cutoff = new Date(Date.now() - abandonedOrderHours * 60 * 60 * 1000);
 
@@ -245,144 +282,125 @@ async function cleanupAbandonedOrders() {
     paymentStatus: { $ne: 'paid' },
     createdAt: { $lte: cutoff },
   })
+    .sort({ lastAutoAttemptAt: 1, _id: 1 })
     .select(
       '_id serviceId providerId chatId checkoutSessionId checkoutSessionStatus checkoutAttemptId checkoutMode'
     )
     .limit(100)
     .lean();
+  await stampAutoAttempt(abandoned);
 
   let cancelled = 0;
   let reopened = 0;
 
   for (const order of abandoned) {
-    let terminalStripeSession = false;
-    if (order.checkoutSessionId) {
-      if (
-        order.checkoutSessionId.startsWith('PENDING_') ||
-        !['test', 'live'].includes(order.checkoutMode)
-      ) {
-        continue;
-      }
-      try {
-        const stripe = await getStripeForMode(order.checkoutMode === 'test');
-        const stripeSession = await stripe.checkout.sessions.retrieve(order.checkoutSessionId);
+    try {
+      let terminalStripeSession = false;
+      if (order.checkoutSessionId) {
         if (
-          stripeSession.id !== order.checkoutSessionId ||
-          stripeSession.livemode !== (order.checkoutMode === 'live')
+          order.checkoutSessionId.startsWith('PENDING_') ||
+          !['test', 'live'].includes(order.checkoutMode)
         ) {
           continue;
         }
-        if (stripeSession.payment_status === 'paid') {
-          const { confirmPaidSession } = require('../../controllers/SafePayCheckoutController');
-          const confirmation = await confirmPaidSession(stripeSession);
-          if (!confirmation.ok) {
-            await logApplicationError({
-              error: new Error('Paid abandoned checkout could not be reconciled'),
-              requestPath: 'scheduler/cleanupAbandonedOrders',
-              httpMethod: 'POST',
-              httpStatus: 500,
-              errorCode: 'ABANDONED_PAYMENT_RECONCILIATION_FAILED',
-              source: 'scheduler',
-              metadata: { orderId: String(order._id) },
-            });
+        try {
+          const stripe = await getStripeForMode(order.checkoutMode === 'test');
+          const stripeSession = await stripe.checkout.sessions.retrieve(order.checkoutSessionId);
+          if (
+            stripeSession.id !== order.checkoutSessionId ||
+            stripeSession.livemode !== (order.checkoutMode === 'live')
+          ) {
+            continue;
           }
+          if (stripeSession.payment_status === 'paid') {
+            const { confirmPaidSession } = require('../../controllers/SafePayCheckoutController');
+            const confirmation = await confirmPaidSession(stripeSession);
+            if (!confirmation.ok) {
+              await logApplicationError({
+                error: new Error('Paid abandoned checkout could not be reconciled'),
+                requestPath: 'scheduler/cleanupAbandonedOrders',
+                httpMethod: 'POST',
+                httpStatus: 500,
+                errorCode: 'ABANDONED_PAYMENT_RECONCILIATION_FAILED',
+                source: 'scheduler',
+                metadata: { orderId: String(order._id) },
+              });
+            }
+            continue;
+          }
+          if (stripeSession.status !== 'expired' || stripeSession.payment_status !== 'unpaid') {
+            continue;
+          }
+          terminalStripeSession = true;
+        } catch (err) {
+          await logApplicationError({
+            error: err,
+            requestPath: 'scheduler/cleanupAbandonedOrders',
+            httpMethod: 'POST',
+            httpStatus: 500,
+            errorCode: 'ABANDONED_CHECKOUT_LOOKUP_FAILED',
+            source: 'scheduler',
+            metadata: { orderId: String(order._id) },
+          });
           continue;
         }
-        if (stripeSession.status !== 'expired' || stripeSession.payment_status !== 'unpaid') {
-          continue;
-        }
-        terminalStripeSession = true;
-      } catch (err) {
-        await logApplicationError({
-          error: err,
-          requestPath: 'scheduler/cleanupAbandonedOrders',
-          httpMethod: 'POST',
-          httpStatus: 500,
-          errorCode: 'ABANDONED_CHECKOUT_LOOKUP_FAILED',
-          source: 'scheduler',
-          metadata: { orderId: String(order._id) },
-        });
+      } else if (order.checkoutSessionStatus === 'pending' || order.checkoutAttemptId) {
+        // A Stripe create call may have succeeded even if its response was lost.
         continue;
       }
-    } else if (order.checkoutSessionStatus === 'pending' || order.checkoutAttemptId) {
-      // A Stripe create call may have succeeded even if its response was lost.
-      continue;
-    }
 
-    // A Stripe-backed attempt is cancellable only after Stripe confirms expiration.
-    const moved = await Order.findOneAndUpdate(
-      {
-        _id: order._id,
-        status: 'awaiting_payment',
-        paymentStatus: { $ne: 'paid' },
-        ...(order.checkoutSessionId
-          ? {
-              checkoutSessionId: order.checkoutSessionId,
-              checkoutSessionStatus: order.checkoutSessionStatus,
-              checkoutAttemptId: order.checkoutAttemptId,
-            }
-          : {
-              checkoutSessionId: { $in: [null, ''] },
-              checkoutSessionStatus: { $nin: ['pending', 'open'] },
-              checkoutAttemptId: { $in: [null, ''] },
-            }),
-        ...(order.checkoutSessionId && terminalStripeSession
-          ? { checkoutSessionStatus: { $in: ['open', 'expired', 'failed', 'complete'] } }
-          : {}),
-      },
-      {
-        $set: {
-          status: 'cancelled',
-          ...(order.checkoutSessionId ? { checkoutSessionStatus: 'expired' } : {}),
+      // A Stripe-backed attempt is cancellable only after Stripe confirms expiration.
+      const moved = await Order.findOneAndUpdate(
+        {
+          _id: order._id,
+          status: 'awaiting_payment',
+          paymentStatus: { $ne: 'paid' },
+          ...(order.checkoutSessionId
+            ? {
+                checkoutSessionId: order.checkoutSessionId,
+                checkoutSessionStatus: order.checkoutSessionStatus,
+                checkoutAttemptId: order.checkoutAttemptId,
+              }
+            : {
+                checkoutSessionId: { $in: [null, ''] },
+                checkoutSessionStatus: { $nin: ['pending', 'open'] },
+                checkoutAttemptId: { $in: [null, ''] },
+              }),
+          ...(order.checkoutSessionId && terminalStripeSession
+            ? { checkoutSessionStatus: { $in: ['open', 'expired', 'failed', 'complete'] } }
+            : {}),
         },
-        $push: {
-          history: {
-            action: 'auto_cancelled',
-            userId: null,
-            timestamp: new Date(),
-            data: { reason: `Ikke betalt innen ${abandonedOrderHours} timer` },
+        {
+          $set: {
+            status: 'cancelled',
+            ...(order.checkoutSessionId ? { checkoutSessionStatus: 'expired' } : {}),
           },
-        },
-      }
-    );
-    if (!moved) continue;
-    cancelled += 1;
-
-    // Keep the conversation's badge honest. `cancelled` is in the Chat status enum but
-    // nothing ever set it, so a chat for a dead contract kept reading "Kontrakt signert".
-    if (moved.chatId) {
-      const Chat = require('../../models/ChatMessage');
-      await Chat.updateOne({ _id: moved.chatId }, { $set: { status: 'cancelled' } }).catch(
-        (err) => console.error('cleanupAbandonedOrders: chat status sync failed: %s', err.message)
+          $push: {
+            history: {
+              action: 'auto_cancelled',
+              userId: null,
+              timestamp: new Date(),
+              data: { reason: `Ikke betalt innen ${abandonedOrderHours} timer` },
+            },
+          },
+        }
       );
-    }
+      if (!moved) continue;
+      cancelled += 1;
 
-    // Put the listing back on the market.
-    //
-    // Awarding sets Service.status to 'awaiting_payment', and NOTHING in the codebase
-    // ever set it back to 'open' — the update whitelist deliberately excludes status.
-    // So an award the customer never paid for removed the job from search permanently,
-    // with no owner-facing way to recover it. Only reopen when no other live order
-    // holds the service.
-    const stillHeld = await Order.findOne({
-      serviceId: order.serviceId,
-      status: { $in: ['awaiting_payment', 'paid', 'in_progress', 'ready_for_review', 'disputed'] },
-    }).select('_id');
-
-    if (!stillHeld) {
-      const service = await Service.findOneAndUpdate(
-        { _id: order.serviceId, status: 'awaiting_payment' },
-        { $set: { status: 'open' } }
-      );
-      if (service) {
-        reopened += 1;
-        // The applicants auto-declined by that award get their applications back, so
-        // the owner can pick someone else instead of reposting from scratch.
-        await JobRequest.updateMany(
-          { serviceId: order.serviceId, status: { $in: ['declined', 'accepted'] } },
-          { $set: { status: 'pending' } }
-        );
-      }
+      // Put the listing back on the market and the auto-declined applicants back in it.
+      if (await releaseListingAfterCancel(moved)) reopened += 1;
+    } catch (err) {
+      // One bad order must not abort the rest of the sweep.
+      await logApplicationError({
+        error: err,
+        requestPath: 'scheduler/cleanupAbandonedOrders',
+        httpMethod: 'POST',
+        httpStatus: 500,
+        errorCode: 'ABANDONED_ORDER_CLEANUP_FAILED',
+        source: 'scheduler',
+        metadata: { orderId: String(order._id) },
+      });
     }
   }
 
@@ -397,12 +415,18 @@ async function cleanupAbandonedOrders() {
  * Everything it finds goes to the admin error log.
  */
 async function reconcileMoneyState() {
+  // Newest first, inside a window: unsorted, the same 200 oldest orders were re-checked
+  // every run and nothing newer was ever looked at.
+  // ponytail: past 500 terminal paid orders per 30 days the oldest in the window go
+  // unchecked; a cursor or a `reconciledAt` rotation is the upgrade.
   const terminalWithMoney = await Order.find({
     status: { $in: ['completed', 'cancelled'] },
     paymentStatus: 'paid',
+    updatedAt: { $gte: daysAgo(30) },
   })
+    .sort({ updatedAt: -1 })
     .select('_id status')
-    .limit(200)
+    .limit(500)
     .lean();
 
   const problems = [];

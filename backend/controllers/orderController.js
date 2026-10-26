@@ -14,6 +14,8 @@ const {
   consumeApplicationContact,
   V2EntitlementError,
 } = require('../services/subscriptions/v2Entitlements');
+const { serverError } = require('../utils/serverError');
+const { parsePagination } = require('../utils/pagination');
 
 // Helper to validate ObjectId
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
@@ -54,6 +56,13 @@ exports.createJobRequest = async (req, res) => {
     if (!serviceId) return res.status(400).json({ error: 'Service ID is required' });
 
     if (!isValidId(serviceId)) return res.status(400).json({ error: 'Invalid service ID format' });
+
+    // The message becomes the chat's first message, so it gets the chat's checks (it was
+    // stored unchecked: any type, any length).
+    const { MAX_MESSAGE_LENGTH } = require('./chatController');
+    if (message != null && (typeof message !== 'string' || message.length > MAX_MESSAGE_LENGTH)) {
+      return res.status(400).json({ error: `Meldingen må være tekst på maks ${MAX_MESSAGE_LENGTH} tegn.` });
+    }
 
     const service = await Service.findById(serviceId);
     if (!service) return res.status(404).json({ error: 'Service not found' });
@@ -98,6 +107,11 @@ exports.createJobRequest = async (req, res) => {
 
     if (!(await ensureProviderConnectReady(req, res, customerId))) return;
 
+    // Applying opens a chat with the owner, so a block in either direction stops it here too.
+    if (await require('./chatController').isBlockedBetween(customerId, providerId)) {
+      return res.status(403).json({ error: 'Du kan ikke søke på dette oppdraget.', code: 'user_blocked' });
+    }
+
     // Check if a request already exists
     const existingRequest = await JobRequest.findOne({
       serviceId,
@@ -108,6 +122,22 @@ exports.createJobRequest = async (req, res) => {
       return res.status(400).json({
         error: 'Du har allerede sendt en forespørsel på dette oppdraget',
       });
+    }
+
+    // The listing shows "limit reached" (isLimitReached) but nothing enforced it.
+    // ponytail: count-then-create, so two simultaneous applications can pass one over the
+    // limit; an atomic counter on Service is the upgrade if that ever matters.
+    if (service.maxApplicants > 0) {
+      const applicantCount = await JobRequest.countDocuments({
+        serviceId,
+        status: { $in: ['pending', 'accepted'] },
+      });
+      if (applicantCount >= service.maxApplicants) {
+        return res.status(400).json({
+          error: 'Dette oppdraget tar ikke imot flere søknader.',
+          limitReached: true,
+        });
+      }
     }
 
     const jobRequestId = new mongoose.Types.ObjectId();
@@ -213,7 +243,7 @@ exports.createJobRequest = async (req, res) => {
       });
     }
     console.error('[Orders] application creation failed:', err);
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 };
 
@@ -247,8 +277,22 @@ exports.updateJobRequestStatus = async (req, res) => {
       });
     }
 
+    // Accepting opens a chat and posts into it; a block either way stops that (declining still works).
+    const { isBlockedBetween, BLOCKED_DEAL } = require('./chatController');
+    if (status === 'accepted' && (await isBlockedBetween(jobRequest.customerId, jobRequest.providerId))) {
+      return res.status(403).json(BLOCKED_DEAL);
+    }
+
+    // Compare-and-swap: two concurrent accept/decline calls both passed the check above,
+    // so a request could end up accepted and declined (two notifications, two chats).
+    const claimed = await JobRequest.findOneAndUpdate(
+      { _id: jobRequest._id, providerId: userId, status: 'pending' },
+      { $set: { status } }
+    );
+    if (!claimed) {
+      return res.status(400).json({ error: 'Forespørselen er allerede behandlet' });
+    }
     jobRequest.status = status;
-    await jobRequest.save();
 
     if (status === 'accepted') {
       // 1. Create Chat
@@ -304,7 +348,7 @@ exports.updateJobRequestStatus = async (req, res) => {
 
     res.json(jobRequest);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 };
 
@@ -314,17 +358,21 @@ exports.updateJobRequestStatus = async (req, res) => {
 exports.getMyJobRequests = async (req, res) => {
   try {
     const userId = req.userId;
+    // Clients read the whole array, so the page is generous — but no longer unbounded.
+    const { limit, skip } = parsePagination(req.query, { defaultLimit: 100 });
     const requests = await JobRequest.find({
       $or: [{ customerId: userId }, { providerId: userId }],
     })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .populate('serviceId')
       .populate('customerId', 'name')
-      .populate('providerId', 'name')
-      .sort({ createdAt: -1 });
+      .populate('providerId', 'name');
 
     res.json(requests);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    serverError(res, err);
   }
 };
 
@@ -335,14 +383,18 @@ exports.getMyJobRequests = async (req, res) => {
 exports.getAllOrders = async (req, res) => {
   try {
     const userId = req.userId;
+    // Clients read the whole array, so the page is generous — but no longer unbounded.
+    const { limit, skip } = parsePagination(req.query, { defaultLimit: 100 });
 
     const orders = await Order.find({
       $or: [{ customerId: userId }, { providerId: userId }],
     })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .populate('serviceId')
       .populate('customerId', 'name avatarUrl')
       .populate('providerId', 'name avatarUrl')
-      .sort({ createdAt: -1 })
       .lean();
 
     // Email is contact information, and an Order exists from the moment the job is
@@ -496,11 +548,18 @@ exports.getCompletedJobDetails = async (req, res) => {
       // Transaction model might not exist, ignore
     }
 
+    // Contact details only once the job is paid — the same rule as the order list. Before that
+    // this endpoint handed both parties each other's email (security review C3).
+    const out = order.toObject();
+    if (out.paymentStatus !== 'paid') {
+      for (const party of [out.customerId, out.providerId]) if (party && typeof party === 'object') delete party.email;
+    }
+
     res.json({
-      order,
-      service: order.serviceId,
-      customer: order.customerId,
-      provider: order.providerId,
+      order: out,
+      service: out.serviceId,
+      customer: out.customerId,
+      provider: out.providerId,
       payment,
       chat,
       transactions,

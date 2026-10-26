@@ -14,7 +14,8 @@ jest.mock('../utils/apiResponse', () => ({
 }));
 jest.mock('../utils/pagination', () => ({ parsePagination: jest.fn(), parseObjectId: jest.fn((v) => v), parseSort: jest.fn(), parseDate: jest.fn() }));
 jest.mock('../services/admin/activityService', () => ({ logActivity: jest.fn() }));
-jest.mock('../models/Order', () => ({ findById: jest.fn(), findOneAndUpdate: jest.fn(), findByIdAndUpdate: jest.fn() }));
+// findOne: releaseListingAfterCancel's "another live order still holds the listing" check.
+jest.mock('../models/Order', () => ({ findById: jest.fn(), findOneAndUpdate: jest.fn(), findByIdAndUpdate: jest.fn(), findOne: jest.fn(() => ({ select: async () => ({ _id: 'other' }) })) }));
 jest.mock('../models/Payment', () => ({ findOne: jest.fn() }));
 jest.mock('../models/Payout', () => ({ findOne: jest.fn() }));
 jest.mock('../models/Dispute', () => ({ findOne: jest.fn() }));
@@ -33,7 +34,10 @@ function setOrder(fields) {
     return { select: () => ({ lean: async () => value }), lean: async () => value, then: (r, j) => Promise.resolve(value).then(r, j) };
   });
   Order.findOneAndUpdate.mockImplementation(async (filter, update) =>
-    filter.status.$in.includes(current.status) ? (current = { ...current, ...update.$set }) : null
+    (filter.status.$in ? filter.status.$in.includes(current.status) : filter.status === current.status) &&
+    !(filter.checkoutSessionStatus?.$nin || []).includes(current.checkoutSessionStatus)
+      ? (current = { ...current, ...update.$set })
+      : null
   );
 }
 const cancel = () => updateOrderStatus(
@@ -63,7 +67,7 @@ it('cancels an unpaid order through a compare-and-swap on its current status', a
   await cancel();
   expect(captured.error).toBeNull();
   expect(Order.findOneAndUpdate).toHaveBeenCalledWith(
-    { _id: 'order_1', status: { $in: ['awaiting_payment'] } },
+    { _id: 'order_1', status: 'awaiting_payment', checkoutSessionStatus: { $nin: ['open', 'pending'] } },
     expect.objectContaining({ $set: expect.objectContaining({ status: 'cancelled' }) }),
     { new: true }
   );
@@ -75,6 +79,15 @@ it('refuses while a checkout is open, because the customer may be paying right n
   await cancel();
   expect(captured.error).toMatchObject({ status: 409 });
   expect(Order.findOneAndUpdate).not.toHaveBeenCalled();
+});
+
+it('the cancel CAS loses to a checkout that started after the admin read the order', async () => {
+  setOrder({ status: 'awaiting_payment', checkoutSessionStatus: null });
+  // The customer's checkout reserves a session between our read and our write.
+  Dispute.findOne.mockImplementation(async () => { current = { ...current, checkoutSessionStatus: 'pending' }; return null; });
+  await cancel();
+  expect(captured.error).toMatchObject({ status: 409 });
+  expect(current.status).toBe('awaiting_payment');
 });
 
 it('refuses while a dispute is active', async () => {

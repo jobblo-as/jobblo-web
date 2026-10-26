@@ -52,8 +52,9 @@ async function verifyPaidCheckoutSession(session, order, allowAlternateAttempt =
 
   const testMode = session.livemode === false;
   const sessionMode = testMode ? 'test' : 'live';
-  const stripeConfig = await getStripeConfiguration();
-  if (stripeConfig.mode !== sessionMode || (order.checkoutMode && order.checkoutMode !== sessionMode)) {
+  // Compared with the order's own checkout mode, not the STRIPE_TEST_MODE toggle: a
+  // live payment confirmed after the toggle moved to test is still a real payment.
+  if (order.checkoutMode && order.checkoutMode !== sessionMode) {
     return { ok: false, reason: 'stripe_mode_mismatch' };
   }
 
@@ -755,6 +756,14 @@ exports.createSafePaySession = async (req, res) => {
       return res.status(404).json({ error: 'Kontrakten ble ikke funnet' });
     }
 
+    // ── SECURITY: Only customer (job poster/payer) may create checkout ─────────
+    // Checked before the 409s below, so a stranger learns nothing about the order's state.
+    if (String(order.customerId) !== String(userId)) {
+      return res
+        .status(403)
+        .json({ error: 'Ikke tilgang. Kun oppdragsgiver kan gjøre betalinger.' });
+    }
+
     // `serviceId` is populated above; if the underlying service was deleted it comes back
     // null and the line-item name below (`order.serviceId.title`) threw a TypeError that
     // surfaced as a bare 500.
@@ -786,13 +795,6 @@ exports.createSafePaySession = async (req, res) => {
         error: 'Kontrakten mangler en avtalt pris.',
         code: 'missing_agreed_price',
       });
-    }
-
-    // ── SECURITY: Only customer (job poster/payer) may create checkout ─────────
-    if (String(order.customerId) !== String(userId)) {
-      return res
-        .status(403)
-        .json({ error: 'Ikke tilgang. Kun oppdragsgiver kan gjøre betalinger.' });
     }
 
     // Already paid — return 409
@@ -1488,7 +1490,6 @@ exports.approveAndPayout = async (req, res) => {
     // Build $set for review fields, only include optional fields if present
     const reviewSet = {
       status: 'completed',
-      paymentStatus: 'paid',
       completedAt: new Date(),
       'review.overall': ratings.overall,
       'review.comment': comment || '',
@@ -1500,7 +1501,9 @@ exports.approveAndPayout = async (req, res) => {
     if (ratings.tidiness !== undefined) reviewSet['review.tidiness'] = ratings.tidiness;
 
     order = await Order.findOneAndUpdate(
-      { _id: orderId, status: 'ready_for_review' },
+      // paymentStatus is matched, never written: a refund that landed after the check
+      // above must not be overwritten back to 'paid' (nor the order completed).
+      { _id: orderId, status: 'ready_for_review', paymentStatus: 'paid' },
       {
         $set: reviewSet,
         $push: {
@@ -1524,109 +1527,125 @@ exports.approveAndPayout = async (req, res) => {
     const totalCustomer = order.agreedPrice + fee;
     const netProvider = order.agreedPrice - fee;
 
-    // ── Update chat to completed ───────────────────────────────────────────────
-    if (order.chatId) {
-      const chat = await Chat.findById(order.chatId);
-      if (chat) {
-        chat.status = 'completed';
-        chat.messages.push({
-          type: 'system_status',
-          systemData: { event: 'work_approved', orderId: order._id },
-          text: 'Jobb godkjent av oppdragsgiver — utbetaling klar',
-          createdAt: new Date(),
-        });
-        await chat.save();
+    // The order is `completed` from here on, so approving again is refused. If one of
+    // these bookkeeping steps (chat, listing, history, review, stats) threw, the request
+    // ended with a 500 before any payout existed and the provider was never paid. They
+    // are logged and skipped instead; the money step below always runs.
+    try {
+      // ── Update chat to completed ───────────────────────────────────────────────
+      if (order.chatId) {
+        const chat = await Chat.findById(order.chatId);
+        if (chat) {
+          chat.status = 'completed';
+          chat.messages.push({
+            type: 'system_status',
+            systemData: { event: 'work_approved', orderId: order._id },
+            text: 'Jobb godkjent av oppdragsgiver — utbetaling klar',
+            createdAt: new Date(),
+          });
+          await chat.save();
+        }
       }
-    }
 
-    // ── Complete service ───────────────────────────────────────────────────────
-    await Service.findByIdAndUpdate(order.serviceId._id, { status: 'completed' });
+      // ── Complete service ───────────────────────────────────────────────────────
+      await Service.findByIdAndUpdate(order.serviceId._id, { status: 'completed' });
 
-    // ── SafePayHistory (idempotent) ────────────────────────────────────────────
-    // sanitize ratings for history (only include provided fields)
-    const sanitizedRatings = { overall: ratings.overall };
-    if (ratings.punctuality !== undefined) sanitizedRatings.punctuality = ratings.punctuality;
-    if (ratings.quality !== undefined) sanitizedRatings.quality = ratings.quality;
-    if (ratings.communication !== undefined)
-      sanitizedRatings.communication = ratings.communication;
-    if (ratings.tidiness !== undefined) sanitizedRatings.tidiness = ratings.tidiness;
+      // ── SafePayHistory (idempotent) ────────────────────────────────────────────
+      // sanitize ratings for history (only include provided fields)
+      const sanitizedRatings = { overall: ratings.overall };
+      if (ratings.punctuality !== undefined) sanitizedRatings.punctuality = ratings.punctuality;
+      if (ratings.quality !== undefined) sanitizedRatings.quality = ratings.quality;
+      if (ratings.communication !== undefined)
+        sanitizedRatings.communication = ratings.communication;
+      if (ratings.tidiness !== undefined) sanitizedRatings.tidiness = ratings.tidiness;
 
-    const existingHistory = await SafePayHistory.findOne({ orderId: order._id });
-    if (existingHistory) {
-      // Payment confirmation creates the row as payment_received; approval must move it
-      // on, or SafePay history shows a completed, paid-out job as still in escrow.
-      await SafePayHistory.updateOne(
-        { _id: existingHistory._id, status: { $in: SafePayHistory.OPEN_STATUSES } },
-        { $set: { status: 'completed', ratings: sanitizedRatings, reviewComment: comment } }
+      const existingHistory = await SafePayHistory.findOne({ orderId: order._id });
+      if (existingHistory) {
+        // Payment confirmation creates the row as payment_received; approval must move it
+        // on, or SafePay history shows a completed, paid-out job as still in escrow.
+        await SafePayHistory.updateOne(
+          { _id: existingHistory._id, status: { $in: SafePayHistory.OPEN_STATUSES } },
+          { $set: { status: 'completed', ratings: sanitizedRatings, reviewComment: comment } }
+        );
+      } else {
+        try {
+          await SafePayHistory.create({
+            orderId: order._id,
+            serviceId: order.serviceId._id,
+            customerId: order.customerId,
+            providerId: order.providerId,
+            serviceTitle: order.serviceId.title || 'Uten navn',
+            amounts: { agreedPrice: order.agreedPrice, fee, tax, totalCustomer, netProvider },
+            status: 'completed',
+            paymentDate: new Date(),
+            ratings: sanitizedRatings,
+            reviewComment: comment,
+          });
+        } catch (e) {
+          if (e.code !== 11000) throw e;
+        }
+      }
+
+      // ── Review: customer reviews provider ─────────────────────────────────────
+      // revieweeId = provider (the one who did the work)
+      // reviewerId = customer (the one who approves)
+      const existingReview = await Review.findOne({ orderId: order._id, reviewerId: userId });
+      if (!existingReview) {
+        try {
+          await Review.create({
+            orderId: order._id,
+            serviceId: order.serviceId._id,
+            reviewerId: userId, // customer writes the review
+            revieweeId: order.providerId, // review is ABOUT the provider
+            // 'poster' means the PROVIDER here — the enum values are named
+            // backwards. See the note on Review.revieweeRole before changing this.
+            revieweeRole: 'poster',
+            rating: ratings.overall,
+            comment: comment || '',
+            photos: photos || [],
+            recommendWorker: recommendWorker || false,
+          });
+        } catch (e) {
+          if (e.code !== 11000) throw e;
+        }
+      }
+
+      // ── Update provider stats ──────────────────────────────────────────────────
+      const provider = await User.findById(order.providerId);
+      if (provider) {
+        const allProviderReviews = await Review.find({ revieweeId: order.providerId });
+        const reviewCount = allProviderReviews.length;
+        const averageRating =
+          reviewCount > 0
+            ? allProviderReviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount
+            : 0;
+
+        provider.completedJobs = (provider.completedJobs || 0) + 1;
+        provider.averageRating = parseFloat(averageRating.toFixed(1));
+        provider.reviewCount = reviewCount;
+        if (!provider.isSafePayUser) {
+          provider.isSafePayUser = true;
+          provider.safePayActivatedAt = new Date();
+        }
+        await provider.save();
+      }
+
+      // ── Also update customer as SafePay user ───────────────────────────────────
+      await User.findOneAndUpdate(
+        { _id: order.customerId, isSafePayUser: { $ne: true } },
+        { $set: { isSafePayUser: true, safePayActivatedAt: new Date() } }
       );
-    } else {
-      try {
-        await SafePayHistory.create({
-          orderId: order._id,
-          serviceId: order.serviceId._id,
-          customerId: order.customerId,
-          providerId: order.providerId,
-          serviceTitle: order.serviceId.title || 'Uten navn',
-          amounts: { agreedPrice: order.agreedPrice, fee, tax, totalCustomer, netProvider },
-          status: 'completed',
-          paymentDate: new Date(),
-          ratings: sanitizedRatings,
-          reviewComment: comment,
-        });
-      } catch (e) {
-        if (e.code !== 11000) throw e;
-      }
+    } catch (sideEffectErr) {
+      await require('../utils/errorLogger').logApplicationError({
+        error: sideEffectErr,
+        requestPath: 'safepay/approveAndPayout',
+        httpMethod: 'POST',
+        httpStatus: 500,
+        errorCode: 'APPROVAL_SIDE_EFFECT_FAILED',
+        source: 'safepay',
+        metadata: { orderId: String(order._id) },
+      }).catch(() => undefined);
     }
-
-    // ── Review: customer reviews provider ─────────────────────────────────────
-    // revieweeId = provider (the one who did the work)
-    // reviewerId = customer (the one who approves)
-    const existingReview = await Review.findOne({ orderId: order._id, reviewerId: userId });
-    if (!existingReview) {
-      try {
-        await Review.create({
-          orderId: order._id,
-          serviceId: order.serviceId._id,
-          reviewerId: userId, // customer writes the review
-          revieweeId: order.providerId, // review is ABOUT the provider
-          // 'poster' means the PROVIDER here — the enum values are named
-          // backwards. See the note on Review.revieweeRole before changing this.
-          revieweeRole: 'poster',
-          rating: ratings.overall,
-          comment: comment || '',
-          photos: photos || [],
-          recommendWorker: recommendWorker || false,
-        });
-      } catch (e) {
-        if (e.code !== 11000) throw e;
-      }
-    }
-
-    // ── Update provider stats ──────────────────────────────────────────────────
-    const provider = await User.findById(order.providerId);
-    if (provider) {
-      const allProviderReviews = await Review.find({ revieweeId: order.providerId });
-      const reviewCount = allProviderReviews.length;
-      const averageRating =
-        reviewCount > 0
-          ? allProviderReviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount
-          : 0;
-
-      provider.completedJobs = (provider.completedJobs || 0) + 1;
-      provider.averageRating = parseFloat(averageRating.toFixed(1));
-      provider.reviewCount = reviewCount;
-      if (!provider.isSafePayUser) {
-        provider.isSafePayUser = true;
-        provider.safePayActivatedAt = new Date();
-      }
-      await provider.save();
-    }
-
-    // ── Also update customer as SafePay user ───────────────────────────────────
-    await User.findOneAndUpdate(
-      { _id: order.customerId, isSafePayUser: { $ne: true } },
-      { $set: { isSafePayUser: true, safePayActivatedAt: new Date() } }
-    );
 
     // ── Actual Stripe Connect transfer to provider ─────────────────────────────
     const releasePayoutToProvider = require('../services/payout/releasePayoutToProvider');

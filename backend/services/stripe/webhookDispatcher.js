@@ -1,4 +1,5 @@
-const { getStripeConfiguration, getStripeForMode } = require('../../config/stripe');
+const Stripe = require('stripe');
+const { getStripeConfigurationForMode, getStripeForMode } = require('../../config/stripe');
 const {
   recordVerifiedDelivery,
   recordDeliveryProblem,
@@ -301,29 +302,24 @@ async function handleEvent(event, { io, stripe } = {}) {
   }
 }
 
-/** Express handler. Requires req.body to be a raw Buffer. */
+/**
+ * Express handler. Requires req.body to be a raw Buffer.
+ *
+ * Verifies against BOTH modes' signing secrets and processes each event in its own
+ * livemode, independent of the STRIPE_TEST_MODE toggle. Gating on the toggle meant
+ * that after a switch, the other mode's events (live refunds, disputes, retries of
+ * earlier deliveries) failed with 400 until Stripe gave up on them after ~3 days.
+ */
 async function stripeWebhook(req, res) {
   let event;
-  let stripeConfig;
-  let stripe;
+  let signedBy;
 
-  try {
-    stripeConfig = await getStripeConfiguration();
-  } catch (err) {
-    await logPaymentFailure({
-      req,
-      error: new Error('Stripe mode configuration unavailable'),
-      httpStatus: 503,
-      errorCode: 'STRIPE_MODE_CONFIGURATION_UNAVAILABLE',
-      metadata: {},
-    });
-    return res.status(503).send('Webhook configuration unavailable');
-  }
-
-  if (!stripeConfig.secretKey || !stripeConfig.keyModeValid || !stripeConfig.webhookSecretValid) {
-    const configurationCode = !stripeConfig.webhookSecret
-      ? 'STRIPE_WEBHOOK_SECRET_MISSING'
-      : 'STRIPE_WEBHOOK_CONFIGURATION_INVALID';
+  const configs = [true, false].map(getStripeConfigurationForMode);
+  const signers = configs.filter((c) => c.webhookSecretValid);
+  if (!signers.length) {
+    const configurationCode = configs.some((c) => c.webhookSecret)
+      ? 'STRIPE_WEBHOOK_CONFIGURATION_INVALID'
+      : 'STRIPE_WEBHOOK_SECRET_MISSING';
     await logPaymentFailure({
       req,
       error: new Error(configurationCode),
@@ -334,23 +330,25 @@ async function stripeWebhook(req, res) {
     return res.status(503).send('Webhook configuration unavailable');
   }
 
-  try {
-    stripe = await getStripeForMode(stripeConfig.testMode);
-  } catch (_err) {
-    return res.status(503).send('Webhook configuration unavailable');
+  let signatureError;
+  for (const config of signers) {
+    try {
+      event = Stripe.webhooks.constructEvent(
+        req.body,
+        req.headers['stripe-signature'],
+        config.webhookSecret
+      );
+      signedBy = config;
+      break;
+    } catch (err) {
+      signatureError = err;
+    }
   }
-
-  try {
-    event = stripe.webhooks.constructEvent(
-      req.body,
-      req.headers['stripe-signature'],
-      stripeConfig.webhookSecret
-    );
-  } catch (err) {
+  if (!signedBy) {
     // Signature mismatch or malformed payload — never process it.
     await logPaymentFailure({
       req,
-      error: err,
+      error: signatureError,
       httpStatus: 400,
       errorCode: 'STRIPE_WEBHOOK_SIGNATURE_FAILED',
       metadata: {},
@@ -358,18 +356,34 @@ async function stripeWebhook(req, res) {
     return res.status(400).send('Webhook signature verification failed');
   }
 
-  if (
-    typeof event.livemode !== 'boolean' ||
-    event.livemode !== (stripeConfig.mode === 'live')
-  ) {
+  // Each endpoint only ever sends its own mode, so a live event signed with the test
+  // secret means the secrets are swapped in the environment, not a mode switch.
+  if (typeof event.livemode !== 'boolean' || event.livemode !== (signedBy.mode === 'live')) {
     await logPaymentFailure({
       req,
-      error: new Error('Stripe event mode does not match the active mode'),
+      error: new Error('Stripe event mode does not match its signing secret'),
       httpStatus: 400,
       errorCode: 'STRIPE_WEBHOOK_MODE_MISMATCH',
       metadata: { eventId: event.id, eventType: event.type },
     });
     return res.status(400).send('Webhook event mode mismatch');
+  }
+
+  // The event's own mode, not the toggle, decides which keys handle it.
+  const stripeConfig = signedBy;
+  let stripe;
+  try {
+    stripe = await getStripeForMode(stripeConfig.testMode);
+  } catch (_err) {
+    // 503 keeps the event retryable until the matching API key is configured.
+    await logPaymentFailure({
+      req,
+      error: new Error('STRIPE_WEBHOOK_CONFIGURATION_INVALID'),
+      httpStatus: 503,
+      errorCode: 'STRIPE_WEBHOOK_CONFIGURATION_INVALID',
+      metadata: { eventId: event.id, eventType: event.type, mode: stripeConfig.mode },
+    });
+    return res.status(503).send('Webhook configuration unavailable');
   }
 
   // Only claim ledger rows for events we actually act on, so an account-wide event

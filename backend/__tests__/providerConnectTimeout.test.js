@@ -426,3 +426,20 @@ describe('SafePay provider Connect timeout processor', () => {
     }));
   });
 });
+
+it('F2: a chargeback the platform WON no longer blocks the timeout refund; an open one still does', async () => {
+  const stripe = configure({ stripe: makeStripe({ payoutReady: true }) });
+  const base = await stripe.charges.retrieve();
+  executeRefund.mockResolvedValue({
+    operation: { operationKey: `safepay-connect-timeout:${order._id}:${payment.stripePaymentIntentId}`, orderId: order._id, paymentIntentId: payment.stripePaymentIntentId, amount: order.checkoutAmountMinor },
+    refund: { id: 're_test_won', status: 'succeeded' },
+    status: 'succeeded',
+  });
+  stripe.charges.retrieve.mockImplementation(async (_id, opts) => ({ ...base, disputed: true, dispute: opts?.expand?.includes('dispute') ? { status: 'won' } : 'dp_1' }));
+  await expect(processOrder({ ...order, providerConnectTimeout: { status: 'provider_ready' } }, now)).resolves.toBe('refunded');
+
+  executeRefund.mockClear();
+  stripe.charges.retrieve.mockImplementation(async () => ({ ...base, disputed: true, dispute: { status: 'needs_response' } }));
+  await processOrder({ ...order, providerConnectTimeout: { status: 'provider_ready' } }, now).catch(() => {});
+  expect(executeRefund).not.toHaveBeenCalled();
+});

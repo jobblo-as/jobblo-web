@@ -2,6 +2,7 @@ const Dispute = require('../../models/Dispute');
 const Order = require('../../models/Order');
 const Payment = require('../../models/Payment');
 const Payout = require('../../models/Payout');
+const StripeFinancialOperation = require('../../models/StripeFinancialOperation');
 const SafePayHistory = require('../../models/SafePayHistory');
 const Chat = require('../../models/ChatMessage');
 const Notification = require('../../models/Notification');
@@ -13,6 +14,7 @@ const { logActivity } = require('../../services/admin/activityService');
 const { notify } = require('../../services/notifications');
 const { getStripeForMode } = require('../../config/stripe');
 const { executeRefund, executeTransferReversal } = require('../../services/stripe/financialOperations');
+const { DISPUTE_ELIGIBLE_STATUSES, hasUnresolvedPayout, UNRESOLVED_PAYOUT_MESSAGE } = require('../../services/admin/safePayStateService');
 
 const SORT_FIELDS = ['createdAt', 'updatedAt', 'openedAt'];
 /** A `pending` resolution idle this long is no longer being run by a live request. */
@@ -29,7 +31,7 @@ async function verifyDisputePayment(stripe, order, payment) {
   const intent = await stripe.paymentIntents.retrieve(payment.stripePaymentIntentId);
   const chargeId = stripeId(intent.latest_charge);
   if (!chargeId) throw new Error('Verified SafePay charge is unavailable for this dispute.');
-  const charge = await stripe.charges.retrieve(chargeId);
+  const charge = await stripe.charges.retrieve(chargeId, { expand: ['dispute'] });
   const expectedAmount = order.checkoutAmountMinor;
   const customerId = order.checkoutCustomerId;
   if (
@@ -58,7 +60,8 @@ async function verifyDisputePayment(stripe, order, payment) {
     charge.currency !== session.currency ||
     stripeId(charge.payment_intent) !== payment.stripePaymentIntentId ||
     stripeId(charge.customer) !== customerId ||
-    charge.disputed === true
+    // `disputed` stays true after a chargeback is WON; only an open or lost one blocks.
+    (charge.disputed === true && !['won', 'warning_closed'].includes(charge.dispute?.status))
   ) {
     throw new Error('SafePay payment does not match the order; manual reconciliation is required.');
   }
@@ -178,15 +181,17 @@ const assignDispute = asyncHandler(async (req, res) => {
     return sendError(res, 'Kan ikke tildele en lukket tvist.', 400);
   }
 
-  dispute.assignedAdminId = req.user._id;
-  if (dispute.status === 'open') dispute.status = 'under_review';
-
-  dispute.timeline.push({
-    action: 'assigned',
-    actorId: req.user._id,
-    note: `Tvist tildelt til ${req.user.name}`,
-  });
-  await dispute.save();
+  // Compare-and-swap on the status read above: a load-then-save wrote it back over a
+  // concurrent `resolved`, leaving a settled dispute active (and blocking auto-release).
+  const updated = await Dispute.findOneAndUpdate(
+    { _id: id, status: dispute.status },
+    {
+      $set: { assignedAdminId: req.user._id, status: dispute.status === 'open' ? 'under_review' : dispute.status },
+      $push: { timeline: { action: 'assigned', actorId: req.user._id, note: `Tvist tildelt til ${req.user.name}` } },
+    },
+    { new: true, runValidators: true }
+  );
+  if (!updated) return sendError(res, 'Tvisten ble endret samtidig. Last inn på nytt.', 409);
 
   await logActivity({
     adminId: req.user._id,
@@ -198,7 +203,7 @@ const assignDispute = asyncHandler(async (req, res) => {
     userAgent: req.headers['user-agent'],
   });
 
-  return sendSuccess(res, { dispute }, 'Tvist tildelt.');
+  return sendSuccess(res, { dispute: updated }, 'Tvist tildelt.');
 });
 
 // ── Status update ─────────────────────────────────────────────────────────────
@@ -212,22 +217,28 @@ const updateDisputeStatus = asyncHandler(async (req, res) => {
   }
 
   const TERMINAL = ['resolved', 'closed', 'cancelled'];
+  // A dispute ends only through resolve, which settles the money and the order. Setting
+  // `closed`/`cancelled` here left the order `disputed` and the payout frozen for good.
+  if (TERMINAL.includes(status)) {
+    return sendError(res, 'En tvist avsluttes med «Løs tvist», ikke med statusendring.', 400);
+  }
   const dispute = await Dispute.findById(id);
   if (!dispute) return sendError(res, 'Tvist ikke funnet.', 404);
   if (TERMINAL.includes(dispute.status)) {
     return sendError(res, 'Kan ikke endre status på en avsluttet tvist.', 400);
   }
 
-  dispute.status = status;
-  dispute.timeline.push({
-    action: `status_changed_to_${status}`,
-    actorId: req.user._id,
-    note: note ?? `Status endret til ${status}`,
-  });
-  if (TERMINAL.includes(status)) dispute.closedAt = new Date();
-  await dispute.save();
+  const updated = await Dispute.findOneAndUpdate(
+    { _id: id, status: dispute.status }, // CAS: never over a concurrent resolve
+    {
+      $set: { status },
+      $push: { timeline: { action: `status_changed_to_${status}`, actorId: req.user._id, note: note ?? `Status endret til ${status}` } },
+    },
+    { new: true, runValidators: true }
+  );
+  if (!updated) return sendError(res, 'Tvisten ble endret samtidig. Last inn på nytt.', 409);
 
-  return sendSuccess(res, { dispute }, 'Tviststatus oppdatert.');
+  return sendSuccess(res, { dispute: updated }, 'Tviststatus oppdatert.');
 });
 
 // ── Request information ───────────────────────────────────────────────────────
@@ -249,20 +260,19 @@ const requestInformation = asyncHandler(async (req, res) => {
     return sendError(res, 'Tvisten er avsluttet.', 400);
   }
 
-  // Add official dispute message (visible to parties)
-  dispute.messages.push({
-    senderId: req.user._id,
-    senderRole: 'admin',
-    message: message.trim(),
-    isInternal: false,
-  });
-  dispute.status = from === 'customer' ? 'waiting_for_customer' : 'waiting_for_provider';
-  dispute.timeline.push({
-    action: `information_requested_from_${from}`,
-    actorId: req.user._id,
-    note: `Admin ba om informasjon fra ${from}`,
-  });
-  await dispute.save();
+  // Add official dispute message (visible to parties). CAS on the status, as in assign.
+  const updated = await Dispute.findOneAndUpdate(
+    { _id: id, status: dispute.status },
+    {
+      $set: { status: from === 'customer' ? 'waiting_for_customer' : 'waiting_for_provider' },
+      $push: {
+        messages: { senderId: req.user._id, senderRole: 'admin', message: message.trim(), isInternal: false },
+        timeline: { action: `information_requested_from_${from}`, actorId: req.user._id, note: `Admin ba om informasjon fra ${from}` },
+      },
+    },
+    { new: true, runValidators: true }
+  );
+  if (!updated) return sendError(res, 'Tvisten ble endret samtidig. Last inn på nytt.', 409);
 
   // Notify the relevant party
   const order = await Order.findById(dispute.orderId).select('customerId providerId').lean();
@@ -278,7 +288,7 @@ const requestInformation = asyncHandler(async (req, res) => {
     });
   }
 
-  return sendSuccess(res, { dispute }, 'Informasjonsforespørsel sendt.');
+  return sendSuccess(res, { dispute: updated }, 'Informasjonsforespørsel sendt.');
 });
 
 // ── Add dispute message (official, visible to parties) ────────────────────────
@@ -350,6 +360,12 @@ const resolveDispute = asyncHandler(async (req, res) => {
     return sendError(res, `Ugyldig utfall. Tillatte: ${VALID_OUTCOMES.join(', ')}.`, 400);
   }
   if (!reason?.trim()) return sendError(res, 'Begrunnelse er påkrevd.', 400);
+  // Amounts become Stripe refunds/transfers: finite numbers, never negative, at most øre precision.
+  for (const amount of [customerAmount, providerAmount]) {
+    if (amount != null && !(typeof amount === 'number' && Number.isFinite(amount) && amount >= 0 && Math.round(amount * 100) / 100 === amount)) {
+      return sendError(res, 'Beløp må være et tall ≥ 0 med høyst to desimaler.', 400);
+    }
+  }
 
   const dispute = await Dispute.findById(id).populate('orderId');
   if (!dispute) return sendError(res, 'Tvist ikke funnet.', 404);
@@ -381,6 +397,11 @@ const resolveDispute = asyncHandler(async (req, res) => {
 
   const securedAmount = order.agreedPrice ?? 0;
   const fee = Math.round(securedAmount * 0.03);
+  // A full refund returns what the customer actually paid, the 3 % fee included — the
+  // same as the start-deadline refund. It used to return the job price only.
+  const paidTotal = Number.isSafeInteger(order.checkoutAmountMinor) && order.checkoutAmountMinor > 0
+    ? order.checkoutAmountMinor / 100
+    : securedAmount + fee;
   const cust = customerAmount ?? 0;
   const prov = providerAmount ?? 0;
 
@@ -408,7 +429,7 @@ const resolveDispute = asyncHandler(async (req, res) => {
       case 'release_to_provider':
         return { refund: 0, payout: securedAmount, payoutFee: fee, payment: 'released', order: 'completed' };
       case 'full_refund_to_customer':
-        return { refund: securedAmount, payout: 0, payoutFee: 0, payment: 'refunded', order: 'cancelled' };
+        return { refund: paidTotal, payout: 0, payoutFee: 0, payment: 'refunded', order: 'cancelled' };
       case 'partial_refund':
       case 'split_payment':
         return {
@@ -421,7 +442,7 @@ const resolveDispute = asyncHandler(async (req, res) => {
       case 'cancel_without_payment':
         return {
           refund: payment && ['completed', 'released', 'disputed'].includes(payment.status)
-            ? securedAmount
+            ? paidTotal
             : 0,
           payout: 0,
           payoutFee: 0,
@@ -535,31 +556,44 @@ const resolveDispute = asyncHandler(async (req, res) => {
       }
     }
 
+    // The refund is checked BEFORE any reversal or payout: a refund larger than what is
+    // still unrefunded on the charge (an earlier partial refund) used to fail only after
+    // the provider's transfer had already been reversed.
+    let refundKey = null;
     if (plan.refund > 0) {
-      const refundResult = await executeRefund(stripe, {
-        operationKey: `dispute:${dispute._id}:refund:${payment.stripePaymentIntentId}:${Math.round(plan.refund * 100)}`,
-        orderId: order._id,
-        paymentId: payment._id,
-        disputeId: dispute._id,
-        stripeMode: order.checkoutMode,
-        paymentIntentId: payment.stripePaymentIntentId,
-        chargeId: charge.id,
-        amount: Math.round(plan.refund * 100),
-        currency: charge.currency,
-      });
-      stripeRefundId = refundResult.refund.id;
-      stripeRefundStatus = refundResult.refund.status;
-      dispute.resolution.stripeRefundId = stripeRefundId;
-      dispute.resolution.stripeRefundStatus = stripeRefundStatus;
-      await dispute.save();
-      if (refundResult.status !== 'succeeded') {
-        return res.status(202).json({
-          message: 'Refunderingen behandles fortsatt av Stripe. Tvisten forblir åpen til betalingen er bekreftet.',
-          code: 'refund_pending',
-          stripeRefundId,
-          stripeRefundStatus,
-        });
+      const base = `dispute:${dispute._id}:refund:${payment.stripePaymentIntentId}:${Math.round(plan.refund * 100)}`;
+      // A refund Stripe later failed (e.g. a closed card) blocked every retry: the same key
+      // replays the failure. A new resolve starts a new attempt instead.
+      refundKey = base;
+      for (let n = 2; n <= 20; n += 1) {
+        const op = await StripeFinancialOperation.findOne({ operationKey: refundKey }).select('status').lean();
+        if (op?.status !== 'failed') break;
+        refundKey = `${base}:attempt${n}`;
       }
+      const inFlight = await StripeFinancialOperation.exists({
+        operationKey: refundKey,
+        status: { $in: ['pending', 'succeeded', 'reconciliation_required'] },
+      });
+      const remaining = Number(charge.amount) - Number(charge.amount_refunded || 0);
+      if (!inFlight && Math.round(plan.refund * 100) > remaining) {
+        const error = new Error(`The refund exceeds what is still refundable on the payment (${remaining / 100} NOK).`);
+        error.code = 'DISPUTE_REFUND_EXCEEDS_REMAINING';
+        throw error;
+      }
+    }
+    // A refund an earlier attempt of THIS dispute started (outcome unknown, or done before a
+    // later step failed) can only be finished by the same outcome and amounts. Any other
+    // resolution uses another key and refunded again: 30 refunded, re-resolved 33/70 => 133 out of 103.
+    const earlierRefund = await StripeFinancialOperation.exists({
+      disputeId: dispute._id,
+      type: 'refund',
+      status: { $in: ['pending', 'succeeded', 'reconciliation_required'] },
+      ...(refundKey ? { operationKey: { $ne: refundKey } } : {}),
+    });
+    if (earlierRefund) {
+      const error = new Error('An earlier refund of this dispute must be finished with the same outcome and amounts, or reconciled in Stripe.');
+      error.code = 'DISPUTE_REFUND_RECONCILIATION_REQUIRED';
+      throw error;
     }
 
     if (plan.payout > 0) {
@@ -655,6 +689,37 @@ const resolveDispute = asyncHandler(async (req, res) => {
         stripeTransferId = transfer.id;
       }
     }
+    // The customer is refunded LAST, only after the provider's transfer has been
+    // reversed (or the provider's share paid). It used to refund first: when the reversal
+    // then failed (provider balance already paid out) the platform had paid the money
+    // twice. A failed reversal now stops here with nothing refunded, and the dispute stays
+    // open and retryable. Every step is idempotent, so a retry repeats none of them.
+    if (plan.refund > 0) {
+      const refundResult = await executeRefund(stripe, {
+        operationKey: refundKey,
+        orderId: order._id,
+        paymentId: payment._id,
+        disputeId: dispute._id,
+        stripeMode: order.checkoutMode,
+        paymentIntentId: payment.stripePaymentIntentId,
+        chargeId: charge.id,
+        amount: Math.round(plan.refund * 100),
+        currency: charge.currency,
+      });
+      stripeRefundId = refundResult.refund.id;
+      stripeRefundStatus = refundResult.refund.status;
+      dispute.resolution.stripeRefundId = stripeRefundId;
+      dispute.resolution.stripeRefundStatus = stripeRefundStatus;
+      await dispute.save();
+      if (refundResult.status !== 'succeeded') {
+        return res.status(202).json({
+          message: 'Refunderingen behandles fortsatt av Stripe. Tvisten forblir åpen til betalingen er bekreftet.',
+          code: 'refund_pending',
+          stripeRefundId,
+          stripeRefundStatus,
+        });
+      }
+    }
   } catch (moneyErr) {
     // Leave the dispute unresolved and retryable, and say so loudly. The previous code
     // returned 502 for a refund failure and merely console.error'd a failed transfer,
@@ -718,9 +783,20 @@ const resolveDispute = asyncHandler(async (req, res) => {
     payment.status = plan.payment;
     await payment.save();
   }
+  // The customer got the money back, so an unpaid payout for this order is void. Left
+  // `failed`, the retry job re-tried it every 2 h forever and raised a reconciliation alert.
+  if (plan.order === 'cancelled') {
+    await Payout.updateOne(
+      { orderId: order._id, status: { $in: ['pending', 'failed', 'released_internal'] } },
+      { $set: { status: 'cancelled', failureReason: 'Dispute resolved with a refund to the customer; no payout.' } }
+    );
+  }
 
   const orderStatus = plan.order;
   order.status = orderStatus;
+  // Back to review after a no_action ruling: a fresh review window and warning, or the
+  // auto-release (and its warning) ran from the pre-dispute date.
+  if (orderStatus === 'ready_for_review') Object.assign(order, { readyForReviewAt: new Date(), autoReleaseWarnedAt: null });
   order.history.push({
     action: 'dispute_resolved',
     userId: req.user._id,
@@ -799,10 +875,49 @@ const reopenDispute = asyncHandler(async (req, res) => {
 
   const dispute = await Dispute.findById(id);
   if (!dispute) return sendError(res, 'Tvist ikke funnet.', 404);
-  if (!['resolved', 'closed'].includes(dispute.status)) {
-    return sendError(res, 'Kun løste eller lukkede tvister kan gjenåpnes.', 400);
+  // `cancelled` too: older disputes were cancelled without a resolution and left the
+  // order `disputed`; reopening and resolving them is the way out.
+  if (!['resolved', 'closed', 'cancelled'].includes(dispute.status)) {
+    return sendError(res, 'Kun avsluttede tvister kan gjenåpnes.', 400);
   }
+  // A resolution that moved money cannot be redone here: resolving again could refund
+  // or pay out a second time. That needs a manual correction in Stripe.
+  const old = dispute.resolution || {};
+  if (old.stripeRefundId || old.stripeTransferId || old.stripeReversalId) {
+    return sendError(res, 'Tvisten har allerede flyttet penger og kan ikke gjenåpnes. Korriger i Stripe.', 409);
+  }
+  const otherActive = await Dispute.findOne({
+    _id: { $ne: dispute._id },
+    orderId: dispute.orderId,
+    status: { $in: ['open', 'under_review', 'waiting_for_customer', 'waiting_for_provider', 'evidence_submitted'] },
+  }).select('_id');
+  if (otherActive) return sendError(res, 'Ordren har allerede en aktiv tvist.', 409);
+  if (await hasUnresolvedPayout(dispute.orderId)) return sendError(res, UNRESOLVED_PAYOUT_MESSAGE, 409);
 
+  // Put the order back under the dispute, with the same guards as opening one: never
+  // while a transfer holds the order lock or a start-deadline refund is running.
+  const now = new Date();
+  const order = await Order.findOneAndUpdate(
+    {
+      _id: dispute.orderId,
+      status: { $in: [...DISPUTE_ELIGIBLE_STATUSES, 'disputed'] },
+      'providerConnectTimeout.status': { $nin: ['processing', 'pending', 'reconciliation_required', 'failed', 'manual_review'] },
+      $or: [{ payoutLockId: null }, { payoutLockedAt: { $lte: new Date(now.getTime() - 5 * 60 * 1000) } }],
+    },
+    {
+      $set: { status: 'disputed' },
+      $push: { history: { action: 'dispute_reopened', userId: req.user._id, timestamp: now, data: { disputeId: dispute._id } } },
+    },
+    { new: false }
+  ).select('status');
+  if (!order) {
+    return sendError(res, 'Ordren kan ikke settes under tvist nå (refusjon eller utbetaling pågår, eller ordren er avsluttet).', 409);
+  }
+  if (order.status !== 'disputed') dispute.previousOrderStatus = order.status;
+  await Payment.updateOne({ orderId: dispute.orderId, status: { $in: ['completed', 'released'] } }, { $set: { status: 'disputed' } });
+
+  // The old resolution kept `resolve` refusing ("already resolved") forever.
+  dispute.resolution = undefined;
   dispute.status = 'under_review';
   dispute.payoutFrozen = true;
   dispute.closedAt = null;

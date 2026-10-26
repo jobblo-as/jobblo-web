@@ -10,6 +10,7 @@ jest.mock('../models/Dispute', () => {
   return mock;
 });
 jest.mock('../models/Notification', () => ({ create: jest.fn() }));
+jest.mock('../models/Payout', () => ({ exists: jest.fn(async () => null) }));
 jest.mock('../services/admin/activityService');
 
 const Order = require('../models/Order');
@@ -83,4 +84,18 @@ describe('openDispute eligibility', () => {
       })
     ).rejects.toThrow('Tvist kan ikke åpnes');
   });
+});
+
+it('F3: refuses to open a dispute while the order has a payout whose transfer outcome is unknown', async () => {
+  const Payout = require('../models/Payout');
+  const order = makeOrder('completed');
+  Order.findById.mockResolvedValue(order);
+  Dispute.findOne.mockResolvedValue(null);
+  Payout.exists.mockResolvedValueOnce({ _id: 'payout_1' });
+  await expect(openDispute({
+    orderId: order._id, openedByUserId: order.customerId, openedByRole: 'customer',
+    reasonCategory: 'other', title: 'Tittel', description: 'Beskrivelse', adminId: order.customerId,
+  })).rejects.toThrow(/avstemmes/);
+  expect(Payout.exists).toHaveBeenCalledWith({ orderId: order._id, status: { $in: ['processing', 'reconciliation_required'] } });
+  expect(Order.findOneAndUpdate).not.toHaveBeenCalled();
 });
