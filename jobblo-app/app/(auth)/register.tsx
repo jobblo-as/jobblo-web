@@ -14,11 +14,13 @@ import { useRouter } from 'expo-router';
 import { useRegisterMutation } from '@/hooks/useRegisterMutation';
 import { useRegistrationStore } from '@/store/registrationStore';
 import { userTerms } from '@/content/userTerms';
+import VerifyEmailStep from '@/components/auth/VerifyEmailStep';
 import { TC, tc } from '../../src/theme/colors';
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-type Step = 'identity' | 'credentials';
+/** Then 'verify': the account signs in only with the mailed code. */
+type Step = 'identity' | 'credentials' | 'verify';
 
 function getErrorMessage(error: unknown, fallback: string): string {
   if (error && typeof error === 'object') {
@@ -124,7 +126,7 @@ export default function RegisterScreen() {
           orgNumber: formData.orgNumber,
         }),
       },
-      { onSuccess: () => router.replace('/(app)') }
+      { onSuccess: () => setStep('verify') }
     );
   };
 
@@ -178,6 +180,15 @@ export default function RegisterScreen() {
           <View className="flex-1 items-center justify-center px-5 py-6">
             <View className="w-full rounded-[28px] bg-surface shadow-sm">
               <View className="px-5 pb-7 pt-6">
+                {step === 'verify' ? (
+                  <VerifyEmailStep
+                    email={formData.email.trim().toLowerCase()}
+                    password={formData.password}
+                    onVerified={() => router.replace('/(app)')}
+                    onBack={() => setStep('credentials')}
+                  />
+                ) : (
+                <>
                 <Pressable onPress={goBack} className="mb-6 flex-row items-center gap-2">
                   <ArrowLeft size={16} color={tc('#63665F', 'muted')} />
                   <Text className="text-[13px] font-medium text-muted">
@@ -492,6 +503,8 @@ export default function RegisterScreen() {
                   <Text className="text-[14px] text-muted">Har du allerede konto? </Text>
                   <Text className="text-[14px] font-semibold text-brand">Logg inn</Text>
                 </Pressable>
+                </>
+                )}
               </View>
             </View>
           </View>

@@ -294,7 +294,19 @@ export default function JobProfileScreen() {
   const verifyWithBankId = async () => {
     // The BankID (Idura) flow returns to the website only, so it runs there.
     setOpeningBankId(true);
-    await WebBrowser.openBrowserAsync(`${WEB_BASE}/profile`);
+    let closed = true;
+    try {
+      // Android answers 'opened' at once and the AppState effect above handles the return.
+      // iOS keeps the app active under the browser sheet, so AppState never fires there: the
+      // promise resolving IS the return, and without this the button stayed on "Åpner BankID …".
+      closed = (await WebBrowser.openBrowserAsync(`${WEB_BASE}/profile`)).type !== 'opened';
+    } finally {
+      if (closed) {
+        setOpeningBankId(false);
+        void refetch();
+        void statsQuery.refetch();
+      }
+    }
   };
 
   const activeJobs = (jobsQuery.data ?? []).filter((job) => ['open', 'pending', 'awaiting_payment', 'paid', 'in_progress', 'waiting_for_approval'].includes(job.status));

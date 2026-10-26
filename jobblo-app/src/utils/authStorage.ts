@@ -103,12 +103,71 @@ function backend(): Promise<StorageBackend> {
 }
 
 /**
+ * Credentials go to the Keychain / Android Keystore (expo-secure-store), not AsyncStorage,
+ * which is a plain file on disk and was included in Android backups (security review M9).
+ * Everything else (the cached profile, monitoring ids) stays on the plain backend: SecureStore
+ * is slow and size-limited, and none of that authenticates anybody.
+ */
+const SECURE_KEYS = new Set(['token']);
+
+function resolveSecureStore(): StorageBackend | null {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const store = require('expo-secure-store');
+    if (typeof store?.getItemAsync !== 'function') return null;
+    return {
+      getItem: (key) => store.getItemAsync(key),
+      // Readable after the first unlock so a refresh or a push handled while the phone is
+      // locked still has the token; THIS_DEVICE_ONLY keeps it out of backups and device moves.
+      setItem: (key, value) => store.setItemAsync(key, value, { keychainAccessible: store.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY }),
+      removeItem: (key) => store.deleteItemAsync(key),
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Builds before this one kept the token on the plain backend. Copy it across once, then delete
+ * the plain copy, so an upgrade neither signs the user out nor leaves the old copy behind.
+ * Copy before delete: a failure in between leaves two copies, never none.
+ */
+async function migrateLegacyKeys(secure: StorageBackend) {
+  const plain = await backend();
+  for (const key of SECURE_KEYS) {
+    const legacy = await plain.getItem(key);
+    if (legacy === null) continue;
+    if ((await secure.getItem(key)) === null) await secure.setItem(key, legacy);
+    await plain.removeItem(key);
+  }
+}
+
+/** `null` = no working SecureStore (web, or a build without the native module): plain backend. */
+let secureSelection: Promise<StorageBackend | null> | null = null;
+
+function secureBackend(): Promise<StorageBackend | null> {
+  if (!secureSelection) {
+    secureSelection = (async () => {
+      const secure = resolveSecureStore();
+      if (!secure || !(await worksAtRuntime(secure))) return null;
+      await migrateLegacyKeys(secure).catch((error) => console.error('[jobblo] Token migration to SecureStore failed.', error));
+      return secure;
+    })();
+  }
+  return secureSelection;
+}
+
+async function backendFor(key: string): Promise<StorageBackend> {
+  return (SECURE_KEYS.has(key) && (await secureBackend())) || backend();
+}
+
+/**
  * A backend that passed the probe can still fail later (storage full, database evicted).
  * Degrading to memory keeps the current session usable instead of throwing into
  * `hydrate()`'s catch block, which would sign the user out.
  */
-async function withFallback<T>(op: (target: StorageBackend) => Promise<T>): Promise<T> {
-  const target = await backend();
+async function withFallback<T>(key: string, op: (target: StorageBackend) => Promise<T>): Promise<T> {
+  const target = await backendFor(key);
   try {
     return await op(target);
   } catch (error) {
@@ -118,9 +177,9 @@ async function withFallback<T>(op: (target: StorageBackend) => Promise<T>): Prom
 }
 
 export const authStorage = {
-  getItem: (key: string) => withFallback((target) => target.getItem(key)),
-  setItem: (key: string, value: string) => withFallback((target) => target.setItem(key, value)),
-  removeItem: (key: string) => withFallback((target) => target.removeItem(key)),
+  getItem: (key: string) => withFallback(key, (target) => target.getItem(key)),
+  setItem: (key: string, value: string) => withFallback(key, (target) => target.setItem(key, value)),
+  removeItem: (key: string) => withFallback(key, (target) => target.removeItem(key)),
 };
 
 /** `false` means logins cannot survive a reload on this build. Useful for a dev-only banner. */

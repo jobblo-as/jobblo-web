@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Alert, Image, Linking, Modal, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
+import { Alert, Image, Modal, Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Camera, Check, CheckCircle2, FileText, Star } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -15,6 +15,7 @@ import * as Haptics from 'expo-haptics';
 import { SafePayProgressSteps } from '../../../../src/components/domain/SafePayProgressSteps';
 import { TC, tc } from '../../../../src/theme/colors';
 import { ApprovalSkeleton } from '../../../../src/components/skeletons/ScreenSkeletons';
+import { isPdfUrl, openDocument } from '../../../../src/utils/evidenceFile';
 
 const STATUS: Record<string, { title: string; step: number; canApprove: boolean }> = {
   awaiting_payment: { title: 'Venter på betaling', step: 2, canApprove: false },
@@ -131,14 +132,6 @@ export default function SafePayApprovalScreen() {
     }
     photoMutation.mutate(photos, { onSuccess: (result) => { setPhotoUrls((current) => [...current, ...result.urls].slice(0, 6)); setPhotos([]); }, onError: (error) => Alert.alert('Bildeopplasting feilet', errorText(error) ?? 'Prøv igjen.') });
   };
-  const openDocument = async (url: string) => {
-    const supported = await Linking.canOpenURL(url);
-    if (supported) {
-      await Linking.openURL(url);
-      return;
-    }
-    Alert.alert('Kunne ikke åpne dokumentet', 'Denne filen kan ikke åpnes på denne enheten.');
-  };
   const submit = () => {
     const payloadRatings = toPayloadRatings(ratings);
     approveMutation.mutate({ orderId: orderId ?? '', ratings: payloadRatings, comment: comment.slice(0, 1000), photos: photoUrls, recommendWorker }, {
@@ -218,8 +211,8 @@ export default function SafePayApprovalScreen() {
                   <Text className="mb-2 text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-subtle">Før arbeid</Text>
                   <View className="flex-row flex-wrap gap-2">
                     {beforeImages.map((asset, index) => (
-                      <Pressable key={`before-${index}`} onPress={() => asset.toLowerCase().endsWith('.pdf') ? void openDocument(asset) : setSelectedImage(asset)} className="h-24 w-[31%] overflow-hidden rounded-xl bg-surface-2">
-                        {asset.toLowerCase().endsWith('.pdf') ? (
+                      <Pressable key={`before-${index}`} onPress={() => isPdfUrl(asset) ? void openDocument(asset) : setSelectedImage(asset)} className="h-24 w-[31%] overflow-hidden rounded-xl bg-surface-2">
+                        {isPdfUrl(asset) ? (
                           <View className="h-full w-full items-center justify-center bg-tint">
                             <FileText size={24} color={TC.brandText} />
                             <Text className="mt-1 text-[0.6875rem] text-brand-text">PDF #{index + 1}</Text>
@@ -238,8 +231,8 @@ export default function SafePayApprovalScreen() {
                   <Text className="mb-2 text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-subtle">Etter arbeid</Text>
                   <View className="flex-row flex-wrap gap-2">
                     {afterImages.map((asset, index) => (
-                      <Pressable key={`after-${index}`} onPress={() => asset.toLowerCase().endsWith('.pdf') ? void openDocument(asset) : setSelectedImage(asset)} className="h-24 w-[31%] overflow-hidden rounded-xl bg-surface-2">
-                        {asset.toLowerCase().endsWith('.pdf') ? (
+                      <Pressable key={`after-${index}`} onPress={() => isPdfUrl(asset) ? void openDocument(asset) : setSelectedImage(asset)} className="h-24 w-[31%] overflow-hidden rounded-xl bg-surface-2">
+                        {isPdfUrl(asset) ? (
                           <View className="h-full w-full items-center justify-center bg-tint">
                             <FileText size={24} color={TC.brandText} />
                             <Text className="mt-1 text-[0.6875rem] text-brand-text">PDF #{index + 1}</Text>

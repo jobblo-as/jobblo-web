@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, AppState, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, ShieldCheck } from 'lucide-react-native';
@@ -81,6 +81,9 @@ export default function SafePayCheckoutScreen() {
   // Held for the whole launch → Checkout → return window, not just the mutation, so the
   // button cannot start a second payment while the first one is still open.
   const [launching, setLaunching] = useState(false);
+  // The state above only renders the disabled button; this ref is the actual guard. A second
+  // tap in the same frame still sees the old `launching` value.
+  const launchingRef = useRef(false);
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (state) => {
@@ -134,60 +137,68 @@ export default function SafePayCheckoutScreen() {
   const contractDate = formatDateRange(service.fromDate, service.toDate);
   const duration = formatDuration(service.duration);
 
-  const handlePay = () => {
-    if (launching || paymentMutation.isPending) return;
+  // `mutateAsync` + `finally`, not `mutate(…, { onSuccess, onSettled })`: TanStack calls a
+  // per-call onSettled right after onSuccess *starts* without awaiting it, so the button came
+  // back while Checkout was still opening and a second tap started a second checkout.
+  const handlePay = async () => {
+    if (launchingRef.current) return;
+    launchingRef.current = true;
     setLaunching(true);
-    paymentMutation.mutate(undefined, {
-      onSuccess: async (response) => {
-        const checkoutUrl = typeof response.url === 'string' ? response.url.trim() : '';
-        if (!checkoutUrl) {
-          Alert.alert('Betaling kunne ikke starte', 'Fikk ingen betalingslenke fra Stripe. Prøv igjen.');
-          return;
-        }
-
-        // `create-session` returns only the Checkout URL, but the server writes
-        // `checkoutSessionId` onto the order before it responds — so this refetch always
-        // sees it. Parsing the URL is only a fallback.
-        const refreshed = await refetch();
-        const stored = refreshed.data?.order?.checkoutSessionId;
-        const sessionId = isValidSessionId(stored) ? stored : sessionIdFromCheckoutUrl(checkoutUrl);
-
-        const result = await runStripeCheckout({ checkoutUrl, sessionId, verify: getSafePaySessionStatus });
-
-        if (result.outcome === 'not_opened') {
-          Alert.alert('Betaling kunne ikke starte', 'Kunne ikke åpne betalingssiden. Prøv igjen.');
-          return;
-        }
-
-        // Closed without the server confirming anything — including a deliberate cancel.
-        // The order stays in whatever state the server says (`awaiting_payment` for a
-        // cancel), the customer stays on this screen, and nothing claims success.
-        if (result.outcome !== 'paid') {
-          await refetch();
-          return;
-        }
-        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
-
-        // Seeding the status cache lets the success screen show the confirmed payment at
-        // once instead of verifying from scratch; its own effect then invalidates the
-        // applicant, application and order lists that the payment changed.
-        queryClient.setQueryData(queryKeys.safepay.status(result.sessionId), result.status);
-        await queryClient.invalidateQueries({ queryKey: queryKeys.safepay.checkout(orderId ?? '') });
-
-        const paidOrderId = isValidOrderId(result.status.orderId) ? result.status.orderId : orderId ?? '';
-        // `replace`: this order is paid now, so the back gesture must not return to a
-        // checkout screen offering to pay for it again.
-        router.replace({
-          pathname: '/(app)/safepay/success',
-          params: { orderId: paidOrderId, session_id: result.sessionId },
-        });
-      },
-      onError: (mutationError) => {
+    try {
+      let response: Awaited<ReturnType<typeof paymentMutation.mutateAsync>>;
+      try {
+        response = await paymentMutation.mutateAsync();
+      } catch (mutationError) {
         if (getErrorStatus(mutationError) === 409) void refetch();
         Alert.alert('Kunne ikke starte betalingen', getErrorMessage(mutationError) ?? 'Prøv igjen.');
-      },
-      onSettled: () => setLaunching(false),
-    });
+        return;
+      }
+      const checkoutUrl = typeof response.url === 'string' ? response.url.trim() : '';
+      if (!checkoutUrl) {
+        Alert.alert('Betaling kunne ikke starte', 'Fikk ingen betalingslenke fra Stripe. Prøv igjen.');
+        return;
+      }
+
+      // `create-session` returns only the Checkout URL, but the server writes
+      // `checkoutSessionId` onto the order before it responds — so this refetch always
+      // sees it. Parsing the URL is only a fallback.
+      const refreshed = await refetch();
+      const stored = refreshed.data?.order?.checkoutSessionId;
+      const sessionId = isValidSessionId(stored) ? stored : sessionIdFromCheckoutUrl(checkoutUrl);
+
+      const result = await runStripeCheckout({ checkoutUrl, sessionId, verify: getSafePaySessionStatus });
+
+      if (result.outcome === 'not_opened') {
+        Alert.alert('Betaling kunne ikke starte', 'Kunne ikke åpne betalingssiden. Prøv igjen.');
+        return;
+      }
+
+      // Closed without the server confirming anything — including a deliberate cancel.
+      // The order stays in whatever state the server says (`awaiting_payment` for a
+      // cancel), the customer stays on this screen, and nothing claims success.
+      if (result.outcome !== 'paid') {
+        await refetch();
+        return;
+      }
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
+
+      // Seeding the status cache lets the success screen show the confirmed payment at
+      // once instead of verifying from scratch; its own effect then invalidates the
+      // applicant, application and order lists that the payment changed.
+      queryClient.setQueryData(queryKeys.safepay.status(result.sessionId), result.status);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.safepay.checkout(orderId ?? '') });
+
+      const paidOrderId = isValidOrderId(result.status.orderId) ? result.status.orderId : orderId ?? '';
+      // `replace`: this order is paid now, so the back gesture must not return to a
+      // checkout screen offering to pay for it again.
+      router.replace({
+        pathname: '/(app)/safepay/success',
+        params: { orderId: paidOrderId, session_id: result.sessionId },
+      });
+    } finally {
+      launchingRef.current = false;
+      setLaunching(false);
+    }
   };
 
   return (
@@ -202,7 +213,7 @@ export default function SafePayCheckoutScreen() {
           calculation={calculation}
           isPaid={isPaid}
           providerName={order.providerId?.name}
-          onPay={handlePay}
+          onPay={() => void handlePay()}
           isPending={paymentMutation.isPending || launching}
           startDeadline={data.startDeadline}
           paidAction={{

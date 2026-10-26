@@ -38,11 +38,9 @@ declare module 'axios' {
 const rawBaseUrl = (() => {
   const configuredUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
   if (configuredUrl) return configuredUrl.replace(/\/$/, '');
-
-  if (process.env.EAS_BUILD_PROFILE === 'production') {
-    throw new Error('EXPO_PUBLIC_API_URL is required for production builds. Set the EAS production environment before building.');
-  }
-
+  // Local development only: app.config.js refuses to build any other EAS profile without an
+  // https:// EXPO_PUBLIC_API_URL (EAS_BUILD_PROFILE is not inlined into the bundle, so that
+  // check cannot live here).
   return 'http://localhost:5001/api';
 })();
 
@@ -108,6 +106,18 @@ function isAuthEndpoint(url?: string) {
   return !!url && AUTH_PATHS_WITHOUT_REFRESH.some((path) => url.includes(path));
 }
 
+/** The account a JWT names (`id`, backend/utils/tokenUtils.js). Read, not verified: the server verifies. */
+function tokenUserId(token: string | null): string | null {
+  try {
+    const payload = token?.split('.')[1];
+    if (!payload) return null;
+    const { id } = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/'))) as { id?: unknown };
+    return typeof id === 'string' && id ? id : null;
+  } catch {
+    return null;
+  }
+}
+
 async function requestNewAccessToken(): Promise<string | null> {
   try {
     // Bare axios rather than `apiClient`: routing this through our own interceptors
@@ -124,16 +134,31 @@ async function requestNewAccessToken(): Promise<string | null> {
     const token = response.data?.accessToken;
     if (typeof token !== 'string' || !token) return null;
 
-    await storage.setItem('token', token);
+    let authStore: typeof import('../store/authStore').useAuthStore | null = null;
     try {
       // Lazy require avoids a circular import at module load time.
       // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { useAuthStore } = require('../store/authStore') as typeof import('../store/authStore');
-      useAuthStore.setState({ token, isAuthenticated: true });
+      authStore = (require('../store/authStore') as typeof import('../store/authStore')).useAuthStore;
     } catch {
       // Storage is what the request interceptor actually reads, so a missing store
       // costs consistency, not the session.
     }
+
+    // The refresh cookie belongs to the device's native cookie store, not to this session: after
+    // a sign-out of A whose server call failed, it is still A's. Accepting its token would
+    // silently switch B (signed in since, e.g. via OAuth, with no cookie of their own) into A.
+    // So the new token must name the account this session is signed in as, else it is a failed
+    // refresh (the caller tears down; the logout call there also revokes A's leftover cookie).
+    const storeUser = authStore?.getState().user;
+    const expected = [
+      storeUser && typeof storeUser._id === 'string' ? storeUser._id : null,
+      tokenUserId(await storage.getItem('token')),
+    ].filter(Boolean);
+    const refreshedId = tokenUserId(token);
+    if (!expected.length || expected.some((id) => id !== refreshedId)) return null;
+
+    await storage.setItem('token', token);
+    authStore?.setState({ token, isAuthenticated: true });
     return token;
   } catch {
     return null;

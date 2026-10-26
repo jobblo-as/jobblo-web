@@ -40,3 +40,14 @@ export const draftStorage: DraftStorage = {
     await browserStorage.removeItem(key);
   },
 };
+
+const CREATE_JOB_DRAFT = 'jobblo-create-job-draft';
+
+/** One draft per account: it holds an address, phone and email (security review M9). */
+export const createJobDraftKey = (userId: string) => `${CREATE_JOB_DRAFT}:${userId}`;
+
+/** On logout / account switch. Also drops the shared key that builds before scoping wrote. */
+export async function clearUserDrafts(userId: string | null) {
+  await draftStorage.removeItem(CREATE_JOB_DRAFT);
+  if (userId) await draftStorage.removeItem(createJobDraftKey(userId));
+}

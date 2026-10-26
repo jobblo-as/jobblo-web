@@ -101,7 +101,7 @@ export function captureError(error: unknown, { fatal = false, kind = 'js' }: { f
 
 /** Current route, so errors and slow calls say where they happened. */
 export function setScreen(name: string) {
-  screen = name.slice(0, 120);
+  screen = templatePath(name).slice(0, 120);
 }
 
 /** Record failed (5xx / network) and slow API calls made through this axios instance. */

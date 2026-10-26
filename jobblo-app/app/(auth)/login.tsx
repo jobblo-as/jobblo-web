@@ -12,10 +12,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Eye, EyeOff, Loader2 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useLoginMutation } from '@/hooks/useLoginMutation';
+import { isEmailNotVerified } from '@/services/auth.service';
+import VerifyEmailStep from '@/components/auth/VerifyEmailStep';
 import { apiBaseUrl } from '@/api/client';
 import { GoogleMark, VippsWordmark } from '@/components/auth/SocialAuthLogos';
 import { completeOAuthSignIn } from '@/hooks/useOAuthLoginCompletion';
 import { runOAuthSession, type OAuthProvider } from '@/utils/oauthAuthSession';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import { useColorScheme } from 'nativewind';
+import { signInWithApple } from '@/utils/appleSignIn';
 import { TC, tc } from '../../src/theme/colors';
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -77,17 +82,20 @@ function SocialButton({
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { colorScheme } = useColorScheme();
   const loginMutation = useLoginMutation();
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   /** Which provider's browser trip is in flight, so a second tap cannot start another. */
-  const [socialProvider, setSocialProvider] = useState<OAuthProvider | null>(null);
+  const [socialProvider, setSocialProvider] = useState<OAuthProvider | 'apple' | null>(null);
   const [socialError, setSocialError] = useState('');
+  /** Password login refused with EMAIL_NOT_VERIFIED: show "Bekreft e-post" (a code was mailed). */
+  const [verifying, setVerifying] = useState(false);
 
   const serverMessage = useMemo(
     () =>
-      loginMutation.error
+      loginMutation.error && !isEmailNotVerified(loginMutation.error)
         ? getErrorMessage(loginMutation.error, 'Innlogging mislyktes. Sjekk e-post og passord.')
         : '',
     [loginMutation.error]
@@ -122,6 +130,9 @@ export default function LoginScreen() {
       { email: form.email.trim().toLowerCase(), password: form.password },
       {
         onSuccess: () => router.replace('/(app)'),
+        onError: (error) => {
+          if (isEmailNotVerified(error)) setVerifying(true);
+        },
       }
     );
   };
@@ -130,7 +141,7 @@ export default function LoginScreen() {
    * Google and Vipps, one path.
    *
    * `runOAuthSession` reports only what it saw of the browser trip; a returned URL is a claim,
-   * not a session. The URL goes to `completeOAuthSignIn`, which verifies the token against
+   * not a session. The URL goes to `completeOAuthSignIn`, which redeems its one-time code and verifies the token against
    * `/auth/profile` before anybody is signed in.
    *
    * On iOS this is the ONLY observer of the return: ASWebAuthenticationSession delivers the
@@ -168,6 +179,20 @@ export default function LoginScreen() {
     }
   };
 
+  /** Native sheet, no browser trip; same single in-flight guard and error card as the others. */
+  const handleAppleAuth = async () => {
+    if (socialProvider) return;
+    setSocialProvider('apple');
+    setSocialError('');
+    loginMutation.reset();
+    try {
+      const result = await signInWithApple();
+      if (result.status === 'failed') setSocialError(result.message);
+    } finally {
+      setSocialProvider(null);
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-page">
       <KeyboardAvoidingView
@@ -182,6 +207,15 @@ export default function LoginScreen() {
           <View className="flex-1 items-center justify-center px-5 py-6">
             <View className="w-full rounded-[28px] bg-surface shadow-sm">
               <View className="px-5 pb-7 pt-6">
+                {verifying ? (
+                  <VerifyEmailStep
+                    email={form.email.trim().toLowerCase()}
+                    password={form.password}
+                    onVerified={() => router.replace('/(app)')}
+                    onBack={() => setVerifying(false)}
+                  />
+                ) : (
+                <>
                 <Text className="text-[30px] font-bold leading-tight tracking-[-0.05em] text-ink">
                   Velkommen tilbake
                 </Text>
@@ -200,6 +234,20 @@ export default function LoginScreen() {
                     disabled={socialProvider !== null}
                     onPress={() => void handleSocialAuth('google')}
                   />
+                  {/* App Store guideline 4.8: Sign in with Apple wherever Google is offered on iOS. */}
+                  {Platform.OS === 'ios' ? (
+                    <AppleAuthentication.AppleAuthenticationButton
+                      buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+                      buttonStyle={
+                        colorScheme === 'dark'
+                          ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                          : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+                      }
+                      cornerRadius={12}
+                      style={{ height: 46, width: '100%', opacity: socialProvider ? 0.6 : 1 }}
+                      onPress={() => void handleAppleAuth()}
+                    />
+                  ) : null}
                 </View>
 
                 <View className="my-6 flex-row items-center gap-3">
@@ -298,6 +346,8 @@ export default function LoginScreen() {
                   <Text className="text-[14px] text-muted">Ny på Jobblo? </Text>
                   <Text className="text-[14px] font-semibold text-brand">Opprett gratis konto</Text>
                 </Pressable>
+                </>
+                )}
               </View>
             </View>
           </View>

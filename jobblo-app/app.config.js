@@ -6,6 +6,12 @@ const apiUrl = String(process.env.EXPO_PUBLIC_API_URL || '').trim();
 const easProfile = String(process.env.EAS_BUILD_PROFILE || '').trim();
 const localGoogleServicesFile = './google-services.json';
 
+// Every EAS build except a development client talks to a real server, so over https only;
+// without this a preview build silently fell back to http://localhost.
+if (easProfile && easProfile !== 'development' && !/^https:\/\//i.test(apiUrl)) {
+  throw new Error(`EXPO_PUBLIC_API_URL must be an https:// URL for the ${easProfile} build profile`);
+}
+
 if (easProfile === 'production') {
   const productionApiUrl = apiUrl.replace(/\/$/, '');
   if (!['https://jobblo.no', 'https://jobblo.no/api'].includes(productionApiUrl)) {

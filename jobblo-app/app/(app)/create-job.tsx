@@ -67,7 +67,7 @@ import { Chip } from '../../src/components/ui/Chip';
 import { Field } from '../../src/components/ui/Field';
 import { Stepper } from '../../src/components/ui/Stepper';
 import { NyAnnonseSheet } from '../../src/components/create-job/NyAnnonseSheet';
-import { draftStorage } from '../../src/utils/draftStorage';
+import { createJobDraftKey, draftStorage } from '../../src/utils/draftStorage';
 import {
   validateCreateJobStep,
   type CreateJobErrorKey,
@@ -84,7 +84,6 @@ import type {
 import { TC, tc } from '../../src/theme/colors';
 import { CreateJobSkeleton } from '../../src/components/skeletons/ScreenSkeletons';
 
-const DRAFT_KEY = 'jobblo-create-job-draft';
 const STEPS = ['Grunnleggende', 'Tid & sted', 'Sjekkliste', 'Kontakt'];
 const PAYMENT_CARDS: Array<{
   value: PaymentType;
@@ -256,6 +255,8 @@ export default function CreateJobScreen() {
   const editId = Array.isArray(params.editId) ? params.editId[0] : params.editId;
   const isEditMode = Boolean(editId);
   const user = useAuthStore((state) => state.user);
+  // Per account: a draft holds an address, phone and email, and must not greet the next user.
+  const draftKey = typeof user?._id === 'string' ? createJobDraftKey(user._id) : null;
   const categoriesQuery = useCategories();
   const locationsQuery = useLocationTree();
   const createMutation = useCreateJobMutation();
@@ -313,11 +314,11 @@ export default function CreateJobScreen() {
   }, [editId, isEditMode, ownerJobsQuery.data]);
 
   useEffect(() => {
-    if (isEditMode) {
+    if (isEditMode || !draftKey) {
       setDraftLoaded(true);
       return;
     }
-    void draftStorage.getItem(DRAFT_KEY).then((raw) => {
+    void draftStorage.getItem(draftKey).then((raw) => {
       if (raw) {
         try {
           const draft = JSON.parse(raw) as Draft;
@@ -331,14 +332,14 @@ export default function CreateJobScreen() {
       }
       setDraftLoaded(true);
     });
-  }, [isEditMode]);
+  }, [isEditMode, draftKey]);
   useEffect(() => {
-    if (!draftLoaded || isEditMode) return;
+    if (!draftLoaded || isEditMode || !draftKey) return;
     // An untouched form is not a draft: writing it back after a publish/discard made the
     // next visit restore an empty "draft".
-    if (JSON.stringify(values) === JSON.stringify(emptyValues()) && !images.length) void draftStorage.removeItem(DRAFT_KEY);
-    else void draftStorage.setItem(DRAFT_KEY, JSON.stringify({ ...values, images } satisfies Draft));
-  }, [draftLoaded, isEditMode, values, images]);
+    if (JSON.stringify(values) === JSON.stringify(emptyValues()) && !images.length) void draftStorage.removeItem(draftKey);
+    else void draftStorage.setItem(draftKey, JSON.stringify({ ...values, images } satisfies Draft));
+  }, [draftLoaded, isEditMode, draftKey, values, images]);
 
   const update = <K extends keyof CreateJobFormValues>(key: K, value: CreateJobFormValues[K]) => {
     setValues((current) => ({ ...current, [key]: value }));
@@ -583,7 +584,7 @@ export default function CreateJobScreen() {
   };
   /** Back to an empty step 1, after publishing and after discarding. */
   const resetForm = () => {
-    void draftStorage.removeItem(DRAFT_KEY);
+    if (draftKey) void draftStorage.removeItem(draftKey);
     setValues(emptyValues());
     setImages([]);
     setErrors({});

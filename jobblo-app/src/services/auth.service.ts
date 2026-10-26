@@ -36,9 +36,28 @@ export async function loginUser(credentials: LoginRequest): Promise<LoginRespons
   return response.data;
 }
 
-export async function registerUser(payload: RegisterRequest): Promise<LoginResponse> {
-  const response = await apiClient.post<LoginResponse>('/auth/register', payload);
+/** Registering signs nobody in: the server mails a code (same answer for a taken address). */
+export type RegisterResponse = { verificationRequired: true; message: string };
+
+export async function registerUser(payload: RegisterRequest): Promise<RegisterResponse> {
+  const response = await apiClient.post<RegisterResponse>('/auth/register', payload);
   return response.data;
+}
+
+/** POST /api/auth/verify-email — the mailed code finishes sign-up; answers like login. */
+export async function verifyEmail(body: { email: string; code: string; password: string }): Promise<LoginResponse> {
+  const response = await apiClient.post<LoginResponse>('/auth/verify-email', body);
+  return response.data;
+}
+
+export async function resendVerification(email: string): Promise<{ message: string }> {
+  const response = await apiClient.post<{ message: string }>('/auth/resend-verification', { email });
+  return response.data;
+}
+
+/** Login refused because the sign-up e-mail is not confirmed yet (the server mailed a fresh code). */
+export function isEmailNotVerified(error: unknown): boolean {
+  return (error as { response?: { data?: { code?: string } } })?.response?.data?.code === 'EMAIL_NOT_VERIFIED';
 }
 
 export async function acceptTerms(): Promise<{ user: AuthUser; acceptedTerms: boolean; termsVersion: string }> {
@@ -91,6 +110,25 @@ export async function fetchProfileWithToken(token: string): Promise<AuthUser> {
     _callerSuppliedAuth: true,
   });
   return response.data;
+}
+
+/**
+ * POST /api/auth/mobile/exchange — redeems the one-time code from an OAuth deep link with this
+ * app's PKCE verifier (security review P6). The server consumes the code on any attempt.
+ *
+ * `_callerSuppliedAuth`: no stored token is sent, and a refusal neither refreshes nor signs out
+ * whoever is using the app. `withCredentials` so the refresh cookie the server sets here lands in
+ * the app's cookie store.
+ */
+export async function exchangeOAuthCode(code: string, codeVerifier: string): Promise<string> {
+  const response = await apiClient.post<{ accessToken?: string }>(
+    '/auth/mobile/exchange',
+    { code, code_verifier: codeVerifier },
+    { _callerSuppliedAuth: true, withCredentials: true }
+  );
+  const token = response.data?.accessToken;
+  if (!isUsableAuthToken(token)) throw new Error('Exchange returned no usable token');
+  return token;
 }
 
 /**

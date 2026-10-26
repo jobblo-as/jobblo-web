@@ -10,12 +10,20 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.jobblo.app",
+      "usesAppleSignIn": true,
       "config": {
         "usesNonExemptEncryption": false
       }
     },
     "android": {
       "package": "com.jobblo.app",
+      "allowBackup": false,
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -31,17 +39,23 @@
       "expo-router",
       "expo-notifications",
       "expo-web-browser",
+      "expo-apple-authentication",
       [
         "expo-image-picker",
         {
           "photosPermission": "Jobblo trenger tilgang til bildene dine slik at du kan legge til bilder av oppdraget, profilbilde og dokumentasjon av utført arbeid.",
-          "cameraPermission": "Jobblo bruker kameraet slik at du kan ta bilder av oppdraget og dokumentere utført arbeid."
+          "cameraPermission": "Jobblo bruker kameraet slik at du kan ta bilder av oppdraget og dokumentere utført arbeid.",
+          "microphonePermission": false
         }
       ],
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Jobblo bruker posisjonen din til å plassere oppdraget ditt på kartet og vise oppdrag i nærheten av deg."
+          "locationWhenInUsePermission": "Jobblo bruker posisjonen din til å plassere oppdraget ditt på kartet og vise oppdrag i nærheten av deg.",
+          "locationAlwaysAndWhenInUsePermission": false,
+          "locationAlwaysPermission": false,
+          "locationFullAccuracyPermission": false,
+          "motionUsagePermission": false
         }
       ]
     ],

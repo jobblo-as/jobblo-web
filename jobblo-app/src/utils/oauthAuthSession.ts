@@ -2,6 +2,65 @@ import { AppState, Linking, Platform } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import type { WebBrowserOpenOptions } from 'expo-web-browser';
 import { createURL } from 'expo-linking';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createPkcePair } from '@/utils/pkce';
+
+/**
+ * "This app started a sign-in at <time>", kept in memory and in storage: on Android the
+ * browser can re-launch Jobblo, and a process restart must not lose a sign-in the person
+ * really started. Read by completeOAuthSignIn through decideOAuthLink (security review H1).
+ */
+const OAUTH_PENDING_KEY = 'jobblo-oauth-pending-since';
+/** The PKCE verifier for that sign-in (security review P6), kept and cleared with the marker. */
+const OAUTH_VERIFIER_KEY = 'jobblo-oauth-verifier';
+let oauthPendingSince = 0;
+let oauthVerifier = '';
+
+async function markOAuthPending(verifier: string): Promise<void> {
+  oauthPendingSince = Date.now();
+  oauthVerifier = verifier;
+  try {
+    await AsyncStorage.multiSet([
+      [OAUTH_PENDING_KEY, String(oauthPendingSince)],
+      [OAUTH_VERIFIER_KEY, verifier],
+    ]);
+  } catch {
+    // The in-memory values still cover the common case.
+  }
+}
+
+export async function getOAuthVerifier(): Promise<string> {
+  if (oauthVerifier) return oauthVerifier;
+  try {
+    return (await AsyncStorage.getItem(OAUTH_VERIFIER_KEY)) ?? '';
+  } catch {
+    return '';
+  }
+}
+
+export async function getOAuthPendingSince(): Promise<number> {
+  if (oauthPendingSince) return oauthPendingSince;
+  try {
+    return Number(await AsyncStorage.getItem(OAUTH_PENDING_KEY)) || 0;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * After a completed sign-in, and after any attempt that ended without one (browser closed,
+ * failed to open, returned an error): otherwise the window stayed open for the full TTL and
+ * an attacker's jobblo://oauth-success?token=… link was accepted during it.
+ */
+export async function clearOAuthPending(): Promise<void> {
+  oauthPendingSince = 0;
+  oauthVerifier = '';
+  try {
+    await AsyncStorage.multiRemove([OAUTH_PENDING_KEY, OAUTH_VERIFIER_KEY]);
+  } catch {
+    // Expires on its own after OAUTH_PENDING_TTL_MS.
+  }
+}
 
 /**
  * Runs a Google or Vipps sign-in from inside the app, and reports only what it actually
@@ -66,10 +125,11 @@ export function isOAuthReturnUrl(url: string | null | undefined): boolean {
 
 /**
  * The app starts flow endpoints on the explicit mobile route so the server can choose the
- * correct callback destination without accepting a caller-controlled return URL.
+ * correct callback destination without accepting a caller-controlled return URL. The PKCE
+ * challenge makes the server answer with a one-time code instead of a token (P6).
  */
-export function oauthStartUrl(provider: OAuthProvider, apiBase: string): string {
-  return `${apiBase.replace(/\/$/, '')}/auth/mobile/${provider}`;
+export function oauthStartUrl(provider: OAuthProvider, apiBase: string, codeChallenge: string): string {
+  return `${apiBase.replace(/\/$/, '')}/auth/mobile/${provider}?code_challenge=${codeChallenge}&code_challenge_method=S256`;
 }
 
 /** Stops a forgotten browser tab holding the flow open forever. */
@@ -116,8 +176,16 @@ export async function runOAuthSession(
   provider: OAuthProvider,
   apiBase: string
 ): Promise<OAuthSessionOutcome> {
+  let pkce: { verifier: string; challenge: string };
+  try {
+    pkce = createPkcePair();
+  } catch {
+    // No secure random source: refuse rather than start a flow nobody can finish safely.
+    return { outcome: 'not_opened' };
+  }
   const returnUrl = oauthReturnUrl();
-  const startUrl = oauthStartUrl(provider, apiBase);
+  const startUrl = oauthStartUrl(provider, apiBase, pkce.challenge);
+  await markOAuthPending(pkce.verifier);
 
   let resolveOutcome: ((result: OAuthSessionOutcome) => void) | null = null;
   const settled = new Promise<OAuthSessionOutcome>((resolve) => {
@@ -196,7 +264,10 @@ export async function runOAuthSession(
       })
       .catch(() => finish({ outcome: 'not_opened' }));
 
-    return await settled;
+    const result = await settled;
+    // No return URL means no sign-in to finish: close the window now, not after the TTL.
+    if (result.outcome !== 'returned') await clearOAuthPending();
+    return result;
   } finally {
     clearTimeout(giveUp);
     if (dismissTimer) clearTimeout(dismissTimer);

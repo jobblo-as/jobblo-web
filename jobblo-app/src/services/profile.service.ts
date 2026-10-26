@@ -93,7 +93,11 @@ export async function updateCurrentProfile(userId: string, data: ProfileUpdate |
   return response.data;
 }
 
-export async function deleteCurrentUser(userId: string): Promise<{ message: string }> {
-  const response = await apiClient.delete<{ message: string }>(`/users/${userId}`);
+// The backend requires the current password to delete your own account (accounts without a
+// password - Google/Apple/Vipps - need a login from the last 10 minutes instead).
+export async function deleteCurrentUser(userId: string, currentPassword?: string): Promise<{ message: string }> {
+  const response = await apiClient.delete<{ message: string }>(`/users/${userId}`, {
+    data: currentPassword ? { currentPassword } : {},
+  });
   return response.data;
 }

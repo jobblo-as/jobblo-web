@@ -19,7 +19,8 @@ export function initSentry(release?: string) {
   Sentry.init({
     dsn: DSN,
     release,
-    environment: process.env.EAS_BUILD_PROFILE || (__DEV__ ? 'development' : 'production'),
+    // Not EAS_BUILD_PROFILE: only EXPO_PUBLIC_* variables reach the bundle.
+    environment: __DEV__ ? 'development' : 'production',
     sendDefaultPii: false,
     tracesSampleRate: 0.1,
   });

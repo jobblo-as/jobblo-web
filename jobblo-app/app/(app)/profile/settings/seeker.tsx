@@ -303,7 +303,7 @@ export default function SeekerScreen() {
 
     const pickCertFile = async () => {
         const res = await DocumentPicker.getDocumentAsync({
-            type: ['image/*', 'application/pdf'],
+            type: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'],
             copyToCacheDirectory: true,
         });
         if (res.canceled) return;

@@ -13,6 +13,7 @@ import { orderStatusLabel } from '../../../../src/constants/orderStatus';
 import type { ProviderOrderHistoryItem } from '../../../../src/types/ProviderOrder';
 import { TC, tc } from '../../../../src/theme/colors';
 import { ProviderOrderSkeleton } from '../../../../src/components/skeletons/ScreenSkeletons';
+import { isPdfUrl, openDocument } from '../../../../src/utils/evidenceFile';
 
 const STATUS: Record<string, { label: string; tone: string; note: string }> = {
   awaiting_payment: { label: 'Venter på betaling', tone: 'bg-surface-2 text-muted', note: 'Oppdragsgiver har ikke betalt ennå. Du får beskjed så snart pengene er sikret.' },
@@ -57,7 +58,7 @@ function Party({ label, name, avatarUrl }: { label: string; name: string; avatar
 }
 
 function EvidenceGrid({ urls, type, canDelete, onDelete }: { urls: string[]; type: EvidenceType; canDelete: boolean; onDelete: (url: string, type: EvidenceType) => void }) {
-  return <View className="flex-row flex-wrap gap-2">{urls.map((url, index) => <View key={`${url}-${index}`} className="relative h-24 w-[31%] overflow-hidden rounded-xl bg-surface-2"><Image source={{ uri: url }} className="h-full w-full" resizeMode="cover" /><Text className="absolute bottom-1 left-1 rounded bg-black/60 px-1 text-[0.6875rem] text-white">Bilde</Text>{canDelete ? <Pressable onPress={() => onDelete(url, type)} className="absolute right-1 top-1 h-6 w-6 items-center justify-center rounded-full bg-black/60"><X size={13} color={TC.surface} /></Pressable> : null}</View>)}</View>;
+  return <View className="flex-row flex-wrap gap-2">{urls.map((url, index) => <View key={`${url}-${index}`} className="relative h-24 w-[31%] overflow-hidden rounded-xl bg-surface-2">{isPdfUrl(url) ? <Pressable onPress={() => void openDocument(url)} accessibilityRole="link" accessibilityLabel={`Åpne PDF ${index + 1}`} className="h-full w-full items-center justify-center"><FileText size={22} color={TC.brandText} /><Text className="mt-1 text-[0.6875rem] text-brand-text">PDF #{index + 1}</Text></Pressable> : <><Image source={{ uri: url }} className="h-full w-full" resizeMode="cover" /><Text className="absolute bottom-1 left-1 rounded bg-black/60 px-1 text-[0.6875rem] text-white">Bilde</Text></>}{canDelete ? <Pressable onPress={() => onDelete(url, type)} className="absolute right-1 top-1 h-6 w-6 items-center justify-center rounded-full bg-black/60"><X size={13} color={TC.surface} /></Pressable> : null}</View>)}</View>;
 }
 
 export default function ProviderOrderScreen() {

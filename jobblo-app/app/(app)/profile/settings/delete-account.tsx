@@ -24,6 +24,8 @@ type DeleteErrorCode =
   | 'active_orders_exist'
   | 'active_subscription_exists'
   | 'subscription_check_unavailable'
+  | 'CURRENT_PASSWORD_REQUIRED'
+  | 'REAUTH_REQUIRED'
   | undefined;
 
 function extractError(err: unknown): { message: string; code: DeleteErrorCode } {
@@ -33,6 +35,9 @@ function extractError(err: unknown): { message: string; code: DeleteErrorCode } 
     }
   )?.response;
   const data = response?.data;
+  if (data?.code === 'REAUTH_REQUIRED') {
+    return { message: 'Av sikkerhetshensyn må du logge inn på nytt og slette profilen innen 10 minutter.', code: 'REAUTH_REQUIRED' };
+  }
   return {
     message: data?.error || data?.message || 'Kunne ikke slette profilen. Prøv igjen.',
     code: (data?.code as DeleteErrorCode) || undefined,
@@ -49,10 +54,11 @@ export default function DeleteAccountScreen() {
   const userId = user && typeof user._id === 'string' ? user._id : null;
 
   const [confirmText, setConfirmText] = useState('');
+  const [password, setPassword] = useState('');
   const canDelete = confirmText.trim().toUpperCase() === CONFIRM_WORD && !!userId;
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => deleteCurrentUser(id),
+    mutationFn: (id: string) => deleteCurrentUser(id, password || undefined),
     onSuccess: async () => {
       try {
         await logout();
@@ -182,6 +188,33 @@ export default function DeleteAccountScreen() {
                 maxLength={10}
                 className={[inputClass, canDelete ? 'border-[#B4544A] dark:border-danger bg-danger-tint' : ''].join(' ')}
               />
+            </View>
+
+            <View className="mb-3">
+              <Text nativeID="delete-password-label" className="mb-1.5 text-[0.8125rem] font-semibold text-ink">
+                Nåværende passord
+              </Text>
+              <TextInput
+                value={password}
+                onChangeText={(value) => {
+                  setPassword(value);
+                  if (deleteMutation.isError) deleteMutation.reset();
+                }}
+                secureTextEntry
+                autoCapitalize="none"
+                autoCorrect={false}
+                textContentType="password"
+                autoComplete="current-password"
+                accessibilityLabel="Nåværende passord"
+                accessibilityLabelledBy="delete-password-label"
+                accessibilityHint="La feltet stå tomt hvis du logger inn med Google, Apple eller Vipps"
+                placeholder="Passordet ditt"
+                placeholderTextColor="#BFBFBF"
+                className="rounded-2xl border border-line bg-surface px-4 py-3.5 text-[0.9375rem] text-ink"
+              />
+              <Text className="mt-1.5 text-[0.75rem] text-muted">
+                Logger du inn med Google, Apple eller Vipps, kan du la feltet stå tomt.
+              </Text>
             </View>
 
             <Pressable

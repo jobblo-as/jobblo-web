@@ -19,12 +19,12 @@ import { TC, tc } from '../../src/theme/colors';
  * as `isAuthenticated` flips, from whichever screen is actually on top; a second navigator
  * pushing at the same time is how duplicate screens happen.
  *
- * The token in the URL is never rendered and never logged. It is read by the hook, verified
- * against the server, and handed to the auth store.
+ * The one-time code in the URL is never rendered and never logged. The hook redeems it with
+ * the app's PKCE verifier and hands the resulting token to the auth store.
  */
 export default function OAuthSuccessScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ token?: string | string[]; error?: string | string[] }>();
+  const params = useLocalSearchParams<{ code?: string | string[]; error?: string | string[] }>();
   const { state, message } = useOAuthLoginCompletion(params);
 
   if (state === 'failed') {
