@@ -12,8 +12,8 @@ function toParams(q: Record<string, unknown>): string {
 export interface AdminJobReportItem {
     _id: string;
     serviceId: { _id: string; title: string; price?: number; status?: string; images?: string[] } | null;
-    reportedBy: { _id: string; name: string; email: string; avatarUrl?: string; role?: string } | null;
-    reportedUser: { _id: string; name: string; email: string; avatarUrl?: string; role?: string } | null;
+    reportedBy: { _id: string; name: string; email: string; avatarUrl?: string; role?: string; accountStatus?: string } | null;
+    reportedUser: { _id: string; name: string; email: string; avatarUrl?: string; role?: string; accountStatus?: string } | null;
     reportType: string;
     description: string;
     status: string;

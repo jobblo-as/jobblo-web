@@ -6,6 +6,7 @@ import { useMutation } from '@tanstack/react-query';
 import { generateJobInfo, generateJobTitle } from '../../api/aiAPI';
 import { useTranslate } from '../../i18n/useTranslate';
 import toast from 'react-hot-toast';
+import { isAxiosError } from 'axios';
 import { summariseAiFill, clampMessage } from '../../utils/aiFillSummary';
 
 interface BasicInformationProps {
@@ -24,7 +25,7 @@ interface BasicInformationProps {
   setHourlyRate: (val: string) => void;
   maxApplicants: string | number;
   setMaxApplicants: (val: string | number) => void;
-  errors?: any;
+  errors?: Partial<Record<string, string>>;
   // BUG-012: optional context for richer AI suggestions
   durationValue?: string | number;
   durationUnit?: string;
@@ -78,7 +79,6 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({
   equipment,
   urgent,
   onAiGenerated,
-  aiGeneratedFlags,
   aiPricingNote,
   onDismissAiPricingNote,
 }) => {
@@ -120,7 +120,7 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({
       hourlyRate: false,
       duration: !!durationValue && String(durationValue).length > 0 && Number(durationValue) > 0,
     };
-    const flags: any = {};
+    const flags: Record<string, boolean> = {};
 
     try {
       const data = await jobInfoMutation.mutateAsync({
@@ -188,11 +188,12 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({
         toast.success(summariseAiFill(flags), { duration: 3000 });
         onAiGenerated?.(flags);
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
+      const body = isAxiosError<{ message?: string; error?: string }>(err) ? err.response?.data : undefined;
       const errorMessage =
-        err.response?.data?.message ||
-        err.response?.data?.error ||
+        body?.message ||
+        body?.error ||
         'Kunne ikke generere AI-innhold. Sjekk API-nøkkel.';
       toast.error(clampMessage(errorMessage));
     }
@@ -210,7 +211,7 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({
       price: !!price && String(price).length > 0 && Number(price) > 0,
       duration: !!durationValue && String(durationValue).length > 0 && Number(durationValue) > 0,
     };
-    const flags: any = {};
+    const flags: Record<string, boolean> = {};
 
     try {
       const data = await titleMutation.mutateAsync({
@@ -269,10 +270,10 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({
         toast.success(summariseAiFill(flags), { duration: 3000 });
         onAiGenerated?.(flags);
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('TITLE GEN ERROR:', err);
-      const errorMessage =
-        err.response?.data?.error || err.response?.data?.message || 'Kunne ikke generere tittel.';
+      const body = isAxiosError<{ message?: string; error?: string }>(err) ? err.response?.data : undefined;
+      const errorMessage = body?.error || body?.message || 'Kunne ikke generere tittel.';
       toast.error(clampMessage(errorMessage));
     }
   };
@@ -289,7 +290,7 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({
       {/* 1. Title Section */}
       <div className="box-card-custom rounded-[14px] p-4 md:p-6">
         <div className="flex items-center justify-between mb-4">
-          <label className="text-[11px] md:text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
+          <label htmlFor="job-title" className="text-[11px] md:text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
             Tittel <span className="text-red-500">*</span>
           </label>
           <div className="flex items-center gap-3">
@@ -339,6 +340,7 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({
         )}
 
         <input
+          id="job-title"
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value.slice(0, 70))}
@@ -359,13 +361,14 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({
       <div
         className={`box-card-custom rounded-[14px] p-4 md:p-6 border transition-colors ${errors?.categories ? 'border-red-500' : 'border-transparent'}`}
       >
-        <label className="text-[11px] md:text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2 mb-4">
+        <label htmlFor="job-category-search" className="text-[11px] md:text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2 mb-4">
           Velg kategori <span className="text-red-500">*</span>
         </label>
 
         <div className="relative mb-4 md:mb-6">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
           <input
+            id="job-category-search"
             type="text"
             placeholder="Søk i kategorier..."
             value={searchTerm}
@@ -424,7 +427,7 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({
       <div className="box-card-custom rounded-[14px] p-4 md:p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex flex-col gap-1">
-            <label className="text-[11px] md:text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
+            <label htmlFor="job-description" className="text-[11px] md:text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
               Beskrivelse <span className="text-red-500">*</span>
             </label>
             <div className="flex items-center gap-1.5 text-[9px] md:text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full w-fit">
@@ -447,6 +450,7 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({
         </div>
         <div className="relative">
           <textarea
+            id="job-description"
             value={description}
             onChange={(e) => setDescription(e.target.value.slice(0, maxDescriptionLength))}
             required
@@ -499,7 +503,7 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({
 
       {/* 4. Skills/Tags Section */}
       <div className="box-card-custom rounded-[14px] p-4 md:p-6">
-        <label className="text-[11px] md:text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2 mb-4">
+        <label htmlFor="job-tags" className="text-[11px] md:text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2 mb-4">
           Ferdigheter / Tags
         </label>
         <div className="space-y-4">
@@ -530,6 +534,7 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({
           <div className="flex gap-2">
             <div className="relative flex-1">
               <input
+                id="job-tags"
                 type="text"
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}

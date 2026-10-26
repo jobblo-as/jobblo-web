@@ -1,7 +1,7 @@
 import styles from './NotificationToggle.module.css';
 
 interface NotificationToggleProps {
-  label: string;
+  label?: string;
   enabled: boolean;
   onChange: (enabled: boolean) => void;
 }

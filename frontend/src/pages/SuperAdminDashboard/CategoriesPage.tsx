@@ -1,5 +1,5 @@
-import { useState, type ComponentType } from 'react';
-import { Plus, Loader2, Tag } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Plus, Loader2, Tag, type LucideIcon } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import {
     useAdminCategories,
@@ -18,6 +18,10 @@ import {
     AdminStatusBadge,
 } from '../../components/admin';
 import type { ColumnDef } from '../../components/admin/AdminDataTable';
+
+// The namespace also exports helpers (createLucideIcon, ...); only icon names are looked up.
+const lucideIcon = (name: string) =>
+    (LucideIcons as unknown as Record<string, LucideIcon | undefined>)[name];
 
 const ACTIVE_OPTIONS = [
     { label: 'Aktive', value: 'true' },
@@ -43,10 +47,11 @@ export default function CategoriesPage() {
     const [form, setForm] = useState<CategoryForm>(emptyForm);
     const [formError, setFormError] = useState('');
 
+    const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
     const handleSearchChange = (val: string) => {
         setSearch(val);
-        clearTimeout((handleSearchChange as any)._t);
-        (handleSearchChange as any)._t = setTimeout(() => {
+        clearTimeout(searchTimer.current);
+        searchTimer.current = setTimeout(() => {
             setDebouncedSearch(val);
             setPage(1);
         }, 400);
@@ -116,7 +121,7 @@ export default function CategoriesPage() {
             key: 'icon',
             header: 'Ikon',
             render: (c) => {
-                const IconComp = (LucideIcons as Record<string, ComponentType>)[c.icon ?? ''];
+                const IconComp = lucideIcon(c.icon ?? '');
                 return IconComp ? (
                     <span className="flex items-center gap-2">
                         <IconComp size={16} className="text-primary" />
@@ -261,7 +266,7 @@ export default function CategoriesPage() {
                             <div className="flex items-center gap-2">
                                 <div className="flex items-center justify-center w-10 h-10 bg-muted rounded-md shrink-0">
                                     {(() => {
-                                        const PreviewIcon = (LucideIcons as Record<string, ComponentType>)[form.icon];
+                                        const PreviewIcon = lucideIcon(form.icon);
                                         return PreviewIcon ? (
                                             <PreviewIcon size={18} className="text-primary" />
                                         ) : (

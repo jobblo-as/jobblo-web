@@ -1,5 +1,6 @@
 import React from 'react';
-import { Button as ShadcnButton, buttonVariants } from '../Button';
+import { Button as ShadcnButton } from '../Button';
+import { buttonVariants } from '../buttonVariants';
 import { cn } from '@/lib/utils';
 import { type VariantProps } from 'class-variance-authority';
 import { Loader2 } from 'lucide-react';

@@ -31,6 +31,7 @@ import { createOrGetChat } from '../../api/chatAPI';
 import EmptyState from '../../components/Ui/EmptyState';
 import { timeFormatter } from '../../utils/timeFormatter';
 import { safePayFee, safePayNetToProvider } from '../../utils/safePayFee';
+import { errorBody } from '../../utils/getErrorMessage';
 
 const ApplicantsPage: React.FC = () => {
   const { serviceId } = useParams<{ serviceId: string }>();
@@ -46,9 +47,9 @@ const ApplicantsPage: React.FC = () => {
   });
   const { data, isLoading, error, refetch } = useApplicantsQuery(serviceId!, sortBy, filterBy);
   const createContractMutation = useCreateSafePayContractMutation();
-  const toggleFavoriteMutation = useToggleApplicantFavoriteMutation(serviceId!);
-  const toggleArchiveMutation = useToggleApplicantArchiveMutation(serviceId!);
-  const declineMutation = useDeclineApplicantMutation(serviceId!);
+  const toggleFavoriteMutation = useToggleApplicantFavoriteMutation();
+  const toggleArchiveMutation = useToggleApplicantArchiveMutation();
+  const declineMutation = useDeclineApplicantMutation();
 
   const activeOrder = data?.activeOrder;
 
@@ -163,8 +164,8 @@ const ApplicantsPage: React.FC = () => {
           toast.success('Kontrakt opprettet! Sender deg til SafePay Checkout.');
           navigate(`/safepay/checkout/${res.orderId}`);
         },
-        onError: (err: any) => {
-          toast.error(err.response?.data?.error || 'Kunne ikke velge søker');
+        onError: (err) => {
+          toast.error(errorBody(err)?.error || 'Kunne ikke velge søker');
         },
       }
     );

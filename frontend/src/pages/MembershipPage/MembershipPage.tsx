@@ -30,6 +30,7 @@ import {
 import type { Plan } from '../../features/plans/types';
 import { CARD, MICRO_LABEL } from '../../theme/brand';
 import { BackLink } from '../../components/Ui/BackLink';
+import { errorBody } from '../../utils/getErrorMessage';
 
 type MySubscription = {
   plan: string;
@@ -162,8 +163,8 @@ export default function MembershipPage() {
       toast.success(data?.message || 'Abonnementet avsluttes ved periodens slutt');
       queryClient.invalidateQueries({ queryKey: ['my-subscription'] });
     },
-    onError: (err: any) =>
-      toast.error(err?.response?.data?.message || 'Kunne ikke si opp abonnementet'),
+    onError: (err) =>
+      toast.error(errorBody(err)?.message || 'Kunne ikke si opp abonnementet'),
   });
 
   const resumeMutation = useMutation({
@@ -172,8 +173,8 @@ export default function MembershipPage() {
       toast.success(data?.message || 'Abonnementet fortsetter');
       queryClient.invalidateQueries({ queryKey: ['my-subscription'] });
     },
-    onError: (err: any) =>
-      toast.error(err?.response?.data?.message || 'Kunne ikke gjenoppta abonnementet'),
+    onError: (err) =>
+      toast.error(errorBody(err)?.message || 'Kunne ikke gjenoppta abonnementet'),
   });
 
   const portalMutation = useMutation({
@@ -182,8 +183,8 @@ export default function MembershipPage() {
       if (data?.url) window.location.assign(data.url);
       else toast.error('Kunne ikke åpne abonnementsadministrasjonen.');
     },
-    onError: (err: any) =>
-      toast.error(err?.response?.data?.message || 'Kunne ikke åpne abonnementsadministrasjonen'),
+    onError: (err) =>
+      toast.error(errorBody(err)?.message || 'Kunne ikke åpne abonnementsadministrasjonen'),
   });
 
   const allowedPlanType: 'private' | 'business' = user?.role === 'company' ? 'business' : 'private';
@@ -304,8 +305,8 @@ export default function MembershipPage() {
       queryClient.invalidateQueries({ queryKey: ['subscription-billing-history'] });
       queryClient.invalidateQueries({ queryKey: ['subscription-plan-change-preview'] });
     },
-    onError: (err: any) =>
-      toast.error(err?.response?.data?.message || 'Kunne ikke endre abonnementet'),
+    onError: (err) =>
+      toast.error(errorBody(err)?.message || 'Kunne ikke endre abonnementet'),
   });
 
   const checkoutMutation = useMutation({ mutationFn: createCheckoutSession });
@@ -324,26 +325,26 @@ export default function MembershipPage() {
       const res = await checkoutMutation.mutateAsync(selectedPlan._id);
       if (!res?.url) throw new Error('Ingen betalingslenke i svaret');
       window.location.href = res.url;
-    } catch (err: any) {
+    } catch (err) {
       // The endpoint returns a Norwegian `message` for the cases the user can act on —
       // an expired coupon, a plan that costs nothing. Swallowing it and always saying
       // "prøv igjen" sent people back into the same failure.
       toast.error(
-        err?.response?.data?.message || 'Kunne ikke starte betalingen. Prøv igjen.'
+        errorBody(err)?.message || 'Kunne ikke starte betalingen. Prøv igjen.'
       );
       // 409 `active_subscription_exists` means the server found a subscription this page
       // did not know about — bought in another tab, or provisioned since the 30-second
       // cache was filled. Refetch so the CTA corrects itself instead of inviting a
       // second attempt that cannot succeed.
-      if (err?.response?.data?.code === 'active_subscription_exists') {
+      if (errorBody<{ code?: string }>(err)?.code === 'active_subscription_exists') {
         queryClient.invalidateQueries({ queryKey: ['my-subscription'] });
       }
       // A plan retired since the catalogue was cached. `usePlans` holds it forever
       // (`staleTime: Infinity`), so it has to be asked again explicitly.
-      if (err?.response?.data?.code === 'plan_inactive') {
+      if (errorBody<{ code?: string }>(err)?.code === 'plan_inactive') {
         void refetch();
       }
-      if (err?.response?.data?.code === 'plan_type_not_allowed') {
+      if (errorBody<{ code?: string }>(err)?.code === 'plan_type_not_allowed') {
         setSelectedId(null);
         void refetch();
       }

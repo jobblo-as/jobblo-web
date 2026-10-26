@@ -53,7 +53,7 @@ export const useCreateSafePayContractMutation = () => {
   });
 };
 
-export const useToggleApplicantFavoriteMutation = (serviceId: string) => {
+export const useToggleApplicantFavoriteMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: toggleApplicantFavorite,
@@ -63,7 +63,7 @@ export const useToggleApplicantFavoriteMutation = (serviceId: string) => {
   });
 };
 
-export const useToggleApplicantArchiveMutation = (serviceId: string) => {
+export const useToggleApplicantArchiveMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: toggleApplicantArchive,
@@ -73,7 +73,7 @@ export const useToggleApplicantArchiveMutation = (serviceId: string) => {
   });
 };
 
-export const useDeclineApplicantMutation = (serviceId: string) => {
+export const useDeclineApplicantMutation = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: { requestId: string; archive?: boolean }) =>

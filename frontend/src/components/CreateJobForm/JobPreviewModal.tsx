@@ -7,10 +7,27 @@ const MapComponent = lazy(() =>
   }))
 );
 
+/** What `useCreateJobForm` builds for the preview; the trailing optionals are read but never set. */
+interface PreviewJob {
+  title: string;
+  description: string;
+  price: number;
+  hourlyRate: number;
+  images: string[];
+  tags: string[];
+  location: { address: string; city: string; coordinates: [number, number] };
+  duration: { value: number; unit: string };
+  userId: { _id: string; name: string; avatarUrl: string; verified: boolean; averageRating: number };
+  promoted?: boolean;
+  urgent?: boolean;
+  experience?: string;
+  categories?: string[];
+}
+
 interface JobPreviewModalProps {
   showPreview: boolean;
   setShowPreview: (show: boolean) => void;
-  previewJobData: any;
+  previewJobData: PreviewJob;
 }
 
 export const JobPreviewModal: React.FC<JobPreviewModalProps> = ({

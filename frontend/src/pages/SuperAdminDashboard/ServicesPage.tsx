@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Briefcase } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminServices, useUpdateServiceStatus, useDeleteAdminService } from '../../hooks/admin';
@@ -36,10 +36,11 @@ export default function ServicesPage() {
     newStatus: string;
   } | null>(null);
 
+  const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const handleSearchChange = useCallback((val: string) => {
     setSearch(val);
-    clearTimeout((handleSearchChange as any)._t);
-    (handleSearchChange as any)._t = setTimeout(() => {
+    clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => {
       setDebouncedSearch(val);
       setPage(1);
     }, 400);

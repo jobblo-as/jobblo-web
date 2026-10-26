@@ -70,7 +70,7 @@ export default function JobbloUserTerm() {
         </div>
 
         {sections.map((section) => (
-          <div key={section.id} id={`section-${section.id}`} style={styles.section}>
+          <div key={section.id} id={`section-${section.id}`}>
             <h3 style={styles.sectionTitle}>
               {section.id}. {section.title}
             </h3>

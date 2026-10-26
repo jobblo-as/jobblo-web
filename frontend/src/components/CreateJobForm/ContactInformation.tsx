@@ -15,7 +15,7 @@ interface ContactInformationProps {
     price: string | number;
     paymentType: string;
   };
-  errors?: any;
+  errors?: Partial<Record<string, string>>;
 }
 
 export const ContactInformation: React.FC<ContactInformationProps> = ({
@@ -36,7 +36,7 @@ export const ContactInformation: React.FC<ContactInformationProps> = ({
         <h2 className="font-bold text-lg md:text-xl mb-6">Kontaktinformasjon (Valgfritt)</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           <div className="space-y-2">
-            <label className="text-xs md:text-sm font-bold text-gray-700 uppercase tracking-wider">
+            <label htmlFor="job-phone" className="text-xs md:text-sm font-bold text-gray-700 uppercase tracking-wider">
               Telefonnummer
             </label>
             {/*
@@ -55,6 +55,7 @@ export const ContactInformation: React.FC<ContactInformationProps> = ({
                 +47
               </span>
               <input
+                id="job-phone"
                 type="tel"
                 inputMode="numeric"
                 autoComplete="tel-national"
@@ -76,10 +77,11 @@ export const ContactInformation: React.FC<ContactInformationProps> = ({
             )}
           </div>
           <div className="space-y-2">
-            <label className="text-xs md:text-sm font-bold text-gray-700 uppercase tracking-wider">
+            <label htmlFor="job-email" className="text-xs md:text-sm font-bold text-gray-700 uppercase tracking-wider">
               E-post
             </label>
             <input
+              id="job-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}

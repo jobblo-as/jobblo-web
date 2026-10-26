@@ -23,6 +23,11 @@ import { useUnreadCount } from '../../../features/notifications/hooks';
 import { NotificationBell } from '../../Notifications/NotificationBell';
 import { useNotificationSound } from '../../../hooks/useNotificationSound';
 
+/** A user reference from the chat payloads: the raw id, or the populated user. */
+type IdRef = string | { _id?: string; id?: string } | null | undefined;
+const refId = (ref: IdRef): string =>
+  !ref ? '' : typeof ref === 'string' ? ref : String(ref._id || ref.id || '');
+
 export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -59,20 +64,11 @@ export default function Header() {
           if (!chat.messages || chat.messages.length === 0) return false;
           const lastMessage = chat.messages[chat.messages.length - 1];
 
-          const currentUserId = String(user?._id || user?.id || '');
+          const currentUserId = String(user?._id || '');
           if (!currentUserId) return false;
 
-          const getMsgSenderId = (msg: any) => {
-            if (!msg.senderId) return '';
-            // If senderId is an object (populated), get _id. If it's a string, use it.
-            if (typeof msg.senderId === 'string') return msg.senderId;
-            if (typeof msg.senderId === 'object') {
-              return String(msg.senderId._id || msg.senderId.id || '');
-            }
-            return String(msg.senderId);
-          };
-
-          const senderId = getMsgSenderId(lastMessage);
+          // senderId is either the raw id or the populated user.
+          const senderId = refId(lastMessage.senderId);
           if (!senderId) return false;
 
           // If you are the sender, it is NOT unread for you
@@ -80,10 +76,7 @@ export default function Header() {
 
           // Check if you are in the seenBy array
           const seenBy = Array.isArray(lastMessage.seenBy) ? lastMessage.seenBy : [];
-          const isSeenByMe = seenBy.some((id: any) => {
-            const idStr = String(id?._id || id?.id || id || '');
-            return idStr === currentUserId;
-          });
+          const isSeenByMe = seenBy.some((id: IdRef) => refId(id) === currentUserId);
 
           return !isSeenByMe;
         });
@@ -100,30 +93,27 @@ export default function Header() {
           });
         }
       } catch (error) {
-        console.error('Error initializing chat state in Header:', error);
+        // A cancelled query (navigation, logout) is not a failure.
+        if ((error as { name?: string } | null)?.name !== 'CancelledError') {
+          console.error('Error initializing chat state in Header:', error);
+        }
       }
     };
 
     initializeChatState();
 
     // Listen for real-time messages
-    const handleReceiveMessage = (data: any) => {
+    const handleReceiveMessage = (data?: {
+      chatId?: string;
+      message?: { senderId?: IdRef; sender?: IdRef; text?: string };
+    }) => {
       // Re-fetch or re-calculate. Simplest is to re-initialize
       initializeChatState();
 
       // Play sound if message is from someone else
-      const currentUserId = String(user?._id || user?.id || '');
+      const currentUserId = String(user?._id || '');
 
-      const getMsgSenderId = (msg: any) => {
-        if (!msg) return '';
-        const sId = msg.senderId || msg.sender;
-        if (!sId) return '';
-        if (typeof sId === 'string') return sId;
-        if (typeof sId === 'object') return String(sId._id || sId.id || '');
-        return String(sId);
-      };
-
-      const senderId = getMsgSenderId(data?.message);
+      const senderId = refId(data?.message?.senderId || data?.message?.sender);
 
       if (senderId && currentUserId && senderId !== currentUserId) {
         // 1. Play sound
@@ -162,7 +152,7 @@ export default function Header() {
     // which is mounted once in App. What stays here is chat, which is a different stream.
 
     // Listen for real-time read status
-    const handleMessagesRead = (data: any) => {
+    const handleMessagesRead = () => {
       initializeChatState();
     };
 

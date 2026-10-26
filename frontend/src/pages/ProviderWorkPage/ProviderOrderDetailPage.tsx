@@ -24,6 +24,7 @@ import { DisputePanel } from '../../components/SafePay/DisputePanel';
 import { useDispute } from '../../features/disputes/hooks';
 import { disputeReasonOptions } from '../../constants/disputes';
 import { compressImages } from '../../utils/compressImage';
+import { errorBody } from '../../utils/getErrorMessage';
 
 // ── Status config ──────────────────────────────────────────────────────────────
 //
@@ -107,11 +108,13 @@ const MiniStarRating: React.FC<{ value: number; onChange: (v: number) => void; s
     const [hover, setHover] = useState<number | null>(null);
     const display = hover ?? value;
     return (
-        <div className="flex gap-1">
+        <div className="flex gap-1" role="group" aria-label="Vurdering">
             {[1, 2, 3, 4, 5].map((s) => (
                 <button
                     key={s}
                     type="button"
+                    aria-label={`Gi ${s} av 5 stjerner`}
+                    aria-pressed={s <= value}
                     onMouseEnter={() => setHover(s)}
                     onMouseLeave={() => setHover(null)}
                     onClick={() => onChange(s)}
@@ -194,26 +197,26 @@ const ProviderOrderDetailPage: React.FC = () => {
     const startMutation = useMutation({
         mutationFn: () => startProviderOrder(orderId!),
         onSuccess: () => { setConnectRequired(false); toast.success('Jobb startet!'); invalidate(); },
-        onError: (e: any) => {
-            if (e.response?.data?.code === 'STRIPE_CONNECT_REQUIRED') {
+        onError: (e) => {
+            if (errorBody<{ code?: string }>(e)?.code === 'STRIPE_CONNECT_REQUIRED') {
                 setConnectRequired(true);
                 return;
             }
-            toast.error(e.response?.data?.error || 'Feil ved start');
+            toast.error(errorBody(e)?.error || 'Feil ved start');
         },
     });
 
     const readyMutation = useMutation({
         mutationFn: () => markOrderReadyForReview(orderId!),
         onSuccess: () => { toast.success('Meldt ferdig!'); invalidate(); },
-        onError: (e: any) => toast.error(e.response?.data?.error || 'Feil'),
+        onError: (e) => toast.error(errorBody(e)?.error || 'Feil'),
     });
 
     const checklistMutation = useMutation({
         mutationFn: ({ itemId, val }: { itemId: string; val: boolean }) =>
             updateProviderChecklistItem(orderId!, itemId, val),
         onSuccess: () => invalidate(),
-        onError: (e: any) => toast.error(e.response?.data?.error || 'Feil'),
+        onError: (e) => toast.error(errorBody(e)?.error || 'Feil'),
     });
 
     const evidenceMutation = useMutation({
@@ -232,7 +235,7 @@ const ProviderOrderDetailPage: React.FC = () => {
             setCompletionNote('');
             invalidate();
         },
-        onError: (e: any) => toast.error(e.response?.data?.error || 'Opplasting feilet'),
+        onError: (e) => toast.error(errorBody(e)?.error || 'Opplasting feilet'),
     });
 
     const removeUploadedMutation = useMutation({
@@ -242,7 +245,7 @@ const ProviderOrderDetailPage: React.FC = () => {
             toast.success('Bilde fjernet');
             invalidate();
         },
-        onError: (e: any) => toast.error(e.response?.data?.error || 'Kunne ikke fjerne bildet'),
+        onError: (e) => toast.error(errorBody(e)?.error || 'Kunne ikke fjerne bildet'),
     });
 
     // Dispute mutation
@@ -261,10 +264,10 @@ const ProviderOrderDetailPage: React.FC = () => {
             setDisputeTouched({ reasonCategory: false, title: false, description: false });
             invalidate();
         },
-        onError: (err: any) => {
+        onError: (err) => {
             const msg =
-                err?.response?.data?.message ??
-                err?.response?.data?.error ??
+                errorBody(err)?.message ??
+                errorBody(err)?.error ??
                 'Noe gikk galt. Prøv igjen.';
             toast.error(msg);
         },
@@ -301,7 +304,7 @@ const ProviderOrderDetailPage: React.FC = () => {
             setReviewComment('');
             queryClient.invalidateQueries({ queryKey: ['order-reviews', orderId] });
         },
-        onError: (e: any) => toast.error(e.response?.data?.error || 'Kunne ikke sende vurdering'),
+        onError: (e) => toast.error(errorBody(e)?.error || 'Kunne ikke sende vurdering'),
     });
 
     // Dispute form validation

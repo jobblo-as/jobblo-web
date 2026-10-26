@@ -20,6 +20,8 @@ import { timeFormatter } from '../../utils/timeFormatter';
 import { BackLink } from '../../components/Ui/BackLink';
 import { CARD, MICRO_LABEL } from '../../theme/brand';
 import { customerOrderPath, isApprovable } from '../../constants/statuses';
+import { errorBody } from '../../utils/getErrorMessage';
+import { isAxiosError } from 'axios';
 
 /**
  * Step 2 of SafePay: the contract, and the payment that commits to it.
@@ -150,12 +152,12 @@ const SafePayCheckout: React.FC = () => {
       // dead end on the one action this page exists for.
       toast.error('Fikk ingen betalingslenke fra Stripe. Prøv igjen.');
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.error || 'Kunne ikke starte betalingen');
+    onError: (err) => {
+      toast.error(errorBody(err)?.error || 'Kunne ikke starte betalingen');
       // A 409 means the server's view of the order has moved on (already paid, service
       // gone). Re-reading it puts the page back in step with reality instead of leaving
       // a stale payment button on screen.
-      if (err?.response?.status === 409) refetch();
+      if (isAxiosError(err) && err.response?.status === 409) refetch();
     },
   });
 

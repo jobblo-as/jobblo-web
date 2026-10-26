@@ -4,6 +4,7 @@ import { ArrowLeft, Loader2, MapPin } from 'lucide-react';
 import { useTopUsers } from '../../features/profile/hooks';
 import { useUserStore } from '../../stores/userStore';
 import { reverseGeocode } from '../../utils/reverseGeocode';
+import type { User } from '../../types/userTypes';
 
 const PAGE_SIZE = 12;
 
@@ -134,7 +135,7 @@ const RecommendedTaskersPage = () => {
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3">
-              {taskers.map((worker: any, index) => {
+              {taskers.map((worker: User & { hourlyRate?: number; nearby?: boolean }, index: number) => {
                 const fullName = `${worker.name} ${worker.lastName || ''}`;
                 const rating = worker.averageRating || 0;
                 const count = worker.reviewCount || 0;

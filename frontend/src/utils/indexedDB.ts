@@ -4,7 +4,9 @@ const DB_VERSION = 1;
 
 interface StoredFormData {
   id: string;
-  data: any;
+  /** Whose draft this is. A draft is only ever shown back to the user who wrote it. */
+  ownerId?: string;
+  data: unknown;
   images?: Array<{ name: string; type: string; base64: string }>;
   createdAt: number;
 }
@@ -60,7 +62,7 @@ const base64ToFile = (base64: string, filename: string): File => {
 };
 
 // Save form data and images
-export const saveFormData = async (data: any, images: File[] = []): Promise<void> => {
+export const saveFormData = async (data: unknown, images: File[] = [], ownerId?: string): Promise<void> => {
   console.log('[IndexedDB] Saving form data...', data);
   const db = await openDB();
 
@@ -78,6 +80,7 @@ export const saveFormData = async (data: any, images: File[] = []): Promise<void
     const store = transaction.objectStore(STORE_NAME);
     const request = store.put({
       id: 'current-form',
+      ownerId,
       data,
       images: base64Images,
       createdAt: Date.now(),
@@ -95,8 +98,9 @@ export const saveFormData = async (data: any, images: File[] = []): Promise<void
 };
 
 // Load form data and images
-export const loadFormData = async (): Promise<{
-  data?: any;
+// T is the caller's draft shape: this module stores whatever it is handed.
+export const loadFormData = async <T>(ownerId?: string): Promise<{
+  data?: T;
   images?: File[];
 }> => {
   console.log('[IndexedDB] Loading form data...');
@@ -110,7 +114,8 @@ export const loadFormData = async (): Promise<{
     request.onsuccess = () => {
       const stored = request.result as StoredFormData | undefined;
       console.log('[IndexedDB] Got stored data:', stored);
-      if (!stored) {
+      // Someone else's draft (address, phone, email, photos) is never shown.
+      if (!stored || stored.ownerId !== ownerId) {
         console.log('[IndexedDB] No stored data found');
         resolve({});
         return;
@@ -134,7 +139,7 @@ export const loadFormData = async (): Promise<{
       }
 
       console.log('[IndexedDB] Loaded form data and images!');
-      resolve({ data: stored.data, images });
+      resolve({ data: stored.data as T, images }); // stored by this owner's own saveFormData
     };
 
     request.onerror = () => {
@@ -162,5 +167,15 @@ export const clearFormData = async (): Promise<void> => {
       console.error('[IndexedDB] Error clearing form data:', request.error);
       reject(request.error);
     };
+  });
+};
+
+/** Every draft in this browser. Called on logout so the next user of the tab sees none. */
+export const clearAllFormData = async (): Promise<void> => {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const request = db.transaction([STORE_NAME], 'readwrite').objectStore(STORE_NAME).clear();
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
   });
 };

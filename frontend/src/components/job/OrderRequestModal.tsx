@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Send, X } from 'lucide-react';
 import { Spinner } from '../Ui/Spinner';
 
@@ -23,6 +23,13 @@ const OrderRequestModal: React.FC<OrderRequestModalProps> = ({
 }) => {
   const [message, setMessage] = useState('');
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const handleSubmit = () => {
@@ -41,12 +48,15 @@ const OrderRequestModal: React.FC<OrderRequestModalProps> = ({
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="order-request-title"
         className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in zoom-in-95 fade-in duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-gray-900">Send forespørsel</h2>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-gray-100 transition-colors">
+          <h2 id="order-request-title" className="text-lg font-bold text-gray-900">Send forespørsel</h2>
+          <button type="button" onClick={onClose} aria-label="Lukk" autoFocus className="p-1 rounded-lg hover:bg-gray-100 transition-colors">
             <X size={20} className="text-gray-500" />
           </button>
         </div>

@@ -68,21 +68,23 @@ export function ContractViewModal({ orderId, trigger }: ContractViewModalProps) 
 
     return (
         <>
-            <span onClick={() => setOpen(true)} style={{ cursor: 'pointer' }}>
+            {/* A real button, so the contract opens from the keyboard too (it was a clickable span). */}
+            <button type="button" onClick={() => setOpen(true)} className="inline-flex cursor-pointer border-0 bg-transparent p-0 text-left">
                 {trigger}
-            </span>
+            </button>
 
             {open && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
                     onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}
+                    onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false); }}
                 >
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+                    <div role="dialog" aria-modal="true" aria-labelledby="contract-view-title" className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
                         {/* Header */}
                         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
                             <div className="flex items-center gap-2.5">
                                 <FileText size={18} className="text-[#1a3a1a]" />
-                                <h2 className="font-bold text-gray-900">Kontrakt</h2>
+                                <h2 id="contract-view-title" className="font-bold text-gray-900">Kontrakt</h2>
                                 {order && (
                                     <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${statusColor}`}>
                                         {statusText}
@@ -92,6 +94,8 @@ export function ContractViewModal({ orderId, trigger }: ContractViewModalProps) 
                             <button
                                 type="button"
                                 onClick={() => setOpen(false)}
+                                aria-label="Lukk"
+                                autoFocus
                                 className="p-1.5 rounded-full hover:bg-gray-100 transition-colors text-gray-400"
                             >
                                 <X size={18} />

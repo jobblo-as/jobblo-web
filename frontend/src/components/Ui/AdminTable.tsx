@@ -3,7 +3,7 @@ import { Table, Card, Button, Select, Input } from 'antd';
 import type { TableProps } from 'antd';
 import { Search, Filter, Plus } from 'lucide-react';
 
-interface AdminTableProps<T extends Record<string, any>> extends TableProps<T> {
+interface AdminTableProps<T extends object> extends Omit<TableProps<T>, 'title'> {
   title: string;
   extra?: React.ReactNode;
   topSection?: React.ReactNode;
@@ -19,7 +19,7 @@ interface AdminTableProps<T extends Record<string, any>> extends TableProps<T> {
   filterPlaceholder?: string;
 }
 
-export const AdminTable = <T extends Record<string, any>>({
+export const AdminTable = <T extends object>({
   title,
   extra,
   topSection,

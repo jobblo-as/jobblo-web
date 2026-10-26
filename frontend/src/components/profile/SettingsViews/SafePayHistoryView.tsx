@@ -22,12 +22,46 @@ import { useNavigate } from 'react-router-dom';
 import { useUserStore } from '../../../stores/userStore';
 import FinanceHistoryTabs from '../../SafePay/FinanceHistoryTabs';
 
+/** One row of GET /api/safepay/history/:userId; amounts in `amounts` are kroner. */
+interface HistoryTransaction {
+  id: string;
+  status: string;
+  isProvider?: boolean;
+  serviceTitle?: string;
+  customerName?: string;
+  providerName?: string;
+  paymentDate?: string;
+  transferDate?: string;
+  amounts: { agreedPrice: number; fee: number; tax: number; totalCustomer: number };
+  originalPaymentAmountMinor: number;
+  providerTransferAmountMinor: number;
+  payoutAmountMinor: number;
+  refundAmountMinor?: number;
+  refundedAmountMinor: number;
+  hasVerifiedProviderTransfer?: boolean;
+  providerTransferReversed?: boolean;
+  payoutStatus?: string;
+  payoutFailureCode: string;
+  payoutFailureMessage?: string;
+  providerConnectStatus?: string;
+  providerConnectDeadlineAt?: string;
+  cancellationReason?: string;
+  refundStatus?: string;
+  refundReason?: string;
+  refundCompletedAt?: string;
+  refundFailedAt?: string;
+  stripeTransferId?: string;
+  stripeRefundId?: string;
+  paymentMethodBrand?: string;
+  paymentMethodLast4?: string;
+}
+
 const PayoutStatusBanner = () => {
   const user = useUserStore((state) => state.user);
   const navigate = useNavigate();
 
-  const isEnabled = Boolean((user as any)?.payoutEnabled);
-  const hasAccount = Boolean((user as any)?.stripeConnectAccountId);
+  const isEnabled = Boolean(user?.payoutEnabled);
+  const hasAccount = Boolean(user?.stripeConnectAccountId);
 
   if (isEnabled) {
     return (
@@ -130,7 +164,7 @@ export const SafePayHistoryView = () => {
     transactionCount: 0,
   };
 
-  const formatDate = (date: any) => {
+  const formatDate = (date?: string | null) => {
     if (!date) return '';
     return new Date(date).toLocaleDateString('nb-NO', {
       year: 'numeric',
@@ -157,7 +191,7 @@ export const SafePayHistoryView = () => {
     }
   };
 
-  const historyStatus = (transaction: any) => {
+  const historyStatus = (transaction: HistoryTransaction) => {
     if (transaction.refundStatus === 'succeeded') return 'refunded';
     if (transaction.refundStatus === 'pending' || transaction.refundStatus === 'reconciliation_required') {
       return 'refund_pending';
@@ -166,7 +200,7 @@ export const SafePayHistoryView = () => {
     return transaction.status;
   };
 
-  const providerPayoutStage = (transaction: any) => {
+  const providerPayoutStage = (transaction: HistoryTransaction) => {
     if (transaction.refundStatus === 'succeeded') {
       return { key: 'refunded', label: 'Refundert', tone: 'text-gray-600' };
     }
@@ -209,7 +243,7 @@ export const SafePayHistoryView = () => {
   };
 
   // Customer view of a refund in three steps: paid → refund started → refunded (or failed).
-  const renderRefundSteps = (transaction: any) => {
+  const renderRefundSteps = (transaction: HistoryTransaction) => {
     const status = transaction.refundStatus;
     if (transaction.isProvider || !status || status === 'none') return null;
     const done = status === 'succeeded';
@@ -402,7 +436,7 @@ export const SafePayHistoryView = () => {
       {/* History List */}
       <div className="flex flex-col gap-4">
         {history.length > 0 ? (
-          history.map((transaction: any) => (
+          history.map((transaction: HistoryTransaction) => (
             <div
               key={transaction.id}
               className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden"
@@ -644,7 +678,7 @@ export const SafePayHistoryView = () => {
                                     aria-label="Kopier full Stripe-overføringsreferanse"
                                     onClick={(event) => {
                                       event.stopPropagation();
-                                      void copyReference(transaction.stripeTransferId);
+                                      void copyReference(transaction.stripeTransferId!);
                                     }}
                                     className="rounded p-1 hover:bg-gray-200"
                                   >
@@ -741,7 +775,7 @@ export const SafePayHistoryView = () => {
                                 title="Kopier full refusjonsreferanse"
                                 onClick={(event) => {
                                   event.stopPropagation();
-                                  void copyReference(transaction.stripeRefundId);
+                                  void copyReference(transaction.stripeRefundId!);
                                 }}
                                 className="rounded p-1 hover:bg-gray-200"
                               >

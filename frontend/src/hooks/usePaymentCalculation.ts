@@ -7,7 +7,12 @@ import { useState, useEffect } from 'react';
 export const usePaymentCalculation = (
   durationValue: string,
   durationUnit: string,
-  initialData: any = {}
+  initialData: {
+    price?: string | number;
+    hourlyRate?: string | number;
+    paymentType?: string;
+    urgent?: boolean;
+  } = {}
 ) => {
   const [price, setPrice] = useState(initialData?.price?.toString() || '');
   const [hourlyRate, setHourlyRate] = useState(initialData?.hourlyRate?.toString() || '');

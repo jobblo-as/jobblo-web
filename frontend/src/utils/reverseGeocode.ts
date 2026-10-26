@@ -25,7 +25,9 @@ export const reverseGeocode = async (
     const result = data.results[0];
     const components = result.address_components || [];
     const pick = (types: string[]) =>
-      components.find((c: any) => types.some((t) => c.types.includes(t)))?.long_name || '';
+      components.find((c: { types: string[]; long_name?: string }) =>
+        types.some((t) => c.types.includes(t))
+      )?.long_name || '';
 
     const street = pick(['route']) || pick(['street_address']);
     const number = pick(['street_number']);

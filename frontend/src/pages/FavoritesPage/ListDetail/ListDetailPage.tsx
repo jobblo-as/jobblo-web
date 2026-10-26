@@ -22,7 +22,7 @@ export const ListDetailPage: React.FC = () => {
   const currentUser = useUserStore((state) => state.user);
 
   // Check if current user is owner (it's an array in the model)
-  const isOwner = list?.user?.some((u) => ((u as { _id?: string })._id || u) === currentUser?._id);
+  const isOwner = list?.user?.some((u) => u._id === currentUser?._id);
 
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);

@@ -7,10 +7,18 @@ export interface ChatMessage {
   _id?: string;
   seenBy?: string[];
   type?: 'text' | 'image' | 'system_payment' | 'system_contract' | 'system_status' | 'attachment';
-  systemData?: any;
+  /** Free-form payload of system messages; `orderId` is the one field the UI follows. */
+  systemData?: { orderId?: string } & Record<string, unknown>;
 }
 
-interface Chat {
+/** The chat's order, populated by chatController; typed loosely as a raw id too. */
+export interface ChatOrder {
+  _id: string;
+  paymentStatus?: string;
+  status?: string;
+}
+
+export interface Chat {
   _id: string;
   clientId: {
     _id: string;
@@ -32,6 +40,7 @@ interface Chat {
     price?: number;
     categories?: string[];
     isSold?: boolean;
+    userId?: string;
   };
   /**
    * From `getChatById` this is one page of the thread (most recent first page by
@@ -48,7 +57,7 @@ interface Chat {
   lastMessage?: string;
   updatedAt?: string;
   deletedFor?: string[];
-  orderId?: any;
+  orderId?: string | ChatOrder | null;
   // `in_progress` and `disputed` are real backend values and were missing here, which
   // is why the conversation badge fell through to its default and read "Forespørsel"
   // for a job that was actually under way.

@@ -1,3 +1,5 @@
+import { isAxiosError } from 'axios';
+
 /**
  * Turns anything thrown by an axios call into a single Norwegian string safe to
  * hand to `toast.error()` or render as a React child.
@@ -61,3 +63,12 @@ export function getErrorMessage(err: unknown, fallback = 'Noe gikk galt. Prøv i
 
   return fallback;
 }
+
+/**
+ * The response body of an axios error, for callers that read one field and keep their own
+ * fallback. `undefined` for anything that is not an axios error with a response.
+ */
+export const errorBody = <T extends object = object>(
+  err: unknown
+): (T & { error?: string; message?: string }) | undefined =>
+  isAxiosError<T & { error?: string; message?: string }>(err) ? err.response?.data : undefined;

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { CreditCard, CheckCircle2, XCircle, Clock, RotateCcw } from 'lucide-react';
 import { useAdminTransactions } from '../../hooks/admin';
 import type { AdminTransactionsQuery, AdminTransaction } from '../../api/admin';
@@ -36,10 +36,11 @@ export default function TransactionsPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
 
+  const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const handleSearchChange = useCallback((val: string) => {
     setSearch(val);
-    clearTimeout((handleSearchChange as any)._t);
-    (handleSearchChange as any)._t = setTimeout(() => {
+    clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => {
       setDebouncedSearch(val);
       setPage(1);
     }, 400);

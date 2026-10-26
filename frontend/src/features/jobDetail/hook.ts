@@ -6,6 +6,7 @@ import {
   getMyJobRequests,
 } from '../../api/orderAPI';
 import type { Jobs } from '../../types/Jobs';
+import { useUserStore } from '../../stores/userStore';
 
 export const useJobDetailQuery = (id: string) => {
   return useQuery({
@@ -30,7 +31,7 @@ export const useCreateJobRequestMutation = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['jobRequests'] });
       queryClient.invalidateQueries({ queryKey: ['my-subscription'] });
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      useUserStore.getState().fetchProfile().catch(() => {});
     },
   });
 };

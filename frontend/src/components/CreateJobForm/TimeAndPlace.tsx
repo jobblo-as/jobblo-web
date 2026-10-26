@@ -38,7 +38,7 @@ interface TimeAndPlaceProps {
   setFromDate: (val: string) => void;
   toDate: string;
   setToDate: (val: string) => void;
-  errors?: any;
+  errors?: Partial<Record<string, string>>;
 }
 
 export const TimeAndPlace: React.FC<TimeAndPlaceProps> = ({
@@ -235,10 +235,11 @@ export const TimeAndPlace: React.FC<TimeAndPlaceProps> = ({
   const locationFields = (
     <>
       <div className="space-y-2">
-        <label className="text-[11px] md:text-[13px] font-bold text-gray-400 uppercase tracking-wider ml-1">
+        <label htmlFor="job-address" className="text-[11px] md:text-[13px] font-bold text-gray-400 uppercase tracking-wider ml-1">
           Gateadresse <span className="text-red-500">*</span>
         </label>
         <AddressAutocomplete
+          id="job-address"
           value={address}
           onValueChange={setAddress}
           onAddressSelect={handleAddressSelect}
@@ -259,7 +260,7 @@ export const TimeAndPlace: React.FC<TimeAndPlaceProps> = ({
       <div className="mt-4 grid grid-cols-1 gap-4 md:mt-6 md:grid-cols-2 md:gap-6">
         {/* County */}
         <div className="space-y-2">
-          <label className="text-[11px] md:text-[13px] font-bold text-gray-400 uppercase tracking-wider ml-1">
+          <label htmlFor="job-county" className="text-[11px] md:text-[13px] font-bold text-gray-400 uppercase tracking-wider ml-1">
             Fylke <span className="text-red-500">*</span>
           </label>
           <Select
@@ -273,6 +274,7 @@ export const TimeAndPlace: React.FC<TimeAndPlaceProps> = ({
             disabled={isLoading}
           >
             <SelectTrigger
+              id="job-county"
               data-invalid={errors?.countyCode ? 'true' : undefined}
               className={selectTriggerClass(!!errors?.countyCode)}
             >
@@ -295,7 +297,7 @@ export const TimeAndPlace: React.FC<TimeAndPlaceProps> = ({
 
         {/* Municipality */}
         <div className="space-y-2">
-          <label className="text-[11px] md:text-[13px] font-bold text-gray-400 uppercase tracking-wider ml-1">
+          <label htmlFor="job-municipality" className="text-[11px] md:text-[13px] font-bold text-gray-400 uppercase tracking-wider ml-1">
             Kommune <span className="text-red-500">*</span>
           </label>
           <Select
@@ -315,6 +317,7 @@ export const TimeAndPlace: React.FC<TimeAndPlaceProps> = ({
             disabled={!countyCode || isLoading}
           >
             <SelectTrigger
+              id="job-municipality"
               data-invalid={errors?.municipalityCode ? 'true' : undefined}
               className={selectTriggerClass(!!errors?.municipalityCode)}
             >
@@ -338,7 +341,7 @@ export const TimeAndPlace: React.FC<TimeAndPlaceProps> = ({
         {/* Area */}
         {selectedMunicipality?.children && selectedMunicipality.children.length > 0 && (
           <div className="space-y-2">
-            <label className="text-[11px] md:text-[13px] font-bold text-gray-400 uppercase tracking-wider ml-1">
+            <label htmlFor="job-area" className="text-[11px] md:text-[13px] font-bold text-gray-400 uppercase tracking-wider ml-1">
               Bydel / Område
             </label>
             <Select
@@ -346,7 +349,7 @@ export const TimeAndPlace: React.FC<TimeAndPlaceProps> = ({
               onValueChange={(value) => setAreaCode?.(value || '')}
               disabled={!municipalityCode || isLoading}
             >
-              <SelectTrigger className={selectTriggerClass(false)}>
+              <SelectTrigger id="job-area" className={selectTriggerClass(false)}>
                 <SelectValue placeholder="Velg bydel (valgfritt)" />
               </SelectTrigger>
               <SelectContent>
@@ -362,7 +365,7 @@ export const TimeAndPlace: React.FC<TimeAndPlaceProps> = ({
 
         {/* City */}
         <div className="space-y-2">
-          <label className="text-[11px] md:text-[13px] font-bold text-gray-400 uppercase tracking-wider ml-1">
+          <label htmlFor="job-city" className="text-[11px] md:text-[13px] font-bold text-gray-400 uppercase tracking-wider ml-1">
             By / Sted <span className="text-red-500">*</span>
           </label>
           {/*
@@ -373,6 +376,7 @@ export const TimeAndPlace: React.FC<TimeAndPlaceProps> = ({
             greyed out so nobody could fix it.
           */}
           <input
+            id="job-city"
             type="text"
             value={city}
             onChange={(e) => setCity(e.target.value)}
@@ -504,10 +508,11 @@ export const TimeAndPlace: React.FC<TimeAndPlaceProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           <div className="space-y-2">
-            <label className="text-[11px] md:text-[13px] font-bold text-gray-400 uppercase tracking-wider ml-1">
+            <label htmlFor="job-from-date" className="text-[11px] md:text-[13px] font-bold text-gray-400 uppercase tracking-wider ml-1">
               Fra dato <span className="text-red-500">*</span>
             </label>
             <input
+              id="job-from-date"
               title="Velg fra dato"
               required
               type="date"
@@ -523,10 +528,11 @@ export const TimeAndPlace: React.FC<TimeAndPlaceProps> = ({
             )}
           </div>
           <div className="space-y-2">
-            <label className="text-[11px] md:text-[13px] font-bold text-gray-400 uppercase tracking-wider ml-1">
+            <label htmlFor="job-to-date" className="text-[11px] md:text-[13px] font-bold text-gray-400 uppercase tracking-wider ml-1">
               Til dato <span className="text-red-500">*</span>
             </label>
             <input
+              id="job-to-date"
               title="Velg til dato"
               required
               type="date"

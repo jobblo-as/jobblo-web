@@ -106,20 +106,6 @@ export default function VoucherPage() {
         setCreateOpen(true);
     };
 
-    const openEdit = (v: Voucher) => {
-        setEditTarget(v);
-        setForm({
-            name: v.name, code: v.code, amount: String(v.amount),
-            type: v.type, usageLimit: String(v.usageLimit),
-            targetPlanType: v.targetPlanType, active: v.active,
-            activeDate: v.activeDate ? new Date(v.activeDate).toISOString().split('T')[0] : '',
-            expiresDate: v.expiresDate ? new Date(v.expiresDate).toISOString().split('T')[0] : '',
-            duration: v.duration || 'once',
-            durationInMonths: v.durationInMonths ? String(v.durationInMonths) : '',
-        });
-        setFormError('');
-        setCreateOpen(true);
-    };
 
     const handleSave = async () => {
         if (!form.name.trim() || !form.code.trim() || !form.amount) {

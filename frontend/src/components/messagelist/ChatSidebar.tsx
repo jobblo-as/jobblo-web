@@ -1,6 +1,7 @@
 import React from 'react';
 import ConversationList from '../../components/chat/ConversationList';
 import type { FilterType } from '../../features/chat/useChatLogic';
+import type { Chat } from '../../api/chatAPI';
 
 interface ChatSidebarProps {
   conversationId?: string;
@@ -8,9 +9,9 @@ interface ChatSidebarProps {
   activeFilter: FilterType;
   setActiveFilter: (filter: FilterType) => void;
   chatsLoading: boolean;
-  filteredChats: any[];
-  user: any;
-  isUnread: (chat: any) => boolean;
+  filteredChats: Chat[];
+  user: { _id?: string } | null;
+  isUnread: (chat: { messages?: Chat['messages'] }) => boolean;
   formatTime: (date?: string) => string;
   onlineUsers: string[];
 }

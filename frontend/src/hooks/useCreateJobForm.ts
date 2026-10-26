@@ -8,7 +8,7 @@ import { usePaymentCalculation } from './usePaymentCalculation';
 import { useForm } from './useForm';
 import { JOB_LIMITS, jobValidationSchema, type JobFormValues } from '../validations/jobValidations';
 import { saveFormData, loadFormData, clearFormData } from '../utils/indexedDB';
-import { getErrorMessage } from '../utils/getErrorMessage';
+import { getErrorMessage, errorBody } from '../utils/getErrorMessage';
 import { summariseAiFill, clampMessage } from '../utils/aiFillSummary';
 import { scrollToFirstError } from '../utils/scrollToError';
 
@@ -19,6 +19,35 @@ import { scrollToFirstError } from '../utils/scrollToError';
  */
 type JobFormErrors = Partial<
   Record<keyof JobFormValues | 'images' | 'coordinates' | 'countyCode' | 'municipalityCode', string>
+>;
+
+/** The schema keyed by every form field, so a field without rules (phone) reads as undefined. */
+const fieldRules: Partial<
+  Record<keyof JobFormValues, { test: (values: JobFormValues) => boolean; message: string }[]>
+> = jobValidationSchema;
+
+/** What the save effect below writes to IndexedDB, read back on mount. */
+type JobDraft = Partial<
+  JobFormValues & {
+    urgent: boolean;
+    maxApplicants: string | number;
+    equipment: string;
+    countyCode: string;
+    municipalityCode: string;
+    areaCode: string;
+    latitude: number | null;
+    longitude: number | null;
+    durationUnit: string;
+    hourlyRate: string;
+    paymentType: string;
+    tags: string[];
+    currentStep: number;
+    currentImages: string[];
+    imagesToDelete: string[];
+    showSmartFillInput: boolean;
+    smartFillPrompt: string;
+    checklistItems: { id: string; text: string }[];
+  }
 >;
 
 interface InitialData {
@@ -60,7 +89,6 @@ export const useCreateJobForm = (
     values,
     errors,
     handleChange: handleFormChange,
-    validate,
     setValues,
     setErrors,
     setMultipleValues,
@@ -296,12 +324,12 @@ export const useCreateJobForm = (
       if (paymentType !== 'Timepris') setPrice(String(suggestion.suggestedPrice));
       setSmartFillPricingNote(suggestion.pricingReasoning);
       setImageAnalysis({ status: 'success', durationRange: suggestion.durationRange });
-    } catch (err: any) {
+    } catch (err) {
       setImageAnalysis({
         status: 'error',
         message:
-          err.response?.data?.message ||
-          err.response?.data?.error ||
+          errorBody(err)?.message ||
+          errorBody(err)?.error ||
           'Bildet kunne ikke analyseres. Fyll ut skjemaet manuelt.',
       });
     }
@@ -342,7 +370,7 @@ export const useCreateJobForm = (
               : undefined) || undefined,
         existingPaymentType: paymentType as 'Timepris' | 'Fastpris' | 'Anbud',
         existingDuration: durationValue
-          ? { value: durationValue, unit: (durationUnit as any) || 'minutes' }
+          ? { value: durationValue, unit: (durationUnit as 'minutes' | 'hours' | 'days') || 'minutes' }
           : undefined,
         existingCity: values.city || undefined,
         existingCounty: countyCode || undefined,
@@ -425,7 +453,8 @@ export const useCreateJobForm = (
         }
 
         if (locationRelevance === 'remote') {
-          setCity((prev) => prev || 'Fjernarbeid / Remote');
+          // Was setCity(prev => ...): setCity takes a string, so the updater itself was stored.
+          setCity(values.city || 'Fjernarbeid / Remote');
         }
 
         setShowSmartFillInput(false);
@@ -440,14 +469,15 @@ export const useCreateJobForm = (
         setSmartFillPricingNote(pricingReasoning || '');
         toast.success(summariseAiFill(newFlags), { duration: 3000 });
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('SMART FILL ERROR:', err);
       const errorMessage =
-        err.response?.data?.error ||
-        err.response?.data?.message ||
+        errorBody(err)?.error ||
+        errorBody(err)?.message ||
         'Kunne ikke generere jobbinformasjon.';
-      const details = err.response?.data?.validationErrors?.length
-        ? ` (${err.response.data.validationErrors.slice(0, 2).join(', ')})`
+      const validationErrors = errorBody<{ validationErrors?: string[] }>(err)?.validationErrors;
+      const details = validationErrors?.length
+        ? ` (${validationErrors.slice(0, 2).join(', ')})`
         : '';
       toast.error(clampMessage(errorMessage + details));
     } finally {
@@ -466,7 +496,7 @@ export const useCreateJobForm = (
       }
 
       try {
-        const { data, images } = await loadFormData();
+        const { data, images } = await loadFormData<JobDraft>(currentUser?._id);
         if (data) {
           setValues({
             title: data.title || '',
@@ -547,7 +577,7 @@ export const useCreateJobForm = (
           smartFillPrompt,
           checklistItems,
         };
-        await saveFormData(dataToSave, selectedImages);
+        await saveFormData(dataToSave, selectedImages, currentUser?._id);
       } catch (err) {
         console.error('Error saving form data:', err);
       }
@@ -590,7 +620,7 @@ export const useCreateJobForm = (
       // Validate Step 1 fields
       const fieldsToValidate: (keyof JobFormValues)[] = ['title', 'description', 'categories'];
       fieldsToValidate.forEach((field) => {
-        const rules = jobValidationSchema[field];
+        const rules = fieldRules[field];
         if (rules) {
           for (const rule of rules) {
             if (!rule.test(values)) {
@@ -618,7 +648,7 @@ export const useCreateJobForm = (
         'toDate',
       ];
       fieldsToValidate.forEach((field) => {
-        const rules = jobValidationSchema[field];
+        const rules = fieldRules[field];
         if (rules) {
           for (const rule of rules) {
             if (!rule.test(values)) {
@@ -684,7 +714,7 @@ export const useCreateJobForm = (
       // Validate Step 4 fields (Contact Information)
       const fieldsToValidate: (keyof JobFormValues)[] = ['email', 'phone'];
       fieldsToValidate.forEach((field) => {
-        const rules = jobValidationSchema[field];
+        const rules = fieldRules[field];
         if (rules) {
           for (const rule of rules) {
             if (!rule.test(values)) {

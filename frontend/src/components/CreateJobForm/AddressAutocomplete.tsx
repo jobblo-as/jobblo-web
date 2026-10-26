@@ -44,6 +44,8 @@ export interface AddressSelectResult {
 }
 
 interface AddressAutocompleteProps {
+  /** Put on the input so a `<label htmlFor>` points at it. */
+  id?: string;
   value: string;
   onValueChange: (val: string) => void;
   onAddressSelect: (result: AddressSelectResult) => void;
@@ -64,6 +66,7 @@ interface AddressAutocompleteProps {
 const boundsCache = new Map<string, google.maps.LatLngBounds | null>();
 
 export function AddressAutocomplete({
+  id,
   value,
   onValueChange,
   onAddressSelect,
@@ -300,6 +303,7 @@ export function AddressAutocomplete({
   if (!GOOGLE_MAPS_API_KEY) {
     return (
       <input
+        id={id}
         type="text"
         value={value}
         onChange={(e) => onValueChange(e.target.value)}
@@ -314,6 +318,7 @@ export function AddressAutocomplete({
   return (
     <div ref={containerRef} className="relative">
       <input
+        id={id}
         type="text"
         value={value}
         onChange={(e) => handleInputChange(e.target.value)}

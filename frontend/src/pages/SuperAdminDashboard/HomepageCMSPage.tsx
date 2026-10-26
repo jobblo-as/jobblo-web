@@ -4,6 +4,9 @@ import { useHomepageContent, useUpdateHomepageContent } from '../../hooks/admin/
 import { AdminPageHeader, AdminLoadingSkeleton, AdminErrorState } from '../../components/admin';
 import { toast } from 'react-hot-toast';
 
+/** Content fields are untyped JSON; a missing one edits as empty. */
+const text = (value: unknown): string => (typeof value === 'string' ? value : '');
+
 export default function HomepageCMSPage() {
   const { data: content, isLoading, isError, refetch } = useHomepageContent();
   const updateMutation = useUpdateHomepageContent();
@@ -21,17 +24,17 @@ export default function HomepageCMSPage() {
   useEffect(() => {
     if (content) {
       setForm({
-        heroTitle: content.heroTitle ?? '',
-        heroSubtitle: content.heroSubtitle ?? '',
-        heroDescription: content.heroDescription ?? '',
-        ctaText: content.ctaText ?? '',
-        ctaUrl: content.ctaUrl ?? '',
+        heroTitle: text(content.heroTitle),
+        heroSubtitle: text(content.heroSubtitle),
+        heroDescription: text(content.heroDescription),
+        ctaText: text(content.ctaText),
+        ctaUrl: text(content.ctaUrl),
         featuredCategories: Array.isArray(content.featuredCategories)
           ? content.featuredCategories.map((c: unknown) => JSON.stringify(c)).join('\n')
           : typeof content.featuredCategories === 'string'
             ? content.featuredCategories
             : '',
-        announcementBanner: content.announcementBanner ?? '',
+        announcementBanner: text(content.announcementBanner),
       });
     }
   }, [content]);

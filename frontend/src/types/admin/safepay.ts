@@ -101,6 +101,7 @@ export interface Dispute {
     orderId: { _id: string; status: string; agreedPrice?: number } | string | null;
     serviceId?: { _id: string; title: string };
     openedBy?: { _id: string; name: string; email: string; role: string };
+    openedByRole?: 'customer' | 'provider';
     openedAgainst?: { _id: string; name: string; email: string; role: string };
     reasonCategory: string;
     title: string;

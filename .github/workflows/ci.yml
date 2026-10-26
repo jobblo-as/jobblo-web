@@ -110,12 +110,12 @@ jobs:
         if: steps.changes.outputs.frontend == 'true'
         run: npm audit --omit=dev --audit-level=high
 
-      # Lint and typecheck block NEW errors: the step fails when the error count rises
-      # above the existing backlog. Lower the numbers as the backlog is fixed (0 = clean).
+      # Lint blocks NEW errors: the step fails when the count rises above the remaining backlog
+      # (209 -> 56 so far; lower it as it is fixed, 0 = clean). Typecheck is clean and blocking.
       - name: Lint
         if: steps.changes.outputs.frontend == 'true'
         env:
-          MAX_ERRORS: 209
+          MAX_ERRORS: 56
         run: |
           STATUS=0; npx eslint . > lint.log 2>&1 || STATUS=$?
           # stylish summary line: "✖ N problems (E errors, W warnings)"; no line = clean
@@ -129,15 +129,7 @@ jobs:
 
       - name: Typecheck
         if: steps.changes.outputs.frontend == 'true'
-        env:
-          MAX_ERRORS: 102
-        run: |
-          STATUS=0; npm run typecheck > tsc.log 2>&1 || STATUS=$?
-          ERRORS=$(grep -c 'error TS' tsc.log || true)
-          echo "### Frontend typecheck: $ERRORS errors (allowed $MAX_ERRORS)" >> "$GITHUB_STEP_SUMMARY"
-          tail -60 tsc.log
-          [ "$STATUS" = 0 ] || [ "$ERRORS" -gt 0 ]
-          [ "$ERRORS" -le "$MAX_ERRORS" ]
+        run: npm run typecheck
 
       - name: Build
         if: steps.changes.outputs.frontend == 'true'
