@@ -19,12 +19,15 @@ globalThis.__storage = { getItem: async (k) => data.get(k) ?? null, setItem: asy
 let deleteFails = false;
 let tokenRequests = 0;
 globalThis.__api = { post: async () => ({}), delete: async () => { if (deleteFails) throw new Error('offline'); return {}; } };
-globalThis.require = () => ({
+let nativePresent = true; // false = a native build older than the JS (Expo SDK 58)
+globalThis.require = (name) => name === 'expo-modules-core'
+  ? { requireOptionalNativeModule: () => (nativePresent ? {} : null) }
+  : ({
   setNotificationHandler() {}, setNotificationChannelAsync: async () => {},
   getPermissionsAsync: async () => ({ status: 'granted' }),
   getDevicePushTokenAsync: async () => { tokenRequests += 1; return { data: 'fcm-token-123' }; },
   addPushTokenListener: () => ({ remove() {} }),
-});
+  });
 const push = await import('./pushNotifications.service.ts');
 
 assert.equal((await push.registerPushNotifications({ automatic: true })).registered, true, 'auto-registers by default');
@@ -46,5 +49,15 @@ assert.equal(tokenRequests, before);
 // Tapping "Aktiver" clears the opt-out.
 assert.equal((await push.registerPushNotifications()).registered, true);
 assert.equal((await push.registerPushNotifications({ automatic: true })).registered, true, 'opt-out cleared by enabling');
+// A native build older than the JS: push switches off without throwing (it was a red error).
+nativePresent = false;
+const warnings = [];
+const origWarn = console.warn;
+console.warn = (...a) => warnings.push(a.join(' '));
+const r = await push.registerPushNotifications({ automatic: true });
+console.warn = origWarn;
+assert.equal(r.registered, false, 'no registration on a stale native build');
+assert.ok(warnings.some((w) => w.includes('Rebuild')), 'one clear rebuild warning');
+
 delete globalThis.require;
 console.log('pushOptOut: all checks passed');

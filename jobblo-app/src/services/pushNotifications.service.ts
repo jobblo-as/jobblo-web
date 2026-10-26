@@ -14,7 +14,20 @@ type NotificationModule = typeof import('expo-notifications');
 let pushTokenSubscription: { remove: () => void } | null = null;
 let notificationBootstrapPromise: Promise<boolean> | null = null;
 
+let staleBuildWarned = false;
+
 function loadNotifications(): NotificationModule | null {
+  // A native build made before the Expo SDK 58 upgrade lacks expo-notifications' newer native
+  // module, and importing the JS package then throws during module init (a red error on every
+  // start). Check first and switch push off with one clear warning: rebuild the app to fix.
+  const { requireOptionalNativeModule } = require('expo-modules-core') as typeof import('expo-modules-core');
+  if (Platform.OS !== 'web' && !requireOptionalNativeModule('ExpoTopicSubscriptionModule')) {
+    if (!staleBuildWarned) {
+      staleBuildWarned = true;
+      console.warn('[push] This app build is older than its code (Expo SDK 58): push is off. Rebuild with `npx expo prebuild --clean` + `npx expo run:android` (or a new EAS build).');
+    }
+    return null;
+  }
   try {
     return require('expo-notifications') as NotificationModule;
   } catch {
