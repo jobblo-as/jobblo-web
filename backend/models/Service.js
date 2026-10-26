@@ -121,7 +121,9 @@ const serviceSchema = new mongoose.Schema(
 
     views: { type: Number, default: 0 },
     maxApplicants: { type: Number, default: 0 }, // 0 means unlimited
-    timeEntries: [timeEntrySchema],
+    // Hours and notes are for the owner and the assigned worker only (progressController
+    // selects them with +timeEntries). Kept out of every other read, incl. the public detail cache.
+    timeEntries: { type: [timeEntrySchema], select: false },
 
     // Dynamic checklist for the job
     checklist: [
@@ -146,5 +148,28 @@ serviceSchema.index({ status: 1, createdAt: -1 });
 serviceSchema.index({ status: 1, price: 1, createdAt: -1 });
 serviceSchema.index({ categories: 1, status: 1, createdAt: -1 });
 serviceSchema.index({ userId: 1, createdAt: -1 }); // "my posted jobs", profile listings
+// price_high sorts { price: -1, createdAt: -1 }: the index above walked backwards gives
+// createdAt ascending, so Mongo sorted every public listing in memory. Same for a category
+// filter with either price sort. And the "Fiks ferdig" (urgent) count fetched every public doc.
+serviceSchema.index({ status: 1, price: -1, createdAt: -1 });
+serviceSchema.index({ categories: 1, status: 1, price: 1, createdAt: -1 });
+serviceSchema.index({ categories: 1, status: 1, price: -1, createdAt: -1 });
+serviceSchema.index({ status: 1, urgent: 1, createdAt: -1 });
+
+// Any write clears the cached public job reads (utils/cache namespace "services": list, nearby,
+// detail), from whichever route or job made it. Except the view counter: it changes on every
+// visit, and clearing on it would empty the cache on each page view.
+// `timestamps` adds `$set: { updatedAt }` and `$setOnInsert: { createdAt }` to every update.
+const TIMESTAMP_OPS = { $set: 'updatedAt', $setOnInsert: 'createdAt' };
+const isViewCountOnly = (update) =>
+  !!update &&
+  Object.keys(update.$inc || {}).join() === 'views' &&
+  Object.keys(update).every((op) => op === '$inc' || Object.keys(update[op]).join() === TIMESTAMP_OPS[op]);
+for (const op of ['save', 'findOneAndUpdate', 'findOneAndDelete', 'deleteOne', 'deleteMany', 'updateOne', 'updateMany', 'insertMany']) {
+  serviceSchema.post(op, function clearServiceCache() {
+    if (typeof this?.getUpdate === 'function' && isViewCountOnly(this.getUpdate())) return;
+    void require('../utils/cache').invalidate('services');
+  });
+}
 
 module.exports = mongoose.model('Service', serviceSchema);

@@ -21,20 +21,23 @@ const STARTERS = [
   ['config drift', () => require('../services/monitoring/configDrift').recordBoot()],
   ['failure simulator', () => require('../services/monitoring/faults').startFaults()],
   ['api contracts', () => require('../services/monitoring/contracts').startContracts()],
+  ['view counts', () => require('../utils/viewCounter').startViewFlush()],
 ];
 
 function startBackground(starters = STARTERS) {
   const failed = [];
+  const stops = []; // [name, fn] for registerShutdown's `extra`: starters that hand back { stop }
   for (const [name, start] of starters) {
     try {
       const r = start();
+      if (r && typeof r.stop === 'function') stops.push([name, () => r.stop()]);
       if (r && typeof r.catch === 'function') r.catch((err) => console.error(`[bootstrap] ${name} failed:`, err.message));
     } catch (err) {
       failed.push(name);
       console.error(`[bootstrap] ${name} failed to start:`, err.message);
     }
   }
-  return { started: starters.length - failed.length, failed };
+  return { started: starters.length - failed.length, failed, stops };
 }
 
 module.exports = { STARTERS, startBackground };

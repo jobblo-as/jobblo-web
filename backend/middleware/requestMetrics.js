@@ -19,10 +19,12 @@ const FLUSH_MS = 60 * 1000;
 const TRACKED_CODES = [400, 401, 403, 404, 429, 500];
 const IP_CAP_PER_BUCKET = 500; // distinct IPs tracked per route per minute
 const IP_TOP_STORED = 50; // stored per row; the remainder goes to ipsOther
+const MAX_BUCKETS = 1000; // method+route rows per minute; the app has ~500 routes
 
 let buckets = new Map();
 let activeRequests = 0;
-const recent = []; // last 60s: [{ t, ms, err }]
+let recent = []; // [{ t, ms, err }]; the last 60s are recent[recentHead..]
+let recentHead = 0;
 
 function percentile(sortedValues, p) {
   if (!sortedValues.length) return 0;
@@ -31,10 +33,10 @@ function percentile(sortedValues, p) {
 }
 
 function routeOf(req) {
-  // Rejected before routing (401/429/404): group by the first two segments after /api,
-  // which keeps cardinality bounded even under random-path scanning.
+  // Rejected before routing (401/403/429/404): "/api/<mount>/*". Two segments, not three: the
+  // third is often an id, so `/api/x/<uuid>` loops made one bucket and one stored row per request.
   if (!req.route) {
-    const parts = req.originalUrl.split('?')[0].split('/').filter(Boolean).slice(0, 3);
+    const parts = req.originalUrl.split('?')[0].split('/').filter(Boolean).slice(0, 2);
     return `/${parts.join('/')}/*`;
   }
   const path = Array.isArray(req.route.path) ? req.route.path.join('|') : String(req.route.path);
@@ -45,7 +47,10 @@ function routeOf(req) {
 const SLOW_REQUEST_MS = Number(process.env.SLO_LATENCY_MS) || 1000;
 
 function record(method, route, status, ms, ip = null) {
-  const key = `${method} ${route}`;
+  let key = `${method} ${route}`;
+  // Hard ceiling on rows per minute whatever the path shape (/api/<random>/... is still one per
+  // random mount name): past MAX_BUCKETS, new keys share one overflow bucket.
+  if (!buckets.has(key) && buckets.size >= MAX_BUCKETS) [key, method, route] = ['* (other)', '*', '(other)'];
   let b = buckets.get(key);
   if (!b) {
     b = { method, route, count: 0, failed: 0, slow: 0, durSum: 0, durMax: 0, codes: {}, samples: [], ips: new Map(), ipsOther: 0 };
@@ -75,7 +80,13 @@ function record(method, route, status, ms, ip = null) {
 
   const now = Date.now();
   recent.push({ t: now, ms, err: status >= 500 });
-  while (recent.length && recent[0].t < now - 60000) recent.shift();
+  // A moving head, not shift(): past ~16k entries (a minute at a few hundred req/s) V8's
+  // shift() copies the whole array — up to ~250 µs per request under sustained load.
+  while (recentHead < recent.length && recent[recentHead].t < now - 60000) recentHead += 1;
+  if (recentHead > 1024 && recentHead * 2 > recent.length) {
+    recent = recent.slice(recentHead);
+    recentHead = 0;
+  }
 }
 
 function toRow(b, minute) {
@@ -157,15 +168,16 @@ function startMetricsFlush() {
 /** Live snapshot of the last 60 seconds (this process only). */
 function liveSnapshot() {
   const now = Date.now();
-  const last10 = recent.filter((r) => r.t >= now - 10000).length;
-  const sorted = recent.map((r) => r.ms).sort((a, b) => a - b);
+  const live = recent.slice(recentHead);
+  const last10 = live.filter((r) => r.t >= now - 10000).length;
+  const sorted = live.map((r) => r.ms).sort((a, b) => a - b);
   return {
     activeRequests,
     rps: Math.round((last10 / 10) * 10) / 10,
-    requestsLastMin: recent.length,
-    errorsLastMin: recent.filter((r) => r.err).length,
+    requestsLastMin: live.length,
+    errorsLastMin: live.filter((r) => r.err).length,
     p95LastMin: percentile(sorted, 95),
   };
 }
 
-module.exports = { requestMetrics, startMetricsFlush, liveSnapshot, percentile, toRow, routeOf };
+module.exports = { requestMetrics, startMetricsFlush, flush, liveSnapshot, percentile, toRow, routeOf };

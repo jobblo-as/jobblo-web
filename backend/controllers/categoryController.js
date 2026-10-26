@@ -1,5 +1,6 @@
 const Category = require('../models/Category');
 const mongoose = require('mongoose');
+const { withDefaults } = require('../utils/lean');
 
 // Helper to validate ObjectId
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
@@ -43,7 +44,8 @@ exports.createCategory = async (req, res) => {
 
 exports.getAllCategories = async (req, res) => {
   try {
-    const categories = await Category.find({ isActive: true });
+    // lean + defaults: the same JSON as hydrated documents, without hydrating them.
+    const categories = withDefaults(Category, await Category.find({ isActive: true }).lean());
     res.json(categories);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
@@ -58,7 +60,7 @@ exports.getCategoryById = async (req, res) => {
       return res.status(400).json({ error: 'Invalid category ID format' });
     }
 
-    const category = await Category.findById(id);
+    const category = withDefaults(Category, await Category.findById(id).lean());
     if (!category) {
       return res.status(404).json({ error: 'Category not found' });
     }

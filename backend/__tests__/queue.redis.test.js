@@ -76,7 +76,9 @@ describe('queues on Redis (BullMQ)', () => {
       return j && (await j.getState()) === 'completed' ? j : null;
     });
     expect(deliverPush).toHaveBeenCalledTimes(3);
-    expect(job.attemptsMade).toBe(3);
+    // BullMQ 6: attemptsStarted counts every run. attemptsMade is updated around completion and
+    // read as 2 or 3 depending on timing, so it is not asserted.
+    expect(job.attemptsStarted).toBe(3);
   });
 
   maybe('a job that keeps failing ends in the failed list (dead letter) and can be retried', async () => {

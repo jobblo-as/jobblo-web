@@ -45,4 +45,17 @@ function withDefaults(Model, docs, { populatedUsers = ['userId'] } = {}) {
   return Array.isArray(docs) ? docs.map(one) : one(docs);
 }
 
-module.exports = { withDefaults, staticDefaults };
+/**
+ * A populated doc read lean: put back the static defaults of the paths the populate SELECTED
+ * (a hydrated subdocument showed e.g. completedJobs: 0 when the stored user had none), and only
+ * those, so no unselected field appears.
+ */
+function selectedDefaults(Model, doc, select) {
+  if (!doc || typeof doc !== 'object' || !Model?.schema) return doc;
+  const wanted = new Set(String(select).split(/\s+/));
+  const out = { ...doc };
+  for (const [path, d] of defaultsOf(Model.schema)) if (wanted.has(path) && out[path] === undefined) out[path] = clone(d);
+  return out;
+}
+
+module.exports = { withDefaults, staticDefaults, selectedDefaults };

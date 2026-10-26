@@ -74,13 +74,24 @@ function runInline(queue, jobName, data) {
 async function enqueue(queue, jobName, data = {}, opts = {}) {
   handlerFor(queue, jobName); // unknown job = programming error, fail loudly
   if (!usingRedis()) return runInline(queue, jobName, data);
+  let fellBack = false;
+  // A timed-out add can still land later (ioredis replays it on reconnect), and the job
+  // would then run twice: in-process now and on a worker. Withdraw it if it lands.
+  // ponytail: a worker that grabs it before remove() still runs it a second time
+  // (handlers are idempotent per the contract above); an inline-ran marker is the upgrade.
   try {
+    const added = getQueue(queue).add(jobName, data, opts);
+    added.then(
+      (job) => fellBack && job?.remove?.().catch((err) => console.error(`[queue] ${queue}/${jobName}: late job not withdrawn: ${err.message}`)),
+      () => {}
+    );
     const job = await Promise.race([
-      getQueue(queue).add(jobName, data, opts),
+      added,
       new Promise((_, reject) => setTimeout(() => reject(new Error('enqueue timed out')), ENQUEUE_TIMEOUT_MS).unref()),
     ]);
     return { id: job.id, inline: false };
   } catch (err) {
+    fellBack = true;
     console.error(`[queue] ${queue}/${jobName}: Redis unavailable (${err.message}) — running in-process`);
     return runInline(queue, jobName, data);
   }
