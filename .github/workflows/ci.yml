@@ -1,9 +1,13 @@
 name: CI
 
 # One workflow for all app checks. Each job only runs when its own area changes
-# (path filters) and they run in parallel. No Docker, no standalone type-check step.
+# (path filters) and they run in parallel. No Docker. Runs on pushes to every branch:
+# deploy.sh only deploys a commit (on any branch) when this workflow is green for it.
 
 on:
+  push:
+    branches:
+      - '**'
   pull_request:
     branches:
       - main
@@ -11,6 +15,8 @@ on:
 
 permissions:
   contents: read
+  # dorny/paths-filter and gitleaks-action read the PR's changed files / commits.
+  pull-requests: read
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -49,6 +55,10 @@ jobs:
         run: |
           npm ci
           echo '### Backend install: passed' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Audit production dependencies
+        if: steps.changes.outputs.backend == 'true'
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Test
         if: steps.changes.outputs.backend == 'true'
@@ -96,24 +106,38 @@ jobs:
         if: steps.changes.outputs.frontend == 'true'
         run: npm ci
 
-      # Lint stays non-blocking while the frontend backlog is worked through;
-      # the production build is the blocking correctness check.
-      - name: Lint (non-blocking)
+      - name: Audit production dependencies
         if: steps.changes.outputs.frontend == 'true'
-        continue-on-error: true
+        run: npm audit --omit=dev --audit-level=high
+
+      # Lint and typecheck block NEW errors: the step fails when the error count rises
+      # above the existing backlog. Lower the numbers as the backlog is fixed (0 = clean).
+      - name: Lint
+        if: steps.changes.outputs.frontend == 'true'
+        env:
+          MAX_ERRORS: 209
         run: |
-          set +e
-          npm run lint > lint.log 2>&1
-          STATUS=$?
-          if [ "$STATUS" -eq 0 ]; then
-            echo "### Frontend lint: passed" >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "### Frontend lint: existing issues (non-blocking)" >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-            head -50 lint.log >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-          fi
-          exit "$STATUS"
+          STATUS=0; npx eslint . > lint.log 2>&1 || STATUS=$?
+          # stylish summary line: "✖ N problems (E errors, W warnings)"; no line = clean
+          ERRORS=$(grep -oE '\(([0-9]+) errors?' lint.log | grep -oE '[0-9]+' | tail -1)
+          ERRORS=${ERRORS:-0}
+          echo "### Frontend lint: $ERRORS errors (allowed $MAX_ERRORS)" >> "$GITHUB_STEP_SUMMARY"
+          tail -60 lint.log
+          # a crash prints no count: fail on a non-zero exit with zero counted errors
+          [ "$STATUS" = 0 ] || [ "$ERRORS" -gt 0 ]
+          [ "$ERRORS" -le "$MAX_ERRORS" ]
+
+      - name: Typecheck
+        if: steps.changes.outputs.frontend == 'true'
+        env:
+          MAX_ERRORS: 102
+        run: |
+          STATUS=0; npm run typecheck > tsc.log 2>&1 || STATUS=$?
+          ERRORS=$(grep -c 'error TS' tsc.log || true)
+          echo "### Frontend typecheck: $ERRORS errors (allowed $MAX_ERRORS)" >> "$GITHUB_STEP_SUMMARY"
+          tail -60 tsc.log
+          [ "$STATUS" = 0 ] || [ "$ERRORS" -gt 0 ]
+          [ "$ERRORS" -le "$MAX_ERRORS" ]
 
       - name: Build
         if: steps.changes.outputs.frontend == 'true'
@@ -123,6 +147,21 @@ jobs:
         run: |
           npm run build
           echo '### Frontend build: passed' >> "$GITHUB_STEP_SUMMARY"
+
+  # ── Secret scan ────────────────────────────────────────────────────────────
+  gitleaks:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Required by gitleaks-action for repositories owned by an organization (free key).
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
 
   # ── Mobile ─────────────────────────────────────────────────────────────────
   mobile:
@@ -156,6 +195,11 @@ jobs:
         run: |
           npm ci
           echo '### Mobile install: passed' >> "$GITHUB_STEP_SUMMARY"
+
+      # critical only: Expo's build tooling ships known highs with no non-breaking fix.
+      - name: Audit production dependencies
+        if: steps.changes.outputs.mobile == 'true'
+        run: npm audit --omit=dev --audit-level=critical
 
       - name: Expo config
         if: steps.changes.outputs.mobile == 'true'

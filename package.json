@@ -1,7 +1,4 @@
 {
-  "dependencies": {
-    "i": "^0.3.7"
-  },
   "devDependencies": {
     "eslint": "^10.6.0",
     "eslint-config-prettier": "^10.1.8",
