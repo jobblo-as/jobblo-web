@@ -1,13 +1,14 @@
 const User = require('../../models/User');
 const { isValidId } = require('./userHelpers');
+const { serverError } = require('../../utils/serverError');
+const { parsePagination } = require('../../utils/pagination');
 
 /** Blocking and unblocking other users. */
 
 // Get blocked users list (More Reliable Version)
 exports.getBlockedUsers = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const { page, limit } = parsePagination(req.query, { defaultLimit: 10 });
 
     // Fetch the user and populate blockedUsers
     const user = await User.findById(req.userId).populate(
@@ -34,7 +35,7 @@ exports.getBlockedUsers = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    serverError(res, error);
   }
 };
 
@@ -74,6 +75,6 @@ exports.blockUser = async (req, res) => {
       return res.json({ message: 'User blocked', isBlocked: true });
     }
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    serverError(res, error);
   }
 };

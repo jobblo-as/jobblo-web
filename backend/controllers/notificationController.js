@@ -1,20 +1,21 @@
 const Notification = require('../models/Notification');
 const User = require('../models/User');
 const mongoose = require('mongoose');
-const { notify, broadcast } = require('../services/notifications');
+const { notify, broadcast, unreadQuery, forViewer } = require('../services/notifications');
+const { serverError } = require('../utils/serverError');
+const { parsePagination } = require('../utils/pagination');
 
 // GET /api/notifications - Get all notifications for a user
 exports.getAllNotifications = async (req, res) => {
   try {
     const userId = req.userId; // Use req.userId set by auth middleware
-    const { page = 1, limit = 5, type } = req.query;
+    const { type } = req.query;
+    const { page, limit, skip } = parsePagination(req.query, { defaultLimit: 5 });
 
     if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ error: 'Invalid user ID' });
     }
 
-    // Pagination calculation
-    const skip = (parseInt(page) - 1) * parseInt(limit);
 
     // Filter criteria
     const query = {
@@ -30,14 +31,29 @@ exports.getAllNotifications = async (req, res) => {
     const total = await Notification.countDocuments(query);
 
     // 2. Fetch paginated notifications
+    // A broadcast's `readBy` holds every user who ever read it; never load it per tray.
     const notifications = await Notification.find(query)
+      .select('-readBy')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit))
       .populate('userId', 'name email')
       .populate('senderId', 'name lastName avatarUrl')
       .populate('orderId')
-      .populate('requestId');
+      .populate('requestId')
+      .lean();
+
+    // Only whether THIS viewer read each broadcast on the page.
+    // ponytail: readBy still grows unbounded on the document; a per-user read-receipt
+    // collection (notificationId, userId) is the upgrade.
+    const broadcastIds = notifications.filter((n) => !n.userId).map((n) => n._id);
+    const readIds = new Set(
+      broadcastIds.length
+        ? (await Notification.find({ _id: { $in: broadcastIds }, readBy: userId }).select('_id').lean()).map((n) =>
+            String(n._id)
+          )
+        : []
+    );
 
     // Response format with metadata
     res.json({
@@ -45,10 +61,10 @@ exports.getAllNotifications = async (req, res) => {
       total,
       currentPage: parseInt(page),
       totalPages: Math.ceil(total / limit),
-      data: notifications,
+      data: notifications.map((n) => forViewer({ ...n, readBy: readIds.has(String(n._id)) ? [userId] : [] }, userId)),
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    serverError(res, error);
   }
 };
 
@@ -76,20 +92,22 @@ exports.markAsRead = async (req, res) => {
       return res.status(403).json({ error: 'Ikke tilgang til dette varselet.' });
     }
 
-    // Update notification to be read
+    // Update notification to be read. A broadcast is shared, so only the caller's
+    // `readBy` entry changes — `read: true` here marked it read for every user.
     const updatedNotification = await Notification.findByIdAndUpdate(
       notificationId,
-      { read: true },
+      notification.userId ? { read: true } : { $addToSet: { readBy: req.userId } },
       { new: true }
     )
       .populate('userId', 'name email')
       .populate('senderId', 'name lastName avatarUrl')
       .populate('orderId')
-      .populate('requestId');
+      .populate('requestId')
+      .lean();
 
-    res.json(updatedNotification);
+    res.json(updatedNotification && forViewer(updatedNotification, req.userId));
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    serverError(res, error);
   }
 };
 
@@ -103,10 +121,14 @@ exports.markAllAsRead = async (req, res) => {
     }
 
     await Notification.updateMany({ userId, read: false }, { $set: { read: true } });
+    await Notification.updateMany(
+      { userId: null, isSystem: true, readBy: { $ne: userId } },
+      { $addToSet: { readBy: userId } }
+    );
 
     res.json({ success: true, message: 'All notifications marked as read' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    serverError(res, error);
   }
 };
 
@@ -141,7 +163,7 @@ exports.deleteNotification = async (req, res) => {
 
     res.json({ success: true, message: 'Notification deleted' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    serverError(res, error);
   }
 };
 
@@ -158,7 +180,7 @@ exports.deleteAllNotifications = async (req, res) => {
 
     res.json({ success: true, message: 'All notifications deleted' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    serverError(res, error);
   }
 };
 
@@ -171,14 +193,11 @@ exports.getUnreadCount = async (req, res) => {
       return res.status(400).json({ error: 'Invalid user ID' });
     }
 
-    const count = await Notification.countDocuments({
-      userId,
-      read: false,
-    });
+    const count = await Notification.countDocuments(unreadQuery(userId));
 
     res.json({ count });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    serverError(res, error);
   }
 };
 
@@ -222,7 +241,7 @@ exports.createTestNotification = async (req, res) => {
 
     res.status(201).json(testNotification);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    serverError(res, error);
   }
 };
 
@@ -244,6 +263,6 @@ exports.createSystemNotification = async (req, res) => {
       data: notification,
     });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    serverError(res, error);
   }
 };

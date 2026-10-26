@@ -8,4 +8,8 @@ const favoriteSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// "My favorites" and the already-favorited check; both were collection scans.
+// Not unique: Cosmos cannot add a unique index to a non-empty collection.
+favoriteSchema.index({ user: 1, service: 1 });
+
 module.exports = mongoose.model('Favorite', favoriteSchema);

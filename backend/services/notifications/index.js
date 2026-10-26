@@ -146,10 +146,27 @@ function emitToUser(userId, event, payload) {
   }
 }
 
+/**
+ * A system broadcast is ONE document in everybody's tray, so its `read` flag is global:
+ * setting it marked the announcement read for every user. Per-user state lives in
+ * `readBy`; `read: true` on a broadcast is only honoured as a legacy "already read" mark.
+ */
+const unreadQuery = (userId) => ({
+  read: false,
+  $or: [{ userId }, { userId: null, isSystem: true, readBy: { $ne: userId } }],
+});
+
+/** The caller's view of a lean notification: per-user `read`, and no list of who read it. */
+function forViewer(n, userId) {
+  const { readBy, ...rest } = n;
+  if (!n.userId) rest.read = Boolean(n.read) || (readBy || []).some((id) => String(id) === String(userId));
+  return rest;
+}
+
 /** The user's current unread total, sent alongside every notification. */
 async function unreadCount(userId) {
   try {
-    return await Notification.countDocuments({ userId, read: false });
+    return await Notification.countDocuments(unreadQuery(userId));
   } catch {
     return null;
   }
@@ -263,4 +280,4 @@ async function broadcast({ type, content }) {
   }
 }
 
-module.exports = { notify, broadcast, emitToUser, unreadCount, TYPES };
+module.exports = { notify, broadcast, emitToUser, unreadCount, unreadQuery, forViewer, TYPES };

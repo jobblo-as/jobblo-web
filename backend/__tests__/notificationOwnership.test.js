@@ -34,6 +34,7 @@ function mockRes() {
 function updateChain(value) {
   const o = {
     populate: jest.fn(() => o),
+    lean: jest.fn(() => o),
     then: (resolve, reject) => Promise.resolve(value).then(resolve, reject),
   };
   return o;

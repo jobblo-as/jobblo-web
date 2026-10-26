@@ -1,0 +1,36 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`public user projection every public field is a deliberate choice (update this list on purpose) 1`] = `
+[
+  "_id",
+  "name",
+  "lastName",
+  "avatarUrl",
+  "bannerUrl",
+  "role",
+  "companyName",
+  "orgNumber",
+  "orgType",
+  "website",
+  "postSted",
+  "locations",
+  "averageRating",
+  "reviewCount",
+  "completedJobs",
+  "skills",
+  "bio",
+  "experience",
+  "hourlyRate",
+  "availabilityText",
+  "portfolio",
+  "previousProjects",
+  "subscription",
+  "responseRate",
+  "averageResponseTime",
+  "repeatCustomersCount",
+  "hireRate",
+  "isSafePayUser",
+  "createdAt",
+  "identityVerification",
+]
+`;

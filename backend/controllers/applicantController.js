@@ -1,6 +1,7 @@
 const JobRequest = require('../models/JobRequest');
 const Service = require('../models/Service');
 const Order = require('../models/Order');
+const { parsePagination } = require('../utils/pagination');
 
 /**
  * GET /api/applicants/:serviceId
@@ -50,7 +51,11 @@ exports.getApplicantsForService = async (req, res) => {
       requestsQuery = requestsQuery.sort({ createdAt: -1 });
     }
 
-    const requests = await requestsQuery;
+    // Each row costs three count queries, so the page is bounded. ponytail: the rating /
+    // completedJobs sorts run in memory on this page only — past 100 applicants they need
+    // an aggregation to sort across pages.
+    const { limit, skip } = parsePagination(req.query, { defaultLimit: 100 });
+    const requests = await requestsQuery.skip(skip).limit(limit);
 
     // Calculate additional stats per applicant (like completed jobs)
     // For a production app, this might be heavily aggregated, but we'll do simple counts here.

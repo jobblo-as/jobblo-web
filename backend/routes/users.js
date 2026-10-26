@@ -1,8 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
+const serviceController = require('../controllers/serviceController');
 const { authenticate, requireAdmin } = require('../middleware/auth');
 const upload = require('../middleware/upload');
+const { authorizeUser } = require('../controllers/users/userHelpers');
 
 /**
  * @swagger
@@ -77,30 +79,6 @@ const upload = require('../middleware/upload');
 
 /**
  * @swagger
- * /api/users:
- *   post:
- *     summary: Opprett en ny bruker
- *     tags: [Brukere]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/User'
- *     responses:
- *       201:
- *         description: Brukeren ble opprettet
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/User'
- *       400:
- *         description: Ugyldig forespørsel eller e-post/telefon finnes allerede
- */
-router.post('/', authenticate, requireAdmin, userController.createUser);
-
-/**
- * @swagger
  * /api/users/{id}:
  *   get:
  *     summary: Hent en spesifikk bruker
@@ -130,6 +108,9 @@ router.get('/:id', authenticate, userController.getUserById);
 router.put(
   '/:id',
   authenticate,
+  // Authorise BEFORE the upload, so a refused edit leaves no avatar/banner in storage.
+  (req, res, next) =>
+    authorizeUser(req, req.params.id) ? next() : res.status(403).json({ error: 'Not authorized' }),
   upload.fields([
     { name: 'avatar', maxCount: 1 },
     { name: 'banner', maxCount: 1 },
@@ -137,7 +118,7 @@ router.put(
   userController.updateUser
 );
 router.delete('/:id', authenticate, userController.deleteUser);
-router.get('/:id/services', authenticate, userController.getUserServices);
+router.get('/:id/services', authenticate, serviceController.getUserServices);
 router.post('/portfolio', authenticate, upload.single('image'), userController.addPortfolioItem);
 router.delete('/portfolio/:itemId', authenticate, userController.deletePortfolioItem);
 
