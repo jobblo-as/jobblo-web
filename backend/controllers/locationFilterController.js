@@ -2,6 +2,8 @@ const NorwayCounty = require('../models/NorwayCounty');
 const NorwayMunicipality = require('../models/NorwayMunicipality');
 const NorwayArea = require('../models/NorwayArea');
 const Service = require('../models/Service');
+const { PUBLIC_SERVICE_STATUSES } = require('../constants/serviceVisibility');
+const { memo } = require('../utils/memo');
 
 /**
  * GET /api/location-filter/tree
@@ -48,45 +50,34 @@ exports.getLocationTree = async (req, res) => {
  * GET /api/location-filter/stats
  * Returns job count per location
  */
+/** Pure: fold { _id: { c, m, a }, count } groups into the per-level count maps. */
+function foldLocationStats(groups) {
+  const stats = { counties: {}, municipalities: {}, areas: {} };
+  const add = (map, code, n) => {
+    if (code != null) map[code] = (map[code] || 0) + n;
+  };
+  for (const { _id, count } of groups) {
+    add(stats.counties, _id.c, count);
+    add(stats.municipalities, _id.m, count);
+    add(stats.areas, _id.a, count);
+  }
+  return stats;
+}
+exports.foldLocationStats = foldLocationStats;
+
 exports.getLocationStats = async (req, res) => {
   try {
-    // Get count per county
-    const countyStats = await Service.aggregate([
-      { $match: { status: { $in: ['open', 'active'] }, countyCode: { $ne: null } } },
-      { $group: { _id: '$countyCode', count: { $sum: 1 } } },
-    ]);
-
-    // Get count per municipality
-    const municipalityStats = await Service.aggregate([
-      { $match: { status: { $in: ['open', 'active'] }, municipalityCode: { $ne: null } } },
-      { $group: { _id: '$municipalityCode', count: { $sum: 1 } } },
-    ]);
-
-    // Get count per area
-    const areaStats = await Service.aggregate([
-      { $match: { status: { $in: ['open', 'active'] }, areaCode: { $ne: null } } },
-      { $group: { _id: '$areaCode', count: { $sum: 1 } } },
-    ]);
-
-    // Format the stats into a single object for easier lookup
-    const stats = {
-      counties: {},
-      municipalities: {},
-      areas: {},
-    };
-
-    countyStats.forEach((s) => {
-      stats.counties[s._id] = s.count;
-    });
-
-    municipalityStats.forEach((s) => {
-      stats.municipalities[s._id] = s.count;
-    });
-
-    areaStats.forEach((s) => {
-      stats.areas[s._id] = s.count;
-    });
-
+    // One pass over the public listings instead of three, computed once per 30 s per process
+    // (utils/memo; "services" namespace, so a listing write refreshes it). Uncached, every
+    // filter-panel open ran all three aggregations.
+    const stats = await memo('services:location-stats', 30, async () =>
+      foldLocationStats(
+        await Service.aggregate([
+          { $match: { status: { $in: PUBLIC_SERVICE_STATUSES } } },
+          { $group: { _id: { c: '$countyCode', m: '$municipalityCode', a: '$areaCode' }, count: { $sum: 1 } } },
+        ])
+      )
+    );
     res.json(stats);
   } catch (err) {
     console.error('Location Stats Error:', err);

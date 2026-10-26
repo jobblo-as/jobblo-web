@@ -1,6 +1,11 @@
 const Service = require('../models/Service');
 const User = require('../models/User');
 const Order = require('../models/Order');
+const { memo } = require('../utils/memo');
+
+// Only what the favourites cards read (the populated seller was fetched and never used).
+const JOB_CARD = 'title images urgent createdAt';
+const USER_CARD = 'name lastName avatarUrl verified role planType';
 
 /**
  * GET /api/explore/favorites
@@ -28,7 +33,8 @@ exports.getFeaturedFavourites = async (req, res) => {
     })
       .sort({ views: -1, createdAt: -1 })
       .limit(12)
-      .populate('userId', 'name lastName avatarUrl');
+      .select(JOB_CARD)
+      .lean();
 
     // Fallback/Fill: If we don't have 12 jobs yet, fill with top viewed jobs overall
     if (topJobs.length < 12) {
@@ -39,7 +45,8 @@ exports.getFeaturedFavourites = async (req, res) => {
       })
         .sort({ views: -1, createdAt: -1 })
         .limit(12 - topJobs.length)
-        .populate('userId', 'name lastName avatarUrl');
+        .select(JOB_CARD)
+        .lean();
 
       topJobs = [...topJobs, ...moreJobs];
     }
@@ -51,7 +58,9 @@ exports.getFeaturedFavourites = async (req, res) => {
       isDeleted: { $ne: true },
     })
       .sort({ averageRating: -1, reviewCount: -1 })
-      .limit(6);
+      .limit(6)
+      .select(USER_CARD)
+      .lean();
 
     // If still no verified users, fallback to top rated providers
     let finalUsers = topRatedUsers;
@@ -62,7 +71,9 @@ exports.getFeaturedFavourites = async (req, res) => {
         isDeleted: { $ne: true },
       })
         .sort({ averageRating: -1, reviewCount: -1 })
-        .limit(6);
+        .limit(6)
+        .select(USER_CARD)
+        .lean();
     }
 
     // Combine and format for the frontend Favourites component
@@ -108,34 +119,26 @@ exports.getFeaturedFavourites = async (req, res) => {
  */
 exports.getDashboardStats = async (req, res) => {
   try {
-    // Count active jobs (status open or active)
-    const activeJobsCount = await Service.countDocuments({
-      status: { $in: ['open', 'active'] },
-    });
-
-    // Count total users
-    const totalUsersCount = await User.countDocuments({ isDeleted: { $ne: true } });
-
-    // Calculate average rating across all users who have reviews
-    const usersWithRatings = await User.find({
-      reviewCount: { $gt: 0 },
-      isDeleted: { $ne: true },
-    });
-    let averageRating = 0;
-    if (usersWithRatings.length > 0) {
-      const totalRating = usersWithRatings.reduce((sum, user) => sum + user.averageRating, 0);
-      averageRating = totalRating / usersWithRatings.length;
-      // Round to 1 decimal place
-      averageRating = Math.round(averageRating * 10) / 10;
-    }
-
-    res.json({
-      activeJobs: activeJobsCount,
-      totalUsers: totalUsersCount,
-      averageRating: averageRating,
-    });
+    // Shared by every visitor: computed once per 30 s per process (utils/memo). It used to
+    // hydrate EVERY user with a review to average one number in JS (~320 ms at 2k raters).
+    // In the "services" namespace so a listing write refreshes activeJobs.
+    res.json(await memo('services:explore-stats', 30, computeDashboardStats));
   } catch (err) {
     console.error('Explore Stats Error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
+async function computeDashboardStats() {
+  const [activeJobs, totalUsers, [rating]] = await Promise.all([
+    Service.countDocuments({ status: { $in: ['open', 'active'] } }),
+    User.countDocuments({ isDeleted: { $ne: true } }),
+    // Average of averageRating across users who have reviews, rounded to 1 decimal.
+    User.aggregate([
+      { $match: { reviewCount: { $gt: 0 }, isDeleted: { $ne: true } } },
+      { $group: { _id: null, avg: { $avg: '$averageRating' } } },
+    ]),
+  ]);
+  return { activeJobs, totalUsers, averageRating: rating?.avg ? Math.round(rating.avg * 10) / 10 : 0 };
+}
+exports.computeDashboardStats = computeDashboardStats;

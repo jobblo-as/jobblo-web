@@ -69,6 +69,7 @@ async function register(role, label) {
     password,
     confirmPassword: password,
     role: 'user',
+    acceptedTerms: true, // register refuses without it (authHelpers.validateRegistration)
   };
 
   const out = await api('POST', '/api/auth/register', { body, expect: [200, 201] });
@@ -93,6 +94,45 @@ async function register(role, label) {
   head('Register both parties');
   const customer = await register('customer', 'customer');
   const provider = await register('provider', 'provider');
+
+  head('Give the provider a payouts-enabled Connect account');
+  // Applying needs a ready Connect account (STRIPE_CONNECT_REQUIRED), and the payout at the end
+  // needs it to move money. A test-mode Custom account is enabled on creation. This script only
+  // runs on a test key, so the account goes in the test-mode field the readiness check reads.
+  const connect = await stripe.accounts.create({
+    type: 'custom',
+    country: 'NO',
+    email: provider.email,
+    capabilities: { transfers: { requested: true } },
+    business_type: 'individual',
+    individual: {
+      first_name: 'E2E',
+      last_name: 'Provider',
+      dob: { day: 1, month: 1, year: 1990 },
+      address: { line1: 'address_full_match', city: 'Oslo', postal_code: '0150', country: 'NO' },
+      email: provider.email,
+      phone: '+4721234567',
+    },
+    business_profile: { mcc: '1520', url: 'https://jobblo.no' },
+    tos_acceptance: { date: Math.floor(Date.now() / 1000), ip: '127.0.0.1' },
+    external_account: {
+      object: 'bank_account',
+      country: 'NO',
+      currency: 'nok',
+      account_number: 'NO9386011117947',
+    },
+  });
+  if (!connect.payouts_enabled) fail('test Connect account is not payouts-enabled', connect.requirements);
+
+  const mongoose = require('mongoose');
+  await mongoose.connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 15000 });
+  await require('../models/User').findByIdAndUpdate(provider.id, {
+    stripeConnectAccountIdTest: connect.id,
+    payoutEnabled: true,
+    chargesEnabled: true,
+    detailsSubmitted: true,
+  });
+  log(`connect=${connect.id} payouts_enabled=${connect.payouts_enabled}`);
 
   head('Customer posts a job');
   const service = await api('POST', '/api/services', {
@@ -154,76 +194,79 @@ async function register(role, label) {
   if (!sessionId) fail('order has no checkoutSessionId after create-session', order);
   log(`checkoutSessionId=${sessionId}`);
 
-  head('Pay with a test card');
-  const amount = Math.round((calc.total || 0) * 100);
-  const intent = await stripe.paymentIntents.create({
-    amount,
-    currency: 'nok',
-    payment_method: 'pm_card_visa',
-    confirm: true,
-    automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
-    metadata: { orderId: String(orderId), type: 'safepay_payment' },
-  });
-  if (intent.status !== 'succeeded') fail('test payment did not succeed', intent.status);
-  log(`paymentIntent=${intent.id} status=${intent.status} amount=${amount / 100} kr`);
-
-  head('Stripe tells us it is paid (webhook — the production confirmation path)');
-  // A Checkout Session cannot be completed over the API, so the event Stripe would send
-  // on completion is constructed and signed with the real secret. Everything downstream
-  // of the signature check — confirmPaidSession, the Payment record, the chat message,
-  // the notifications — runs exactly as it does in production.
-  // Must sign with the same secret the running server will verify against. The server
-  // picks by STRIPE_TEST_MODE and does NOT fall back across modes, so signing with the
-  // wrong one produces a signature mismatch that reads like a code bug rather than the
-  // config problem it is.
-  //
-  // This script cannot read that flag (it does not connect to Mongo until step 12), and
-  // it only ever runs against an sk_test_ key, so it accepts either variable and says
-  // which one it used.
-  const webhookSecretVar = process.env.STRIPE_TEST_WEBHOOK_SECRET
-    ? 'STRIPE_TEST_WEBHOOK_SECRET'
-    : 'STRIPE_WEBHOOK_SECRET';
+  head('A forged "paid" event is refused (signed, but Stripe says the session is unpaid)');
+  // A Checkout Session cannot be completed over the API, and the webhook no longer trusts the
+  // event body: it re-reads the session from Stripe before marking anything paid. So a
+  // correctly signed but made-up "completed" event must leave the order unpaid.
+  const webhookSecretVar = process.env.STRIPE_TEST_WEBHOOK_SECRET ? 'STRIPE_TEST_WEBHOOK_SECRET' : 'STRIPE_WEBHOOK_SECRET';
   const webhookSecret = process.env[webhookSecretVar];
-  if (!webhookSecret) {
-    fail(
-      'Neither STRIPE_TEST_WEBHOOK_SECRET nor STRIPE_WEBHOOK_SECRET is set',
-      'Without it the webhook rejects every event, so a paid order is only ever confirmed\n' +
-        '     if the buyer returns to the success page. Set the one matching the mode the\n' +
-        '     server is running in (STRIPE_TEST_MODE) and re-run.'
-    );
-  }
-  log(`signing with ${webhookSecretVar}`);
-
-  const payload = JSON.stringify({
-    id: `evt_e2e_${stamp}`,
+  if (!webhookSecret) fail('Neither STRIPE_TEST_WEBHOOK_SECRET nor STRIPE_WEBHOOK_SECRET is set', 'Use the secret the server verifies with (for `stripe listen`, the one it prints).');
+  const forged = JSON.stringify({
+    id: `evt_e2e_forged_${stamp}`,
     object: 'event',
+    livemode: false, // the webhook refuses an event whose mode differs from its signing secret's
     type: 'checkout.session.completed',
-    data: {
-      object: {
-        id: sessionId,
-        object: 'checkout.session',
-        status: 'complete',
-        payment_status: 'paid',
-        payment_intent: intent.id,
-        metadata: { orderId: String(orderId), userId: String(customer.id), type: 'safepay_payment' },
-      },
-    },
+    data: { object: { id: sessionId, object: 'checkout.session', status: 'complete', payment_status: 'paid', metadata: { orderId: String(orderId), userId: String(customer.id), type: 'safepay_payment' } } },
   });
-
-  const signature = stripe.webhooks.generateTestHeaderString({ payload, secret: webhookSecret });
-  const hookRes = await fetch(`${API}/api/safepay-checkout/webhook`, {
+  const forgedRes = await fetch(`${API}/api/stripe/webhook`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'stripe-signature': signature },
-    body: payload,
+    headers: { 'Content-Type': 'application/json', 'stripe-signature': stripe.webhooks.generateTestHeaderString({ payload: forged, secret: webhookSecret }) },
+    body: forged,
   });
-  if (hookRes.status !== 200) fail(`webhook → ${hookRes.status}`, await hookRes.text());
-  log('webhook accepted');
+  if (forgedRes.status !== 200) fail(`forged webhook → ${forgedRes.status} (signed with ${webhookSecretVar})`, await forgedRes.text());
+  const afterForged = await api('GET', `/api/orders/${orderId}`, { token: customer.token });
+  if (afterForged.paymentStatus === 'paid' || afterForged.status !== 'awaiting_payment') fail('a forged event marked the order paid', afterForged);
+  log(`refused: order still ${afterForged.status}/${afterForged.paymentStatus}`);
 
-  head('Order is now paid, and the money is held');
-  const paid = await api('GET', `/api/orders/${orderId}`, { token: customer.token });
+  head('Pay the Checkout session in a browser with a test card');
+  // Needs Playwright (frontend/node_modules) and `stripe listen --forward-to <API>/api/stripe/webhook`
+  // running with the same signing secret, so Stripe's real checkout.session.completed arrives.
+  const { chromium } = require(require.resolve('@playwright/test', { paths: [require('path').join(__dirname, '../../frontend')] }));
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newPage();
+    await page.goto(session.url, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+    const fillIf = async (sel, value) => {
+      const el = page.locator(sel).first();
+      if (await el.isVisible({ timeout: 3000 }).catch(() => false)) await el.fill(value);
+    };
+    await fillIf('#email', customer.email);
+    const cardTab = page.locator('[data-testid="card-accordion-item-button"]').first();
+    if (await cardTab.isVisible({ timeout: 3000 }).catch(() => false)) await cardTab.click();
+    await page.locator('#cardNumber').fill('4242424242424242', { timeout: 30_000 });
+    await page.locator('#cardExpiry').fill('12 / 34');
+    await page.locator('#cardCvc').fill('123');
+    await fillIf('#billingName', 'E2E Customer');
+    await fillIf('#billingPostalCode', '0150');
+    await page.locator('[data-testid="hosted-payment-submit-button"], button[type="submit"]').first().click();
+    // Ask Stripe rather than waiting for the redirect: the success URL is the web app, which
+    // does not have to be running for this script.
+    let cs;
+    for (let i = 0; i < 30; i++) {
+      cs = await stripe.checkout.sessions.retrieve(sessionId);
+      if (cs.payment_status === 'paid') break;
+      await new Promise((r) => setTimeout(r, 3000));
+    }
+    if (cs.payment_status !== 'paid') {
+      const shot = require('path').join(require('os').tmpdir(), `e2e-checkout-${stamp}.png`);
+      await page.screenshot({ path: shot, fullPage: true });
+      fail(`Checkout session not paid at Stripe (status ${cs.status}/${cs.payment_status})`, `screenshot: ${shot}`);
+    }
+    log(`paid with 4242 4242 4242 4242 — Stripe: session ${cs.status}/${cs.payment_status}`);
+  } finally {
+    await browser.close();
+  }
+
+  head('Stripe tells us it is paid (real webhook — the production confirmation path)');
+  let paid;
+  for (let i = 0; i < 40; i++) {
+    paid = await api('GET', `/api/orders/${orderId}`, { token: customer.token });
+    if (['paid', 'in_progress'].includes(paid.status)) break;
+    await new Promise((r) => setTimeout(r, 3000));
+  }
   log(`status=${paid.status}  paymentStatus=${paid.paymentStatus}`);
   if (!['paid', 'in_progress'].includes(paid.status)) {
-    fail('order did not reach paid after the webhook', { status: paid.status });
+    fail('order did not reach paid within 2 minutes of paying', 'Is `stripe listen --forward-to ' + API + '/api/stripe/webhook` running, and does the server use the secret it printed?');
   }
 
   head('Provider starts the job');
@@ -231,43 +274,6 @@ async function register(role, label) {
 
   head('Provider marks it ready for review');
   await api('POST', `/api/safepay/orders/${orderId}/ready-for-review`, { token: provider.token });
-
-  head('Give the provider a payouts-enabled Connect account');
-  // Without this the release stops at PAYOUT_SETUP_REQUIRED — correct behaviour, but it
-  // means the transfer itself never runs and the one step that actually moves money to
-  // the provider goes untested. A test-mode Custom account is enabled on creation.
-  const connect = await stripe.accounts.create({
-    type: 'custom',
-    country: 'NO',
-    email: provider.email,
-    capabilities: { transfers: { requested: true } },
-    business_type: 'individual',
-    individual: {
-      first_name: 'E2E',
-      last_name: 'Provider',
-      dob: { day: 1, month: 1, year: 1990 },
-      address: { line1: 'address_full_match', city: 'Oslo', postal_code: '0150', country: 'NO' },
-      email: provider.email,
-      phone: '+4721234567',
-    },
-    business_profile: { mcc: '1520', url: 'https://jobblo.no' },
-    tos_acceptance: { date: Math.floor(Date.now() / 1000), ip: '127.0.0.1' },
-    external_account: {
-      object: 'bank_account',
-      country: 'NO',
-      currency: 'nok',
-      account_number: 'NO9386011117947',
-    },
-  });
-  if (!connect.payouts_enabled) fail('test Connect account is not payouts-enabled', connect.requirements);
-
-  const mongoose = require('mongoose');
-  await mongoose.connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 15000 });
-  await require('../models/User').findByIdAndUpdate(provider.id, {
-    stripeConnectAccountId: connect.id,
-    payoutEnabled: true,
-  });
-  log(`connect=${connect.id} payouts_enabled=${connect.payouts_enabled}`);
 
   head('Customer approves — releases the payout');
   const approved = await api('POST', '/api/safepay-checkout/approve', {

@@ -74,6 +74,39 @@ async function step(name, url, { method = 'GET', headers = {}, body, expectStatu
   }
 }
 
+/**
+ * One WebSocket step: connect and wait for the first message. socket.io in cluster mode
+ * (WEB_CONCURRENCY>1) accepts websocket only, so a polling handshake would always read as down.
+ */
+function wsStep(name, url, { expect } = {}) {
+  const started = Date.now();
+  return new Promise((resolve) => {
+    let ws;
+    const done = (r) => {
+      clearTimeout(timer);
+      try {
+        ws?.close();
+      } catch {
+        /* already closed */
+      }
+      resolve({ name, ms: Date.now() - started, status: null, ...r });
+    };
+    const timer = setTimeout(() => done({ ok: false, error: `Timed out after ${STEP_TIMEOUT_MS / 1000}s` }), STEP_TIMEOUT_MS);
+    try {
+      ws = new WebSocket(url);
+    } catch (e) {
+      return done({ ok: false, error: e.message });
+    }
+    ws.onmessage = (ev) => {
+      const text = String(ev.data);
+      const problem = expect ? expect(text) : null;
+      done(problem ? { ok: false, error: problem } : { ok: true, status: 101, text });
+    };
+    ws.onerror = (ev) => done({ ok: false, error: ev?.message || ev?.error?.message || 'WebSocket error' });
+    ws.onclose = (ev) => done({ ok: false, error: `Closed before the handshake (code ${ev.code})` });
+  });
+}
+
 const json = (text) => {
   try {
     return JSON.parse(text);
@@ -92,8 +125,8 @@ const BUILT_IN = [
   {
     key: 'realtime',
     name: 'Realtime (socket.io)',
-    describe: 'socket.io polling handshake opens a session',
-    run: ({ api }) => [step('socket.io handshake', `${api}/socket.io/?EIO=4&transport=polling`, { expect: (t) => (t.startsWith('0{') ? null : 'Unexpected handshake payload') })],
+    describe: 'socket.io websocket handshake opens a session (works single-process and in cluster mode)',
+    run: ({ api }) => [wsStep('socket.io handshake', `${api.replace(/^http/, 'ws')}/socket.io/?EIO=4&transport=websocket`, { expect: (t) => (t.startsWith('0{') ? null : 'Unexpected handshake payload') })],
   },
   {
     key: 'web',
