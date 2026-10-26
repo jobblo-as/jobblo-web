@@ -102,6 +102,10 @@ export const DEV_NAV: { label: string; items: DevNavItem[] }[] = [
     label: 'Infrastructure',
     items: [
       { path: 'server', label: 'Server', icon: Server, description: 'Host, CPU, memory, disk and process health.' },
+      { path: 'workers', label: 'Cluster (API workers)', icon: Network, description: 'Every API process (cluster): primary, workers, load, event loop, memory, cache hit rate, login queue and restarts.' },
+      { path: 'nginx', label: 'Nginx', icon: Globe, description: 'Reverse proxy: connections, requests, micro-cache HIT/MISS, status codes, slow paths, processes and cache folder.' },
+      { path: 'pm2', label: 'PM2', icon: Workflow, description: 'Processes pm2 manages: status, restarts, uptime, CPU, memory, mode and recent errors.' },
+      { path: 'caching', label: 'Caching', icon: Zap, description: 'All cache layers in one place: nginx micro-cache, in-process L1 and the Redis response cache.' },
       { path: 'dependencies', label: 'Dependency Map', icon: Share2, description: 'Every service Jobblo depends on and how they connect; external services tab: Stripe, email, push, OpenAI and geocoding latency, failures, rate limits and quotas.' },
       { path: 'costs', label: 'Cost Center', icon: Wallet, description: 'Monthly infrastructure cost, projections, budget and unit economics.' },
       { path: 'capacity', label: 'Capacity Planning', icon: TrendingUp, description: 'Growth forecasts and when disk, memory, database and traffic hit their limits.' },
