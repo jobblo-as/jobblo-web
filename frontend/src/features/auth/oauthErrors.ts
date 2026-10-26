@@ -54,6 +54,8 @@ const OAUTH_ERROR_MESSAGES: Record<string, string> = {
     'BankID delte ingen e-postadresse. Opprett en konto med e-post først, og verifiser deretter med BankID fra profilen din.',
   bankid_auth_required: 'Du må være innlogget for å verifisere kontoen din med BankID.',
   bankid_unavailable: 'BankID er ikke tilgjengelig akkurat nå. Prøv igjen senere.',
+  bankid_email_not_verified:
+    'Bekreft e-postadressen din før du verifiserer med BankID. Logg ut og inn igjen for å få en kode, eller bruk «Glemt passord».',
 
   google_failed: 'Google-innloggingen mislyktes. Prøv igjen.',
 };

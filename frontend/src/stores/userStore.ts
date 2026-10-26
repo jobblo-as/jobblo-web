@@ -7,6 +7,8 @@ import {
   refreshToken as refreshTokenApi,
 } from '../features/auth/Api';
 import { disconnectSocket } from '../socket/socket';
+import { queryClient } from '../lib/queryClient';
+import { clearAllFormData } from '../utils/indexedDB';
 
 /**
  * Only these preferences are written to localStorage.
@@ -88,6 +90,12 @@ export const useUserStore = create<UserState>()(
         // after `await logoutUser()`, so if the server 500'd or the user was
         // offline the socket stayed connected as the old user.
         disconnectSocket();
+        // Every logout runs through here (menus, forced 401 / revoked session, account
+        // deletion), so the previous user's chats, orders and subscription never reach
+        // the next user in this tab. Only some callers used to clear it themselves.
+        queryClient.clear();
+        // The create-job draft holds address, phone, email and photos (M9).
+        clearAllFormData().catch(() => {});
 
         try {
           await logoutUser();

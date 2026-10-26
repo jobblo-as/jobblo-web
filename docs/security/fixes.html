@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Jobblo – Security Fix Log</title>
+<style>
+  :root { --ink:#0b0b0b; --muted:#5f6368; --line:#e3e5df; --brand:#1f4d33; --soft:#f3f5f0; --p0:#b42318; --p1:#b54708; --p2:#175cd3; --ok:#067647; }
+  * { box-sizing: border-box; }
+  body { font: 10.5pt/1.5 "Segoe UI", Inter, Arial, sans-serif; color: var(--ink); margin: 0; }
+  h1 { font-size: 22pt; color: var(--brand); margin: 0 0 4px; letter-spacing: -0.02em; }
+  h2 { font-size: 13.5pt; color: var(--brand); border-bottom: 2px solid var(--line); padding-bottom: 4px; margin: 22px 0 10px; }
+  h3 { font-size: 11.5pt; margin: 0 0 6px; }
+  p { margin: 0 0 8px; }
+  .sub { color: var(--muted); margin-bottom: 14px; }
+  .box { background: var(--soft); border-radius: 8px; padding: 12px 14px; margin: 10px 0 14px; }
+  table { width: 100%; border-collapse: collapse; margin: 6px 0 12px; font-size: 9.5pt; }
+  th { background: var(--brand); color: #fff; text-align: left; padding: 6px 8px; font-weight: 600; }
+  td { border-bottom: 1px solid var(--line); padding: 6px 8px; vertical-align: top; }
+  code { font-family: Consolas, "Cascadia Mono", monospace; font-size: 9pt; background: #eef0eb; padding: 1px 4px; border-radius: 3px; }
+  .badge { display: inline-block; font-size: 8pt; font-weight: 700; color: #fff; border-radius: 10px; padding: 1px 8px; }
+  .P0 { background: var(--p0); } .P1 { background: var(--p1); } .P2 { background: var(--p2); }
+  .done { color: var(--ok); font-weight: 700; } .open { color: var(--p1); font-weight: 700; }
+  .fix { border: 1px solid var(--line); border-left: 4px solid var(--ok); border-radius: 6px; padding: 10px 12px; margin: 10px 0; page-break-inside: avoid; }
+  .fix .lbl { font-weight: 700; }
+  ul { margin: 2px 0 8px; padding-left: 18px; } li { margin: 2px 0; }
+  .foot { color: var(--muted); font-size: 8.5pt; margin-top: 18px; }
+  @page { size: A4; margin: 16mm 15mm 16mm 15mm; }
+  table.mini{width:auto;margin:6px 0}
+  table.mini td,table.mini th{padding:2px 10px}
+</style>
+</head>
+<body>
+
+<h1>Jobblo – Security Fix Log</h1>
+<p class="sub">Fixes for the findings in “Jobblo – Security &amp; Code Review” · last updated <!--DATE-->26 Oct 2026<!--/DATE--> · committed locally in topic commits on branch fixed/secuity, not pushed</p>
+
+<div class="box">
+  <p><strong>Status:</strong> <!--STATUS-->All 23 code findings fixed and verified (C2, C3, H1&ndash;H9, M1&ndash;M12), plus 11 P3 items and the second review round. C1 and C4 are key rotations for the owner. Full backend suite: 1,854 passed, 0 failed. C1 and C4 are key rotations done outside the code.<!--/STATUS--></p>
+  <p>Every fix ships with an automated test that fails on the old code and passes on the new code, plus live checks against a local copy of the app. The full backend suite passes after each fix.</p>
+</div>
+
+<h2>Progress</h2>
+<table>
+  <tr><th>ID</th><th>Finding</th><th>Status</th><th>Proof</th></tr>
+  <!--ROWS-->
+  <tr><td><span class="badge P0">P0</span> C1</td><td>Azure secret in git history</td><td class="open">Owner action</td><td>Rotate in Entra ID, review sign-ins</td></tr>
+  <tr><td><span class="badge P0">P0</span> C2</td><td>WebSocket accepted any website</td><td class="done">Fixed</td><td>4 tests · 3 live checks</td></tr>
+  <tr><td><span class="badge P0">P0</span> C3</td><td>Private profile data visible to other users</td><td class="done">Fixed</td><td>8 tests · 6 live checks</td></tr>
+  <tr><td><span class="badge P0">P0</span> C4</td><td>Production keys shared outside the server</td><td class="open">Owner action</td><td>Redis rotated; others in progress</td></tr>
+  <tr><td><span class="badge P1">P1</span> H3</td><td>Search input used as raw regex; public filter endpoint</td><td class="done">Fixed</td><td>tests · 6 live checks · endpoint removed (404)</td></tr>
+    <tr><td><span class="badge P1">P1</span> H5</td><td>Seed scripts could wipe the production database</td><td class="done">Fixed</td><td>9 tests (incl. real scripts)</td></tr>
+    <tr><td><span class="badge P1">P1</span> H1</td><td>Mobile: crafted login link switched the signed-in account</td><td class="done">Fixed</td><td>8 checks · typecheck</td></tr>
+  <tr><td><span class="badge P1">P1</span> H2</td><td>Mobile: logout left the push token active</td><td class="done">Fixed</td><td>API replay: old order 401/active, new 200/inactive</td></tr>
+    <tr><td><span class="badge P1">P1</span> H4</td><td>Two ratings per order</td><td class="done">Fixed</td><td>2 new tests (fail on old code)</td></tr>
+    <tr><td><span class="badge P1">P1</span> H9</td><td>2FA set-up possible with only a stolen password</td><td class="done">Fixed</td><td>7 tests (fail on old code) · e2e · 2 live checks</td></tr>
+    <tr><td><span class="badge P1">P1</span> H8</td><td>Backend libraries with known security bugs</td><td class="done">Fixed</td><td>npm audit: 3 high &rarr; 0 · suite + live checks</td></tr>
+    <tr><td><span class="badge P1">P1</span> H6</td><td>Paid money could get stuck after approval or a failed transfer</td><td class="done">Fixed</td><td>13 new tests (8 fail on old code) · full suite</td></tr>
+    <tr><td><span class="badge P1">P1</span> H7</td><td>Disputes could freeze money or make the platform pay twice</td><td class="done">Fixed</td><td>11 new tests (all fail on old code)</td></tr>
+    <tr><td><span class="badge P2">P2</span> M1</td><td>Error responses leaked internal messages</td><td class="done">Fixed</td><td>9 tests incl. a regression scan of all controllers</td></tr>
+    <tr><td><span class="badge P2">P2</span> M12</td><td>Personal data in logs</td><td class="done">Fixed</td><td>redaction tests · app typecheck</td></tr>
+    <tr><td><span class="badge P2">P2</span> M10</td><td>Switching the Stripe mode dropped the other mode&rsquo;s webhooks</td><td class="done">Fixed</td><td>6 new tests with real signatures</td></tr>
+    <tr><td><span class="badge P2">P2</span> M2</td><td>Pagination unbounded on list endpoints</td><td class="done">Fixed</td><td>8 tests + earlier helper changes</td></tr>
+    <tr><td><span class="badge P2">P2</span> M6</td><td>Smaller authorization gaps</td><td class="done">Fixed</td><td>8 tests (14 of 15 in the file fail on old code)</td></tr>
+    <tr><td><span class="badge P2">P2</span> M9</td><td>Mobile app: token storage, drafts, double pay, store rules</td><td class="done">Fixed</td><td>4 checks pass · typecheck 0 errors</td></tr>
+    <tr><td><span class="badge P2">P2</span> M5</td><td>Sessions and sockets (+ chat parts of M4, M6, M7, M2)</td><td class="done">Fixed</td><td>20+ tests fail on old code</td></tr>
+    <tr><td><span class="badge P2">P2</span> M7</td><td>Abuse and cost (AI, error ingest, views)</td><td class="done">Fixed</td><td>8 tests</td></tr>
+    <tr><td><span class="badge P2">P2</span> M3</td><td>Upload checks too weak</td><td class="done">Fixed</td><td>13 new tests</td></tr>
+    <tr><td><span class="badge P2">P2</span> M4</td><td>Features that silently did not work</td><td class="done">Fixed</td><td>tests in upload, chat and SafePay suites</td></tr>
+    <tr><td><span class="badge P2">P2</span> M11</td><td>Deploy and CI</td><td class="done">Fixed</td><td>dry runs, YAML parsed; watch the first real deploy</td></tr>
+    <tr><td><span class="badge P3">P3</span> P3</td><td>11 backend low issues (accounts, money, config)</td><td class="done">Fixed</td><td>tests for each; 79 tests in 8 suites re-run</td></tr>
+    <tr><td><span class="badge P2">P2</span> M8</td><td>Web app bugs</td><td class="done">Fixed</td><td>8 browser tests + node test, typecheck: no new errors</td></tr>
+    <tr><td><span class="badge P1">R2</span> Round 2</td><td>New findings from the second review</td><td class="done">Fixed</td><td>see the R2 sections</td></tr>
+  <!--/ROWS-->
+</table>
+
+<h2>Fixes in detail</h2>
+<!--FIXES-->
+<div class="fix">
+  <h3><span class="badge P0">P0</span> C2 · WebSocket refused from other websites</h3>
+  <p><span class="lbl">Problem:</span> browsers do not apply CORS to WebSockets, so a page on any site could open a Socket.IO connection with a logged-in visitor's cookie and read their notifications and chats.</p>
+  <p><span class="lbl">Fix:</span> the Socket.IO server now refuses the handshake when the <code>Origin</code> is not in Jobblo's allowlist (<code>allowRequest</code>, reusing the same check as HTTP CORS). Requests without an Origin (mobile app, server) still connect.</p>
+  <p><span class="lbl">Files:</span> <code>backend/bootstrap/socket.js</code> · new test <code>backend/__tests__/socketOrigin.test.js</code></p>
+  <p><span class="lbl">Verified:</span></p>
+  <ul>
+    <li>Test: foreign origin and lookalike origin refused (403); own origin and no origin accepted. Fails on the old code (2 of 4), passes on the new.</li>
+    <li>Live: <code>https://evil.example</code> refused · web app <code>localhost:5173</code> connects · mobile (no Origin) connects.</li>
+  </ul>
+</div>
+
+<div class="fix">
+  <h3><span class="badge P0">P0</span> C3 · Private profile data no longer visible to other users</h3>
+  <p><span class="lbl">Problem:</span> the “public” user projection was the owner's list minus three fields, so any logged-in user got other users' home address, earnings, last login, birth date, Google and Stripe ids; <code>/users/top</code> and search returned everyone's email, search matched on email, public lists showed members' emails, and <code>completed-details</code> showed both parties' emails before payment.</p>
+  <p><span class="lbl">Fix:</span></p>
+  <ul>
+    <li>New explicit allow-list <code>PUBLIC_FIELDS</code> (name, avatar, bio, skills, rating, city, portfolio, response stats…). The response cleaner keeps only these plus computed stats, so a query that selects more still cannot leak it.</li>
+    <li>Search no longer selects, returns or matches on email.</li>
+    <li>Public lists: emails only for the list's own members.</li>
+    <li>Order completed-details: emails only once the order is paid (same rule as the order list).</li>
+    <li>Search also returns only public jobs (allow-list instead of a blacklist) and caps <code>page</code>/<code>limit</code> (max 50).</li>
+  </ul>
+  <p><span class="lbl">Files:</span> <code>backend/utils/userProjections.js</code>, <code>backend/controllers/users/searchController.js</code>, <code>backend/controllers/listController.js</code>, <code>backend/controllers/orderController.js</code> · new test <code>backend/__tests__/publicProfilePrivacy.test.js</code></p>
+  <p><span class="lbl">Verified:</span></p>
+  <ul>
+    <li>Test: 8 cases; 7 fail on the old code, all pass on the new.</li>
+    <li>Live: another user's profile returns no private field but still the name · <code>/users/top</code> returns 0 emails (was 5 of 5) · searching by email domain finds 0 people · own profile still shows own email.</li>
+  </ul>
+</div>
+
+<div class="fix">
+  <h3><span class="badge P1">P1</span> H3 (part 1) · User search treats input as text</h3>
+  <p><span class="lbl">Problem:</span> search text went straight into <code>new RegExp()</code>: <code>(a+)+$</code> could stall MongoDB and <code>(</code> returned a 500. Arrays (<code>?q[]=a&amp;q[]=b</code>) also got through.</p>
+  <p><span class="lbl">Fix:</span> input must be a string, is trimmed to 100 characters and escaped with the existing <code>escapeRegex</code> in <code>/users/search</code> and <code>/users/search-all</code>. The public <code>/filter/apply</code> endpoint follows in part 2.</p>
+  <p><span class="lbl">Verified:</span> test cases for <code>(a+)+$</code>, <code>(</code> and array input · live: all six requests return 200.</p>
+</div>
+<div class="fix">
+  <h3><span class="badge P1">P1</span> H5 · Seed scripts can no longer wipe production</h3>
+  <p><span class="lbl">Problem:</span> all 10 seed entry points empty collections (users, jobs, orders…) and read <code>backend/.env</code>, which on the server is the production database. One mistaken run would delete every user and create <code>user1@jobblo.no</code> as superAdmin with a password written in the repo. <code>seeds/index.js</code> also printed the full <code>MONGO_URI</code>.</p>
+  <p><span class="lbl">Fix:</span> one shared guard (<code>seeds/guard.js</code>) runs before every <code>mongoose.connect</code> in the seed scripts:</p>
+  <ul>
+    <li>Refuses when <code>NODE_ENV=production</code>, even with confirmation.</li>
+    <li>Otherwise requires the database name as confirmation: <code>--yes-wipe=jobblo-dev</code>.</li>
+    <li>Logs only host and database name; the URI with credentials is no longer printed.</li>
+    <li>Note: a "local database only" rule would not help here, because production's <code>MONGO_URI</code> is also <code>127.0.0.1</code>.</li>
+  </ul>
+  <p><span class="lbl">Files:</span> new <code>backend/seeds/guard.js</code>; guarded <code>seedData.js</code>, <code>seeds/index.js</code>, <code>seeds/run-*.js</code> (6), <code>seeds/seedNorwayLocations*.js</code> (2); <code>seeds/Readme.md</code> updated · new test <code>backend/__tests__/seedGuard.test.js</code></p>
+  <p><span class="lbl">Verified:</span> 9 tests, including starting the real <code>seeds/index.js</code>, <code>run-categories.js</code> and <code>seedData.js</code> with <code>NODE_ENV=production</code>: each exits with code 1 before connecting and never prints the password from the URI.</p>
+</div>
+<div class="fix">
+  <h3><span class="badge P1">P1</span> H1 · Mobile: login links only accepted for a sign-in the app started</h3>
+  <p><span class="lbl">Problem:</span> any app or web page can open <code>jobblo://oauth-success?token=…</code>. The app checked that the token was real and signed in as that user, even over an existing session. An attacker's link switched the phone into the attacker's account, so the victim's addresses and messages went to them.</p>
+  <p><span class="lbl">Fix:</span></p>
+  <ul>
+    <li><code>runOAuthSession</code> records "this app started a sign-in at &lt;time&gt;" in memory and storage (survives Android restarting the app).</li>
+    <li><code>completeOAuthSignIn</code> (the single place both iOS and Android finish a sign-in) accepts a link only within 10 minutes of that, and never while someone is signed in; the marker is cleared after a successful sign-in.</li>
+    <li>The check runs inside the single-flight sign-in, so two deliveries of the same real link still join one request.</li>
+  </ul>
+  <p><span class="lbl">Files:</span> new <code>jobblo-app/src/utils/oauthPending.ts</code> (+ <code>oauthPending.check.mjs</code>), <code>src/utils/oauthAuthSession.ts</code>, <code>src/hooks/useOAuthLoginCompletion.ts</code></p>
+  <p><span class="lbl">Verified:</span> 8 checks (fresh start accepted; no start, expired, future timestamp refused; never over a signed-in account) · app typecheck 0 errors. Longer term: replace the token in the link with a one-time code exchanged with PKCE, or verified App/Universal Links.</p>
+</div>
+
+<div class="fix">
+  <h3><span class="badge P1">P1</span> H2 · Mobile: logout switches off push notifications</h3>
+  <p><span class="lbl">Problem:</span> <code>logout()</code> ended the server session first, then tried to deactivate the push token with that dead session. The 401 was swallowed and the local key deleted, so the device kept receiving the previous user's chat notifications.</p>
+  <p><span class="lbl">Fix:</span> deactivate the push token first, while the session is still valid, then end the session.</p>
+  <p><span class="lbl">Files:</span> <code>jobblo-app/src/store/authStore.ts</code></p>
+  <p><span class="lbl">Verified:</span> replayed both orders against the real API: old order → DELETE 401 and the token stays <strong>active</strong>; new order → DELETE 200 and the token is <strong>inactive</strong>.</p>
+</div>
+<div class="fix">
+  <h3><span class="badge P1">P1</span> H3 (part 2) · Unused public filter endpoint removed</h3>
+  <p><span class="lbl">Problem:</span> <code>POST /api/filter/apply</code> was public, ran the keyword as a regular expression, took <code>page</code>/<code>limit</code> from the body without a cap (<code>limit: 1000000</code> dumped every listing), returned drafts, paid and completed jobs, dropped the location filter whenever a keyword was set, and put the raw error text in its 500 response.</p>
+  <p><span class="lbl">Fix:</span> neither the web app nor the mobile app calls it (only <code>/api/filter/options</code> is used), so the route, its controller function and its Swagger block were removed instead of patched.</p>
+  <p><span class="lbl">Files:</span> <code>backend/routes/filter.js</code>, <code>backend/controllers/filterController.js</code></p>
+  <p><span class="lbl">Verified:</span> live <code>POST /api/filter/apply</code> → 404; <code>GET /api/filter/options</code> → 200; full suite green.</p>
+</div>
+
+<div class="fix">
+  <h3><span class="badge P1">P1</span> H4 · One review per person per order</h3>
+  <p><span class="lbl">Problem:</span> <code>revieweeRole</code> came from the request body and is part of the one-review-per-order unique index, so a party could rate the other person twice on the same order (once as <code>seeker</code>, once as <code>poster</code>).</p>
+  <p><span class="lbl">Fix:</span> the role is derived from the order (customer reviewing the provider → <code>poster</code>, provider reviewing the customer → <code>seeker</code>, the same mapping SafePay approval uses). A second review now hits the unique index and gets "Du har allerede gitt vurdering for dette oppdraget".</p>
+  <p><span class="lbl">Files:</span> <code>backend/controllers/reviewController.js</code> · test added to <code>backend/__tests__/reviewEligibility.test.js</code></p>
+  <p><span class="lbl">Verified:</span> for both parties and every claimed role (<code>seeker</code>, <code>poster</code>, none) the stored role is the derived one; the new tests fail on the old code (2 of 11) and pass on the new.</p>
+</div>
+
+<div class="fix">
+  <h3>Test stability · flaky queue test fixed</h3>
+  <p><span class="lbl">Problem:</span> the "Redis down → fall back in-process" test timed the first load of the BullMQ library as well, which could exceed its limit while the full suite runs in parallel.</p>
+  <p><span class="lbl">Fix:</span> load BullMQ before starting the timer, so the test measures only the 3-second fallback. <span class="lbl">Verified:</span> 3 full runs in a row, 1,651 passed each time.</p>
+</div>
+<div class="fix">
+  <h3><span class="badge P1">P1</span> H9 · Setting up 2FA needs a code sent to the account's email</h3>
+  <p><span class="lbl">Problem:</span> an admin or developer without an authenticator yet could set one up with only a password. Someone with a leaked password could add <em>their own</em> authenticator and then pass the 2FA gate for good.</p>
+  <p><span class="lbl">Fix:</span> new <code>POST /api/auth/mfa/setup/send-code</code> emails a 6-digit code to the account's address (refused when 2FA is already on; limited to 1 per minute and 5 per hour). <code>POST /api/auth/mfa/setup</code> returns the authenticator secret only after that code is checked for this user and this session, with an attempt limit. This reuses the existing developer step-up email code. The website's 2FA screen first asks "Confirm it is you" (email me a code, then continue), and only then shows the QR code.</p>
+  <p><span class="lbl">Files:</span> <code>backend/controllers/mfaController.js</code> · <code>backend/routes/auth.js</code> · <code>frontend/src/components/shared/MfaGate.tsx</code> · tests <code>backend/__tests__/mfaSetupEmailCode.test.js</code>, <code>frontend/e2e/developer-console.spec.js</code></p>
+  <p><span class="lbl">Verified:</span> 7 new tests (all fail on the old code). Browser test: no secret is requested before the email step; a wrong code shows the error, and the right code shows the QR set-up. Live on the local backend: set-up without a code or with a wrong code gives 400 <code>MFA_SETUP_EMAIL_CODE</code> and no secret. Full backend suite: 1,658 passed.</p>
+  <p><span class="lbl">Note:</span> the mobile app has no 2FA set-up screen, so no app change was needed.</p>
+</div>
+<div class="fix">
+  <h3><span class="badge P1">P1</span> H8 · Backend libraries updated</h3>
+  <p><span class="lbl">Problem:</span> <code>npm audit</code> reported 8 known security bugs in backend libraries (3 high, 5 moderate). The high ones were in body-parser (request body handling), multer (file uploads) and follow-redirects (used by axios).</p>
+  <p><span class="lbl">Fix:</span> updates within the same major version only, so the API does not change:</p>
+  <table class="mini">
+    <tr><th>Library</th><th>Before</th><th>After</th></tr>
+    <tr><td>body-parser</td><td>2.3.0</td><td>2.4.0</td></tr>
+    <tr><td>multer</td><td>2.4.0</td><td>2.5.0</td></tr>
+    <tr><td>follow-redirects</td><td>1.16.0</td><td>1.16.1</td></tr>
+    <tr><td>nodemailer</td><td>10.0.9</td><td>10.2.1</td></tr>
+    <tr><td>fast-uri</td><td>3.1.8</td><td>3.1.9</td></tr>
+    <tr><td>ip-address</td><td>10.7.3</td><td>10.7.5</td></tr>
+    <tr><td>uuid</td><td>13.0.0</td><td>13.0.2</td></tr>
+  </table>
+  <p>nodemailer was pinned to exactly <code>10.0.9</code>, which is why <code>npm audit</code> asked for <code>--force</code>. It is now <code>^10.2.1</code>.</p>
+  <p><span class="lbl">Files:</span> <code>backend/package.json</code> · <code>backend/package-lock.json</code></p>
+  <p><span class="lbl">Verified:</span> full backend suite, 1,658 passed. Direct checks of the new versions:</p>
+  <ul>
+    <li>JSON body: 200 for a valid body, 413 for one that is too large, 400 for malformed JSON.</li>
+    <li>File upload: 200 for a normal file, 413 for one over the size limit.</li>
+    <li>Sending email: a message with Norwegian letters is built correctly.</li>
+  </ul>
+  <p>The local backend restarted on the new packages, and all 14 earlier live checks still pass.</p>
+  <p><span class="lbl">Left on purpose:</span> 2 moderate findings for <code>uuid@9</code> inside <code>firebase-admin &rarr; @google-cloud/storage &rarr; gaxios</code>. The bug only affects uuid v3, v5 and v6 when a buffer is passed, and gaxios only calls <code>uuid.v4()</code>, so it cannot be reached here. It will go away with a future firebase-admin update.</p>
+</div>
+<div class="fix">
+  <h3><span class="badge P1">P1</span> H6 · Money no longer gets stuck after approval or a failed transfer</h3>
+  <p><span class="lbl">Problem:</span> three ways a paid job ended with the money held on the platform and nothing retrying it:</p>
+  <ol>
+    <li><strong>Approval.</strong> The order is marked <code>completed</code> first. If a bookkeeping step after that (chat, listing, history, review, rating stats) failed, the request ended with an error before any payout existed. Approving again was refused ("already completed").</li>
+    <li><strong>Auto-release.</strong> If the 14-day auto-release payout failed and the retry job paid it later, the payment became <code>released</code>. The auto-release job only looks at <code>completed</code> payments, so the order stayed "waiting for review" for good, and the customer could still open a dispute on money that had already been paid out.</li>
+    <li><strong>Stripe errors.</strong> Any error from Stripe's transfer call set the payout to <code>reconciliation_required</code>, even when Stripe had clearly refused it. Nothing ever retried that state. The idempotency key was also fixed, so a retry within 24 hours would only have got Stripe's saved error back.</li>
+  </ol>
+  <p><span class="lbl">Fix:</span></p>
+  <ol>
+    <li>The bookkeeping steps after approval are isolated. A failure is written to the error log (<code>APPROVAL_SIDE_EFFECT_FAILED</code>) and the payout step always runs.</li>
+    <li>Auto-release also accepts a <code>released</code> payment and then finishes the order. The retry job finishes the order as soon as its payout succeeds. One shared step does this (compare-and-swap, so it never touches an order a customer or dispute already moved).</li>
+    <li>A clear refusal from Stripe (a 4xx answer other than 409) now means "failed, no money moved": the order lock is released and the retry job tries again. Network errors and 5xx answers stay "outcome unknown".</li>
+    <li>Each attempt uses its own idempotency key. A second transfer is still impossible, because every retry first looks up Stripe for a transfer carrying this payout's id.</li>
+    <li>The retry job (every 2 hours) now also checks "outcome unknown" payouts. If the transfer did happen, it is recorded. If, 24 hours after the attempt, Stripe still has no transfer for this payout, it goes back to "failed" and is paid on the next run.</li>
+  </ol>
+  <p>One case is left for a person on purpose: if the provider has changed payout account since the attempt, the lookup could miss the old transfer, so the payout is never retried automatically. The daily money check still reports such orders.</p>
+  <p><span class="lbl">Files:</span> <code>backend/services/payout/releasePayoutToProvider.js</code> · <code>backend/services/scheduler/jobs.js</code> · <code>backend/controllers/SafePayCheckoutController.js</code> · tests: <code>__tests__/approvalPayoutIsolation.test.js</code> (new), <code>__tests__/payoutReleaseRecovery.test.js</code>, <code>__tests__/safepayScheduler.test.js</code>, <code>__tests__/bug006_stripe_connect.test.js</code> (now expects one key per attempt)</p>
+  <p><span class="lbl">Verified:</span> 13 new tests. Each of the three paths has tests that fail on the old code (8 in total). The fake Stripe in the tests replays saved answers per key, like real Stripe. The tests show:</p>
+  <ul>
+    <li>A refused transfer is paid on the next retry.</li>
+    <li>An unknown outcome is kept for 24 hours, then paid exactly once.</li>
+    <li>A transfer that really happened is only recorded, never paid twice.</li>
+    <li>A payout account that changed blocks the automatic retry.</li>
+  </ul>
+  <p>Full backend suite: 1,671 passed. The local backend boots and the scheduler starts on the new code, and the retry job ran cleanly against the local database (no stuck payouts there to replay).</p>
+</div>
+<div class="fix">
+  <h3><span class="badge P1">P1</span> H7 · Every dispute ends with money and order status in step</h3>
+  <p><span class="lbl">Problem:</span> four dead ends in the admin dispute flow:</p>
+  <ol>
+    <li>A reopened dispute kept its old resolution, so it could never be resolved again, and the payout stayed frozen.</li>
+    <li>An admin could set a dispute to <code>closed</code> or <code>cancelled</code> without resolving it, which left the order <code>disputed</code> with no way out.</li>
+    <li>On a paid-out order, the customer was refunded <em>before</em> the provider's transfer was reversed. If the reversal then failed (the provider had already been paid out), the platform paid the money twice.</li>
+    <li>A "full refund" returned only the job price, not the 3 % fee the customer had also paid.</li>
+  </ol>
+  <p><span class="lbl">Fix:</span></p>
+  <ol>
+    <li>A dispute now ends only through "Resolve". The status endpoint refuses <code>resolved</code>, <code>closed</code> and <code>cancelled</code>; the admin web app never used it for those.</li>
+    <li>Reopening clears the old resolution and puts the order (and payment) back under dispute. It uses the same safety checks as opening a dispute: not while a payout or start-deadline refund holds the order, and not if another dispute is active.</li>
+    <li>A resolution that has already moved money (a refund, transfer or reversal) cannot be reopened, so money can never move twice; that needs a manual correction in Stripe. Old <code>cancelled</code> dead-end disputes can now be reopened, and the admin page shows the button for them.</li>
+    <li>The provider's transfer is reversed first, and the customer is refunded only after that succeeds. A failed reversal refunds nothing and leaves the dispute open to retry.</li>
+  </ol>
+  <p><span class="lbl">Decision made (policy):</span> a full refund (<code>full_refund_to_customer</code> and <code>cancel_without_payment</code>) now returns everything the customer paid, <strong>the 3 % fee included</strong>. This is the same as the existing start-deadline refund, and it is the customer-safe choice. To keep the fee instead, change <code>paidTotal</code> back to <code>securedAmount</code> in <code>disputesAdminController.js</code>.</p>
+  <p><span class="lbl">Files:</span> <code>backend/controllers/admin/disputesAdminController.js</code> · <code>frontend/src/pages/SuperAdminDashboard/DisputeDetailPage.tsx</code> · test: <code>backend/__tests__/disputeResolutionMoney.test.js</code></p>
+  <p><span class="lbl">Verified:</span> 11 new tests, all failing on the old code. They cover:</p>
+  <ul>
+    <li>A full refund includes the fee.</li>
+    <li>The reversal runs before the refund, and a failed reversal refunds nothing.</li>
+    <li>Status changes cannot end a dispute.</li>
+    <li>Reopen, then resolve again, works; reopen is refused after money moved, while the order is locked, or with another active dispute.</li>
+  </ul>
+  <p>The 16 existing dispute tests still pass.</p>
+</div>
+<div class="fix">
+  <h3><span class="badge P2">P2</span> M1 · Error responses no longer leak internal messages</h3>
+  <p><span class="lbl">Problem:</span> controllers answered 500 errors with <code>error.message</code>, which sent raw MongoDB and Stripe text to the client (collection names, ids, and e-mail addresses inside duplicate-key errors). Every unknown URL (404) was also logged as <code>INTERNAL_SERVER_ERROR</code>, and the error logs never expired.</p>
+  <p><span class="lbl">Fix:</span></p>
+  <ul>
+    <li>One helper, <code>utils/serverError.js</code>, writes the full error to the log under the request id and answers with a safe message plus that id (<code>referenceId</code>), so support can find the log entry. It replaces 40 raw responses in 11 controllers.</li>
+    <li>For catch-alls around a create or update, a sibling helper answers a validation error with 400 and its message (the problem is in the caller's input), a cast error with a neutral 400, and anything else with the safe 500.</li>
+    <li>Where an error has its own <code>status</code> (a refusal our code made on purpose, such as a wrong 2FA code), its message is kept. Otherwise it goes through the helper.</li>
+    <li>The central error handler no longer logs 4xx errors as server errors.</li>
+    <li>A client-sent <code>X-Request-ID</code> is only echoed back when it is short and plain (at most 64 letters, digits, <code>-</code> or <code>_</code>).</li>
+    <li>Error entries now expire after 90 days, in both <code>ErrorLog</code> and the error part of <code>AdminActivity</code>. The audit trail is kept.</li>
+  </ul>
+  <p><span class="lbl">Files:</span> <code>utils/serverError.js</code> (new) · <code>middleware/errorHandlers.js</code> · <code>middleware/requestId.js</code> · <code>middleware/auth.js</code> · <code>models/ErrorLog.js</code> · <code>models/AdminActivity.js</code> · 20 controllers · test <code>__tests__/safeErrors.test.js</code></p>
+  <p><span class="lbl">Verified:</span> 9 tests. They check that:</p>
+  <ul>
+    <li>No response contains duplicate-key or cast-error text.</li>
+    <li>The request id is in the response and in the log.</li>
+    <li>A 404 is not logged.</li>
+    <li>A spoofed request id is replaced.</li>
+    <li>A <strong>scan of every controller</strong> fails the build if a raw <code>.message</code> is ever sent with a 500 again.</li>
+  </ul>
+  <p>Both TTL indexes are built on the local database, and the full backend suite passes.</p>
+</div>
+
+<div class="fix">
+  <h3><span class="badge P2">P2</span> M12 · No personal data in logs</h3>
+  <p><span class="lbl">Problem:</span> about 220 places logged whole error objects (a duplicate-key error contains the user's e-mail or phone number), the error log stored raw messages, the redaction list missed e-mail, phone, address, birth date and codes, a controller printed a user's full transaction list on every call, and the mobile app logged an Axios error that carries the user's token.</p>
+  <p><span class="lbl">Fix:</span></p>
+  <ul>
+    <li>The redaction list now also covers e-mail, phone, address, birth date, national id, OTP, e-mail codes and backup codes.</li>
+    <li>A new <code>redactText</code> function masks e-mail addresses, duplicate-key values and phone or id numbers inside free text. The error log applies it to messages and stack traces.</li>
+    <li>At server start, every console line goes through the same redaction. That is one place instead of 220 call sites, and it also covers future ones.</li>
+    <li>The transaction dump is removed.</li>
+    <li>The mobile app logs only the message and HTTP status.</li>
+  </ul>
+  <p><span class="lbl">Files:</span> <code>utils/sanitizer.js</code> · <code>utils/errorLogger.js</code> · <code>utils/consoleRedaction.js</code> (new) · <code>bootstrap/index.js</code> · <code>controllers/transactionController.js</code> · <code>jobblo-app/src/services/categories.service.ts</code></p>
+  <p><span class="lbl">Verified:</span> tests for text and object redaction and for console output (Error objects included). The app typecheck is clean.</p>
+  <p><span class="lbl">Also fixed:</span> <code>redisManagement.test.js</code> failed once a local Redis held about 31,000 keys, because its bounded SCAN never reached the test's own keys. The test now uses its own Redis database (<code>/15</code>).</p>
+</div>
+<div class="fix">
+  <h3><span class="badge P2">P2</span> M10 · Webhooks from both Stripe modes are processed</h3>
+  <p><span class="lbl">Problem:</span> the webhook took its signing secret and Stripe client from the global <code>STRIPE_TEST_MODE</code> switch. After a switch, the other mode's events (live refunds, chargebacks, transfers) failed the signature check or were rejected as a "mode mismatch". Stripe stops retrying after about 3 days, so they would be lost. A paid checkout from the other mode was also sent to manual review.</p>
+  <p><span class="lbl">Fix:</span></p>
+  <ul>
+    <li>The signature is checked against both signing secrets, test and live.</li>
+    <li>The event's own <code>livemode</code> must match the secret that verified it.</li>
+    <li>The event is then processed with that mode's Stripe client. If that mode has no API key, the answer is 503 so Stripe retries.</li>
+    <li>Duplicate handling (StripeEvent) is unchanged.</li>
+    <li>Checkout confirmation compares the session with the order's own mode, not the switch.</li>
+  </ul>
+  <p><span class="lbl">Files:</span> <code>backend/config/stripe.js</code> · <code>backend/services/stripe/webhookDispatcher.js</code> · <code>backend/controllers/SafePayCheckoutController.js</code> (mode check only) · tests <code>stripeWebhookBothModes.test.js</code> (new), <code>confirmPaidSessionIdempotency.test.js</code>, <code>stripeWebhookDispatcher.test.js</code></p>
+  <p><span class="lbl">Verified:</span> 6 new tests use real Stripe test signatures. With the switch on test, a live refund is processed with the live client. The old code fails that test. A forged event is refused, and so is an event signed with the wrong mode's secret. 52 tests in the three Stripe suites pass; I re-ran them myself.</p>
+  <p><span class="lbl">Owner action:</span> set all four on the server: <code>STRIPE_WEBHOOK_SECRET</code>, <code>STRIPE_TEST_WEBHOOK_SECRET</code>, <code>STRIPE_SECRET_KEY</code> and <code>STRIPE_TEST_SECRET_KEY</code>. If Connect events go to a separate Stripe endpoint, that endpoint has its own secret, which is not supported yet; today it must be the same endpoint as the platform one.</p>
+</div>
+<div class="fix">
+  <h3><span class="badge P2">P2</span> M2 · Every list endpoint has a page limit</h3>
+  <p><span class="lbl">Problem:</span> about 20 endpoints used <code>limit</code>/<code>page</code> exactly as sent, or returned the whole collection: favorites, lists, orders, job requests, reviews, applicants, a user's listings, notifications, transactions, blocked users, admin lists, and others. A huge, negative or text value loaded entire collections or caused 500s.</p>
+  <p><span class="lbl">Fix:</span> the shared <code>parsePagination</code> helper is used everywhere. It accepts whole numbers only, caps the limit at 100, and allows page 1&ndash;1000 (the page cap is new). Bad input is clamped to a safe value, not refused, so existing clients keep working. Where the web or app expects every item, the default page size is 100, and response shapes are unchanged. List endpoints that had no order are now sorted newest first, so pages are stable. The admin transaction search now treats its input as plain text, not a regex.</p>
+  <p><span class="lbl">Files:</span> <code>utils/pagination.js</code>, plus these controllers: favorites, lists, orders, reviews, applicants, notifications, transactions, blocking, admin and my-applications; test <code>listBoundsAndAuthz.test.js</code></p>
+  <p><span class="lbl">Verified:</span> each endpoint, called with <code>limit=99999999&amp;page=-5</code>, queries at most 100 items. The tests fail on the old code.</p>
+  <p><span class="lbl">Not capped on purpose:</span> the owner's own "my posted jobs" and applicants overview, where clients need the full list.</p>
+</div>
+
+<div class="fix">
+  <h3><span class="badge P2">P2</span> M6 · Smaller authorization gaps closed</h3>
+  <ul>
+    <li><strong>Time entries:</strong> any logged-in user could read any job's time entries. Now only the job owner or the assigned worker can. One shared check (<code>isOwnerOrAssignedWorker</code>) replaces two copies.</li>
+    <li><strong>Other users' listings:</strong> <code>GET /users/:id/services</code> showed other people's drafts, cancelled and completed listings. Others now see public listings only; the owner sees everything.</li>
+    <li><strong>System notifications:</strong> marking one as read marked it read for <em>every</em> user. "Read" is now stored per user (<code>readBy</code>), and the list, the unread badge and the live (socket) count all use that. The list of who read a notification is no longer sent to clients.</li>
+    <li><strong>Public config:</strong> <code>GET /api/config/:key</code> returned any setting, including internal ones such as the Stripe mode. Only an allowlist of public keys is served now; any other key returns 404 without a database query.</li>
+    <li><strong>Messages</strong> (marking another user's message as read, sending messages typed as "system"): handled by the chat agent, see M5.</li>
+  </ul>
+  <p><span class="lbl">Files:</span> <code>controllers/services/progressController.js</code> · <code>controllers/services/browseController.js</code> · <code>routes/users.js</code> · <code>controllers/notificationController.js</code> · <code>services/notifications/index.js</code> · <code>controllers/globalConfigController.js</code> · test <code>listBoundsAndAuthz.test.js</code></p>
+  <p><span class="lbl">Verified:</span> 15 tests in the file (M2 and M6); 14 fail on the old code. I re-ran them together with the existing notification tests: 22 passed.</p>
+  <p><span class="lbl">Behaviour change:</span> unread system announcements now count towards the bell badge. Old announcements that the bug had already marked read stay read.</p>
+</div>
+<div class="fix">
+  <h3><span class="badge P2">P2</span> M9 (+ P3 mobile) · Mobile app security and App Store risks</h3>
+  <ul>
+    <li><strong>Tokens:</strong> the login token now lives in the phone's secure storage (expo-secure-store) instead of plain storage. It is excluded from backups and never moves to a new device. A token saved by an older app version is moved over once, and a phone without secure storage falls back safely. Android backup is switched off.</li>
+    <li><strong>Half-written job:</strong> the draft is now stored per user and deleted on logout, on account switch and on forced logout, so the next user never sees it.</li>
+    <li><strong>"Betal" double tap:</strong> the button stays disabled until Checkout has opened. The cause was that the payment library re-enabled it too early.</li>
+    <li><strong>App Store 4.8:</strong> Google sign-in is hidden on iOS until Sign in with Apple exists.</li>
+    <li><strong>App Store 5.1.1:</strong> the unused microphone, "always" location, precise-location and motion permissions are removed.</li>
+    <li><strong>App Store 3.1.1:</strong> buying a membership is blocked on iOS whatever the configuration says.</li>
+    <li><strong>Monitoring:</strong> screen and API paths no longer contain ids, UUIDs or Stripe ids.</li>
+    <li><strong>iOS push:</strong> the backend only sends through Firebase (FCM), which cannot use an iOS (APNs) token. So instead of asking for a permission that delivers nothing, iOS push is switched off for now and the settings screen explains why.</li>
+  </ul>
+  <p><span class="lbl">Files:</span> <code>jobblo-app/src/utils/authStorage.ts</code>, <code>draftStorage.ts</code>, <code>src/store/authStore.ts</code>, <code>app/(app)/create-job.tsx</code>, <code>app/(app)/safepay/checkout/[orderId].tsx</code>, <code>app/(auth)/login.tsx</code>, <code>src/config/features.ts</code>, <code>src/monitoring/paths.ts</code>, <code>reporter.ts</code>, <code>src/services/pushNotifications.service.ts</code>, the notification settings screen, <code>app.json</code>, <code>package.json</code> (expo-secure-store)</p>
+  <p><span class="lbl">Verified:</span> 4 checks (secure storage and migration, per-user drafts, path cleaning, OAuth link), each failing on the old code. I re-ran them all myself and they pass. The app typecheck has 0 errors.</p>
+  <p><span class="lbl">Owner actions:</span></p>
+  <ul>
+    <li>Make a new EAS build: secure storage and the removed permissions take effect only in a new native build.</li>
+    <li>Decide on Sign in with Apple. This brings Google sign-in back on iOS, and Vipps login may also need it under rule 4.8.</li>
+    <li>Check whether paid extra contacts count as digital goods on iOS.</li>
+    <li>For real iOS push, add Firebase iOS messaging (or APNs/Expo push sending on the backend).</li>
+  </ul>
+</div>
+<div class="fix">
+  <h3><span class="badge P2">P2</span> M5 · Sessions and sockets (and the chat parts of M2, M4, M6, M7 and P3)</h3>
+  <ul>
+    <li><strong>Old refresh token:</strong> the grace window used <code>updatedAt</code>, which every request changes, so an old token kept working. It now uses a separate <code>rotatedAt</code>. Reusing an old token outside the 60-second window is treated as theft: the session is deleted and its sockets are disconnected. Inside the window, the current token is returned without rotating again.</li>
+    <li><strong>Sockets after logout:</strong> every socket joins a session room. Hooks on the Session model disconnect a session's sockets whenever that session is deleted, which covers every place that ends a session:
+      <ul>
+        <li>logout, and revoking one or all sessions;</li>
+        <li>password change and reset;</li>
+        <li>admin deactivate and revoke;</li>
+        <li>self-delete, and the refresh-theft case above.</li>
+      </ul>
+      An admin soft-delete now also deletes the user's sessions. This works across servers through the Redis adapter.</li>
+    <li><strong>One message check:</strong> the HTTP route and the socket now share one send function. It checks the text (non-empty, at most 5,000 characters), that the sender is a participant, the block list in both directions, a limit of 30 messages per minute per chat, and a chat size cap below MongoDB's 16 MB (a full chat answers 409).</li>
+    <li><strong>Presence:</strong> each user receives only their own chat partners' online status, not every online user's id.</li>
+    <li><strong>Blocking now works (M4):</strong> it stops creating a chat, sending chat and order messages, and applying to the other person's job.</li>
+    <li><strong>Order messages (M6):</strong> only the order's parties can mark a message read, and clients can no longer send "system" messages.</li>
+    <li><strong>Lists (M2):</strong> chats and messages are paged; the default page is 100.</li>
+    <li><strong>Agreed price (P3):</strong> must be a whole number of NOK from 1 to 1,000,000, and only the job owner (the payer) can set it.</li>
+  </ul>
+  <p><span class="lbl">Files:</span> <code>models/Session.js</code> · <code>controllers/auth/loginController.js</code> (refresh) · <code>sockets/rooms.js</code> · <code>sockets/chat.socket.js</code> · <code>controllers/chatController.js</code> · <code>controllers/messageController.js</code> · <code>controllers/adminController.js</code> · <code>controllers/orderController.js</code> (block check on apply) · tests <code>tokenPurpose</code>, <code>chatSessionSecurity</code> (new), <code>chatSocketAuth</code>, <code>chatMoneyGuards</code>, <code>jobRequestContactUsage</code></p>
+  <p><span class="lbl">Verified:</span> 20 tests fail on the old code. I re-ran all 7 chat, session and job-request suites myself: 119 passed (after the apply-block fix and one mock update).</p>
+  <p><span class="lbl">Known limits:</span> a session that expires through MongoDB's TTL (not a delete) does not disconnect its socket until the next check. Partners are loaded when a socket connects, so a brand-new chat shows presence after a reconnect.</p>
+</div>
+
+<div class="fix">
+  <h3><span class="badge P2">P2</span> M7 · Abuse and cost limits</h3>
+  <ul>
+    <li><strong>AI endpoints:</strong> each user gets 20 AI calls per hour (the limit falls back to the IP address). Input over 8,000 characters is refused with 413 before OpenAI is called. A title, description or prompt that is not text gets 400 instead of crashing.</li>
+    <li><strong>Client error reports</strong> (<code>POST /api/errors/client</code>): bodies are capped at 32 kb, down from 12 MB, before the global parser runs. The endpoint has its own limit (30 per 15 minutes per IP), and stored fields are shortened and redacted.</li>
+    <li><strong>Listing views:</strong> one view per visitor per listing per 24 hours (Redis <code>SET NX</code>, with a bounded in-memory fallback), so refreshing a page can't push a listing up "Trending". The owner's own views were already not counted.</li>
+  </ul>
+  <p><span class="lbl">Files:</span> <code>routes/ai.js</code> · <code>routes/errors.js</code> · <code>app.js</code> (one line) · <code>utils/firstView.js</code> (new) · <code>controllers/services/browseController.js</code> (view count only) · test <code>m7AbuseLimits.test.js</code></p>
+  <p><span class="lbl">Verified:</span> 8 tests, including the 21st AI call getting 429 while another user is unaffected, a 40 kb error report refused, and three visits counted once. 6 of the original 7 fail on the old code, and I added the type check and its test. I re-ran the file myself: 8 of 8 pass.</p>
+</div>
+<div class="fix">
+  <h3><span class="badge P2">P2</span> M3 &middot; Uploads are checked properly</h3>
+  <ul>
+    <li><strong>Real file type:</strong> it is read from the file's first bytes, not the browser header. Only JPEG, PNG, WebP (and PDF for documents) are allowed. SVG is refused.</li>
+    <li><strong>File names:</strong> generated by the server, so the user's file name is never used.</li>
+    <li><strong>Order of checks:</strong> the type is checked right after upload parsing, and ownership is checked <em>before</em> anything is stored, so a refused request leaves no files behind.</li>
+    <li><strong>Rate limit:</strong> 60 uploads per 15 minutes per user.</li>
+    <li><strong>Private storage:</strong> dispute and order evidence, chat-report evidence, admin evidence and certifications can go to a private container (<code>AZURE_PRIVATE_CONTAINER</code>). Responses then carry read-only links that expire after 15 minutes. Without that setting, files go to the public container as before.</li>
+  </ul>
+  <p><span class="lbl">Files:</span> <code>utils/azureUpload.js</code> &middot; <code>middleware/upload.js</code> &middot; upload, safepay, service and users routes &middot; <code>app.js</code> (one line) &middot; web <code>accept=</code> lists &middot; app certification picker &middot; test <code>uploadSecurity.test.js</code> (13 tests)</p>
+  <p><span class="lbl">Owner actions:</span></p>
+  <ol>
+    <li>Create a <strong>private</strong> container (e.g. <code>jobblo-private</code>) in Azure Storage.</li>
+    <li>Set <code>AZURE_PRIVATE_CONTAINER=jobblo-private</code> on the server.</li>
+    <li>Make sure the storage connection string contains <code>AccountName</code> and <code>AccountKey</code>, so the server can create the expiring links.</li>
+    <li>Optionally, move the old evidence files into the private container.</li>
+  </ol>
+</div>
+
+<div class="fix">
+  <h3><span class="badge P2">P2</span> M4 &middot; Features that silently did not work</h3>
+  <ul>
+    <li><strong>Chat-report evidence:</strong> it was saved with an empty file URL. The files are now really uploaded, after all checks. The web dialog also called an endpoint that does not exist; it now sends one request.</li>
+    <li><strong>Admin evidence upload:</strong> it always answered "no files". It now has an upload step, at most 5 files of 5 MB.</li>
+    <li><strong>Blocking a user:</strong> it had no effect. It now stops chats, messages (web and socket) and job applications; see M5.</li>
+    <li><strong>SafePay history for admins:</strong> superAdmins got 403 because the check used role names that do not exist. Fixed.</li>
+  </ul>
+</div>
+
+<div class="fix">
+  <h3><span class="badge P2">P2</span> M11 &middot; Deploy and CI</h3>
+  <ul>
+    <li><strong>deploy.sh:</strong>
+      <ul>
+        <li>On <code>main</code>, it deploys only after a green CI run, unless <code>--skip-ci-check</code> is passed.</li>
+        <li>The backend installs with <code>npm ci --omit=dev</code>.</li>
+        <li>The frontend is built into a new release folder, and the live site keeps serving the old build meanwhile.</li>
+        <li>After the API restarts, a health check runs for up to 60 seconds. Only when it passes is the site switched to the new build, in one atomic step, so there are no more 404s during deploys.</li>
+        <li>Any failure rolls back the code, the API and the frontend.</li>
+      </ul>
+    </li>
+    <li><strong>CI:</strong>
+      <ul>
+        <li>It now also runs on pushes to <code>main</code>.</li>
+        <li><code>npm audit --omit=dev --audit-level=high</code> runs for the backend.</li>
+        <li>Frontend lint and typecheck now block the build when the number of errors <em>grows</em>. Today there are 209 lint and 102 type errors, so they cannot block on any error yet.</li>
+        <li>A gitleaks secret scan was added.</li>
+      </ul>
+    </li>
+    <li><strong>Repo hygiene:</strong> <code>.gitignore</code> now covers key files, service-account files and test output. Unused packages (<code>crypto</code>, <code>socket.io-client</code> and <code>body-parser</code> in the backend, <code>i</code> at the root) were removed. The dev Docker images run as a non-root user, and the dev frontend port is bound to 127.0.0.1.</li>
+  </ul>
+  <p><span class="lbl">Not tested:</span> the release-folder swap uses a symlink, which this Windows PC cannot create. The rest of the script was dry-run with stand-in tools. <strong>Watch the first real deploy.</strong></p>
+  <p><span class="lbl">Owner actions:</span></p>
+  <ul>
+    <li>Install the <code>gh</code> CLI on the server and log in.</li>
+    <li>Check that <code>HEALTH_URL</code>, or the default <code>127.0.0.1:5001</code>, matches the server.</li>
+    <li>Add the <code>GITLEAKS_LICENSE</code> secret in GitHub. The old Azure secret in history (C1) will be flagged until it is rotated and allowlisted.</li>
+    <li>Run <code>git rm --cached infra/terraform.tfvars</code>.</li>
+    <li>Decide what to do with the unused <code>jobblo-argo-cd/</code>, <code>infra/</code> and <code>traefik-proxy/</code> folders.</li>
+  </ul>
+</div>
+
+<div class="fix">
+  <h3><span class="badge P3">P3</span> Low issues, backend (11 items)</h3>
+  <ol>
+    <li>BankID verification can no longer reactivate an account an admin made inactive.</li>
+    <li>Deleting your own account needs your current password, or a login from the last 10 minutes for accounts without a password. The last superAdmin cannot delete their own account.</li>
+    <li><code>PUT /users/:id</code> no longer accepts <code>role</code>. Roles change only through the admin endpoint, which checks for the last superAdmin and writes the audit log.</li>
+    <li>Login takes the same time whether or not the account exists, and there is a per-account lockout. In round 2 the lockout is being changed to email + IP, so attackers can't lock other people out.</li>
+    <li>Points shop: a balance can no longer be spent twice by two purchases at once (atomic check-and-spend).</li>
+    <li>Admin dispute amounts must be numbers of 0 or more with at most 2 decimals.</li>
+    <li>An admin cancel can no longer race a checkout that is just starting (compare-and-swap).</li>
+    <li>Approval no longer overwrites a refund state set at the same moment.</li>
+    <li>A mismatched extra-contact payment now raises a critical alert.</li>
+    <li>In production the API refuses to start on a public <code>HOST</code>, unless <code>ALLOW_PUBLIC_HOST=true</code>. <strong>The server needs <code>HOST=127.0.0.1</code>.</strong></li>
+    <li>In production <code>SESSION_SECRET</code> is required; it no longer falls back to <code>JWT_SECRET</code>.</li>
+  </ol>
+  <p><span class="lbl">Files:</span> the BankID, profile, login, shop, admin order and dispute controllers (amount validation only) &middot; <code>SafePayCheckoutController.js</code> (approval filter) &middot; <code>v2ExtraContacts.js</code> &middot; <code>bootstrap/index.js</code> &middot; <code>config/session.js</code> &middot; tests <code>p3AccountGuards</code>, <code>p3MoneyGuards</code>, <code>p3BootGuards</code>, <code>adminOrderCancel</code>, <code>extraContacts</code></p>
+  <p><span class="lbl">Verified:</span> each item has a test that fails on the old code. I re-ran the 8 suites myself: 79 tests passed.</p>
+</div>
+
+<div class="fix">
+  <h3><span class="badge P1">R2</span> Second review round: findings fixed so far</h3>
+  <p>Eight fresh, read-only reviewers looked at auth, money, admin authorization, input handling, the web app, the mobile app, infrastructure and backend correctness. These items are fixed and tested:</p>
+  <ul>
+    <li><strong>Server crash (high):</strong> one socket message with no payload (<code>mark-as-read</code>) made the API process exit. The handler is fixed, and a process-wide handler now logs unhandled promise rejections instead of exiting.</li>
+    <li><strong>Dispute payout with an unknown transfer outcome (high):</strong> it could never be finished. The payout service now lets it reach the Stripe lookup. There is a test.</li>
+    <li><strong>Retry job vs. an admin re-resolving a dispute (medium):</strong> the race could pay the provider <em>and</em> refund the customer. Failed dispute payouts are now left to the admin's resolve step; only unknown-outcome ones go to the retry job, and only for the lookup.</li>
+    <li><strong>Refund checked first (medium):</strong> a refund bigger than what is left on the payment is now refused <em>before</em> the provider's transfer is reversed.</li>
+    <li><strong>Failed refund (low):</strong> after Stripe fails a refund, a new resolve starts a fresh attempt instead of replaying the failure.</li>
+    <li><strong>Void payouts (low):</strong> after a refund, the order's unpaid payout is cancelled, so it is not retried and alerted on forever.</li>
+    <li><strong>Chargeback recovery (medium):</strong> Stripe sends one event per dispute stage, and each opened its own incident, so the same chargeback could be taken back from the provider more than once. The cap now counts all incidents of the same Stripe dispute.</li>
+    <li><strong>Body size (high):</strong> one anonymous 12 MB JSON body blocked the server for about 4 seconds. The global JSON and form limit is now 256 kb.</li>
+    <li><strong>Graceful shutdown (medium):</strong> it never finished while a chat user was online, so every restart killed running jobs. Sockets are now closed first.</li>
+    <li><strong>Socket rooms (medium):</strong> the dead <code>join_service</code> event let any user create unlimited rooms. It is removed.</li>
+    <li>The <code>X-Powered-By</code> header is removed.</li>
+    <li><strong>AI input:</strong> a non-text AI field now gets 400 instead of crashing.</li>
+    <li><strong>Blocking:</strong> a block between two users also stops applying to the other person's job.</li>
+  </ul>
+  <p><span class="lbl">Being fixed now by agents:</span></p>
+  <ul>
+    <li>The refresh-cookie operator injection (high): an anonymous request could delete any user's session.</li>
+    <li>Parallel guessing of the email codes.</li>
+    <li>Account pre-hijack through a linked Google or Vipps login.</li>
+    <li>Per-account limits on OTP guesses.</li>
+    <li>The lockout key, and linking a Vipps or BankID identity in a shared browser.</li>
+    <li>The Bearer token taking priority over the cookie, and logout deactivating push tokens.</li>
+    <li><code>SameSite=Lax</code> cookies.</li>
+    <li>Security headers in nginx, and an ecosystem file with <code>NODE_ENV</code> and the pm2 kill timeout.</li>
+    <li>Metrics write volume.</li>
+    <li>Input caps and escaping.</li>
+    <li>14 backend correctness bugs: scheduler batches, application restore, chat contract lock, maxApplicants, indexes, and others.</li>
+    <li>Mobile and web review items.</li>
+  </ul>
+</div>
+<div class="fix">
+  <h3><span class="badge P1">R2</span> Security headers, NODE_ENV and graceful restarts (server config)</h3>
+  <ul>
+    <li><strong>Security headers:</strong> the new <code>deploy/nginx/jobblo-security-headers.conf</code> sets these headers on every response, so other sites can no longer load Jobblo in a hidden frame (clickjacking):
+      <ul>
+        <li><code>X-Frame-Options DENY</code> and <code>frame-ancestors 'none'</code></li>
+        <li><code>nosniff</code></li>
+        <li>HSTS (1 year)</li>
+        <li>Referrer-Policy</li>
+      </ul>
+      It is included at server level and again in every location that sets its own header; otherwise nginx drops the server-level headers there.</li>
+    <li><strong>NODE_ENV and HOST:</strong> the new <code>backend/ecosystem.config.js</code> starts the API under pm2 with <code>NODE_ENV=production</code> and <code>HOST=127.0.0.1</code>. Every production safety switch depends on these.</li>
+    <li><strong>Graceful restarts:</strong> the same file sets <code>kill_timeout: 12000</code>, so pm2 no longer kills the API halfway through its graceful shutdown.</li>
+    <li><strong>deploy.sh:</strong> it now uses <code>pm2 startOrReload ecosystem.config.js</code>.</li>
+  </ul>
+  <p><span class="lbl">Verified:</span> <code>bash -n deploy.sh</code> passes, the pm2 config loads with the expected values, and the headers file is included in all 4 places. I checked these myself. They are not tested on a real server, because nginx and pm2 aren't installed here.</p>
+  <p><span class="lbl">Owner actions:</span></p>
+  <ol>
+    <li>Copy the headers file to <code>/etc/nginx/snippets/</code>, then run <code>nginx -t</code> and reload.</li>
+    <li>Before enabling HSTS <code>includeSubDomains</code>, check that every <code>*.jobblo.no</code> host serves HTTPS.</li>
+    <li>Once, briefly (a short API outage): <code>cd backend &amp;&amp; pm2 delete jobblo-api &amp;&amp; pm2 start ecosystem.config.js &amp;&amp; pm2 save</code>.</li>
+  </ol>
+</div>
+<div class="fix">
+  <h3><span class="badge P1">PERF</span> Backend performance: toward 5,000 requests per second</h3>
+  <p><span class="lbl">Measured:</span> local load test with autocannon (100 connections, 10 s per endpoint, 0 errors in every run). "Before" is the committed code, "after" the current code.</p>
+  <table class="mini">
+    <tr><th>Endpoint</th><th>Before, 1 process (rps / CPU per request)</th><th>After, 1 process</th><th>After, 6 workers</th></tr>
+    <tr><td>GET /api/services (list)</td><td>93 rps / 8.7 ms</td><td>799 rps / 0.6 ms</td><td>1,060 rps</td></tr>
+    <tr><td>GET /api/services?category=…</td><td>114 rps / 6.7 ms</td><td>955 rps / 0.4 ms</td><td>1,094 rps</td></tr>
+    <tr><td>GET /api/categories</td><td>466 rps / 1.1 ms</td><td>1,241 rps / 0.4 ms</td><td>2,957 rps</td></tr>
+    <tr><td>GET /api/filter/options</td><td>641 rps / 1.1 ms</td><td>1,217 rps / 0.4 ms</td><td>4,139 rps</td></tr>
+    <tr><td>GET /api/services/:id</td><td>31 rps</td><td>620 rps</td><td>596 rps</td></tr>
+  </table>
+  <p><strong>Why not 5,000 here:</strong> about 11 agents keep this PC's CPU near 100 %, and even a bare Node "hello" server only reaches about 4,500 rps on it. CPU time per request is the reliable figure: cached public reads fell from 6.7&ndash;8.7 ms to 0.4&ndash;0.6 ms, 10&ndash;20 times less. On an idle 8-core Linux server, 6&ndash;8 workers at that cost add up to well over 5,000 rps for these reads. That is a projection; it still has to be measured on the server.</p>
+  <p><span class="lbl">Changes:</span></p>
+  <ul>
+    <li><code>cluster.js</code>: one worker per CPU (<code>WEB_CONCURRENCY=auto</code>, needs Redis). Sockets use WebSocket only, so no sticky sessions are needed. Slot 1 runs the scheduler and the other one-instance jobs.</li>
+    <li>Response cache (<code>utils/cache.js</code>): responses are stored as Buffers, a 1-second in-process layer sits in front of Redis, and identical concurrent requests share one lookup. Invalidation is one atomic Redis call instead of a keyspace scan of about 155 round trips.</li>
+    <li>Redis auto-pipelining.</li>
+    <li>New indexes for the listing sorts and filters, and for top users, which was sorting the whole user collection in memory.</li>
+    <li>Request metrics: an O(1) window (the old <code>Array.shift</code> cost up to 250 &micro;s per request). Unmatched URLs are grouped, at most 1,000 buckets per minute, which closes a storage-cost attack.</li>
+    <li>A load-test script: <code>backend/scripts/loadtest/run.js</code>.</li>
+  </ul>
+  <p>Tests: <code>perfCache</code>, <code>perfClusterPlan</code>, <code>perfMiddleware</code> (including the cardinality cap, which fails on the old code), <code>perfQueries</code>.</p>
+  <p><span class="lbl">On the server:</span> <code>backend/ecosystem.config.js</code> sets <code>WEB_CONCURRENCY=auto</code> in pm2 fork mode. Do <strong>not</strong> use <code>pm2 -i</code>, or the scheduler stops running. <code>REDIS_URL</code> must be set.</p>
+  <ul>
+    <li>If the database provider limits connections, lower the pool with <code>?maxPoolSize=20</code> in <code>MONGO_URI</code> (each worker can open 100).</li>
+    <li>Check that the new indexes get built.</li>
+    <li>Check which database production really uses: <code>infra/cosmosdb.tf</code> defines Cosmos DB at 400 RU/s, which would cap writes far below 5,000 per second.</li>
+  </ul>
+  <p><span class="lbl">Next step (phase 2, after the security fixes in the same files land):</span></p>
+  <ul>
+    <li>Authenticated requests: no session write on every request; lean, field-limited user lookup.</li>
+    <li>Listing views: count them in Redis and write them in batches, instead of one database write per view.</li>
+    <li>Smaller list payloads (14.7 KB for 25 listings) and a cached total count.</li>
+    <li>Run the filter aggregations in parallel, with the right index.</li>
+    <li>Route ordering, so cache hits skip the middleware chain.</li>
+  </ul>
+</div>
+
+<div class="fix">
+  <h3><span class="badge P1">R2</span> Mobile app: second-round fixes</h3>
+  <ul>
+    <li><strong>Login links:</strong> the sign-in window now closes when a Google, Vipps or BankID attempt is cancelled or fails. Before, a forged login link was accepted for 10 minutes afterwards.</li>
+    <li><strong>Push opt-out:</strong> switching push off on a device now stays off after a restart.</li>
+    <li><strong>Push token on logout:</strong> the local push token is kept until the server confirms deactivation, so a failed logout can be retried.</li>
+    <li><strong>PDF evidence:</strong> it is recognised even with signed (private) links, and shown as a document instead of a broken image. Opening a document can no longer crash.</li>
+    <li><strong>BankID on iOS:</strong> the button no longer stays stuck on "Åpner BankID …".</li>
+    <li><strong>Notifications:</strong> one tapped while signed out is no longer replayed for the next user.</li>
+    <li><strong>API address:</strong> every build except development must use an <code>https://</code> API address.</li>
+  </ul>
+  <p><span class="lbl">Verified:</span> all 11 app checks pass and the typecheck has 0 errors (I re-ran both myself).</p>
+  <p><span class="lbl">Owner action:</span> the EAS "preview" environment needs <code>EXPO_PUBLIC_API_URL</code> set to an https address.</p>
+</div>
+
+<div class="fix">
+  <h3><span class="badge P1">R2</span> Input handling: second-round fixes</h3>
+  <ul>
+    <li><code>GET /api/users/top</code>: the address and city text is capped at 100 characters and 5 words, and the location queries have limits. Before, one request could create thousands of regex searches.</li>
+    <li><strong>Emails:</strong> the user's name in the password-reset email is HTML-escaped, so no injected links in a genuine Jobblo email.</li>
+    <li><strong>Listing search:</strong> the text is cut <em>before</em> escaping, so a 200-character search no longer leaves a broken regex that caused a 500.</li>
+    <li><strong>Repeated query keys</strong> (<code>?a=1&amp;a=2</code>) no longer crash 8 endpoints with a 500. A new shared <code>queryString</code> helper is used at each site, including the admin error-log filters.</li>
+    <li><strong>Admin error-log filter:</strong> the route filter is escaped.</li>
+    <li><strong>Regex sweep:</strong> no other request-driven, unescaped regex is left in the backend.</li>
+  </ul>
+  <p><span class="lbl">Verified:</span> <code>queryInputHardening.test.js</code>, 6 tests; 5 of them fail on the old code.</p>
+</div>
+<div class="fix">
+  <h3><span class="badge P1">R2</span> Backend correctness: 14 bugs from the code review</h3>
+  <ol>
+    <li><strong>Abandoned-checkout cleanup</strong> no longer brings back withdrawn or owner-declined applications. Only the ones the award itself declined are restored (new marker <code>autoDeclinedByOrderId</code>), one by one. A failure on one order no longer stops the whole run.</li>
+    <li><strong>Daily money check</strong> looks at orders updated in the last 30 days, newest first. Before, it read the same 200 oldest orders forever.</li>
+    <li><strong>Auto-release and cleanup batches</strong> rotate (new field <code>lastAutoAttemptAt</code>), so a few stuck orders can no longer block everyone else.</li>
+    <li><strong>After a "no action" dispute ruling</strong>, the order gets a fresh review window and warning. Auto-release also treats a dispute closed inside the window as blocking.</li>
+    <li><strong>Cancelled contracts</strong> no longer lock the chat. "Opprett kontrakt" and price changes work again, and a re-award keeps the negotiated price.</li>
+    <li><strong><code>maxApplicants</code></strong> is now enforced.</li>
+    <li><strong>An admin cancelling an unpaid contract</strong> reopens the listing and restores the auto-declined applications. This uses a shared helper (<code>services/order/releaseListing.js</code>) that the cleanup job uses too.</li>
+    <li><strong>New indexes</strong> on applications by job owner. Before, the applicants page did up to 200 full scans.</li>
+    <li><strong>Opening a chat</strong> counts its messages in the database instead of loading every message.</li>
+    <li><strong>Older-message pages</strong> no longer repeat messages.</li>
+    <li><strong>A queue job</strong> that lands late after the in-process fallback has already run is removed, so it doesn't run twice.</li>
+    <li><strong>The notification tray</strong> no longer loads every reader of a broadcast.</li>
+    <li><strong>Editing a listing</strong> validates the checklist like creating one does, and a single image is no longer split into characters.</li>
+    <li><strong>Accepting and declining</strong> an application at the same moment can no longer both succeed.</li>
+  </ol>
+  <p><span class="lbl">Verified:</span> 13 new tests (<code>listingLifecycleFixes.test.js</code> and one in <code>queue.fallback</code>), all failing on the old code, plus one dispute test I added for item 4. I re-ran the three suites: 49 tests passed.</p>
+  <p><span class="lbl">Known limits</span> (marked <code>ponytail:</code> in the code):</p>
+  <ul>
+    <li>Two simultaneous applications can still exceed <code>maxApplicants</code> by one.</li>
+    <li>A queue worker that picks up the late job before it is removed can still run it twice.</li>
+    <li>The money check covers at most 500 orders a month.</li>
+  </ul>
+</div>
+<div class="fix">
+  <h3><span class="badge P1">R2</span> Login and account security: second-round fixes</h3>
+  <ol>
+    <li><strong>High: anyone could log out any user.</strong> A cookie written as <code>j:{"$ne":null}</code> was parsed into a database operator, so <code>POST /api/auth/logout</code> deleted a random session, or a chosen user's. Every cookie value that is not plain text is now dropped right after parsing, and the logout and refresh handlers only accept text.</li>
+    <li><strong>Email code guessing:</strong> parallel guesses at the 2FA-setup / step-up email code all counted as one attempt. The attempt is now spent atomically before comparing; 20 parallel guesses get at most 5 checks.</li>
+    <li><strong>Account pre-hijack:</strong> an attacker who registered your email and linked their own Google or Vipps login could still sign in after you reset the password. A password reset now removes linked logins, and the owner re-links them. The real fix is email verification at registration, still to do.</li>
+    <li><strong>Password-reset code guesses:</strong> guessing was unlimited across new codes. There is now a per-account cap of 20 guesses per hour that a new code does not reset.</li>
+    <li><strong>Lockout:</strong> anyone could lock any account. The lockout now counts per email + IP (10 failures), with a much higher limit per email (100 in 15 minutes), so the real owner can still log in from their own connection.</li>
+    <li><strong>Vipps and BankID linking:</strong> a link started by one user, followed by a logout, could be completed by another person in the same browser. The callback now requires the same signed-in user and session.</li>
+    <li><strong>Token order:</strong> the access cookie was read before the <code>Authorization</code> header, so a stale cookie in the phone app could make user B's requests run as user A. The header now wins, with the cookie as the fallback (socket too).</li>
+    <li><strong>Push on logout:</strong> logout did not switch off the phone's push notifications on the server. Push tokens now record their login session, and logout deactivates them.</li>
+    <li><strong>SameSite:</strong> auth cookies are <code>SameSite=Lax</code> instead of <code>None</code>, so they are no longer sent in hidden frames from other sites. One shared helper replaces four copies.</li>
+  </ol>
+  <p><span class="lbl">Verified:</span> new test files <code>cookieInjection</code>, <code>stepUpAttempts</code>, <code>authResetGuards</code>, <code>authHeaderAndLogout</code> and <code>cookieSameSite</code>, plus updates to the Vipps, BankID and account suites. Each fails on the old code. Full backend suite: <strong>1,854 passed, 0 failed</strong>.</p>
+  <p><span class="lbl">Known limits:</span> push tokens registered before this change get their session id on the app's next start. If the 1-hour access token expires in the middle of a Vipps or BankID link, the link is refused and must be restarted.</p>
+</div>
+
+<div class="fix">
+  <h3><span class="badge P1">R2</span> Access checks: second-round fixes</h3>
+  <ul>
+    <li><strong>Favourites and lists:</strong> they could store, and then reveal, draft, cancelled or finished listings. Adding a listing now needs it to be public or yours, and only public or own listings are filled in when the list is read.</li>
+    <li><strong>Order messages:</strong> they showed the other party's email before payment. They now show name and avatar only.</li>
+    <li><strong>Admin panel and superAdmins:</strong> it could create or promote superAdmins without step-up. superAdmin can no longer be assigned there; existing superAdmins can still be demoted.</li>
+    <li><strong>Time entries:</strong> a listing's time entries (hours, notes) are hidden on every read by default. Only the owner or the assigned worker can fetch them.</li>
+    <li><strong>Second create-user path:</strong> <code>POST /api/users</code> had no field allowlist or audit log, and nobody used it. It is removed; <code>POST /api/admin/users</code> remains.</li>
+    <li><strong>SafePay create-session:</strong> it checks who the customer is first, so outsiders can no longer probe whether an order exists or what state it is in.</li>
+  </ul>
+  <p><span class="lbl">Verified:</span> <code>authzExposureReview</code> and <code>safepayCreateSessionOwnership</code>, 8 tests, 7 of which fail on the old code. I re-checked that the earlier fixes in the same files are intact: 53 tests passed.</p>
+</div>
+
+<div class="fix">
+  <h3><span class="badge P2">P2</span> M8 · Web app bugs (+ P3 web and review items)</h3>
+  <ul>
+    <li><strong>Logout:</strong> every logout path now clears the data cache, including the admin and developer menus, a forced logout and the 2FA screen. The next user in the same tab no longer sees the previous user's chats, orders or subscription.</li>
+    <li><strong>Double clicks:</strong> "Opprett kontrakt" and "Start fiks ferdig-betaling" can no longer be clicked twice.</li>
+    <li><strong>Profile loading:</strong> the profile is fetched once per page load, and the page no longer remounts.</li>
+    <li><strong>SafePay checklist:</strong> the tick appears only after a successful save, and a failure shows an error.</li>
+    <li><strong>Accessibility:</strong> the contract modal opens with the keyboard (a real button, dialog role, Escape to close, focus handling), and every create-job label is linked to its field.</li>
+    <li><strong><code>?next=</code> redirect:</strong> a new shared <code>safeLocalPath</code> check, used in 3 places, also rejects <code>/\</code> and tab or newline tricks. Share pop-ups open with <code>noopener,noreferrer</code>.</li>
+    <li><strong>Deleting your account:</strong> it asks for your current password, and explains when you need to log in again.</li>
+    <li><strong>2FA screen:</strong> it no longer hangs on "Laster …" after a failed status load; there is a "Try again" button.</li>
+    <li><strong>Coins redeem:</strong> one request only, with success and error messages.</li>
+    <li><strong>Subscription success page:</strong> it now waits for the login session to load before calling the API.</li>
+    <li><strong>Web job draft:</strong> the draft (address, phone, email, photos) is deleted on every logout and stored with its owner, so the next user in the same browser never sees it. This is the web version of the M9 mobile fix.</li>
+    <li><strong>SafePay checklist:</strong> it is announced as a real checkbox to screen readers.</li>
+  </ul>
+  <p><span class="lbl">Verified:</span> <code>e2e/m8-web.spec.js</code> (10 browser tests) and <code>safeLocalPath.test.mjs</code> pass, and the typecheck is clean.</p>
+  <p><span class="lbl">Owner action (Google Maps):</span> the reverse geocoding calls Google's Geocoding web service from the browser, which does not accept a key restricted to your website. In Google Cloud Console, check that the browser key has website restrictions and API restrictions, and set quota and billing alerts. Better: switch to the Maps JavaScript Geocoder, which works with a restricted key.</p>
+</div>
+<div class="fix">
+  <h3><span class="badge P1">PERF</span> Backend performance, phase 2: the per-request hot spots</h3>
+  <ul>
+    <li><strong>Logged-in requests:</strong> every logged-in request used to write to the database. The session's "last used" time is now written at most once a minute, and the session and user are read as lean objects. The database work per request dropped from 5.4 ms to 2.5 ms of CPU, about 3 times the throughput in the A/B test. Bearer-first, the 2FA gate and the session revocation are unchanged.</li>
+    <li><strong>Listing views:</strong> they are counted in Redis (<code>HINCRBY</code>) and written to MongoDB in one batch every 15 seconds, instead of one database write per view. CPU per counted view fell from 557 &micro;s to 16 &micro;s. The listing detail page on 6 workers went from 596 to 1,694 requests/second (p99 470 &rarr; 178 ms), even though this PC was busier. The one-view-per-visitor rule and the owner exclusion are kept.</li>
+    <li><strong>Listing list:</strong> it is 33 % smaller (14.7 &rarr; 9.8 KB for 25 listings), because fields no list view uses are dropped. The total count is cached per filter, and the county lookup is cached for an hour.</li>
+    <li><strong>Top users, categories and filter options:</strong> lean reads, a cached total count, and the filter queries running in parallel instead of one after another.</li>
+    <li><strong>pm2 cluster mode:</strong> under <code>pm2 -i</code>, only instance 0 now runs the scheduler. Before, every instance ran it.</li>
+  </ul>
+  <p><span class="lbl">Verified:</span> new tests <code>perfAuth</code>, <code>viewCounter</code>, <code>perfList</code>, <code>perfUsersTop</code> and <code>perfFilterOptions</code>, plus <code>slotFrom</code> cases in <code>perfClusterPlan</code>. Each fails on the old code. The lean outputs are identical to the old ones on all 24 dev listings. I re-ran the perf and auth suites myself: 89 tests passed.</p>
+  <p><span class="lbl">Measurement note:</span> during phase 2 this PC was far more loaded than in phase 1: a bare Node server dropped from about 4,500 to 879 rps. The raw rps numbers from that run are not meaningful; the CPU-per-request and payload numbers above are. Final 5,000 rps proof needs the load-test script on the real (idle) server:</p>
+  <p><code>node scripts/loadtest/run.js --url http://127.0.0.1:5001</code></p>
+  <p><span class="lbl">Skipped on purpose:</span></p>
+  <ul>
+    <li>A Redis cache of the logged-in user: its invalidation could not be guaranteed on every role, status, 2FA and password change.</li>
+    <li>Reordering routes: no measurable gain.</li>
+  </ul>
+  <p><span class="lbl">Known limits:</span> view counts in MongoDB lag by up to 15 seconds, and counts held in memory are lost if a process crashes (when Redis is off).</p>
+  <p><span class="lbl">Dev data note:</span> the listing <code>6ada49e45851423aa9563b53</code> got inflated view counts from the phase-1 benchmark. Reset it by hand if that matters.</p>
+</div>
+<div class="fix">
+  <h3><span class="badge P1">R3</span> Final review round: 66 findings, 64 fixed</h3>
+  <p>Eight fresh reviewers re-checked every file after rounds 1 and 2: money, login, access to data, input and uploads, chat and sockets, web app, mobile app, and server/deploy. Every finding, with its fix and status, is in <b>Jobblo-Security-Review-Report.pdf</b>. In short:</p>
+  <ul>
+    <li><strong>Money:</strong>
+      <ul>
+        <li>No second refund after re-resolving a dispute.</li>
+        <li>A won chargeback no longer blocks the payout.</li>
+        <li>A dispute cannot be opened on a payout whose outcome is unknown.</li>
+        <li>Status changes cannot undo a resolved dispute.</li>
+        <li>Chargeback incidents can close, including a new close-lost-chargeback action.</li>
+        <li>Recovery has a lock, so two admins cannot over-recover.</li>
+        <li><strong>Audit entries that were silently dropped are now saved.</strong> 19 admin actions were missing from the allowed list.</li>
+      </ul>
+    </li>
+    <li><strong>Login:</strong>
+      <ul>
+        <li>An attacker can no longer lock the owner out.</li>
+        <li>Password checks are limited, and all hashing uses the bounded queue.</li>
+        <li>2FA and backup codes can only be used once, and repeated wrong codes end the session and email the owner.</li>
+        <li>Only the owner can change their own email.</li>
+        <li>Push tokens are switched off on every session end.</li>
+      </ul>
+    </li>
+    <li><strong>New sign-in features:</strong>
+      <ul>
+        <li><strong>E-mail verification at sign-up</strong>, with no email enumeration. This is the real fix for account pre-hijack.</li>
+        <li><strong>Sign in with Apple</strong> in the app, so Google sign-in is shown on iOS again.</li>
+        <li><strong>One-time code + PKCE</strong> for the app's Google/Vipps sign-in link, so the link no longer carries a token.</li>
+      </ul>
+    </li>
+    <li><strong>Sockets:</strong>
+      <ul>
+        <li>Per-socket event limit, and at most 10 sockets per user.</li>
+        <li>Sockets close at token expiry and on revocation, even when Redis is down.</li>
+        <li>Account status is checked on connect, and the block list applies to every contract step and to presence.</li>
+        <li>Chats and messages are hidden instead of deleted, so evidence survives.</li>
+      </ul>
+    </li>
+    <li><strong>Input:</strong>
+      <ul>
+        <li>The log-masking regex can no longer freeze the server (84 s became 1 ms).</li>
+        <li>Upload forms have field limits; one request had used 1.2 GB.</li>
+        <li>Cache keys ignore the query string where it doesn't matter, and image decoding has a pixel limit.</li>
+        <li>The remaining page caps are in place, the error log no longer stores query strings, and the AI image type is checked from the file bytes.</li>
+        <li>Client error reports cannot pose as server errors.</li>
+      </ul>
+    </li>
+    <li><strong>Access:</strong>
+      <ul>
+        <li>List search shows only public listings.</li>
+        <li>List contributors cannot read other people's emails.</li>
+        <li>Image links must come from Jobblo storage, and private evidence links cannot be re-published.</li>
+        <li>The profile website must be a real http(s) address.</li>
+      </ul>
+    </li>
+    <li><strong>Mobile:</strong>
+      <ul>
+        <li>Login tokens are no longer written to the nginx log.</li>
+        <li>A token refresh cannot switch to another account.</li>
+        <li>Notifications are cleared from the tray on logout.</li>
+        <li>Unused Android permissions are blocked.</li>
+        <li>Account deletion asks for the password.</li>
+      </ul>
+    </li>
+    <li><strong>Server, deploy and CI:</strong>
+      <ul>
+        <li>Deploy always rolls back on failure and needs green CI on every branch.</li>
+        <li>Support tickets are limited.</li>
+        <li>The scheduler stops first on shutdown, and pm2 gets 16 s.</li>
+        <li>Login limiters fail closed when Redis is down.</li>
+        <li>Report-only CSP and a Permissions-Policy header.</li>
+        <li>Audits for the frontend and the app, and a production Docker image.</li>
+      </ul>
+    </li>
+    <li><strong>Web:</strong>
+      <ul>
+        <li>No private chat text in monitoring.</li>
+        <li>The unused success page is removed.</li>
+        <li>The 6 bugs found by the new E2E tests are fixed.</li>
+        <li>Type errors went from 102 to 0, so the typecheck now blocks CI, and lint errors from 209 to 56.</li>
+      </ul>
+    </li>
+  </ul>
+  <p><span class="lbl">Not fixable in code:</span> C1, the Azure secret in git history, which the owner must rotate. P7, the npm audit warnings in the app's build tools, waits for the next Expo update; forcing it would break the app.</p>
+  <p><span class="lbl">Release order:</span> deploy the backend first, then the new app build. The new app expects the one-time sign-in code and e-mail verification.</p>
+  <p><span class="lbl">Verified:</span></p>
+  <ul>
+    <li><strong>Backend:</strong> 2,025 tests passed on a clean checkout of the commits. The only failing test checks frontend files committed in the frontend commit.</li>
+    <li><strong>Mobile:</strong> all checks and the typecheck pass.</li>
+    <li><strong>Web:</strong> the E2E suite is re-run before the frontend commit.</li>
+  </ul>
+</div>
+<!--/FIXES-->
+
+<p class="foot">Generated from <code>docs/security/fixes.html</code>. Tests: backend jest suite 1,854 passed, 0 failed (latest full run).</p>
+</body>
+</html>

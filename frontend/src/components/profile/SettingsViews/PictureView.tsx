@@ -31,7 +31,7 @@ export const PictureView = () => {
         ref={fileInputRef}
         onChange={handleFileChange}
         className="hidden"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp"
         title="Upload profile picture"
       />
 
@@ -40,7 +40,7 @@ export const PictureView = () => {
         ref={cameraInputRef}
         onChange={handleFileChange}
         className="hidden"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp"
         capture="user"
         title="Take profile picture"
       />

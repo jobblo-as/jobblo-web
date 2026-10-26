@@ -4,7 +4,8 @@ import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import SocialAuthButtons from '../SocialAuthButtons/AuthButton.tsx';
 import AuthField from './AuthField.tsx';
 import { FIELD_ICON_BUTTON, PRIMARY_BUTTON, TEXT_LINK } from './authStyles.ts';
-import { useAuth } from '../../features/auth/hook/useAuth.ts';
+import { useAuth, isEmailNotVerified } from '../../features/auth/hook/useAuth.ts';
+import VerifyEmailStep from './VerifyEmailStep.tsx';
 import { useForm } from '../../hooks/useForm.ts';
 import { getErrorMessage } from '../../utils/getErrorMessage.ts';
 import { loginValidationSchema, type LoginFormValues } from '../../validations/authValidations';
@@ -15,6 +16,7 @@ export const LoginForm = () => {
   const { login, isLoggingIn } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState('');
+  const [verifying, setVerifying] = useState(false);
   const [searchParams] = useSearchParams();
 
   // Vipps and Google redirect here with ?error=<code> when they refuse a sign-in.
@@ -40,10 +42,22 @@ export const LoginForm = () => {
         // Express error handler straight to React as a child — a white screen on
         // exactly the request the user most needs to work.
         onError: (error: unknown) =>
-          setServerError(getErrorMessage(error, 'Innlogging mislyktes. Sjekk e-post og passord.')),
+          isEmailNotVerified(error)
+            ? setVerifying(true) // the server mailed a fresh code
+            : setServerError(getErrorMessage(error, 'Innlogging mislyktes. Sjekk e-post og passord.')),
       }
     );
   };
+
+  if (verifying) {
+    return (
+      <VerifyEmailStep
+        email={values.email.trim().toLowerCase()}
+        password={values.password}
+        onBack={() => setVerifying(false)}
+      />
+    );
+  }
 
   return (
     <div>

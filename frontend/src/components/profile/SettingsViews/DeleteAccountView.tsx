@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { AlertTriangle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import type { SettingsContextType } from '../../../pages/SettingsPage';
@@ -25,24 +25,31 @@ export const DeleteAccountView = () => {
   const { form, handleChange } = useOutletContext<SettingsContextType>();
   const user = useUserStore((state) => state.user);
   const logout = useUserStore((state) => state.logout);
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   const [confirmText, setConfirmText] = useState('');
+  const [currentPassword, setCurrentPassword] = useState('');
   const deleteMutation = useMutation({
-    mutationFn: () => deleteUserAccount(user!._id, form.feedback?.trim() || undefined),
+    // The server asks for the current password (403 CURRENT_PASSWORD_REQUIRED), or for an
+    // account with no password, a sign-in from the last 10 minutes (403 REAUTH_REQUIRED).
+    mutationFn: () =>
+      deleteUserAccount(user!._id, form.feedback?.trim() || undefined, currentPassword || undefined),
     onSuccess: async () => {
       toast.success('Profilen din er slettet.');
       try {
         await logout();
       } finally {
-        queryClient.clear();
         navigate('/', { replace: true });
       }
     },
     // A 409 here is the "you still have live orders" case, and its message
     // tells the user exactly what to do — so surface it rather than a generic.
-    onError: (err) => toast.error(getErrorMessage(err, 'Kunne ikke slette profilen. Prøv igjen.')),
+    onError: (err) =>
+      toast.error(
+        (err as { response?: { data?: { code?: string } } })?.response?.data?.code === 'REAUTH_REQUIRED'
+          ? 'Logg inn på nytt og prøv igjen.'
+          : getErrorMessage(err, 'Kunne ikke slette profilen. Prøv igjen.')
+      ),
   });
   const isDeleting = deleteMutation.isPending;
 
@@ -99,6 +106,25 @@ export const DeleteAccountView = () => {
           placeholder={CONFIRM_WORD}
           className="w-full bg-gray-100 focus:bg-white outline-none rounded-2xl px-5 py-3.5 text-gray-900 font-medium border border-transparent focus:border-red-300 transition-colors"
         />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label htmlFor="delete-current-password" className="text-sm font-medium text-gray-700">
+          Nåværende passord
+        </label>
+        <input
+          id="delete-current-password"
+          type="password"
+          autoComplete="current-password"
+          aria-describedby="delete-current-password-hint"
+          value={currentPassword}
+          onChange={(e) => setCurrentPassword(e.target.value)}
+          className="w-full bg-gray-100 focus:bg-white outline-none rounded-2xl px-5 py-3.5 text-gray-900 font-medium border border-transparent focus:border-red-300 transition-colors"
+        />
+        <p id="delete-current-password-hint" className="text-xs text-gray-500">
+          La feltet stå tomt hvis du logger inn med Google eller Vipps. Da må du ha logget inn de
+          siste 10 minuttene.
+        </p>
       </div>
 
       <button

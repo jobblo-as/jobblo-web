@@ -19,6 +19,17 @@ export async function registerUser(userData: {
   return res.data;
 }
 
+/** Finishes sign-up with the mailed code; answers like login ({ user, accessToken }). */
+export async function verifyEmail(body: { email: string; code: string; password: string }) {
+  const res = await mainLink.post('/api/auth/verify-email', body);
+  return res.data;
+}
+
+export async function resendVerification(email: string) {
+  const res = await mainLink.post('/api/auth/resend-verification', { email });
+  return res.data;
+}
+
 export async function logoutUser() {
   const res = await mainLink.post('/api/auth/logout');
   return res.data;

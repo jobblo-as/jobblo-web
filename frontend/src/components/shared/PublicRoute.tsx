@@ -1,8 +1,9 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useUserStore } from '../../stores/userStore';
 import { AuthPending } from './ProtectedRoute';
+import { safeLocalPath } from '../../utils/safeLocalPath';
 
-export const PublicRoute = ({ children }: { children: JSX.Element }) => {
+export const PublicRoute = ({ children }: { children: React.JSX.Element }) => {
   const isAuth = useUserStore((state) => state.isAuthenticated);
   const authReady = useUserStore((state) => state.authReady);
   const location = useLocation();
@@ -15,9 +16,7 @@ export const PublicRoute = ({ children }: { children: JSX.Element }) => {
     // user who lands on /login (e.g. via a stale link) still ends up where they
     // were headed instead of being dumped on /home.
     const from = (location.state as { from?: unknown } | null)?.from;
-    const target =
-      typeof from === 'string' && from.startsWith('/') && !from.startsWith('//') ? from : '/home';
-    return <Navigate to={target} replace />;
+    return <Navigate to={safeLocalPath(from, '/home')} replace />;
   }
 
   return children;

@@ -1,5 +1,5 @@
 import mainLink from '../../api/mainURLs';
-import type { UserUpdatePayload } from './types/user';
+import type { ExperiencePayload, UserUpdatePayload } from './types/user';
 
 export const updateUser = async (userId: string, data: UserUpdatePayload) => {
   const response = await mainLink.put(`/api/users/${userId}`, data);
@@ -84,7 +84,7 @@ export const deleteCertification = async (certId: string) => {
   return response.data;
 };
 
-export const addExperience = async (data: any) => {
+export const addExperience = async (data: ExperiencePayload) => {
   const response = await mainLink.post('/api/users/experience', data);
   return response.data;
 };
@@ -99,7 +99,7 @@ export const getSafePayHistory = async (userId: string) => {
   return response.data;
 };
 
-export const deleteUserAccount = async (userId: string, feedback?: string) => {
-  const response = await mainLink.delete(`/api/users/${userId}`, { data: { feedback } });
+export const deleteUserAccount = async (userId: string, feedback?: string, currentPassword?: string) => {
+  const response = await mainLink.delete(`/api/users/${userId}`, { data: { feedback, currentPassword } });
   return response.data;
 };

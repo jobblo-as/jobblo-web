@@ -4,6 +4,7 @@ import { ArrowLeft, Eye, EyeOff, Loader2 } from 'lucide-react';
 import SocialAuthButtons from '../SocialAuthButtons/AuthButton.tsx';
 import AuthField from './AuthField.tsx';
 import PasswordChecklist from './PasswordChecklist.tsx';
+import VerifyEmailStep from './VerifyEmailStep.tsx';
 import { FIELD_ICON_BUTTON, PRIMARY_BUTTON, TEXT_LINK } from './authStyles.ts';
 import { useAuth } from '../../features/auth/hook/useAuth.ts';
 import { useForm } from '../../hooks/useForm.ts';
@@ -20,8 +21,9 @@ import {
  * submit button sat below a scroll the user had no reason to expect. Split, each step
  * fits the viewport, the form asks one thing at a time, and step one leads with Vipps —
  * where most Norwegian users finish in a tap and never see step two.
+ * Then "Bekreft e-post": the account signs in only after the mailed code.
  */
-type Step = 'identity' | 'credentials';
+type Step = 'identity' | 'credentials' | 'verify';
 
 export const RegisterForm = () => {
   const { register, isRegistering } = useAuth();
@@ -99,11 +101,24 @@ export const RegisterForm = () => {
         }),
       },
       {
+        onSuccess: (data) => {
+          if (data?.verificationRequired) setStep('verify');
+        },
         onError: (error: unknown) =>
           setServerError(getErrorMessage(error, 'Registreringen mislyktes. Prøv igjen.')),
       }
     );
   };
+
+  if (step === 'verify') {
+    return (
+      <VerifyEmailStep
+        email={values.email.trim().toLowerCase()}
+        password={values.password}
+        onBack={() => setStep('credentials')}
+      />
+    );
+  }
 
   const passwordToggle = (visible: boolean, onToggle: () => void) => (
     <button

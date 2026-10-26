@@ -102,14 +102,14 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
         ref={fileInputRef}
         type="file"
         multiple
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp"
         onChange={handleFileChange}
         className="hidden"
       />
       <input
         ref={cameraInputRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp"
         capture="environment"
         onChange={handleFileChange}
         className="hidden"
