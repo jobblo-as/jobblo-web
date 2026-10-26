@@ -2,6 +2,7 @@ const express = require('express');
 const passport = require('passport');
 const { optionalAuthenticate } = require('../middleware/auth');
 const { createSession } = require('../utils/tokenUtils');
+const { setAuthCookies } = require('../controllers/auth/authHelpers');
 const { oauthDestination, noStore } = require('../utils/oauthReturn');
 const vippsController = require('../controllers/vippsController');
 
@@ -45,18 +46,7 @@ function googleCallback(req, res, next) {
 
     try {
       const { accessToken, refreshToken } = await createSession(req, user._id);
-      res.cookie('accessToken', accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        maxAge: 60 * 60 * 1000,
-      });
-      res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
+      setAuthCookies(res, accessToken, refreshToken);
       return res.redirect(oauthDestination({ req, platform: 'web', accessToken }));
     } catch (sessionError) {
       console.error('Google callback session error:', sessionError.message);
@@ -71,7 +61,8 @@ router.get('/google/callback', optionalAuthenticate, googleCallback);
 router.get('/vipps', optionalAuthenticate, (req, res) =>
   vippsController.redirectToVipps(req, res, { platform: 'web' })
 );
-router.get('/vipps/callback', (req, res) =>
+// optionalAuthenticate so a link callback can be checked against the session that started it.
+router.get('/vipps/callback', optionalAuthenticate, (req, res) =>
   vippsController.vippsCallback(req, res, { platform: 'web' })
 );
 

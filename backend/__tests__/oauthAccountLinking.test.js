@@ -413,9 +413,10 @@ describe('14. OAuth placeholder passwords cannot authenticate', () => {
       fs.readdirSync(path.join(__dirname, '..', 'controllers', 'auth')).map((f) => fs.readFileSync(path.join(__dirname, '..', 'controllers', 'auth', f), 'utf8')).join('\n') // the controller is split into controllers/auth
     );
 
-    expect(source).toMatch(
-      /isBcryptHash\(user\.password\)\s*&&\s*\(await bcrypt\.compare\(password, user\.password\)\)/
-    );
+    // A non-hash is never compared (a dummy hash is, for constant timing) and never passes.
+    expect(source).toMatch(/const hasHash = Boolean\(user\) && isBcryptHash\(user\.password\)/);
+    expect(source).toMatch(/hasHash \? user\.password : DUMMY_HASH/);
+    expect(source).toMatch(/if \(!hasHash \|\| !matches\)/);
   });
 
   it('no OAuth path writes a plaintext placeholder any more', () => {

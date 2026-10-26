@@ -125,13 +125,16 @@ async function sendSubscriptionRecoveryEmail({
 }
 
 /**
- * Sends a 6-digit OTP email for password reset.
+ * Sends a 6-digit OTP email for password reset, or (purpose 'verify-email') to confirm the
+ * address of a new account.
  * @param {string} toEmail - Recipient email address
  * @param {string} otp - 6-digit OTP code
  * @param {string} userName - Recipient's name
+ * @param {string} [purpose] - 'verify-email'; anything else = password reset
  */
-const deliverOtpEmail = async (toEmail, otp, userName) => {
+const deliverOtpEmail = async (toEmail, otp, userName, purpose) => {
   const transporter = createTransporter();
+  const verify = purpose === 'verify-email';
 
   // Split OTP into individual digits for styled boxes
   const digits = otp.split('');
@@ -142,13 +145,13 @@ const deliverOtpEmail = async (toEmail, otp, userName) => {
     'border-radius:10px;margin:0 4px;letter-spacing:0;';
 
   const digitBoxesHtml = digits
-    .map((d) => `<span style="${digitBoxStyle}">${d}</span>`)
+    .map((d) => `<span style="${digitBoxStyle}">${escapeHtml(d)}</span>`)
     .join('');
 
   const mailOptions = {
     from: `"Jobblo" <${process.env.SMTP_USER}>`,
     to: toEmail,
-    subject: 'Din verifiseringskode – Jobblo',
+    subject: verify ? 'Bekreft e-postadressen din – Jobblo' : 'Din verifiseringskode – Jobblo',
     html: `
       <!DOCTYPE html>
       <html lang="no">
@@ -177,10 +180,12 @@ const deliverOtpEmail = async (toEmail, otp, userName) => {
                 <tr>
                   <td style="padding:40px 40px 32px;">
                     <h2 style="color:#111827;font-size:20px;font-weight:700;
-                               margin:0 0 8px;">Hei, ${userName || 'der'}!</h2>
+                               margin:0 0 8px;">Hei, ${escapeHtml(userName || 'der')}!</h2>
                     <p style="color:#6B7280;font-size:15px;line-height:1.6;margin:0 0 32px;">
-                      Vi mottok en forespørsel om å tilbakestille passordet ditt.
-                      Bruk koden nedenfor. Den er gyldig i <strong>10 minutter</strong>.
+                      ${verify
+                        ? 'Takk for at du opprettet en konto hos Jobblo. Bekreft e-postadressen din med koden nedenfor.'
+                        : 'Vi mottok en forespørsel om å tilbakestille passordet ditt. Bruk koden nedenfor.'}
+                      Den er gyldig i <strong>10 minutter</strong>.
                     </p>
 
                     <!-- OTP Boxes -->
@@ -190,7 +195,7 @@ const deliverOtpEmail = async (toEmail, otp, userName) => {
 
                     <p style="color:#9CA3AF;font-size:13px;line-height:1.6;margin:0;">
                       Hvis du ikke ba om dette, kan du trygt ignorere denne e-posten.
-                      Passordet ditt forblir uendret.
+                      ${verify ? 'Kontoen blir ikke tatt i bruk uten koden.' : 'Passordet ditt forblir uendret.'}
                     </p>
                   </td>
                 </tr>
@@ -228,16 +233,26 @@ async function sendDevAlertEmail(to, incident) {
   });
 }
 
+/** Plain-text security notice to an account owner (e.g. repeated wrong two-factor codes). */
+async function sendSecurityAlertEmail(to, subject, text) {
+  await sendLogged(createTransporter(), { from: `"Jobblo" <${process.env.SMTP_USER}>`, to, subject, text });
+}
+
 /**
  * Send a one-time code through the email queue (services/queue): returns as soon as the job
  * is queued, retried with backoff if SMTP fails. Answering at the same speed whether or not
  * the address exists also closes the timing leak in "forgot password". The code is sealed in
  * the job payload. Use deliverOtpEmail when the caller must know the email went out.
  */
-async function sendOtpEmail(toEmail, otp, userName) {
+async function sendOtpEmail(toEmail, otp, userName, purpose) {
   const { enqueue } = require('../services/queue');
   const { sealOtp } = require('../services/queue/handlers');
-  return enqueue('email', 'otp', { to: toEmail, name: userName || null, otpSealed: sealOtp(otp) }, { attempts: 3 });
+  return enqueue('email', 'otp', { to: toEmail, name: userName || null, otpSealed: sealOtp(otp), ...(purpose && { purpose }) }, { attempts: 3 });
 }
 
-module.exports = { sendOtpEmail, deliverOtpEmail, sendSubscriptionRecoveryEmail, sendDevAlertEmail };
+/** sendSecurityAlertEmail through the email queue: returns as soon as the job is queued. */
+async function queueSecurityAlertEmail(to, subject, text) {
+  return require('../services/queue').enqueue('email', 'securityAlert', { to, subject, text }, { attempts: 3 });
+}
+
+module.exports = { sendOtpEmail, deliverOtpEmail, sendSubscriptionRecoveryEmail, sendDevAlertEmail, sendSecurityAlertEmail, queueSecurityAlertEmail };

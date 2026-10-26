@@ -36,8 +36,15 @@ function buildSessionStore(env = process.env) {
 }
 
 function sessionMiddleware(env = process.env) {
+  // Separate from JWT_SECRET so leaking one does not compromise the other. The fallback
+  // is for dev/test only; production refuses to boot without its own secret.
+  if (env.NODE_ENV === 'production' && !env.SESSION_SECRET) {
+    throw new Error('SESSION_SECRET is required in production (it must differ from JWT_SECRET).');
+  }
+  if (env.NODE_ENV === 'production' && env.SESSION_SECRET === env.JWT_SECRET) {
+    throw new Error('SESSION_SECRET must differ from JWT_SECRET in production.');
+  }
   return session({
-    // Separate from JWT_SECRET so leaking one does not compromise the other; falls back.
     secret: env.SESSION_SECRET || env.JWT_SECRET,
     resave: false,
     saveUninitialized: false,
@@ -45,7 +52,7 @@ function sessionMiddleware(env = process.env) {
     cookie: {
       secure: env.NODE_ENV === 'production',
       httpOnly: true,
-      sameSite: env.NODE_ENV === 'production' ? 'none' : 'lax',
+      sameSite: 'lax', // same-site app; the OAuth/BankID callbacks are top-level GETs
       maxAge: 24 * 60 * 60 * 1000,
     },
   });

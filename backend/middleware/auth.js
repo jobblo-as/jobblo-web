@@ -1,6 +1,13 @@
 const User = require('../models/User');
 const Session = require('../models/Session');
 const { verifyToken, deviceNameFrom } = require('../utils/tokenUtils');
+const { withDefaults } = require('../utils/lean');
+
+const LAST_USED_EVERY_MS = 60 * 1000;
+
+/** A deactivated or deleted account may hold no live access (HTTP here, sockets in chat.socket.js). */
+const isInactiveAccount = (user) =>
+  user.accountStatus === 'inactive' || user.accountStatus === 'deactivated' || Boolean(user.isDeleted);
 
 /**
  * Middleware to authenticate JWT tokens
@@ -12,13 +19,12 @@ const { verifyToken, deviceNameFrom } = require('../utils/tokenUtils');
  */
 const authenticate = async (req, res, next) => {
   try {
-    // Try to get token from cookie first, then from Authorization header
-    let token = req.cookies.accessToken || req.cookies.token;
-    const refreshToken = req.cookies.refreshToken;
-
-    if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
-      token = req.headers.authorization.split(' ')[1];
-    }
+    // Bearer header first, cookie as fallback. React Native sends its native cookie jar on
+    // every request, so after a logout that failed offline the jar still holds user A's
+    // cookie while the header carries user B's token: cookie-first answered B as A.
+    const authHeader = req.headers.authorization || '';
+    const token =
+      (authHeader.startsWith('Bearer ') && authHeader.slice(7).trim()) || req.cookies?.accessToken || req.cookies?.token;
 
     if (!token) {
       return res.status(401).json({
@@ -56,7 +62,7 @@ const authenticate = async (req, res, next) => {
     const sessionExists = await Session.findOne({
       _id: sessionId,
       userId: decoded.id,
-    });
+    }).lean();
 
     if (!sessionExists) {
       // Clear cookies if session is invalid or revoked
@@ -71,13 +77,18 @@ const authenticate = async (req, res, next) => {
 
     // Update session lastUsed. The app's device model is filled in here too, so sessions
     // created before the app sent it, or by an OAuth login in the browser, get it as well.
-    sessionExists.lastUsed = new Date();
+    // At most once a minute per session: this ran a write on every authenticated request.
+    const touch = {};
+    if (!(Date.now() - new Date(sessionExists.lastUsed || 0).getTime() < LAST_USED_EVERY_MS)) touch.lastUsed = new Date();
     const deviceName = deviceNameFrom(req);
-    if (deviceName && sessionExists.deviceName !== deviceName) sessionExists.deviceName = deviceName;
-    await sessionExists.save();
+    if (deviceName && sessionExists.deviceName !== deviceName) touch.deviceName = deviceName;
+    if (Object.keys(touch).length) await Session.updateOne({ _id: sessionExists._id }, { $set: touch });
 
-    // Fetch user from database
-    const user = await User.findById(decoded.id).select('-password');
+    // Lean (hydrating the whole user was most of this middleware's CPU). Every reader of
+    // req.user only reads it (mfa.js reloads by id before saving); `id` and the schema
+    // defaults a document carried are put back so it reads the same.
+    const lean = await User.findById(decoded.id).select('-password').lean();
+    const user = lean && { ...withDefaults(User, lean, { populatedUsers: [] }), id: String(lean._id) };
 
     if (!user) {
       return res.status(401).json({
@@ -86,11 +97,7 @@ const authenticate = async (req, res, next) => {
       });
     }
 
-    if (
-      user.accountStatus === 'inactive' ||
-      user.accountStatus === 'deactivated' ||
-      user.isDeleted
-    ) {
+    if (isInactiveAccount(user)) {
       return res.status(403).json({
         error: 'Account inactive',
         message: 'Kontoen din er deaktivert.',
@@ -130,7 +137,7 @@ const authenticate = async (req, res, next) => {
     }
     return res.status(500).json({
       error: 'Authentication error',
-      message: error.message,
+      message: 'Could not verify your sign-in. Try again.',
     });
   }
 };
@@ -194,4 +201,14 @@ const requireRole = (...roles) => (req, res, next) => {
 const requireAdmin = requireRole('superAdmin');
 const requireDeveloper = requireRole('developer', 'superAdmin');
 
-module.exports = { authenticate, optionalAuthenticate, requireAdmin, requireDeveloper, requireRole };
+/**
+ * After authenticate: refuse (403 EMAIL_NOT_VERIFIED) an account whose e-mail was never
+ * proven. On payout onboarding and BankID, so a stranger who registered someone else's
+ * address cannot attach their own payout account or identity to it (A5).
+ */
+const requireVerifiedEmail = (req, res, next) => {
+  const { emailUnverified, EMAIL_NOT_VERIFIED } = require('../controllers/auth/authHelpers');
+  return emailUnverified(req.user) ? res.status(403).json(EMAIL_NOT_VERIFIED) : next();
+};
+
+module.exports = { authenticate, optionalAuthenticate, requireAdmin, requireDeveloper, requireRole, isInactiveAccount, requireVerifiedEmail };

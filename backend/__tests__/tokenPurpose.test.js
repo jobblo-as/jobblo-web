@@ -17,8 +17,11 @@ jest.mock('../models/Session', () => ({
   findById: jest.fn(),
   findOne: jest.fn(),
   deleteOne: jest.fn(),
+  findOneAndDelete: jest.fn(),
   findOneAndUpdate: jest.fn(),
+  updateOne: jest.fn(async () => ({})),
 }));
+jest.mock('../models/PushToken', () => ({ updateMany: jest.fn() }));
 jest.mock('../models/User', () => ({ findById: jest.fn(), findByIdAndUpdate: jest.fn() }));
 
 const Session = require('../models/Session');
@@ -36,23 +39,29 @@ function addSession(id, userId) {
   sessions.set(id, s);
   return s;
 }
-const query = (v) => ({ select: () => Promise.resolve(v), then: (r, j) => Promise.resolve(v).then(r, j) });
+// A Mongoose query stand-in: awaitable, and .select()/.lean() chain to the same value.
+const query = (v) => ({ select: () => query(v), lean: () => Promise.resolve(v), then: (r, j) => Promise.resolve(v).then(r, j) });
 
 function installMocks() {
-  Session.findOne.mockImplementation(async (f) => {
+  Session.findOne.mockImplementation((f) => query(findSession(f)));
+  function findSession(f) {
     const all = [...sessions.values()];
     if (f.refreshToken !== undefined) return all.find((s) => s.refreshToken === f.refreshToken) || null;
     if (f.oldRefreshToken !== undefined) return all.find((s) => s.oldRefreshToken === f.oldRefreshToken) || null;
     const s = sessions.get(String(f._id));
     return s && String(s.userId) === String(f.userId) ? s : null;
-  });
+  }
   const matchesOr = (s, or) => or.some((c) => (c.refreshToken ?? c.oldRefreshToken) === (c.refreshToken !== undefined ? s.refreshToken : s.oldRefreshToken));
-  Session.deleteOne.mockImplementation(async ({ $or }) => {
-    for (const [id, s] of sessions) if (matchesOr(s, $or)) sessions.delete(id);
+  Session.deleteOne.mockImplementation(async ({ _id, $or }) => {
+    for (const [id, s] of sessions) if (_id ? id === String(_id) : matchesOr(s, $or)) sessions.delete(id);
   });
-  Session.findOneAndUpdate.mockImplementation(async ({ _id, $or }, update) => {
+  Session.findOneAndDelete.mockImplementation(async ({ $or }) => {
+    for (const [id, s] of sessions) if (matchesOr(s, $or)) { sessions.delete(id); return s; }
+    return null;
+  });
+  Session.findOneAndUpdate.mockImplementation(async ({ _id, $or, refreshToken }, update) => {
     const s = sessions.get(String(_id));
-    if (!s || !matchesOr(s, $or)) return null;
+    if (!s || !($or ? matchesOr(s, $or) : s.refreshToken === refreshToken)) return null;
     Object.assign(s, update, { updatedAt: new Date() });
     return s;
   });
@@ -223,6 +232,29 @@ describe.each([
     for (const r of [a, b]) {
       expect((await bearer(r.body.accessToken)).body).toEqual({ userId: 'u1', sid: 's-u1' });
     }
+  });
+
+  // M5: the grace window ran from updatedAt, which every request bumps, and reuse was never theft.
+  const cookieToken = (res) => /refreshToken=([^;]+)/.exec(String(res.headers['set-cookie']))[1];
+
+  it('a rotated-out token reused within the grace window gets the same current token, no second rotation', async () => {
+    const { refreshToken } = login();
+    const first = await refresh(refreshToken);
+    const again = await refresh(refreshToken);
+    expect(again.status).toBe(200);
+    expect(cookieToken(again)).toBe(cookieToken(first));
+    expect(sessions.get('s-u1').refreshToken).toBe(cookieToken(first));
+  });
+
+  it('a rotated-out token reused after the grace window revokes the session, even with recent activity', async () => {
+    const { refreshToken } = login();
+    const first = await refresh(refreshToken);
+    const s = sessions.get('s-u1');
+    s.rotatedAt = new Date(Date.now() - 2 * 60 * 1000);
+    s.updatedAt = new Date(); // the real user is active
+    expect((await refresh(refreshToken)).status).toBe(401);
+    expect(sessions.has('s-u1')).toBe(false);
+    expect((await refresh(cookieToken(first))).status).toBe(401);
   });
 
   it('deactivated accounts cannot refresh', async () => {

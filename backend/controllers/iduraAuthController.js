@@ -47,6 +47,7 @@ const ERRORS = {
   VERIFICATION_FAILED: 'bankid_verification_failed',
   IDENTITY: 'bankid_identity',
   ALREADY_LINKED: 'bankid_already_linked',
+  EMAIL_NOT_VERIFIED: 'bankid_email_not_verified',
 };
 
 function frontendUrl(pathAndQuery) {
@@ -100,6 +101,12 @@ exports.startIduraAuth = async (req, res) => {
     return res.redirect(frontendUrl(`login?error=${ERRORS.AUTH_REQUIRED}`));
   }
 
+  // A BankID identity goes only onto an account whose e-mail is proven: otherwise a stranger
+  // who registered someone else's address could pin their own identity to it (A5).
+  if (require('./auth/authHelpers').emailUnverified(req.user)) {
+    return res.redirect(frontendUrl(`${failureTarget}?error=${ERRORS.EMAIL_NOT_VERIFIED}`));
+  }
+
   try {
     // Any half-finished previous attempt is dropped, so exactly one is ever live.
     clearTransaction(req);
@@ -109,6 +116,7 @@ exports.startIduraAuth = async (req, res) => {
     startTransaction(req, {
       intent: INTENTS.LINK,
       jobbloUserId: req.userId,
+      jobbloSessionId: req.sessionId,
       state,
       nonce,
       codeVerifier,
@@ -171,24 +179,16 @@ async function claimIdentity(subject, userId) {
 
 /** Write the verified identity onto the account and derive the legacy flags from it. */
 async function applyVerification(userId, identity) {
-  return User.findByIdAndUpdate(
-    userId,
-    {
-      $set: {
-        identityVerification: identity,
-        /**
-         * `verified` and `accountStatus` are kept in step with `identityVerification`
-         * rather than being set independently. They predate this feature and are read
-         * all over the product (the job card's "Verified" chip, provider profiles), so
-         * they stay — but `identityVerification` is the source of truth and these two
-         * are derived from it, written only here and only after a full OIDC validation.
-         */
-        verified: true,
-        accountStatus: 'verified',
-      },
-    },
-    { new: true }
-  );
+  /**
+   * `verified` and `accountStatus` are kept in step with `identityVerification`
+   * rather than being set independently. They predate this feature and are read
+   * all over the product (the job card's "Verified" chip, provider profiles), so
+   * they stay — but `identityVerification` is the source of truth and these two
+   * are derived from it, written only here and only after a full OIDC validation.
+   */
+  await User.findByIdAndUpdate(userId, { $set: { identityVerification: identity, verified: true } });
+  // Verifying never reactivates: an account an admin set 'inactive' stays inactive.
+  await User.updateOne({ _id: userId, accountStatus: { $ne: 'inactive' } }, { $set: { accountStatus: 'verified' } });
 }
 
 exports.iduraCallback = async (req, res) => {
@@ -227,6 +227,13 @@ exports.iduraCallback = async (req, res) => {
   if (intent !== INTENTS.LINK) {
     logFailure(req, 'unsupported_intent');
     return res.redirect(frontendUrl(`${failureTarget}?error=${ERRORS.INVALID_STATE}`));
+  }
+
+  // The transaction outlives a logout in the same browser: someone else finishing BankID
+  // there must not verify the starter's account. Same rule as the Google state store.
+  if (String(req.userId) !== pending.jobbloUserId || String(req.sessionId) !== pending.jobbloSessionId) {
+    logFailure(req, 'link_callback_outside_starting_session');
+    return res.redirect(frontendUrl(`${failureTarget}?error=${ERRORS.VERIFICATION_FAILED}`));
   }
 
   if (!code) {
@@ -304,3 +311,4 @@ exports.iduraCallback = async (req, res) => {
 };
 
 exports.ERRORS = ERRORS;
+exports.applyVerification = applyVerification;

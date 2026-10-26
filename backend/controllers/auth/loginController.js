@@ -1,11 +1,71 @@
 const User = require('../../models/User');
 const Session = require('../../models/Session');
-const bcrypt = require('bcryptjs');
-const { isBcryptHash } = require('../../utils/passwordUtils');
+const PushToken = require('../../models/PushToken');
+const { isBcryptHash, comparePassword, hashPassword } = require('../../utils/passwordUtils');
 const { generateTokens, verifyToken, createSession } = require('../../utils/tokenUtils');
-const { CURRENT_TERMS_VERSION, sanitizeUser, sendServerError, validateRegisterInput, setAuthCookies, clearAuthCookies } = require('./authHelpers');
+const { sendOtpEmail, queueSecurityAlertEmail } = require('../../utils/emailService');
+const { windowCounter, CURRENT_TERMS_VERSION, sanitizeUser, sendServerError, validateRegisterInput, setAuthCookies, clearAuthCookies, emailUnverified, EMAIL_NOT_VERIFIED, issueOtp, checkOtp, validatePasswordStrength, CLEAR_RESET_STATE } = require('./authHelpers');
 
-/** Register, login, logout and refresh-token rotation. */
+/** Register (+ e-mail verification), login, logout and refresh-token rotation. */
+
+/**
+ * E-mail verification at sign-up. A new account is inert until its address is proven:
+ * no password login, no payout onboarding, no BankID. Without this anyone could register
+ * someone else's address and attach their own payout account / BankID before the owner
+ * turned up (pre-hijack, A5).
+ */
+const VERIFY_EMAIL = 'verify-email';
+const MAX_VERIFY_MAILS_PER_HOUR = 5;
+const verifyMails = windowCounter('verifymail', 60 * 60 * 1000);
+const VERIFICATION_SENT = {
+  verificationRequired: true,
+  message: 'Sjekk e-posten din. Skriv inn den 6-sifrede koden vi har sendt for å fullføre registreringen.',
+};
+const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
+
+/**
+ * Mail the address's owner: a fresh code while the account is unverified, or with
+ * `notice` a heads-up that someone tried to register their address. At most
+ * MAX_VERIFY_MAILS_PER_HOUR per address; queued, so it returns without waiting for SMTP.
+ */
+async function mailVerification(user, { notice = false } = {}) {
+  if ((await verifyMails.incr(user.email)) > MAX_VERIFY_MAILS_PER_HOUR) return;
+  if (notice) {
+    await queueSecurityAlertEmail(
+      user.email,
+      'Noen prøvde å registrere seg med e-postadressen din – Jobblo',
+      `Hei ${user.name || ''}!\n\nNoen prøvde nettopp å opprette en ny Jobblo-konto med denne e-postadressen. ` +
+        'Du har allerede en konto, så ingenting er endret.\n\n' +
+        'Var det deg? Logg inn som vanlig, eller bruk «Glemt passord» hvis du ikke husker passordet.\n' +
+        'Var det ikke deg, kan du se bort fra denne e-posten.'
+    );
+    return;
+  }
+  const otp = await issueOtp(user._id, VERIFY_EMAIL);
+  await sendOtpEmail(user.email, otp, user.name, VERIFY_EMAIL);
+}
+
+/**
+ * Compared against when the account is missing or has no password, so a wrong e-mail
+ * costs the same bcrypt time as a wrong password and response time does not reveal
+ * which accounts exist. Hash of a throwaway string at the cost new passwords use (12).
+ */
+const DUMMY_HASH = '$2a$12$S3ecbRlwjQycSILm9J9UueiT3RlgHtXzg2nYm6/LV1ZITIYKglwju';
+
+/**
+ * Per-account lockout. LOCKOUT_PER_CLIENT failures for one e-mail from one IP within
+ * LOCKOUT_MS block that pair, so a stranger cannot lock the owner out from their own
+ * network; LOCKOUT_PER_EMAIL failures from anywhere block the e-mail (a botnet spread
+ * over many IPs) for every client that has itself failed for it, so a client with no
+ * failures (the owner, typing the right password) still gets in. Applies to unknown
+ * e-mails too, so a lockout reveals nothing.
+ */
+const LOCKOUT_PER_CLIENT = 10;
+const LOCKOUT_PER_EMAIL = 100;
+const LOCKOUT_MS = 15 * 60 * 1000;
+const clientFails = windowCounter('loginfail', LOCKOUT_MS);
+const emailFails = windowCounter('loginfail-email', LOCKOUT_MS);
+const clientKey = (req, email) => `${email}|${req.ip || ''}`;
 
 exports.register = async (req, res) => {
   let createdUserId = null;
@@ -40,13 +100,19 @@ exports.register = async (req, res) => {
       return res.status(400).json({ error: validationError });
     }
 
-    const existingUser = await User.findOne({ email: normalizedEmail }).select('_id');
+    // Hashed before the lookup: bcrypt dominates the response time, so a taken address
+    // answers as slowly as a free one.
+    const hashedPassword = await hashPassword(password);
 
+    const existingUser = await User.findOne({ email: normalizedEmail }).select('_id name email emailVerifiedAt createdAt');
+
+    // A taken address gets the same 202 as a free one, so sign-up no longer tells anyone who
+    // has an account. Its owner gets the mail instead: a fresh code while it is unverified,
+    // otherwise a notice. Nothing about the existing account changes.
     if (existingUser) {
-      return res.status(400).json({ error: 'Email already exists' });
+      await mailVerification(existingUser, { notice: !emailUnverified(existingUser) });
+      return res.status(202).json(VERIFICATION_SENT);
     }
-
-    const hashedPassword = await bcrypt.hash(password, 12);
 
     const user = await User.create({
       name: role === 'company' ? String(companyName).trim() : String(name || '').trim(),
@@ -64,14 +130,10 @@ exports.register = async (req, res) => {
 
     createdUserId = user._id;
 
-    const { accessToken, refreshToken } = await createSession(req, user._id);
+    // Not signed in yet: POST /verify-email with the mailed code does that.
+    await mailVerification(user);
 
-    setAuthCookies(res, accessToken, refreshToken);
-
-    return res.status(201).json({
-      user: sanitizeUser(user),
-      accessToken,
-    });
+    return res.status(202).json(VERIFICATION_SENT);
   } catch (error) {
     if (createdUserId) {
       await Promise.allSettled([
@@ -85,7 +147,7 @@ exports.register = async (req, res) => {
     }
 
     if (error.code === 11000) {
-      return res.status(400).json({ error: 'Email already exists' });
+      return res.status(202).json(VERIFICATION_SENT); // lost a race for the address: same answer as above
     }
 
     return sendServerError(res, error, 'Register failed');
@@ -103,11 +165,16 @@ exports.login = async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    const user = await User.findOne({ email: normalizedEmail }).select('+password');
-
-    if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+    const [byClient, byEmail] = await Promise.all([clientFails.get(clientKey(req, normalizedEmail)), emailFails.get(normalizedEmail)]);
+    if (byClient >= LOCKOUT_PER_CLIENT || (byClient > 0 && byEmail >= LOCKOUT_PER_EMAIL)) {
+      return res.status(429).json({
+        error: 'Too many failed attempts',
+        message: 'For mange mislykkede forsøk. Prøv igjen om 15 minutter.',
+        code: 'ACCOUNT_LOCKED',
+      });
     }
+
+    const user = await User.findOne({ email: normalizedEmail }).select('+password');
 
     /**
      * Refuse anything in `password` that is not actually a bcrypt hash.
@@ -125,12 +192,14 @@ exports.login = async (req, res) => {
      * the remaining legacy rows fail closed rather than depending on a library's
      * behaviour with malformed input.
      */
-    const isPasswordValid =
-      isBcryptHash(user.password) && (await bcrypt.compare(password, user.password));
+    const hasHash = Boolean(user) && isBcryptHash(user.password);
+    const matches = await comparePassword(String(password), hasHash ? user.password : DUMMY_HASH);
 
-    if (!isPasswordValid) {
+    if (!hasHash || !matches) {
+      await Promise.all([clientFails.incr(clientKey(req, normalizedEmail)), emailFails.incr(normalizedEmail)]);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
+    await clientFails.reset(clientKey(req, normalizedEmail)); // the e-mail-wide count stays: it measures the attack
 
     if (
       user.isDeleted ||
@@ -142,6 +211,12 @@ exports.login = async (req, res) => {
         message: 'Kontoen din er deaktivert.',
         code: 'account_inactive',
       });
+    }
+
+    // An unverified sign-up cannot sign in with its password; it gets a fresh code instead.
+    if (emailUnverified(user)) {
+      await mailVerification(user);
+      return res.status(403).json(EMAIL_NOT_VERIFIED);
     }
 
     const { accessToken, refreshToken } = await createSession(req, user._id);
@@ -157,19 +232,88 @@ exports.login = async (req, res) => {
   }
 };
 
+/**
+ * POST /api/auth/verify-email { email, code, password } — finish sign-up and sign in
+ * (same tokens and cookies login gives; the 2FA gate in middleware/auth.js still applies).
+ *
+ * The code proves the mailbox; the password makes sure the account ends up with one the
+ * mailbox owner knows. When it is not the stored one (someone else registered this address
+ * first, or the owner signed up again with another password) it becomes the account's
+ * password, and whatever the first registrant could have linked is dropped.
+ */
+exports.verifyEmail = async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body?.email);
+    const { code, password } = req.body || {};
+    if (!email || !code || typeof password !== 'string') {
+      return res.status(400).json({ error: 'E-post, kode og passord er påkrevd' });
+    }
+    const passwordError = validatePasswordStrength(password);
+    if (passwordError) return res.status(400).json({ error: passwordError });
+
+    const pending = await checkOtp({ email }, String(code), req.ip, VERIFY_EMAIL);
+    const user = pending && (await User.findById(pending._id).select('+password'));
+    // Only an account still waiting for proof: this endpoint can set the password, so a
+    // verified account must never be reachable through it (password reset is the way there).
+    if (!user || !emailUnverified(user)) return res.status(400).json({ error: 'Ugyldig eller utløpt kode' });
+
+    const samePassword = isBcryptHash(user.password) && (await comparePassword(password, user.password));
+    const $set = {
+      emailVerifiedAt: new Date(),
+      ...(!samePassword && { password: await hashPassword(password), oauthProviders: [] }),
+    };
+    await User.updateOne({ _id: user._id }, { $set, ...CLEAR_RESET_STATE });
+    if (!samePassword) await Session.deleteMany({ userId: user._id });
+    user.set($set);
+
+    if (require('../../middleware/auth').isInactiveAccount(user)) {
+      return res.status(403).json({ error: 'Account inactive', message: 'Kontoen din er deaktivert.', code: 'account_inactive' });
+    }
+
+    const { accessToken, refreshToken } = await createSession(req, user._id);
+    setAuthCookies(res, accessToken, refreshToken);
+    return res.json({ user: sanitizeUser(user), accessToken });
+  } catch (error) {
+    return sendServerError(res, error, 'Verify email failed');
+  }
+};
+
+/** POST /api/auth/resend-verification { email } — same answer whether or not a code went out. */
+exports.resendVerification = async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body?.email);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Vennligst oppgi en gyldig e-postadresse' });
+    }
+    const user = await User.findOne({ email }).select('_id name email emailVerifiedAt createdAt');
+    if (emailUnverified(user)) await mailVerification(user);
+    return res.json({ message: 'Hvis e-postadressen venter på bekreftelse, har vi sendt en ny kode dit.' });
+  } catch (error) {
+    return sendServerError(res, error, 'Resend verification failed');
+  }
+};
+
 exports.logout = async (req, res) => {
   try {
-    const refreshToken = req.cookies?.refreshToken;
+    const refreshToken = cookieString(req, 'refreshToken');
 
+    const ended = [];
     if (refreshToken) {
-      await Session.deleteOne({
+      const session = await Session.findOneAndDelete({
         $or: [{ refreshToken }, { oldRefreshToken: refreshToken }],
       });
+      if (session) ended.push(session._id);
     }
     // Clients that send a Bearer token (the mobile app) may not carry the refresh cookie;
     // the token's own session is ended too, so "Logg ut" always ends it server-side.
     if (req.sessionId && req.userId) {
       await Session.deleteOne({ _id: req.sessionId, userId: req.userId });
+      ended.push(req.sessionId);
+    }
+    // The phone must stop getting this user's notifications even when the app's own
+    // deactivation call failed: switch off the push tokens these sessions registered.
+    if (ended.length) {
+      await PushToken.updateMany({ sessionId: { $in: ended } }, { $set: { active: false } });
     }
 
     clearAuthCookies(res);
@@ -180,9 +324,17 @@ exports.logout = async (req, res) => {
   }
 };
 
+/** A string cookie or null — never an object a query would read as an operator. */
+const cookieString = (req, name) => (typeof req.cookies?.[name] === 'string' ? req.cookies[name] : null);
+
+/** How long a just-rotated-out refresh token still works (concurrent refreshes, lost responses). */
+const ROTATION_GRACE_MS = 60 * 1000;
+const rotatedJustNow = (session) =>
+  Boolean(session?.rotatedAt) && Date.now() - new Date(session.rotatedAt).getTime() < ROTATION_GRACE_MS;
+
 exports.refreshToken = async (req, res) => {
   try {
-    const refreshToken = req.cookies?.refreshToken;
+    const refreshToken = cookieString(req, 'refreshToken');
 
     if (!refreshToken) {
       return res.status(401).json({ error: 'Refresh token missing' });
@@ -193,10 +345,13 @@ exports.refreshToken = async (req, res) => {
     if (!session) {
       session = await Session.findOne({ oldRefreshToken: refreshToken });
 
-      const isWithinGracePeriod =
-        session?.updatedAt && Date.now() - new Date(session.updatedAt).getTime() < 60 * 1000;
-
-      if (!isWithinGracePeriod) {
+      if (session && !rotatedJustNow(session)) {
+        // A rotated-out token used after the grace window: two parties hold this session's
+        // tokens, and we cannot tell which one is the owner. End it (its sockets too).
+        await Session.deleteOne({ _id: session._id });
+        session = null;
+      }
+      if (!session) {
         clearAuthCookies(res);
 
         return res.status(401).json({
@@ -250,20 +405,20 @@ exports.refreshToken = async (req, res) => {
 
     const { accessToken, refreshToken: newRefreshToken } = generateTokens(user._id, session._id);
 
-    const updatedSession = await Session.findOneAndUpdate(
-      {
-        _id: session._id,
-        $or: [{ refreshToken }, { oldRefreshToken: refreshToken }],
-      },
-      {
-        oldRefreshToken: refreshToken,
-        refreshToken: newRefreshToken,
-        lastUsed: new Date(),
-      },
-      { new: true }
-    );
+    // Only the current token rotates. A token rotated out seconds ago (two tabs refreshing
+    // at once) gets the session's current token back: rotating again used to orphan the
+    // token the other tab had just received.
+    let current = session.refreshToken === refreshToken
+      ? await Session.findOneAndUpdate(
+        { _id: session._id, refreshToken },
+        { oldRefreshToken: refreshToken, refreshToken: newRefreshToken, rotatedAt: new Date(), lastUsed: new Date() },
+        { new: true }
+      )
+      : session;
+    // Lost the race to a concurrent refresh with the same token: that one rotated it.
+    if (!current) current = await Session.findOne({ _id: session._id, oldRefreshToken: refreshToken });
 
-    if (!updatedSession) {
+    if (!current || !(current.refreshToken === newRefreshToken || rotatedJustNow(current))) {
       clearAuthCookies(res);
 
       return res.status(401).json({
@@ -272,7 +427,7 @@ exports.refreshToken = async (req, res) => {
       });
     }
 
-    setAuthCookies(res, accessToken, newRefreshToken);
+    setAuthCookies(res, accessToken, current.refreshToken);
 
     return res.json({ message: 'Token refreshed', accessToken });
   } catch (error) {

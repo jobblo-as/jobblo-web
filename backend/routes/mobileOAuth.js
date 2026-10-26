@@ -1,8 +1,14 @@
 const express = require('express');
 const passport = require('passport');
 const { optionalAuthenticate } = require('../middleware/auth');
-const { createSession } = require('../utils/tokenUtils');
-const { oauthDestination, noStore } = require('../utils/oauthReturn');
+const { makeLimiter } = require('../middleware/rateLimiter');
+const {
+  oauthDestination,
+  noStore,
+  readCodeChallenge,
+  signedInDestination,
+  exchangeMobileCode,
+} = require('../utils/oauthReturn');
 const vippsController = require('../controllers/vippsController');
 
 const router = express.Router();
@@ -18,6 +24,7 @@ function setGoogleLinkIntent(req) {
 async function googleStart(req, res, next) {
   noStore(res);
   setGoogleLinkIntent(req);
+  req.oauthCodeChallenge = readCodeChallenge(req);
   return passport.authenticate('google-mobile', {
     scope: ['profile', 'email'],
   })(req, res, next);
@@ -44,20 +51,15 @@ function googleCallback(req, res, next) {
     }
 
     try {
-      const { accessToken, refreshToken } = await createSession(req, user._id);
-      res.cookie('accessToken', accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        maxAge: 60 * 60 * 1000,
-      });
-      res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
-      return res.redirect(oauthDestination({ req, platform: 'mobile', accessToken }));
+      return res.redirect(
+        await signedInDestination({
+          req,
+          res,
+          platform: 'mobile',
+          userId: user._id,
+          codeChallenge: req.googleOAuthIntent?.codeChallenge,
+        })
+      );
     } catch (sessionError) {
       console.error('Google callback session error:', sessionError.message);
       return res.redirect(oauthDestination({ req, platform: 'mobile', error: 'google_failed' }));
@@ -71,9 +73,22 @@ router.get('/google/callback', optionalAuthenticate, googleCallback);
 router.get('/vipps', optionalAuthenticate, (req, res) =>
   vippsController.redirectToVipps(req, res, { platform: 'mobile' })
 );
-router.get('/vipps/callback', (req, res) =>
+// optionalAuthenticate so a link callback can be checked against the session that started it.
+router.get('/vipps/callback', optionalAuthenticate, (req, res) =>
   vippsController.vippsCallback(req, res, { platform: 'mobile' })
 );
+
+// The app redeems the one-time code from the deep link with its PKCE verifier.
+// Counts failures only; codes are 256-bit and single use, so this is defence in depth.
+const exchangeLimiter = makeLimiter('oauth-exchange', {
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  skipSuccessfulRequests: true,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { code: 'rate_limited', message: 'For mange forsøk. Vent litt og prøv igjen.' },
+});
+router.post('/exchange', exchangeLimiter, exchangeMobileCode);
 
 module.exports = router;
 module.exports.googleStart = googleStart;

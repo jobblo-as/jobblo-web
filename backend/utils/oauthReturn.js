@@ -1,4 +1,8 @@
 const crypto = require('crypto');
+const MobileOAuthCode = require('../models/MobileOAuthCode');
+const User = require('../models/User');
+const { createSession } = require('./tokenUtils');
+const { setAuthCookies } = require('../controllers/auth/authHelpers');
 
 /**
  * Where a Google or Vipps sign-in ends up — the website, or the mobile app.
@@ -34,6 +38,11 @@ const ERROR_CODE_RE = /^[a-z][a-z0-9_]{0,63}$/;
 const ACCESS_TOKEN_RE = /^[A-Za-z0-9_-]{4,}\.[A-Za-z0-9_-]{4,}\.[A-Za-z0-9_-]{4,}$/;
 /** Real access tokens are a few hundred characters; this rejects only the pathological. */
 const ACCESS_TOKEN_MAX = 4096;
+/** The one-time code the app exchanges (32 random bytes, base64url) — and a PKCE S256 challenge. */
+const ONE_TIME_CODE_RE = /^[A-Za-z0-9_-]{43}$/;
+/** RFC 7636 code_verifier: 43–128 unreserved characters. */
+const CODE_VERIFIER_RE = /^[A-Za-z0-9._~-]{43,128}$/;
+const ONE_TIME_CODE_TTL_MS = 60 * 1000;
 /** Code for "nothing more useful can be said than: it did not work". */
 const GENERIC_ERROR = 'oauth_failed';
 /** The one session key this module owns. */
@@ -276,7 +285,90 @@ function takeOAuthPlatform(req) {
 }
 
 /**
- * The final destination for one OAuth flow. Pass exactly one of `accessToken` / `error`.
+ * The PKCE challenge an app build sent to the mobile start endpoint, or '' (old builds, web).
+ * Only S256: `plain` would put the verifier itself in the browser's URL.
+ */
+function readCodeChallenge(req) {
+  const challenge = typeof req?.query?.code_challenge === 'string' ? req.query.code_challenge : '';
+  const method = req?.query?.code_challenge_method;
+  return method === 'S256' && ONE_TIME_CODE_RE.test(challenge) ? challenge : '';
+}
+
+const sha256 = (value) => crypto.createHash('sha256').update(value).digest();
+
+/**
+ * Where a successful sign-in goes. A mobile flow started WITH a PKCE challenge gets a 60 s
+ * one-time code bound to the account and that challenge; the session itself is created only
+ * when the app redeems it (exchangeMobileCode), so an intercepted link creates nothing.
+ *
+ * ponytail: everything else keeps the old behaviour, including mobile builds that predate
+ * PKCE (no `code_challenge`), which still get the access token in the deep link. Remove that
+ * mobile fallback once every store build sends a challenge (refuse mobile without one).
+ */
+async function signedInDestination({ req, res, platform, userId, codeChallenge }) {
+  if (platform === 'mobile' && codeChallenge) {
+    const oneTimeCode = crypto.randomBytes(32).toString('base64url');
+    await MobileOAuthCode.create({
+      codeHash: sha256(oneTimeCode).toString('hex'),
+      userId,
+      codeChallenge,
+      expiresAt: new Date(Date.now() + ONE_TIME_CODE_TTL_MS),
+    });
+    return oauthDestination({ req, platform, oneTimeCode });
+  }
+  const { accessToken, refreshToken } = await createSession(req, userId);
+  setAuthCookies(res, accessToken, refreshToken);
+  return oauthDestination({ req, platform, accessToken });
+}
+
+/**
+ * POST /api/auth/mobile/exchange { code, code_verifier } → { accessToken } + auth cookies,
+ * set on the APP's own request, so the refresh cookie lands in the app's cookie store (the old
+ * flow set it in the browser tab, where the app never saw it).
+ *
+ * The code is deleted BEFORE the verifier is compared: single use, and a wrong verifier
+ * burns it, so an app that intercepted the link gets one guess at a 256-bit secret.
+ */
+async function exchangeMobileCode(req, res) {
+  noStore(res);
+  const invalid = () =>
+    res.status(400).json({ code: 'invalid_grant', message: 'Innloggingen mislyktes. Prøv igjen.' });
+  const code = typeof req.body?.code === 'string' ? req.body.code : '';
+  const verifier = typeof req.body?.code_verifier === 'string' ? req.body.code_verifier : '';
+  if (!ONE_TIME_CODE_RE.test(code) || !CODE_VERIFIER_RE.test(verifier)) return invalid();
+
+  try {
+    const record = await MobileOAuthCode.findOneAndDelete({
+      codeHash: sha256(code).toString('hex'),
+      expiresAt: { $gt: new Date() },
+    });
+    if (!record) return invalid();
+
+    const expected = Buffer.from(String(record.codeChallenge));
+    const actual = Buffer.from(sha256(verifier).toString('base64url'));
+    if (expected.length !== actual.length || !crypto.timingSafeEqual(expected, actual)) {
+      console.warn('OAuth exchange: PKCE verifier mismatch, code burned');
+      return invalid();
+    }
+
+    // Up to 60 s have passed since the callback checked the account.
+    const user = await User.findById(record.userId).select('isDeleted accountStatus');
+    if (!user || user.isDeleted || ['inactive', 'deactivated'].includes(user.accountStatus)) {
+      return res.status(403).json({ code: 'account_inactive', message: 'Kontoen er ikke aktiv.' });
+    }
+
+    const { accessToken, refreshToken } = await createSession(req, record.userId);
+    setAuthCookies(res, accessToken, refreshToken);
+    return res.json({ accessToken });
+  } catch (err) {
+    console.error('OAuth exchange failed: %s', err.message);
+    return res.status(500).json({ message: 'Innloggingen mislyktes. Prøv igjen.' });
+  }
+}
+
+/**
+ * The final destination for one OAuth flow. Pass exactly one of `accessToken` /
+ * `oneTimeCode` / `error`.
  *
  * `webPath` applies to the website only, where a link conflict belongs on the profile page.
  * The app has ONE arrival screen for both outcomes: two competing success paths is how two
@@ -286,15 +378,19 @@ function takeOAuthPlatform(req) {
  * dead end — the person is mid-sign-in and has to land somewhere real. The misconfiguration
  * is logged, not shown.
  */
-function oauthDestination({ req, platform, accessToken, error, webPath = 'login' }) {
+function oauthDestination({ req, platform, accessToken, oneTimeCode, error, webPath = 'login' }) {
   const token = typeof accessToken === 'string' ? accessToken.trim() : '';
+  const oneTime = ONE_TIME_CODE_RE.test(String(oneTimeCode || '')) ? String(oneTimeCode) : '';
   const code = ERROR_CODE_RE.test(String(error || '')) ? String(error) : '';
 
   if (platform === 'mobile') {
     const bridge = mobileBridgeUrl(req);
     if (bridge.url) {
       const params = new URLSearchParams();
-      if (token) {
+      if (oneTime) {
+        params.set('state', 'success');
+        params.set('code', oneTime);
+      } else if (token) {
         params.set('state', 'success');
         params.set('token', token);
       } else {
@@ -309,8 +405,9 @@ function oauthDestination({ req, platform, accessToken, error, webPath = 'login'
   // Web: the callback has already set the httpOnly auth cookies, and the page bootstraps
   // from them (POST /api/auth/refresh-token). A bearer token in this URL leaked into
   // history, logs and Referer — and the page that read it would log in whoever's token
-  // a link carried (login CSRF). The mobile bridge above still carries one: the app has
-  // no shared cookie jar with the browser tab.
+  // a link carried (login CSRF). The mobile bridge above carries a one-time code instead
+  // (PKCE builds) or, for old builds only, the token. A one-time code that cannot reach the
+  // app has no session behind it, so on the website it falls through to a failure.
   const base = resolveFrontendBase();
   if (token) return `${base}/oauth-success`;
   return `${base}/${String(webPath).replace(/^\//, '')}?error=${code || GENERIC_ERROR}`;
@@ -421,15 +518,22 @@ function mobileReturn(req, res) {
     !failed && rawToken.length <= ACCESS_TOKEN_MAX && ACCESS_TOKEN_RE.test(rawToken)
       ? rawToken
       : '';
-  const code = ERROR_CODE_RE.test(pick(query.code)) ? pick(query.code) : '';
+  // `code` is the one-time code on `state=success`, the error code otherwise.
+  const oneTimeCode =
+    pick(query.state) === 'success' && ONE_TIME_CODE_RE.test(pick(query.code)) ? pick(query.code) : '';
+  const code = !oneTimeCode && ERROR_CODE_RE.test(pick(query.code)) ? pick(query.code) : '';
 
   const link = resolveAppLinkPrefix();
-  // Something meaningful arrived: either a usable token or a known error code.
-  const usable = !!token || !!code;
+  // Something meaningful arrived: a one-time code, a usable token or a known error code.
+  const usable = !!oneTimeCode || !!token || !!code;
 
   let target = '';
   if (link.error) {
     console.error('OAuth mobileReturn: %s', link.error);
+  } else if (oneTimeCode) {
+    // Useless without the PKCE verifier held by the app that started the sign-in, so it does
+    // not matter which app the `jobblo` scheme delivers it to.
+    target = `${link.prefix}oauth-success?code=${oneTimeCode}`;
   } else if (token) {
     // Group segments like `(auth)` are omitted from expo-router URLs, so this resolves to
     // app/(auth)/oauth-success.tsx — the single canonical arrival screen. Both charsets are
@@ -450,11 +554,14 @@ function mobileReturn(req, res) {
   // the status code separates "we are misconfigured" from "those parameters were unusable"
   // for whoever reads the logs.
   const status = link.error ? 500 : usable ? 200 : 400;
-  res.status(status).send(mobileReturnPage({ nonce, target, failed: failed || !token }));
+  res.status(status).send(mobileReturnPage({ nonce, target, failed: failed || !(token || oneTimeCode) }));
 }
 
 module.exports = {
   mobileReturn,
+  readCodeChallenge,
+  signedInDestination,
+  exchangeMobileCode,
   oauthDestination,
   rememberOAuthPlatform,
   takeOAuthPlatform,

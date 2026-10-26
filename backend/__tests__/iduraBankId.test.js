@@ -46,6 +46,7 @@ jest.mock('../models/User', () => ({
   findOne: jest.fn(),
   create: jest.fn(),
   findByIdAndUpdate: jest.fn(),
+  updateOne: jest.fn(),
   deleteOne: jest.fn(),
 }));
 
@@ -136,6 +137,7 @@ function makeReq({
   query = {},
   session = {},
   userId = 'session-user',
+  sessionId = 'login-session-1',
   url = '/api/auth/idura/callback',
 } = {}) {
   if (session && typeof session.save !== 'function') {
@@ -145,6 +147,7 @@ function makeReq({
     query,
     session,
     userId,
+    sessionId,
     protocol: 'http',
     originalUrl: url,
     get: () => 'localhost:5000',
@@ -158,6 +161,7 @@ function sessionWithTransaction(overrides = {}) {
     iduraTransaction: {
       intent: 'link',
       jobbloUserId: 'session-user',
+      jobbloSessionId: 'login-session-1',
       state: 'state-random-value',
       nonce: 'nonce-random-value',
       codeVerifier: 'verifier-random-value',
@@ -369,7 +373,11 @@ describe('8. a valid account verification', () => {
     const [id, update] = User.findByIdAndUpdate.mock.calls[0];
     expect(id).toBe('session-user');
     expect(update.$set.verified).toBe(true);
-    expect(update.$set.accountStatus).toBe('verified');
+    // accountStatus is derived separately and never overwrites an admin's 'inactive'.
+    expect(User.updateOne).toHaveBeenCalledWith(
+      { _id: 'session-user', accountStatus: { $ne: 'inactive' } },
+      { $set: { accountStatus: 'verified' } }
+    );
     expect(update.$set.identityVerification.subject).toBe('bankid-subject-1');
 
     expect(res.redirectedTo).toContain('/profile?verified=bankid');
@@ -621,6 +629,19 @@ describe('16 & 21. e-mail and callback parameters cannot choose the account', ()
     expect(User.findById).toHaveBeenCalledWith('session-user');
     expect(User.findById).not.toHaveBeenCalledWith('victim');
     expect(User.findByIdAndUpdate.mock.calls[0][0]).toBe('session-user');
+  });
+
+  it.each([
+    ['after the starter logged out', { userId: null, sessionId: undefined }],
+    ['as another signed-in user', { userId: 'someone-else', sessionId: 'login-session-2' }],
+    ['from another login session of the same user', { sessionId: 'login-session-2' }],
+  ])('a link callback %s is refused', async (_l, who) => {
+    grantReturns(VALID_CLAIMS);
+    User.findById.mockReturnValue({ select: async () => ({ _id: 'session-user' }) });
+    const res = makeRes();
+    await controller.iduraCallback(makeReq({ query: cbQuery(), session: sessionWithTransaction(), ...who }), res);
+    expect(res.redirectedTo).toContain('error=');
+    expectNothingWritten();
   });
 
   it('a link transaction with no stored target refuses rather than guessing', async () => {

@@ -1,9 +1,10 @@
 const User = require('../../models/User');
 const Session = require('../../models/Session');
-const bcrypt = require('bcryptjs');
+const IdentityClaim = require('../../models/IdentityClaim');
+const { hashPassword } = require('../../utils/passwordUtils');
 const crypto = require('crypto');
 const { sendOtpEmail } = require('../../utils/emailService');
-const { validatePasswordStrength, sha256, CLEAR_RESET_STATE, issueOtp, checkOtp, sendServerError } = require('./authHelpers');
+const { validatePasswordStrength, sha256, CLEAR_RESET_STATE, issueOtp, checkOtp, verifyCurrentPassword, sendServerError, emailUnverified } = require('./authHelpers');
 
 /** Password change and reset with emailed one-time codes. */
 
@@ -24,7 +25,7 @@ exports.changePasswordSendOtp = async (req, res) => {
     const user = await User.findById(userId).select('+password');
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    const isValid = await bcrypt.compare(currentPassword, user.password);
+    const isValid = await verifyCurrentPassword(user, currentPassword);
     if (!isValid) {
       return res.status(400).json({ error: 'Nåværende passord er feil' });
     }
@@ -84,14 +85,14 @@ exports.changePasswordVerifyOtp = async (req, res) => {
       return res.status(400).json({ error: newPasswordError });
     }
 
-    const user = await checkOtp({ _id: userId }, otp);
+    const user = await checkOtp({ _id: userId }, otp, req.ip);
     if (!user) {
       return res.status(400).json({ error: 'Ugyldig eller utløpt kode' });
     }
 
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    const hashedPassword = await hashPassword(newPassword, 12);
 
-    await User.updateOne({ _id: userId }, { $set: { password: hashedPassword }, ...CLEAR_RESET_STATE });
+    await User.updateOne({ _id: userId }, { $set: { password: hashedPassword, emailVerifiedAt: new Date() }, ...CLEAR_RESET_STATE });
     // Sign out every other device: a password change is how people lock out an intruder.
     await Session.deleteMany({ userId, _id: { $ne: req.sessionId } });
 
@@ -152,7 +153,7 @@ exports.verifyOtp = async (req, res) => {
       return res.status(400).json({ error: 'E-post og kode er påkrevd' });
     }
 
-    const user = await checkOtp({ email: normalizedEmail }, otp);
+    const user = await checkOtp({ email: normalizedEmail }, otp, req.ip);
     if (!user) {
       return res.status(400).json({ error: 'Ugyldig eller utløpt kode' });
     }
@@ -181,6 +182,31 @@ exports.verifyOtp = async (req, res) => {
 };
 
 /**
+ * The first reset of an account whose e-mail was never proven (emailUnverified: no
+ * emailVerifiedAt, created after EMAIL_PROOF_CUTOFF; older accounts count as proven): a
+ * pre-hijacker may have attached THEIR payout destination and BankID identity before the owner
+ * took it over. Those are dropped; the owner sets them up again. Since registration verifies
+ * the e-mail and payout onboarding / BankID refuse unverified accounts, this only still bites
+ * accounts registered between the cutoff and that deploy; kept as the backstop for them.
+ */
+const emailUnproven = (user) => {
+  if (!emailUnverified(user)) return { cleared: false, $set: {}, $unset: {} };
+  return {
+    cleared: true,
+    $set: {
+      payoutEnabled: false, chargesEnabled: false, detailsSubmitted: false, payoutOnboardingStatus: 'none',
+      payoutMethod: null, payoutVerified: false,
+      ...(user.identityVerification?.subject ? { verified: false } : {}),
+      ...(user.accountStatus === 'verified' ? { accountStatus: 'active' } : {}),
+    },
+    $unset: {
+      stripeConnectAccountId: 1, stripeConnectAccountIdTest: 1, connectAccountCreatedAt: 1,
+      bankAccountNumber: 1, iban: 1, bicSwift: 1, vippsHandle: 1, identityVerification: 1,
+    },
+  };
+};
+
+/**
  * POST /api/auth/reset-password
  * Resets the password using the reset token returned by verify-otp.
  */
@@ -203,26 +229,38 @@ exports.resetPassword = async (req, res) => {
       passwordResetSessionToken: sha256(resetToken),
       passwordResetSessionExpires: { $gt: new Date() },
     };
-    const user = await User.findOne(tokenFilter).select('_id');
+    const user = await User.findOne(tokenFilter).select('_id emailVerifiedAt createdAt accountStatus identityVerification');
     if (!user) {
       return res.status(400).json({ error: 'Ugyldig eller utløpt sesjonstoken. Start på nytt.' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const hashedPassword = await hashPassword(password, 12);
+    const firstProof = emailUnproven(user);
 
     const updated = await User.updateOne(
       { _id: user._id, ...tokenFilter },
-      { $set: { password: hashedPassword }, ...CLEAR_RESET_STATE }
+      // A reset proves control of the e-mail, not of the linked Google/Vipps identities: an
+      // attacker who pre-registered this address and linked their own provider would keep
+      // signing in through it. Unlink them all; the owner re-links from the profile. (New
+      // sign-ups can no longer link before verifying; this covers older accounts.)
+      {
+        $set: { password: hashedPassword, oauthProviders: [], emailVerifiedAt: new Date(), ...firstProof.$set },
+        $unset: { ...CLEAR_RESET_STATE.$unset, ...firstProof.$unset },
+      }
     );
     if (updated.modifiedCount !== 1) {
       return res.status(400).json({ error: 'Ugyldig eller utløpt sesjonstoken. Start på nytt.' });
     }
+    if (firstProof.cleared) await IdentityClaim.deleteMany({ userId: user._id });
 
     // Invalidate all sessions for security
     await Session.deleteMany({ userId: user._id });
 
     return res.json({
-      message: 'Passordet er oppdatert. Du kan nå logge inn.',
+      message: firstProof.cleared
+        ? 'Passordet er oppdatert. Du kan nå logge inn. Utbetalingskonto og BankID-verifisering må settes opp på nytt.'
+        : 'Passordet er oppdatert. Du kan nå logge inn.',
+      payoutAndIdentityReset: firstProof.cleared,
     });
   } catch (error) {
     return sendServerError(res, error, 'Reset password failed');

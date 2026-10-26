@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const User = require('../../models/User');
 const Session = require('../../models/Session');
 const { OWN_USER_SELECT, sanitizeUserOwner } = require('../../utils/userProjections');
@@ -31,6 +32,10 @@ exports.revokeSession = async (req, res) => {
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
+    }
+    // A non-ObjectId used to reach deleteOne, throw a CastError and answer 500.
+    if (!mongoose.isValidObjectId(sessionId)) {
+      return res.status(400).json({ error: 'Invalid session ID' });
     }
 
     const result = await Session.deleteOne({

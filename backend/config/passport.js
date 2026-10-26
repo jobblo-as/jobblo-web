@@ -80,6 +80,8 @@ function buildGoogleStateStore(key) {
         expiresAt: Date.now() + GOOGLE_STATE_TTL_MS,
         linkUserId: link ? String(link.userId) : null,
         linkSessionId: link ? String(link.sessionId) : null,
+        // Mobile PKCE challenge (routes/mobileOAuth.js); null on web and for old app builds.
+        codeChallenge: req.oauthCodeChallenge || null,
       };
       return callback(null, state);
     },
@@ -106,7 +108,10 @@ function buildGoogleStateStore(key) {
         return reject('link callback outside the session that started it');
       }
 
-      req.googleOAuthIntent = { linkToUserId: pending.linkUserId };
+      req.googleOAuthIntent = {
+        linkToUserId: pending.linkUserId,
+        codeChallenge: pending.codeChallenge || null,
+      };
       return callback(null, true);
     },
   };
@@ -175,6 +180,8 @@ function buildGoogleVerify() {
             verified: false,
             role: 'user',
             oauthProviders: [{ provider: 'google', providerId: String(profile.id) }],
+            // Google asserting the address is the proof sign-up otherwise asks a code for.
+            ...(emailVerifiedFrom(profile) === true && { emailVerifiedAt: new Date() }),
           });
 
           return done(null, user);
