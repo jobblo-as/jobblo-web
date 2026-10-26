@@ -3,6 +3,7 @@ import { defineConfig } from '@playwright/test';
 export default defineConfig({
   testDir: './e2e',
   testMatch: '**/*.spec.js',
+  globalSetup: './e2e/helpers/warmup.js',
   fullyParallel: true,
   workers: 2,
   reporter: 'list',
@@ -20,7 +21,9 @@ export default defineConfig({
       reuseExistingServer: false,
     },
     {
-      command: 'npm run dev -- --host 127.0.0.1 --port 5176 --strictPort',
+      // e2e/vite.e2e.config.mjs = the app's vite.config.ts with its own dep cache, so this
+      // server does not re-optimise over the 5173 dev server and hang lazy routes.
+      command: 'npx vite --config e2e/vite.e2e.config.mjs --host 127.0.0.1 --port 5176 --strictPort',
       url: 'http://127.0.0.1:5176',
       timeout: 60_000,
       reuseExistingServer: false,
