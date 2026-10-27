@@ -55,7 +55,7 @@ async function verifyCapturedPayment(stripe, order, payment) {
   const intent = await stripe.paymentIntents.retrieve(order.paymentIntentId);
   const chargeId = idOf(intent.latest_charge);
   if (!chargeId) throw reviewRequired('The captured payment has no verifiable charge.');
-  const charge = await stripe.charges.retrieve(chargeId);
+  const charge = await stripe.charges.retrieve(chargeId, { expand: ['dispute'] });
   const expectedLivemode = !testMode;
   if (
     session.id !== order.checkoutSessionId ||
@@ -84,7 +84,8 @@ async function verifyCapturedPayment(stripe, order, payment) {
     idOf(charge.payment_intent) !== order.paymentIntentId ||
     idOf(charge.customer) !== order.checkoutCustomerId ||
     charge.currency !== session.currency ||
-    charge.disputed === true
+    // `disputed` stays true after a chargeback is WON; only an open or lost one blocks.
+    (charge.disputed === true && !['won', 'warning_closed'].includes(charge.dispute?.status))
   ) {
     throw reviewRequired('Stripe payment could not be verified against the captured SafePay order.');
   }

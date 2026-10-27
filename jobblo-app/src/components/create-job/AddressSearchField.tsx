@@ -103,7 +103,7 @@ export function AddressSearchField({ value, detail, confirmed, error, onSelect, 
           placeholderTextColor={TC.placeholder}
           autoCorrect={false}
           returnKeyType="search"
-          className="flex-1 text-[1rem] text-ink"
+          className="flex-1 text-[1.0625rem] text-ink"
           accessibilityLabel="Adresse"
         />
         {loading ? <ActivityIndicator size="small" color={TC.brandText} /> : null}

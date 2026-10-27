@@ -24,6 +24,7 @@ const StripePaymentIncident = require('../../models/StripePaymentIncident');
 const { getStripeForMode } = require('../../config/stripe');
 const mongoose = require('mongoose');
 const PROCESSING_LEASE_MS = 5 * 60 * 1000;
+const UNKNOWN_OUTCOME_SETTLE_MS = 24 * 60 * 60 * 1000;
 
 function payoutError(code, message) {
   const error = new Error(message);
@@ -57,6 +58,31 @@ async function releaseOrderPayoutLock(orderId, payoutId) {
     { _id: orderId, payoutLockId: String(payoutId) },
     { $set: { payoutLockId: null, payoutLockedAt: null } }
   );
+}
+
+/** A transfer an earlier attempt made (found by its payoutId) is recorded, never paid again. */
+async function recordRecoveredTransfer(payout, recovered, { orderId, livemode, saveOpts }) {
+  payout.status = 'transferred';
+  payout.stripeTransferId = recovered.id;
+  payout.transferInitiatedAt ||= new Date();
+  payout.transferCompletedAt ||= new Date();
+  payout.failureCode = null;
+  payout.failureReason = null;
+  await payout.save(saveOpts);
+  await Payment.findOneAndUpdate({ orderId }, { $set: { status: 'released' } });
+  await releaseOrderPayoutLock(orderId, payout._id);
+  await creditProviderEarnings(payout);
+  try {
+    const { recordStripeTransfer } = require('../stripe/financialHistory');
+    await recordStripeTransfer(recovered, { livemode, source: 'reconciliation' });
+  } catch (error) {
+    console.error(
+      'releasePayoutToProvider: recovered transfer history sync failed for payout %s: %s',
+      String(payout._id),
+      error.code || error.name || 'financial_history_sync_failed'
+    );
+  }
+  return { payout, transfer: recovered, alreadyPaid: false, reconciled: true };
 }
 
 /**
@@ -136,7 +162,7 @@ async function verifiedSourceCharge({
     throw payoutError('PAYOUT_SOURCE_PAYMENT_INTENT_INVALID', 'PaymentIntent is not a matching captured payment.');
   }
 
-  const charge = await stripe.charges.retrieve(chargeId);
+  const charge = await stripe.charges.retrieve(chargeId, { expand: ['dispute'] });
   if (
     charge.id !== chargeId ||
     charge.paid !== true ||
@@ -149,7 +175,8 @@ async function verifiedSourceCharge({
     Number(charge.amount_refunded || 0) < 0 ||
     Number(charge.amount_refunded || 0) > charge.amount ||
     charge.amount - Number(charge.amount_refunded || 0) < maxTransferMinor ||
-    charge.disputed === true
+    // `disputed` stays true after a chargeback is WON; only an open or lost one blocks.
+    (charge.disputed === true && !['won', 'warning_closed'].includes(charge.dispute?.status))
   ) {
     throw payoutError('PAYOUT_SOURCE_CHARGE_INVALID', 'Source charge is refunded, disputed, or mismatched.');
   }
@@ -241,7 +268,9 @@ async function releasePayoutToProvider(opts) {
       String(dispute.orderId) !== String(orderId) ||
       !['open', 'under_review', 'waiting_for_customer', 'waiting_for_provider', 'evidence_submitted'].includes(dispute.status) ||
       !['release_to_provider', 'partial_refund', 'split_payment'].includes(dispute.resolution?.outcome) ||
-      !['pending', 'failed'].includes(dispute.resolution?.moneyState) ||
+      // `reconciliation_required` too: an unknown-outcome dispute transfer must reach the
+      // Stripe lookup below, or nothing (retry job or admin) could ever finish it.
+      !['pending', 'failed', 'reconciliation_required'].includes(dispute.resolution?.moneyState) ||
       dispute.resolution.providerAmount !== grossAmount
     ) {
       throw payoutError('PAYOUT_DISPUTE_NOT_AUTHORIZED', 'Approved dispute resolution is required.');
@@ -492,9 +521,19 @@ async function releasePayoutToProvider(opts) {
       }
     }
     if (!recovered) {
-      payout.status = 'reconciliation_required';
+      // No transfer carries this payout's id. Once no request can still be in flight
+      // (24 h, also Stripe's idempotency window) that is definitive, so the payout goes
+      // back to `failed` for retryFailedPayouts — it used to wait here forever. Only when
+      // the lookup covered the account the attempt actually paid to.
+      const since = payout.transferFailedAt || new Date();
+      const sameAccount = !payout.stripeConnectAccountId || payout.stripeConnectAccountId === stripeConnectAccountId;
+      const settled = sameAccount && Date.now() - new Date(since).getTime() >= UNKNOWN_OUTCOME_SETTLE_MS;
+      payout.status = settled ? 'failed' : 'reconciliation_required';
+      payout.transferFailedAt = since;
       payout.failureCode = 'PAYOUT_TRANSFER_NOT_FOUND';
-      payout.failureReason = 'A previous transfer attempt is unresolved; no automatic retry was made.';
+      payout.failureReason = settled
+        ? 'No transfer was made (checked with Stripe after 24 h); it will be retried.'
+        : 'A previous transfer attempt is unresolved; no automatic retry was made.';
       await payout.save(saveOpts);
       throw payoutError('PAYOUT_RECONCILIATION_REQUIRED', 'Previous Stripe transfer attempt requires manual reconciliation.');
     }
@@ -511,30 +550,7 @@ async function releasePayoutToProvider(opts) {
       await payout.save(saveOpts);
       throw payoutError('PAYOUT_TRANSFER_MISMATCH', 'Existing Stripe transfer requires manual review.');
     }
-    payout.status = 'transferred';
-    payout.stripeTransferId = recovered.id;
-    payout.transferInitiatedAt ||= new Date();
-    payout.transferCompletedAt ||= new Date();
-    payout.failureCode = null;
-    payout.failureReason = null;
-    await payout.save(saveOpts);
-    await Payment.findOneAndUpdate({ orderId }, { $set: { status: 'released' } });
-    await releaseOrderPayoutLock(orderId, payout._id);
-    await creditProviderEarnings(payout);
-    try {
-      const { recordStripeTransfer } = require('../stripe/financialHistory');
-      await recordStripeTransfer(recovered, {
-        livemode: source.livemode,
-        source: 'reconciliation',
-      });
-    } catch (error) {
-      console.error(
-        'releasePayoutToProvider: recovered transfer history sync failed for payout %s: %s',
-        String(payout._id),
-        error.code || error.name || 'financial_history_sync_failed'
-      );
-    }
-    return { payout, transfer: recovered, alreadyPaid: false, reconciled: true };
+    return recordRecoveredTransfer(payout, recovered, { orderId, livemode: source.livemode, saveOpts });
   } else {
   payout = await Payout.findOneAndUpdate(
     {
@@ -637,13 +653,9 @@ async function releasePayoutToProvider(opts) {
         await payout.save(saveOpts);
         throw payoutError('PAYOUT_TRANSFER_MISMATCH', 'Existing Stripe transfer requires manual review.');
       }
-      payout.status = 'transferred';
-      payout.stripeTransferId = recovered.id;
-      payout.transferInitiatedAt ||= new Date();
-      await payout.save(saveOpts);
-      await releaseOrderPayoutLock(orderId, payout._id);
-      await creditProviderEarnings(payout);
-      return { payout, transfer: recovered, alreadyPaid: false, reconciled: true };
+      // It used to only mark the payout transferred: the Payment stayed unreleased and the
+      // transfer never reached the financial history.
+      return recordRecoveredTransfer(payout, recovered, { orderId, livemode: source.livemode, saveOpts });
     }
   }
 
@@ -696,12 +708,32 @@ async function releasePayoutToProvider(opts) {
       },
     };
 
+    // One key per attempt: with a fixed key Stripe replayed a refused attempt's saved
+    // error for 24 h, so every retry "failed" again. A second transfer is still
+    // impossible: every attempt after the first lists this payout's transfers above.
     transfer = await stripe.transfers.create(transferParams, {
-      idempotencyKey: `transfer_${idempotencyKey}`,
+      idempotencyKey: `transfer_${idempotencyKey}_${payout.retryCount ?? 0}`,
     });
   } catch (stripeErr) {
-    // Record failure without losing the Payout record (retryable)
+    // A 4xx answer (except 409, a concurrent request on the same key) means Stripe
+    // refused it and created nothing: a plain failure the retry job picks up. Anything
+    // else (network, 5xx) leaves the outcome unknown.
+    const status = stripeErr.statusCode;
+    if (Number.isInteger(status) && status >= 400 && status < 500 && status !== 409) {
+      payout.status = 'failed';
+      payout.transferFailedAt = new Date();
+      payout.failureReason = 'Stripe refused the transfer; no money moved.';
+      payout.failureCode = stripeErr.code || stripeErr.type || 'stripe_transfer_refused';
+      await payout.save(saveOpts);
+      await releaseOrderPayoutLock(orderId, payout._id);
+      const err = payoutError('PAYOUT_TRANSFER_FAILED', 'Stripe refused the transfer; it will be retried.');
+      err.stripeCode = payout.failureCode;
+      err.payoutId = String(payout._id);
+      err.retryable = true;
+      throw err;
+    }
     payout.status = 'reconciliation_required';
+    payout.transferFailedAt = new Date();
     payout.failureReason = 'Stripe transfer outcome is unknown; reconcile before retrying.';
     payout.failureCode = stripeErr.code || stripeErr.type || 'stripe_transfer_outcome_unknown';
     await payout.save(saveOpts);

@@ -105,16 +105,37 @@ test('a developer must enter the authenticator code before the console loads', a
   expect(calls.filter((c) => c.pathname === '/api/auth/mfa/verify').map((c) => c.body)).toEqual([{ code: '000000' }, { code: '123456' }]);
 });
 
-test('first sign-in shows the QR set-up instead of a code prompt', async ({ page }) => {
+test('first sign-in: an emailed code is required before the QR set-up (H9)', async ({ page }) => {
   await mockApi(page, { mfa: { required: true, enabled: false, verified: false } });
-  await page.route(`${API}/api/auth/mfa/setup`, (route) =>
-    route.fulfill({ json: { secret: 'JBSWY3DPEHPK3PXP', otpauthUrl: 'otpauth://totp/Jobblo:dev@example.test?secret=JBSWY3DPEHPK3PXP&issuer=Jobblo' } })
-  );
+  const setupBodies = [];
+  await page.route(`${API}/api/auth/mfa/setup/send-code`, (route) => route.fulfill({ json: { sentTo: 'd***@example.test' } }));
+  await page.route(`${API}/api/auth/mfa/setup`, (route) => {
+    const body = route.request().postDataJSON();
+    setupBodies.push(body);
+    if (body?.emailCode !== '424242') return route.fulfill({ status: 400, json: { message: 'Wrong code. 4 attempt(s) left.', code: 'MFA_SETUP_EMAIL_CODE' } });
+    return route.fulfill({ json: { secret: 'JBSWY3DPEHPK3PXP', otpauthUrl: 'otpauth://totp/Jobblo:dev@example.test?secret=JBSWY3DPEHPK3PXP&issuer=Jobblo' } });
+  });
   await page.goto('/developer/queues');
+
+  // No secret is requested before the email step.
+  await expect(page.getByText('Confirm it is you')).toBeVisible();
+  expect(setupBodies).toEqual([]);
+  await page.getByRole('button', { name: 'Email me a code' }).click();
+  await expect(page.getByText('d***@example.test', { exact: false })).toBeVisible();
+
+  const input = page.getByLabel('Email code');
+  await input.fill('111111');
+  await page.getByRole('button', { name: 'Continue' }).click();
+  await expect(page.getByRole('alert')).toHaveText('Wrong code. 4 attempt(s) left.');
+  await expect(page.getByText('Set up an authenticator app')).toHaveCount(0);
+
+  await input.fill('424242');
+  await page.getByRole('button', { name: 'Continue' }).click();
   await expect(page.getByText('Set up an authenticator app')).toBeVisible();
   await page.getByText("Can't scan? Enter this key instead").click();
   await expect(page.getByText('JBSWY3DPEHPK3PXP')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Confirm and turn on' })).toBeDisabled();
+  expect(setupBodies).toEqual([{ emailCode: '111111' }, { emailCode: '424242' }]);
 });
 
 test('an ordinary user is sent away from /developer', async ({ page }) => {

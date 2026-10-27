@@ -24,7 +24,7 @@ function Avatar({ uri, label }: { uri?: string; label: string }) {
       {uri && !failed ? (
         <Image source={{ uri }} style={{ width: 56, height: 56 }} onError={() => setFailed(true)} />
       ) : (
-        <Text className="text-[1rem] font-semibold text-brand-text">{label}</Text>
+        <Text className="text-[1.0625rem] font-semibold text-brand-text">{label}</Text>
       )}
     </View>
   );
@@ -151,13 +151,13 @@ export default function RecommendedTaskersScreen() {
                   <View className="flex-row items-center gap-3">
                     <Avatar uri={worker.avatarUrl} label={initials(worker.name, worker.lastName)} />
                     <View className="min-w-0 flex-1">
-                      <Text className="text-[1rem] font-semibold text-ink" numberOfLines={1}>{name}</Text>
+                      <Text className="text-[1.0625rem] font-semibold text-ink" numberOfLines={1}>{name}</Text>
                       <View className="mt-1 flex-row items-center gap-1">
                         {reviews > 0 ? (
                           <>
                             <Star size={13} color="#B7791F" fill="#B7791F" />
                             <Text className="text-[0.8125rem] font-semibold text-ink">{rating.toFixed(1)}</Text>
-                            <Text className="text-[0.8125rem] text-subtle">
+                            <Text className="text-[0.8125rem] text-muted">
                               ({reviews} {reviews === 1 ? 'anmeldelse' : 'anmeldelser'})
                             </Text>
                           </>
@@ -172,7 +172,7 @@ export default function RecommendedTaskersScreen() {
                       <Text className="text-[0.9375rem] font-bold tabular-nums text-ink">
                         {worker.hourlyRate ? `${worker.hourlyRate} kr` : '—'}
                       </Text>
-                      <Text className="text-[0.8125rem] text-subtle">{worker.hourlyRate ? 'per time' : 'pris avtales'}</Text>
+                      <Text className="text-[0.8125rem] text-muted">{worker.hourlyRate ? 'per time' : 'pris avtales'}</Text>
                     </View>
                   </View>
 
@@ -185,7 +185,7 @@ export default function RecommendedTaskersScreen() {
                       ))}
                       {(worker.skills?.length ?? 0) > 3 ? (
                         <View className="rounded-full bg-surface-2 px-2.5 py-1">
-                          <Text className="text-[0.8125rem] font-medium text-subtle">+{(worker.skills?.length ?? 0) - 3}</Text>
+                          <Text className="text-[0.8125rem] font-medium text-muted">+{(worker.skills?.length ?? 0) - 3}</Text>
                         </View>
                       ) : null}
                     </View>

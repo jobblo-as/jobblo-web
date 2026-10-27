@@ -31,7 +31,10 @@ export const categoriesService = {
         types: data.types || [],
       };
     } catch (error) {
-      console.error('Failed to fetch filter options:', error);
+      // Message and status only: an AxiosError carries the request config, including the
+      // Authorization header with the user's token, into the device log.
+      const { message, response } = (error ?? {}) as { message?: string; response?: { status?: number } };
+      console.error('Failed to fetch filter options:', message, response?.status);
       throw error;
     }
   },

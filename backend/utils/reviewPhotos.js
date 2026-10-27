@@ -26,9 +26,10 @@ const MAX_URL_LENGTH = 2048;
  * Validate and normalise a `photos` payload.
  *
  * @param {unknown} photos  Raw value from the request body.
+ * @param {string[]} [existing]  Photos already on the review (kept even if from older storage).
  * @returns {{ ok: true, photos: string[] } | { ok: false, error: string }}
  */
-function normaliseReviewPhotos(photos) {
+function normaliseReviewPhotos(photos, existing = []) {
   if (photos === undefined || photos === null) return { ok: true, photos: [] };
 
   if (!Array.isArray(photos)) {
@@ -63,6 +64,12 @@ function normaliseReviewPhotos(photos) {
 
     if (!/^https:\/\//i.test(url)) {
       return { ok: false, error: 'Bilde-URL må være en https-adresse.' };
+    }
+
+    // Only our own uploads (POST /safepay-checkout/review-photos), never a private-container
+    // (evidence) URL, which responses would sign for every reader.
+    if (!existing.includes(url) && !require('./azureUpload').isOurPublicBlobUrl(url)) {
+      return { ok: false, error: 'Bilde-URL er ikke tillatt. Last opp bildet først.' };
     }
 
     cleaned.push(url);

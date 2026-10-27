@@ -1,5 +1,4 @@
 const crypto = require('crypto');
-const bcrypt = require('bcryptjs');
 const { isBcryptHash } = require('../../utils/passwordUtils');
 const User = require('../../models/User');
 const Service = require('../../models/Service');
@@ -9,68 +8,12 @@ const List = require('../../models/List');
 const { sendMongoError } = require('../../utils/mongoErrors');
 const { PUBLIC_USER_SELECT, OWN_USER_SELECT, sanitizeUserPublic, sanitizeUserOwner } = require('../../utils/userProjections');
 const { isValidId, authorizeUser } = require('./userHelpers');
+const { verifyCurrentPassword, sendServerError } = require('../auth/authHelpers');
 
-/** User profiles: create, read (public vs owner view), update, delete (anonymise), their jobs, admin list. */
+/** User profiles: read (public vs owner view), update, delete (anonymise), their jobs, admin list. */
 
-// Create a new user
-exports.createUser = async (req, res) => {
-  try {
-    const {
-      name,
-      lastName,
-      email,
-      phone,
-      avatarUrl,
-      bio,
-      role,
-      birthDate,
-      gender,
-      address,
-      postNumber,
-      postSted,
-      country,
-      subscription,
-      verified,
-      lastLogin,
-      availability,
-      earnings,
-      spending,
-      oauthProviders,
-    } = req.body;
-
-    const user = new User({
-      name,
-      lastName,
-      email,
-      phone: phone?.trim() || undefined,
-      avatarUrl,
-      bio,
-      role,
-      birthDate,
-      gender,
-      address,
-      postNumber,
-      postSted,
-      country,
-      subscription,
-      verified,
-      lastLogin,
-      availability,
-      earnings,
-      spending,
-      oauthProviders,
-    });
-    await user.save();
-    res.status(201).json(user);
-  } catch (err) {
-    if (err.code === 11000) {
-      // Duplicate key error
-      return res.status(400).json({ error: 'Email or phone already exists' });
-    }
-    res.status(400).json({ error: err.message });
-  }
-};
-
+// An OAuth-only account (no password) may delete itself only from a session this fresh.
+const REAUTH_WINDOW_MS = 10 * 60 * 1000;
 
 exports.getUserById = async (req, res) => {
   try {
@@ -247,8 +190,9 @@ exports.updateUser = async (req, res) => {
       'website',
     ];
 
+    // `role` is deliberately absent: role changes go only through PUT /api/admin/users/:id/role,
+    // which guards the last superAdmin and writes the audit log.
     if (req.user.role === 'superAdmin') {
-      allowedUpdates.push('role');
       allowedUpdates.push('verified');
       allowedUpdates.push('isTrusted');
     }
@@ -258,6 +202,17 @@ exports.updateUser = async (req, res) => {
       if (req.body[key] !== undefined) {
         updates[key] = req.body[key];
       }
+    }
+
+    // Rendered as the company profile's "Besøk nettside" link: only http(s), '' clears it.
+    if (updates.website !== undefined && updates.website !== null && updates.website !== '') {
+      const website = String(updates.website).trim();
+      let url = null;
+      try { url = new URL(website); } catch { /* not a URL */ }
+      if (website.length > 200 || !url || !['http:', 'https:'].includes(url.protocol)) {
+        return res.status(400).json({ error: 'Nettsiden må være en gyldig http(s)-adresse (maks 200 tegn).' });
+      }
+      updates.website = website;
     }
 
     // Normalize Norwegian post numbers on the server side.
@@ -299,18 +254,25 @@ exports.updateUser = async (req, res) => {
     const user = await User.findById(id).select('+password');
     if (!user) return res.status(404).json({ error: 'User not found' });
 
+    // Portfolio / project images must be our own uploads (POST /users/portfolio, /api/upload),
+    // never a private-container (evidence) URL, which responses sign. URLs already stored are kept.
+    const { isOurPublicBlobUrl } = require('../../utils/azureUpload');
+    for (const k of ['portfolio', 'previousProjects']) {
+      const stored = (user[k] || []).map((item) => item?.imageUrl);
+      const bad = [].concat(updates[k] || []).some((item) => item?.imageUrl && !stored.includes(item.imageUrl) && !isOurPublicBlobUrl(item.imageUrl));
+      if (bad) return res.status(400).json({ error: 'Bilde-URL er ikke tillatt. Last opp bildet først.' });
+    }
+
     // The login e-mail is where reset codes go, so changing it takes the current
     // password: a stolen session alone must not be able to redirect account recovery.
-    // A superAdmin editing someone else's account is exempt.
+    // Only the owner can change it; nobody (a superAdmin included) changes another's here.
     if (updates.email !== undefined) {
       if (String(updates.email).trim().toLowerCase() === user.email) {
         delete updates.email;
-      } else if (String(req.userId) === String(id)) {
-        const { currentPassword } = req.body;
-        const passwordOk =
-          typeof currentPassword === 'string' &&
-          isBcryptHash(user.password) &&
-          (await bcrypt.compare(currentPassword, user.password));
+      } else if (String(req.userId) !== String(id)) {
+        return res.status(403).json({ code: 'EMAIL_SELF_ONLY', error: 'Bare kontoeieren kan endre e-postadressen.' });
+      } else {
+        const passwordOk = await verifyCurrentPassword(user, req.body.currentPassword);
         if (!passwordOk) {
           return res.status(403).json({
             code: 'CURRENT_PASSWORD_REQUIRED',
@@ -339,10 +301,25 @@ exports.updateUser = async (req, res) => {
       new: true,
       select: OWN_USER_SELECT,
     });
+    // A superAdmin setting trust flags on someone else is an admin action: audit it.
+    const flags = ['verified', 'isTrusted'].filter((k) => updates[k] !== undefined && String(req.userId) !== String(id));
+    if (flags.length) {
+      await require('../../services/admin/activityService').logActivity({
+        adminId: req.user._id,
+        action: 'user_verified',
+        targetModel: 'User',
+        targetId: id,
+        description: `Endret ${flags.map((k) => `${k}=${updates[k]}`).join(', ')} for ${user.email}`,
+        metadata: { area: 'users.update', ...Object.fromEntries(flags.map((k) => [k, updates[k]])) },
+        ip: req.ip,
+        userAgent: req.get?.('user-agent') || 'unknown',
+      });
+    }
     res.json(sanitizeUserOwner(updatedUser));
   } catch (err) {
     // Was `res.status(400).json({ error: err.message })`, which forwarded the raw
     // driver string (E11000 duplicate key ... index: email_1 ...) to a toast.
+    if (err?.code === 'PASSWORD_ATTEMPTS' || err?.code === 'PASSWORD_HASH_BUSY') return sendServerError(res, err);
     console.error('updateUser Error:', err);
     sendMongoError(res, err, 'Kunne ikke lagre endringene. Prøv igjen.');
   }
@@ -360,9 +337,42 @@ exports.deleteUser = async (req, res) => {
     }
 
     const user = await User.findById(id).select(
-      'isDeleted email avatarPublicId bannerPublicId certifications'
+      'isDeleted email role avatarPublicId bannerPublicId certifications +password'
     );
     if (!user || user.isDeleted) return res.status(404).json({ error: 'Fant ikke brukeren.' });
+
+    // Self-deletion takes the current password (a stolen session alone must not erase the
+    // account). OAuth-only accounts have no password, so they need a fresh login instead.
+    if (String(req.userId) === String(id)) {
+      if (isBcryptHash(user.password)) {
+        const ok = await verifyCurrentPassword(user, (req.body || {}).currentPassword);
+        if (!ok) {
+          return res.status(403).json({
+            code: 'CURRENT_PASSWORD_REQUIRED',
+            error: 'Skriv inn nåværende passord for å slette kontoen.',
+          });
+        }
+      } else {
+        const session = await require('../../models/Session').findById(req.sessionId).select('createdAt').lean();
+        if (!session || Date.now() - new Date(session.createdAt).getTime() > REAUTH_WINDOW_MS) {
+          return res.status(403).json({
+            code: 'REAUTH_REQUIRED',
+            error: 'Logg inn på nytt for å slette kontoen.',
+          });
+        }
+      }
+    }
+
+    if (user.role === 'superAdmin') {
+      const activeSuperAdmins = await User.countDocuments({
+        role: 'superAdmin',
+        isDeleted: { $ne: true },
+        accountStatus: { $ne: 'inactive' },
+      });
+      if (activeSuperAdmins <= 1) {
+        return res.status(403).json({ code: 'last_superadmin', error: 'Kan ikke slette den siste superadmin.' });
+      }
+    }
 
     const blockingOrders = await Order.countDocuments({
       $or: [{ customerId: id }, { providerId: id }],
@@ -547,6 +557,7 @@ exports.deleteUser = async (req, res) => {
 
     res.json({ message: 'Profilen din er slettet.' });
   } catch (err) {
+    if (err?.code === 'PASSWORD_ATTEMPTS' || err?.code === 'PASSWORD_HASH_BUSY') return sendServerError(res, err);
     console.error('deleteUser Error:', err);
     res.status(500).json({ error: 'Kunne ikke slette profilen. Prøv igjen.' });
   }

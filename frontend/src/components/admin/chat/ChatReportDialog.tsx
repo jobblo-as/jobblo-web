@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { X, Loader2, AlertTriangle, Upload, File } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-import { postChatReport, uploadChatReportEvidence } from '../../../api/admin/chats';
+import { postChatReport } from '../../../api/admin/chats';
 import {
     Dialog,
     DialogContent,
@@ -77,11 +77,6 @@ export function ChatReportDialog({ chatId, open, onClose, scope = 'chat', messag
         },
     });
 
-    const uploadMutation = useMutation({
-        mutationFn: (formData: FormData) => uploadChatReportEvidence(chatId, formData),
-    });
-    const isUploading = uploadMutation.isPending;
-
     const handleClose = () => {
         setReportType('');
         setTitle('');
@@ -114,36 +109,18 @@ export function ChatReportDialog({ chatId, open, onClose, scope = 'chat', messag
     const handleSubmit = async () => {
         if (!reportType || !title.trim() || !description.trim() || !confirmed) return;
 
-        let evidence: Array<{ fileUrl: string; fileType: string }> = [];
-
-        if (evidenceFiles.length > 0) {
-            try {
-                const formData = new FormData();
-                for (const ef of evidenceFiles) {
-                    formData.append('files', ef.file);
-                }
-                const uploadRes = await uploadMutation.mutateAsync(formData);
-                evidence = (uploadRes.files || []).map((f: { fileUrl: string; fileType: string }) => ({
-                    fileUrl: f.fileUrl,
-                    fileType: f.fileType,
-                }));
-            } catch {
-                toast.error('Kunne ikke laste opp vedlegg.');
-                return;
-            }
-        }
-
-        submitMutation.mutate({
-            scope,
-            ...(scope === 'message' && messageId ? { messageId } : {}),
-            reportType,
-            title: title.trim(),
-            description: description.trim(),
-            ...(evidence.length > 0 && { evidence }),
-        });
+        // One multipart request: the server checks the report, then stores the "evidence" files.
+        const formData = new FormData();
+        formData.append('scope', scope);
+        if (scope === 'message' && messageId) formData.append('messageId', messageId);
+        formData.append('reportType', reportType);
+        formData.append('title', title.trim());
+        formData.append('description', description.trim());
+        for (const ef of evidenceFiles) formData.append('evidence', ef.file);
+        submitMutation.mutate(formData);
     };
 
-    const canSubmit = reportType && title.trim() && description.trim() && confirmed && !submitMutation.isPending && !isUploading;
+    const canSubmit = reportType && title.trim() && description.trim() && confirmed && !submitMutation.isPending;
 
     return (
         <Dialog open={open} onOpenChange={(o) => { if (!o) handleClose(); }}>
@@ -199,7 +176,7 @@ export function ChatReportDialog({ chatId, open, onClose, scope = 'chat', messag
 
                     <div>
                         <label className="block text-sm font-medium text-foreground mb-1">Vedlegg (valgfritt)</label>
-                        <input ref={fileInputRef} type="file" multiple accept="image/*,application/pdf"
+                        <input ref={fileInputRef} type="file" multiple accept="image/jpeg,image/png,image/webp,application/pdf"
                             onChange={handleFileSelect} className="hidden" />
                         <button type="button" onClick={() => fileInputRef.current?.click()}
                             className="flex items-center gap-2 w-full px-3 py-2.5 text-sm text-muted-foreground border border-dashed border-border rounded-md hover:border-ring hover:text-foreground transition-colors">
@@ -240,8 +217,8 @@ export function ChatReportDialog({ chatId, open, onClose, scope = 'chat', messag
                     </Button>
                     <Button onClick={handleSubmit} disabled={!canSubmit}
                         className="rounded-md bg-primary hover:bg-primary/90 text-white disabled:opacity-50">
-                        {(isUploading || submitMutation.isPending) && <Loader2 size={14} className="animate-spin" />}
-                        {isUploading ? 'Laster opp...' : submitMutation.isPending ? 'Sender...' : 'Send rapport'}
+                        {submitMutation.isPending && <Loader2 size={14} className="animate-spin" />}
+                        {submitMutation.isPending ? 'Sender...' : 'Send rapport'}
                     </Button>
                 </DialogFooter>
             </DialogContent>

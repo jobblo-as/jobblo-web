@@ -81,7 +81,7 @@ export default function BlockedUsersScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} tintColor={TC.brandText} />}
       >
         {users.length ? users.map((user) => (
-          <View key={user._id} className="mb-3 flex-row items-center rounded-2xl border border-line bg-surface p-3">
+          <View key={user._id} className="mb-3 flex-row items-center rounded-2xl bg-surface p-3">
             <Pressable onPress={() => router.push(`/profile/${user._id}`)} className="flex-1 flex-row items-center gap-3">
               <View className="relative h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-line bg-tint">
                 {user.avatarUrl ? <Image source={{ uri: user.avatarUrl }} className="h-full w-full" /> : <Text className="font-semibold text-brand-text">{initials(user)}</Text>}

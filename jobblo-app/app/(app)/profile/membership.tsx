@@ -334,8 +334,8 @@ function planFeatures(plan: SubscriptionPlan): string[] {
 
         {/* Current plan, straight from the server */}
         {subscription?.hasPlan ? (
-          <View className="rounded-3xl border border-line bg-surface p-5">
-            <Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.14em] text-subtle">
+          <View className="rounded-3xl bg-surface p-5">
+            <Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.14em] text-muted">
               Din nåværende plan
             </Text>
             <View className="mt-2 flex-row items-center">
@@ -387,7 +387,7 @@ function planFeatures(plan: SubscriptionPlan): string[] {
 
         {/* Plan cards */}
         {typePlans.length === 0 ? (
-          <View className="mt-5 rounded-3xl border border-line bg-surface p-6">
+          <View className="mt-5 rounded-3xl bg-surface p-6">
             <Text className="text-center text-[0.9375rem] font-semibold text-ink">
               Ingen planer tilgjengelig
             </Text>
@@ -468,7 +468,7 @@ function planFeatures(plan: SubscriptionPlan): string[] {
         {/* Coupon — only meaningful for a paid plan we can actually buy */}
         {/* Summary + CTA */}
         {selectedPlan ? (
-          <View className="mt-5 rounded-3xl border border-line bg-surface p-5">
+          <View className="mt-5 rounded-3xl bg-surface p-5">
             <View className="flex-row items-center justify-between">
               <Text className="text-[0.875rem] text-muted">{selectedPlan.name}</Text>
               <Text className="text-[0.875rem] font-medium text-ink">
@@ -483,7 +483,7 @@ function planFeatures(plan: SubscriptionPlan): string[] {
               </Text>
             </View>
             {!isFree ? (
-              <Text className="mt-1 text-[0.8125rem] text-subtle">
+              <Text className="mt-1 text-[0.8125rem] text-muted">
                 Per måned. Endelig beløp bekreftes av Stripe.
               </Text>
             ) : null}
@@ -512,7 +512,7 @@ function planFeatures(plan: SubscriptionPlan): string[] {
                 </View>
               </View>
             ) : !isAllowedForAccount ? (
-              <View className="mt-4 rounded-2xl border border-line bg-surface-2 px-4 py-3.5">
+              <View className="mt-4 rounded-2xl bg-surface-2 px-4 py-3.5">
                 <Text className="text-center text-[0.875rem] leading-5 text-muted">
                   {allowedPlanType === 'business'
                     ? 'Privatplaner er tilgjengelige for privatkontoer.'
@@ -604,7 +604,7 @@ function planFeatures(plan: SubscriptionPlan): string[] {
           <View className="mt-0.5">
             <Info size={14} color={tc('#9B9E96', 'subtle')} />
           </View>
-          <Text className="ml-2 flex-1 text-[0.8125rem] leading-5 text-subtle">
+          <Text className="ml-2 flex-1 text-[0.8125rem] leading-5 text-muted">
             Betalingen skjer i Stripes sikre betalingsside i nettleseren. Medlemskapet aktiveres når
             Stripe har bekreftet betalingen — det kan ta noen sekunder etter at du kommer tilbake til
             appen.

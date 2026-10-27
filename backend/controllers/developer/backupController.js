@@ -4,6 +4,7 @@ const { logActivity } = require('../../services/admin/activityService');
 const BackupRun = require('../../models/BackupRun');
 const backup = require('../../services/backup');
 const atlas = require('../../services/backup/atlas');
+const { serverError } = require('../../utils/serverError');
 
 const HOUR = 60 * 60 * 1000;
 
@@ -42,7 +43,7 @@ const getBackups = asyncHandler(async (req, res) => {
   });
 });
 
-const fail = (res, e) => sendError(res, e.message, e.status || 500);
+const fail = (res, e) => (e.status ? sendError(res, e.message, e.status) : serverError(res, e));
 const audit = (req, description, metadata) =>
   logActivity({ adminId: req.user._id, action: 'other', description, metadata: { area: 'developer.backup', ...metadata }, ip: req.ip, userAgent: req.get('user-agent') || 'unknown' });
 

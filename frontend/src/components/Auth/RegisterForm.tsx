@@ -20,6 +20,7 @@ import {
  * submit button sat below a scroll the user had no reason to expect. Split, each step
  * fits the viewport, the form asks one thing at a time, and step one leads with Vipps —
  * where most Norwegian users finish in a tap and never see step two.
+ * Then "Bekreft e-post": the account signs in only after the mailed code.
  */
 type Step = 'identity' | 'credentials';
 

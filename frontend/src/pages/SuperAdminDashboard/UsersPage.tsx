@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Users, UserPlus, Calendar, Plus, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAdminUsers, useCreateAdminUser, useChangeUserRole, useVerifyUser, useUpdateUserStatus } from '../../hooks/admin';
@@ -7,16 +7,13 @@ import type { AdminUser } from '../../types/admin';
 import type { ColumnDef } from '../../components/admin/AdminDataTable';
 import { useUserStore } from '../../stores/userStore';
 
-// Role options — create form (all roles allowed)
+// Role options — create form. The API refuses superAdmin (no step-up in the panel).
 const ROLE_OPTIONS = [
   { label: 'Bruker', value: 'user' },
   { label: 'Tilbyder', value: 'provider' },
   { label: 'Bedrift', value: 'company' },
-  { label: 'Super Admin', value: 'superAdmin' },
   { label: 'Utvikler', value: 'developer' },
 ];
-// Role change options — same set as create
-const CHANGE_ROLE_OPTIONS = ROLE_OPTIONS;
 const ROLE_FILTER_OPTIONS = [
   { label: 'Bruker', value: 'user' },
   { label: 'Tilbyder', value: 'provider' },
@@ -24,6 +21,8 @@ const ROLE_FILTER_OPTIONS = [
   { label: 'Super Admin', value: 'superAdmin' },
   { label: 'Utvikler', value: 'developer' },
 ];
+// Role change: superAdmin is listed (so an existing one displays) but cannot be picked.
+const CHANGE_ROLE_OPTIONS = ROLE_FILTER_OPTIONS;
 const STATUS_OPTIONS = [
   { label: 'Aktiv', value: 'active' },
   { label: 'Inaktiv', value: 'inactive' },
@@ -41,10 +40,11 @@ export default function UsersPage() {
   const [statusFilter, setStatusFilter] = useState('');
 
   // Debounce search
+  const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const handleSearchChange = useCallback((val: string) => {
     setSearch(val);
-    clearTimeout((handleSearchChange as any)._t);
-    (handleSearchChange as any)._t = setTimeout(() => {
+    clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => {
       setDebouncedSearch(val);
       setPage(1);
     }, 400);
@@ -170,7 +170,7 @@ export default function UsersPage() {
                 aria-label={`Endre rolle for ${u.name}`}
               >
                 {CHANGE_ROLE_OPTIONS.map((r) => (
-                  <option key={r.value} value={r.value}>
+                  <option key={r.value} value={r.value} disabled={r.value === 'superAdmin'}>
                     {r.label}
                   </option>
                 ))}

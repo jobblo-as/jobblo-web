@@ -29,7 +29,7 @@ export function HowItWorks() {
   return (
     <View style={{ paddingHorizontal: 20, paddingTop: 64, paddingBottom: 48 }}>
       <View style={{ marginBottom: 28, gap: 8 }}>
-        <Text style={{ color: tc('#9B9E96', 'subtle'), fontSize: 11, fontWeight: '700', letterSpacing: 2.5, textTransform: 'uppercase' }}>
+        <Text style={{ color: tc('#63665F', 'muted'), fontSize: 13, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase' }}>
           03 — Prosessen
         </Text>
         <Text style={{ color: TC.ink, fontSize: 32, fontWeight: '700', lineHeight: 38, letterSpacing: -1.1 }}>

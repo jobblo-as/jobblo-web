@@ -47,7 +47,10 @@ function newClient(label, options = {}) {
 /** The shared command client (cache, rate limits, health). null when Redis is off. */
 function getRedis() {
   if (!enabled()) return null;
-  if (!shared) shared = newClient('shared', { maxRetriesPerRequest: 1, connectTimeout: 5000 });
+  // Auto-pipelining: commands issued in the same tick (one rate-limit EVALSHA + one cache GET per
+  // request, hundreds of requests at once) go out in one write instead of one syscall each.
+  // Safe here: the shared client never runs blocking or subscribe commands.
+  if (!shared) shared = newClient('shared', { maxRetriesPerRequest: 1, connectTimeout: 5000, enableAutoPipelining: true });
   return shared;
 }
 

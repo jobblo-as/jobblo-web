@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, AppState, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, ShieldCheck } from 'lucide-react-native';
@@ -81,6 +81,9 @@ export default function SafePayCheckoutScreen() {
   // Held for the whole launch → Checkout → return window, not just the mutation, so the
   // button cannot start a second payment while the first one is still open.
   const [launching, setLaunching] = useState(false);
+  // The state above only renders the disabled button; this ref is the actual guard. A second
+  // tap in the same frame still sees the old `launching` value.
+  const launchingRef = useRef(false);
 
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (state) => {
@@ -123,78 +126,86 @@ export default function SafePayCheckoutScreen() {
   if (isProvider && !isCustomer) {
     // `replace`, not `push`: this screen is a wall for providers, so it must not stay on the
     // stack for the back gesture to return to.
-    return <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page"><View className="flex-1 justify-center px-4"><View className="rounded-3xl border border-line bg-surface p-8"><View className="mx-auto h-11 w-11 items-center justify-center rounded-full bg-tint"><ShieldCheck size={20} color={TC.brand} /></View><Text className="mt-4 text-center text-[1.0625rem] font-semibold text-ink">Betaling håndteres av oppdragsgiver</Text><Text className="mt-2 text-center text-[0.875rem] leading-relaxed text-muted">Du kan følge oppdragets status og starte arbeidet fra din egen arbeidsside.</Text><Pressable onPress={() => router.replace(providerOrderRoute(order._id))} className="mt-6 rounded-full bg-brand px-6 py-3"><Text className="text-center text-[0.9375rem] font-semibold text-white">Gå til mitt oppdrag</Text></Pressable></View></View></SafeAreaView>;
+    return <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page"><View className="flex-1 justify-center px-4"><View className="rounded-3xl bg-surface p-8"><View className="mx-auto h-11 w-11 items-center justify-center rounded-full bg-tint"><ShieldCheck size={20} color={TC.brand} /></View><Text className="mt-4 text-center text-[1.0625rem] font-semibold text-ink">Betaling håndteres av oppdragsgiver</Text><Text className="mt-2 text-center text-[0.875rem] leading-relaxed text-muted">Du kan følge oppdragets status og starte arbeidet fra din egen arbeidsside.</Text><Pressable onPress={() => router.replace(providerOrderRoute(order._id))} className="mt-6 rounded-full bg-brand px-6 py-3"><Text className="text-center text-[0.9375rem] font-semibold text-white">Gå til mitt oppdrag</Text></Pressable></View></View></SafeAreaView>;
   }
 
   if (!isCustomer && !isProvider) {
-    return <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page"><View className="flex-1 justify-center px-4"><View className="rounded-3xl border border-line bg-surface p-8"><Text className="text-center text-[1.0625rem] font-semibold text-ink">Ikke tilgang</Text><Text className="mt-2 text-center text-[0.875rem] text-muted">Denne kontrakten tilhører andre parter.</Text></View></View></SafeAreaView>;
+    return <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page"><View className="flex-1 justify-center px-4"><View className="rounded-3xl bg-surface p-8"><Text className="text-center text-[1.0625rem] font-semibold text-ink">Ikke tilgang</Text><Text className="mt-2 text-center text-[0.875rem] text-muted">Denne kontrakten tilhører andre parter.</Text></View></View></SafeAreaView>;
   }
 
   const isPaid = order.paymentStatus === 'paid' || SETTLED_STATUSES.includes(order.status);
   const contractDate = formatDateRange(service.fromDate, service.toDate);
   const duration = formatDuration(service.duration);
 
-  const handlePay = () => {
-    if (launching || paymentMutation.isPending) return;
+  // `mutateAsync` + `finally`, not `mutate(…, { onSuccess, onSettled })`: TanStack calls a
+  // per-call onSettled right after onSuccess *starts* without awaiting it, so the button came
+  // back while Checkout was still opening and a second tap started a second checkout.
+  const handlePay = async () => {
+    if (launchingRef.current) return;
+    launchingRef.current = true;
     setLaunching(true);
-    paymentMutation.mutate(undefined, {
-      onSuccess: async (response) => {
-        const checkoutUrl = typeof response.url === 'string' ? response.url.trim() : '';
-        if (!checkoutUrl) {
-          Alert.alert('Betaling kunne ikke starte', 'Fikk ingen betalingslenke fra Stripe. Prøv igjen.');
-          return;
-        }
-
-        // `create-session` returns only the Checkout URL, but the server writes
-        // `checkoutSessionId` onto the order before it responds — so this refetch always
-        // sees it. Parsing the URL is only a fallback.
-        const refreshed = await refetch();
-        const stored = refreshed.data?.order?.checkoutSessionId;
-        const sessionId = isValidSessionId(stored) ? stored : sessionIdFromCheckoutUrl(checkoutUrl);
-
-        const result = await runStripeCheckout({ checkoutUrl, sessionId, verify: getSafePaySessionStatus });
-
-        if (result.outcome === 'not_opened') {
-          Alert.alert('Betaling kunne ikke starte', 'Kunne ikke åpne betalingssiden. Prøv igjen.');
-          return;
-        }
-
-        // Closed without the server confirming anything — including a deliberate cancel.
-        // The order stays in whatever state the server says (`awaiting_payment` for a
-        // cancel), the customer stays on this screen, and nothing claims success.
-        if (result.outcome !== 'paid') {
-          await refetch();
-          return;
-        }
-        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
-
-        // Seeding the status cache lets the success screen show the confirmed payment at
-        // once instead of verifying from scratch; its own effect then invalidates the
-        // applicant, application and order lists that the payment changed.
-        queryClient.setQueryData(queryKeys.safepay.status(result.sessionId), result.status);
-        await queryClient.invalidateQueries({ queryKey: queryKeys.safepay.checkout(orderId ?? '') });
-
-        const paidOrderId = isValidOrderId(result.status.orderId) ? result.status.orderId : orderId ?? '';
-        // `replace`: this order is paid now, so the back gesture must not return to a
-        // checkout screen offering to pay for it again.
-        router.replace({
-          pathname: '/(app)/safepay/success',
-          params: { orderId: paidOrderId, session_id: result.sessionId },
-        });
-      },
-      onError: (mutationError) => {
+    try {
+      let response: Awaited<ReturnType<typeof paymentMutation.mutateAsync>>;
+      try {
+        response = await paymentMutation.mutateAsync();
+      } catch (mutationError) {
         if (getErrorStatus(mutationError) === 409) void refetch();
         Alert.alert('Kunne ikke starte betalingen', getErrorMessage(mutationError) ?? 'Prøv igjen.');
-      },
-      onSettled: () => setLaunching(false),
-    });
+        return;
+      }
+      const checkoutUrl = typeof response.url === 'string' ? response.url.trim() : '';
+      if (!checkoutUrl) {
+        Alert.alert('Betaling kunne ikke starte', 'Fikk ingen betalingslenke fra Stripe. Prøv igjen.');
+        return;
+      }
+
+      // `create-session` returns only the Checkout URL, but the server writes
+      // `checkoutSessionId` onto the order before it responds — so this refetch always
+      // sees it. Parsing the URL is only a fallback.
+      const refreshed = await refetch();
+      const stored = refreshed.data?.order?.checkoutSessionId;
+      const sessionId = isValidSessionId(stored) ? stored : sessionIdFromCheckoutUrl(checkoutUrl);
+
+      const result = await runStripeCheckout({ checkoutUrl, sessionId, verify: getSafePaySessionStatus });
+
+      if (result.outcome === 'not_opened') {
+        Alert.alert('Betaling kunne ikke starte', 'Kunne ikke åpne betalingssiden. Prøv igjen.');
+        return;
+      }
+
+      // Closed without the server confirming anything — including a deliberate cancel.
+      // The order stays in whatever state the server says (`awaiting_payment` for a
+      // cancel), the customer stays on this screen, and nothing claims success.
+      if (result.outcome !== 'paid') {
+        await refetch();
+        return;
+      }
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => undefined);
+
+      // Seeding the status cache lets the success screen show the confirmed payment at
+      // once instead of verifying from scratch; its own effect then invalidates the
+      // applicant, application and order lists that the payment changed.
+      queryClient.setQueryData(queryKeys.safepay.status(result.sessionId), result.status);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.safepay.checkout(orderId ?? '') });
+
+      const paidOrderId = isValidOrderId(result.status.orderId) ? result.status.orderId : orderId ?? '';
+      // `replace`: this order is paid now, so the back gesture must not return to a
+      // checkout screen offering to pay for it again.
+      router.replace({
+        pathname: '/(app)/safepay/success',
+        params: { orderId: paidOrderId, session_id: result.sessionId },
+      });
+    } finally {
+      launchingRef.current = false;
+      setLaunching(false);
+    }
   };
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: 120 }}>
         <Pressable onPress={() => router.push({ pathname: '/(app)/job-applicants/[serviceId]', params: { serviceId: service._id } })} className="mb-5 flex-row items-center gap-2 self-start"><ArrowLeft size={17} color={tc('#63665F', 'muted')} /><Text className="text-[0.8125rem] text-muted">Tilbake til søkere</Text></Pressable>
-        <View className="mb-6"><Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.16em] text-subtle">SafePay</Text><Text className="mt-2 text-[1.9rem] font-bold leading-tight text-ink">Kontrakt og betaling</Text><Text className="mt-2 text-[0.9375rem] leading-relaxed text-muted">Beløpet trekkes nå og holdes av Jobblo til du har godkjent arbeidet.</Text></View>
+        <View className="mb-6"><Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.16em] text-muted">SafePay</Text><Text className="mt-2 text-[1.9rem] font-bold leading-tight text-ink">Kontrakt og betaling</Text><Text className="mt-2 text-[0.9375rem] leading-relaxed text-muted">Beløpet trekkes nå og holdes av Jobblo til du har godkjent arbeidet.</Text></View>
         <SafePayProgressSteps currentStep={2} />
         <SafePayPartiesCard order={order} />
         <DigitalContractCard service={service} order={order} calculation={calculation} contractDate={contractDate} duration={duration} />
@@ -202,7 +213,7 @@ export default function SafePayCheckoutScreen() {
           calculation={calculation}
           isPaid={isPaid}
           providerName={order.providerId?.name}
-          onPay={handlePay}
+          onPay={() => void handlePay()}
           isPending={paymentMutation.isPending || launching}
           startDeadline={data.startDeadline}
           paidAction={{
@@ -211,7 +222,7 @@ export default function SafePayCheckoutScreen() {
           }}
         />}
         {order.paymentStatus === 'failed' ? <Text className="mt-4 text-center text-[0.8125rem] font-medium text-danger">Forrige betalingsforsøk mislyktes. Du kan prøve igjen over.</Text> : null}
-        {order.status === 'cancelled' ? null : <Text className="mt-5 text-center text-[0.8125rem] leading-relaxed text-subtle">Ved å bekrefte godtar du Jobblos vilkår og SafePay-avtalen.</Text>}
+        {order.status === 'cancelled' ? null : <Text className="mt-5 text-center text-[0.8125rem] leading-relaxed text-muted">Ved å bekrefte godtar du Jobblos vilkår og SafePay-avtalen.</Text>}
       </ScrollView>
     </SafeAreaView>
   );

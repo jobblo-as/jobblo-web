@@ -58,7 +58,7 @@ export default function OtpInput({ value, onChange, onComplete, disabled }: OtpI
   };
 
   return (
-    <div className="flex justify-center gap-3" onPaste={handlePaste}>
+    <div className="flex justify-center gap-2 sm:gap-3" onPaste={handlePaste}>
       {digits.map((d, i) => (
         <input
           key={i}
@@ -74,7 +74,7 @@ export default function OtpInput({ value, onChange, onComplete, disabled }: OtpI
           onChange={(e) => handleChange(e.target.value, i)}
           onKeyDown={(e) => handleKey(e, i)}
           className={[
-            'w-12 h-14 text-center text-[22px] font-bold rounded-xl border-2 outline-none transition-all',
+            'w-12 min-w-0 flex-1 max-w-12 h-14 text-center text-[22px] font-bold rounded-xl border-2 outline-none transition-all',
             'focus:border-black focus:ring-2 focus:ring-black/10',
             disabled ? 'opacity-50 cursor-not-allowed bg-gray-100' : '',
             d ? 'border-black bg-gray-50' : 'border-gray-200 bg-white',

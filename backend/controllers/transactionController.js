@@ -1,10 +1,15 @@
 const Transaction = require('../models/Transaction');
 const User = require('../models/User');
 const mongoose = require('mongoose');
+const { serverError } = require('../utils/serverError');
+const { parsePagination } = require('../utils/pagination');
+const { escapeRegex } = require('../utils/devQuery');
 // GET ALL TRANSACTIONS (FOR ADMIN)
 exports.getTransactions = async (req, res) => {
   try {
-    const { page = 1, limit = 10, search, type } = req.query;
+    const { search, type } = req.query;
+    const { limit, skip } = parsePagination(req.query, { defaultLimit: 10 });
+    const searchRe = typeof search === 'string' && search.trim() ? escapeRegex(search.trim().slice(0, 100)) : null;
     let query = {};
 
     // 1. Type Filter (subscription / extra_contact)
@@ -13,18 +18,18 @@ exports.getTransactions = async (req, res) => {
     }
 
     // 2. Search Logic (Email + Transaction ID)
-    if (search) {
+    if (searchRe) {
       // Pehle Users collection mein search karein ke kya koi user is email se match karta hai
       const matchedUsers = await User.find({
-        email: { $regex: search, $options: 'i' },
+        email: { $regex: searchRe, $options: 'i' },
       }).select('_id');
 
       const userIds = matchedUsers.map((user) => user._id);
 
       // Ab Transaction query mein check karein
       query.$or = [
-        { stripeSessionId: { $regex: search, $options: 'i' } }, // Search by ID
-        { planName: { $regex: search, $options: 'i' } }, // Search by Plan
+        { stripeSessionId: { $regex: searchRe, $options: 'i' } }, // Search by ID
+        { planName: { $regex: searchRe, $options: 'i' } }, // Search by Plan
         { userId: { $in: userIds } }, // Search by matched User IDs
       ];
     }
@@ -32,8 +37,8 @@ exports.getTransactions = async (req, res) => {
     const transactions = await Transaction.find(query)
       .populate('userId', 'email name') // Email populate karna zaroori hai table ke liye
       .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(Number(limit));
+      .skip(skip)
+      .limit(limit);
 
     const total = await Transaction.countDocuments(query);
 
@@ -44,21 +49,20 @@ exports.getTransactions = async (req, res) => {
     });
   } catch (error) {
     console.error('Backend Error:', error);
-    res.status(500).json({ message: 'Internal Server Error', error: error.message });
+    serverError(res, error);
   }
 };
 
 // GET USER TRANSACTIONS (FOR USER DASHBOARD)
 exports.getUserTransactions = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const { limit, skip } = parsePagination(req.query, { defaultLimit: 10 });
     const transactions = await Transaction.find({ userId: req.user.id })
       .sort({ createdAt: -1 })
-      .skip((page - 1) * Number(limit))
-      .limit(Number(limit));
+      .skip(skip)
+      .limit(limit);
 
     const total = await Transaction.countDocuments({ userId: req.user.id });
-    console.log('total', transactions);
     res.status(200).json({
       success: true,
       transactions,
@@ -66,7 +70,7 @@ exports.getUserTransactions = async (req, res) => {
       totalTransactions: total,
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    serverError(res, error);
   }
 };
 
@@ -127,6 +131,6 @@ exports.updateTransactionStatus = async (req, res) => {
     });
   } catch (error) {
     console.error('Update Status Error:', error);
-    res.status(500).json({ message: 'Internal Server Error', error: error.message });
+    serverError(res, error);
   }
 };

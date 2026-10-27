@@ -84,7 +84,7 @@ export function LocationFilter({
               <Text className="flex-1 text-[0.875rem] font-medium text-ink">
                 {county.name}
               </Text>
-              {typeof county.count === 'number' ? <Text className="text-[0.8125rem] text-subtle">{county.count}</Text> : null}
+              {typeof county.count === 'number' ? <Text className="text-[0.8125rem] text-muted">{county.count}</Text> : null}
               {county.children && county.children.length > 0 && (
                 <Pressable onPress={() => onToggleCountyExpand(county.code)}>
                   {expandedCounties.includes(county.code) ? (
@@ -113,7 +113,7 @@ export function LocationFilter({
                     <Text className="flex-1 text-[0.8125rem] text-muted">
                       {municipality.name}
                     </Text>
-                    {typeof municipality.count === 'number' ? <Text className="text-[0.8125rem] text-subtle">{municipality.count}</Text> : null}
+                    {typeof municipality.count === 'number' ? <Text className="text-[0.8125rem] text-muted">{municipality.count}</Text> : null}
                     {municipality.children &&
                       municipality.children.length > 0 && (
                         <Pressable
@@ -152,10 +152,10 @@ export function LocationFilter({
                         <Checkbox
                           checked={selectedAreaCodes.includes(area.code)}
                         />
-                        <Text className="flex-1 text-[0.8125rem] text-subtle">
+                        <Text className="flex-1 text-[0.8125rem] text-muted">
                           {area.name}
                         </Text>
-                        {typeof area.count === 'number' ? <Text className="text-[0.8125rem] text-subtle">{area.count}</Text> : null}
+                        {typeof area.count === 'number' ? <Text className="text-[0.8125rem] text-muted">{area.count}</Text> : null}
                       </Pressable>
                     ))}
                 </View>

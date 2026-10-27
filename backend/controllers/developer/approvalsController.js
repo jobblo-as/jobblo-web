@@ -5,6 +5,7 @@ const { clientIp } = require('../../services/monitoring/securityEvents');
 const stepUp = require('../../services/developer/stepUp');
 const { ACTIONS } = require('../../services/developer/sensitiveActions');
 const ChangeRequest = require('../../models/ChangeRequest');
+const { serverError } = require('../../utils/serverError');
 
 /**
  * Access model for the developer dashboard:
@@ -46,7 +47,7 @@ const sendStepUp = asyncHandler(async (req, res) => {
   try {
     await stepUp.sendCode(req.user);
   } catch (err) {
-    return sendError(res, err.message, err.status || 500);
+    return (err.status ? sendError(res, err.message, err.status) : serverError(res, err));
   }
   await audit(req, 'Requested step-up code', {});
   return sendSuccess(res, { sentTo: require('../../services/monitoring/securityEvents').maskEmail(req.user.email) }, 'Code sent.');
@@ -59,7 +60,7 @@ const verifyStepUp = asyncHandler(async (req, res) => {
     return sendSuccess(res, result, 'Confirmed.');
   } catch (err) {
     await audit(req, 'Failed step-up authentication', { reason: err.message });
-    return sendError(res, err.message, err.status || 500);
+    return (err.status ? sendError(res, err.message, err.status) : serverError(res, err));
   }
 });
 
@@ -91,7 +92,7 @@ const submitAction = asyncHandler(async (req, res) => {
     try {
       await action.execute(payload, { actor: req.user._id, actorIp: clientIp(req), reason });
     } catch (err) {
-      return sendError(res, err.message, err.status || 500);
+      return (err.status ? sendError(res, err.message, err.status) : serverError(res, err));
     }
     await audit(req, `${summary} (${reason})`, { type: req.params.type, direct: true, key: payload.key, environment: process.env.NODE_ENV || 'development', after: payload.enabled, risk: risk && { score: risk.score, level: risk.level, acknowledged: req.body?.acknowledgeRisk === true } });
     return sendSuccess(res, { executed: true, summary, risk }, 'Done.');

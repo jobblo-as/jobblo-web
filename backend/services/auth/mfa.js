@@ -119,26 +119,35 @@ async function verify(userId, sessionId, { code, backupCode }) {
   const Session = require('../../models/Session');
   const user = await User.findById(userId).select(`email role mfaEnabledAt ${SECRET_FIELDS}`);
   if (!user) throw Object.assign(new Error('User not found'), { status: 404 });
+  // Each write is conditional on the state the check read, so two parallel requests cannot
+  // both spend the same code: only the one whose update matched (modifiedCount 1) is accepted.
   let backupCodes = null;
+  let left = (user.mfaBackupCodes || []).length;
+  let won;
   if (!user.mfaEnabledAt) {
     if (!user.mfaPendingSecret) throw Object.assign(new Error('Start the authenticator setup first.'), { status: 400 });
     const step = verifyCode(decrypt(user.mfaPendingSecret), code);
     if (step === null) return { ok: false };
     const fresh = newBackupCodes();
     backupCodes = fresh.codes;
-    Object.assign(user, { mfaSecret: user.mfaPendingSecret, mfaPendingSecret: null, mfaEnabledAt: new Date(), mfaLastStep: step, mfaBackupCodes: fresh.hashes });
+    left = fresh.hashes.length;
+    won = await User.updateOne(
+      { _id: userId, mfaEnabledAt: null, mfaPendingSecret: user.mfaPendingSecret },
+      { $set: { mfaSecret: user.mfaPendingSecret, mfaPendingSecret: null, mfaEnabledAt: new Date(), mfaLastStep: step, mfaBackupCodes: fresh.hashes } }
+    );
   } else if (backupCode) {
     const h = hashBackup(backupCode);
     if (!(user.mfaBackupCodes || []).includes(h)) return { ok: false };
-    user.mfaBackupCodes = user.mfaBackupCodes.filter((x) => x !== h); // one use each
+    left -= 1;
+    won = await User.updateOne({ _id: userId, mfaBackupCodes: h }, { $pull: { mfaBackupCodes: h } }); // one use each
   } else {
     const step = verifyCode(decrypt(user.mfaSecret), code, { lastStep: user.mfaLastStep ?? -1 });
     if (step === null) return { ok: false };
-    user.mfaLastStep = step;
+    won = await User.updateOne({ _id: userId, $or: [{ mfaLastStep: null }, { mfaLastStep: { $lt: step } }] }, { $set: { mfaLastStep: step } });
   }
-  await user.save({ validateBeforeSave: false });
+  if (won.modifiedCount !== 1) return { ok: false };
   await Session.updateOne({ _id: sessionId, userId }, { $set: { mfaVerifiedAt: new Date() } });
-  return { ok: true, backupCodes, backupCodesLeft: (user.mfaBackupCodes || []).length };
+  return { ok: true, backupCodes, backupCodesLeft: left };
 }
 
 /** Remove a user's authenticator (lost phone) and sign them out everywhere. */

@@ -1,20 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
+const { checkFileTypes, DOCUMENT_TYPES, MULTIPART_LIMITS } = require('../middleware/upload');
+// Report evidence: buffered here, type checked from the bytes (checkFileTypes), uploaded by
+// submitChatReport only after the participant checks pass.
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB per file
-  fileFilter: (_req, file, cb) => {
-    const ALLOWED_MIME = [
-      'image/jpeg', 'image/png', 'image/webp', 'image/gif',
-      'application/pdf', 'video/mp4',
-    ];
-    if (ALLOWED_MIME.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Ugyldig filtype. Tillatte: JPEG, PNG, WEBP, GIF, PDF, MP4.'));
-    }
-  },
+  limits: { ...MULTIPART_LIMITS, fileSize: 10 * 1024 * 1024, files: 5 }, // 10 MB per file
 });
 
 const chatController = require('../controllers/chatController');
@@ -40,6 +32,7 @@ router.post(
   authenticate,
   reportSubmitLimiter,
   upload.array('evidence', 5),
+  checkFileTypes(DOCUMENT_TYPES),
   submitChatReport
 );
 // GET /api/chats/:chatId/reports/me — the authenticated user's own reports for this chat

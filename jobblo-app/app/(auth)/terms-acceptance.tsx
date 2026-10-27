@@ -51,11 +51,11 @@ export default function TermsAcceptanceScreen() {
             </View>
           ) : null}
 
-          <View className="mt-5 rounded-2xl border border-line bg-[#F5F6F1] dark:bg-surface-2 p-3">
-            <Text className="text-[12px] font-semibold uppercase tracking-[0.18em] text-subtle">Brukervilkår</Text>
+          <View className="mt-5 rounded-2xl bg-[#F5F6F1] dark:bg-surface-2 p-3">
+            <Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.18em] text-muted">Brukervilkår</Text>
             <Text className="mt-2 text-[13px] font-semibold text-ink">{userTerms.title}</Text>
-            <Text className="mt-1 text-[11px] text-muted">Sist oppdatert: {userTerms.lastUpdatedDisplay}</Text>
-            <Text className="mt-3 text-[12px] leading-5 text-muted">{userTerms.intro}</Text>
+            <Text className="mt-1 text-[0.8125rem] text-muted">Sist oppdatert: {userTerms.lastUpdatedDisplay}</Text>
+            <Text className="mt-3 text-[0.8125rem] leading-5 text-muted">{userTerms.intro}</Text>
           </View>
 
           <View className="mt-5 gap-3">
@@ -84,7 +84,7 @@ export default function TermsAcceptanceScreen() {
             </Pressable>
           </View>
 
-          <Text className="mt-5 text-[11px] leading-5 text-muted">
+          <Text className="mt-5 text-[0.8125rem] leading-5 text-muted">
             Logget inn som {typeof user?.email === 'string' && user.email.trim() ? user.email : 'bruker'}.
           </Text>
         </View>

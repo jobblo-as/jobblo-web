@@ -90,6 +90,107 @@ function verdict({ configured = true, live, errorRate, failures = 0, stale = fal
 
 const rate = (failed, total) => (total ? failed / total : undefined);
 
+/** Redis ping + memory, BullMQ job counts, worker heartbeats. Each part fails soft (shown, not thrown). */
+async function scalingSignals() {
+  const redis = require('../../config/redis');
+  const queue = require('../../services/queue');
+  const [workers, ping] = await Promise.all([
+    require('../../services/monitoring/workers').listWorkers().catch(() => null),
+    redis.enabled() ? redis.pingRedis().catch((e) => ({ enabled: true, ok: false, error: e.message })) : { enabled: false },
+  ]);
+  let memory = null;
+  let queues = null;
+  if (ping.ok) {
+    memory = await withTimeout(redis.getRedis().info('memory'))
+      .then((info) => ({ used: /used_memory_human:(\S+)/.exec(info)?.[1], max: /maxmemory_human:(\S+)/.exec(info)?.[1], policy: /maxmemory_policy:(\S+)/.exec(info)?.[1] }))
+      .catch(() => null);
+    if (queue.usingRedis()) {
+      queues = await withTimeout(
+        Promise.all(Object.keys(queue.QUEUES).map(async (name) => [name, await queue.getQueue(name).getJobCounts('waiting', 'active', 'delayed', 'failed')]))
+      )
+        .then(Object.fromEntries)
+        .catch((e) => ({ error: e.message }));
+    }
+  }
+  return { workers, redis: { ...ping, status: redis.state?.status, memory }, queues, queueMode: queue.usingRedis() ? 'redis' : 'inline' };
+}
+
+/** Pure: the Redis / API workers / response cache / background jobs nodes. Unit-tested. */
+function scalingNodes({ workers, redis, queues, queueMode }) {
+  const t = workers?.totals;
+  const configured = workers?.configured || '1';
+  const wantMany = configured !== '1';
+  const expected = /^\d+$/.test(configured) ? Number(configured) : null;
+  const cacheRows = Object.entries(t?.cache || {});
+  const hits = cacheRows.reduce((a, [, c]) => a + c.hits, 0);
+  const misses = cacheRows.reduce((a, [, c]) => a + c.misses, 0);
+  const sumQ = (k) => (queues && !queues.error ? Object.values(queues).reduce((a, c) => a + (c[k] || 0), 0) : 0);
+  const evictionRisk = redis.memory?.policy && redis.memory.policy !== 'noeviction';
+  return [
+    {
+      id: 'redis',
+      name: 'Redis',
+      group: 'data',
+      status: !redis.enabled ? 'off' : !redis.ok ? 'down' : evictionRisk ? 'degraded' : 'healthy',
+      metrics: !redis.enabled
+        ? { Note: 'REDIS_URL not set: cache, rate limits and jobs are per process.' }
+        : {
+            Ping: redis.ok ? `${redis.ms} ms` : redis.error || redis.status || 'unreachable',
+            Connection: redis.status || '—',
+            ...(redis.memory
+              ? {
+                  Memory: `${redis.memory.used || '?'} of ${redis.memory.max && redis.memory.max !== '0B' ? redis.memory.max : 'no limit'}`,
+                  Eviction: evictionRisk ? `${redis.memory.policy} — set noeviction (BullMQ jobs can be evicted)` : redis.memory.policy,
+                }
+              : {}),
+          },
+      impact: 'Shared cache, cross-worker rate limits, background jobs (email, push, scheduled jobs) and realtime across workers stop; with WEB_CONCURRENCY>1 the API falls back to one process.',
+    },
+    {
+      id: 'workers',
+      name: 'API workers (cluster)',
+      group: 'core',
+      status: !t ? 'unknown' : (expected && t.workers < expected) || (wantMany && !redis.ok) || t.worstLoopP99Ms >= 200 ? 'degraded' : 'healthy',
+      metrics: t
+        ? {
+            Workers: `${t.workers} running · WEB_CONCURRENCY=${configured}`,
+            'Requests / s': t.rps,
+            'Event loop p99 (worst)': `${t.worstLoopP99Ms} ms`,
+            Restarts: t.restarts,
+            'Logins refused (busy)': t.passwordBusy,
+            ...(wantMany && !redis.ok ? { Note: 'Redis is down, so cluster mode runs ONE process.' } : {}),
+          }
+        : {},
+      impact: 'Fewer workers means less throughput; a crash-looping worker restarts with backoff. Details on the API Workers page.',
+    },
+    {
+      id: 'cache',
+      name: 'Response cache',
+      group: 'core',
+      status: hits + misses < 50 ? 'unknown' : hits / (hits + misses) < 0.5 ? 'degraded' : 'healthy',
+      metrics: {
+        Store: redis.ok ? 'Redis (shared) + 1 s in-process' : 'in-process only',
+        'Hit rate (all workers)': hits + misses ? `${Math.round((hits / (hits + misses)) * 1000) / 10}% of ${hits + misses}` : 'no traffic yet',
+        ...Object.fromEntries(cacheRows.slice(0, 5).map(([name, c]) => [name, c.hitRate == null ? '—' : `${c.hitRate}%`])),
+      },
+      impact: 'Public job lists, categories and filters hit MongoDB on every request: slower pages and less headroom under load.',
+    },
+    {
+      id: 'queues',
+      name: 'Background jobs',
+      group: 'core',
+      status: queueMode !== 'redis' ? 'unknown' : !queues || queues.error ? 'down' : sumQ('failed') > 0 || sumQ('waiting') > 500 ? 'degraded' : 'healthy',
+      metrics:
+        queueMode !== 'redis'
+          ? { Mode: 'in-process (no Redis): a job lost in a restart is not retried' }
+          : queues?.error
+            ? { Error: queues.error }
+            : { Mode: 'BullMQ', Waiting: sumQ('waiting'), Active: sumQ('active'), Delayed: sumQ('delayed'), 'Failed (dead letters)': sumQ('failed') },
+      impact: 'Emails (OTP, receipts), push notifications and scheduled jobs are delayed; failed jobs wait in the dead-letter list on the Queues page.',
+    },
+  ];
+}
+
 const getDependencies = asyncHandler(async (req, res) => {
   const force = req.query.refresh === 'true';
   const since = (ms) => new Date(Date.now() - ms);
@@ -125,6 +226,10 @@ const getDependencies = asyncHandler(async (req, res) => {
     ]),
     require('../../models/BackupRun').findOne({ kind: 'backup', status: 'succeeded' }).sort({ startedAt: -1 }).select('startedAt').lean(),
   ]);
+  const scaling = await scalingSignals();
+  const schedulerWorkers = (scaling.workers?.workers || []).filter((w) => w.scheduler);
+  const schedulerOn = scaling.workers?.workers?.length ? schedulerWorkers.length > 0 : scheduler.state.enabled;
+  const schedulerWhere = schedulerWorkers.map((w) => (w.slot ? `worker ${w.slot}` : `pid ${w.pid}`)).join(', ');
   const L = live.results;
   const syn = Object.fromEntries(synthetic.map((s) => [s._id, s]));
   const deliveryStats = (rows) => {
@@ -183,8 +288,9 @@ const getDependencies = asyncHandler(async (req, res) => {
     node('scheduler', {
       name: 'Scheduler',
       group: 'core',
-      status: !scheduler.state.enabled ? 'off' : schedulerFailed.length ? 'degraded' : 'healthy',
-      metrics: { Enabled: scheduler.state.enabled ? 'yes' : 'no', 'Failed runs (1 h)': schedulerFailed.length, ...(schedulerFailed.length ? { Failing: [...new Set(schedulerFailed.map((r) => r.job))].join(', ') } : {}) },
+      // In cluster mode only worker 1 runs it, so "this process" is not the answer: ask the heartbeats.
+      status: !schedulerOn ? 'off' : schedulerFailed.length ? 'degraded' : 'healthy',
+      metrics: { Enabled: schedulerOn ? `yes${schedulerWhere ? ` (${schedulerWhere})` : ''}` : 'no — ENABLE_SCHEDULER=false on every worker', 'Failed runs (1 h)': schedulerFailed.length, ...(schedulerFailed.length ? { Failing: [...new Set(schedulerFailed.map((r) => r.job))].join(', ') } : {}) },
       impact: 'Escrow auto-release, payout retries, refunds of abandoned orders and reconciliation stop.',
     }),
     node('mongo', {
@@ -242,6 +348,7 @@ const getDependencies = asyncHandler(async (req, res) => {
     node('openai', { name: 'OpenAI', group: 'external', status: verdict({ configured: configured.openai, live: L.openai }), metrics: L.openai ? { 'Models check': L.openai.ok ? `${L.openai.ms} ms` : L.openai.error } : {}, impact: 'AI job-description help and image analysis are unavailable.' }),
     node('github', { name: 'GitHub', group: 'external', status: verdict({ configured: configured.github, live: L.github }), metrics: L.github ? { 'Repo check': L.github.ok ? `${L.github.ms} ms` : L.github.error } : {}, impact: 'Deployments page cannot list CI runs. No user impact.' }),
     node('slack', { name: 'Slack alerts', group: 'external', status: configured.slack ? 'unknown' : 'off', metrics: {}, impact: 'Incident alerts only go by email.' }),
+    ...scalingNodes(scaling),
   ];
 
   // from → to: "from needs to".
@@ -250,9 +357,11 @@ const getDependencies = asyncHandler(async (req, res) => {
     ['api', 'mongo'], ['api', 'realtime'], ['api', 'blob'], ['api', 'stripe'], ['api', 'smtp'], ['api', 'fcm'],
     ['api', 'idura'], ['api', 'vipps'], ['api', 'google'], ['api', 'openai'], ['api', 'github'], ['api', 'slack'],
     ['scheduler', 'mongo'], ['scheduler', 'stripe'], ['scheduler', 'smtp'], ['backups', 'mongo'],
+    ['nginx', 'workers'], ['workers', 'redis'], ['api', 'cache'], ['cache', 'redis'], ['api', 'queues'], ['queues', 'redis'],
+    ['queues', 'smtp'], ['queues', 'fcm'], ['realtime', 'redis'], ['scheduler', 'queues'],
   ].map(([from, to]) => ({ from, to }));
 
   return sendSuccess(res, { checkedAt: new Date(live.at), nodes, edges });
 });
 
-module.exports = { verdict, getDependencies };
+module.exports = { verdict, scalingSignals, scalingNodes, getDependencies };

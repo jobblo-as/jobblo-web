@@ -18,6 +18,9 @@ function uploadErrors(err, req, res, next) {
       LIMIT_FILE_SIZE: 'Bildet er for stort. Maks 8 MB per fil.',
       LIMIT_FILE_COUNT: 'For mange filer. Du kan laste opp inntil 6 bilder.',
       LIMIT_UNEXPECTED_FILE: 'Uventet fil i opplastingen.',
+      LIMIT_FIELD_VALUE: 'Et tekstfelt er for langt.',
+      LIMIT_FIELD_COUNT: 'For mange felt i skjemaet.',
+      LIMIT_PART_COUNT: 'For mange felt i skjemaet.',
     };
     return res.status(413).json({ error: messages[err.code] || 'Kunne ikke laste opp filen.' });
   }
@@ -30,10 +33,13 @@ function uploadErrors(err, req, res, next) {
 async function errorHandler(err, req, res, next) {
   const status = err.status || err.statusCode || 500;
   const isAppErr = err instanceof AppError;
-  const errorCode = isAppErr ? err.code : 'INTERNAL_SERVER_ERROR';
-  const safeMessage = isAppErr ? err.message : 'Internal server error.';
+  // A 404/400 from http-errors is not a server fault: it was logged as
+  // INTERNAL_SERVER_ERROR, so every unknown URL filled the error log (M1).
+  const clientErr = !isAppErr && status < 500;
+  const errorCode = isAppErr ? err.code : clientErr ? (err.code || `HTTP_${status}`) : 'INTERNAL_SERVER_ERROR';
+  const safeMessage = isAppErr ? err.message : clientErr && err.expose ? err.message : 'Internal server error.';
 
-  try {
+  if (!clientErr) try {
     await logApplicationError({
       error: err,
       requestPath: req.path,

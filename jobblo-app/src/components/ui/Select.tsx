@@ -58,7 +58,7 @@ export function Select({
           className={cn(
             'shrink',
             isField ? 'text-[0.9375rem]' : 'text-[0.875rem] font-semibold',
-            selected ? 'text-ink' : 'text-subtle'
+            selected ? 'text-ink' : 'text-muted'
           )}
         >
           {selected?.label ?? placeholder}
@@ -81,7 +81,7 @@ export function Select({
                 accessibilityState={{ selected: active }}
                 className={cn('flex-row items-center justify-between rounded-xl px-3 py-3.5', active ? 'bg-tint' : 'active:bg-surface-2')}
               >
-                <Text className={cn('text-[1rem]', active ? 'font-semibold text-brand-text' : 'text-ink')}>{option.label}</Text>
+                <Text className={cn('text-[1.0625rem]', active ? 'font-semibold text-brand-text' : 'text-ink')}>{option.label}</Text>
                 {active ? <Check size={18} color={TC.brandText} /> : null}
               </Pressable>
             );

@@ -294,20 +294,8 @@ interface SubmitChatReportPayload {
     description: string;
 }
 
-export const postChatReport = async (
-    chatId: string,
-    payload: SubmitChatReportPayload & { evidence?: Array<{ fileUrl: string; fileType: string }> }
-) => {
+// FormData when there are evidence files (field "evidence", JPG/PNG/WEBP/PDF, max 5).
+export const postChatReport = async (chatId: string, payload: SubmitChatReportPayload | FormData) => {
     const res = await mainLink.post(`/api/chats/${chatId}/reports`, payload);
-    return res.data;
-};
-
-export const uploadChatReportEvidence = async (
-    chatId: string,
-    formData: FormData
-): Promise<{ files?: Array<{ fileUrl: string; fileType: string }> }> => {
-    const res = await mainLink.post(`/api/chats/${chatId}/reports/evidence`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-    });
     return res.data;
 };

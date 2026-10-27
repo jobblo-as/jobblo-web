@@ -2,7 +2,13 @@ const Order = require('../../models/Order');
 const { asyncHandler, sendSuccess, sendError, buildPagination } = require('../../utils/apiResponse');
 const { parsePagination, parseObjectId, parseSort, parseDate } = require('../../utils/pagination');
 const { logActivity } = require('../../services/admin/activityService');
-const { transitionOrder, OrderTransitionError } = require('../../services/order/orderState');
+const {
+  isValidTransition,
+  assertNoActiveDispute,
+  assertTerminalIsMoneySafe,
+  OrderTransitionError,
+} = require('../../services/order/orderState');
+const { releaseListingAfterCancel } = require('../../services/order/releaseListing');
 
 const SORT_FIELDS = ['createdAt', 'updatedAt', 'agreedPrice', 'status'];
 
@@ -95,27 +101,45 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   if (status === 'cancelled') {
     // This was an unconditional findByIdAndUpdate: an admin could cancel a PAID order
     // with no refund, stranding the captured money (payout refuses cancelled orders).
-    // transitionOrder applies the transition table, the active-dispute freeze, the
-    // "held money needs a refund or payout" rule and a compare-and-swap.
-    const current = await Order.findById(id).select('checkoutSessionStatus').lean();
-    if (!current) return sendError(res, 'Ordre ikke funnet.', 404);
-    if (['open', 'pending'].includes(current.checkoutSessionStatus)) {
-      // The customer may be paying right now; a payment after cancellation would be
-      // captured against a cancelled order.
-      return sendError(res, 'Ordren har en aktiv betaling og kan ikke avbrytes nå.', 409);
-    }
+    // Same guards as transitionOrder (transition table, active-dispute freeze, "held money
+    // needs a refund or payout"), but the compare-and-swap also requires that no checkout
+    // session is open or being created: a payment after cancellation would be captured
+    // against a cancelled order, and checking that in a separate read raced a new checkout.
+    // ponytail: mirrors transitionOrder; a `where` option there would let this reuse it.
+    const NO_ACTIVE_CHECKOUT = { $nin: ['open', 'pending'] };
     try {
-      const result = await transitionOrder({
-        orderId: id,
-        to: 'cancelled',
-        actorId: req.user._id,
-        action: 'admin_cancelled',
-        reason: note,
-      });
-      if (!result.changed && !result.alreadyThere) {
-        return sendError(res, 'Ordren ble endret samtidig. Prøv igjen.', 409);
+      const current = await Order.findById(id);
+      if (!current) return sendError(res, 'Ordre ikke funnet.', 404);
+      if (current.status === 'cancelled') {
+        order = current;
+      } else {
+        if (NO_ACTIVE_CHECKOUT.$nin.includes(current.checkoutSessionStatus)) {
+          return sendError(res, 'Ordren har en aktiv betaling og kan ikke avbrytes nå.', 409);
+        }
+        if (!isValidTransition(current.status, 'cancelled')) {
+          return sendError(res, `Ugyldig statusovergang: ${current.status} → cancelled`, 409);
+        }
+        await assertNoActiveDispute(id);
+        await assertTerminalIsMoneySafe(current, 'cancelled');
+        order = await Order.findOneAndUpdate(
+          { _id: id, status: current.status, checkoutSessionStatus: NO_ACTIVE_CHECKOUT },
+          {
+            $set: { status: 'cancelled' },
+            $push: {
+              history: {
+                action: 'admin_cancelled',
+                userId: req.user._id,
+                timestamp: new Date(),
+                data: { from: current.status, to: 'cancelled', reason: note },
+              },
+            },
+          },
+          { new: true }
+        );
+        if (!order) return sendError(res, 'Ordren ble endret samtidig, eller har en aktiv betaling. Prøv igjen.', 409);
+        // An unpaid award left the listing hidden ('awaiting_payment') and its applicants declined.
+        await releaseListingAfterCancel(order);
       }
-      order = result.order;
     } catch (err) {
       if (err instanceof OrderTransitionError) return sendError(res, err.message, 409);
       throw err;

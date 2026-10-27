@@ -182,3 +182,32 @@ describe('getReviewByOrderId access control (F-34)', () => {
     expect(Review.find).toHaveBeenCalledWith({ orderId: String(ORDER) });
   });
 });
+
+/**
+ * H4: the role is part of the one-review-per-order unique index, so it must come from the
+ * order, never the body — otherwise one person could rate the other twice per order.
+ */
+describe('createReview derives revieweeRole from the order (H4)', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    Review.find.mockResolvedValue([{ rating: 5 }]);
+    Review.create.mockResolvedValue({ _id: 'rev1' });
+    User.findByIdAndUpdate.mockResolvedValue({});
+    mockOrder();
+  });
+
+  it.each([
+    ['customer reviewing the provider', CUSTOMER, PROVIDER, 'poster'],
+    ['provider reviewing the customer', PROVIDER, CUSTOMER, 'seeker'],
+  ])('%s is stored as %s whatever the body says', async (_label, reviewer, reviewee, role) => {
+    for (const claimed of ['seeker', 'poster', undefined]) {
+      Review.create.mockClear();
+      await reviewController.createReview(
+        req({ orderId: String(ORDER), revieweeId: String(reviewee), revieweeRole: claimed, rating: 5 }, reviewer),
+        mockRes()
+      );
+      expect(Review.create).toHaveBeenCalledTimes(1);
+      expect(Review.create.mock.calls[0][0].revieweeRole).toBe(role);
+    }
+  });
+});

@@ -136,11 +136,11 @@ function MyJobCard({
               </View>
             ) : null}
           </View>
-          {price ? <Text className="text-[1rem] font-bold text-ink">{price}</Text> : null}
+          {price ? <Text className="text-[1.0625rem] font-bold text-ink">{price}</Text> : null}
         </View>
 
         <View className="mt-2.5 flex-row items-center gap-2">
-          <Text className="flex-1 text-[1rem] font-semibold tracking-[-0.02em] text-ink" numberOfLines={2}>
+          <Text className="flex-1 text-[1.0625rem] font-semibold tracking-[-0.02em] text-ink" numberOfLines={2}>
             {job.title}
           </Text>
           <ChevronRight size={18} color={tc('#9B9E96', 'subtle')} />
@@ -150,7 +150,7 @@ function MyJobCard({
           <Text className="text-[0.8125rem] text-muted">{formatDate(job.createdAt)}</Text>
           {job.location?.city ? (
             <View className="flex-row items-center gap-1">
-              <Text className="text-subtle">·</Text>
+              <Text className="text-muted">·</Text>
               <MapPin size={12} color={tc('#9B9E96', 'subtle')} />
               <Text className="text-[0.8125rem] text-muted">{job.location.city}</Text>
             </View>
@@ -173,7 +173,7 @@ function MyJobCard({
             </View>
           ) : null}
           {job.categories?.length ? (
-            <Text className="min-w-0 flex-shrink text-[0.8125rem] text-subtle" numberOfLines={1}>
+            <Text className="min-w-0 flex-shrink text-[0.8125rem] text-muted" numberOfLines={1}>
               {job.categories.join(', ')}
             </Text>
           ) : null}
@@ -215,7 +215,7 @@ function MyJobCard({
           ].join(' ')}
         >
           <Pencil size={15} color={canEdit ? TC.ink : tc('#9B9E96', 'subtle')} />
-          <Text className={['text-[0.8125rem] font-semibold', canEdit ? 'text-ink' : 'text-subtle'].join(' ')}>Rediger</Text>
+          <Text className={['text-[0.8125rem] font-semibold', canEdit ? 'text-ink' : 'text-muted'].join(' ')}>Rediger</Text>
         </Pressable>
         <Pressable
           onPress={onDelete}

@@ -44,6 +44,13 @@ const jobRequestSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    // The award (Order) that auto-declined this application. Only these rows go back to
+    // `pending` when that award is cancelled unpaid; withdrawn and owner-declined stay.
+    autoDeclinedByOrderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Order',
+      default: null,
+    },
   },
   { timestamps: true }
 );
@@ -70,5 +77,8 @@ jobRequestSchema.index(
 // The applicants list and "my applications" both filter on these.
 jobRequestSchema.index({ serviceId: 1, status: 1 });
 jobRequestSchema.index({ customerId: 1, createdAt: -1 });
+// The owner's side (providerId is the job owner): received requests, by date and status.
+jobRequestSchema.index({ providerId: 1, createdAt: -1 });
+jobRequestSchema.index({ providerId: 1, status: 1 });
 
 module.exports = mongoose.model('JobRequest', jobRequestSchema);

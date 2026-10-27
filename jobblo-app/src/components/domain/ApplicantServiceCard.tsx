@@ -47,7 +47,7 @@ export function ApplicantServiceCard({
             ) : null}
           </View>
 
-          <Text className="text-[1rem] font-semibold tracking-[-0.02em] text-ink" numberOfLines={2}>
+          <Text className="text-[1.0625rem] font-semibold tracking-[-0.02em] text-ink" numberOfLines={2}>
             {service.title}
           </Text>
 
@@ -55,13 +55,13 @@ export function ApplicantServiceCard({
             <Text className="text-[0.8125rem] text-muted">{formatDate(service.createdAt)}</Text>
             {service.location?.city ? (
               <View className="flex-row items-center gap-1">
-                <Text className="text-subtle">·</Text>
+                <Text className="text-muted">·</Text>
                 <MapPin size={12} color={tc('#9B9E96', 'subtle')} />
                 <Text className="text-[0.8125rem] text-muted">{service.location.city}</Text>
               </View>
             ) : null}
             {formatPrice(service.price) ? (
-              <Text className="text-subtle">·</Text>
+              <Text className="text-muted">·</Text>
             ) : null}
             {formatPrice(service.price) ? (
               <Text className="text-[0.8125rem] font-semibold text-ink">{formatPrice(service.price)}</Text>

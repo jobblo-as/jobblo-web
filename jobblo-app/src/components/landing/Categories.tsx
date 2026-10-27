@@ -12,7 +12,7 @@ export function Categories() {
 
   return (
     <View style={{ paddingHorizontal: 20, paddingTop: 64, paddingBottom: 40 }}>
-      <Text style={{ color: tc('#9B9E96', 'subtle'), fontSize: 11, fontWeight: '700', letterSpacing: 2.5, textTransform: 'uppercase' }}>
+      <Text style={{ color: tc('#63665F', 'muted'), fontSize: 13, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase' }}>
         01 — Kategorier
       </Text>
       <Text style={{ marginTop: 16, color: TC.ink, fontSize: 32, fontWeight: '700', lineHeight: 38, letterSpacing: -1.1 }}>
@@ -34,7 +34,7 @@ export function Categories() {
         {isLoading ? (
           Array.from({ length: 6 }).map((_, i) => (
             <View key={i} style={{ borderBottomWidth: 1, borderBottomColor: TC.line, paddingVertical: 18 }}>
-              <Text style={{ color: tc('#9B9E96', 'subtle') }}>Laster kategorier…</Text>
+              <Text style={{ color: tc('#63665F', 'muted') }}>Laster kategorier…</Text>
             </View>
           ))
         ) : (
@@ -48,7 +48,7 @@ export function Categories() {
                 onPress={() => router.push({ pathname: '/(auth)/register' })}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderBottomWidth: 1, borderBottomColor: TC.line, paddingVertical: 18 }}
               >
-                <Text style={{ color: tc('#9B9E96', 'subtle'), fontSize: 12, fontWeight: '700', letterSpacing: 2.2, minWidth: 36, textAlign: 'center' }}>
+                <Text style={{ color: tc('#63665F', 'muted'), fontSize: 13, fontWeight: '700', letterSpacing: 1.5, minWidth: 36, textAlign: 'center' }}>
                   {String(i + 1).padStart(2, '0')}
                 </Text>
                 <Icon size={22} color={TC.brandText} />

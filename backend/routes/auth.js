@@ -1,7 +1,6 @@
 const iduraAuthController = require('../controllers/iduraAuthController');
 const vippsController = require('../controllers/vippsController');
 const User = require('../models/User');
-const { setCookie } = require('../utils/setCookie.js');
 
 const { authenticate, optionalAuthenticate } = require('../middleware/auth');
 const { authLimiter, otpSendLimiter, otpVerifyLimiter } = require('../middleware/rateLimiter');
@@ -71,15 +70,17 @@ const jwt = require('jsonwebtoken');
  *             $ref: '#/components/schemas/RegisterRequest'
  *     responses:
  *       201:
- *         description: Bruker registrert
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/AuthResponse'
+ *         description: "{ user, accessToken } + auth-cookies: innlogget med en gang. En kode for å bekrefte e-posten sendes i bakgrunnen (bekreftes fra profilsiden)."
  *       400:
  *         description: Ugyldig input
  */
 router.post('/register', authLimiter, authController.register);
+// Confirm the signed-in account's e-mail from the profile page: mail a code, then enter it.
+router.post('/email/send-code', authenticate, otpSendLimiter, authController.sendEmailCode);
+router.post('/email/verify', authenticate, otpVerifyLimiter, authController.confirmEmailCode);
+// ponytail: legacy "verify before sign-in" endpoints for older app/web builds (see loginController).
+router.post('/verify-email', otpVerifyLimiter, authController.verifyEmail);
+router.post('/resend-verification', otpSendLimiter, authController.resendVerification);
 router.post('/accept-terms', authenticate, authController.acceptTerms);
 
 /**
@@ -116,6 +117,7 @@ const mfaVerifyLimiter = require('../middleware/rateLimiter').makeLimiter('mfa-v
   windowMs: 15 * 60 * 1000,
   max: 6,
   skipSuccessfulRequests: true,
+  passOnStoreError: false, // fail closed if Redis is down (middleware/rateLimiter.js)
   // Per signed-in user; IPv6 addresses grouped by /56 (express-rate-limit's ipKeyGenerator).
   keyGenerator: (req) => (req.user?._id ? `u:${req.user._id}` : require('express-rate-limit').ipKeyGenerator(req.ip)),
   standardHeaders: true,
@@ -123,6 +125,7 @@ const mfaVerifyLimiter = require('../middleware/rateLimiter').makeLimiter('mfa-v
   message: { error: 'Too many attempts', message: 'For mange forsøk. Vent 15 minutter og prøv igjen.', code: 'MFA_LOCKED' },
 });
 router.get('/mfa', authenticate, mfaController.status);
+router.post('/mfa/setup/send-code', authenticate, mfaController.sendSetupCode);
 router.post('/mfa/setup', authenticate, mfaController.setup);
 router.post('/mfa/verify', authenticate, mfaVerifyLimiter, mfaController.verify);
 router.get('/sessions', authenticate, authController.getSessions);
@@ -165,6 +168,18 @@ router.post(
  * utils/oauthReturn.js. Same shape as `/api/safepay-checkout/mobile-return`.
  */
 router.get('/mobile-return', mobileReturn);
+
+// Native Sign in with Apple from the iOS app: the identity token is verified against
+// Apple's JWKS in controllers/appleAuthController.js. Failures only, like the other logins.
+const appleLimiter = require('../middleware/rateLimiter').makeLimiter('apple-native', {
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  skipSuccessfulRequests: true,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { code: 'rate_limited', message: 'For mange forsøk. Vent litt og prøv igjen.' },
+});
+router.post('/apple/native', appleLimiter, require('../controllers/appleAuthController').appleNativeSignIn);
 
 // Google OAuth Routes
 //
@@ -231,13 +246,13 @@ router.get('/google/callback', (req, res, next) => {
  * error, token error, issuer value or stack trace reaches the browser.
  */
 router.get('/idura', optionalAuthenticate, iduraAuthController.startIduraAuth);
-router.get('/idura/callback', iduraAuthController.iduraCallback);
+router.get('/idura/callback', optionalAuthenticate, iduraAuthController.iduraCallback);
 
 router.get('/vipps', optionalAuthenticate, (req, res) => {
   req.baseUrl = '/api/auth/web';
   return vippsController.redirectToVipps(req, res, { platform: 'web' });
 });
-router.get('/vipps/callback', (req, res) => {
+router.get('/vipps/callback', optionalAuthenticate, (req, res) => {
   req.baseUrl = '/api/auth/web';
   return vippsController.vippsCallback(req, res, { platform: 'web' });
 });

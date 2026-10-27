@@ -21,7 +21,7 @@
  *
  * Refuses to merge when BOTH rows carry a (different) orderId — that needs a human.
  */
-require('dotenv').config({ path: __dirname + '/../.env' });
+require('../config/env'); // backend/.env.development (production: .env.production)
 
 const mongoose = require('mongoose');
 

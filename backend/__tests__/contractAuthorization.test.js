@@ -9,18 +9,14 @@
 
 jest.mock('../models/ChatMessage', () => ({ findById: jest.fn() }));
 jest.mock('../models/Order', () => ({ findOne: jest.fn(), findById: jest.fn() }));
-jest.mock('../models/User', () => ({ findById: jest.fn() }));
+jest.mock('../models/User', () => ({ findById: jest.fn(), exists: jest.fn(async () => null) }));
 jest.mock('../models/Service', () => ({ findById: jest.fn(), findByIdAndUpdate: jest.fn(), findOneAndUpdate: jest.fn(async () => ({})), updateOne: jest.fn(async () => ({})) }));
-jest.mock('../models/Dispute', () => ({ findOne: jest.fn() }));
-jest.mock('../models/ChatReport', () => ({ findOne: jest.fn() }));
 jest.mock('../config/stripe', () => ({ getStripe: jest.fn() }));
 jest.mock('../services/stripe/customers', () => ({ resolveStripeCustomer: jest.fn() }));
 
 const mongoose = require('mongoose');
 const Chat = require('../models/ChatMessage');
 const Order = require('../models/Order');
-const Dispute = require('../models/Dispute');
-const ChatReport = require('../models/ChatReport');
 const chatController = require('../controllers/chatController');
 
 const OWNER_ID = new mongoose.Types.ObjectId();
@@ -69,9 +65,6 @@ function makeRes() {
 beforeEach(() => {
   jest.clearAllMocks();
   Order.findOne.mockResolvedValue(null);
-  Dispute.findOne.mockResolvedValue(null);
-  // No open abuse report unless a test says otherwise.
-  ChatReport.findOne.mockReturnValue({ select: jest.fn().mockResolvedValue(null) });
 });
 
 describe('createContract authorization', () => {
@@ -141,78 +134,31 @@ describe('createContract authorization', () => {
   });
 });
 
-describe('deleteChat protects dispute evidence', () => {
-  function chatWithOrder(orderId) {
-    return {
-      _id: CHAT_ID,
-      clientId: OWNER_ID,
-      providerId: APPLICANT_ID,
-      orderId,
-    };
-  }
-
-  it('refuses to delete a conversation attached to a paid order', async () => {
-    Chat.findById.mockResolvedValue(chatWithOrder('order_1'));
-    Order.findById.mockReturnValue({
-      select: jest.fn().mockReturnValue({
-        lean: jest.fn().mockResolvedValue({ status: 'ready_for_review', paymentStatus: 'paid' }),
-      }),
-    });
-
-    const req = { user: { id: String(APPLICANT_ID) }, params: { chatId: String(CHAT_ID) } };
-    const res = makeRes();
-
-    await chatController.deleteChat(req, res);
-
-    expect(res.statusCode).toBe(409);
-    expect(res.body.code).toBe('chat_locked_by_order');
-  });
-
-  it('refuses to delete a conversation with an active dispute', async () => {
-    Chat.findById.mockResolvedValue(chatWithOrder('order_1'));
-    Order.findById.mockReturnValue({
-      select: jest.fn().mockReturnValue({
-        lean: jest.fn().mockResolvedValue({ status: 'completed', paymentStatus: 'unpaid' }),
-      }),
-    });
-    Dispute.findOne.mockReturnValue({ select: jest.fn().mockResolvedValue({ _id: 'd1' }) });
-
-    const req = { user: { id: String(APPLICANT_ID) }, params: { chatId: String(CHAT_ID) } };
-    const res = makeRes();
-
-    await chatController.deleteChat(req, res);
-
-    expect(res.statusCode).toBe(409);
-    expect(res.body.code).toBe('chat_locked_by_dispute');
-  });
-
-  it('refuses to delete a conversation with an open abuse report, even with no order', async () => {
-    // The harassment / off-platform-payment case usually has NO order, so the order
-    // guard above did not cover it and the reported user could delete the evidence.
-    Chat.findById.mockResolvedValue(chatWithOrder(null));
-    ChatReport.findOne.mockReturnValue({ select: jest.fn().mockResolvedValue({ _id: 'rep1' }) });
+// Z3: deleteChat hard-deleted the shared conversation for both parties; only active orders,
+// disputes and open reports were protected, so a harasser could wipe it before being reported.
+describe('deleteChat only hides the conversation for the caller', () => {
+  it.each([
+    ['no order', null],
+    ['a completed order', 'order_1'],
+  ])('keeps a chat with %s and hides it for the caller', async (_label, orderId) => {
+    Chat.findById.mockReturnValue({ select: jest.fn().mockResolvedValue({ _id: CHAT_ID, clientId: OWNER_ID, providerId: APPLICANT_ID, orderId }) });
     Chat.findByIdAndDelete = jest.fn().mockResolvedValue({});
+    Chat.updateOne = jest.fn().mockResolvedValue({ modifiedCount: 1 });
 
-    const req = { user: { id: String(APPLICANT_ID) }, params: { chatId: String(CHAT_ID) } };
-    const res = makeRes();
+    const res = { ...makeRes(), end() { return this; } };
+    await chatController.deleteChat({ user: { id: String(APPLICANT_ID) }, params: { chatId: String(CHAT_ID) } }, res);
 
-    await chatController.deleteChat(req, res);
-
-    expect(res.statusCode).toBe(409);
-    expect(res.body.code).toBe('chat_locked_by_report');
-    expect(Chat.findByIdAndDelete).not.toHaveBeenCalled();
-  });
-
-  it('still allows deleting a chat with no order attached', async () => {
-    Chat.findById.mockResolvedValue(chatWithOrder(null));
-    Chat.findByIdAndDelete = jest.fn().mockResolvedValue({});
-
-    const req = { user: { id: String(OWNER_ID) }, params: { chatId: String(CHAT_ID) } };
-    const res = makeRes();
-
-    await chatController.deleteChat(req, res);
-
-    expect(Chat.findByIdAndDelete).toHaveBeenCalled();
     expect(res.statusCode).toBe(204);
+    expect(Chat.findByIdAndDelete).not.toHaveBeenCalled();
+    expect(Chat.updateOne).toHaveBeenCalledWith({ _id: String(CHAT_ID) }, { $addToSet: { deletedFor: String(APPLICANT_ID) } });
+  });
+
+  it('still refuses an outsider', async () => {
+    Chat.findById.mockReturnValue({ select: jest.fn().mockResolvedValue({ _id: CHAT_ID, clientId: OWNER_ID, providerId: APPLICANT_ID }) });
+    Chat.updateOne = jest.fn();
+    const res = makeRes();
+    await chatController.deleteChat({ user: { id: String(new mongoose.Types.ObjectId()) }, params: { chatId: String(CHAT_ID) } }, res);
+    expect(res.statusCode).toBe(403);
+    expect(Chat.updateOne).not.toHaveBeenCalled();
   });
 });

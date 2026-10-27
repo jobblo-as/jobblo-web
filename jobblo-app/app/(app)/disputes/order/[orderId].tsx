@@ -121,7 +121,7 @@ export default function DisputeThreadScreen() {
   if (!dispute) {
     return (
       <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
-        <View className="mx-4 my-8 rounded-3xl border border-line bg-surface p-6">
+        <View className="mx-4 my-8 rounded-3xl bg-surface p-6">
           <Text className="text-[0.9375rem] font-semibold text-ink">Ingen tvist på dette oppdraget</Text>
           <Text className="mt-1.5 text-[0.875rem] leading-relaxed text-muted">
             Det er ikke åpnet noen tvist her ennå. Du kan åpne en tvist hvis noe har gått galt med oppdraget.
@@ -163,14 +163,14 @@ export default function DisputeThreadScreen() {
           contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
           keyboardShouldPersistTaps="handled"
         >
-          <View className="mb-4 rounded-2xl border border-line bg-surface p-5">
+          <View className="mb-4 rounded-2xl bg-surface p-5">
             <Text className="mb-1 text-[0.9375rem] font-semibold text-ink" numberOfLines={3}>{dispute.title}</Text>
             <Text className="mb-3 text-[0.8125rem] text-muted">Kategori: {reasonLabel}</Text>
             <Text className="text-[0.8125rem] leading-relaxed text-ink">{dispute.description}</Text>
             <View className="mt-3 flex-row flex-wrap items-center gap-x-2">
-              {openedLabel ? <Text className="text-[0.8125rem] text-subtle">Opprettet {openedLabel}</Text> : null}
+              {openedLabel ? <Text className="text-[0.8125rem] text-muted">Opprettet {openedLabel}</Text> : null}
               {dispute.openedByRole ? (
-                <Text className="text-[0.8125rem] text-subtle">· Åpnet av {roleLabel(dispute.openedByRole)}</Text>
+                <Text className="text-[0.8125rem] text-muted">· Åpnet av {roleLabel(dispute.openedByRole)}</Text>
               ) : null}
             </View>
           </View>
@@ -193,7 +193,7 @@ export default function DisputeThreadScreen() {
           </Text>
 
           {messages.length === 0 ? (
-            <View className="rounded-2xl border border-line bg-surface p-5">
+            <View className="rounded-2xl bg-surface p-5">
               <Text className="text-[0.8125rem] leading-relaxed text-muted">
                 {active
                   ? 'Ingen meldinger ennå. Skriv den første meldingen nedenfor.'
@@ -213,7 +213,7 @@ export default function DisputeThreadScreen() {
                     <View className="rounded-full bg-line px-3 py-1.5">
                       <Text className="text-center text-[0.8125rem] text-muted">{msg.message}</Text>
                     </View>
-                    <Text className="mt-1 text-[0.6875rem] text-subtle">{dateLabel(msg.createdAt)}</Text>
+                    <Text className="mt-1 text-[0.8125rem] text-muted">{dateLabel(msg.createdAt)}</Text>
                   </View>
                 );
               }
@@ -239,7 +239,7 @@ export default function DisputeThreadScreen() {
                       {isOwn ? 'Deg' : roleLabel(msg.senderRole)}
                     </Text>
                     <Text className="text-[0.8125rem] leading-relaxed text-ink">{msg.message}</Text>
-                    <Text className="mt-1 text-[0.6875rem] text-subtle">{dateLabel(msg.createdAt)}</Text>
+                    <Text className="mt-1 text-[0.8125rem] text-muted">{dateLabel(msg.createdAt)}</Text>
                   </View>
                 </View>
               );
@@ -271,7 +271,7 @@ export default function DisputeThreadScreen() {
                 <Send size={16} color={canSend ? '#FFFFFF' : tc('#9B9E96', 'subtle')} />
               </Pressable>
             </View>
-            <Text className="mt-1 text-right text-[0.6875rem] text-subtle">
+            <Text className="mt-1 text-right text-[0.8125rem] text-muted">
               {messageMutation.isPending ? 'Sender...' : `${draft.length}/${DISPUTE_MESSAGE_MAX_LENGTH}`}
             </Text>
           </View>

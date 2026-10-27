@@ -22,6 +22,7 @@ jest.mock('@azure/storage-blob', () => ({
   BlobServiceClient: {
     fromConnectionString: () => ({
       getContainerClient: () => ({
+        url: 'https://acct.blob.core.windows.net/test-images',
         getBlockBlobClient: (blobName) => ({
           url: `https://acct.blob.core.windows.net/test-images/${blobName}`,
           uploadData: async () => store.set(blobName, true),

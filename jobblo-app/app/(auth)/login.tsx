@@ -12,10 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Eye, EyeOff, Loader2 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useLoginMutation } from '@/hooks/useLoginMutation';
-import { apiBaseUrl } from '@/api/client';
-import { GoogleMark, VippsWordmark } from '@/components/auth/SocialAuthLogos';
-import { completeOAuthSignIn } from '@/hooks/useOAuthLoginCompletion';
-import { runOAuthSession, type OAuthProvider } from '@/utils/oauthAuthSession';
+import SocialSignInButtons from '@/components/auth/SocialSignInButtons';
 import { TC, tc } from '../../src/theme/colors';
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -32,57 +29,12 @@ function getErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-/**
- * Vipps first, in Vipps' own orange, then Google — the same order, artwork and colours as the
- * website's components/SocialAuthButtons/AuthButton.tsx.
- *
- * The Vipps wordmark IS the brand name, so it replaces the word instead of sitting beside it:
- * the button reads "Fortsett med [Vipps]". Because that leaves the label without the provider
- * name in text, the accessible name is spelled out on the Pressable.
- */
-function SocialButton({
-  provider,
-  disabled,
-  onPress,
-}: {
-  provider: OAuthProvider;
-  disabled: boolean;
-  onPress: () => void;
-}) {
-  const isVipps = provider === 'vipps';
-
-  return (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      accessibilityRole="button"
-      accessibilityLabel={isVipps ? 'Fortsett med Vipps' : 'Fortsett med Google'}
-      className={`h-[46px] flex-row items-center justify-center gap-2.5 rounded-xl px-4 ${isVipps ? 'bg-[#FF5B24]' : 'border border-line bg-surface'
-        } ${disabled ? 'opacity-60' : ''}`}
-    >
-      {isVipps ? (
-        <>
-          <Text className="text-[15px] font-semibold text-white">Fortsett med</Text>
-          <VippsWordmark />
-        </>
-      ) : (
-        <>
-          <GoogleMark />
-          <Text className="text-[15px] font-semibold text-ink">Fortsett med Google</Text>
-        </>
-      )}
-    </Pressable>
-  );
-}
-
 export default function LoginScreen() {
   const router = useRouter();
   const loginMutation = useLoginMutation();
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
-  /** Which provider's browser trip is in flight, so a second tap cannot start another. */
-  const [socialProvider, setSocialProvider] = useState<OAuthProvider | null>(null);
   const [socialError, setSocialError] = useState('');
 
   const serverMessage = useMemo(
@@ -126,48 +78,6 @@ export default function LoginScreen() {
     );
   };
 
-  /**
-   * Google and Vipps, one path.
-   *
-   * `runOAuthSession` reports only what it saw of the browser trip; a returned URL is a claim,
-   * not a session. The URL goes to `completeOAuthSignIn`, which verifies the token against
-   * `/auth/profile` before anybody is signed in.
-   *
-   * On iOS this is the ONLY observer of the return: ASWebAuthenticationSession delivers the
-   * callback to the session, so no deep link fires and app/(auth)/oauth-success.tsx never
-   * mounts. On Android the deep link does arrive and that screen mounts as well — both call
-   * the same single-flight completion, so the second one joins instead of signing in twice.
-   *
-   * Nothing here navigates. app/(auth)/_layout.tsx redirects to /(app) once the session exists.
-   */
-  const handleSocialAuth = async (provider: OAuthProvider) => {
-    if (socialProvider) return;
-
-    setSocialProvider(provider);
-    setSocialError('');
-    // A stale password error above a fresh provider attempt reads as if the provider failed.
-    loginMutation.reset();
-
-    try {
-      const session = await runOAuthSession(provider, apiBaseUrl);
-
-      if (session.outcome === 'not_opened') {
-        setSocialError('Vi klarte ikke å åpne innloggingsvinduet. Prøv igjen.');
-        return;
-      }
-      // The browser closed without a return URL. Never treat that as a sign-in.
-      if (session.outcome === 'dismissed') {
-        setSocialError('Innloggingen ble avbrutt.');
-        return;
-      }
-
-      const result = await completeOAuthSignIn(session.url);
-      if (result.status === 'failed') setSocialError(result.message);
-    } finally {
-      setSocialProvider(null);
-    }
-  };
-
   return (
     <SafeAreaView className="flex-1 bg-page">
       <KeyboardAvoidingView
@@ -190,21 +100,13 @@ export default function LoginScreen() {
                 </Text>
 
                 <View className="mt-6 gap-2.5">
-                  <SocialButton
-                    provider="vipps"
-                    disabled={socialProvider !== null}
-                    onPress={() => void handleSocialAuth('vipps')}
-                  />
-                  <SocialButton
-                    provider="google"
-                    disabled={socialProvider !== null}
-                    onPress={() => void handleSocialAuth('google')}
-                  />
+                  {/* A stale password error above a fresh provider attempt reads as if the provider failed. */}
+                  <SocialSignInButtons onStart={() => loginMutation.reset()} onError={setSocialError} />
                 </View>
 
                 <View className="my-6 flex-row items-center gap-3">
                   <View className="h-px flex-1 bg-line" />
-                  <Text className="text-[11px] font-semibold uppercase tracking-[0.2em] text-subtle">
+                  <Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.2em] text-muted">
                     eller
                   </Text>
                   <View className="h-px flex-1 bg-line" />
@@ -234,14 +136,14 @@ export default function LoginScreen() {
                       className={`h-[46px] rounded-xl border bg-[#F5F6F1] dark:bg-surface-2 px-3.5 text-[15px] text-ink ${errors.email ? 'border-danger-line bg-[#FCF5F4] dark:bg-danger-tint' : 'border-transparent'
                         }`}
                     />
-                    {errors.email ? <Text className="text-[12px] text-[#B0453B] dark:text-danger">{errors.email}</Text> : null}
+                    {errors.email ? <Text className="text-[0.8125rem] text-[#B0453B] dark:text-danger">{errors.email}</Text> : null}
                   </View>
 
                   <View className="gap-2">
                     <View className="flex-row items-center justify-between gap-3">
                       <Text className="text-[13px] font-medium text-ink">Passord</Text>
                       <Pressable onPress={() => router.push('/(auth)/forgot-password')}>
-                        <Text className="text-[12px] font-medium text-brand">Glemt passord?</Text>
+                        <Text className="text-[0.8125rem] font-medium text-brand">Glemt passord?</Text>
                       </Pressable>
                     </View>
 
@@ -272,7 +174,7 @@ export default function LoginScreen() {
                       </Pressable>
                     </View>
                     {errors.password ? (
-                      <Text className="text-[12px] text-[#B0453B] dark:text-danger">{errors.password}</Text>
+                      <Text className="text-[0.8125rem] text-[#B0453B] dark:text-danger">{errors.password}</Text>
                     ) : null}
                   </View>
 

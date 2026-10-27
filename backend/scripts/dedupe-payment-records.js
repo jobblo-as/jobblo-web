@@ -22,7 +22,7 @@
  * original stripeSessionId, and for JobRequest it is the application the job owner
  * has actually been looking at.
  */
-require('dotenv').config({ path: __dirname + '/../.env' });
+require('../config/env'); // backend/.env.development (production: .env.production)
 
 const mongoose = require('mongoose');
 

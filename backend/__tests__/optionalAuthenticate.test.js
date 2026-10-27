@@ -55,9 +55,9 @@ describe('optionalAuthenticate', () => {
 
   it('attaches the user when a valid bearer token is present', async () => {
     jwt.verify.mockReturnValue(ACCESS);
-    Session.findOne.mockResolvedValue({ _id: 's1', userId: 'u1', save: jest.fn() });
+    Session.findOne.mockReturnValue({ lean: jest.fn().mockResolvedValue({ _id: 's1', userId: 'u1' }) });
     User.findById.mockReturnValue({
-      select: jest.fn().mockResolvedValue({ _id: { toString: () => 'u1' }, email: 'a@b.no' }),
+      select: jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue({ _id: { toString: () => 'u1' }, email: 'a@b.no' }) }),
     });
 
     const req = mockReq({ headers: { authorization: 'Bearer good.token' } });

@@ -303,7 +303,7 @@ export default function SeekerScreen() {
 
     const pickCertFile = async () => {
         const res = await DocumentPicker.getDocumentAsync({
-            type: ['image/*', 'application/pdf'],
+            type: ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'],
             copyToCacheDirectory: true,
         });
         if (res.canceled) return;
@@ -394,7 +394,7 @@ export default function SeekerScreen() {
             <View className="h-14 flex-row items-center justify-between border-b border-line bg-page px-2">
                 <Pressable onPress={leave} hitSlop={8} accessibilityRole="button" className="min-w-[72px] flex-row items-center px-2 py-2">
                     <ChevronLeft size={20} color={TC.ink2} />
-                    <Text className="text-[1rem] text-ink-2">Tilbake</Text>
+                    <Text className="text-[1.0625rem] text-ink-2">Tilbake</Text>
                 </Pressable>
                 <Text className="text-[1.0625rem] font-semibold text-ink">Jobbsøker-profil</Text>
                 <Pressable
@@ -408,7 +408,7 @@ export default function SeekerScreen() {
                     {updateProfile.isPending ? (
                         <ActivityIndicator size="small" color={TC.brandText} />
                     ) : (
-                        <Text className={`text-[1rem] font-semibold ${canSaveBase ? 'text-brand-text' : 'text-[#B5B8B0]'}`}>Lagre</Text>
+                        <Text className={`text-[1.0625rem] font-semibold ${canSaveBase ? 'text-brand-text' : 'text-[#B5B8B0]'}`}>Lagre</Text>
                     )}
                 </Pressable>
             </View>
@@ -466,7 +466,7 @@ export default function SeekerScreen() {
                                 returnKeyType="done"
                                 accessibilityLabel="Ny ferdighet"
                                 style={{ paddingVertical: 6, paddingHorizontal: 0 }}
-                                className="flex-1 text-[1rem] text-ink"
+                                className="flex-1 text-[1.0625rem] text-ink"
                             />
                             <Pressable
                                 onPress={addSkill}
@@ -479,7 +479,7 @@ export default function SeekerScreen() {
                             </Pressable>
                         </View>
                     </Card>
-                    <Text className="mb-6 px-1 text-[0.8125rem] text-subtle">
+                    <Text className="mb-6 px-1 text-[0.8125rem] text-muted">
                         {baseUnchanged ? 'Tilgjengelighet og ferdigheter er lagret.' : 'Trykk «Lagre» øverst for å lagre endringene.'}
                     </Text>
 
@@ -497,7 +497,7 @@ export default function SeekerScreen() {
                                     <View className="min-w-0 flex-1">
                                         <Text className="text-[0.9375rem] font-semibold text-ink">{exp.title}</Text>
                                         {exp.company ? <Text className="mt-0.5 text-[0.8125rem] text-ink-2">{exp.company}</Text> : null}
-                                        <Text className="mt-0.5 text-[0.8125rem] text-subtle">
+                                        <Text className="mt-0.5 text-[0.8125rem] text-muted">
                                             {fmtDate(exp.startDate)} – {fmtDate(exp.endDate)}
                                         </Text>
                                         {exp.description ? (
@@ -661,7 +661,7 @@ export default function SeekerScreen() {
 function GroupHeader({ title, onAdd }: { title: string; onAdd: () => void }) {
     return (
         <View className="mb-2 flex-row items-center justify-between px-1">
-            <Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-subtle">{title}</Text>
+            <Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-muted">{title}</Text>
             <Pressable onPress={onAdd} hitSlop={8} accessibilityRole="button" accessibilityLabel={`Legg til ${title.toLowerCase()}`} className="flex-row items-center gap-1">
                 <Plus size={15} color={TC.brandText} />
                 <Text className="text-[0.8125rem] font-semibold text-brand-text">Legg til</Text>

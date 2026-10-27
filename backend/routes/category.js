@@ -90,7 +90,7 @@ router.post('/', authenticate, requireAdmin, categoryController.createCategory);
  *               items:
  *                 $ref: '#/components/schemas/Category'
  */
-router.get('/', cacheJson('categories', 300), categoryController.getAllCategories);
+router.get('/', cacheJson('categories', 300, { ignoreQuery: true }), categoryController.getAllCategories);
 
 /**
  * @swagger

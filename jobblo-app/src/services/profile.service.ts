@@ -6,12 +6,13 @@ export type CurrentProfile = {
   lastName?: string;
   /**
    * The account's login e-mail, returned by GET /auth/profile because `email` is
-   * part of the backend OWN_USER_SELECT projection. There is no separate
-   * verification field on the User model, so nothing here indicates a verified
-   * address — `verified` and `identityVerified` below are unrelated flags
+   * part of the backend OWN_USER_SELECT projection. Whether it is confirmed is
+   * `emailVerified`; `verified` and `identityVerified` below are unrelated flags
    * (admin trust and BankID respectively).
    */
   email?: string;
+  /** E-mail confirmed with a mailed code or a provider (legacy accounts: true). Never BankID. */
+  emailVerified?: boolean;
   companyName?: string;
   role?: string;
   avatarUrl?: string;
@@ -93,7 +94,11 @@ export async function updateCurrentProfile(userId: string, data: ProfileUpdate |
   return response.data;
 }
 
-export async function deleteCurrentUser(userId: string): Promise<{ message: string }> {
-  const response = await apiClient.delete<{ message: string }>(`/users/${userId}`);
+// The backend requires the current password to delete your own account (accounts without a
+// password - Google/Apple/Vipps - need a login from the last 10 minutes instead).
+export async function deleteCurrentUser(userId: string, currentPassword?: string): Promise<{ message: string }> {
+  const response = await apiClient.delete<{ message: string }>(`/users/${userId}`, {
+    data: currentPassword ? { currentPassword } : {},
+  });
   return response.data;
 }

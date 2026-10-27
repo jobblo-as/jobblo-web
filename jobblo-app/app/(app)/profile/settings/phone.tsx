@@ -146,7 +146,7 @@ export default function PhoneSettingsScreen() {
         >
           <ScreenHeader title="Telefonnummer" subtitle="Kontaktinformasjon som vises på profilen din." icon={Phone} />
 
-          <View className="rounded-3xl border border-line bg-surface p-5">
+          <View className="rounded-3xl bg-surface p-5">
             <View className="mb-4">
               <Text className="mb-1.5 text-[0.8125rem] font-semibold text-ink">
                 Telefonnummer
@@ -229,7 +229,7 @@ export default function PhoneSettingsScreen() {
             </Pressable>
           </View>
 
-          <View className="mt-4 rounded-3xl border border-line bg-surface-2 p-4">
+          <View className="mt-4 rounded-3xl bg-surface-2 p-4">
             <View className="flex-row items-start">
               <Info size={16} color={tc('#63665F', 'muted')} />
               <View className="ml-2 min-w-0 flex-1">

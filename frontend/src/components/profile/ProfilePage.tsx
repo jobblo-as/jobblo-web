@@ -9,6 +9,7 @@ import { ProfileCover } from './ProfileCover';
 import { useProfileLogic } from '../../features/profile/useProfileLogic';
 import { useUserStore } from '../../stores/userStore';
 import { IdentityVerificationCard } from './IdentityVerificationCard';
+import { EmailVerificationCard } from './EmailVerificationCard';
 
 /**
  * A profile.
@@ -151,6 +152,11 @@ export default function ProfilePage() {
                 Each is hidden at the other's breakpoint, so one is visible at a time —
                 the alternative was a media-query hook, and a CSS breakpoint is the
                 thing that actually decides which layout is on screen. */}
+            <EmailVerificationCard
+              user={userToDisplay}
+              isOwnProfile={isOwnProfile}
+              className="lg:hidden"
+            />
             <IdentityVerificationCard
               user={userToDisplay}
               isOwnProfile={isOwnProfile}

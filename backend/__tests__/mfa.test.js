@@ -1,4 +1,4 @@
-jest.mock('../models/Session', () => ({ findOne: jest.fn() }));
+jest.mock('../models/Session', () => ({ findOne: jest.fn(), updateOne: jest.fn() }));
 jest.mock('../models/User', () => ({ findById: jest.fn() }));
 jest.mock('../utils/tokenUtils', () => ({ verifyToken: jest.fn(() => ({ id: 'u1', sid: 's1' })), deviceNameFrom: () => null }));
 
@@ -41,8 +41,8 @@ describe('TOTP (RFC 6238 test vectors, SHA-1)', () => {
 
 describe('authenticate: superAdmin/developer need a verified session', () => {
   const run = async (role, { verified = false, enabled = true, path = '/api/developer/overview' } = {}) => {
-    Session.findOne.mockResolvedValue({ save: jest.fn(), mfaVerifiedAt: verified ? new Date() : null });
-    User.findById.mockReturnValue({ select: () => Promise.resolve({ _id: 'u1', role, mfaEnabledAt: enabled ? new Date() : null }) });
+    Session.findOne.mockReturnValue({ lean: () => Promise.resolve({ _id: 's1', mfaVerifiedAt: verified ? new Date() : null }) });
+    User.findById.mockReturnValue({ select: () => ({ lean: () => Promise.resolve({ _id: 'u1', role, mfaEnabledAt: enabled ? new Date() : null }) }) });
     const req = { cookies: { accessToken: 't' }, headers: {}, originalUrl: path };
     const res = { statusCode: 200, body: null, status(c) { this.statusCode = c; return this; }, json(b) { this.body = b; return this; }, clearCookie() {} };
     const next = jest.fn();

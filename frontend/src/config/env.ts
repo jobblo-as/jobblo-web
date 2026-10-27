@@ -19,7 +19,7 @@ function resolveApiBaseUrl(): string {
   const configured = rawApiUrl?.trim();
   if (configured) return configured.replace(/\/$/, '');
 
-  if (import.meta.env.DEV) return 'http://localhost:5000';
+  if (import.meta.env.DEV) return 'http://localhost:5001';
 
   console.error(
     '[jobblo] VITE_MAIN_URL is not set in this production build. ' +

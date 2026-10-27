@@ -108,7 +108,7 @@ export function IdentityVerificationCard({
         <ShieldCheck size={20} strokeWidth={2.2} className="mt-0.5 shrink-0 text-[#2E6641]" />
         <div className="min-w-0 flex-1">
           <h2 className="text-[0.9375rem] font-bold tracking-[-0.02em] text-[#0B0B0B]">
-            Identitetsbekreftelse
+            BankID
           </h2>
           <p className="mt-1 text-[0.8125rem] leading-relaxed text-[#63665F]">
             Bekreft identiteten din med BankID for å skape mer trygghet på Jobblo.

@@ -35,6 +35,27 @@ function userRooms(userId) {
 function joinUserRooms(socket) {
   if (!socket?.userId) return;
   for (const room of userRooms(socket.userId)) socket.join(room);
+  if (socket.sessionId) socket.join(sessionRoom(socket.sessionId));
 }
 
-module.exports = { userRooms, joinUserRooms };
+/** One room per login session, so ending a session can reach exactly its sockets. */
+const sessionRoom = (sessionId) => `session_${sessionId}`;
+
+/**
+ * Disconnect every socket of these sessions, on every instance (the redis adapter relays
+ * disconnectSockets). A socket is authenticated once, at connect; without this it kept
+ * receiving and sending after logout, revocation, password reset or deactivation.
+ * Called from the Session model's delete hooks, so every way a session ends is covered.
+ */
+function disconnectSessions(sessionIds) {
+  const io = require('./io').getIO();
+  if (!io || !sessionIds?.length) return;
+  const rooms = sessionIds.map(sessionRoom);
+  // With the redis adapter io.in() only publishes, and this instance disconnects its own
+  // sockets when the message comes back: with Redis down not even local ones went. Local
+  // first, then the relay for other instances (a no-op for sockets already gone).
+  io.local.in(rooms).disconnectSockets(true);
+  io.in(rooms).disconnectSockets(true);
+}
+
+module.exports = { userRooms, joinUserRooms, sessionRoom, disconnectSessions };

@@ -15,7 +15,6 @@ interface ChecklistStepProps {
 export const ChecklistStep = ({
   checklistItems,
   setChecklistItems,
-  currentCategory,
 }: ChecklistStepProps) => {
   const [newItemText, setNewItemText] = useState('');
 

@@ -82,7 +82,7 @@ export const BannerView = () => {
           ref={fileInputRef}
           onChange={handleFileChange}
           className="hidden"
-          accept="image/*"
+          accept="image/jpeg,image/png,image/webp"
           title="Last opp bannerbilde"
         />
       </div>

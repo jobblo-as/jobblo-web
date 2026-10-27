@@ -129,6 +129,18 @@ beforeEach(() => {
 });
 
 describe('confirmPaidSession', () => {
+  it('confirms a payment in its own mode after STRIPE_TEST_MODE was switched (M10)', async () => {
+    getStripeConfiguration.mockResolvedValue({ mode: 'live', testMode: false });
+    Order.findById.mockResolvedValue(order());
+    Order.findOneAndUpdate.mockResolvedValue({ ...order('paid'), status: 'paid' });
+    Payment.updateOne.mockResolvedValue({ upsertedCount: 1 });
+
+    const result = await confirmPaidSession(session(), null);
+
+    expect(result.ok).toBe(true);
+    expect(getStripeForMode).toHaveBeenCalledWith(true);
+  });
+
   it('marks the order paid and creates exactly one Payment on first confirmation', async () => {
     Order.findById.mockResolvedValue(order());
     Order.findOneAndUpdate.mockResolvedValue({ ...order('paid'), status: 'paid' });

@@ -1,5 +1,5 @@
 import mainLink from '../../api/mainURLs';
-import type { Jobs } from './types';
+import type { Jobs } from '../../types/Jobs';
 import type { Tab } from '../../types/tabs';
 
 interface FetchJobsParams {
@@ -46,7 +46,6 @@ export const fetchJobs = async ({
   urgent = false,
   minPrice,
   maxPrice,
-  tab = 'Discover',
   lat,
   lng,
   radius,

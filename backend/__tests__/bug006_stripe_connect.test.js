@@ -321,7 +321,8 @@ describe('BUG-006: Stripe Connect & Sensitive Data Leak Prevention', () => {
           destination: 'acct_test123',
         }),
         expect.objectContaining({
-          idempotencyKey: `transfer_payout_order_${orderId}`,
+          // One key per attempt (H6): a fixed key replayed a refused attempt's error for 24 h.
+          idempotencyKey: expect.stringMatching(new RegExp(`^transfer_payout_order_${orderId}_\\d+$`)),
         })
       );
 

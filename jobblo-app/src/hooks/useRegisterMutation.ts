@@ -5,7 +5,7 @@ import { registerUser, type RegisterRequest, type LoginResponse } from '@/servic
 import { queryKeys } from '@/queryKeys';
 
 /**
- * Register mutation.
+ * Register mutation: signs in straight away (the e-mail is confirmed later on the profile).
  * Navigation after success is handled by the calling screen —
  * hooks must not call useRouter() and navigate themselves because the
  * hook may be instantiated before the navigation context is ready.

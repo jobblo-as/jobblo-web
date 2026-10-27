@@ -25,6 +25,7 @@ import { ContractViewModal } from '../../components/SafePay/ContractViewModal';
 import { toast } from 'react-hot-toast';
 import { CARD, CARD_INTERACTIVE, MICRO_LABEL, PILL_PRIMARY } from '../../theme/brand';
 import { BackLink } from '../../components/Ui/BackLink';
+import { errorBody } from '../../utils/getErrorMessage';
 
 /**
  * Søkeroversikt — both sides of an application in one place.
@@ -736,9 +737,9 @@ const MyApplicantsOverview: React.FC = () => {
                             if (!window.confirm('Vil du trekke tilbake søknaden?')) return;
                             withdrawMutation.mutate(app._id, {
                               onSuccess: () => toast.success('Søknaden er trukket tilbake'),
-                              onError: (e: any) =>
+                              onError: (e) =>
                                 toast.error(
-                                  e?.response?.data?.error || 'Kunne ikke trekke tilbake søknaden'
+                                  errorBody(e)?.error || 'Kunne ikke trekke tilbake søknaden'
                                 ),
                             });
                           }}

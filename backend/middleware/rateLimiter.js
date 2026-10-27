@@ -4,7 +4,9 @@ const rateLimit = require('express-rate-limit');
  * Every rate limiter is built here. With REDIS_URL the counts live in Redis (one prefix per
  * limiter), so a limit is a limit across all API instances instead of per process; without
  * it, the in-memory store as before. If Redis is unreachable requests pass (fail open) rather
- * than every request failing — a missing rate limit for a minute beats an outage.
+ * than every request failing — a missing rate limit for a minute beats an outage. Credential
+ * limiters (auth, otp-*, mfa-verify) pass `passOnStoreError: false` and fail closed instead:
+ * an outage must not hand a password / code guesser an unlimited budget.
  */
 // Every limiter by name, for the Rate Limit Monitor (limits, and resetKey to unblock a client).
 const LIMITERS = new Map();
@@ -16,8 +18,17 @@ function makeLimiter(name, options) {
   if (!client) limiter = rateLimit(options);
   else {
     const { RedisStore } = require('rate-limit-redis');
-    const store = new RedisStore({ sendCommand: (command, ...args) => client.call(command, ...args), prefix: `${redis.PREFIX}:rl:${name}:` });
-    limiter = rateLimit({ ...options, store, passOnStoreError: true });
+    // The store loads its Lua scripts once, at startup. If Redis is down then, that promise stays
+    // rejected and the limiter fails open forever, even after Redis is back. A script's SHA is
+    // just its SHA-1, so answer SCRIPT LOAD locally on failure; the first EVALSHA after Redis
+    // returns gets NOSCRIPT, and the store reloads the script itself.
+    const sha1 = (text) => require('node:crypto').createHash('sha1').update(text).digest('hex');
+    const sendCommand = (command, ...args) => {
+      const sent = client.call(command, ...args);
+      return command === 'SCRIPT' && args[0] === 'LOAD' ? sent.catch(() => sha1(args[1])) : sent;
+    };
+    const store = new RedisStore({ sendCommand, prefix: `${redis.PREFIX}:rl:${name}:` });
+    limiter = rateLimit({ ...options, store, passOnStoreError: options.passOnStoreError ?? true });
   }
   LIMITERS.set(name, { name, windowMs: options.windowMs, max: typeof options.max === 'number' ? options.max : null, failedOnly: Boolean(options.skipSuccessfulRequests), limiter });
   return limiter;
@@ -50,6 +61,7 @@ const authLimiter = makeLimiter('auth', {
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 20, // failed attempts only
   skipSuccessfulRequests: true,
+  passOnStoreError: false,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -63,6 +75,7 @@ const authLimiter = makeLimiter('auth', {
 const otpSendLimiter = makeLimiter('otp-send', {
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 3,
+  passOnStoreError: false,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -75,6 +88,7 @@ const otpSendLimiter = makeLimiter('otp-send', {
 const otpVerifyLimiter = makeLimiter('otp-verify', {
   windowMs: 10 * 60 * 1000, // 10 minutes
   max: 5,
+  passOnStoreError: false,
   standardHeaders: true,
   legacyHeaders: false,
   message: {

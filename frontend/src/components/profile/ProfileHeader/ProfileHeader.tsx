@@ -250,7 +250,7 @@ export function ProfileHeader({
                 <input
                   ref={avatarInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
                   onChange={uploadAvatar}
                   className="hidden"
                 />

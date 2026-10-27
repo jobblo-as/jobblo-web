@@ -27,19 +27,27 @@ const inlineStats = { ran: 0, failed: 0, lastError: null };
 const handlers = () => require('./handlers').HANDLERS;
 const usingRedis = () => redis.enabled();
 
+// While Redis is down every connection retries constantly: one line per 30 s per source, as
+// config/redis.js does. A Queue with no 'error' listener made BullMQ print each raw stack.
+const lastErrorLog = new Map();
+function logConnectionError(source, err) {
+  if (Date.now() - (lastErrorLog.get(source) || 0) < 30_000) return;
+  lastErrorLog.set(source, Date.now());
+  console.error(`[queue] ${source}: ${err.message}`);
+}
+
 function getQueue(name) {
   if (!QUEUES[name]) throw new Error(`Unknown queue "${name}"`);
   if (!queues.has(name)) {
     const { Queue } = require('bullmq');
     const cfg = QUEUES[name];
-    queues.set(
-      name,
-      new Queue(name, {
-        connection: redis.bullConnection(`queue:${name}`),
-        prefix: `${redis.PREFIX}:bull`,
-        defaultJobOptions: { attempts: cfg.attempts, backoff: cfg.backoff, removeOnComplete: cfg.keepCompleted, removeOnFail: KEEP_FAILED },
-      })
-    );
+    const queue = new Queue(name, {
+      connection: redis.bullConnection(`queue:${name}`),
+      prefix: `${redis.PREFIX}:bull`,
+      defaultJobOptions: { attempts: cfg.attempts, backoff: cfg.backoff, removeOnComplete: cfg.keepCompleted, removeOnFail: KEEP_FAILED },
+    });
+    queue.on('error', (err) => logConnectionError(`queue ${name}`, err));
+    queues.set(name, queue);
   }
   return queues.get(name);
 }
@@ -74,13 +82,24 @@ function runInline(queue, jobName, data) {
 async function enqueue(queue, jobName, data = {}, opts = {}) {
   handlerFor(queue, jobName); // unknown job = programming error, fail loudly
   if (!usingRedis()) return runInline(queue, jobName, data);
+  let fellBack = false;
+  // A timed-out add can still land later (ioredis replays it on reconnect), and the job
+  // would then run twice: in-process now and on a worker. Withdraw it if it lands.
+  // ponytail: a worker that grabs it before remove() still runs it a second time
+  // (handlers are idempotent per the contract above); an inline-ran marker is the upgrade.
   try {
+    const added = getQueue(queue).add(jobName, data, opts);
+    added.then(
+      (job) => fellBack && job?.remove?.().catch((err) => console.error(`[queue] ${queue}/${jobName}: late job not withdrawn: ${err.message}`)),
+      () => {}
+    );
     const job = await Promise.race([
-      getQueue(queue).add(jobName, data, opts),
+      added,
       new Promise((_, reject) => setTimeout(() => reject(new Error('enqueue timed out')), ENQUEUE_TIMEOUT_MS).unref()),
     ]);
     return { id: job.id, inline: false };
   } catch (err) {
+    fellBack = true;
     console.error(`[queue] ${queue}/${jobName}: Redis unavailable (${err.message}) — running in-process`);
     return runInline(queue, jobName, data);
   }
@@ -106,7 +125,7 @@ function startWorkers() {
       const final = job && job.attemptsMade >= (job.opts.attempts || 1);
       console.error(`[queue] ${name}/${job?.name} #${job?.id} ${final ? 'FAILED for good' : `failed (attempt ${job?.attemptsMade})`}: ${err.message}`);
     });
-    worker.on('error', (err) => console.error(`[queue] worker ${name}: ${err.message}`));
+    worker.on('error', (err) => logConnectionError(`worker ${name}`, err));
     workers.set(name, worker);
   }
   console.log(`[queue] ${workers.size} workers started (${Object.keys(QUEUES).join(', ')})`);

@@ -27,9 +27,9 @@ export function ApplicantCompareSection({ applicants, onClear }: { applicants: A
               <View className="min-w-0 flex-1"><Text className="text-[0.875rem] font-medium text-ink" numberOfLines={1}>{applicant.name}</Text><Text className="text-[0.8125rem] text-muted" numberOfLines={1}>{applicant.skills.join(', ') || 'Generell hjelp'}</Text></View>
             </View>
             <View className="mt-3 flex-row flex-wrap gap-2">
-              <View className="min-w-[30%] flex-1 rounded-lg bg-surface-2 p-2"><Text className="text-center text-[0.9375rem] font-bold text-ink">{applicant.completedJobs}</Text><Text className="text-center text-[0.6875rem] uppercase text-muted">Fullførte</Text></View>
-              <View className="min-w-[30%] flex-1 rounded-lg bg-surface-2 p-2"><Text className="text-center text-[0.9375rem] font-bold text-ink">{applicant.rating ? Number(applicant.rating).toFixed(1) : '—'}★</Text><Text className="text-center text-[0.6875rem] uppercase text-muted">Vurdering</Text></View>
-              <View className="min-w-[30%] flex-1 rounded-lg bg-surface-2 p-2"><Text className="text-center text-[0.9375rem] font-bold text-ink">{applicant.responseRate ?? '—'}</Text><Text className="text-center text-[0.6875rem] uppercase text-muted">Svarrate</Text></View>
+              <View className="min-w-[30%] flex-1 rounded-lg bg-surface-2 p-2"><Text className="text-center text-[0.9375rem] font-bold text-ink">{applicant.completedJobs}</Text><Text className="text-center text-[0.8125rem] uppercase text-muted">Fullførte</Text></View>
+              <View className="min-w-[30%] flex-1 rounded-lg bg-surface-2 p-2"><Text className="text-center text-[0.9375rem] font-bold text-ink">{applicant.rating ? Number(applicant.rating).toFixed(1) : '—'}★</Text><Text className="text-center text-[0.8125rem] uppercase text-muted">Vurdering</Text></View>
+              <View className="min-w-[30%] flex-1 rounded-lg bg-surface-2 p-2"><Text className="text-center text-[0.9375rem] font-bold text-ink">{applicant.responseRate ?? '—'}</Text><Text className="text-center text-[0.8125rem] uppercase text-muted">Svarrate</Text></View>
             </View>
           </View>
         ))}

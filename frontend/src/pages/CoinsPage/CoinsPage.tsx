@@ -5,6 +5,8 @@ import { ProfileTitleWrapper } from '../../components/layout/body/profile/Profil
 import { useUserStore } from '../../stores/userStore';
 import { buyItem, getJobbloShop } from '../../api/jobbloShop';
 import { toast } from 'react-hot-toast';
+import { getErrorMessage } from '../../utils/getErrorMessage';
+import { Construction, Hammer, Info, MessageSquareText, UserPlus } from 'lucide-react';
 
 interface Level {
   name: string;
@@ -79,7 +81,14 @@ export default function CoinsPage() {
   const user = useUserStore((state) => state.user);
   const { data: rewards = [] } = useQuery<Reward[]>({ queryKey: ['jobblo-shop'], queryFn: getJobbloShop });
   // Update user pointsBalance after a purchase
-  const buyMutation = useMutation({ mutationFn: buyItem, onSuccess: () => fetchProfile() });
+  const buyMutation = useMutation({
+    mutationFn: buyItem,
+    onSuccess: () => {
+      toast.success('Belønningen er løst inn!');
+      fetchProfile().catch(() => {});
+    },
+    onError: (err) => toast.error(getErrorMessage(err, 'Kunne ikke løse inn belønningen. Prøv igjen.')),
+  });
   const userCoins = user?.pointsBalance || 0;
   const levelInfo = getLevelInfo(userCoins);
 
@@ -87,10 +96,9 @@ export default function CoinsPage() {
     fetchProfile();
   }, [fetchProfile]);
 
-  const handleRedeem = async (rewardId: number, coinCost: number) => {
+  const handleRedeem = (rewardId: string, coinCost: number) => {
     if (userCoins >= coinCost) {
-      // Handle redemption logic here
-      await buyMutation.mutateAsync(rewardId.toString());
+      buyMutation.mutate(rewardId);
     } else {
       toast.error('Du har ikke nok coins for denne belønningen.');
     }
@@ -162,9 +170,7 @@ export default function CoinsPage() {
       </div>
 
       <div className={styles.infoBox}>
-        <span className="material-symbols-outlined" style={{ color: 'var(--color-primary)' }}>
-          info
-        </span>
+        <Info size={22} color="var(--color-primary)" aria-hidden className="shrink-0" />
         <p>
           Tjen poeng ved å fullføre oppdrag: <strong>1 poeng for små jobber</strong> og{' '}
           <strong>5 poeng for store jobber</strong>!
@@ -187,7 +193,8 @@ export default function CoinsPage() {
             <p className={styles.rewardDescription}>{reward.description}</p>
             <button
               onClick={() => handleRedeem(reward._id, reward.coins)}
-              disabled={userCoins < reward.coins}
+              type="button"
+              disabled={userCoins < reward.coins || buyMutation.isPending}
               className={styles.redeemButton}
             >
               {userCoins >= reward.coins ? 'Løs inn' : 'Ikke nok coins'}
@@ -200,42 +207,22 @@ export default function CoinsPage() {
         <h2 className={styles.sectionTitle}>Hvordan tjene flere coins?</h2>
         <div className={styles.earnMethodsGrid}>
           <div className={styles.earnMethod}>
-            <span
-              className="material-symbols-outlined"
-              style={{ fontSize: '40px', color: 'var(--color-primary)' }}
-            >
-              handyman
-            </span>
+            <Hammer size={40} color="var(--color-primary)" aria-hidden />
             <h4>Små oppdrag</h4>
             <p>Tjen 1 poeng for hvert fullførte småjobb</p>
           </div>
           <div className={styles.earnMethod}>
-            <span
-              className="material-symbols-outlined"
-              style={{ fontSize: '40px', color: 'var(--color-primary)' }}
-            >
-              construction
-            </span>
+            <Construction size={40} color="var(--color-primary)" aria-hidden />
             <h4>Store oppdrag</h4>
             <p>Tjen 5 poeng for hvert fullførte storjobb</p>
           </div>
           <div className={styles.earnMethod}>
-            <span
-              className="material-symbols-outlined"
-              style={{ fontSize: '40px', color: 'var(--color-primary)' }}
-            >
-              rate_review
-            </span>
+            <MessageSquareText size={40} color="var(--color-primary)" aria-hidden />
             <h4>Skriv anmeldelser</h4>
             <p>Få ekstra poeng for å skrive kvalitetsanmeldelser</p>
           </div>
           <div className={styles.earnMethod}>
-            <span
-              className="material-symbols-outlined"
-              style={{ fontSize: '40px', color: 'var(--color-primary)' }}
-            >
-              group_add
-            </span>
+            <UserPlus size={40} color="var(--color-primary)" aria-hidden />
             <h4>Henvis venner</h4>
             <p>Tjen bonus poeng når venner registrerer seg</p>
           </div>

@@ -35,7 +35,7 @@ export function SearchAreaMap({ center, radius }: { center: [number, number]; ra
   }, [region.latitude, region.longitude, region.latitudeDelta, region.longitudeDelta]);
 
   return (
-    <View className="relative h-52 overflow-hidden rounded-2xl border border-line bg-surface-2">
+    <View className="relative h-52 overflow-hidden rounded-2xl bg-surface-2">
       {MAPS_AVAILABLE ? <MapView
         ref={mapRef}
         provider={MAP_PROVIDER}

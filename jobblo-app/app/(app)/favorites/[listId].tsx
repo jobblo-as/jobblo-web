@@ -264,7 +264,7 @@ export default function FavoriteListDetailScreen() {
           ) : null}
 
           {services.length === 0 ? (
-            <View className="mt-5 rounded-[24px] border border-line bg-surface p-8">
+            <View className="mt-5 rounded-[24px] bg-surface p-8">
               <Text className="text-center text-[1.0625rem] font-semibold text-ink">
                 Ingen oppdrag i listen ennå
               </Text>

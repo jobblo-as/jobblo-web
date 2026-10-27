@@ -47,7 +47,7 @@ test('parseRange falls back to 24h on bad input', () => {
 test('route label uses the template, or a bounded prefix when unrouted', () => {
   const { routeOf } = require('../middleware/requestMetrics');
   expect(routeOf({ route: { path: '/:id' }, baseUrl: '/api/orders', originalUrl: '/api/orders/42' })).toBe('/api/orders/:id');
-  expect(routeOf({ originalUrl: '/api/developer/overview/x/y?range=1h' })).toBe('/api/developer/overview/*');
+  expect(routeOf({ originalUrl: '/api/developer/overview/x/y?range=1h' })).toBe('/api/developer/*');
 });
 
 describe('orderIssues (shared stuck/inconsistency rules)', () => {

@@ -63,6 +63,14 @@ export const useDevErrorDetail = (id?: string) =>
   useQuery({ queryKey: ['dev', 'error', id], queryFn: () => devApi.errorDetail(id!), enabled: Boolean(id) });
 export const useDevServer = () =>
   useQuery({ queryKey: ['dev', 'server'], queryFn: devApi.server, refetchInterval: useInterval(5_000), ...opts });
+export const useDevWorkers = () =>
+  useQuery({ queryKey: ['dev', 'workers'], queryFn: devApi.workers, refetchInterval: useInterval(5_000), ...opts });
+export const useDevNginx = () =>
+  useQuery({ queryKey: ['dev', 'nginx'], queryFn: devApi.nginx, refetchInterval: useInterval(5_000), ...opts });
+export const useDevPm2 = () =>
+  useQuery({ queryKey: ['dev', 'pm2'], queryFn: devApi.pm2, refetchInterval: useInterval(10_000), ...opts });
+export const useDevCaching = () =>
+  useQuery({ queryKey: ['dev', 'caching'], queryFn: devApi.caching, refetchInterval: useInterval(5_000), ...opts });
 export const useDevMongo = () =>
   useQuery({ queryKey: ['dev', 'mongo'], queryFn: devApi.mongo, refetchInterval: useInterval(60_000), ...opts });
 export const useDevMongoIndexes = (name?: string) =>

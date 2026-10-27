@@ -1,0 +1,5 @@
+# Findings that are not secrets. One fingerprint per line (gitleaks prints it with each finding).
+# Only add a line after checking the value: a real key must be rotated and removed instead.
+
+# Fake password 'Passord123' for a mocked user in the e-mail verification test.
+5c361c9ebc7e2de0cc222b994a459fa3f877f18d:backend/__tests__/emailVerification.test.js:generic-api-key:188

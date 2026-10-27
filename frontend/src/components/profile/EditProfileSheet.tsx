@@ -68,8 +68,8 @@ const draftFrom = (user: User | null): Draft => ({
   name: asText(user?.name),
   lastName: asText(user?.lastName),
   bio: asText(user?.bio),
-  skills: Array.isArray((user as any)?.skills) ? [...(user as any).skills] : [],
-  availabilityText: asText((user as any)?.availabilityText),
+  skills: Array.isArray(user?.skills) ? [...user.skills] : [],
+  availabilityText: asText(user?.availabilityText),
   address: asText(user?.address),
   postNumber: asText(user?.postNumber),
   postSted: asText(user?.postSted),
@@ -273,7 +273,7 @@ export function EditProfileSheet({
             <input
               ref={avatarInputRef}
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp"
               onChange={uploadAvatar}
               className="hidden"
             />

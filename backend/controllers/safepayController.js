@@ -13,6 +13,7 @@ const Review = require('../models/Review');
 const { notify } = require('../services/notifications');
 const { ensureProviderConnectReady } = require('../middleware/requireProviderConnect');
 const { acquireServiceContractLock } = require('../services/order/contractLock');
+const { liveContractOrderId } = require('../services/order/releaseListing');
 
 /**
  * POST /api/safepay/create-contract
@@ -80,6 +81,10 @@ exports.createContract = async (req, res) => {
       });
     }
 
+    // Awarding opens the contract and posts into the pair's chat; a block either way stops it.
+    const { isBlockedBetween, BLOCKED_DEAL } = require('./chatController');
+    if (await isBlockedBetween(userId, applicantId)) return res.status(403).json(BLOCKED_DEAL);
+
     if (!(await ensureProviderConnectReady(req, res, applicantId))) return;
 
     // Prevent duplicate contract.
@@ -129,7 +134,8 @@ exports.createContract = async (req, res) => {
       // already uses. This path ignored it, created the order at the listing price and
       // then overwrote the chat's agreed price with the listing price.
       const pairChat = await Chat.findOne(pairChatFilter).select('agreedPrice orderId').lean();
-      price = (!pairChat?.orderId && pairChat?.agreedPrice) || service.price;
+      // A cancelled earlier contract does not lock the negotiated price.
+      price = (!(await liveContractOrderId(pairChat)) && pairChat?.agreedPrice) || service.price;
 
       // 2. Create the Order (Contract) with checklist initialized from service
       const checklist = (service.checklist || []).map((item) => ({
@@ -206,7 +212,7 @@ exports.createContract = async (req, res) => {
       // Mark other requests as declined
       await JobRequest.updateMany(
         { serviceId, _id: { $ne: requestId }, status: 'pending' },
-        { status: 'declined' }
+        { status: 'declined', autoDeclinedByOrderId: order._id }
       );
     } else {
       await JobRequest.findOneAndUpdate(
@@ -216,7 +222,7 @@ exports.createContract = async (req, res) => {
       // Mark other requests as declined
       await JobRequest.updateMany(
         { serviceId, customerId: { $ne: applicantId }, status: 'pending' },
-        { status: 'declined' }
+        { status: 'declined', autoDeclinedByOrderId: order._id }
       );
     }
 
@@ -379,9 +385,8 @@ exports.getSafePayHistory = async (req, res) => {
 
     // Bug 2: Authorization check
     if (String(req.userId) !== String(userId)) {
-      // Check if user is admin (optional, based on available role)
-      const user = await User.findById(req.userId);
-      if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
+      // Only superAdmin may read someone else's history ('admin'/'super_admin' are not roles).
+      if (req.user?.role !== 'superAdmin') {
         return res.status(403).json({ error: 'Ikke autorisert' });
       }
     }

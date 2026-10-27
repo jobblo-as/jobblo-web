@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, Shield, Clock, Users, CheckCircle2, Loader2 } from 'lucide-react';
-import { useAdminDisputes, useDisputesSummary, useAssignDispute, useUpdateDisputeStatus, useResolveDispute, useReopenDispute, useAddInternalNote } from '../../hooks/admin/safepay';
+import { useAdminDisputes, useDisputesSummary, useAssignDispute, useResolveDispute, useReopenDispute } from '../../hooks/admin/safepay';
 import type { Dispute, DisputeStatus, DisputeOutcome } from '../../types/admin/safepay';
 import {
     AdminDataTable,
@@ -62,8 +62,6 @@ export default function DisputesPage() {
     // Action state
     const [resolveTarget, setResolveTarget] = useState<Dispute | null>(null);
     const [resolveForm, setResolveForm] = useState<ResolveForm>({ outcome: '', reason: '', customerAmount: '', providerAmount: '' });
-    const [noteTarget, setNoteTarget] = useState<Dispute | null>(null);
-    const [noteText, setNoteText] = useState('');
     const [reopenTarget, setReopenTarget] = useState<Dispute | null>(null);
     const [reopenReason, setReopenReason] = useState('');
 
@@ -75,10 +73,8 @@ export default function DisputesPage() {
     const { data: summary, isLoading: summaryLoading } = useDisputesSummary();
 
     const assignMutation = useAssignDispute();
-    const statusMutation = useUpdateDisputeStatus();
     const resolveMutation = useResolveDispute();
     const reopenMutation = useReopenDispute();
-    const noteMutation = useAddInternalNote();
 
     const handleResolve = async () => {
         if (!resolveTarget || !resolveForm.outcome || !resolveForm.reason.trim()) return;

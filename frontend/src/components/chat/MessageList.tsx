@@ -7,7 +7,7 @@ interface MessageListProps {
   messages: ChatMessage[];
   userId: string | null;
   formatTime: (date: string) => string;
-  messagesEndRef: React.RefObject<HTMLDivElement>;
+  messagesEndRef: React.RefObject<HTMLDivElement | null>;
   onSystemMessageClick?: (msg: ChatMessage) => void;
   chatId?: string;
 }

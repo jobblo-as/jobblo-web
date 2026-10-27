@@ -17,12 +17,14 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, url, ti
   // shows it twice: once as plain text and again inside the card. Sending only the link
   // leaves the card as the single, clean title.
   const shareText = url;
+  // noopener: without it the share site gets `window.opener` and can navigate this tab.
+  const openShare = (href: string) => window.open(href, '_blank', 'noopener,noreferrer');
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(url);
       toast.success('Lenke kopiert!');
-    } catch (err) {
+    } catch {
       toast.error('Kunne ikke kopiere lenke');
     }
   };
@@ -41,7 +43,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, url, ti
       name: 'Messages',
       icon: <MessageCircle size={24} fill="currentColor" />,
       color: 'bg-blue-500 text-white',
-      action: () => window.open(`sms:?&body=${encodeURIComponent(shareText)}`),
+      action: () => openShare(`sms:?&body=${encodeURIComponent(shareText)}`),
     },
     {
       name: 'WhatsApp',
@@ -51,7 +53,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, url, ti
         </svg>
       ),
       color: 'bg-[#25D366] text-white',
-      action: () => window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`),
+      action: () => openShare(`https://wa.me/?text=${encodeURIComponent(shareText)}`),
     },
     {
       name: 'Facebook',
@@ -62,7 +64,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, url, ti
       ),
       color: 'bg-[#1877F2] text-white',
       action: () =>
-        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`),
+        openShare(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`),
     },
     {
       name: 'X',
@@ -73,7 +75,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({ isOpen, onClose, url, ti
       ),
       color: 'bg-black text-white',
       action: () =>
-        window.open(
+        openShare(
           `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`
         ),
     },

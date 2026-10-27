@@ -3,7 +3,6 @@ import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import type { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { authStorage } from '../utils/authStorage';
-import { initSentry, sentryCapture } from './sentry';
 import { templatePath } from './paths';
 
 /**
@@ -90,7 +89,6 @@ export function captureError(error: unknown, { fatal = false, kind = 'js' }: { f
     const e = error instanceof Error ? error : new Error(typeof error === 'string' ? error : JSON.stringify(error));
     const event: Event = { type: 'error', at: new Date().toISOString(), name: e.name || 'Error', message: e.message || '(no message)', stack: e.stack?.slice(0, 4000), fatal, kind, screen };
     push(event);
-    sentryCapture(error, { fatal, kind, screen });
     // Fatal: persist first, so a successful send can clear it (no duplicate next launch).
     if (fatal) void authStorage.setItem(PENDING_KEY, JSON.stringify({ sessionId, event })).catch(() => undefined).finally(() => void flush());
     else void flush();
@@ -101,7 +99,7 @@ export function captureError(error: unknown, { fatal = false, kind = 'js' }: { f
 
 /** Current route, so errors and slow calls say where they happened. */
 export function setScreen(name: string) {
-  screen = name.slice(0, 120);
+  screen = templatePath(name).slice(0, 120);
 }
 
 /** Record failed (5xx / network) and slow API calls made through this axios instance. */
@@ -135,7 +133,6 @@ export async function startMonitoring(apiBaseUrl: string) {
   if (started) return;
   started = true;
   endpoint = `${apiBaseUrl.replace(/\/$/, '')}/mobile/telemetry`;
-  initSentry(appVersion ? `${appVersion}${build ? `+${build}` : ''}` : undefined);
 
   // Uncaught JS errors. Keep the previous handler: it shows the red box in dev and
   // terminates the app in release, which is the correct crash behaviour.

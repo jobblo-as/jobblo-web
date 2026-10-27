@@ -19,6 +19,18 @@ export async function registerUser(userData: {
   return res.data;
 }
 
+/** Signed in: mail a code to the account's own address (profile "E-post" row). */
+export async function sendEmailCode() {
+  const res = await mainLink.post<{ message: string }>('/api/auth/email/send-code');
+  return res.data;
+}
+
+/** Signed in: confirm the address with that code. Sets only emailVerifiedAt. */
+export async function confirmEmailCode(code: string) {
+  const res = await mainLink.post<{ emailVerified: boolean }>('/api/auth/email/verify', { code });
+  return res.data;
+}
+
 export async function logoutUser() {
   const res = await mainLink.post('/api/auth/logout');
   return res.data;

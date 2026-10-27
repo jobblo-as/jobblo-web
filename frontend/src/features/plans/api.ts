@@ -5,7 +5,7 @@ export const getPlans = async () => {
   return res.data;
 };
 
-export const updatePlan = async (id: string, data: any) => {
+export const updatePlan = async (id: string, data: Record<string, unknown>) => {
   const res = await mainLink.put(`/api/plans/${id}`, data);
   return res.data;
 };
@@ -20,7 +20,7 @@ export const getConfigByKey = async (key: string) => {
   return res.data;
 };
 
-export const updateConfig = async (key: string, value: any) => {
+export const updateConfig = async (key: string, value: unknown) => {
   const res = await mainLink.post('/api/config/update', { key, value });
   return res.data;
 };

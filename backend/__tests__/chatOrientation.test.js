@@ -37,7 +37,7 @@ jest.mock('../models/Order', () => {
   Order.findById = jest.fn();
   return Order;
 });
-jest.mock('../models/User', () => ({ findById: jest.fn() }));
+jest.mock('../models/User', () => ({ findById: jest.fn(), exists: jest.fn(async () => null) }));
 jest.mock('../models/Service', () => ({ findById: jest.fn(), findByIdAndUpdate: jest.fn(), findOneAndUpdate: jest.fn(async () => ({})), updateOne: jest.fn(async () => ({})) }));
 jest.mock('../models/Dispute', () => ({ findOne: jest.fn() }));
 jest.mock('../models/JobRequest', () => ({ findOne: jest.fn() }));

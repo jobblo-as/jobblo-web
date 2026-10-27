@@ -3,6 +3,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { initSocket } from '../../socket/socket';
 import { useUserStore } from '../../stores/userStore';
 import { useChatQueries } from '../../features/chat/hook';
+import { applyIncomingMessage, applyMessagesRead, refreshChats } from './refreshChats';
+import type { ChatMessage } from '../../api/chatAPI';
 
 export const useChatSocket = (conversationId?: string) => {
   const queryClient = useQueryClient();
@@ -16,46 +18,46 @@ export const useChatSocket = (conversationId?: string) => {
     const socket = initSocket();
     if (!socket || !userId) return;
 
-    // Initial setup
-    socket.emit('setup', userId);
+    // Rooms live on the server-side socket, so a reconnect (the server now closes sockets
+    // when the access token expires, about hourly) starts with none: join again on every
+    // connect, or live messages stop until the conversation is reopened.
+    const joinRooms = () => {
+      socket.emit('setup', userId);
+      if (conversationId) {
+        socket.emit('join-chat', conversationId);
+        socket.emit('mark-as-read', { chatId: conversationId, userId });
+      }
+    };
+    // mark-as-read answers with messages-read, which updates the unread state in the caches.
+    joinRooms();
+    const handleReconnect = () => {
+      joinRooms();
+      // Messages may have arrived while disconnected.
+      refreshChats(queryClient, conversationId);
+    };
 
-    if (conversationId) {
-      socket.emit('join-chat', conversationId);
-      socket.emit('mark-as-read', { chatId: conversationId, userId });
-      queryClient.invalidateQueries({ queryKey: ['chats'] });
-      window.dispatchEvent(new CustomEvent('chat-read'));
-    }
-
-    // Socket listeners
-    const handleReceiveMessage = (data: { chatId: string }) => {
-      queryClient.invalidateQueries({ queryKey: ['chat', data.chatId] });
-      queryClient.invalidateQueries({ queryKey: ['chats'] });
+    // Socket listeners. The Header applies the same events (it listens on every page);
+    // applying one twice is harmless, the message is matched by _id.
+    const handleReceiveMessage = (data: { chatId: string; message?: ChatMessage }) => {
+      if (!applyIncomingMessage(queryClient, data.chatId, data.message)) refreshChats(queryClient, data.chatId);
 
       if (conversationId === data.chatId) {
         socket.emit('mark-as-read', { chatId: conversationId, userId });
-        window.dispatchEvent(new CustomEvent('chat-read'));
       }
     };
 
-    const handleMessagesRead = (data: { chatId: string }) => {
-      if (data.chatId === conversationId) {
-        queryClient.invalidateQueries({ queryKey: ['chat', data.chatId] });
-      }
-      queryClient.invalidateQueries({ queryKey: ['chats'] });
+    const handleMessagesRead = (data: { chatId: string; userId: string }) => {
+      applyMessagesRead(queryClient, data.chatId, data.userId);
     };
 
     const handleUserOnline = (onlineUserIds: string[]) => {
       setOnlineUsers(onlineUserIds);
     };
 
+    socket.on('connect', handleReconnect);
     socket.on('receive-message', handleReceiveMessage);
     socket.on('messages-read', handleMessagesRead);
     socket.on('get-online-users', handleUserOnline);
-
-    const serviceId = activeChatQuery.data?.serviceId?._id;
-    if (serviceId) {
-      socket.emit('join_service', serviceId);
-    }
 
     return () => {
       if (conversationId) socket.emit('leave-chat', conversationId);
@@ -64,13 +66,13 @@ export const useChatSocket = (conversationId?: string) => {
       // socket.off calls, every conversation you opened added another copy: after
       // N opens a single inbound message ran the handler N times, each firing two
       // invalidateQueries — 2N duplicate refetches on the busiest screen in the
-      // app. This effect also re-runs when serviceId resolves, so it registered
-      // at least twice per conversation.
+      // app.
+      socket.off('connect', handleReconnect);
       socket.off('receive-message', handleReceiveMessage);
       socket.off('messages-read', handleMessagesRead);
       socket.off('get-online-users', handleUserOnline);
     };
-  }, [conversationId, userId, queryClient, activeChatQuery.data?.serviceId?._id]);
+  }, [conversationId, userId, queryClient]);
 
   return {
     userId,

@@ -11,7 +11,7 @@ export default function VisibilityScreen() {
       <ScreenHeader title="Søkemotorsynlighet" icon={Eye} className="px-4 pt-2" />
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
-        <View className="rounded-3xl border border-line bg-surface p-5">
+        <View className="rounded-3xl bg-surface p-5">
           <View className="flex-row items-start gap-3">
             <View className="h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-tint">
               <Eye size={21} color={TC.brandText} />

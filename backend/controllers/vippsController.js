@@ -1,4 +1,3 @@
-const { createSession } = require('../utils/tokenUtils');
 const { createUnusablePassword } = require('../utils/passwordUtils');
 const { resolveOAuthLogin } = require('../utils/oauthLinking');
 const {
@@ -7,6 +6,8 @@ const {
   takeOAuthPlatform,
   withPlatformState,
   noStore,
+  readCodeChallenge,
+  signedInDestination,
 } = require('../utils/oauthReturn');
 const axios = require('axios');
 const User = require('../models/User');
@@ -90,7 +91,11 @@ exports.redirectToVipps = async (req, res, options = {}) => {
       state,
       createdAt: Date.now(),
       linkUserId: wantsLink && req.userId ? String(req.userId) : null,
+      // The login session that asked to link: the callback must come from it (see below).
+      linkSessionId: wantsLink && req.userId ? String(req.sessionId) : null,
       redirectUri,
+      // Mobile PKCE challenge; null on web and for app builds that predate it.
+      codeChallenge: platform === 'mobile' ? readCodeChallenge(req) || null : null,
     };
 
     await new Promise((resolve, reject) =>
@@ -133,7 +138,6 @@ exports.vippsCallback = async (req, res, options = {}) => {
     options.platform || platformFromState
   );
   const platform = options.platform || platformFromState || routePlatform;
-  const succeeded = (accessToken) => oauthDestination({ req, platform, accessToken });
   const failed = (errorCode, webPath) =>
     oauthDestination({ req, platform, error: errorCode, webPath });
   const cancelled = () => (platform === 'mobile' ? failed(ERRORS.CANCELLED) : frontendUrl('login'));
@@ -179,6 +183,12 @@ exports.vippsCallback = async (req, res, options = {}) => {
   if (Date.now() - (pending.createdAt || 0) > STATE_TTL_MS) {
     console.warn('Vipps: state expired');
     return res.redirect(failed(ERRORS.INVALID_STATE));
+  }
+  // A link survives in the browser session after its starter logs out: a different person
+  // finishing the provider flow there must not be attached to the starter's account.
+  if (pending.linkUserId && (String(req.userId) !== pending.linkUserId || String(req.sessionId) !== pending.linkSessionId)) {
+    console.warn('Vipps: link callback outside the session that started it');
+    return res.redirect(failed(ERRORS.FAILED, 'profile'));
   }
 
   try {
@@ -290,6 +300,8 @@ exports.vippsCallback = async (req, res, options = {}) => {
           // column -- see utils/passwordUtils.js.
           password: await createUnusablePassword(),
           oauthProviders: [{ provider: 'vipps', providerId: String(profile.sub).trim() }],
+          // Vipps asserting the address is the proof sign-up otherwise asks a code for.
+          ...(profile.email_verified === true && { emailVerifiedAt: new Date() }),
         });
         console.log('Vipps signup created user %s', user._id);
         break;
@@ -308,23 +320,15 @@ exports.vippsCallback = async (req, res, options = {}) => {
       return res.redirect(failed('account_inactive'));
     }
 
-    const { accessToken, refreshToken } = await createSession(req, user._id);
-
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: 60 * 60 * 1000,
-    });
-
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
-    return res.redirect(succeeded(accessToken));
+    return res.redirect(
+      await signedInDestination({
+        req,
+        res,
+        platform,
+        userId: user._id,
+        codeChallenge: pending.codeChallenge,
+      })
+    );
   } catch (err) {
     console.error('Vipps API Error:', err.response?.data || err.message);
     return res.redirect(failed(ERRORS.FAILED));

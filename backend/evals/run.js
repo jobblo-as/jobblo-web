@@ -14,7 +14,7 @@
  * allow list is the fixed list from evals/cases.js, so a run is reproducible
  * on any machine.
  */
-require('dotenv').config();
+require('../config/env'); // backend/.env.development (production: .env.production)
 const fs = require('fs');
 const path = require('path');
 const { OpenAI } = require('openai');

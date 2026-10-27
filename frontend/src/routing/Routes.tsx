@@ -6,13 +6,10 @@ import { ProtectedRoute } from '../components/shared/ProtectedRoute.tsx';
 import { PublicRoute } from '../components/shared/PublicRoute.tsx';
 import { AdminProtectedRoute } from '../components/shared/AdminProtectedRoute.tsx';
 import { DeveloperProtectedRoute } from '../components/shared/DeveloperProtectedRoute.tsx';
-import { SettingsLayout } from '../components/layout/SettingsLayout/SettingsLayout.tsx';
 import { RouteErrorElement } from '../components/ErrorBoundary.tsx';
 import { PageLoader } from '../components/Loading/PageLoader.tsx';
 
 
-import OAuthSuccess from '../pages/OAuthSuccess.tsx';
-import SettingsPage from '../pages/SettingsPage.tsx';
 
 // =======================
 // Helpers
@@ -21,6 +18,12 @@ import SettingsPage from '../pages/SettingsPage.tsx';
 // `PageLoader` is used directly rather than through a local wrapper component: this file
 // also exports the `routes` table, and a component declared alongside a non-component
 // export breaks fast refresh for the whole module.
+const SettingsLayout = lazy(() =>
+  import('../components/layout/SettingsLayout/SettingsLayout.tsx').then((m) => ({ default: m.SettingsLayout }))
+);
+const OAuthSuccess = lazy(() => import('../pages/OAuthSuccess.tsx'));
+const SettingsPage = lazy(() => import('../pages/SettingsPage.tsx'));
+
 const withSuspense = (Component: React.ComponentType) => (
   <Suspense fallback={<PageLoader />}>
     <Component />
@@ -108,7 +111,6 @@ const CookiePolicyPage = lazy(() => import('../pages/CookiePolicyPage/CookiePoli
 const AboutPage = lazy(() => import('../pages/AboutPage/AboutPage.tsx'));
 const JobbloUserTerm = lazy(() => import('../pages/UserTerm/UserTerm.tsx'));
 const SuccessPage = lazy(() => import('../components/subscription/success.tsx'));
-const ContactSuccessPage = lazy(() => import('../pages/ContactSuccessPage.tsx'));
 const ServiceListingPage = lazy(() => import('../pages/ServiceListingPage/ServiceListing.tsx'));
 const UpcomingFeatures = lazy(() => import('../pages/UpcomingFeaturesPage/UpcomingFeatures.tsx'));
 const MembershipPage = lazy(() => import('../pages/MembershipPage/MembershipPage.tsx'));
@@ -135,6 +137,10 @@ const DevOverviewPage = lazy(() => import('../pages/DeveloperDashboard/OverviewP
 const DevApiMonitoringPage = lazy(() => import('../pages/DeveloperDashboard/ApiMonitoringPage.tsx'));
 const DevErrorsPage = lazy(() => import('../pages/DeveloperDashboard/ErrorsPage.tsx'));
 const DevServerPage = lazy(() => import('../pages/DeveloperDashboard/ServerPage.tsx'));
+const DevWorkersPage = lazy(() => import('../pages/DeveloperDashboard/WorkersPage.tsx'));
+const DevNginxPage = lazy(() => import('../pages/DeveloperDashboard/NginxPage.tsx'));
+const DevPm2Page = lazy(() => import('../pages/DeveloperDashboard/Pm2Page.tsx'));
+const DevCachingPage = lazy(() => import('../pages/DeveloperDashboard/CachingPage.tsx'));
 const DevMongoPage = lazy(() => import('../pages/DeveloperDashboard/MongoPage.tsx'));
 const DevSchedulerPage = lazy(() => import('../pages/DeveloperDashboard/SchedulerPage.tsx'));
 const DevWebhooksPage = lazy(() => import('../pages/DeveloperDashboard/WebhooksPage.tsx'));
@@ -259,7 +265,7 @@ export const routes: RouteObject[] = [
     errorElement: <RouteErrorElement />,
     children: [
       { index: true, element: withSuspense(LandingPage) },
-      { path: 'oauth-success', element: <OAuthSuccess /> },
+      { path: 'oauth-success', element: withSuspense(OAuthSuccess) },
       { path: 'home', element: withSuspense(JobListingPage) },
       { path: 'oppdragstakere', element: withSuspense(RecommendedTaskersPage) },
       { path: 'search', element: withSuspense(ServiceListingPage) },
@@ -318,14 +324,12 @@ export const routes: RouteObject[] = [
       {
         path: 'settings',
         element: (
-          <ProtectedRoute>
-            <SettingsLayout />
-          </ProtectedRoute>
+          <ProtectedRoute>{withSuspense(SettingsLayout)}</ProtectedRoute>
         ),
         children: [
           {
             path: '',
-            element: <SettingsPage />,
+            element: withSuspense(SettingsPage),
             children: [
               { index: true, element: withSuspense(UsernameView) },
               { path: 'name', element: withSuspense(NameView) },
@@ -369,10 +373,11 @@ export const routes: RouteObject[] = [
         path: 'favorites/list/:listId',
         element: <ProtectedRoute>{withSuspense(ListDetailPage)}</ProtectedRoute>,
       },
-      { path: 'subscription/success', element: withSuspense(SuccessPage) },
+      // Behind the guard like safepay/success: the page calls an authenticated API, and run
+      // before the session bootstrap it got a 401 after a long Stripe visit.
+      { path: 'subscription/success', element: <ProtectedRoute>{withSuspense(SuccessPage)}</ProtectedRoute> },
       { path: 'coins', element: <ProtectedRoute>{withSuspense(CoinsPage)}</ProtectedRoute> },
       { path: 'team', element: withSuspense(TeamPage) },
-      { path: 'contact/success', element: withSuspense(ContactSuccessPage) },
       { path: 'support', element: withSuspense(SupportPage) },
       { path: 'delete-account', element: withSuspense(DeleteAccountRequestPage) },
       {
@@ -486,6 +491,10 @@ export const routes: RouteObject[] = [
       { path: 'api', element: withSuspense(DevApiMonitoringPage) },
       { path: 'errors', element: withSuspense(DevErrorsPage) },
       { path: 'server', element: withSuspense(DevServerPage) },
+      { path: 'workers', element: withSuspense(DevWorkersPage) },
+      { path: 'nginx', element: withSuspense(DevNginxPage) },
+      { path: 'pm2', element: withSuspense(DevPm2Page) },
+      { path: 'caching', element: withSuspense(DevCachingPage) },
       { path: 'mongo', element: withSuspense(DevMongoPage) },
       { path: 'scheduler', element: withSuspense(DevSchedulerPage) },
       { path: 'webhooks', element: withSuspense(DevWebhooksPage) },

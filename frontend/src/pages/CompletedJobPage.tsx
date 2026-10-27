@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ChevronLeft,
@@ -76,11 +76,14 @@ export default function CompletedJobPage() {
     });
   };
 
-  useEffect(() => {
-    if ((!orderId && !serviceIdParam) || isError) navigate(-1);
-  }, [orderId, serviceIdParam, isError, navigate]);
+  // No id or a failed load shows "Fant ikke oppdraget" below. This used to navigate(-1),
+  // which on a pasted link left the site; back falls back to /home like BackLink.
+  const goBack = () => (window.history.length > 1 ? navigate(-1) : navigate('/home'));
 
-  if (isLoading) {
+  // A disabled query (no id) stays pending forever in TanStack v5: only show the loader
+  // while there is something to load.
+  const hasId = Boolean(orderId || serviceIdParam);
+  if (hasId && isLoading && !isError) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-lg">Laster...</div>
@@ -89,14 +92,14 @@ export default function CompletedJobPage() {
   }
   // Was `return null` — a blank white page with no explanation whenever the
   // order or its Service had been deleted.
-  if (!data || !data.service) {
+  if (!hasId || isError || !data || !data.service) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 text-center">
         <h2 className="text-lg font-bold text-gray-900 mb-2">Fant ikke oppdraget</h2>
         <p className="text-sm text-gray-500 mb-5">
           Oppdraget kan ha blitt slettet, eller du har ikke tilgang til det.
         </p>
-        <button onClick={() => navigate(-1)} className="text-custom-green font-medium">
+        <button onClick={goBack} className="text-custom-green font-medium">
           Gå tilbake
         </button>
       </div>
@@ -110,7 +113,7 @@ export default function CompletedJobPage() {
       {/* Header */}
       <div className="bg-white shadow-sm border-b sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-4">
-          <button onClick={() => navigate(-1)} className="p-2 rounded-full hover:bg-gray-100">
+          <button type="button" onClick={goBack} aria-label="Tilbake" className="p-2 rounded-full hover:bg-gray-100">
             <ChevronLeft size={20} />
           </button>
           <div>

@@ -295,3 +295,141 @@ describe('provider earnings are credited exactly once per transfer, on every pat
     expect(credits()).toHaveLength(0);
   });
 });
+
+describe('H6: a failed or unknown transfer is retried until the provider is paid', () => {
+  // Like Stripe: a request that got an answer is saved under its idempotency key and
+  // replayed for 24 h, errors included.
+  const stripeAnswers = (first) => {
+    const saved = new Map();
+    let n = 0;
+    stripe.transfers.create.mockImplementation(async (params, opts) => {
+      if (saved.has(opts.idempotencyKey)) {
+        const r = saved.get(opts.idempotencyKey);
+        if (r instanceof Error) throw r;
+        return r;
+      }
+      if (n++ === 0 && first) { saved.set(opts.idempotencyKey, first); throw first; }
+      const t = { id: `tr_${transfers.length + 1}`, idem: opts.idempotencyKey, ...params, livemode: false };
+      transfers.push(t);
+      saved.set(opts.idempotencyKey, t);
+      return t;
+    });
+  };
+  const refused = () => Object.assign(new Error('Insufficient funds in Stripe balance'), { type: 'StripeInvalidRequestError', statusCode: 400, code: 'balance_insufficient' });
+
+  it('a refused transfer (4xx) is a plain failure: lock released, the next retry pays once', async () => {
+    stripeAnswers(refused());
+    await expect(releasePayoutToProvider(baseArgs())).rejects.toMatchObject({ code: 'PAYOUT_TRANSFER_FAILED' });
+    expect(Payout.rows[0]).toMatchObject({ status: 'failed', failureCode: 'balance_insufficient', transferFailedAt: expect.any(Date) });
+    expect(order.payoutLockId).toBeNull();
+
+    // As retryFailedPayouts does. With the old fixed key Stripe replayed the refusal.
+    const r = await releasePayoutToProvider(baseArgs());
+    expect(r.payout.status).toBe('transferred');
+    expect(transfers).toHaveLength(1);
+    const keys = stripe.transfers.create.mock.calls.map(([, o]) => o.idempotencyKey);
+    expect(new Set(keys).size).toBe(2);
+  });
+
+  it('a 409 (concurrent request on the key) stays an unknown outcome', async () => {
+    stripeAnswers(Object.assign(new Error('conflict'), { type: 'StripeIdempotencyError', statusCode: 409 }));
+    await expect(releasePayoutToProvider(baseArgs())).rejects.toMatchObject({ code: 'PAYOUT_RECONCILIATION_REQUIRED' });
+    expect(Payout.rows[0].status).toBe('reconciliation_required');
+  });
+
+  it('unknown outcome, transfer never happened: kept for 24 h, then failed, then paid exactly once', async () => {
+    stripeAnswers(Object.assign(new Error('socket hang up'), { type: 'StripeConnectionError' }));
+    await expect(releasePayoutToProvider(baseArgs())).rejects.toMatchObject({ code: 'PAYOUT_RECONCILIATION_REQUIRED' });
+    expect(Payout.rows[0]).toMatchObject({ status: 'reconciliation_required', transferFailedAt: expect.any(Date) });
+
+    // Reconciler within 24 h: looks, finds nothing, waits. Never creates.
+    await expect(releasePayoutToProvider(baseArgs())).rejects.toMatchObject({ code: 'PAYOUT_RECONCILIATION_REQUIRED' });
+    expect(Payout.rows[0].status).toBe('reconciliation_required');
+    expect(stripe.transfers.create).toHaveBeenCalledTimes(1);
+
+    // 24 h later: still no transfer at Stripe, so it is a failure the retry job may pay.
+    Payout.rows[0].transferFailedAt = new Date(Date.now() - 25 * 3600_000);
+    await expect(releasePayoutToProvider(baseArgs())).rejects.toMatchObject({ code: 'PAYOUT_RECONCILIATION_REQUIRED' });
+    expect(Payout.rows[0]).toMatchObject({ status: 'failed', failureCode: 'PAYOUT_TRANSFER_NOT_FOUND' });
+
+    const r = await releasePayoutToProvider(baseArgs());
+    expect(r.payout.status).toBe('transferred');
+    expect(transfers).toHaveLength(1);
+    await expect(releasePayoutToProvider(baseArgs())).resolves.toMatchObject({ alreadyPaid: true });
+    expect(transfers).toHaveLength(1);
+  });
+
+  it('unknown outcome, transfer DID happen: recorded, never paid twice even after 24 h', async () => {
+    stripeAnswers(Object.assign(new Error('socket hang up'), { type: 'StripeConnectionError' }));
+    await expect(releasePayoutToProvider(baseArgs())).rejects.toThrow();
+    const p = Payout.rows[0];
+    transfers.push({ id: 'tr_real', amount: 97000, currency: 'nok', destination: 'acct_p', source_transaction: 'ch_1', livemode: false, metadata: { payoutId: String(p._id) } });
+    p.transferFailedAt = new Date(Date.now() - 25 * 3600_000);
+    const r = await releasePayoutToProvider(baseArgs());
+    expect(r).toMatchObject({ reconciled: true, payout: { status: 'transferred', stripeTransferId: 'tr_real' } });
+    expect(transfers).toHaveLength(1);
+  });
+
+  it('after 24 h it is NOT retried if the provider changed payout account (lookup could miss it)', async () => {
+    stripeAnswers(Object.assign(new Error('socket hang up'), { type: 'StripeConnectionError' }));
+    await expect(releasePayoutToProvider(baseArgs())).rejects.toThrow();
+    Payout.rows[0].transferFailedAt = new Date(Date.now() - 25 * 3600_000);
+    provider = { stripeConnectAccountIdTest: 'acct_new' };
+    await expect(releasePayoutToProvider(baseArgs())).rejects.toMatchObject({ code: 'PAYOUT_RECONCILIATION_REQUIRED' });
+    expect(Payout.rows[0].status).toBe('reconciliation_required');
+    expect(stripe.transfers.create).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('money review: an unknown-outcome DISPUTE payout can be finished', () => {
+  it('a dispute in reconciliation_required reaches the Stripe lookup and records the transfer that happened', async () => {
+    order.status = 'disputed';
+    payment.status = 'disputed';
+    Dispute.findById.mockImplementation(() => lean({
+      _id: 'disp_1', orderId: 'order_1', status: 'under_review',
+      resolution: { outcome: 'split_payment', moneyState: 'reconciliation_required', providerAmount: 600 },
+    }));
+    const p = new Payout({ orderId: 'order_1', status: 'reconciliation_required', idempotencyKey: 'payout_order_order_1', stripeLivemode: false, grossAmount: 600, platformFee: 0, netProviderAmount: 600, lastAttemptedAt: new Date(Date.now() - 3600_000) });
+    Payout.rows.push(p);
+    transfers.push({ id: 'tr_dispute', amount: 60000, currency: 'nok', destination: 'acct_p', source_transaction: 'ch_1', livemode: false, metadata: { payoutId: String(p._id) } });
+    const r = await releasePayoutToProvider(baseArgs({ grossAmount: 600, platformFee: 0, releaseSource: 'dispute_release', disputeId: 'disp_1' }));
+    expect(r).toMatchObject({ reconciled: true, payout: { status: 'transferred', stripeTransferId: 'tr_dispute' } });
+    expect(stripe.transfers.create).not.toHaveBeenCalled();
+  });
+});
+
+describe('final review: won chargebacks and recovered failed payouts', () => {
+  const { recordStripeTransfer } = require('../services/stripe/financialHistory');
+
+  it('a chargeback the platform WON no longer blocks the payout (Stripe keeps charge.disputed true)', async () => {
+    stripe.charges.retrieve.mockImplementation(async (id, opts) => ({
+      id: 'ch_1', paid: true, captured: true, amount: 103000, amount_refunded: 0, currency: 'nok', payment_intent: 'pi_1', customer: 'cus_1',
+      disputed: true,
+      dispute: opts?.expand?.includes('dispute') ? { id: 'dp_1', status: 'won' } : 'dp_1',
+    }));
+    const result = await releasePayoutToProvider(baseArgs());
+    expect(result.payout.status).toBe('transferred');
+    expect(transfers).toHaveLength(1);
+  });
+
+  it.each(['needs_response', 'under_review', 'lost'])('an open or lost chargeback (%s) still blocks it', async (status) => {
+    stripe.charges.retrieve.mockImplementation(async () => ({
+      id: 'ch_1', paid: true, captured: true, amount: 103000, amount_refunded: 0, currency: 'nok', payment_intent: 'pi_1', customer: 'cus_1',
+      disputed: true, dispute: { id: 'dp_1', status },
+    }));
+    await expect(releasePayoutToProvider(baseArgs())).rejects.toMatchObject({ code: 'PAYOUT_SOURCE_CHARGE_INVALID' });
+    expect(transfers).toHaveLength(0);
+  });
+
+  it('a failed payout whose transfer turns out to exist also releases the Payment and records the transfer', async () => {
+    const p = new Payout({ orderId: 'order_1', status: 'failed', grossAmount: 1000, platformFee: 30, netProviderAmount: 970, stripeLivemode: false, stripeConnectAccountId: 'acct_p', idempotencyKey: 'payout_order_order_1' });
+    Payout.rows.push(p);
+    transfers.push({ id: 'tr_found', amount: 97000, currency: 'nok', destination: 'acct_p', source_transaction: 'ch_1', livemode: false, metadata: { payoutId: String(p._id) } });
+    const result = await releasePayoutToProvider(baseArgs());
+    expect(result).toMatchObject({ reconciled: true });
+    expect(Payout.rows[0]).toMatchObject({ status: 'transferred', stripeTransferId: 'tr_found', transferCompletedAt: expect.any(Date) });
+    expect(Payment.findOneAndUpdate).toHaveBeenCalledWith({ orderId: 'order_1' }, { $set: { status: 'released' } });
+    expect(recordStripeTransfer).toHaveBeenCalledWith(expect.objectContaining({ id: 'tr_found' }), expect.objectContaining({ livemode: false }));
+    expect(stripe.transfers.create).not.toHaveBeenCalled();
+  });
+});

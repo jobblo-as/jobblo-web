@@ -136,6 +136,9 @@ const orderSchema = new mongoose.Schema(
     // sending a second warning. `readyForReviewAt` was already recorded but nothing
     // ever read it — this is what makes the auto-release window observable.
     autoReleaseWarnedAt: { type: Date, default: null },
+    // Last time a scheduler sweep (auto-release, abandoned cleanup) looked at this order.
+    // Sweeps take the least-recently-tried first, so orders skipped every run rotate out.
+    lastAutoAttemptAt: { type: Date, default: null },
 
     // Fence between a Stripe transfer and a dispute opening. releasePayoutToProvider
     // claims it (compare-and-swap on this order, with the order still releasable)
@@ -193,5 +196,9 @@ const orderSchema = new mongoose.Schema(
 );
 
 orderSchema.index({ status: 1, paymentStatus: 1, providerConnectDeadlineAt: 1 });
+// Every order lookup is by job or by party; without these each one was a collection scan.
+orderSchema.index({ serviceId: 1, status: 1 });
+orderSchema.index({ customerId: 1, createdAt: -1 });
+orderSchema.index({ providerId: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Order', orderSchema);

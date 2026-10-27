@@ -11,6 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { GlassFill, useGlass } from '../../src/components/ui/GlassButton';
 import { useRouter } from 'expo-router';
 import {
   Bell,
@@ -44,23 +45,30 @@ import { cn } from '../../src/lib/utils';
 import { useTabBarSpace } from '../../src/components/GlassTabBar';
 import type { Notification } from '../../src/types/Notification';
 import { TC, tc } from '../../src/theme/colors';
+import { DARK, LIGHT } from '../../src/theme/tokens';
+import { colorScheme } from 'nativewind';
 import { AlertsSkeleton } from '../../src/components/skeletons/ScreenSkeletons';
 
 /* ── Notification type metadata ──────────────────────────────────────────── */
 
-type Meta = { label: string; Icon: LucideIcon; tint: string; color: string };
+// `color` is [light, dark]: picked at render, since a module-level constant would freeze
+// whichever theme was active when the file loaded.
+type Meta = { label: string; Icon: LucideIcon; tint: string; color: [string, string] };
 
 const META: Record<string, Meta> = {
-  order: { label: 'Bestilling', Icon: Banknote, tint: 'bg-tint', color: TC.brandText },
-  payment: { label: 'Betaling', Icon: Banknote, tint: 'bg-tint', color: TC.brandText },
-  application: { label: 'Søknad', Icon: Briefcase, tint: 'bg-[#EAF0FA]', color: '#2F5D9E' },
-  message: { label: 'Melding', Icon: MessageSquare, tint: 'bg-[#F2EEF9]', color: '#6B4FA0' },
-  review: { label: 'Anmeldelse', Icon: Star, tint: 'bg-[#FBF4E3]', color: '#96752A' },
-  job_update: { label: 'Jobboppdatering', Icon: ClipboardCheck, tint: 'bg-surface-2', color: tc('#63665F', 'muted') },
+  order: { label: 'Bestilling', Icon: Banknote, tint: 'bg-tint', color: [LIGHT.brandText, DARK.brandText] },
+  payment: { label: 'Betaling', Icon: Banknote, tint: 'bg-tint', color: [LIGHT.brandText, DARK.brandText] },
+  application: { label: 'Søknad', Icon: Briefcase, tint: 'bg-[#EAF0FA] dark:bg-[#1E2836]', color: ['#2F5D9E', '#8FB3E8'] },
+  message: { label: 'Melding', Icon: MessageSquare, tint: 'bg-[#F2EEF9] dark:bg-[#29233A]', color: ['#6B4FA0', '#BBA6E3'] },
+  review: { label: 'Anmeldelse', Icon: Star, tint: 'bg-[#FBF4E3] dark:bg-[#2E2716]', color: ['#96752A', '#E0C27A'] },
+  job_update: { label: 'Jobboppdatering', Icon: ClipboardCheck, tint: 'bg-surface-2', color: ['#63665F', DARK.muted] },
 };
+const FALLBACK: Meta = { label: 'Varsel', Icon: Bell, tint: 'bg-surface-2', color: ['#63665F', DARK.muted] };
 
-const notificationMeta = (type: string): Meta =>
-  META[type] || { label: 'Varsel', Icon: Bell, tint: 'bg-surface-2', color: tc('#63665F', 'muted') };
+const notificationMeta = (type: string) => {
+  const meta = META[type] || FALLBACK;
+  return { ...meta, color: meta.color[colorScheme.get() === 'dark' ? 1 : 0] };
+};
 
 /* ── Time ────────────────────────────────────────────────────────────────── */
 
@@ -110,6 +118,7 @@ function NotificationRow({
 }) {
   const { label, Icon, tint, color } = notificationMeta(item.type);
   const isUnread = !item.read;
+  const glass = useGlass(16);
   const isSystem = !!item.isSystem || (!item.userId && item.readBy);
   const sender = item.senderId?.name
     ? [item.senderId.name, item.senderId.lastName].filter(Boolean).join(' ')
@@ -120,11 +129,11 @@ function NotificationRow({
       onPress={() => onOpen(item)}
       accessibilityRole="button"
       accessibilityLabel={`${label}: ${item.content}${isUnread ? ', ulest' : ''}`}
-      className={cn(
-        'mx-4 mb-2 flex-row items-start gap-3 rounded-2xl border p-3.5 active:opacity-80',
-        isUnread ? 'border-brand-text/25 bg-surface' : 'border-line bg-white/70'
-      )}
+      className="mx-4 mb-2 flex-row items-start gap-3 p-3.5 active:opacity-80"
+      // Glass card; unread keeps its green edge (the dot and bold text mark it too).
+      style={[glass, isUnread ? { borderWidth: 1, borderColor: 'rgba(46,102,65,0.3)' } : null]}
     >
+      <GlassFill radius={16} />
       <View>
         {item.senderId?.avatarUrl ? (
           <Image source={{ uri: item.senderId.avatarUrl }} className="h-11 w-11 rounded-full bg-tint" />
@@ -134,7 +143,7 @@ function NotificationRow({
           </View>
         )}
         {item.senderId?.avatarUrl ? (
-          <View className={cn('absolute -bottom-0.5 -right-0.5 h-5 w-5 items-center justify-center rounded-full border-2 border-white', tint)}>
+          <View className={cn('absolute -bottom-0.5 -right-0.5 h-5 w-5 items-center justify-center rounded-full border-2 border-surface', tint)}>
             <Icon size={10} color={color} />
           </View>
         ) : null}
@@ -145,7 +154,7 @@ function NotificationRow({
           <Text className="flex-1 text-[0.8125rem] font-semibold text-muted" numberOfLines={1}>
             {sender ? `${label} · ${sender}` : label}
           </Text>
-          <Text className="text-[0.8125rem] tabular-nums text-subtle">{formatNotificationTime(item.createdAt)}</Text>
+          <Text className="text-[0.8125rem] tabular-nums text-muted">{formatNotificationTime(item.createdAt)}</Text>
           {isUnread ? <View className="h-2 w-2 rounded-full bg-brand" accessibilityLabel="Ulest" /> : null}
         </View>
         <Text
@@ -400,7 +409,7 @@ export default function AlertsScreen() {
           keyExtractor={keyExtractor}
           renderItem={renderItem}
           renderSectionHeader={({ section }) => (
-            <Text className="bg-page px-4 pb-2 pt-3 text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-subtle">
+            <Text className="bg-page px-4 pb-2 pt-3 text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-muted">
               {section.title}
             </Text>
           )}

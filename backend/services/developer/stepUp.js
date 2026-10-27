@@ -39,15 +39,20 @@ async function sendCode(user) {
 async function verifyCode(user, sessionId, code) {
   const StepUpOtp = require('../../models/StepUpOtp');
   if (!/^\d{6}$/.test(String(code || ''))) throw fail('Enter the 6-digit code.', 400);
-  const otp = await StepUpOtp.findOne({ userId: user._id, expiresAt: { $gt: new Date() } }).sort({ createdAt: -1 });
-  if (!otp) throw fail('No valid code. Request a new one.', 400);
-  if (otp.attempts >= MAX_ATTEMPTS) throw fail('Too many wrong attempts. Request a new code.', 429);
-  const ok = crypto.timingSafeEqual(Buffer.from(otp.codeHash, 'hex'), Buffer.from(hashCode(code), 'hex'));
-  if (!ok) {
-    otp.attempts += 1;
-    await otp.save();
-    throw fail(`Wrong code. ${MAX_ATTEMPTS - otp.attempts} attempt(s) left.`, 400);
+  // Spend the attempt atomically BEFORE comparing: a read-compare-then-save let N parallel
+  // guesses share one attempt.
+  const live = { userId: user._id, expiresAt: { $gt: new Date() } };
+  const otp = await StepUpOtp.findOneAndUpdate(
+    { ...live, attempts: { $lt: MAX_ATTEMPTS } },
+    { $inc: { attempts: 1 } },
+    { new: true, sort: { createdAt: -1 } }
+  );
+  if (!otp) {
+    if (await StepUpOtp.exists(live)) throw fail('Too many wrong attempts. Request a new code.', 429);
+    throw fail('No valid code. Request a new one.', 400);
   }
+  const ok = crypto.timingSafeEqual(Buffer.from(otp.codeHash, 'hex'), Buffer.from(hashCode(code), 'hex'));
+  if (!ok) throw fail(`Wrong code. ${MAX_ATTEMPTS - otp.attempts} attempt(s) left.`, 400);
   await StepUpOtp.deleteMany({ userId: user._id });
   return {
     token: jwt.sign({ sub: String(user._id), sid: String(sessionId), purpose: PURPOSE }, process.env.JWT_SECRET, { expiresIn: TOKEN_TTL_S }),

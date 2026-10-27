@@ -64,7 +64,7 @@ export default function DisputeDetailPage() {
     const d = dispute as Dispute;
     const orderId = typeof d.orderId === 'object' ? d.orderId?._id : d.orderId;
     const isActive = ['open', 'under_review', 'waiting_for_customer', 'waiting_for_provider', 'evidence_submitted'].includes(d.status);
-    const isResolved = ['resolved', 'closed'].includes(d.status);
+    const isResolved = ['resolved', 'closed', 'cancelled'].includes(d.status);
     const PRIORITY_COLOR: Record<string, string> = { low: 'bg-muted text-muted-foreground', medium: 'bg-yellow-50 text-yellow-700', high: 'bg-orange-50 text-orange-700', critical: 'bg-red-100 text-red-700' };
 
     return (
@@ -258,16 +258,16 @@ export default function DisputeDetailPage() {
                         <h2 className="text-lg font-bold text-foreground">Løs tvist: {d.title}</h2>
                         <p className="text-sm text-muted-foreground">Alle handlinger logges og varsler berørte parter. Stripe-refusjoner behandles i sanntid.</p>
                         <div>
-                            <label className="block text-sm font-medium text-foreground mb-1">Utfall *</label>
-                            <select value={resolveOutcome} onChange={(e) => setResolveOutcome(e.target.value as DisputeOutcome)}
+                            <label htmlFor="resolve-outcome" className="block text-sm font-medium text-foreground mb-1">Utfall *</label>
+                            <select id="resolve-outcome" value={resolveOutcome} onChange={(e) => setResolveOutcome(e.target.value as DisputeOutcome)}
                                 className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50">
                                 <option value="">Velg utfall</option>
                                 {OUTCOME_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
                             </select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-foreground mb-1">Begrunnelse *</label>
-                            <textarea rows={3} value={resolveReason} onChange={(e) => setResolveReason(e.target.value)}
+                            <label htmlFor="resolve-reason" className="block text-sm font-medium text-foreground mb-1">Begrunnelse *</label>
+                            <textarea id="resolve-reason" rows={3} value={resolveReason} onChange={(e) => setResolveReason(e.target.value)}
                                 className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50 resize-none"
                                 placeholder="Forklar beslutningen…" />
                         </div>

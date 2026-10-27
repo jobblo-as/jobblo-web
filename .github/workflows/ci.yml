@@ -1,9 +1,13 @@
 name: CI
 
 # One workflow for all app checks. Each job only runs when its own area changes
-# (path filters) and they run in parallel. No Docker, no standalone type-check step.
+# (path filters) and they run in parallel. No Docker. Runs on pushes to every branch:
+# deploy.sh only deploys a commit (on any branch) when this workflow is green for it.
 
 on:
+  push:
+    branches:
+      - '**'
   pull_request:
     branches:
       - main
@@ -11,6 +15,8 @@ on:
 
 permissions:
   contents: read
+  # dorny/paths-filter reads the PR's changed files.
+  pull-requests: read
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -49,6 +55,10 @@ jobs:
         run: |
           npm ci
           echo '### Backend install: passed' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Audit production dependencies
+        if: steps.changes.outputs.backend == 'true'
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Test
         if: steps.changes.outputs.backend == 'true'
@@ -96,24 +106,30 @@ jobs:
         if: steps.changes.outputs.frontend == 'true'
         run: npm ci
 
-      # Lint stays non-blocking while the frontend backlog is worked through;
-      # the production build is the blocking correctness check.
-      - name: Lint (non-blocking)
+      - name: Audit production dependencies
         if: steps.changes.outputs.frontend == 'true'
-        continue-on-error: true
+        run: npm audit --omit=dev --audit-level=high
+
+      # Lint blocks NEW errors: the step fails when the count rises above the remaining backlog
+      # (209 -> 56 so far; lower it as it is fixed, 0 = clean). Typecheck is clean and blocking.
+      - name: Lint
+        if: steps.changes.outputs.frontend == 'true'
+        env:
+          MAX_ERRORS: 56
         run: |
-          set +e
-          npm run lint > lint.log 2>&1
-          STATUS=$?
-          if [ "$STATUS" -eq 0 ]; then
-            echo "### Frontend lint: passed" >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "### Frontend lint: existing issues (non-blocking)" >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-            head -50 lint.log >> "$GITHUB_STEP_SUMMARY"
-            echo '```' >> "$GITHUB_STEP_SUMMARY"
-          fi
-          exit "$STATUS"
+          STATUS=0; npx eslint . > lint.log 2>&1 || STATUS=$?
+          # stylish summary line: "✖ N problems (E errors, W warnings)"; no line = clean
+          ERRORS=$(grep -oE '\(([0-9]+) errors?' lint.log | grep -oE '[0-9]+' | tail -1)
+          ERRORS=${ERRORS:-0}
+          echo "### Frontend lint: $ERRORS errors (allowed $MAX_ERRORS)" >> "$GITHUB_STEP_SUMMARY"
+          tail -60 lint.log
+          # a crash prints no count: fail on a non-zero exit with zero counted errors
+          [ "$STATUS" = 0 ] || [ "$ERRORS" -gt 0 ]
+          [ "$ERRORS" -le "$MAX_ERRORS" ]
+
+      - name: Typecheck
+        if: steps.changes.outputs.frontend == 'true'
+        run: npm run typecheck
 
       - name: Build
         if: steps.changes.outputs.frontend == 'true'
@@ -123,6 +139,39 @@ jobs:
         run: |
           npm run build
           echo '### Frontend build: passed' >> "$GITHUB_STEP_SUMMARY"
+
+  # ── Secret scan ────────────────────────────────────────────────────────────
+  gitleaks:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # The gitleaks CLI (MIT, free) rather than gitleaks-action, which needs a paid
+      # GITLEAKS_LICENSE for repositories owned by an organization (jobblo-as).
+      - name: Install gitleaks
+        run: |
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.18.4/gitleaks_8.18.4_linux_x64.tar.gz | tar -xz gitleaks
+          ./gitleaks version
+      - name: Scan the new commits
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          # Same scope as gitleaks-action had: a PR's commits, or the commits a push added.
+          # A new branch (no "before") is scanned against main.
+          if [ -n "$PR_BASE" ]; then
+            range="$PR_BASE..$PR_HEAD"
+          elif [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ]; then
+            range="$BEFORE..$GITHUB_SHA"
+          else
+            range="origin/main..$GITHUB_SHA"
+          fi
+          echo "Scanning $range"
+          ./gitleaks detect --source . --redact --no-banner -v --log-opts="$range"
 
   # ── Mobile ─────────────────────────────────────────────────────────────────
   mobile:
@@ -156,6 +205,11 @@ jobs:
         run: |
           npm ci
           echo '### Mobile install: passed' >> "$GITHUB_STEP_SUMMARY"
+
+      # critical only: Expo's build tooling ships known highs with no non-breaking fix.
+      - name: Audit production dependencies
+        if: steps.changes.outputs.mobile == 'true'
+        run: npm audit --omit=dev --audit-level=critical
 
       - name: Expo config
         if: steps.changes.outputs.mobile == 'true'

@@ -93,7 +93,6 @@ export default function CreateJobForm({
     maxApplicants,
     setMaxApplicants,
     equipment,
-    setEquipment,
     fromDate,
     setFromDate,
     toDate,
@@ -103,7 +102,6 @@ export default function CreateJobForm({
     email,
     setEmail,
     selectedImages,
-    setSelectedImages,
     handleImageSelection,
     triggerImageAnalysis,
     imageAnalysis,
@@ -364,7 +362,8 @@ export default function CreateJobForm({
                 setTitle={setTitle}
                 description={description}
                 setDescription={setDescription}
-                categories={categories as any}
+                // Edit mode can seed an array; BasicInformation only ever selects one, so it reads a string.
+                categories={categories as string}
                 setCategories={setCategories}
                 price={price}
                 setPrice={setPrice}
@@ -404,7 +403,7 @@ export default function CreateJobForm({
                 setAreaCode={setAreaCode}
                 coordinates={coordinates}
                 setCoordinates={setCoordinates}
-                durationValue={durationValue as any}
+                durationValue={durationValue}
                 setDurationValue={setDurationValue}
                 durationUnit={durationUnit}
                 setDurationUnit={setDurationUnit}

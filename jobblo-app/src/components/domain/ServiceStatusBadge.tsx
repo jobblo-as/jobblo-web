@@ -24,7 +24,7 @@ const TONE_CLASS: Record<Tone, string> = {
   quiet: 'bg-surface-2 text-muted',
   moving: 'bg-tint text-brand-text',
   action: 'bg-brand-deep text-white',
-  closed: 'border border-line bg-surface text-subtle',
+  closed: 'border border-line bg-surface text-muted',
 };
 
 /** Norwegian label for a Service.status; never the raw value. */

@@ -12,7 +12,7 @@
  *  - re-running never duplicates: Prices carry lookup_key jobblo_plan_<planId>_<øre>, and
  *    creates use idempotency keys.
  */
-require('dotenv').config({ path: require('path').join(__dirname, '..', '.env'), quiet: true });
+require('../config/env'); // backend/.env.development (production: .env.production)
 const mongoose = require('mongoose');
 const SubscriptionPlan = require('../models/SubscriptionPlan');
 const { getStripeConfiguration, getStripeForMode } = require('../config/stripe');

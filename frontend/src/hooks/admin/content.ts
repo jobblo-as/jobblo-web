@@ -27,7 +27,7 @@ export const useHomepageContent = () =>
 export const useUpdateHomepageContent = () => {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: (payload: unknown) => updateHomepageContent(payload),
+        mutationFn: (payload: Record<string, unknown>) => updateHomepageContent(payload),
         onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'content', 'homepage'] }); toast.success('Hjemmeside oppdatert.'); },
         onError: () => toast.error('Kunne ikke oppdatere hjemmeside.'),
     });
@@ -39,7 +39,7 @@ export const useNavigation = () =>
 export const useUpdateNavigation = () => {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: (payload: unknown) => updateNavigation(payload),
+        mutationFn: (payload: Record<string, unknown>) => updateNavigation(payload),
         onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'content', 'navigation'] }); toast.success('Navigasjon oppdatert.'); },
         onError: () => toast.error('Kunne ikke oppdatere navigasjon.'),
     });
@@ -51,7 +51,7 @@ export const useFooter = () =>
 export const useUpdateFooter = () => {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: (payload: unknown) => updateFooter(payload),
+        mutationFn: (payload: Record<string, unknown>) => updateFooter(payload),
         onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'content', 'footer'] }); toast.success('Footer oppdatert.'); },
         onError: () => toast.error('Kunne ikke oppdatere footer.'),
     });
@@ -63,7 +63,7 @@ export const useAnnouncements = () =>
 export const useUpdateAnnouncement = () => {
     const qc = useQueryClient();
     return useMutation({
-        mutationFn: (payload: unknown) => updateAnnouncement(payload),
+        mutationFn: (payload: Record<string, unknown>) => updateAnnouncement(payload),
         onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'content', 'announcements'] }); toast.success('Kunngjøring oppdatert.'); },
         onError: () => toast.error('Kunne ikke oppdatere kunngjøring.'),
     });

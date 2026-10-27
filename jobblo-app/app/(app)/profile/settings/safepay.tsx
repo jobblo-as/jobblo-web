@@ -202,7 +202,7 @@ function Transaction({ transaction }: { transaction: SafePayHistoryTransaction }
                 </Text>
               </View>
               <View className="flex-row items-center gap-0.5">
-                <Text className="text-[0.8125rem] font-medium text-subtle">{expanded ? 'Skjul' : 'Detaljer'}</Text>
+                <Text className="text-[0.8125rem] font-medium text-muted">{expanded ? 'Skjul' : 'Detaljer'}</Text>
                 {expanded ? <ChevronUp size={14} color={tc('#9B9E96', 'subtle')} /> : <ChevronDown size={14} color={tc('#9B9E96', 'subtle')} />}
               </View>
             </View>
@@ -417,7 +417,7 @@ function toneBg(color: string) {
 
 function DetailHeading({ children }: { children: React.ReactNode }) {
   return (
-    <Text className="mb-1.5 mt-3 text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-subtle">{children}</Text>
+    <Text className="mb-1.5 mt-3 text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-muted">{children}</Text>
   );
 }
 
@@ -563,7 +563,7 @@ function SummaryCell({ label, value, icon, divider = false }: { label: string; v
         {icon}
         <Text className="text-[0.8125rem] text-muted">{label}</Text>
       </View>
-      <Text className="mt-1.5 text-[1rem] font-bold tabular-nums text-ink" numberOfLines={1} adjustsFontSizeToFit>
+      <Text className="mt-1.5 text-[1.0625rem] font-bold tabular-nums text-ink" numberOfLines={1} adjustsFontSizeToFit>
         {value}
       </Text>
     </View>

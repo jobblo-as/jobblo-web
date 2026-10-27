@@ -24,6 +24,8 @@ export type User = {
   planType?: 'business' | 'private';
   monthlyContactUsage?: number;
   verified?: boolean;
+  /** E-mail confirmed (owner profile only). Not BankID: that is `identityVerified` below. */
+  emailVerified?: boolean;
 
   /**
    * BankID verification state, as the server chooses to expose it.
@@ -73,6 +75,36 @@ export type User = {
   jobsThisMonth?: number;
   totalApplicationsReceived?: number;
   completedJobs?: number;
+  // Stripe Connect status (userProjections.js lists them as safe to send).
+  stripeConnectAccountId?: string;
+  payoutEnabled?: boolean;
+  // Profile sections (backend/models/User.js); dates arrive as ISO strings.
+  experience?: {
+    _id: string;
+    title?: string;
+    company?: string;
+    startDate: string;
+    endDate?: string;
+    description?: string;
+  }[];
+  portfolio?: { _id: string; title?: string; description?: string; imageUrl?: string; link?: string }[];
+  previousProjects?: {
+    _id: string;
+    title?: string;
+    description?: string;
+    imageUrl?: string;
+    category?: string;
+    date?: string;
+    link?: string;
+  }[];
+  certifications?: {
+    _id: string;
+    title?: string;
+    url?: string;
+    issuedBy?: string;
+    date?: string;
+    description?: string;
+  }[];
 };
 
 export type AuthTokens = {

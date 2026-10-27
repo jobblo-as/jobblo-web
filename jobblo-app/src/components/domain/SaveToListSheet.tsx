@@ -213,7 +213,7 @@ export function SaveToListSheet({
             onSubmitEditing={() => void handleCreateAndSave()}
             className="rounded-2xl border border-line bg-surface px-4 py-3 text-[0.9375rem] text-ink"
           />
-          <Text className="mt-1.5 text-right text-[0.8125rem] text-subtle">
+          <Text className="mt-1.5 text-right text-[0.8125rem] text-muted">
             {trimmedName.length}/{FAVORITE_LIST_NAME_MAX_LENGTH}
           </Text>
 
@@ -255,7 +255,7 @@ export function SaveToListSheet({
         </View>
       ) : sortedLists.length === 0 ? (
         <View className="items-center py-8">
-          <Text className="text-[1rem] font-semibold text-ink">Du har ingen lister ennå</Text>
+          <Text className="text-[1.0625rem] font-semibold text-ink">Du har ingen lister ennå</Text>
           <Text className="mt-1.5 text-center text-[0.8125rem] text-muted">
             Lag en liste for å samle oppdragene du vil komme tilbake til.
           </Text>

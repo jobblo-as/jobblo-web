@@ -1,6 +1,7 @@
 const Transaction = require('../../models/Transaction');
 const { asyncHandler, sendSuccess, sendError, buildPagination } = require('../../utils/apiResponse');
 const { parsePagination, parseObjectId, parseSort, parseDate } = require('../../utils/pagination');
+const { queryString } = require('../../utils/devQuery');
 
 const SORT_FIELDS = ['createdAt', 'amount', 'status'];
 const VALID_STATUSES = ['pending', 'succeeded', 'failed', 'refunded'];
@@ -22,7 +23,7 @@ const getTransactions = asyncHandler(async (req, res) => {
     query.type = req.query.type;
   }
   if (req.query.search) {
-    const esc = req.query.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const esc = queryString(req.query.search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     query.$or = [
       { planName: { $regex: esc, $options: 'i' } },
       { discountCoupon: { $regex: esc, $options: 'i' } },

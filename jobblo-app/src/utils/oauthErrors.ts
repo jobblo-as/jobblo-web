@@ -53,6 +53,16 @@ export const OAUTH_ERROR_MESSAGES: Record<string, string> = {
   account_deactivated:
     'Denne kontoen er deaktivert. Kontakt support hvis du vil åpne den igjen.',
 
+  // Sign in with Apple, web flow (Android). Native iOS gets the same copy as JSON messages.
+  apple_account_exists:
+    'Det finnes allerede en konto med denne e-postadressen. Logg inn med e-post og passord først.',
+  apple_no_email: 'Apple delte ingen e-postadresse, og den trengs for å opprette en konto.',
+  apple_invalid_state: 'Innloggingen tok for lang tid eller ble avbrutt. Prøv igjen.',
+  apple_invalid_token: 'Apple-innloggingen mislyktes. Prøv igjen.',
+  apple_cancelled: 'Apple-innloggingen ble avbrutt.',
+  apple_failed: 'Apple-innloggingen mislyktes. Prøv igjen.',
+  account_inactive: 'Kontoen er ikke aktiv.',
+
   // Generic: the hand-off page could not tell us anything more specific.
   oauth_failed: 'Innloggingen mislyktes. Prøv igjen.',
 };

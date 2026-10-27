@@ -5,6 +5,7 @@
  */
 
 jest.mock('../models/ChatMessage', () => ({
+  aggregate: jest.fn(),
   findById: jest.fn(),
   find: jest.fn(),
   findOne: jest.fn(),
@@ -22,6 +23,7 @@ jest.mock('../models/Service', () => ({
   create: jest.fn(),
   updateOne: jest.fn(),
 }));
+jest.mock('../utils/viewCounter', () => ({ count: jest.fn() }));
 jest.mock('../models/JobRequest', () => ({ findById: jest.fn(), findOne: jest.fn() }));
 jest.mock('../models/Dispute', () => ({ findOne: jest.fn() }));
 jest.mock('../models/Notification', () => ({ create: jest.fn() }));
@@ -66,6 +68,7 @@ function makeRes() {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  require('../utils/cache')._local.clear(); // getServiceById caches public listings
   Dispute.findOne.mockReturnValue(selectChain(null));
   Notification.create.mockResolvedValue({});
 });
@@ -142,7 +145,7 @@ describe('non-public listings are not readable by id', () => {
   }
 
   it('hides a draft from an anonymous visitor, and does not confirm it exists', async () => {
-    Service.findById.mockReturnValue({ populate: jest.fn().mockResolvedValue(service('draft')) });
+    Service.findById.mockReturnValue({ populate: () => ({ lean: async () => service('draft') }) });
     Order.findOne.mockReturnValue(selectChain(null));
 
     const res = makeRes();
@@ -154,7 +157,7 @@ describe('non-public listings are not readable by id', () => {
 
   it('lets the owner read their own non-public listing', async () => {
     Service.findById.mockReturnValue({
-      populate: jest.fn().mockResolvedValue(service('cancelled')),
+      populate: () => ({ lean: async () => service('cancelled') }),
     });
 
     const res = makeRes();
@@ -167,7 +170,7 @@ describe('non-public listings are not readable by id', () => {
   });
 
   it('does not count a view for the owner refreshing their own page', async () => {
-    Service.findById.mockReturnValue({ populate: jest.fn().mockResolvedValue(service('open')) });
+    Service.findById.mockReturnValue({ populate: () => ({ lean: async () => service('open') }) });
 
     await serviceController.getServiceById(
       { params: { id: String(SERVICE) }, query: {}, userId: String(OWNER) },
@@ -176,21 +179,20 @@ describe('non-public listings are not readable by id', () => {
 
     // `views` is a public sort field, so the owner's own refreshes inflating it is a
     // ranking problem, not just a cosmetic one.
+    expect(require('../utils/viewCounter').count).not.toHaveBeenCalled();
     expect(Service.updateOne).not.toHaveBeenCalled();
   });
 
   it('does count a view for a visitor reading a live listing', async () => {
-    Service.findById.mockReturnValue({ populate: jest.fn().mockResolvedValue(service('open')) });
+    Service.findById.mockReturnValue({ populate: () => ({ lean: async () => service('open') }) });
 
     await serviceController.getServiceById(
       { params: { id: String(SERVICE) }, query: {}, userId: String(WORKER) },
       makeRes()
     );
 
-    expect(Service.updateOne).toHaveBeenCalledWith(
-      { _id: SERVICE },
-      { $inc: { views: 1 } }
-    );
+    // Buffered (utils/viewCounter flushes one bulkWrite of $inc's), not a write per view.
+    expect(require('../utils/viewCounter').count).toHaveBeenCalledWith(SERVICE);
   });
 
   it('rejects a malformed id with 400 rather than a CastError 500', async () => {
@@ -265,13 +267,8 @@ describe('message pagination', () => {
   }
 
   it('returns the newest page by default and reports what remains', async () => {
-    Chat.findById
-      .mockReturnValueOnce({
-        select: jest
-          .fn()
-          .mockResolvedValue({ clientId: WORKER, providerId: OWNER, messages: new Array(130) }),
-      })
-      .mockReturnValueOnce(chatQuery([{ text: 'siste' }]));
+    Chat.aggregate.mockResolvedValueOnce([{ clientId: WORKER, providerId: OWNER, total: 130 }]);
+    Chat.findById.mockReturnValueOnce(chatQuery([{ text: 'siste' }]));
 
     const res = makeRes();
     await chatController.getChatById(
@@ -288,13 +285,8 @@ describe('message pagination', () => {
   });
 
   it('caps an oversized limit', async () => {
-    Chat.findById
-      .mockReturnValueOnce({
-        select: jest
-          .fn()
-          .mockResolvedValue({ clientId: WORKER, providerId: OWNER, messages: new Array(10) }),
-      })
-      .mockReturnValueOnce(chatQuery([]));
+    Chat.aggregate.mockResolvedValueOnce([{ clientId: WORKER, providerId: OWNER, total: 10 }]);
+    Chat.findById.mockReturnValueOnce(chatQuery([]));
 
     const res = makeRes();
     await chatController.getChatById(
@@ -311,9 +303,7 @@ describe('message pagination', () => {
   });
 
   it('authorizes before reading any messages', async () => {
-    Chat.findById.mockReturnValueOnce({
-      select: jest.fn().mockResolvedValue({ clientId: WORKER, providerId: OWNER, messages: [] }),
-    });
+    Chat.aggregate.mockResolvedValueOnce([{ clientId: WORKER, providerId: OWNER, total: 0 }]);
 
     const res = makeRes();
     await chatController.getChatById(
@@ -327,6 +317,6 @@ describe('message pagination', () => {
 
     expect(res.statusCode).toBe(403);
     // The second query — the one that actually pulls messages — must never run.
-    expect(Chat.findById).toHaveBeenCalledTimes(1);
+    expect(Chat.findById).not.toHaveBeenCalled();
   });
 });

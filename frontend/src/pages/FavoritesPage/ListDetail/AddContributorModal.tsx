@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast';
 interface User {
   _id: string;
   name: string;
+  lastName?: string;
   email: string;
   avatarUrl?: string;
 }

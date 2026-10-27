@@ -52,11 +52,11 @@ function makeRes() {
  * endpoint awaits it before sending the browser to Vipps, so a stub that resolved
  * synchronously would hide the ordering the production race fix depends on.
  */
-function makeReq({ query = {}, session = {}, userId } = {}) {
+function makeReq({ query = {}, session = {}, userId, sessionId } = {}) {
   if (session && typeof session.save !== 'function') {
     session.save = (cb) => setImmediate(() => cb(null));
   }
-  return { query, session, userId };
+  return { query, session, userId, sessionId };
 }
 
 const OLD_ENV = process.env;
@@ -247,6 +247,29 @@ describe('the identity decision reaches the user as a distinguishable outcome', 
     expect(res.redirectedTo).toBe('https://jobblo.example/login?error=vipps_account_exists');
     expect(User.create).not.toHaveBeenCalled();
     expect(res.cookies.accessToken).toBeUndefined();
+  });
+
+  it.each([
+    ['after the starter logged out', {}],
+    ['as another user', { userId: 'user_2', sessionId: 'sess_2' }],
+    ['from another login session', { userId: 'user_1', sessionId: 'sess_2' }],
+  ])('a link callback %s is refused before any exchange', async (_l, who) => {
+    primeVipps({ sub: 'attacker-sub' });
+    const req = makeReq({
+      query: { code: 'c', state: 'abc' },
+      session: { vippsAuth: { state: 'abc', createdAt: Date.now(), linkUserId: 'user_1', linkSessionId: 'sess_1' } },
+      ...who,
+    });
+    const res = makeRes();
+    await vippsController.vippsCallback(req, res);
+    expect(res.redirectedTo).toContain('error=vipps_failed');
+    expect(axios.post).not.toHaveBeenCalled();
+  });
+
+  it('a link start records the session it came from', async () => {
+    const req = makeReq({ query: { link: '1' }, userId: 'user_1', sessionId: 'sess_1' });
+    await vippsController.redirectToVipps(req, makeRes());
+    expect(req.session.vippsAuth).toMatchObject({ linkUserId: 'user_1', linkSessionId: 'sess_1' });
   });
 
   it('a missing token response does not fall through to a login', async () => {

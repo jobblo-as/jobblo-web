@@ -8,7 +8,6 @@ import { ChatWindow } from '../../components/messagelist/ChatWindow';
 export function MessagesPageSplit() {
   const {
     conversationId,
-    queryClient,
     messagesEndRef,
     activeFilter,
     setActiveFilter,

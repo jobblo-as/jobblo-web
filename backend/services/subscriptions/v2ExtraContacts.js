@@ -16,6 +16,7 @@ const JobRequest = require('../../models/JobRequest');
 const User = require('../../models/User');
 const { getStripeConfiguration, getStripeForMode } = require('../../config/stripe');
 const { resolveStripeCustomer } = require('../stripe/customers');
+const { logApplicationError } = require('../../utils/errorLogger');
 
 const CHECKOUT_MINUTES = 30; // Stripe's minimum Checkout lifetime
 const CLOSED_SERVICE_STATUSES = ['completed', 'in_progress', 'closed', 'cancelled', 'expired', 'draft', 'waiting_for_approval'];
@@ -174,6 +175,16 @@ async function confirmExtraContactSession(session, Model = ExtraContactPurchase,
     session.livemode !== (purchase.stripeMode === 'live')
   ) {
     console.error('[extra-contact] session does not match its purchase; manual review', { sessionId: session?.id, purchaseId: metadata.purchaseId });
+    // The customer may have paid for nothing: raise an incident, not just a log line.
+    await logApplicationError({
+      error: new Error('Extra-contact Checkout session does not match its purchase'),
+      requestPath: 'stripe/extra-contact',
+      httpMethod: 'POST',
+      httpStatus: 500,
+      errorCode: 'EXTRA_CONTACT_PAYMENT_MISMATCH',
+      source: 'stripe',
+      metadata: { sessionId: session?.id, purchaseId: String(metadata.purchaseId), paymentStatus: session?.payment_status },
+    });
     return { handled: 'extra_contact_mismatch' };
   }
   if (session.payment_status !== 'paid') return { handled: 'extra_contact_unpaid' };

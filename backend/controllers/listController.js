@@ -4,6 +4,15 @@ const Service = require('../models/Service');
 const Notification = require('../models/Notification');
 const User = require('../models/User');
 const notificationController = require('./notificationController');
+const { parsePagination } = require('../utils/pagination');
+const { PUBLIC_SERVICE_STATUSES, isPubliclyVisible } = require('../constants/serviceVisibility');
+
+/** Lists only show public listings, or the viewer's own; a list must not expose a draft or a finished job. */
+const visibleServices = (viewerId) => ({
+  path: 'services',
+  match: { $or: [{ status: { $in: PUBLIC_SERVICE_STATUSES } }, { userId: viewerId }] },
+});
+exports.visibleServices = visibleServices;
 
 /**
  * Favorite / saved list controller.
@@ -65,7 +74,9 @@ exports.getUserLists = async (req, res) => {
       };
     }
 
-    const lists = await List.find(query).populate('services');
+    // Clients render every list, so the page is generous — but no longer unbounded.
+    const { limit, skip } = parsePagination(req.query, { defaultLimit: 100 });
+    const lists = await List.find(query).sort({ _id: -1 }).skip(skip).limit(limit).populate(visibleServices(currentUserId));
     res.status(200).json(lists);
   } catch (error) {
     return failed(res, 500, 'lists_fetch_failed', 'Error fetching lists', error);
@@ -125,7 +136,7 @@ exports.addServiceToList = async (req, res) => {
      * screen rendered.
      */
     const service = await Service.findById(serviceId);
-    if (!service) {
+    if (!service || (!isPubliclyVisible(service) && String(service.userId) !== String(req.userId))) {
       return failed(res, 404, 'service_not_found', 'Service not found');
     }
 
@@ -252,7 +263,10 @@ exports.addContributors = async (req, res) => {
     }
 
     if (Array.isArray(userIds)) {
-      userIds.filter(isValidId).forEach((userId) => {
+      // At most 20 per call, and only real, live accounts.
+      const wanted = [...new Set(userIds.filter(isValidId).map(String))].slice(0, 20);
+      const existing = await User.find({ _id: { $in: wanted }, isDeleted: { $ne: true } }).select('_id').lean();
+      existing.map((u) => String(u._id)).forEach((userId) => {
         if (!list.contributors.includes(userId)) {
           list.contributors.push(userId);
         }
@@ -331,7 +345,7 @@ exports.getListById = async (req, res) => {
       _id: listId,
       $or: [{ user: req.userId }, { contributors: req.userId }, { public: true }],
     })
-      .populate('services')
+      .populate(visibleServices(req.userId))
       .populate('user', 'name lastName avatarUrl email')
       .populate('contributors', 'name lastName avatarUrl email');
 
@@ -339,7 +353,16 @@ exports.getListById = async (req, res) => {
       return failed(res, 404, 'list_not_found', 'List not found');
     }
 
-    res.status(200).json(list);
+    // Only the owner sees emails. Contributors are added by id without being asked, so a
+    // "member" check let anyone add strangers to a list and read their addresses (C3 again).
+    const out = list.toObject();
+    const ids = (people) => [].concat(people || []).map((p) => String(p?._id || p));
+    const isOwner = ids(out.user).includes(String(req.userId));
+    if (!isOwner) {
+      for (const person of [].concat(out.user || [], out.contributors || [])) if (person && typeof person === 'object') delete person.email;
+    }
+
+    res.status(200).json(out);
   } catch (error) {
     return failed(res, 500, 'list_fetch_failed', 'Error fetching list', error);
   }

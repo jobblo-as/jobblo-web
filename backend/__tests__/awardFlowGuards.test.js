@@ -31,7 +31,7 @@ jest.mock('../models/JobRequest', () => ({
 }));
 jest.mock('../models/ChatMessage', () => ({ findOne: jest.fn(), findOneAndUpdate: jest.fn() }));
 jest.mock('../models/Notification', () => ({ create: jest.fn() }));
-jest.mock('../models/User', () => ({ findById: jest.fn(), findByIdAndUpdate: jest.fn() }));
+jest.mock('../models/User', () => ({ findById: jest.fn(), findByIdAndUpdate: jest.fn(), exists: jest.fn(async () => null) }));
 jest.mock('../services/notifications', () => ({ notify: jest.fn() }));
 jest.mock('../services/stripeConnectReadiness', () => ({
   getConnectReadiness: jest.fn().mockResolvedValue({ ready: true }),
@@ -228,6 +228,19 @@ describe('the contract uses the price agreed in the conversation', () => {
     const res = makeRes();
     await safepayController.createContract(req(), res);
     expect(res.statusCode).toBe(409);
+    expect(Order).not.toHaveBeenCalled();
+  });
+});
+
+// S6: awarding opens a contract with, and posts into the chat of, someone you blocked.
+describe('a block stops the award', () => {
+  it('refuses when either side has blocked the other, before any order exists', async () => {
+    JobRequest.findOne.mockResolvedValue({ _id: REQUEST, status: 'pending' });
+    require('../models/User').exists.mockResolvedValueOnce({ _id: APPLICANT });
+    const res = makeRes();
+    await safepayController.createContract(req(), res);
+    expect(res.statusCode).toBe(403);
+    expect(res.body.code).toBe('user_blocked');
     expect(Order).not.toHaveBeenCalled();
   });
 });

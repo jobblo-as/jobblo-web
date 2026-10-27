@@ -13,6 +13,7 @@ jest.mock('../models/ChatMessage', () => ({
   findOneAndUpdate: jest.fn(),
   findByIdAndUpdate: jest.fn(),
   findByIdAndDelete: jest.fn(),
+  updateOne: jest.fn(),
 }));
 jest.mock('../models/Order', () => {
   const Order = jest.fn(function (doc) {
@@ -24,7 +25,7 @@ jest.mock('../models/Order', () => {
   Order.findByIdAndUpdate = jest.fn();
   return Order;
 });
-jest.mock('../models/User', () => ({ findById: jest.fn() }));
+jest.mock('../models/User', () => ({ findById: jest.fn(), exists: jest.fn() }));
 jest.mock('../models/Service', () => ({ findById: jest.fn(), findByIdAndUpdate: jest.fn(), updateOne: jest.fn() }));
 jest.mock('../models/JobRequest', () => ({ findOne: jest.fn() }));
 jest.mock('../models/Dispute', () => ({ findOne: jest.fn() }));
@@ -82,6 +83,7 @@ function populateChain(value) {
 beforeEach(() => {
   jest.clearAllMocks();
   enabled.mockReturnValue(true);
+  User.exists.mockResolvedValue(null);
 });
 
 describe('updateAgreedPrice', () => {
@@ -92,6 +94,7 @@ describe('updateAgreedPrice', () => {
       providerId: OWNER,
       orderId: null,
       status: 'requested',
+      serviceId: { _id: SERVICE, userId: OWNER },
       messages: [],
       save: jest.fn().mockResolvedValue(),
       ...overrides,
@@ -102,7 +105,8 @@ describe('updateAgreedPrice', () => {
     // The escrow amount comes from the order; the payment endpoint prefers the chat
     // value. Letting these diverge meant agreeing 5000, setting the chat to 3, paying
     // 3 kr, and still having the 5000 kr order marked fully paid.
-    Chat.findById.mockResolvedValue(chatDoc({ orderId: ORDER }));
+    Chat.findById.mockReturnValue(populateChain(chatDoc({ orderId: ORDER })));
+    require('../models/Order').findById.mockReturnValue({ select: () => ({ lean: async () => ({ status: 'awaiting_payment' }) }) });
 
     const res = makeRes();
     await chatController.updateAgreedPrice(
@@ -119,8 +123,9 @@ describe('updateAgreedPrice', () => {
     ['negative', -100],
     ['not a number', 'gratis'],
     ['infinite', Infinity],
+    ['decimal (P3)', 1200.5],
   ])('rejects %s', async (_label, agreedPrice) => {
-    Chat.findById.mockResolvedValue(chatDoc());
+    Chat.findById.mockReturnValue(populateChain(chatDoc()));
 
     const res = makeRes();
     await chatController.updateAgreedPrice(
@@ -132,7 +137,7 @@ describe('updateAgreedPrice', () => {
   });
 
   it('rejects a price above the ceiling that would overflow Stripe', async () => {
-    Chat.findById.mockResolvedValue(chatDoc());
+    Chat.findById.mockReturnValue(populateChain(chatDoc()));
 
     const res = makeRes();
     await chatController.updateAgreedPrice(
@@ -149,8 +154,8 @@ describe('updateAgreedPrice', () => {
 
   it('does not drag a live job back to "agreed"', async () => {
     const chat = chatDoc({ status: 'in_progress' });
-    Chat.findById.mockResolvedValue(chat);
-    Chat.findById.mockResolvedValueOnce(chat);
+    Chat.findById.mockReturnValue(populateChain(chat));
+    Chat.findById.mockReturnValueOnce(populateChain(chat));
 
     await chatController.updateAgreedPrice(
       {
@@ -165,8 +170,23 @@ describe('updateAgreedPrice', () => {
     expect(chat.agreedPrice).toBe(1200);
   });
 
+  it('refuses the worker setting the price the owner will pay (P3)', async () => {
+    const chat = chatDoc();
+    Chat.findById.mockReturnValue(populateChain(chat));
+
+    const res = makeRes();
+    await chatController.updateAgreedPrice(
+      { user: { id: String(WORKER) }, params: { chatId: String(CHAT) }, body: { agreedPrice: 90000 } },
+      res
+    );
+
+    expect(res.statusCode).toBe(403);
+    expect(res.body.code).toBe('price_owner_only');
+    expect(chat.save).not.toHaveBeenCalled();
+  });
+
   it('refuses a non-participant', async () => {
-    Chat.findById.mockResolvedValue(chatDoc());
+    Chat.findById.mockReturnValue(populateChain(chatDoc()));
 
     const res = makeRes();
     await chatController.updateAgreedPrice(
@@ -179,6 +199,51 @@ describe('updateAgreedPrice', () => {
     );
 
     expect(res.statusCode).toBe(403);
+  });
+
+  // S6: price and contract steps post system messages into the chat, and skipped the block list.
+  it('refuses a blocked pair (S6)', async () => {
+    const chat = chatDoc();
+    Chat.findById.mockReturnValue(populateChain(chat));
+    User.exists.mockResolvedValueOnce({ _id: WORKER });
+
+    const res = makeRes();
+    await chatController.updateAgreedPrice(
+      { user: { id: String(OWNER) }, params: { chatId: String(CHAT) }, body: { agreedPrice: 500 } },
+      res
+    );
+
+    expect(res.statusCode).toBe(403);
+    expect(res.body.code).toBe('user_blocked');
+    expect(chat.save).not.toHaveBeenCalled();
+  });
+
+  it('shares the chat send limit, so repeated changes cannot grow the document without bound (S6)', async () => {
+    const chatId = String(new mongoose.Types.ObjectId());
+    const chat = chatDoc({ _id: chatId });
+    Chat.findById.mockReturnValue(populateChain(chat));
+
+    let res;
+    for (let i = 1; i <= 31; i++) {
+      res = makeRes();
+      await chatController.updateAgreedPrice({ user: { id: String(OWNER) }, params: { chatId }, body: { agreedPrice: i } }, res);
+    }
+
+    expect(res.statusCode).toBe(429);
+    expect(chat.save).toHaveBeenCalledTimes(30);
+  });
+
+  it('createContract refuses a blocked pair (S6)', async () => {
+    const chat = chatDoc({ serviceId: { _id: SERVICE, userId: OWNER, price: 1000, checklist: [] } });
+    Chat.findById.mockReturnValue(populateChain(chat));
+    User.exists.mockResolvedValueOnce({ _id: WORKER });
+
+    const res = makeRes();
+    await chatController.createContract({ user: { id: String(OWNER) }, params: { chatId: String(CHAT) }, body: {} }, res);
+
+    expect(res.statusCode).toBe(403);
+    expect(res.body.code).toBe('user_blocked');
+    expect(require('../models/Order')).not.toHaveBeenCalled();
   });
 });
 
@@ -247,12 +312,28 @@ describe('sendMessage hygiene', () => {
     };
   }
 
+  /** findById(...).select(...) reads it; the atomic updateOne appends to it. */
+  function storeChat(chat) {
+    Chat.findById.mockReturnValue(Object.assign(Promise.resolve(chat), { select: () => Promise.resolve(chat) }));
+    Chat.updateOne.mockImplementation(async (_filter, update) => {
+      chat.messages.push(update.$push.messages);
+      Object.assign(chat, update.$set);
+      return { modifiedCount: 1 };
+    });
+  }
+  const send = (userId, text, chatId = CHAT) => {
+    const res = makeRes();
+    return chatController
+      .sendMessage({ user: { id: String(userId) }, params: { chatId: String(chatId) }, body: { text }, app: { get: () => null } }, res)
+      .then(() => res);
+  };
+
   it.each([
     ['missing', undefined],
     ['empty', ''],
     ['whitespace only', '   '],
   ])('rejects a %s message instead of storing undefined', async (_label, text) => {
-    Chat.findById.mockResolvedValue(chatDoc());
+    storeChat(chatDoc());
 
     const res = makeRes();
     await chatController.sendMessage(
@@ -264,7 +345,7 @@ describe('sendMessage hygiene', () => {
   });
 
   it('rejects an oversized message that could push the document past the 16 MB limit', async () => {
-    Chat.findById.mockResolvedValue(chatDoc());
+    storeChat(chatDoc());
 
     const res = makeRes();
     await chatController.sendMessage(
@@ -282,7 +363,7 @@ describe('sendMessage hygiene', () => {
 
   it('un-hides the conversation for someone who had deleted it', async () => {
     const chat = chatDoc();
-    Chat.findById.mockResolvedValue(chat);
+    storeChat(chat);
 
     await chatController.sendMessage(
       {
@@ -306,9 +387,9 @@ describe('sendMessage hygiene', () => {
       serviceId: SERVICE,
       orderId: ORDER,
     };
-    Chat.findById.mockResolvedValue(chat);
+    storeChat(chat);
 
-    for (let i = 0; i < 100; i += 1) {
+    for (let i = 0; i < 20; i += 1) {
       const res = makeRes();
       await chatController.sendMessage({
         user: { id: String(OWNER) },
@@ -319,15 +400,15 @@ describe('sendMessage hygiene', () => {
       expect(res.statusCode).toBe(201);
     }
 
-    expect(chat.messages).toHaveLength(100);
-    expect(chat.save).toHaveBeenCalledTimes(100);
+    expect(chat.messages).toHaveLength(20);
+    expect(Chat.updateOne).toHaveBeenCalledTimes(20);
     expect(consumeApplicationContact).not.toHaveBeenCalled();
   });
 
   it('does not consume a contact when chat persistence fails or when the message is retried', async () => {
     const chat = chatDoc();
-    chat.save.mockRejectedValueOnce(new Error('chat write failed'));
-    Chat.findById.mockResolvedValue(chat);
+    storeChat(chat);
+    Chat.updateOne.mockRejectedValueOnce(new Error('chat write failed'));
 
     const failed = makeRes();
     await chatController.sendMessage({
@@ -348,9 +429,49 @@ describe('sendMessage hygiene', () => {
     expect(retried.statusCode).toBe(201);
     expect(consumeApplicationContact).not.toHaveBeenCalled();
   });
+
+  it('M4: refuses a message when either side has blocked the other', async () => {
+    storeChat(chatDoc());
+    User.exists.mockResolvedValue({ _id: OWNER });
+    const res = await send(WORKER, 'hei');
+    expect(res.statusCode).toBe(403);
+    expect(res.body.code).toBe('user_blocked');
+    expect(Chat.updateOne).not.toHaveBeenCalled();
+  });
+
+  it('M7: appends only while the document is under the size cap, and says so when full', async () => {
+    storeChat(chatDoc());
+    Chat.updateOne.mockResolvedValueOnce({ modifiedCount: 0 });
+    const res = await send(WORKER, 'hei');
+    expect(res.statusCode).toBe(409);
+    expect(res.body.code).toBe('chat_full');
+    expect(Chat.updateOne.mock.calls[0][0].$expr).toEqual({ $lt: [{ $bsonSize: '$$ROOT' }, 15 * 1024 * 1024] });
+  });
+
+  it('M7: limits how fast one user can send into one chat', async () => {
+    const chatId = new mongoose.Types.ObjectId(); // own counter key
+    storeChat({ ...chatDoc(), _id: chatId });
+    for (let i = 0; i < 30; i += 1) expect((await send(WORKER, `m${i}`, chatId)).statusCode).toBe(201);
+    const limited = await send(WORKER, 'one too many', chatId);
+    expect(limited.statusCode).toBe(429);
+    expect((await send(OWNER, 'the other side still can', chatId)).statusCode).toBe(201);
+  });
 });
 
 describe('createOrGetChat usage accounting', () => {
+  it('M4: refuses to open a chat between users when one has blocked the other', async () => {
+    User.findById.mockReturnValue({ select: jest.fn().mockResolvedValue({ _id: WORKER, name: 'Worker' }) });
+    User.exists.mockResolvedValue({ _id: WORKER });
+    const res = makeRes();
+    await chatController.createOrGetChat({
+      user: { id: String(OWNER) },
+      body: { providerId: String(WORKER), serviceId: String(SERVICE) },
+    }, res);
+    expect(res.statusCode).toBe(403);
+    expect(res.body.code).toBe('user_blocked');
+    expect(Chat.findOneAndUpdate).not.toHaveBeenCalled();
+  });
+
   it('opens or creates a chat without consuming an included contact', async () => {
     User.findById.mockReturnValue({
       select: jest.fn().mockResolvedValue({ _id: WORKER, name: 'Worker' }),

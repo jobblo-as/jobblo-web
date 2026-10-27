@@ -32,6 +32,7 @@ export interface JobLocation {
   type: string;
   coordinates: [number, number];
   address: string;
+  postalCode?: string;
   city: string;
 }
 

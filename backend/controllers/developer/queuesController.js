@@ -25,10 +25,11 @@ const queueAction = (fn, verb) =>
       logActivity({ adminId: req.user._id, action: 'other', description: `Queue ${req.params.queue}: ${verb}${req.params.id ? ` job ${req.params.id}` : ''}`, metadata: { area: 'developer.queues', queue: req.params.queue, jobId: req.params.id || null, result }, ip: req.ip, userAgent: req.get('user-agent') || 'unknown' });
       return sendSuccess(res, result, `${verb} done.`);
     } catch (err) {
-      return sendError(res, err.message, err.status || 500);
+      return (err.status ? sendError(res, err.message, err.status) : serverError(res, err));
     }
   });
 const qa = () => require('../../services/queue/admin');
+const { serverError } = require('../../utils/serverError');
 const retryQueueJob = queueAction((q, id) => qa().retryJob(q, id), 'retried');
 const removeQueueJob = queueAction((q, id) => qa().removeJob(q, id), 'removed');
 const retryFailedJobs = queueAction((q) => qa().retryAllFailed(q), 'retried all failed');

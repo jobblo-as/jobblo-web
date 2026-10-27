@@ -1,7 +1,7 @@
 import mainLink from './mainURLs';
 
 export const getApplicants = async (serviceId: string, sort?: string, filter?: string) => {
-  const params: any = {};
+  const params: Record<string, string> = {};
   if (sort) params.sort = sort;
   if (filter) params.filter = filter;
   const res = await mainLink.get(`/api/applicants/${serviceId}`, { params });
@@ -15,7 +15,7 @@ export const getMyApplicantsOverview = async () => {
 
 /** Provider: all services they applied to, with full order/chat/status */
 export const getMyApplicationsOverview = async (status?: string) => {
-  const params: any = {};
+  const params: Record<string, string> = {};
   if (status) params.status = status;
   const res = await mainLink.get('/api/my-applications', { params });
   return res.data;

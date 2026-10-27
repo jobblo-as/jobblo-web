@@ -5,17 +5,21 @@
 services:
   # ---- The backend API ----
   backend:
-    # Build the image using the Dockerfile inside the ./backend folder
-    build: ./backend
+    # Build the image using the Dockerfile inside the ./backend folder. The image defaults to
+    # production (no dev dependencies); local dev needs nodemon, so build the dev variant.
+    build:
+      context: ./backend
+      args:
+        NODE_ENV: development
 
     # Map port 5001 on THIS computer only (127.0.0.1) to the container. Without the
     # address Docker publishes it on every network interface, reachable from the LAN.
     ports:
       - "127.0.0.1:5001:5001"
 
-    # Load your secrets/settings from backend/.env
+    # Load your secrets/settings from backend/.env.development
     env_file:
-      - ./backend/.env
+      - ./backend/.env.development
 
     # Talk to the MongoDB running on YOUR Windows machine (where your real
     # "jobblo-dev" data lives). Inside a container, "localhost" means the
@@ -39,9 +43,9 @@ services:
     # Build the image using the Dockerfile inside the ./frontend folder
     build: ./frontend
 
-    # Open the app at http://localhost:5173
+    # Open the app at http://localhost:5173 (this computer only, not the LAN)
     ports:
-      - "5173:5173"
+      - "127.0.0.1:5173:5173"
 
     # Load frontend settings from frontend/.env
     env_file:

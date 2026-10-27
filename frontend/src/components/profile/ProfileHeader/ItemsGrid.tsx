@@ -23,6 +23,7 @@ import { JobCardSkeleton } from '../../Loading/JobCardSkeleton.tsx';
 import type { Jobs } from '../../../types/Jobs.ts';
 import type { EditSection } from '../EditProfileSheet';
 import { IdentityVerificationCard } from '../IdentityVerificationCard';
+import { EmailVerificationCard } from '../EmailVerificationCard';
 
 /**
  * Everything below the tabs on a profile.
@@ -271,6 +272,7 @@ export function ItemsGrid({
               Hidden below lg because the single-column stack puts this whole column
               after "Om meg" — too far down to be discoverable. ProfilePage renders the
               same card high in the mobile flow instead, so exactly one is ever visible. */}
+          <EmailVerificationCard user={user} isOwnProfile={isOwner} className="hidden lg:block" />
           <IdentityVerificationCard
             user={user}
             isOwnProfile={isOwner}

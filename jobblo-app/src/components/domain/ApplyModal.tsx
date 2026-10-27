@@ -132,7 +132,7 @@ export const ApplyModal = React.memo(
                 }}
               />
 
-              <Text className="mt-1 text-right text-[11px] text-subtle">
+              <Text className="mt-1 text-right text-[0.8125rem] text-muted">
                 {messageLength}/{maxLength}
               </Text>
             </View>

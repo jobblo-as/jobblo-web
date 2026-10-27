@@ -184,15 +184,8 @@ export const PayoutSettingsView = () => {
       }
       window.location.assign(data.url);
     } catch (error) {
-      if (
-        typeof error === 'object' &&
-        error !== null &&
-        'response' in error &&
-        (error as { response?: { data?: { code?: string } } }).response?.data?.code ===
-          'STRIPE_CONNECT_PLATFORM_SETUP_REQUIRED'
-      ) {
-        setPlatformSetupRequired(true);
-      }
+      const code = (error as { response?: { data?: { code?: string } } } | null)?.response?.data?.code;
+      if (code === 'STRIPE_CONNECT_PLATFORM_SETUP_REQUIRED') setPlatformSetupRequired(true);
       toast.error(getErrorMessage(error));
     }
   };

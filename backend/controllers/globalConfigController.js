@@ -10,9 +10,14 @@ exports.getConfigs = async (req, res) => {
   }
 };
 
+// GET /api/config/:key is unauthenticated, so it serves only the flags the web/app read
+// publicly. Everything else (STRIPE_TEST_MODE, dashboard settings) is admin-only via GET /.
+const PUBLIC_CONFIG_KEYS = ['FREE_PRIVATE_JOBS_UNDER_10000', 'ADS_FOR_NON_SUBSCRIBERS'];
+
 exports.getConfigByKey = async (req, res) => {
   try {
     const { key } = req.params;
+    if (!PUBLIC_CONFIG_KEYS.includes(key)) return res.status(404).json({ message: 'Config not found' });
     let config = await GlobalConfig.findOne({ key });
 
       // Fallback defaults if config is missing in DB

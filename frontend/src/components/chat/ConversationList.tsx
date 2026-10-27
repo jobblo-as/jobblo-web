@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessagesSquare } from 'lucide-react';
 import { ConversationSkeleton } from '../Loading/ConversationSkeleton';
+import type { ChatMessage } from '../../api/chatAPI';
 
 interface ConversationUser {
   _id: string;
@@ -20,8 +21,8 @@ interface ChatItem {
     isSold?: boolean;
   };
   lastMessage?: string;
-  messages?: any[];
-  updatedAt: string;
+  messages?: ChatMessage[];
+  updatedAt?: string;
 }
 
 interface ConversationListProps {

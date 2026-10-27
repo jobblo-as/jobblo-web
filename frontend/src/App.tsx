@@ -2,28 +2,25 @@ import './styles/App.css';
 import './styles/Jobblo.css';
 import { Outlet, useLocation } from 'react-router-dom';
 import Header from './components/layout/header/Header.tsx';
-import Footer from './components/layout/footer/Footer.tsx';
 import { ScrollToTop } from './components/shared/ScrollToTop.tsx';
 import { CookieBanner } from './components/shared/CookieBanner.tsx';
-import { App as AntApp } from 'antd';
 import { useAuth } from './features/auth/hook/useAuth.ts';
 import { useOrderApprovalSocket } from './features/notifications/hooks';
 import { NotificationRealtime } from './features/notifications/NotificationRealtime';
 import { useUserStore } from './stores/userStore';
 import { Toaster } from 'react-hot-toast';
-import { PageLoader } from './components/Loading/PageLoader.tsx';
+import { lazy, Suspense } from 'react';
+
+// Below the fold (min-h-screen keeps it there), so it loads after the page, not with it.
+const Footer = lazy(() => import('./components/layout/footer/Footer.tsx'));
 
 export default function App() {
-  const { isLoadingUser } = useAuth();
+  useAuth(); // proactive token refresh
   const user = useUserStore((state) => state.user);
   const location = useLocation();
 
   // Listen for order approvals globally
   useOrderApprovalSocket(user?._id);
-
-  if (isLoadingUser) {
-    return <PageLoader />;
-  }
 
   const isMessagesPage = location.pathname.startsWith('/messages');
 
@@ -68,22 +65,24 @@ export default function App() {
           },
         }}
       />
-      <AntApp>
-        {/* All notification socket handling — sound, toast, system notification, cache
-            updates, reconnect and foreground recovery — lives here and is mounted exactly
-            once. It renders nothing. */}
-        <NotificationRealtime />
-        <ScrollToTop />
-        <CookieBanner />
-        {!isAuthPage && <Header />}
-        {/* At least one screen tall, so the footer starts below the fold. Without it the footer
-            sat right under a redirect, the session check or a short skeleton, then jumped down
-            when the page arrived — the main source of layout shift (CLS 0.2–1.8 per load). */}
-        <div className={isMessagesPage || isAuthPage ? undefined : 'min-h-screen'}>
-          <Outlet />
-        </div>
-        {!isMessagesPage && !isAuthPage && <Footer />}
-      </AntApp>
+      {/* All notification socket handling — sound, toast, system notification, cache
+          updates, reconnect and foreground recovery — lives here and is mounted exactly
+          once. It renders nothing. */}
+      <NotificationRealtime />
+      <ScrollToTop />
+      <CookieBanner />
+      {!isAuthPage && <Header />}
+      {/* At least one screen tall, so the footer starts below the fold. Without it the footer
+          sat right under a redirect, the session check or a short skeleton, then jumped down
+          when the page arrived — the main source of layout shift (CLS 0.2–1.8 per load). */}
+      <div className={isMessagesPage || isAuthPage ? undefined : 'min-h-screen'}>
+        <Outlet />
+      </div>
+      {!isMessagesPage && !isAuthPage && (
+        <Suspense fallback={null}>
+          <Footer />
+        </Suspense>
+      )}
     </>
   );
 }

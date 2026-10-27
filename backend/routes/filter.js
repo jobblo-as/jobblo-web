@@ -25,46 +25,10 @@ const { cacheJson } = require('../utils/cache');
  *         description: Serverfeil ved henting av filtervalg
  */
 // Job counts per category change all the time: a short cache absorbs bursts of page loads.
-router.get('/options', cacheJson('filter-options', 30), filterController.getFilterOptions);
+router.get('/options', cacheJson('filter-options', 30, { ignoreQuery: true }), filterController.getFilterOptions);
 
-/**
- * @swagger
- * /api/filter/apply:
- *   post:
- *     summary: Bruk valgte filtre og hent matchende tjenester
- *     description: Returnerer tjenester som matcher de valgte filterkriteriene.
- *     tags: [Filter]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               categories:
- *                 type: array
- *                 items: { type: string }
- *               priceRange:
- *                 type: object
- *                 properties:
- *                   min: { type: number }
- *                   max: { type: number }
- *               urgentOnly:
- *                 type: boolean
- *               verifiedProvidersOnly:
- *                 type: boolean
- *               searchKeyword:
- *                 type: string
- *               sortBy:
- *                 type: string
- *                 enum: ["newest", "price_low", "price_high", "rating_high", "nearby"]
- *     responses:
- *       200:
- *         description: Liste over filtrerte tjenester
- *       500:
- *         description: Serverfeil ved henting av resultater
- */
+// POST /api/filter/apply was removed: no client called it, and it was public, ran user text as a
+// regular expression, had no page limit and returned non-public listings (security review H3).
 
-router.post('/apply', filterController.applyFilters);
 
 module.exports = router;

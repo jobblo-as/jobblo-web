@@ -1890,6 +1890,10 @@ export const devApi = {
   updateError: (id: string, body: { status?: ErrorStatus; assignee?: string | null; note?: string }) =>
     mainLink.patch(`/api/developer/errors/${id}`, body),
   server: () => get<ServerInfo>('/server'),
+  workers: () => get<WorkersInfo>('/workers'),
+  nginx: () => get<NginxInfo>('/nginx'),
+  pm2: () => get<Pm2Info>('/pm2'),
+  caching: () => get<CachingInfo>('/caching'),
   mongo: () => get<MongoInfo>('/mongo'),
   mongoIndexes: (name: string) =>
     get<{ indexes: { name: string; key: Record<string, number>; ops: number; since: string | null }[] }>(`/mongo/collections/${encodeURIComponent(name)}/indexes`),
@@ -2019,3 +2023,109 @@ export const devApi = {
   report: (type: string, q: Query) => get<ReportInfo>(`/reports/${type}`, q),
   settings: () => get<SettingsInfo>('/settings'),
 };
+
+/** Developer console → Workers: one API process per row, from its Redis heartbeat (backend services/monitoring/workers.js). */
+export interface WorkerInfo {
+  id: string;
+  host: string;
+  pid: number;
+  slot: number | null;
+  ppid: number;
+  schedPolicy: string;
+  restarts: number;
+  lastExit: string | null;
+  node: string;
+  startedAt: string;
+  at: string;
+  cpuPercent: number;
+  rss: number;
+  heapUsed: number;
+  heapTotal: number;
+  loopP50Ms: number | null;
+  loopP99Ms: number | null;
+  loopMaxMs: number | null;
+  rps: number;
+  activeRequests: number;
+  requestsLastMin: number;
+  errorsLastMin: number;
+  p95LastMinMs: number | null;
+  scheduler: boolean;
+  redis: boolean;
+  cache: Record<string, { hits: number; misses: number }>;
+  passwordQueue: { active: number; waiting: number; done: number; busy: number; maxWaiting: number; maxActive: number; maxQueue: number };
+}
+export interface WorkersInfo {
+  configured: string;
+  primaries: { host: string; pid: number; workers: number; schedPolicy: string }[];
+  redis: boolean;
+  heartbeatSec: number;
+  workers: WorkerInfo[];
+  totals: {
+    workers: number;
+    rps: number;
+    activeRequests: number;
+    errorsLastMin: number;
+    cpuPercent: number;
+    rss: number;
+    restarts: number;
+    worstLoopP99Ms: number;
+    passwordBusy: number;
+    passwordWaiting: number;
+    schedulerWorkers: number;
+    cache: Record<string, { hits: number; misses: number; hitRate: number | null }>;
+  };
+}
+
+type Unavailable = { available: false; reason: string };
+export interface NginxPath { path: string; requests: number; hitRate: number | null; p95Ms: number | null }
+export interface NginxInfo {
+  version: string | null;
+  status: Unavailable | { available: true; active: number; accepts: number; handled: number; requests: number; dropped: number; reading: number; writing: number; waiting: number };
+  accessLog:
+    | Unavailable
+    | {
+        available: true;
+        file: string;
+        sizeBytes: number;
+        lines: number;
+        unparsed: number;
+        from: string | null;
+        to: string | null;
+        rpsLastMin: number;
+        statuses: Record<'2xx' | '3xx' | '4xx' | '5xx', number>;
+        cache: Record<string, number>;
+        cacheHitRate: number | null;
+        requestP95Ms: number | null;
+        upstreamP95Ms: number | null;
+        topPaths: NginxPath[];
+      };
+  processes: { available: boolean; reason?: string; list: { pid: number; ppid: number | null; role: string; rssBytes: number; command: string }[] };
+  cacheDir: (Unavailable & { dir: string }) | { available: true; dir: string; files: number; bytes: number; truncated: boolean };
+  config: { statusUrl: string; accessLog: string; cacheDir: string };
+}
+export interface Pm2Process {
+  id: number;
+  name: string;
+  pid: number | null;
+  status: string;
+  mode: 'fork' | 'cluster';
+  instances: number | string;
+  restarts: number;
+  unstableRestarts: number;
+  uptimeSec: number;
+  cpuPercent: number | null;
+  memoryBytes: number | null;
+  node: string | null;
+  appVersion: string | null;
+  killTimeoutMs: number | null;
+  webConcurrency: string | null;
+  nodeEnv: string | null;
+  createdAt: string | null;
+  errLogTail: string[];
+}
+export type Pm2Info = Unavailable | { available: true; processes: Pm2Process[]; self: string | null };
+export interface CachingInfo {
+  nginx: Unavailable | { available: true; hitRate: number | null; statuses: Record<string, number>; topPaths: NginxPath[]; window: { from: string | null; to: string | null; lines: number } };
+  api: { store: 'redis' | 'in-process'; workers: number; namespaces: { name: string; ttlSec: number | null; hits: number; misses: number; hitRate: number | null; redisKeys: number | null }[] };
+  redisKeys: Unavailable | { available: true; truncated: boolean };
+}

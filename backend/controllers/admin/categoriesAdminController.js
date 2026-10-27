@@ -3,6 +3,7 @@ const Service = require('../../models/Service');
 const { asyncHandler, sendSuccess, sendError, buildPagination } = require('../../utils/apiResponse');
 const { parsePagination, parseObjectId } = require('../../utils/pagination');
 const { logActivity } = require('../../services/admin/activityService');
+const { queryString } = require('../../utils/devQuery');
 
 /**
  * GET /api/admin/categories
@@ -12,7 +13,7 @@ const getCategories = asyncHandler(async (req, res) => {
 
   const query = {};
   if (req.query.search) {
-    const esc = req.query.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const esc = queryString(req.query.search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     query.name = { $regex: esc, $options: 'i' };
   }
   if (req.query.isActive !== undefined) {

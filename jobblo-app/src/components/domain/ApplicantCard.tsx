@@ -63,9 +63,9 @@ export function ApplicantCard({
       <View className="flex-row items-start gap-3">
         <View className="relative h-12 w-12 shrink-0 items-center justify-center overflow-visible rounded-full bg-tint">
           <View className="h-12 w-12 overflow-hidden rounded-full">
-            {applicant.avatarUrl ? <Image source={{ uri: applicant.avatarUrl }} className="h-full w-full" /> : <View className="h-full w-full items-center justify-center"><Text className="text-[1rem] font-medium text-[#122A1C] dark:text-brand-text">{getInitials(applicant.name)}</Text></View>}
+            {applicant.avatarUrl ? <Image source={{ uri: applicant.avatarUrl }} className="h-full w-full" /> : <View className="h-full w-full items-center justify-center"><Text className="text-[1.0625rem] font-medium text-[#122A1C] dark:text-brand-text">{getInitials(applicant.name)}</Text></View>}
           </View>
-          {isTop ? <View className="absolute -right-2 -top-1 rounded-full border-2 border-white bg-brand px-1.5 py-0.5"><Text className="text-[0.6875rem] font-medium text-white">Topp</Text></View> : null}
+          {isTop ? <View className="absolute -right-2 -top-1 rounded-full border-2 border-white bg-brand px-1.5 py-0.5"><Text className="text-[0.8125rem] font-medium text-white">Topp</Text></View> : null}
         </View>
 
         <View className="min-w-0 flex-1">
@@ -84,9 +84,9 @@ export function ApplicantCard({
       </View>
 
       <View className="mt-4 flex-row flex-wrap items-start gap-x-5 gap-y-2 border-t border-line pt-3">
-        <View><Text className="text-[0.9375rem] font-semibold text-ink">{applicant.completedJobs}</Text><Text className="mt-0.5 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-subtle">Fullførte</Text></View>
-        <View><Text className="text-[0.9375rem] font-semibold text-ink">{applicant.rating ? Number(applicant.rating).toFixed(1) : '—'}★</Text><Text className="mt-0.5 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-subtle">Vurdering</Text></View>
-        <View><Text className="text-[0.9375rem] font-semibold text-ink">{applicant.responseRate ?? '—'}</Text><Text className="mt-0.5 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-subtle">Svarrate</Text></View>
+        <View><Text className="text-[0.9375rem] font-semibold text-ink">{applicant.completedJobs}</Text><Text className="mt-0.5 text-[0.8125rem] font-semibold uppercase tracking-[0.08em] text-muted">Fullførte</Text></View>
+        <View><Text className="text-[0.9375rem] font-semibold text-ink">{applicant.rating ? Number(applicant.rating).toFixed(1) : '—'}★</Text><Text className="mt-0.5 text-[0.8125rem] font-semibold uppercase tracking-[0.08em] text-muted">Vurdering</Text></View>
+        <View><Text className="text-[0.9375rem] font-semibold text-ink">{applicant.responseRate ?? '—'}</Text><Text className="mt-0.5 text-[0.8125rem] font-semibold uppercase tracking-[0.08em] text-muted">Svarrate</Text></View>
         <View className="min-w-0 flex-1"><Text className="text-[0.8125rem] text-muted" numberOfLines={1}>Søkt {formatDate(application.appliedAt)}</Text>{applicant.locations.length > 0 ? <View className="mt-1 flex-row items-center gap-1"><MapPin size={12} color={tc('#9B9E96', 'subtle')} /><Text className="flex-1 text-[0.8125rem] text-muted" numberOfLines={1}>{applicant.locations.join(' · ')}</Text></View> : null}</View>
       </View>
 

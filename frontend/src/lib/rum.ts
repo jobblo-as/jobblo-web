@@ -70,7 +70,9 @@ function describe(el: Element | null): string | null {
     const name = target.getAttribute('aria-label') || target.getAttribute('name') || target.getAttribute('placeholder') || '';
     return mask(`${tag}[${type}] ${name}`);
   }
-  const label = target.getAttribute('aria-label') || target.getAttribute('data-testid') || target.getAttribute('title') || (target as HTMLElement).innerText || '';
+  // No innerText fallback: a chat row's text is the other person's name and the start of
+  // their last message, which then reached the developer console with any error trail.
+  const label = target.getAttribute('aria-label') || target.getAttribute('data-testid') || target.getAttribute('title') || '';
   return mask(`${target.getAttribute('role') || tag} "${mask(label, 40)}"`);
 }
 

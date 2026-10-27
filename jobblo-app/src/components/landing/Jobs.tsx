@@ -26,7 +26,7 @@ export function Jobs() {
     <View style={{ paddingHorizontal: 20, paddingTop: 28, paddingBottom: 48 }}>
       <View style={{ marginBottom: 22, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }}>
         <View style={{ flex: 1 }}>
-          <Text style={{ color: tc('#9B9E96', 'subtle'), fontSize: 11, fontWeight: '700', letterSpacing: 2.5, textTransform: 'uppercase' }}>
+          <Text style={{ color: tc('#63665F', 'muted'), fontSize: 13, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase' }}>
             05 — Ute nå
           </Text>
           <Text style={{ marginTop: 12, color: TC.ink, fontSize: 32, fontWeight: '700', lineHeight: 38, letterSpacing: -1.1 }}>
@@ -79,9 +79,9 @@ export function Jobs() {
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: TC.tint, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6 }}>
                     <ShieldCheck size={12} color={TC.brandText} />
-                    <Text style={{ color: TC.brandText, fontSize: 12, fontWeight: '700' }}>SafePay</Text>
+                    <Text style={{ color: TC.brandText, fontSize: 13, fontWeight: '700' }}>SafePay</Text>
                   </View>
-                  <Text style={{ color: tc('#9B9E96', 'subtle'), fontSize: 12 }}>{index < 2 ? 'Nå' : 'Ny'}</Text>
+                  <Text style={{ color: tc('#63665F', 'muted'), fontSize: 13 }}>{index < 2 ? 'Nå' : 'Ny'}</Text>
                 </View>
 
                 <Text style={{ color: TC.ink, fontSize: 21, fontWeight: '700', lineHeight: 26, letterSpacing: -0.5 }}>
@@ -97,7 +97,7 @@ export function Jobs() {
                 <View style={{ borderTopWidth: 1, borderTopColor: TC.line, paddingTop: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flex: 1 }}>
                     <MapPin size={14} color={tc('#9B9E96', 'subtle')} />
-                    <Text style={{ color: tc('#63665F', 'muted'), fontSize: 12 }} numberOfLines={1}>{location}</Text>
+                    <Text style={{ color: tc('#63665F', 'muted'), fontSize: 13 }} numberOfLines={1}>{location}</Text>
                   </View>
                   <Text style={{ color: TC.ink, fontSize: 18, fontWeight: '700' }}>
                     {price} kr

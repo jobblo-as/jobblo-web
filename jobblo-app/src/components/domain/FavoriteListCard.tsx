@@ -51,7 +51,7 @@ export function FavoriteListCard({ list, onPress }: FavoriteListCardProps) {
         {list.public ? (
           <View className="absolute left-2.5 top-2.5 flex-row items-center gap-1 rounded-full bg-white/95 px-2 py-1">
             <Globe size={11} color={TC.brandText} />
-            <Text className="text-[0.6875rem] font-semibold text-brand-text">Offentlig</Text>
+            <Text className="text-[0.8125rem] font-semibold text-brand-text">Offentlig</Text>
           </View>
         ) : null}
       </View>

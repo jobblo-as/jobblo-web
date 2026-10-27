@@ -5,6 +5,17 @@ const { isValidId } = require('./serviceHelpers');
 
 /** Work progress on a listing: time entries and the checklist. */
 
+/** The listing's owner, or the worker awarded it. Nobody else touches or reads its progress. */
+async function isOwnerOrAssignedWorker(service, userId) {
+  if (String(service.userId) === String(userId)) return true;
+  const order = await Order.findOne({
+    serviceId: service._id,
+    providerId: userId,
+    status: { $in: ['paid', 'in_progress', 'ready_for_review'] },
+  }).select('_id');
+  return Boolean(order);
+}
+
 // ------------------- Time Entries -------------------
 
 exports.addTimeEntry = async (req, res) => {
@@ -14,7 +25,7 @@ exports.addTimeEntry = async (req, res) => {
 
     if (!isValidId(id)) return res.status(400).json({ error: 'Invalid service ID' });
 
-    const service = await Service.findById(id);
+    const service = await Service.findById(id).select('+timeEntries');
     if (!service) return res.status(404).json({ error: 'Service not found' });
 
     // Time is logged against the caller, never against a user named in the body.
@@ -25,17 +36,7 @@ exports.addTimeEntry = async (req, res) => {
 
     // The owner logs time on their own job; the assigned worker logs time on a job
     // they were awarded. Nobody else.
-    const isOwner = String(service.userId) === String(userId);
-    let isAssignedWorker = false;
-    if (!isOwner) {
-      const order = await Order.findOne({
-        serviceId: service._id,
-        providerId: userId,
-        status: { $in: ['paid', 'in_progress', 'ready_for_review'] },
-      }).select('_id');
-      isAssignedWorker = Boolean(order);
-    }
-    if (!isOwner && !isAssignedWorker) {
+    if (!(await isOwnerOrAssignedWorker(service, userId))) {
       return res.status(403).json({ error: 'Ikke autorisert for dette oppdraget.' });
     }
 
@@ -61,9 +62,15 @@ exports.addTimeEntry = async (req, res) => {
 exports.getTimeEntries = async (req, res) => {
   try {
     const { id } = req.params;
+    if (!isValidId(id)) return res.status(400).json({ error: 'Invalid service ID' });
 
-    const service = await Service.findById(id);
+    const service = await Service.findById(id).select('+timeEntries');
     if (!service) return res.status(404).json({ error: 'Service not found' });
+
+    // Any logged-in user could read any job's hours and notes.
+    if (!(await isOwnerOrAssignedWorker(service, req.userId))) {
+      return res.status(403).json({ error: 'Ikke autorisert for dette oppdraget.' });
+    }
 
     res.json(service.timeEntries);
   } catch (err) {
@@ -92,17 +99,7 @@ exports.updateChecklistItem = async (req, res) => {
     // Ticking off work was authenticated but not authorized — any logged-in user could
     // mark items complete on any listing, and be stamped into `checkedBy` doing it.
     // The owner or the assigned worker only.
-    const isOwner = String(service.userId) === String(userId);
-    let isAssignedWorker = false;
-    if (!isOwner) {
-      const order = await Order.findOne({
-        serviceId: service._id,
-        providerId: userId,
-        status: { $in: ['paid', 'in_progress', 'ready_for_review'] },
-      }).select('_id');
-      isAssignedWorker = Boolean(order);
-    }
-    if (!isOwner && !isAssignedWorker) {
+    if (!(await isOwnerOrAssignedWorker(service, userId))) {
       return res.status(403).json({ error: 'Ikke autorisert for dette oppdraget.' });
     }
 

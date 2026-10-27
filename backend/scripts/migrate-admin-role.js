@@ -21,7 +21,7 @@
  * This script must be reviewed and approved by a human before --apply is used.
  */
 
-require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
+require('../config/env'); // backend/.env.development (production: .env.production)
 const mongoose = require('mongoose');
 const User = require('../models/User');
 

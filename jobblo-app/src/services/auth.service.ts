@@ -36,8 +36,21 @@ export async function loginUser(credentials: LoginRequest): Promise<LoginRespons
   return response.data;
 }
 
+/** Signs in straight away, like login; the e-mail is confirmed later from the profile. */
 export async function registerUser(payload: RegisterRequest): Promise<LoginResponse> {
   const response = await apiClient.post<LoginResponse>('/auth/register', payload);
+  return response.data;
+}
+
+/** Signed in: mail a code to the account's own address (profile "E-post" row). */
+export async function sendEmailCode(): Promise<{ message: string }> {
+  const response = await apiClient.post<{ message: string }>('/auth/email/send-code');
+  return response.data;
+}
+
+/** Signed in: confirm the address with that code. Sets only emailVerifiedAt (never BankID). */
+export async function confirmEmailCode(code: string): Promise<{ emailVerified: boolean }> {
+  const response = await apiClient.post<{ emailVerified: boolean }>('/auth/email/verify', { code });
   return response.data;
 }
 
@@ -91,6 +104,25 @@ export async function fetchProfileWithToken(token: string): Promise<AuthUser> {
     _callerSuppliedAuth: true,
   });
   return response.data;
+}
+
+/**
+ * POST /api/auth/mobile/exchange — redeems the one-time code from an OAuth deep link with this
+ * app's PKCE verifier (security review P6). The server consumes the code on any attempt.
+ *
+ * `_callerSuppliedAuth`: no stored token is sent, and a refusal neither refreshes nor signs out
+ * whoever is using the app. `withCredentials` so the refresh cookie the server sets here lands in
+ * the app's cookie store.
+ */
+export async function exchangeOAuthCode(code: string, codeVerifier: string): Promise<string> {
+  const response = await apiClient.post<{ accessToken?: string }>(
+    '/auth/mobile/exchange',
+    { code, code_verifier: codeVerifier },
+    { _callerSuppliedAuth: true, withCredentials: true }
+  );
+  const token = response.data?.accessToken;
+  if (!isUsableAuthToken(token)) throw new Error('Exchange returned no usable token');
+  return token;
 }
 
 /**

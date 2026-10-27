@@ -81,8 +81,8 @@ export const SeekerSettingsView = () => {
   const certInputRef = useRef<HTMLInputElement>(null);
 
   const isUnchanged =
-    form.availabilityText === (user as any)?.availabilityText &&
-    JSON.stringify(form.skills) === JSON.stringify((user as any)?.skills);
+    form.availabilityText === user?.availabilityText &&
+    JSON.stringify(form.skills) === JSON.stringify(user?.skills);
 
   const isDisabled = isUnchanged || updateUser?.isPending;
 
@@ -357,7 +357,7 @@ export const SeekerSettingsView = () => {
         )}
 
         <div className="flex flex-col gap-4">
-          {(user as any)?.experience?.map((exp: any) => (
+          {user?.experience?.map((exp) => (
             <div
               key={exp._id}
               className="bg-white border border-gray-100 rounded-2xl p-5 flex justify-between items-start group"
@@ -447,7 +447,7 @@ export const SeekerSettingsView = () => {
                 type="file"
                 ref={projectInputRef}
                 className="hidden"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file && !file.type.startsWith('image/')) {
@@ -493,7 +493,7 @@ export const SeekerSettingsView = () => {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {(user as any)?.previousProjects?.map((project: any) => (
+          {user?.previousProjects?.map((project) => (
             <div
               key={project._id}
               className="bg-white border border-gray-100 rounded-2xl p-4 flex gap-4 items-center"
@@ -570,7 +570,7 @@ export const SeekerSettingsView = () => {
                 type="file"
                 ref={portfolioInputRef}
                 className="hidden"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file && !file.type.startsWith('image/')) {
@@ -615,7 +615,7 @@ export const SeekerSettingsView = () => {
         )}
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {(user as any)?.portfolio?.map((item: any) => (
+          {user?.portfolio?.map((item) => (
             <div
               key={item._id}
               className="group relative aspect-square bg-gray-100 rounded-2xl overflow-hidden border border-gray-100"
@@ -692,7 +692,7 @@ export const SeekerSettingsView = () => {
                 type="file"
                 ref={certInputRef}
                 className="hidden"
-                accept=".pdf,image/*"
+                accept="application/pdf,image/jpeg,image/png,image/webp"
                 onChange={(e) => setCertFile(e.target.files?.[0] || null)}
               />
               {certFile ? (
@@ -729,7 +729,7 @@ export const SeekerSettingsView = () => {
         )}
 
         <div className="flex flex-col gap-4">
-          {(user as any)?.certifications?.map((cert: any) => (
+          {user?.certifications?.map((cert) => (
             <div
               key={cert._id}
               className="bg-white border border-gray-100 rounded-2xl p-5 flex items-center gap-4 group"

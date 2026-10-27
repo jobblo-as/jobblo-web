@@ -48,7 +48,7 @@ export default function TermsScreen() {
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="rounded-3xl border border-line bg-surface p-5">
+        <View className="rounded-3xl bg-surface p-5">
           <View className="flex-row items-start gap-3">
             <View className="h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-tint">
               <FileText size={20} color={TC.brandText} />
@@ -80,7 +80,7 @@ export default function TermsScreen() {
           </View>
         ))}
 
-        <View className="mt-5 rounded-3xl border border-line bg-surface p-5">
+        <View className="mt-5 rounded-3xl bg-surface p-5">
           <Text className="text-[0.8125rem] italic leading-5 text-muted">
             {userTerms.footer}
           </Text>

@@ -36,7 +36,7 @@ export function SavedJobCard({ job, onRemove, isRemoving = false }: SavedJobCard
     job.status === 'expired';
 
   return (
-    <View className="flex-row items-center gap-3.5 rounded-[24px] border border-line bg-surface p-3">
+    <View className="flex-row items-center gap-3.5 rounded-[24px] bg-surface p-3">
       <Pressable
         onPress={() => router.push({ pathname: '/(app)/jobs/[id]', params: { id: job._id } })}
         className="flex-1 flex-row items-center gap-3.5"
@@ -47,7 +47,7 @@ export function SavedJobCard({ job, onRemove, isRemoving = false }: SavedJobCard
           {image ? (
             <Image source={{ uri: image }} className="h-full w-full" resizeMode="cover" />
           ) : (
-            <Text className="text-[0.6875rem] text-muted">Ingen bilde</Text>
+            <Text className="text-[0.8125rem] text-muted">Ingen bilde</Text>
           )}
         </View>
 
@@ -71,7 +71,7 @@ export function SavedJobCard({ job, onRemove, isRemoving = false }: SavedJobCard
             )}
             {isClosed ? (
               <View className="rounded-full bg-surface-2 px-2 py-0.5">
-                <Text className="text-[0.6875rem] font-semibold text-muted">Lukket</Text>
+                <Text className="text-[0.8125rem] font-semibold text-muted">Lukket</Text>
               </View>
             ) : null}
           </View>

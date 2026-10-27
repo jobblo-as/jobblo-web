@@ -106,7 +106,7 @@ function financeMetrics(summary?: SafePayFinanceSummary): FinanceMetric[] {
 function formatMinor(amount: number, currency: string) {
     const code = currency.toUpperCase();
     const formatter = new Intl.NumberFormat('nb-NO', { style: 'currency', currency: code });
-    const fractionDigits = formatter.resolvedOptions().maximumFractionDigits;
+    const fractionDigits = formatter.resolvedOptions().maximumFractionDigits ?? 2;
     return formatter.format(amount / (10 ** fractionDigits));
 }
 

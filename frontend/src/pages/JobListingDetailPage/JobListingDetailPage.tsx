@@ -1,5 +1,5 @@
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import type { AxiosError } from 'axios';
+import { isAxiosError, type AxiosError } from 'axios';
 import { toast } from 'react-hot-toast';
 import { useUserStore } from '../../stores/userStore';
 import {
@@ -46,6 +46,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { getConnectStatus, getContactEntitlements, getExtraContactStatus } from '../../api/stripeAPI';
 
 import { useConfigByKey, usePlans } from '../../features/plans/hooks';
+import { errorBody } from '../../utils/getErrorMessage';
 
 const DEFAULT_SHARE_IMAGE = `${SITE_URL}/assets/share-image.png`;
 
@@ -82,7 +83,10 @@ function upsertMeta(attr: 'name' | 'property', key: string, value: string | null
   }
 }
 
-function useListingSeo(job: any, serviceId: string | undefined) {
+function useListingSeo(
+  job: { title?: string; description?: string; images?: unknown[] } | undefined,
+  serviceId: string | undefined
+) {
   useEffect(() => {
     if (typeof document === 'undefined') return;
 
@@ -155,8 +159,8 @@ const JobListingDetailPage = () => {
       toast.success('Takk! Rapporten din er sendt til oss. Vi ser på saken.');
       setIsReportModalOpen(false);
     },
-    onError: (err: any) => {
-      toast.error(err?.response?.data?.message || 'Kunne ikke sende rapporten. Prøv igjen.');
+    onError: (err) => {
+      toast.error(errorBody(err)?.message || 'Kunne ikke sende rapporten. Prøv igjen.');
     },
   });
 
@@ -405,42 +409,55 @@ const JobListingDetailPage = () => {
           setIsOrderModalOpen(false);
           toast.success('Forespørsel sendt! Venter på godkjenning.');
         },
-        onError: (err: any) => {
-          if (err.response?.data?.code === 'STRIPE_CONNECT_REQUIRED') {
+        onError: (err) => {
+          const response = isAxiosError<{
+            code?: string;
+            error?: string;
+            message?: string;
+            isDelayed?: boolean;
+            unlockAt?: string;
+            upgradeRequired?: boolean;
+            limit?: number;
+            usage?: number;
+            extraContact?: ExtraContactOffer;
+          }>(err)
+            ? err.response
+            : undefined;
+          if (response?.data?.code === 'STRIPE_CONNECT_REQUIRED') {
             setIsOrderModalOpen(false);
             setIsConnectRequiredModalOpen(true);
             void connectStatusQuery.refetch();
             return;
           }
-          if (err.response?.status === 403 && err.response?.data?.isDelayed) {
-            setUnlockTime(err.response.data.unlockAt);
+          if (response?.status === 403 && response.data?.isDelayed) {
+            setUnlockTime(response.data.unlockAt ?? null);
             setIsTimerActive(true);
             setIsOrderModalOpen(false);
-            toast.error(err.response.data.message);
+            toast.error(response.data.message ?? '');
             return;
           }
-          const errorCode = err.response?.data?.code;
+          const errorCode = response?.data?.code;
           if (
             errorCode === 'CONTACT_LIMIT_REACHED' ||
             errorCode === 'PAID_SUBSCRIPTION_REQUIRED' ||
-            err.response?.status === 402 ||
-            err.response?.data?.upgradeRequired
+            response?.status === 402 ||
+            response?.data?.upgradeRequired
           ) {
             setUpgradeInfo({
               message: errorCode === 'CONTACT_LIMIT_REACHED'
                 ? 'Du har brukt alle inkluderte kontakter denne perioden.'
-                : err.response?.data?.message,
-              limit: includedContactLimit ?? err.response?.data?.limit,
-              usage: includedContactsUsed ?? err.response?.data?.usage,
+                : response?.data?.message,
+              limit: includedContactLimit ?? response?.data?.limit,
+              usage: includedContactsUsed ?? response?.data?.usage,
               serviceId: job._id,
-              extraContact: err.response?.data?.extraContact,
+              extraContact: response?.data?.extraContact,
             });
             setIsOrderModalOpen(false);
             setIsUpgradeModalOpen(true);
             return;
           }
           toast.error(
-            err.response?.data?.error || err.response?.data?.message || 'Kunne ikke sende forespørsel'
+            response?.data?.error || response?.data?.message || 'Kunne ikke sende forespørsel'
           );
         },
       }
@@ -693,7 +710,10 @@ const JobListingDetailPage = () => {
                   Sjekkliste
                 </h2>
                 <ul className="mt-3 space-y-2.5">
-                  {job.checklist.map((item: any, idx: number) => (
+                  {job.checklist.map((
+                    item: { text?: string; checked?: boolean; checkedBy?: { name?: string }; checkedAt: string },
+                    idx: number
+                  ) => (
                     <li key={idx} className="flex items-start gap-2.5">
                       <span
                         className={`mt-0.5 flex size-4.5 shrink-0 items-center justify-center rounded-[0.3rem] border ${

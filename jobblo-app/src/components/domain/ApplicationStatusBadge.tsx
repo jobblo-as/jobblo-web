@@ -6,7 +6,7 @@ export type ApplicationStatusBadgeVariant = 'pending' | 'accepted' | 'declined';
 const badgeClasses: Record<ApplicationStatusBadgeVariant, string> = {
   pending: 'bg-surface-2 text-muted',
   accepted: 'bg-tint text-brand-text',
-  declined: 'border border-line bg-surface text-subtle',
+  declined: 'border border-line bg-surface text-muted',
 };
 
 const labelMap: Record<ApplicationStatusBadgeVariant, string> = {

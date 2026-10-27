@@ -3,8 +3,41 @@ const Order = require('../../models/Order');
 const mongoose = require('mongoose');
 const { evaluateListingCapabilities } = require('../../utils/listingCapabilities');
 const { SERVICE_LIMITS, validateServiceFields, pickContactUpdates } = require('./serviceHelpers');
+const { inputOrServerError } = require('../../utils/serverError');
+const { isOurPublicBlobUrl } = require('../../utils/azureUpload');
+// Body image URLs (no files uploaded in this request) must be our own public uploads, never a
+// private-container (evidence) URL, which responses sign; at most MAX_IMAGES per listing.
+// `kept` are URLs already on the listing (may predate this rule).
+const MAX_IMAGES = 6;
+const bodyImageError = (images, kept = []) => {
+  const list = [].concat(images || []);
+  if (list.length + kept.length > MAX_IMAGES) return `Maks ${MAX_IMAGES} bilder per oppdrag.`;
+  if (list.some((url) => typeof url !== 'string' || (!kept.includes(url) && !isOurPublicBlobUrl(url)))) return 'Bilde-URL er ikke tillatt. Last opp bildet først.';
+  return null;
+};
 
 /** Writing listings: create, update and delete (with the capability guards). */
+
+/** A client checklist (array or JSON string) → `{ items: [{ id, text }] }` or `{ error }`. */
+function parseChecklist(raw) {
+  let list;
+  try {
+    list = typeof raw === 'string' ? JSON.parse(raw) : raw;
+  } catch {
+    list = null;
+  }
+  if (!Array.isArray(list)) return { error: 'Sjekklisten kunne ikke leses.' };
+  if (list.length > SERVICE_LIMITS.MAX_CHECKLIST_ITEMS) {
+    return { error: `Sjekklisten kan ha maks ${SERVICE_LIMITS.MAX_CHECKLIST_ITEMS} punkter.` };
+  }
+  return {
+    items: list.map((item) => ({
+      id: item?.id,
+      text: String(item?.text ?? '').slice(0, SERVICE_LIMITS.CHECKLIST_TEXT_MAX),
+    })),
+  };
+}
+exports.parseChecklist = parseChecklist;
 
 // ------------------- Create Service -------------------
 
@@ -92,35 +125,24 @@ exports.createService = async (req, res) => {
     } else {
       // Fallback to body image URLs (backwards compatibility). No metadata: a URL
       // alone carries no authority to delete anything.
-      if (images) serviceData.images = images;
+      const imageError = images && bodyImageError(images);
+      if (imageError) return res.status(400).json({ error: imageError });
+      if (images) serviceData.images = [].concat(images);
     }
 
     // Parse checklist (frontend sends it as JSON string)
+    // Swallowing a bad checklist created the job with an EMPTY one and returned 201, so
+    // the poster believed it was saved and the contract later had nothing to tick off.
     let parsedChecklist = [];
     if (checklist) {
-      try {
-        parsedChecklist = typeof checklist === 'string' ? JSON.parse(checklist) : checklist;
-        if (!Array.isArray(parsedChecklist)) throw new Error('checklist must be an array');
-        if (parsedChecklist.length > SERVICE_LIMITS.MAX_CHECKLIST_ITEMS) {
-          return res.status(400).json({
-            error: `Sjekklisten kan ha maks ${SERVICE_LIMITS.MAX_CHECKLIST_ITEMS} punkter.`,
-          });
-        }
-        // Format checklist items with default values
-        parsedChecklist = parsedChecklist.map((item) => ({
-          id: item.id,
-          text: String(item.text ?? '').slice(0, SERVICE_LIMITS.CHECKLIST_TEXT_MAX),
-          checked: false,
-          checkedBy: null,
-          checkedAt: null,
-        }));
-      } catch (err) {
-        // Swallowing this created the job with an EMPTY checklist and returned 201, so
-        // the poster believed their checklist was saved. The contract made from it
-        // later then had nothing to tick off, and nobody was ever told why.
-        console.error('Failed to parse checklist:', err.message);
-        return res.status(400).json({ error: 'Sjekklisten kunne ikke leses.' });
-      }
+      const parsed = parseChecklist(checklist);
+      if (parsed.error) return res.status(400).json({ error: parsed.error });
+      parsedChecklist = parsed.items.map((item) => ({
+        ...item,
+        checked: false,
+        checkedBy: null,
+        checkedAt: null,
+      }));
     }
 
     // Whitelist what a client may set.
@@ -167,8 +189,7 @@ exports.createService = async (req, res) => {
 
     res.status(201).json(service);
   } catch (err) {
-    console.error(err);
-    res.status(400).json({ error: err.message });
+    inputOrServerError(res, err);
   }
 };
 
@@ -265,31 +286,29 @@ exports.updateService = async (req, res) => {
       service.imageMetadata = [...service.imageMetadata, ...newImageMetadata];
     } else if (req.body.images) {
       // Fallback for body image URLs. Client imageMetadata is ignored — see createService.
-      service.images = [...service.images, ...req.body.images];
+      // [].concat: a single URL arrives as a string, and spreading it added one "image"
+      // per character. URLs already on the listing are not added twice.
+      const added = [].concat(req.body.images).filter((url) => !service.images.includes(url));
+      const imageError = added.length > 0 && bodyImageError(added, service.images);
+      if (imageError) return res.status(400).json({ error: imageError });
+      service.images = [...service.images, ...added];
     }
 
     // ⭐ HANDLE CHECKLIST UPDATE
+    // Same parser and caps as create: a non-array 500'd on .map, and errors were swallowed.
     if (req.body.checklist) {
-      try {
-        let parsedChecklist =
-          typeof req.body.checklist === 'string'
-            ? JSON.parse(req.body.checklist)
-            : req.body.checklist;
-
-        // Update checklist, preserving existing checked state if available
-        service.checklist = parsedChecklist.map((newItem) => {
-          const existingItem = service.checklist.find((item) => item.id === newItem.id);
-          return {
-            id: newItem.id,
-            text: newItem.text,
-            checked: existingItem ? existingItem.checked : false,
-            checkedBy: existingItem ? existingItem.checkedBy : null,
-            checkedAt: existingItem ? existingItem.checkedAt : null,
-          };
-        });
-      } catch (err) {
-        console.error('Failed to parse checklist:', err);
-      }
+      const parsed = parseChecklist(req.body.checklist);
+      if (parsed.error) return res.status(400).json({ error: parsed.error });
+      // Update checklist, preserving existing checked state if available
+      service.checklist = parsed.items.map((newItem) => {
+        const existingItem = service.checklist.find((item) => item.id === newItem.id);
+        return {
+          ...newItem,
+          checked: existingItem ? existingItem.checked : false,
+          checkedBy: existingItem ? existingItem.checkedBy : null,
+          checkedAt: existingItem ? existingItem.checkedAt : null,
+        };
+      });
     }
 
     // Whitelist, mirroring the allowedUpdates pattern in userController.

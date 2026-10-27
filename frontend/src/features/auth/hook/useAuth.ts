@@ -5,16 +5,17 @@ import {
   getUserSessions,
   revokeSession,
   revokeAllOtherSessions,
-  fetchProfile,
   refreshToken,
   forgotPassword,
   verifyOtp,
   resetPassword,
 } from '../Api';
 import { useUserStore } from '../../../stores/userStore';
+import type { User } from '../../../types/userTypes';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { getErrorMessage } from '../../../utils/getErrorMessage';
+import { safeLocalPath } from '../../../utils/safeLocalPath';
 
 export const useAuth = () => {
   const queryClient = useQueryClient();
@@ -27,11 +28,7 @@ export const useAuth = () => {
   // was sent to /home after logging in and lost what they were trying to do.
   // Only same-origin paths are honoured so a crafted state can't redirect off-site.
   const redirectAfterAuth = (fallback = '/home'): string => {
-    const from = (location.state as { from?: unknown } | null)?.from;
-    if (typeof from === 'string' && from.startsWith('/') && !from.startsWith('//')) {
-      return from;
-    }
-    return fallback;
+    return safeLocalPath((location.state as { from?: unknown } | null)?.from, fallback);
   };
 
   // Note: Don't auto-logout here during rehydration - let the interceptor handle token issues
@@ -40,7 +37,6 @@ export const useAuth = () => {
     mutationFn: userLogin,
     onSuccess: (data) => {
       setStoreLogin(data.user, { accessToken: data.accessToken });
-      queryClient.setQueryData(['profile'], data.user);
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
       toast.success(`Velkommen tilbake, ${data.user.name}!`);
       navigate(redirectAfterAuth(data.user.role === 'developer' ? '/developer' : '/home'), { replace: true });
@@ -53,15 +49,17 @@ export const useAuth = () => {
     },
   });
 
+  const finishSignUp = (data: { user: User; accessToken: string }) => {
+    setStoreLogin(data.user, { accessToken: data.accessToken });
+    queryClient.invalidateQueries({ queryKey: ['sessions'] });
+    toast.success('Registreringen er fullført!');
+    navigate(redirectAfterAuth(), { replace: true });
+  };
+
   const registerMutation = useMutation({
     mutationFn: registerUser,
-    onSuccess: (data) => {
-      setStoreLogin(data.user, { accessToken: data.accessToken });
-      queryClient.setQueryData(['profile'], data.user);
-      queryClient.invalidateQueries({ queryKey: ['sessions'] });
-      toast.success('Registreringen er fullført!');
-      navigate(redirectAfterAuth(), { replace: true });
-    },
+    // Signed in straight away; the e-mail is confirmed later from the profile page.
+    onSuccess: finishSignUp,
     onError: (error: unknown) => {
       toast.error(getErrorMessage(error, 'Registreringen mislyktes. Prøv igjen.'));
     },
@@ -83,16 +81,9 @@ export const useAuth = () => {
     },
   });
 
-  const profileQuery = useQuery({
-    queryKey: ['profile'],
-    queryFn: async () => {
-      const userData = await fetchProfile();
-      useUserStore.getState().setUser(userData);
-      return userData;
-    },
-    retry: false,
-    enabled: isAuthenticated, // Use isAuthenticated instead of tokens?.accessToken
-  });
+  // No ['profile'] query here: bootstrap() and login already put the profile in the store.
+  // This query re-fetched it on every signed-in load, and App swapped the whole page for a
+  // loader while it ran, remounting everything below it.
 
   const sessionsQuery = useQuery({
     queryKey: ['sessions'],
@@ -181,8 +172,6 @@ export const useAuth = () => {
     registerError: registerMutation.error,
     logout: logoutMutation.mutate,
     isLoggingOut: logoutMutation.isPending,
-    user: profileQuery.data,
-    isLoadingUser: profileQuery.isLoading,
     sessions: sessionsQuery.data,
     isLoadingSessions: sessionsQuery.isLoading,
     revokeSession: revokeSessionMutation.mutate,

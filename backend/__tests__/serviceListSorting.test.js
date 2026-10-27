@@ -25,6 +25,7 @@ describe('GET /api/services sorting', () => {
 
     // Minimal stand-in for the chained query builder the controller uses.
     const chain = {
+      select: () => chain,
       populate: () => chain,
       lean: () => chain,
       skip: () => chain,

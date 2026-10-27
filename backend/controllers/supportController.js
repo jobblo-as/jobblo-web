@@ -8,7 +8,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * POST /api/support/tickets
  *
  * Open to logged-out visitors too — someone who cannot log in is exactly the
- * person who needs support most. Rate limiting comes from the global apiLimiter.
+ * person who needs support most. Rate limited per IP in routes/support.js (10/hour).
  */
 exports.createTicket = async (req, res) => {
   try {

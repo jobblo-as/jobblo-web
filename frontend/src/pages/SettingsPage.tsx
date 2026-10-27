@@ -1,32 +1,39 @@
 import { useEffect, useRef, useState } from 'react';
-import { useLocation, Outlet, useNavigate } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { useUserStore } from '../stores/userStore';
 import { useUpdateUser } from '../features/profile/hooks';
 import { toast } from 'react-hot-toast';
+import type { User } from '../types/userTypes';
 
-interface UserData {
-  _id?: string;
-  name?: string;
-  lastName?: string;
-  email?: string;
-  avatarUrl?: string;
-  bannerUrl?: string;
-  phone?: string;
-  bio?: string;
-}
-
-interface UpdateUserResult {
-  mutateAsync: (data: FormData) => Promise<unknown>;
-  isPending: boolean;
-}
+/** The editable profile fields, plus the two write-only inputs some views add. */
+export type SettingsForm = {
+  name: string;
+  lastName: string;
+  bio: string;
+  phone: string;
+  address: string;
+  postNumber: string;
+  postSted: string;
+  country: string;
+  email: string;
+  availabilityText: string;
+  skills: string[];
+  companyName: string;
+  orgNumber: string;
+  orgType: string;
+  locations: string[];
+  website: string;
+  currentPassword?: string;
+  feedback?: string;
+};
 
 export type SettingsContextType = {
-  user: any;
-  form: any;
-  updateUser: any;
+  user: User | null;
+  form: SettingsForm;
+  updateUser: ReturnType<typeof useUpdateUser>;
   fileInputRef: React.RefObject<HTMLInputElement | null>;
   cameraInputRef: React.RefObject<HTMLInputElement | null>;
-  handleChange: (key: string, value: any) => void;
+  handleChange: <K extends keyof SettingsForm>(key: K, value: SettingsForm[K]) => void;
   handleUpdate: () => void;
   handlePhotoSelect: () => void;
   handleCameraSelect: () => void;
@@ -34,13 +41,11 @@ export type SettingsContextType = {
 };
 
 export default function SettingsPage() {
-  const navigate = useNavigate();
-  const location = useLocation();
   const user = useUserStore((state) => state.user);
   const updateUser = useUpdateUser();
   // Explicitly typed: `skills: []` and `locations: []` were inferred as never[],
   // so assigning the user's real string arrays in the effect below was an error.
-  const [form, setForm] = useState<Record<string, unknown>>({
+  const [form, setForm] = useState<SettingsForm>({
     name: '',
     lastName: '',
     bio: '',
@@ -73,8 +78,8 @@ export default function SettingsPage() {
       postSted: user.postSted || '',
       country: user.country || '',
       email: user.email || '',
-      availabilityText: (user as any).availabilityText || '',
-      skills: (user as any).skills || [],
+      availabilityText: user.availabilityText || '',
+      skills: user.skills || [],
       companyName: user.companyName || '',
       orgNumber: user.orgNumber || '',
       orgType: user.orgType || '',
@@ -83,7 +88,7 @@ export default function SettingsPage() {
     });
   }, [user]);
 
-  const handleChange = (key: string, value: any) => {
+  const handleChange = <K extends keyof SettingsForm>(key: K, value: SettingsForm[K]) => {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -107,8 +112,8 @@ export default function SettingsPage() {
       postSted: user.postSted || '',
       country: user.country || '',
       email: user.email || '',
-      availabilityText: (user as any).availabilityText || '',
-      skills: (user as any).skills || [],
+      availabilityText: user.availabilityText || '',
+      skills: user.skills || [],
       companyName: user.companyName || '',
       orgNumber: user.orgNumber || '',
       orgType: user.orgType || '',
@@ -165,7 +170,7 @@ export default function SettingsPage() {
 
       updateUser.mutate({
         userId: user._id,
-        data: formData as any,
+        data: formData,
       });
 
       // Reset input value so same file can be selected again if needed

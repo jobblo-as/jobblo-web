@@ -13,7 +13,7 @@ interface PaymentInformationProps {
   urgent: boolean;
   setUrgent: (val: boolean) => void;
   subscription?: string;
-  errors?: any;
+  errors?: Partial<Record<string, string>>;
 }
 
 const PAYMENT_METHODS = [

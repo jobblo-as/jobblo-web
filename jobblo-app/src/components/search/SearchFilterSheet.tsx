@@ -133,7 +133,7 @@ export function SearchFilterSheet({
 
         {/* Categories */}
         <View>
-          <Text className="mb-2 mt-5 text-[0.8125rem] font-semibold uppercase tracking-[0.14em] text-subtle">Kategorier</Text>
+          <Text className="mb-2 mt-5 text-[0.8125rem] font-semibold uppercase tracking-[0.14em] text-muted">Kategorier</Text>
           {categoriesLoading ? (
             <View className="py-3">
               <ActivityIndicator color={TC.brandText} size="small" />
@@ -154,7 +154,7 @@ export function SearchFilterSheet({
                         className={`flex-1 flex-row items-center rounded-lg px-2.5 py-2 ${categoryClass}`}
                       >
                         {selected ? <Check size={14} color={TC.brandText} /> : null}<Text className={`flex-1 text-[0.875rem] ${textClass}`}>{cat.name}</Text>
-                        <Text className={`text-[0.8125rem] ${selected ? 'text-brand-text' : 'text-subtle'}`}>
+                        <Text className={`text-[0.8125rem] ${selected ? 'text-brand-text' : 'text-muted'}`}>
                           {cat.count || 0}
                         </Text>
                       </Pressable>
@@ -178,7 +178,7 @@ export function SearchFilterSheet({
                             <Text className={`flex-1 text-[0.8125rem] ${filters.selectedCategories.includes(sub.name) ? 'font-semibold text-brand-text' : 'text-muted'}`}>
                               {sub.name}
                             </Text>
-                            <Text className="text-[0.8125rem] text-subtle">{sub.count || 0}</Text>
+                            <Text className="text-[0.8125rem] text-muted">{sub.count || 0}</Text>
                           </Pressable>
                         ))}
                       </View>
@@ -223,13 +223,13 @@ export function SearchFilterSheet({
             icon={filters.userLocation ? <Check size={15} color="#FFFFFF" /> : <Locate size={15} color={TC.brandText} />}
             onPress={handleUseCurrentLocation}
           />
-          <Text className="mt-2 text-[0.8125rem] text-subtle">
+          <Text className="mt-2 text-[0.8125rem] text-muted">
             Viser oppdrag innen 5 km
           </Text>
           {locationError ? <Text className="mt-2 text-[0.8125rem] text-[#B4544A] dark:text-danger">{locationError}</Text> : null}
         </View>
 
-        <View className="mt-5 border-t border-line pt-5"><View className="mb-3 flex-row items-center justify-between"><View className="flex-row items-center gap-1.5"><MapPin size={13} color={TC.brandText} /><Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.14em] text-subtle">Kart</Text></View><Text className="text-[0.8125rem] text-muted">{filters.userLocation ? 'Min posisjon' : 'Søkeområde'}</Text></View>{visible ? <SearchAreaMap center={mapCenter} radius={mapRadius} /> : null}</View>
+        <View className="mt-5 border-t border-line pt-5"><View className="mb-3 flex-row items-center justify-between"><View className="flex-row items-center gap-1.5"><MapPin size={13} color={TC.brandText} /><Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.14em] text-muted">Kart</Text></View><Text className="text-[0.8125rem] text-muted">{filters.userLocation ? 'Min posisjon' : 'Søkeområde'}</Text></View>{visible ? <SearchAreaMap center={mapCenter} radius={mapRadius} /> : null}</View>
         <PriceRangeFilter minPrice={filters.minPrice} maxPrice={filters.maxPrice} onMinChange={onSetMinPrice} onMaxChange={onSetMaxPrice} onReset={onResetPrice} />
 
           </ScrollView>

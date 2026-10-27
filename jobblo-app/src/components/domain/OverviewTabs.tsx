@@ -41,7 +41,7 @@ export function OverviewTabs({
             </Text>
             {typeof tab.count === 'number' && tab.count > 0 ? (
               <View className={['rounded-full px-1.5', active ? 'bg-white/20' : 'bg-surface-2'].join(' ')}>
-                <Text className={active ? 'text-[0.6875rem] font-bold text-white' : 'text-[0.6875rem] font-bold text-muted'}>
+                <Text className={active ? 'text-[0.8125rem] font-bold text-white' : 'text-[0.8125rem] font-bold text-muted'}>
                   {tab.count}
                 </Text>
               </View>

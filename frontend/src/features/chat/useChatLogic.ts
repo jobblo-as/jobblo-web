@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useChatSocket } from './useChatSocket';
 import { useQueryClient } from '@tanstack/react-query';
+import type { Chat } from '../../api/chatAPI';
 
 export type FilterType = 'All' | 'Purchases' | 'Sales';
 
@@ -85,13 +86,16 @@ export const useChatLogic = () => {
     return chat.clientId?._id === userId;
   });
 
-  const isUnread = (chat: any) => {
+  const isUnread = (chat: { messages?: Chat['messages'] }) => {
     const lastMsg = chat.messages?.[chat.messages.length - 1];
     if (!lastMsg || !userId) return false;
     const senderId =
       typeof lastMsg.senderId === 'string' ? lastMsg.senderId : lastMsg.senderId?._id;
     if (senderId === userId) return false;
-    return !lastMsg.seenBy?.some((id: any) => (id?._id || id) === userId);
+    // seenBy is typed as ids, but tolerate a populated user too.
+    return !lastMsg.seenBy?.some((id: string | { _id?: string }) =>
+      (typeof id === 'object' && id ? id._id || id : id) === userId
+    );
   };
 
   return {

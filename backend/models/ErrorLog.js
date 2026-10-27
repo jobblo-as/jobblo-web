@@ -37,5 +37,7 @@ const errorLogSchema = new mongoose.Schema(
 );
 
 errorLogSchema.index({ createdAt: -1 });
+// Errors expire after 90 days: they carried no expiry and grew without bound (M1).
+errorLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60 });
 
 module.exports = mongoose.model('ErrorLog', errorLogSchema);

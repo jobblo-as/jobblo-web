@@ -37,6 +37,8 @@ import { useDispute } from '../../features/disputes/hooks';
 import { disputeReasonOptions } from '../../constants/disputes';
 import { statusLabel } from '../../constants/statuses';
 import { compressImages } from '../../utils/compressImage';
+import { getErrorMessage, errorBody } from '../../utils/getErrorMessage';
+import { isAxiosError } from 'axios';
 
 /** Matches MAX_REVIEW_PHOTOS in backend/utils/reviewPhotos.js. */
 const MAX_REVIEW_PHOTOS = 6;
@@ -447,14 +449,14 @@ const SafePayApproval: React.FC = () => {
         toast.success('Jobb godkjent!');
       }
     },
-    onError: (err: any) => {
-      const status = err.response?.status;
+    onError: (err) => {
+      const status = isAxiosError(err) ? err.response?.status : undefined;
       // `mutationFn` throws a plain Error for the missing-rating case, which has no
       // `response` at all. Reading only `response.data.error` turned that specific,
       // actionable message into the generic "Kunne ikke godkjenne jobben" — and the
       // skip-checklist path calls `mutate()` directly, so it was the message that path
       // actually produced.
-      const message = err?.response?.data?.error || err?.message || 'Kunne ikke godkjenne jobben';
+      const message = errorBody(err)?.error || err?.message || 'Kunne ikke godkjenne jobben';
       if (status === 403) {
         toast.error('Ikke tilgang. Kun oppdragsgiver kan godkjenne jobben.');
       } else if (status === 400 && message.includes('ready_for_review')) {
@@ -469,9 +471,13 @@ const SafePayApproval: React.FC = () => {
   const updateChecklistItemMutation = useMutation({
     mutationFn: ({ itemId, checked }: { itemId: string; checked: boolean }) =>
       updateCheckoutChecklistItem(orderId!, itemId, checked),
-    onSuccess: () => {
+    // Tick only once the server has saved it: the tick used to be set before the request,
+    // so a failed save still showed as checked.
+    onSuccess: (_data, { itemId, checked }) => {
+      setChecklist((prev) => prev.map((i) => (i.id === itemId ? { ...i, checked } : i)));
       refetch();
     },
+    onError: (err: unknown) => toast.error(getErrorMessage(err, 'Kunne ikke lagre sjekklistepunktet. Prøv igjen.')),
   });
 
   /**
@@ -548,9 +554,7 @@ const SafePayApproval: React.FC = () => {
     const item = checklist.find((i) => i.id === id);
     if (!item) return;
 
-    const newChecked = !item.checked;
-    setChecklist((prev) => prev.map((i) => (i.id === id ? { ...i, checked: newChecked } : i)));
-    updateChecklistItemMutation.mutate({ itemId: id, checked: newChecked });
+    updateChecklistItemMutation.mutate({ itemId: id, checked: !item.checked });
   };
 
   if (isLoading) {
@@ -944,7 +948,7 @@ const SafePayApproval: React.FC = () => {
                   <label
                     key={item.id}
                     htmlFor={`checklist-${item.id}`}
-                    role="button"
+                    role="checkbox"
                     tabIndex={canToggle ? 0 : -1}
                     aria-checked={!!item.checked}
                     aria-disabled={!canToggle}
@@ -974,6 +978,10 @@ const SafePayApproval: React.FC = () => {
                       onChange={() => {
                         if (canToggle) toggleCheck(item.id);
                       }}
+                      // The label is the checkbox for assistive tech; this copy is hidden so it
+                      // is not announced or focused twice.
+                      aria-hidden="true"
+                      tabIndex={-1}
                       className="sr-only"
                     />
                     <span

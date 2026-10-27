@@ -106,6 +106,10 @@ const userSchema = new mongoose.Schema(
     ],
     earnings: { type: Number, default: 0 },
     spending: { type: Number, default: 0 },
+    // Set when the owner proved control of `email`: the sign-up code, a reset / change-password
+    // code, or a provider-verified e-mail. Unset = never proven: see emailUnverified in
+    // controllers/auth/authHelpers.js (accounts from before EMAIL_PROOF_CUTOFF count as proven).
+    emailVerifiedAt: { type: Date },
     oauthProviders: [
       {
         provider: { type: String },
@@ -335,6 +339,11 @@ const userSchema = new mongoose.Schema(
       type: Number,
       select: false,
     },
+    // What the current code is for: 'verify-email', or unset for the password flows.
+    otpPurpose: {
+      type: String,
+      select: false,
+    },
     // The 32-byte token handed out after a correct code. Kept apart from the code's
     // hash so /reset-password can never be satisfied by a 6-digit guess.
     passwordResetSessionToken: {
@@ -363,6 +372,9 @@ userSchema.index({
   'oauthProviders.provider': 1,
   'oauthProviders.providerId': 1,
 });
+
+// GET /api/users/top sorts every user by this; without it Mongo sorts the whole collection in memory.
+userSchema.index({ reviewCount: -1, averageRating: -1 });
 
 // Admin query indexes
 userSchema.index({ role: 1, isDeleted: 1 });

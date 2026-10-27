@@ -5,7 +5,7 @@
  */
 
 jest.mock('../config/stripe', () => ({
-  getStripeConfiguration: jest.fn(),
+  getStripeConfigurationForMode: jest.fn(),
   getStripeForMode: jest.fn(),
 }));
 jest.mock('../services/stripe/webhookReadiness', () => ({
@@ -30,7 +30,7 @@ jest.mock('../services/subscriptions/v2WebhookProcessor', () => ({
   processVerifiedEvent: jest.fn(),
 }));
 
-const { getStripeConfiguration, getStripeForMode } = require('../config/stripe');
+const { getStripeConfigurationForMode, getStripeForMode } = require('../config/stripe');
 const webhookReadiness = require('../services/stripe/webhookReadiness');
 const ledger = require('../services/stripe/eventLedger');
 const { confirmPaidSession } = require('../controllers/SafePayCheckoutController');
@@ -40,6 +40,17 @@ const paymentLifecycle = require('../services/stripe/paymentLifecycle');
 const { stripeWebhook, ORDER_EVENT_TYPES } = require('../services/stripe/webhookDispatcher');
 const { processVerifiedEvent } = require('../services/subscriptions/v2WebhookProcessor');
 const Stripe = require('stripe');
+
+// The dispatcher verifies with the static Stripe.webhooks; tests stub it per case.
+const realConstructEvent = Stripe.webhooks.constructEvent.bind(Stripe.webhooks);
+const constructEvent = jest.spyOn(Stripe.webhooks, 'constructEvent');
+
+// The test-mode config is what each case sets; live stays unconfigured.
+function mockTestModeConfig(config) {
+  getStripeConfigurationForMode.mockImplementation((testMode) =>
+    testMode ? config : { testMode: false, mode: 'live', webhookSecret: null, webhookSecretValid: false }
+  );
+}
 
 function makeRes() {
   return {
@@ -72,11 +83,7 @@ function makeReq(overrides = {}) {
 }
 
 function mockStripeConstructing(event) {
-  getStripeForMode.mockResolvedValue({
-    webhooks: {
-      constructEvent: jest.fn(() => ({ livemode: false, ...event })),
-    },
-  });
+  constructEvent.mockImplementation(() => ({ livemode: false, ...event }));
 }
 
 const paidSafePaySession = {
@@ -88,7 +95,9 @@ const paidSafePaySession = {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  getStripeConfiguration.mockResolvedValue({
+  constructEvent.mockImplementation(realConstructEvent);
+  getStripeForMode.mockResolvedValue({ webhooks: {} });
+  mockTestModeConfig({
     testMode: true,
     mode: 'test',
     secretKey: 'sk_test_fake',
@@ -123,7 +132,7 @@ describe('signature verification', () => {
       payload,
       secret: signingSecret,
     });
-    getStripeConfiguration.mockResolvedValue({
+    mockTestModeConfig({
       testMode: true,
       mode: 'test',
       secretKey: 'sk_test_fixture',
@@ -147,12 +156,8 @@ describe('signature verification', () => {
   });
 
   it('rejects an event whose signature does not verify, and never claims it', async () => {
-    getStripeForMode.mockResolvedValue({
-      webhooks: {
-        constructEvent: jest.fn(() => {
-          throw new Error('No signatures found matching the expected signature');
-        }),
-      },
+    constructEvent.mockImplementation(() => {
+      throw new Error('No signatures found matching the expected signature');
     });
 
     const res = makeRes();
@@ -164,12 +169,8 @@ describe('signature verification', () => {
   });
 
   it('logs the signature failure with an errorCode, since the logger drops 4xx without one', async () => {
-    getStripeForMode.mockResolvedValue({
-      webhooks: {
-        constructEvent: jest.fn(() => {
-          throw new Error('bad signature');
-        }),
-      },
+    constructEvent.mockImplementation(() => {
+      throw new Error('bad signature');
     });
 
     await stripeWebhook(makeReq(), makeRes());
@@ -183,7 +184,7 @@ describe('signature verification', () => {
   });
 
   it('refuses to process anything when no signing secret is configured', async () => {
-    getStripeConfiguration.mockResolvedValue({
+    mockTestModeConfig({
       testMode: true,
       mode: 'test',
       secretKey: 'sk_test_fake',

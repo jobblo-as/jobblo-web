@@ -135,11 +135,29 @@ function _resolveLang(body) {
  * stable instructions, the application context and the user's raw text in
  * separate, clearly-labelled parts. This function only performs the call.
  */
-async function _callAi(context) {
+async function _callAi(context, images = []) {
   warnIfWeakModel();
-  const request = buildRequest(context, MODEL);
+  const model = images.length ? VISION_MODEL : MODEL;
+  const request = buildRequest({ ...context, hasImages: images.length > 0 }, model);
+  // Photos of the job (app "Legg ut oppdrag"): the same prompt, with the images beside it.
+  // Low detail: a fixed ~85 tokens each, plenty to see what the work is.
+  if (images.length) {
+    request.messages[1].content = [
+      {
+        type: 'text',
+        text:
+          request.messages[1].content +
+          '\n\nThe attached photos show the job. Describe the work you can see in them as the customer would; ' +
+          'never mention the photos themselves ("se bildet").',
+      },
+      ...images.map((file) => ({
+        type: 'image_url',
+        image_url: { url: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`, detail: 'low' },
+      })),
+    ];
+  }
   const completion = await getClient().chat.completions.create(request);
-  recordAiUsage(MODEL, completion.usage, 'text'); // token counts only, for the cost center
+  recordAiUsage(model, completion.usage, images.length ? 'image' : 'text'); // token counts only, for the cost center
   const choice = completion.choices && completion.choices[0];
 
   // A strict-schema refusal is a distinct outcome from a bad answer: the model
@@ -532,6 +550,17 @@ exports.generateFullJobListing = async (req, res) => {
       return res.status(400).json({ error: 'Vennligst beskriv jobben (min. 5 tegn).' });
     }
 
+    // Multipart (with photos) sends every field as text.
+    const images = (req.files || []).slice(0, 3);
+    let duration = existingDuration;
+    if (typeof duration === 'string') {
+      try {
+        duration = JSON.parse(duration);
+      } catch {
+        duration = undefined;
+      }
+    }
+
     const { names: catNames, chosen: catChosen } = await _loadCategoryContext(existingCategory);
     const userPayment = PAYMENT_TYPES.includes(existingPaymentType)
       ? existingPaymentType
@@ -546,12 +575,12 @@ exports.generateFullJobListing = async (req, res) => {
       title: existingTitle,
       description: existingDescription,
       paymentType: userPayment,
-      userDuration: existingDuration,
+      userDuration: duration,
       userCity: existingCity,
       userCounty: existingCounty,
       equipment: existingEquipment,
-      urgency: !!existingUrgent,
-    });
+      urgency: existingUrgent === true || existingUrgent === 'true',
+    }, images);
 
     const validated = validateSmartFillOutput(parsed, {
       userPaymentType: userPayment,
@@ -582,5 +611,213 @@ exports.generateFullJobListing = async (req, res) => {
     });
   } catch (err) {
     return _respondWithAiError(res, err, 'generate-full-listing');
+  }
+};
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Category suggestions for the one-question-per-screen flow (app "Legg ut oppdrag").
+// Up to 3 photos and/or a short text → up to 3 active categories, best first.
+// Images go as `detail: 'low'` (a fixed ~85 tokens each): enough to tell painting from
+// moving, and the call stays fast and cheap.
+// ──────────────────────────────────────────────────────────────────────────────
+const MAX_SUGGESTION_IMAGES = 3;
+const MAX_SUGGESTION_TEXT = 500;
+
+/** Keep only active category names (case-insensitive match), no duplicates, at most 3. Pure. */
+function pickSuggestedCategories(raw, names) {
+  const byLower = new Map(names.map((n) => [n.toLowerCase(), n]));
+  const out = [];
+  for (const value of Array.isArray(raw) ? raw : []) {
+    const name = byLower.get(String(value || '').trim().toLowerCase());
+    if (name && !out.includes(name)) out.push(name);
+    if (out.length === 3) break;
+  }
+  return out;
+}
+
+exports.suggestCategories = async (req, res) => {
+  try {
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(500).json({ success: false, error: 'AI-tjenesten er ikke konfigurert', message: 'Velg kategori selv.' });
+    }
+    const files = (req.files || []).slice(0, MAX_SUGGESTION_IMAGES);
+    const text = typeof req.body?.text === 'string' ? req.body.text.trim().slice(0, MAX_SUGGESTION_TEXT) : '';
+    if (!files.length && !text) {
+      return res.status(400).json({ success: false, error: 'Legg til et bilde eller en kort beskrivelse.' });
+    }
+
+    const { names } = await _loadCategoryContext();
+    if (!names.length) return res.json({ success: true, suggestions: [] });
+
+    const strict = _visionSupportsStrictSchema(VISION_MODEL);
+    const schema = {
+      type: 'object',
+      additionalProperties: false,
+      required: ['categories'],
+      properties: { categories: { type: 'array', items: { type: 'string', enum: names } } },
+    };
+    const response = await getClient().chat.completions.create({
+      model: VISION_MODEL,
+      temperature: 0,
+      max_tokens: 80,
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You sort jobs on Jobblo, a Norwegian marketplace for small jobs. From the photos and/or text, ' +
+            'pick the 3 categories the job most likely belongs to, best first, from exactly this list: ' +
+            `${JSON.stringify(names)}. Fewer than 3 only if the list has fewer.` +
+            (strict ? '' : ' Respond with a JSON object: {"categories": [string, ...]}.'),
+        },
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: text ? `The customer wrote: ${text}` : 'Photos of the job:' },
+            ...files.map((file) => ({
+              type: 'image_url',
+              image_url: { url: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`, detail: 'low' },
+            })),
+          ],
+        },
+      ],
+      response_format: strict
+        ? { type: 'json_schema', json_schema: { name: 'jobblo_category_suggestions', strict: true, schema } }
+        : { type: 'json_object' },
+    });
+    recordAiUsage(VISION_MODEL, response.usage, files.length ? 'image' : 'text');
+
+    let parsed = {};
+    try {
+      parsed = JSON.parse(response.choices?.[0]?.message?.content || '{}');
+    } catch {
+      parsed = {};
+    }
+    return res.json({ success: true, suggestions: pickSuggestedCategories(parsed.categories, names) });
+  } catch (err) {
+    return _respondWithAiError(res, err, 'suggest-categories');
+  }
+};
+exports.pickSuggestedCategories = pickSuggestedCategories;
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Camera helper (app "Legg ut oppdrag"): after each photo, one short line on what the AI
+// sees and what to photograph next, and whether the photo should be retaken.
+// One low-detail image (~85 tokens) and a tiny answer: fast and cheap enough per photo.
+// ──────────────────────────────────────────────────────────────────────────────
+const PHOTO_QUALITIES = ['ok', 'blurry', 'dark', 'unclear'];
+// Said instead of a model hint that only calls the photo unclear: guidance, not an error.
+const PHOTO_UNCLEAR_HINT = {
+  en: "I can't quite see what needs doing yet – take a photo of the area or thing that needs work.",
+  no: 'Jeg ser ikke helt hva som skal gjøres ennå – ta et bilde av området eller tingen som trenger arbeid.',
+};
+const PHOTO_DONE_HINT = {
+  en: 'Looks good – tap Done, or add another angle if you like.',
+  no: 'Ser bra ut – trykk Ferdig, eller ta et bilde fra en annen vinkel om du vil.',
+};
+// The kinds of view the helper asks for, in both languages.
+const PHOTO_VIEWS = {
+  closeup: /close-?up|nærbilde|detail|detalj/i,
+  overview: /overview|whole (area|room)|wide|oversikt|hele (rommet|området)/i,
+  angle: /angle|vinkel/i,
+  size: /size|measure|størrelse|mål/i,
+  access: /access|entrance|adkomst|inngang/i,
+};
+/** Pure: does `hint` ask for a kind of view an earlier hint already asked for? */
+function repeatsAdvice(hint, earlierHints) {
+  const kinds = (text) => Object.keys(PHOTO_VIEWS).filter((k) => PHOTO_VIEWS[k].test(text));
+  const asked = new Set(earlierHints.flatMap(kinds));
+  const now = kinds(hint);
+  return now.length > 0 && now.every((k) => asked.has(k));
+}
+exports.repeatsAdvice = repeatsAdvice;
+
+exports.photoHint = async (req, res) => {
+  try {
+    if (!process.env.OPENAI_API_KEY) return res.status(500).json({ success: false, error: 'AI-tjenesten er ikke konfigurert' });
+    if (!req.file?.buffer) return res.status(400).json({ success: false, error: 'Et bilde er påkrevd.' });
+    const lang = _resolveLang(req.body);
+    const count = Math.max(1, Math.min(6, parseInt(req.body?.count, 10) || 1));
+    // What the earlier photos showed and the advice already given, so the helper does not say
+    // "take a close-up" after every photo. Multipart sends them as JSON text; bad input is ignored.
+    const list = (raw) => {
+      try {
+        const v = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        return Array.isArray(v) ? v.filter((x) => typeof x === 'string' && x.trim()).slice(-5).map((x) => x.trim().slice(0, 160)) : [];
+      } catch {
+        return [];
+      }
+    };
+    const earlierSeen = list(req.body?.previousSeen);
+    const earlierHints = list(req.body?.previousHints);
+    const strict = _visionSupportsStrictSchema(VISION_MODEL);
+    const schema = {
+      type: 'object',
+      additionalProperties: false,
+      required: ['hint', 'seen', 'quality'],
+      properties: { hint: { type: 'string' }, seen: { type: 'string' }, quality: { type: 'string', enum: PHOTO_QUALITIES } },
+    };
+    const response = await getClient().chat.completions.create({
+      model: VISION_MODEL,
+      temperature: 0.3,
+      max_tokens: 90,
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are the camera helper in Jobblo, where people post small jobs they want done (painting, cleaning, moving, ' +
+            'garden, repairs, assembly). The user just took photo number ' + count + ' of up to 6. Answer in ' +
+            (lang === 'en' ? 'English' : 'Norwegian bokmål') + '. hint: ONE short, friendly sentence (max 22 words). If the ' +
+            'photo should be retaken, say why. Otherwise look at ALL photos so far and ask for the ONE view that is still ' +
+            'missing for a pro to understand the job (an overview of the whole area, a close-up of the problem, something ' +
+            'showing size, the access) - never a view already shown or already asked for. If nothing important is missing ' +
+            '(usually after an overview and a close-up, or from photo 3), say the photos look good and they can tap Done. ' +
+            'You see a small, low-resolution preview: never judge sharpness from its resolution. quality "blurry" only ' +
+            'when the subject is clearly out of focus or smeared by motion, "dark" only when you cannot make out the subject; ' +
+            'then the photo should be retaken. Be generous otherwise: most photos show a ' +
+            'place or thing that needs work even when the problem is subtle (a room to clean, a wall to paint, furniture ' +
+            'to move or assemble, a garden) - that is "ok". Use "unclear" only when the photo is almost empty, covered or ' +
+            'shows nothing recognisable. The hint always guides the next step; never answer only that the photo is unclear. ' +
+            'seen: what the photo shows that matters for the job, as plain facts for the listing text (max 15 words, same ' +
+            'language, no advice, empty when unclear). Never mention people.' +
+            (strict ? '' : ' Respond with a JSON object: {"hint": string, "seen": string, "quality": "ok"|"blurry"|"dark"|"unclear"}.'),
+        },
+        {
+          role: 'user',
+          content: [
+            ...(earlierSeen.length || earlierHints.length
+              ? [{ type: 'text', text: `Earlier photos showed: ${earlierSeen.join('; ') || '—'}. Advice already given: ${earlierHints.join(' | ') || '—'}.` }]
+              : []),
+            { type: 'image_url', image_url: { url: `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`, detail: 'low' } },
+          ],
+        },
+      ],
+      response_format: strict
+        ? { type: 'json_schema', json_schema: { name: 'jobblo_photo_hint', strict: true, schema } }
+        : { type: 'json_object' },
+    });
+    recordAiUsage(VISION_MODEL, response.usage, 'image');
+
+    let parsed = {};
+    try {
+      parsed = JSON.parse(response.choices?.[0]?.message?.content || '{}');
+    } catch {
+      parsed = {};
+    }
+    let hint = typeof parsed.hint === 'string' ? parsed.hint.trim().slice(0, 200) : '';
+    // The model still tends to ask for "a close-up" after every photo. Asking again for a view it
+    // already asked for is replaced: the user has done that, so the set is good enough.
+    const quality = PHOTO_QUALITIES.includes(parsed.quality) ? parsed.quality : 'ok';
+    if (quality === 'ok' && hint && repeatsAdvice(hint, earlierHints)) hint = PHOTO_DONE_HINT[lang === 'en' ? 'en' : 'no'];
+    // "The photo is unclear" read like an error to testers, while the listing text (which also
+    // uses the category and details) came out fine. Unclear photos get guidance instead.
+    if (quality === 'unclear' || /\b(unclear|not clear|uklart|utydelig)\b/i.test(hint)) {
+      if (quality !== 'blurry' && quality !== 'dark') hint = PHOTO_UNCLEAR_HINT[lang === 'en' ? 'en' : 'no'];
+    }
+    if (!hint) return res.status(502).json({ success: false, error: 'AI ga ikke noe svar.' });
+    // `seen` feeds the title/description later (the app keeps one per photo).
+    const seen = typeof parsed.seen === 'string' ? parsed.seen.trim().slice(0, 160) : '';
+    return res.json({ success: true, hint, seen, quality });
+  } catch (err) {
+    return _respondWithAiError(res, err, 'photo-hint');
   }
 };

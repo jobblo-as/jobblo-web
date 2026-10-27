@@ -95,13 +95,16 @@ function verifyToken(token, purpose) {
 }
 
 const axios = require('axios');
+const GEO_TIMEOUT_MS = 1500;
 
 const getGeoLocation = async (ip) => {
   try {
     if (!ip || ip === '::1' || ip === '127.0.0.1' || ip.includes('127.0.0.1')) {
       return 'Localhost';
     }
-    const response = await axios.get(`http://ip-api.com/json/${encodeURIComponent(ip)}`);
+    // Bounded: this runs inside every login, and axios has no timeout by default, so a slow
+    // or blackholed ip-api.com held every sign-in open until the socket gave up.
+    const response = await axios.get(`http://ip-api.com/json/${encodeURIComponent(ip)}`, { timeout: GEO_TIMEOUT_MS });
     if (response.data && response.data.status === 'success') {
       return `${response.data.city}, ${response.data.country}`;
     }
@@ -170,4 +173,4 @@ const createSession = async (req, userId) => {
   }
 };
 
-module.exports = { generateTokens, verifyToken, createSession, deviceNameFrom, ACCESS_TTL_S, REFRESH_TTL_S };
+module.exports = { generateTokens, verifyToken, createSession, deviceNameFrom, getGeoLocation, GEO_TIMEOUT_MS, ACCESS_TTL_S, REFRESH_TTL_S };

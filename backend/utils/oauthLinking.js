@@ -1,7 +1,7 @@
 const User = require('../models/User');
 
 /**
- * Account-linking policy for third-party sign-in (Vipps, Google).
+ * Account-linking policy for third-party sign-in (Vipps, Google, Apple).
  *
  * ============================================================================
  * THE RULE
@@ -57,7 +57,7 @@ const User = require('../models/User');
  */
 
 /** Providers this policy governs. Used only for clearer error messages. */
-const SUPPORTED_PROVIDERS = new Set(['vipps', 'google']);
+const SUPPORTED_PROVIDERS = new Set(['vipps', 'google', 'apple']);
 
 /**
  * A provider subject id we are willing to trust as an identity.
@@ -133,7 +133,8 @@ async function linkProviderToUser(user, provider, providerId) {
 /**
  * Decide what a provider callback should do.
  *
- * Performs no writes except the link in the intentional-linking case, so the caller
+ * Performs no writes except the link in the intentional-linking case and stamping
+ * emailVerifiedAt when the provider verifies the account's own address, so the caller
  * stays in control of user creation and of how each outcome is presented.
  *
  * @param {Object}  args
@@ -165,9 +166,18 @@ async function resolveOAuthLogin({ provider, providerId, email, emailVerified, l
   const id = providerId.trim();
   const normalisedEmail = usableEmail(email, emailVerified);
 
+  // The provider vouching for the account's own address proves it, like the sign-up code.
+  // The one write besides linking.
+  const stampVerified = async (user) => {
+    if (emailVerified !== true || !normalisedEmail || user.emailVerifiedAt || user.email !== normalisedEmail) return;
+    user.emailVerifiedAt = new Date();
+    await User.updateOne({ _id: user._id }, { $set: { emailVerifiedAt: user.emailVerifiedAt } });
+  };
+
   // 1. Already linked -- the returning-user path.
   const linked = await findUserByProviderIdentity(provider, id);
   if (linked) {
+    await stampVerified(linked);
     return { outcome: 'login', user: linked, email: normalisedEmail };
   }
 
@@ -179,6 +189,7 @@ async function resolveOAuthLogin({ provider, providerId, email, emailVerified, l
     const result = await linkProviderToUser(target, provider, id);
     if (!result.ok) return { outcome: 'link_conflict', reason: result.reason };
 
+    await stampVerified(result.user);
     return { outcome: 'linked', user: result.user, email: normalisedEmail };
   }
 

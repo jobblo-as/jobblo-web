@@ -108,7 +108,7 @@ const ContributorsModal: React.FC<ContributorsModalProps> = ({
             ))}
 
             {/* Other Contributors */}
-            {list.contributors?.length > 0 ? (
+            {list.contributors && list.contributors.length > 0 ? (
               list.contributors.map((user: Contributor) => (
                 <div
                   key={user._id}

@@ -1,8 +1,9 @@
 import { create } from 'zustand';
 import { queryClient } from '../providers/queryClient';
 import { destroyChatSocket } from '../services/chatSocket.service';
-import { deactivateRegisteredPushToken } from '../services/pushNotifications.service';
+import { deactivateRegisteredPushToken, dismissDeliveredNotifications } from '../services/pushNotifications.service';
 import { authStorage as storage } from '../utils/authStorage';
+import { clearUserDrafts } from '../utils/draftStorage';
 
 type AuthUser = Record<string, unknown> | null;
 
@@ -10,8 +11,10 @@ function userId(user: AuthUser) {
   return user && typeof user._id === 'string' ? user._id : null;
 }
 
-async function clearAuthenticatedSession() {
+async function clearAuthenticatedSession(previousUser: AuthUser) {
   await deactivateRegisteredPushToken().catch(() => undefined);
+  await dismissDeliveredNotifications().catch(() => undefined);
+  await clearUserDrafts(userId(previousUser)).catch(() => undefined);
   await queryClient.cancelQueries();
   queryClient.removeQueries();
   destroyChatSocket();
@@ -70,7 +73,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   login: async (token, user) => {
     if (userId(get().user) && userId(get().user) !== userId(user)) {
-      await clearAuthenticatedSession();
+      await clearAuthenticatedSession(get().user);
     }
     await Promise.all([
       storage.setItem('token', token),
@@ -83,7 +86,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: async () => {
-    // Best-effort, and deliberately first: this is what deletes the server session and
+    // First, while the session is still valid: stop this device's push notifications. Done
+    // after logoutUser() it ran with a dead session, got a 401 that was swallowed, and the
+    // phone kept showing the previous user's messages (security review H2).
+    await deactivateRegisteredPushToken().catch(() => undefined);
+    // Then, best-effort: this is what deletes the server session and
     // invalidates the 7-day refresh cookie held by the native cookie store. Clearing only
     // local storage would leave a resumable session behind. A network failure must still
     // let the user sign out locally, so the result is ignored.
@@ -97,7 +104,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch {
       // Offline, or the session was already gone server-side. Sign out locally regardless.
     }
-    await clearAuthenticatedSession();
+    await clearAuthenticatedSession(get().user);
     await storage.removeItem('token');
     await storage.removeItem('user');
     set({ token: null, user: null, isAuthenticated: false, hydrated: true });

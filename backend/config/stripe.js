@@ -52,7 +52,15 @@ async function isTestMode() {
 }
 
 async function getStripeConfiguration() {
-  const testMode = await isTestMode();
+  return getStripeConfigurationForMode(await isTestMode());
+}
+
+/**
+ * Keys and signing secret for one mode, regardless of the STRIPE_TEST_MODE toggle.
+ * The webhook uses this per event: Stripe keeps delivering (and retrying) events of
+ * the mode that is not currently selected, and those must still be processed.
+ */
+function getStripeConfigurationForMode(testMode) {
   const secretKey = secretKeyForMode(testMode);
   const webhookSecret = (
     testMode ? process.env.STRIPE_TEST_WEBHOOK_SECRET : process.env.STRIPE_WEBHOOK_SECRET
@@ -78,13 +86,9 @@ async function getStripeConfiguration() {
 }
 
 /**
- * Signing secret for the Stripe webhook, matching whichever mode getStripe() uses.
- *
- * Deliberately NO cross-mode fallback. A test-signed event verified against the
- * live secret fails as a signature mismatch, which in the log is indistinguishable
- * from a forged request. Missing configuration should report itself as missing
- * configuration, so the caller can return "not configured" rather than "bad
- * signature".
+ * Signing secret for the currently selected mode. The webhook itself does not use
+ * this: it verifies against both modes' secrets (getStripeConfigurationForMode) and
+ * processes each event with the client of the event's own livemode.
  */
 async function getStripeWebhookSecret() {
   return (await getStripeConfiguration()).webhookSecret;
@@ -180,6 +184,7 @@ module.exports = {
   getStripe,
   getStripeForMode,
   getStripeConfiguration,
+  getStripeConfigurationForMode,
   getStripeWebhookSecret,
   getStripeModeReport,
   isTestMode,

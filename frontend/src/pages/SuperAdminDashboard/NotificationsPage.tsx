@@ -11,6 +11,7 @@ import {
   Select,
   message,
 } from 'antd';
+import { AntdTheme } from '../../theme/AntdTheme';
 import { fetchSystemHistory, sendSystemNotification } from '../../api/admin';
 import ConfirmDialog from '../../components/Ui/ConfirmDialog';
 import { AdminTable } from '../../components/Ui/AdminTable';
@@ -31,7 +32,6 @@ const NotificationsPage = () => {
   const totalPages = historyQuery.data?.totalPages ?? 1;
   const historyLoading = historyQuery.isFetching;
   const sendMutation = useMutation({ mutationFn: sendSystemNotification });
-  const loading = sendMutation.isPending;
   const [sendConfirm, setSendConfirm] = useState<{ visible: boolean; data: any }>({
     visible: false,
     data: null,
@@ -205,4 +205,10 @@ const NotificationsPage = () => {
   );
 };
 
-export default NotificationsPage;
+export default function NotificationsPageWithTheme() {
+  return (
+    <AntdTheme>
+      <NotificationsPage />
+    </AntdTheme>
+  );
+}

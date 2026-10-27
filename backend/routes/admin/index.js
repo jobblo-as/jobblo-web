@@ -34,6 +34,7 @@ router.get('/stripe/webhook-readiness', stripeWebhookHealthController.getWebhook
 router.get('/stripe/payment-incidents', stripePaymentIncidentController.list);
 router.post('/stripe/payment-incidents/:id/refund-duplicate', stripePaymentIncidentController.refundDuplicatePayment);
 router.post('/stripe/payment-incidents/:id/reverse-chargeback-transfer', stripePaymentIncidentController.reverseChargebackTransfer);
+router.post('/stripe/payment-incidents/:id/close-lost-chargeback', stripePaymentIncidentController.closeLostChargebackWithoutTransfer);
 router.get('/billing/subscriptions/summary', subscriptionRebuildInProgress);
 router.post('/billing/subscriptions/reconcile', financeSyncLimiter, subscriptionRebuildInProgress);
 
@@ -193,7 +194,14 @@ router.get('/maintenance', contentAdminController.getMaintenanceMode);
 router.put('/maintenance', contentAdminController.toggleMaintenanceMode);
 
 // ── Evidence Upload ────────────────────────────────────────────────────────
-router.post('/chat-reports/:reportId/evidence', evidenceUploadController.uploadEvidence);
+// Field "files" (max 5, 5 MB each). Buffered only; the controller uploads after finding the report.
+const multer = require('multer');
+router.post(
+  '/chat-reports/:reportId/evidence',
+  multer({ storage: multer.memoryStorage(), limits: { ...upload.MULTIPART_LIMITS, fileSize: 5 * 1024 * 1024, files: 5 } }).array('files', 5),
+  upload.checkFileTypes(upload.DOCUMENT_TYPES),
+  evidenceUploadController.uploadEvidence
+);
 
 // ── Shop Management ────────────────────────────────────────────────────────
 router.get('/shop', shopAdminController.getShopItems);

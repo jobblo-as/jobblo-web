@@ -13,6 +13,7 @@ import {
   message,
   Progress,
 } from 'antd';
+import { AntdTheme } from '../../theme/AntdTheme';
 import ConfirmDialog from '../../components/Ui/ConfirmDialog';
 import { AdminTable } from '../../components/Ui/AdminTable';
 import {
@@ -259,4 +260,10 @@ const RoadmapAdminPage = () => {
   );
 };
 
-export default RoadmapAdminPage;
+export default function RoadmapAdminPageWithTheme() {
+  return (
+    <AntdTheme>
+      <RoadmapAdminPage />
+    </AntdTheme>
+  );
+}

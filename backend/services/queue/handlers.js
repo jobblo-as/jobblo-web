@@ -9,8 +9,13 @@ const otpBox = () => require('../../utils/secretBox').createBox('queued-otp');
 const HANDLERS = {
   email: {
     /** One-time code. The code travels sealed; it is opened only here, at send time. */
-    otp: async ({ to, name, otpSealed }) => {
-      await require('../../utils/emailService').deliverOtpEmail(to, otpBox().open(otpSealed).toString('utf8'), name);
+    otp: async ({ to, name, otpSealed, purpose }) => {
+      await require('../../utils/emailService').deliverOtpEmail(to, otpBox().open(otpSealed).toString('utf8'), name, purpose);
+      return { sent: true };
+    },
+    /** Plain-text security notice to an account owner (queueSecurityAlertEmail). */
+    securityAlert: async ({ to, subject, text }) => {
+      await require('../../utils/emailService').sendSecurityAlertEmail(to, subject, text);
       return { sent: true };
     },
     /** Alert email to the on-call developer. Loads the incident fresh: the job only carries its id. */

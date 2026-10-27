@@ -19,28 +19,24 @@ import {
 } from './api';
 import { useUserStore } from '../../stores/userStore';
 import { toast } from 'react-hot-toast';
+import { errorBody } from '../../utils/getErrorMessage';
+import type { ExperiencePayload, UserUpdatePayload } from './types/user';
 
-interface UpdateUserData {
-  name?: string;
-  email?: string;
-  phone?: string;
-  avatarUrl?: string;
-  bio?: string;
-}
 
 export const useUpdateUser = () => {
   const queryClient = useQueryClient();
   const { fetchProfile } = useUserStore((state) => state);
 
   return useMutation({
-    mutationFn: ({ userId, data }: { userId: string; data: any }) => updateUser(userId, data),
+    mutationFn: ({ userId, data }: { userId: string; data: UserUpdatePayload }) =>
+      updateUser(userId, data),
     onSuccess: (_, { userId }) => {
       queryClient.invalidateQueries({ queryKey: ['userProfile', userId] });
       fetchProfile();
       toast.success('Oppdatert!');
     },
-    onError: (error: any) => {
-      const message = error.response?.data?.error || error.message || 'Kunne ikke oppdatere';
+    onError: (error) => {
+      const message = errorBody(error)?.error || error.message || 'Kunne ikke oppdatere';
       toast.error(message);
     },
   });
@@ -66,7 +62,7 @@ export const useBlockUser = () => {
     },
     onError: (error: unknown) => {
       const err = error as { response?: { data?: { error?: string } } };
-      toast.error(err.response?.data?.error || 'Kunne ikke blokkere bruker');
+      toast.error(errorBody(err)?.error || 'Kunne ikke blokkere bruker');
     },
   });
 };
@@ -136,8 +132,8 @@ export const useAddPortfolioItem = () => {
       fetchProfile();
       toast.success('Portfolio-element lagt til!');
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.error || 'Kunne ikke legge til portfolio');
+    onError: (error) => {
+      toast.error(errorBody(error)?.error || 'Kunne ikke legge til portfolio');
     },
   });
 };
@@ -153,8 +149,8 @@ export const useDeletePortfolioItem = () => {
       fetchProfile();
       toast.success('Portfolio-element slettet');
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.error || 'Kunne ikke slette element');
+    onError: (error) => {
+      toast.error(errorBody(error)?.error || 'Kunne ikke slette element');
     },
   });
 };
@@ -170,8 +166,8 @@ export const useAddPreviousProject = () => {
       fetchProfile();
       toast.success('Prosjekt lagt til!');
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.error || 'Kunne ikke legge til prosjekt');
+    onError: (error) => {
+      toast.error(errorBody(error)?.error || 'Kunne ikke legge til prosjekt');
     },
   });
 };
@@ -187,8 +183,8 @@ export const useDeletePreviousProject = () => {
       fetchProfile();
       toast.success('Prosjekt slettet');
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.error || 'Kunne ikke slette prosjekt');
+    onError: (error) => {
+      toast.error(errorBody(error)?.error || 'Kunne ikke slette prosjekt');
     },
   });
 };
@@ -204,8 +200,8 @@ export const useAddCertification = () => {
       fetchProfile();
       toast.success('Sertifisering lagt til!');
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.error || 'Kunne ikke legge til sertifisering');
+    onError: (error) => {
+      toast.error(errorBody(error)?.error || 'Kunne ikke legge til sertifisering');
     },
   });
 };
@@ -221,8 +217,8 @@ export const useDeleteCertification = () => {
       fetchProfile();
       toast.success('Sertifisering slettet');
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.error || 'Kunne ikke slette');
+    onError: (error) => {
+      toast.error(errorBody(error)?.error || 'Kunne ikke slette');
     },
   });
 };
@@ -232,14 +228,14 @@ export const useAddExperience = () => {
   const { fetchProfile, user } = useUserStore((state) => state);
 
   return useMutation({
-    mutationFn: (data: any) => addExperience(data),
+    mutationFn: (data: ExperiencePayload) => addExperience(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['userProfile', user?._id] });
       fetchProfile();
       toast.success('Erfaring lagt til!');
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.error || 'Kunne ikke legge til erfaring');
+    onError: (error) => {
+      toast.error(errorBody(error)?.error || 'Kunne ikke legge til erfaring');
     },
   });
 };
@@ -255,8 +251,8 @@ export const useDeleteExperience = () => {
       fetchProfile();
       toast.success('Erfaring slettet');
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.error || 'Kunne ikke slette erfaring');
+    onError: (error) => {
+      toast.error(errorBody(error)?.error || 'Kunne ikke slette erfaring');
     },
   });
 };

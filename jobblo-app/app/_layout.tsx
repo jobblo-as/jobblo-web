@@ -55,10 +55,13 @@ export default function RootLayout() {
     const key = data.notificationId || JSON.stringify(data);
     if (handledNotificationRef.current === key) return;
     handledNotificationRef.current = key;
-    if (!hydratedRef.current || !authenticatedRef.current) {
+    // Held only until the stored session is known. Tapped while signed out, it belonged to the
+    // previous account: replaying it after the next sign-in opened their chat for someone else.
+    if (!hydratedRef.current) {
       pendingNotificationRef.current = data;
       return;
     }
+    if (!authenticatedRef.current) return;
 
     if (data.type === 'chat_message' && data.chatId) {
       router.push({ pathname: '/(app)/messages/[chatId]', params: { chatId: data.chatId } });
@@ -81,8 +84,9 @@ export default function RootLayout() {
 
   useEffect(() => {
     const pending = pendingNotificationRef.current;
-    if (!pending || !hydrated || !isAuthenticated) return;
+    if (!pending || !hydrated) return;
     pendingNotificationRef.current = null;
+    if (!isAuthenticated) return;
     const key = pending.notificationId || JSON.stringify(pending);
     handledNotificationRef.current = null;
     routeNotification({ ...pending, notificationId: key });

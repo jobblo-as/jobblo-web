@@ -7,26 +7,30 @@ import { ChatWindowSkeleton } from '../Loading/ChatWindowSkeleton';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { useMutation } from '@tanstack/react-query';
-import { createContract, createPaymentSession } from '../../api/chatAPI';
+import { isAxiosError } from 'axios';
+import { createContract, createPaymentSession, type Chat, type ChatMessage } from '../../api/chatAPI';
 import { customerOrderPath } from '../../constants/statuses';
 
 interface ChatWindowProps {
   conversationId?: string;
   isMobile: boolean;
   activeChatLoading: boolean;
-  otherUser: any;
+  otherUser: Chat['clientId'] | null;
   isOtherUserOnline: boolean;
-  activeChat: any;
+  activeChat?: Chat;
   userId: string;
-  messages: any[];
+  messages: ChatMessage[];
   formatTime: (date?: string) => string;
-  messagesEndRef: React.RefObject<HTMLDivElement>;
+  messagesEndRef: React.RefObject<HTMLDivElement | null>;
   newMessage: string;
   setNewMessage: (msg: string) => void;
   handleSend: () => void;
   sending: boolean;
   refetchActiveChat?: () => void;
 }
+
+const apiError = (err: unknown) =>
+  isAxiosError<{ error?: string }>(err) ? err.response?.data?.error : undefined;
 
 export const ChatWindow: React.FC<ChatWindowProps> = ({
   conversationId,
@@ -50,14 +54,15 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   // — both parties, the order, the agreed price — into the browser console of every
   // production user. Removed.
   const createContractMutation = useMutation({
-    mutationFn: () =>
-      createContract(activeChat._id, activeChat.agreedPrice || activeChat.serviceId.price),
-    onSuccess: (data) => {
+    mutationFn: (chatId: string) =>
+      // Only reachable with an active chat (handleCreateContract checks it).
+      createContract(chatId, activeChat!.agreedPrice || activeChat!.serviceId.price),
+    onSuccess: () => {
       toast.success('Kontrakt opprettet!');
       refetchActiveChat?.();
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.error || 'Kunne ikke opprette kontrakt');
+    onError: (err) => {
+      toast.error(apiError(err) || 'Kunne ikke opprette kontrakt');
     },
   });
 
@@ -66,27 +71,32 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       toast.error('Mangler info for å opprette kontrakt');
       return;
     }
-    createContractMutation.mutate();
+    createContractMutation.mutate(activeChat._id);
   };
 
   const createPaymentSessionMutation = useMutation({
-    mutationFn: () => createPaymentSession(activeChat._id),
+    mutationFn: () => createPaymentSession(activeChat!._id),
     onSuccess: (data) => {
       if (data.url) {
         window.location.href = data.url;
       }
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.error || 'Kunne ikke starte betaling');
+    onError: (err) => {
+      toast.error(apiError(err) || 'Kunne ikke starte betaling');
     },
   });
 
+  // orderId is the populated order, or (unpopulated) just its id.
+  const rawOrder = activeChat?.orderId;
+  const chatOrder = typeof rawOrder === 'object' ? rawOrder : null;
+  const chatOrderId = typeof rawOrder === 'object' ? rawOrder?._id : rawOrder;
+
   const handleStartSafePay = () => {
-    if (activeChat?.orderId?._id || activeChat?.orderId) {
-      const orderId = activeChat.orderId._id || activeChat.orderId;
+    if (chatOrderId) {
+      const orderId = chatOrderId;
       // ponytail BUG-005: customer goes to approval/checkout pages (or starts payment session); provider always goes to their work page
       if (isServiceOwner) {
-        if (activeChat.orderId.paymentStatus === 'paid') {
+        if (chatOrder?.paymentStatus === 'paid') {
           navigateToOrder(orderId, { preferApprovalWhenPaid: true });
         } else {
           createPaymentSessionMutation.mutate();
@@ -144,11 +154,20 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     }
   };
 
+  // Stays disabled after success too: the chat refetch (contract) or the Checkout redirect
+  // (payment) lands a moment later, and a second click in between made a second one.
+  const contractBusy =
+    createContractMutation.isPending ||
+    (createContractMutation.isSuccess && createContractMutation.variables === activeChat?._id);
+  const paymentBusy =
+    createPaymentSessionMutation.isPending ||
+    (createPaymentSessionMutation.isSuccess && !!createPaymentSessionMutation.data?.url);
+
   // Check if chat is ready for action bar
   const isChatReady =
     activeChat?.status === 'agreed' || activeChat?.agreedPrice !== undefined || activeChat?.orderId;
 
-  const handleSystemMessageClick = (msg: any) => {
+  const handleSystemMessageClick = (msg: ChatMessage) => {
     if (msg.systemData?.orderId) {
       // ponytail BUG-005: route to correct viewer's page (provider → work page)
       navigateToOrder(msg.systemData.orderId);
@@ -181,16 +200,20 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                   <div className="flex gap-3">
                     {!activeChat.orderId ? (
                       <button
+                        type="button"
                         onClick={handleCreateContract}
-                        className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer border-none bg-linear-to-r from-[#2E6641] to-[#15803d] text-white shadow-sm hover:shadow-md hover:from-[#15803d] hover:to-[#14532d] transition-all duration-200 transform hover:-translate-y-0.5"
+                        disabled={contractBusy}
+                        className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer border-none bg-linear-to-r from-[#2E6641] to-[#15803d] text-white shadow-sm hover:shadow-md hover:from-[#15803d] hover:to-[#14532d] transition-all duration-200 transform hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         Opprett kontrakt
                       </button>
                     ) : (
-                      activeChat.orderId.paymentStatus !== 'paid' && (
+                      chatOrder?.paymentStatus !== 'paid' && (
                         <button
+                          type="button"
                           onClick={handleStartSafePay}
-                          className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer border-none bg-linear-to-r from-[#2E6641] to-[#15803d] text-white shadow-sm hover:shadow-md hover:from-[#15803d] hover:to-[#14532d] transition-all duration-200 transform hover:-translate-y-0.5"
+                          disabled={paymentBusy}
+                          className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer border-none bg-linear-to-r from-[#2E6641] to-[#15803d] text-white shadow-sm hover:shadow-md hover:from-[#15803d] hover:to-[#14532d] transition-all duration-200 transform hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
                         >
                           Start fiks ferdig-betaling
                         </button>

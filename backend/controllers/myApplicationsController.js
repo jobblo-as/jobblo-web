@@ -12,6 +12,7 @@ const Order = require('../models/Order');
 const Chat = require('../models/ChatMessage');
 const Service = require('../models/Service');
 const { notify } = require('../services/notifications');
+const { parsePagination } = require('../utils/pagination');
 
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
 
@@ -21,8 +22,8 @@ const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
 exports.getMyApplications = async (req, res) => {
   try {
     const userId = req.userId;
-    const { page = 1, limit = 20, status } = req.query;
-    const skip = (Number(page) - 1) * Number(limit);
+    const { status } = req.query;
+    const { page, limit, skip } = parsePagination(req.query);
 
     // customerId in JobRequest = the applicant (worker)
     const filter = { customerId: userId };

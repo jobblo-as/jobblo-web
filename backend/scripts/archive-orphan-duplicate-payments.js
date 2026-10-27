@@ -17,7 +17,7 @@
  *   node scripts/archive-orphan-duplicate-payments.js --apply --backup-ref=<verified backup id> --reviewed=<row count>
  *   node scripts/archive-orphan-duplicate-payments.js --restore=<archiveBatch> [--drop-unique-index]
  */
-require('dotenv').config({ path: require('path').join(__dirname, '..', '.env'), quiet: true });
+require('../config/env'); // backend/.env.development (production: .env.production)
 const fs = require('fs');
 const crypto = require('crypto');
 const mongoose = require('mongoose');

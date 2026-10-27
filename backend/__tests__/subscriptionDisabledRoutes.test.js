@@ -1,3 +1,6 @@
+// These are the "flags off" responses. config/redis.js loads backend/.env, which may switch
+// the V2 flags on for local development; set them off explicitly (dotenv never overrides).
+for (const flag of ['CHECKOUT', 'MANAGEMENT', 'PLAN_CATALOGUE', 'ENTITLEMENTS']) process.env[`SUBSCRIPTION_V2_${flag}_ENABLED`] = 'false';
 const express = require('express');
 const request = require('supertest');
 
@@ -8,6 +11,7 @@ jest.mock('../middleware/auth', () => ({
 jest.mock('../middleware/rateLimiter', () => ({
   adminLimiter: (_req, _res, next) => next(),
   financeSyncLimiter: (_req, _res, next) => next(),
+  makeLimiter: () => (_req, _res, next) => next(), // middleware/upload.js builds its upload limiter
 }));
 
 const app = express();

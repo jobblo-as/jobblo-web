@@ -28,11 +28,6 @@ const RESOLVE_OUTCOMES = [
     { label: 'Annet', value: 'other' },
 ];
 
-const PRIORITY_OPTIONS = ['low', 'medium', 'high', 'urgent'];
-const STATUS_OPTIONS = [
-    'open', 'under_review', 'waiting_for_reporter',
-    'waiting_for_reported_user', 'action_required', 'resolved', 'dismissed', 'closed',
-];
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
     return (

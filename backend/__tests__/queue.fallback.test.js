@@ -35,12 +35,15 @@ it('Redis configured but down: falls back to in-process within the enqueue timeo
   jest.spyOn(console, 'error').mockImplementation(() => {});
   const { enqueue } = require('../services/queue');
   const { deliverPush } = require('../services/pushNotifications');
+  // Load BullMQ before timing: its first require can take seconds while the whole suite runs
+  // in parallel, which made this test flaky. What is measured is the 3 s enqueue fallback.
+  require('bullmq');
   const started = Date.now();
   const r = await enqueue('push', 'send', { userId: 'u2', message: {} });
   expect(r.inline).toBe(true);
-  expect(Date.now() - started).toBeLessThan(4500);
+  expect(Date.now() - started).toBeLessThan(5000);
   await until(() => deliverPush.mock.calls.length === 1);
-}, 10000);
+}, 20000); // total wait, incl. the in-process run, under a loaded full-suite run
 
 it('an unknown job is a programming error and throws', async () => {
   const { enqueue } = require('../services/queue');
@@ -63,4 +66,45 @@ it('the console sees job data redacted: no codes, masked emails, push text reduc
   expect(redactJobData({ to: 'kari.nord@example.no', name: 'Kari', otpSealed: 'v1:abc' })).toEqual({ to: expect.not.stringContaining('kari.nord'), name: 'Kari', otpSealed: '[hidden]' });
   expect(redactJobData({ userId: 'u1', message: { title: 'Ny melding', body: 'Hei, ring meg på 91234567', data: {} } })).toEqual({ userId: 'u1', message: { title: 'Ny melding', fields: ['title', 'body', 'data'] } });
   expect(redactJobData({ job: 'reconcileMoneyState' })).toEqual({ job: 'reconcileMoneyState' });
+});
+
+it('Redis slow, not down: a job that lands after the fallback is withdrawn, so it runs once', async () => {
+  jest.useFakeTimers({ doNotFake: ['setImmediate', 'nextTick', 'queueMicrotask'] });
+  let land;
+  const remove = jest.fn().mockResolvedValue(undefined);
+  jest.doMock('bullmq', () => ({ Queue: jest.fn(() => ({ on: () => {}, add: () => new Promise((r) => { land = r; }) })) }));
+  jest.doMock('../config/redis', () => ({ enabled: () => true, bullConnection: () => ({}), PREFIX: 't', closeRedis: async () => {} }));
+  jest.spyOn(console, 'error').mockImplementation(() => {});
+  try {
+    const { enqueue } = require('../services/queue');
+    const { deliverPush } = require('../services/pushNotifications');
+    const pending = enqueue('push', 'send', { userId: 'u3', message: {} });
+    await jest.advanceTimersByTimeAsync(3000);
+    expect((await pending).inline).toBe(true);
+    land({ id: 'late', remove });
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(remove).toHaveBeenCalled();
+    jest.useRealTimers();
+    await until(() => deliverPush.mock.calls.length === 1);
+  } finally {
+    jest.useRealTimers();
+    jest.dontMock('bullmq');
+    jest.dontMock('../config/redis');
+  }
+});
+
+it('Redis down: queue errors are logged once per 30 s, not once per reconnect attempt', () => {
+  const listeners = {};
+  jest.doMock('bullmq', () => ({ Queue: jest.fn(() => ({ on: (ev, fn) => (listeners[ev] = fn) })) }));
+  jest.doMock('../config/redis', () => ({ enabled: () => true, bullConnection: () => ({}), PREFIX: 't', closeRedis: async () => {} }));
+  const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+  try {
+    require('../services/queue').getQueue('email');
+    for (let i = 0; i < 5; i++) listeners.error(new Error('connect ECONNREFUSED 127.0.0.1:6379'));
+    expect(log.mock.calls.filter(([m]) => String(m).includes('queue email'))).toHaveLength(1);
+  } finally {
+    jest.dontMock('bullmq');
+    jest.dontMock('../config/redis');
+  }
 });

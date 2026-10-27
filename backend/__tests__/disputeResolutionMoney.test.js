@@ -31,7 +31,11 @@ jest.mock('../utils/pagination', () => ({
 jest.mock('../models/Dispute', () => ({ findById: jest.fn(), findOneAndUpdate: jest.fn() }));
 jest.mock('../models/Order', () => ({}));
 jest.mock('../models/Payment', () => ({ findOne: jest.fn() }));
-jest.mock('../models/Payout', () => ({ findOne: jest.fn() }));
+jest.mock('../models/Payout', () => ({ findOne: jest.fn(), updateOne: jest.fn().mockResolvedValue({}), exists: jest.fn(async () => null) }));
+jest.mock('../models/StripeFinancialOperation', () => ({
+  findOne: jest.fn(() => ({ select: () => ({ lean: async () => null }) })),
+  exists: jest.fn(async () => null),
+}));
 jest.mock('../models/SafePayHistory', () => ({ findOneAndUpdate: jest.fn() }));
 jest.mock('../models/ChatMessage', () => ({ findByIdAndUpdate: jest.fn() }));
 jest.mock('../models/Notification', () => ({ create: jest.fn() }));
@@ -418,4 +422,271 @@ describe('the recorded resolution and concurrent admins', () => {
     expect(idleFor).toBeGreaterThanOrEqual(10 * 60 * 1000 - 1000);
     expect(filter.status.$in).toContain('open');
   });
+});
+
+describe('H7: every dispute path ends with money and order consistent', () => {
+  const Order = require('../models/Order');
+  const { executeTransferReversal } = require('../services/stripe/financialOperations');
+  const { updateDisputeStatus, reopenDispute } = require('../controllers/admin/disputesAdminController');
+  const withFee = async () => {
+    const stripe = await getStripeForMode();
+    for (const fn of [stripe.checkout.sessions.retrieve, stripe.paymentIntents.retrieve, stripe.charges.retrieve]) {
+      const base = await fn();
+      fn.mockResolvedValue({ ...base, amount_total: 103000, amount_received: 103000, amount: 103000 });
+    }
+    return stripe;
+  };
+  const transferred = () => Payout.findOne.mockReturnValue({ lean: jest.fn().mockResolvedValue({ status: 'transferred', stripeTransferId: 'tr_9', stripeConnectAccountId: 'acct_p', netProviderAmount: 970 }) });
+
+  it('a full refund returns what the customer paid, the 3 % fee included', async () => {
+    await withFee();
+    const order = { ...ORDER(), checkoutAmountMinor: 103000 };
+    Dispute.findById.mockReturnValue({ populate: jest.fn().mockResolvedValue(disputeDoc(order)) });
+    await run('full_refund_to_customer');
+    expect(refundsCreate).toHaveBeenCalledWith(expect.objectContaining({ amount: 103000 }), expect.any(Object));
+    expect(order.status).toBe('cancelled');
+  });
+
+  it('on a paid-out order the transfer is reversed BEFORE the customer is refunded', async () => {
+    const stripe = await withFee();
+    stripe.transfers = { retrieve: jest.fn().mockResolvedValue({ id: 'tr_9', livemode: false, destination: 'acct_p', source_transaction: 'ch_1', amount: 97000, amount_reversed: 0, currency: 'nok' }) };
+    transferred();
+    executeTransferReversal.mockResolvedValue({ reversal: { id: 'trr_1' } });
+    const order = { ...ORDER(), checkoutAmountMinor: 103000 };
+    Dispute.findById.mockReturnValue({ populate: jest.fn().mockResolvedValue(disputeDoc(order)) });
+    await run('full_refund_to_customer');
+    expect(executeTransferReversal).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ amount: 97000 }));
+    expect(executeTransferReversal.mock.invocationCallOrder[0]).toBeLessThan(refundsCreate.mock.invocationCallOrder[0]);
+  });
+
+  it('a failed reversal refunds nothing and leaves the dispute open and retryable', async () => {
+    const stripe = await withFee();
+    stripe.transfers = { retrieve: jest.fn().mockResolvedValue({ id: 'tr_9', livemode: false, destination: 'acct_p', source_transaction: 'ch_1', amount: 97000, amount_reversed: 0, currency: 'nok' }) };
+    transferred();
+    executeTransferReversal.mockRejectedValue(new Error('Insufficient funds in the connected account'));
+    const order = { ...ORDER(), checkoutAmountMinor: 103000 };
+    const dispute = disputeDoc(order);
+    Dispute.findById.mockReturnValue({ populate: jest.fn().mockResolvedValue(dispute) });
+    await run('full_refund_to_customer');
+    expect(refundsCreate).not.toHaveBeenCalled();
+    expect(dispute.status).toBe('open');
+    expect(dispute.resolution.moneyState).toBe('failed');
+    expect(order.status).toBe('disputed');
+  });
+
+  it.each(['closed', 'cancelled', 'resolved'])('a dispute cannot be ended by setting status %s', async (status) => {
+    Dispute.findById.mockResolvedValue({ ...disputeDoc(ORDER()), status: 'under_review' });
+    await updateDisputeStatus({ params: { disputeId: 'dispute_1' }, body: { status }, user: { _id: 'admin_1' } }, {});
+    expect(captured.error).toEqual(expect.objectContaining({ status: 400 }));
+  });
+
+  describe('reopen', () => {
+    let dispute; let payUpdate;
+    beforeEach(() => {
+      Dispute.findOne = jest.fn().mockReturnValue({ select: async () => null });
+      Order.findOneAndUpdate = jest.fn().mockReturnValue({ select: async () => ({ status: 'completed' }) });
+      payUpdate = jest.fn().mockResolvedValue({});
+      Payment.updateOne = payUpdate;
+      dispute = { ...disputeDoc('order_1'), status: 'resolved', resolution: { outcome: 'no_action', moneyState: 'settled' } };
+      Dispute.findById.mockResolvedValue(dispute);
+    });
+    const reopen = () => reopenDispute({ params: { disputeId: 'dispute_1' }, body: { reason: 'Ny informasjon' }, user: { _id: 'admin_1' } }, {});
+
+    it('clears the old resolution and puts the order back under dispute, so it can be resolved again', async () => {
+      await reopen();
+      expect(captured.error).toBeNull();
+      expect(dispute).toMatchObject({ status: 'under_review', resolution: undefined, payoutFrozen: true, previousOrderStatus: 'completed' });
+      expect(Order.findOneAndUpdate.mock.calls[0][1].$set).toEqual({ status: 'disputed' });
+      expect(payUpdate).toHaveBeenCalledWith({ orderId: 'order_1', status: { $in: ['completed', 'released'] } }, { $set: { status: 'disputed' } });
+    });
+
+    it('a resolution that moved money cannot be reopened (no second refund or payout)', async () => {
+      dispute.resolution = { outcome: 'full_refund_to_customer', moneyState: 'settled', stripeRefundId: 're_1' };
+      await reopen();
+      expect(captured.error).toEqual(expect.objectContaining({ status: 409 }));
+      expect(Order.findOneAndUpdate).not.toHaveBeenCalled();
+    });
+
+    it('a cancelled dispute (old dead end) can be reopened', async () => {
+      dispute.status = 'cancelled';
+      dispute.resolution = undefined;
+      await reopen();
+      expect(dispute.status).toBe('under_review');
+    });
+
+    it('refused while a payout or refund holds the order', async () => {
+      Order.findOneAndUpdate.mockReturnValue({ select: async () => null });
+      await reopen();
+      expect(captured.error).toEqual(expect.objectContaining({ status: 409 }));
+      expect(dispute.status).toBe('resolved');
+    });
+
+    it('refused when another dispute is already active on the order', async () => {
+      Dispute.findOne.mockReturnValue({ select: async () => ({ _id: 'd2' }) });
+      await reopen();
+      expect(captured.error).toEqual(expect.objectContaining({ status: 409 }));
+    });
+  });
+});
+
+describe('money review follow-ups', () => {
+  const StripeFinancialOperation = require('../models/StripeFinancialOperation');
+  const { executeTransferReversal } = require('../services/stripe/financialOperations');
+
+  it('a refund larger than what is still refundable is refused BEFORE the provider is reversed', async () => {
+    const stripe = await getStripeForMode();
+    const base = await stripe.charges.retrieve();
+    stripe.charges.retrieve.mockResolvedValue({ ...base, amount_refunded: 40000 }); // 400 of 1000 already refunded
+    stripe.transfers = { retrieve: jest.fn().mockResolvedValue({ id: 'tr_9', livemode: false, destination: 'acct_p', source_transaction: 'ch_1', amount: 97000, amount_reversed: 0, currency: 'nok' }) };
+    Payout.findOne.mockReturnValue({ lean: jest.fn().mockResolvedValue({ status: 'transferred', stripeTransferId: 'tr_9', stripeConnectAccountId: 'acct_p', netProviderAmount: 970 }) });
+    const order = ORDER();
+    const dispute = disputeDoc(order);
+    Dispute.findById.mockReturnValue({ populate: jest.fn().mockResolvedValue(dispute) });
+    await run('full_refund_to_customer');
+    expect(executeTransferReversal).not.toHaveBeenCalled();
+    expect(refundsCreate).not.toHaveBeenCalled();
+    expect(dispute.resolution.moneyState).toBe('failed');
+  });
+
+  it('after Stripe failed the earlier refund, a new resolve uses a new attempt key', async () => {
+    StripeFinancialOperation.findOne
+      .mockReturnValueOnce({ select: () => ({ lean: async () => ({ status: 'failed' }) }) })
+      .mockReturnValueOnce({ select: () => ({ lean: async () => null }) });
+    const order = ORDER();
+    Dispute.findById.mockReturnValue({ populate: jest.fn().mockResolvedValue(disputeDoc(order)) });
+    await run('full_refund_to_customer');
+    expect(executeRefund).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ operationKey: expect.stringMatching(/:attempt2$/) }));
+    expect(order.status).toBe('cancelled');
+  });
+
+  it('a settled refund cancels the unpaid payout so it is not retried forever', async () => {
+    const order = ORDER();
+    Dispute.findById.mockReturnValue({ populate: jest.fn().mockResolvedValue(disputeDoc(order)) });
+    await run('full_refund_to_customer');
+    expect(Payout.updateOne).toHaveBeenCalledWith(
+      { orderId: 'order_1', status: { $in: ['pending', 'failed', 'released_internal'] } },
+      expect.objectContaining({ $set: expect.objectContaining({ status: 'cancelled' }) })
+    );
+  });
+});
+
+it('a no_action ruling back to ready_for_review restarts the review window and its warning', async () => {
+  const order = { ...ORDER(), readyForReviewAt: new Date('2026-01-01'), autoReleaseWarnedAt: new Date('2026-01-10') };
+  Dispute.findById.mockReturnValue({ populate: jest.fn().mockResolvedValue(disputeDoc(order, 'ready_for_review')) });
+  await run('no_action');
+  expect(order.status).toBe('ready_for_review');
+  expect(Date.now() - order.readyForReviewAt.getTime()).toBeLessThan(5000);
+  expect(order.autoReleaseWarnedAt).toBeNull();
+});
+
+describe('final review: dispute money and status races', () => {
+  const StripeFinancialOperation = require('../models/StripeFinancialOperation');
+  const ORIGINAL_KEY = 'dispute:dispute_1:refund:pi_1:30000';
+  // A refund an earlier 30/70 attempt started; Stripe timed out but the refund happened.
+  const earlierRefund = (status = 'reconciliation_required') => {
+    const ops = [{ disputeId: 'dispute_1', type: 'refund', status, operationKey: ORIGINAL_KEY }];
+    StripeFinancialOperation.exists.mockImplementation(async (f) => ops.find((op) =>
+      (f.disputeId === undefined || op.disputeId === f.disputeId) &&
+      (f.type === undefined || op.type === f.type) &&
+      f.status.$in.includes(op.status) &&
+      (typeof f.operationKey === 'string' ? op.operationKey === f.operationKey : !f.operationKey || op.operationKey !== f.operationKey.$ne)) || null);
+  };
+  afterEach(() => StripeFinancialOperation.exists.mockImplementation(async () => null));
+
+  it.each(['reconciliation_required', 'succeeded'])('F1: re-resolving with other amounts after an earlier refund (%s) refunds nothing more', async (status) => {
+    earlierRefund(status);
+    const order = ORDER();
+    const dispute = disputeDoc(order);
+    dispute.resolution = { outcome: 'split_payment', customerAmount: 300, providerAmount: 700, moneyState: status === 'succeeded' ? 'failed' : 'reconciliation_required' };
+    Dispute.findById.mockReturnValue({ populate: jest.fn().mockResolvedValue(dispute) });
+    await run('split_payment', { customerAmount: 330, providerAmount: 670 });
+    expect(executeRefund).not.toHaveBeenCalled();
+    expect(releasePayoutToProvider).not.toHaveBeenCalled();
+    expect(dispute.resolution.moneyState).toBe('reconciliation_required');
+    expect(order.status).toBe('disputed');
+  });
+
+  it('F1: an outcome without a refund (no_action) is refused too while that refund is unresolved', async () => {
+    earlierRefund();
+    const order = ORDER();
+    Dispute.findById.mockReturnValue({ populate: jest.fn().mockResolvedValue(disputeDoc(order)) });
+    await run('no_action');
+    expect(captured.error.status).toBe(502);
+    expect(order.status).toBe('disputed');
+  });
+
+  it('F1: the SAME outcome and amounts finish the earlier refund on its own key', async () => {
+    earlierRefund();
+    const order = ORDER();
+    Dispute.findById.mockReturnValue({ populate: jest.fn().mockResolvedValue(disputeDoc(order)) });
+    await run('split_payment', { customerAmount: 300, providerAmount: 700 });
+    expect(executeRefund).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ operationKey: ORIGINAL_KEY }));
+    expect(order.status).toBe('completed');
+  });
+
+  it('F2: a chargeback the platform WON does not block the dispute money (charge.disputed stays true)', async () => {
+    const stripe = await getStripeForMode();
+    const base = await stripe.charges.retrieve();
+    stripe.charges.retrieve.mockImplementation(async (_id, opts) => ({ ...base, disputed: true, dispute: opts?.expand?.includes('dispute') ? { status: 'won' } : 'dp_1' }));
+    const order = ORDER();
+    Dispute.findById.mockReturnValue({ populate: jest.fn().mockResolvedValue(disputeDoc(order)) });
+    await run('full_refund_to_customer');
+    expect(refundsCreate).toHaveBeenCalled();
+    expect(order.status).toBe('cancelled');
+  });
+
+  it('F2: a lost chargeback still blocks it', async () => {
+    const stripe = await getStripeForMode();
+    const base = await stripe.charges.retrieve();
+    stripe.charges.retrieve.mockResolvedValue({ ...base, disputed: true, dispute: { status: 'lost' } });
+    const order = ORDER();
+    Dispute.findById.mockReturnValue({ populate: jest.fn().mockResolvedValue(disputeDoc(order)) });
+    await run('full_refund_to_customer');
+    expect(refundsCreate).not.toHaveBeenCalled();
+    expect(order.status).toBe('disputed');
+  });
+
+  it('F3: reopen is refused while the order has a payout whose transfer outcome is unknown', async () => {
+    const { reopenDispute } = require('../controllers/admin/disputesAdminController');
+    const Order = require('../models/Order');
+    Dispute.findOne = jest.fn().mockReturnValue({ select: async () => null });
+    Order.findOneAndUpdate = jest.fn().mockReturnValue({ select: async () => ({ status: 'completed' }) });
+    Payout.exists.mockResolvedValueOnce({ _id: 'payout_1' });
+    Dispute.findById.mockResolvedValue({ ...disputeDoc('order_1'), status: 'resolved', resolution: { outcome: 'no_action', moneyState: 'settled' } });
+    await reopenDispute({ params: { disputeId: 'dispute_1' }, body: { reason: 'Ny informasjon' }, user: { _id: 'admin_1' } }, {});
+    expect(captured.error).toEqual(expect.objectContaining({ status: 409 }));
+    expect(Payout.exists).toHaveBeenCalledWith({ orderId: 'order_1', status: { $in: ['processing', 'reconciliation_required'] } });
+    expect(Order.findOneAndUpdate).not.toHaveBeenCalled();
+  });
+
+  describe('F4: admin status writes are compare-and-swap, never over a concurrent resolve', () => {
+    const ctl = require('../controllers/admin/disputesAdminController');
+    const req = (body = {}) => ({ params: { disputeId: 'dispute_1' }, body, user: { _id: 'admin_1', name: 'Admin' }, headers: {} });
+    beforeEach(() => {
+      const doc = { ...disputeDoc('order_1'), status: 'open', messages: [] };
+      Dispute.findById.mockReturnValue(Object.assign(Promise.resolve(doc), { populate() { return this; } }));
+      Dispute.findOneAndUpdate.mockResolvedValue(null); // a resolve landed between read and write
+    });
+    it.each([
+      ['assignDispute', {}],
+      ['updateDisputeStatus', { status: 'under_review' }],
+      ['requestInformation', { from: 'customer', message: 'Send kvittering' }],
+    ])('%s answers 409 and filters on the status it read', async (fn, body) => {
+      await ctl[fn](req(body), {});
+      expect(captured.error).toEqual(expect.objectContaining({ status: 409 }));
+      expect(Dispute.findOneAndUpdate.mock.calls[0][0]).toEqual({ _id: 'dispute_1', status: 'open' });
+    });
+  });
+});
+
+it('F4: a party message answering a request is compare-and-swap too (409 after a concurrent resolve)', async () => {
+  const { addUserDisputeMessage } = require('../controllers/disputeController');
+  Dispute.findById.mockReturnValue({ populate: async () => ({ _id: 'dispute_1', status: 'waiting_for_customer', orderId: { customerId: 'cust_1', providerId: 'prov_1' } }) });
+  Dispute.findOneAndUpdate.mockResolvedValue(null);
+  const res = { status(c) { this.code = c; return this; }, json(b) { this.body = b; return this; } };
+  await addUserDisputeMessage({ params: { disputeId: '507f1f77bcf86cd799439011' }, userId: 'cust_1', body: { message: 'Her er kvitteringen' } }, res);
+  expect(res.code).toBe(409);
+  const [filter, update] = Dispute.findOneAndUpdate.mock.calls[0];
+  expect(filter).toEqual({ _id: 'dispute_1', status: 'waiting_for_customer' });
+  expect(update.$set).toEqual({ status: 'evidence_submitted' });
 });

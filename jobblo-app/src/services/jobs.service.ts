@@ -113,4 +113,9 @@ export const jobsService = {
     if (!serviceId.trim()) throw new Error('Mangler gyldig annonse-ID');
     await apiClient.delete(`/services/${serviceId.trim()}`);
   },
+
+  /** POST /api/services/:id/reports. 409 = already reported, 400 = own job / bad type (Norwegian `error`). */
+  async reportJob(serviceId: string, reportType: string, description: string): Promise<void> {
+    await apiClient.post(`/services/${serviceId}/reports`, { reportType, description });
+  },
 };

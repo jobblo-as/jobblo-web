@@ -3,6 +3,7 @@ const Payment = require('../../models/Payment');
 const SafePayHistory = require('../../models/SafePayHistory');
 const Chat = require('../../models/ChatMessage');
 const Dispute = require('../../models/Dispute');
+const Payout = require('../../models/Payout');
 const { logActivity } = require('./activityService');
 const { notify } = require('../../services/notifications');
 
@@ -25,6 +26,16 @@ const PAYOUT_LOCK_LEASE_MS = 5 * 60 * 1000;
 const {
   isValidTransition,
 } = require('../order/orderState');
+
+/**
+ * A transfer whose outcome is unknown must be reconciled first. Once the order is
+ * disputed, the payout lookup refuses (order not approved / active dispute) and the
+ * dispute resolve refuses every money outcome while it is unknown: both froze for good.
+ */
+function hasUnresolvedPayout(orderId) {
+  return Payout.exists({ orderId, status: { $in: ['processing', 'reconciliation_required'] } });
+}
+const UNRESOLVED_PAYOUT_MESSAGE = 'En utbetaling for denne ordren avstemmes fortsatt med Stripe. Prøv igjen senere.';
 
 /**
  * Open a dispute for a SafePay contract.
@@ -58,6 +69,7 @@ async function openDispute({
     status: { $in: ['open', 'under_review', 'waiting_for_customer', 'waiting_for_provider', 'evidence_submitted'] },
   });
   if (existing) throw new Error('Det finnes allerede en aktiv tvist for denne ordren');
+  if (await hasUnresolvedPayout(orderId)) throw new Error(UNRESOLVED_PAYOUT_MESSAGE);
 
   const openedAgainst =
     String(order.customerId) === String(openedByUserId) ? order.providerId : order.customerId;
@@ -199,4 +211,4 @@ async function openDispute({
   return dispute;
 }
 
-module.exports = { openDispute, isValidTransition, DISPUTE_ELIGIBLE_STATUSES };
+module.exports = { openDispute, hasUnresolvedPayout, UNRESOLVED_PAYOUT_MESSAGE, isValidTransition, DISPUTE_ELIGIBLE_STATUSES };

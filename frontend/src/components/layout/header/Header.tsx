@@ -2,9 +2,10 @@ import jobbloWordmark from '../../../assets/images/Login/jobblo-wordmark.png';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useUserStore } from '../../../stores/userStore';
 import { toast } from 'react-hot-toast';
-import { useState, useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { getMyChats } from '../../../api/chatAPI';
+import { useState, useEffect, useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { getMyChats, type ChatMessage } from '../../../api/chatAPI';
+import { applyIncomingMessage, applyMessagesRead, refreshChats } from '../../../features/chat/refreshChats';
 import { initSocket } from '../../../socket/socket';
 import { Link, NavLink } from 'react-router-dom';
 import {
@@ -23,13 +24,17 @@ import { useUnreadCount } from '../../../features/notifications/hooks';
 import { NotificationBell } from '../../Notifications/NotificationBell';
 import { useNotificationSound } from '../../../hooks/useNotificationSound';
 
+/** A user reference from the chat payloads: the raw id, or the populated user. */
+type IdRef = string | { _id?: string; id?: string } | null | undefined;
+const refId = (ref: IdRef): string =>
+  !ref ? '' : typeof ref === 'string' ? ref : String(ref._id || ref.id || '');
+
 export default function Header() {
   const navigate = useNavigate();
   const location = useLocation();
   const user = useUserStore((state) => state.user);
   const Auth = useUserStore((state) => state.isAuthenticated);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
   const { playMessageSound } = useNotificationSound();
   const queryClient = useQueryClient();
 
@@ -39,91 +44,60 @@ export default function Header() {
   const { data: unreadNotificationsData } = useUnreadCount();
   const unreadNotificationsCount = unreadNotificationsData?.count || 0;
 
-  useEffect(() => {
-    if (!user?._id) {
-      setUnreadMessagesCount(0);
-      return;
-    }
+  const userId = user?._id;
+  // The same ['chats'] cache as the messages page: socket events refresh it (refreshChats),
+  // and the badge follows. It used to fetchQuery with staleTime 0 on every event, on top of
+  // the messages page's own refetches.
+  const { data: chats } = useQuery({
+    queryKey: ['chats'],
+    queryFn: getMyChats,
+    enabled: Boolean(userId),
+    refetchOnWindowFocus: false,
+  });
 
+  const unreadMessagesCount = useMemo(() => {
+    if (!userId || !Array.isArray(chats)) return 0;
+    const currentUserId = String(userId);
+    return chats.filter((chat) => {
+      const lastMessage = chat.messages?.[chat.messages.length - 1];
+      if (!lastMessage) return false;
+      // senderId is either the raw id or the populated user; your own message is not unread.
+      const senderId = refId(lastMessage.senderId);
+      if (!senderId || senderId === currentUserId) return false;
+      const seenBy = Array.isArray(lastMessage.seenBy) ? lastMessage.seenBy : [];
+      return !seenBy.some((id: IdRef) => refId(id) === currentUserId);
+    }).length;
+  }, [chats, userId]);
+
+  // Join every chat room, so live messages reach the header on any page: again when the
+  // list of chats changes or the socket reconnects (rooms do not survive a reconnect).
+  const chatIds = useMemo(() => (Array.isArray(chats) ? chats.map((c) => c._id).filter(Boolean).join(',') : ''), [chats]);
+  useEffect(() => {
+    if (!userId) return;
+    const socket = initSocket();
+    const joinRooms = () => {
+      socket.emit('join', userId);
+      for (const id of chatIds.split(',').filter(Boolean)) socket.emit('join-chat', id);
+    };
+    joinRooms();
+    socket.on('connect', joinRooms);
+    return () => {
+      socket.off('connect', joinRooms);
+    };
+  }, [userId, chatIds]);
+
+  useEffect(() => {
+    if (!userId) return;
     const socket = initSocket();
 
-    const initializeChatState = async () => {
-      try {
-        // Socket events re-run this, so it reads through the shared ['chats'] cache
-        // (same key as useChatQueries) instead of a private request.
-        const chats = await queryClient.fetchQuery({ queryKey: ['chats'], queryFn: getMyChats, staleTime: 0 });
-        if (!Array.isArray(chats)) return;
-
-        // 1. Calculate unread count
-        const unreadChats = chats.filter((chat) => {
-          if (!chat.messages || chat.messages.length === 0) return false;
-          const lastMessage = chat.messages[chat.messages.length - 1];
-
-          const currentUserId = String(user?._id || user?.id || '');
-          if (!currentUserId) return false;
-
-          const getMsgSenderId = (msg: any) => {
-            if (!msg.senderId) return '';
-            // If senderId is an object (populated), get _id. If it's a string, use it.
-            if (typeof msg.senderId === 'string') return msg.senderId;
-            if (typeof msg.senderId === 'object') {
-              return String(msg.senderId._id || msg.senderId.id || '');
-            }
-            return String(msg.senderId);
-          };
-
-          const senderId = getMsgSenderId(lastMessage);
-          if (!senderId) return false;
-
-          // If you are the sender, it is NOT unread for you
-          if (senderId === currentUserId) return false;
-
-          // Check if you are in the seenBy array
-          const seenBy = Array.isArray(lastMessage.seenBy) ? lastMessage.seenBy : [];
-          const isSeenByMe = seenBy.some((id: any) => {
-            const idStr = String(id?._id || id?.id || id || '');
-            return idStr === currentUserId;
-          });
-
-          return !isSeenByMe;
-        });
-
-        setUnreadMessagesCount(unreadChats.length);
-
-        // 2. Join socket rooms
-        if (socket) {
-          socket.emit('join', user?._id);
-          chats.forEach((chat) => {
-            if (chat._id) {
-              socket.emit('join-chat', chat._id);
-            }
-          });
-        }
-      } catch (error) {
-        console.error('Error initializing chat state in Header:', error);
-      }
-    };
-
-    initializeChatState();
-
-    // Listen for real-time messages
-    const handleReceiveMessage = (data: any) => {
-      // Re-fetch or re-calculate. Simplest is to re-initialize
-      initializeChatState();
+    const handleReceiveMessage = (data?: { chatId?: string; message?: ChatMessage & { sender?: IdRef } }) => {
+      // Into the caches without a refetch; a chat the list does not have yet is fetched.
+      if (data?.chatId && !applyIncomingMessage(queryClient, data.chatId, data.message)) refreshChats(queryClient, data.chatId);
 
       // Play sound if message is from someone else
-      const currentUserId = String(user?._id || user?.id || '');
+      const currentUserId = String(userId);
 
-      const getMsgSenderId = (msg: any) => {
-        if (!msg) return '';
-        const sId = msg.senderId || msg.sender;
-        if (!sId) return '';
-        if (typeof sId === 'string') return sId;
-        if (typeof sId === 'object') return String(sId._id || sId.id || '');
-        return String(sId);
-      };
-
-      const senderId = getMsgSenderId(data?.message);
+      const senderId = refId((data?.message?.senderId as IdRef) || data?.message?.sender);
 
       if (senderId && currentUserId && senderId !== currentUserId) {
         // 1. Play sound
@@ -155,46 +129,18 @@ export default function Header() {
       }
     };
 
-    // `new_notification` is deliberately NOT handled here. It used to be — the header
-    // played the alert sound while `useUnreadCount` (mounted by the bell inside this same
-    // header) invalidated the queries, so one event ran two handlers, and the server was
-    // emitting it into two rooms on top of that. It belongs to `NotificationRealtime`,
+    // `new_notification` is deliberately NOT handled here: it belongs to NotificationRealtime,
     // which is mounted once in App. What stays here is chat, which is a different stream.
-
-    // Listen for real-time read status
-    const handleMessagesRead = (data: any) => {
-      initializeChatState();
-    };
-
-    // Listen for local tab updates
-    const handleChatRead = () => {
-      initializeChatState();
-    };
-
-    if (socket) {
-      if (socket.connected) {
-        initializeChatState();
-      } else {
-        socket.on('connect', initializeChatState);
-      }
-      socket.on('receive-message', handleReceiveMessage);
-      socket.on('messages-read', handleMessagesRead);
-    }
-
-    window.addEventListener('chat-read', handleChatRead);
+    const handleMessagesRead = (data: { chatId: string; userId: string }) => applyMessagesRead(queryClient, data.chatId, data.userId);
+    socket.on('receive-message', handleReceiveMessage);
+    socket.on('messages-read', handleMessagesRead);
 
     return () => {
-      if (socket) {
-        socket.off('receive-message', handleReceiveMessage);
-        socket.off('messages-read', handleMessagesRead);
-        // Was `socket.off('connect')` with no handler, which removes *every* connect
-        // listener on the socket — including the reconnect recovery in
-        // NotificationRealtime and anything chat registers.
-        socket.off('connect', initializeChatState);
-      }
-      window.removeEventListener('chat-read', handleChatRead);
+      // Named handlers only: `socket.off('connect')` without one removed every listener.
+      socket.off('receive-message', handleReceiveMessage);
+      socket.off('messages-read', handleMessagesRead);
     };
-  }, [user?._id, playMessageSound, queryClient]);
+  }, [userId, playMessageSound, queryClient, navigate]);
 
   const handleProtectedNavigation = (path: string) => {
     if (!user) {
