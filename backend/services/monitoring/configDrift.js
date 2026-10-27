@@ -121,7 +121,10 @@ function policyChecks(env = process.env, extra = {}) {
   rule('mongo_auth', 'MongoDB connection uses credentials', 'high', /^mongodb(\+srv)?:\/\/[^/]*@/.test(String(env.MONGO_URI || '')), /^mongodb(\+srv)?:\/\/[^/]*@/.test(String(env.MONGO_URI || '')) ? 'Credentials present in MONGO_URI.' : 'MONGO_URI has no user — the database accepts unauthenticated connections.', true);
   rule('backups', 'Database backups configured', 'high', Boolean(env.BACKUP_DIR || (env.ATLAS_CLIENT_ID && env.ATLAS_GROUP_ID)), env.BACKUP_DIR ? `BACKUP_DIR=${env.BACKUP_DIR}` : 'No BACKUP_DIR and no Atlas credentials.', true);
   rule('alerts', 'Alerts reach a human', 'medium', Boolean(env.DEV_ALERT_EMAIL || env.SLACK_WEBHOOK_URL), env.DEV_ALERT_EMAIL || env.SLACK_WEBHOOK_URL ? 'DEV_ALERT_EMAIL / SLACK_WEBHOOK_URL set.' : 'Incidents open but nobody is notified.', true);
-  rule('scheduler', 'Scheduler runs (escrow release, payout retries)', 'high', env.ENABLE_SCHEDULER !== 'false', env.ENABLE_SCHEDULER === 'false' ? 'ENABLE_SCHEDULER=false — fine on extra instances, wrong on the only one.' : 'Scheduler enabled.', true);
+  // cluster.js turns the scheduler off on workers 2+ on purpose (worker 1 runs it), so a
+  // dashboard request answered by worker 2 must not fail this rule.
+  const extraWorker = Number(env.WORKER_SLOT) > 1;
+  rule('scheduler', 'Scheduler runs (escrow release, payout retries)', 'high', env.ENABLE_SCHEDULER !== 'false' || extraWorker, extraWorker && env.ENABLE_SCHEDULER === 'false' ? `Runs on worker 1; this answer came from worker ${env.WORKER_SLOT}, where it is off by design.` : env.ENABLE_SCHEDULER === 'false' ? 'ENABLE_SCHEDULER=false — fine on extra instances, wrong on the only one.' : 'Scheduler enabled.', true);
   return rules;
 }
 

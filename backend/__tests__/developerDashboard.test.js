@@ -486,6 +486,12 @@ describe('configuration drift', () => {
     const failing = prod.filter((r) => r.ok === false).map((r) => r.key);
     expect(failing).toEqual(expect.arrayContaining(['jwt_secret', 'cors', 'host_bind', 'scheduler', 'mongo_auth', 'backups']));
     expect(policyChecks({ NODE_ENV: 'production', MONGO_URI: 'mongodb+srv://u:p@cluster/db' }).find((r) => r.key === 'mongo_auth').ok).toBe(true);
+    // Cluster worker 2+ has the scheduler off by design (cluster.js); worker 1 or a single process must not.
+    const scheduler = (env) => policyChecks({ NODE_ENV: 'production', ENABLE_SCHEDULER: 'false', ...env }).find((r) => r.key === 'scheduler');
+    expect(scheduler({ WORKER_SLOT: '2' }).ok).toBe(true);
+    expect(scheduler({ WORKER_SLOT: '2' }).detail).toMatch(/worker 1/);
+    expect(scheduler({ WORKER_SLOT: '1' }).ok).toBe(false);
+    expect(scheduler({}).ok).toBe(false);
   });
   test('handled Stripe events are read from the dispatcher source', () => {
     expect(handledStripeEvents()).toEqual(expect.arrayContaining(['checkout.session.completed', 'charge.refunded', 'transfer.reversed']));
