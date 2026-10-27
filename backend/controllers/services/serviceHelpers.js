@@ -66,8 +66,11 @@ function validateServiceFields(body, { partial = false } = {}) {
     }
   }
 
-  const from = has('fromDate') ? new Date(body.fromDate) : null;
-  const to = has('toDate') ? new Date(body.toDate) : null;
+  // An empty date is "not given": the app and web send toDate '' for a flexible end date, and
+  // new Date('') is Invalid Date, which refused every job without an end date.
+  const dateOf = (field) => (has(field) && body[field] !== '' ? new Date(body[field]) : null);
+  const from = dateOf('fromDate');
+  const to = dateOf('toDate');
   if (from && Number.isNaN(from.getTime())) return 'Ugyldig fra-dato.';
   if (to && Number.isNaN(to.getTime())) return 'Ugyldig til-dato.';
   if (from && to && from > to) return 'Sluttdato kan ikke være før startdato.';
