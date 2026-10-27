@@ -381,25 +381,21 @@ exports.updatePlanEntitlements = async (req, res) => {
           n < 0 ||
           (PLAN_INTEGER_ENTITLEMENTS.includes(key) && !Number.isInteger(n))
         ) {
-          return res
-            .status(400)
-            .json({
-              code: 'PLAN_ENTITLEMENT_INVALID',
-              field: key,
-              message: `${key} må være et gyldig tall (0 eller mer).`,
-            });
+          return res.status(400).json({
+            code: 'PLAN_ENTITLEMENT_INVALID',
+            field: key,
+            message: `${key} må være et gyldig tall (0 eller mer).`,
+          });
         }
         set[`entitlements.${key}`] = n;
       }
       if (ent.locationPrecision !== undefined) {
         if (!['exact', 'approximate'].includes(ent.locationPrecision)) {
-          return res
-            .status(400)
-            .json({
-              code: 'PLAN_ENTITLEMENT_INVALID',
-              field: 'locationPrecision',
-              message: 'Ugyldig posisjonspresisjon.',
-            });
+          return res.status(400).json({
+            code: 'PLAN_ENTITLEMENT_INVALID',
+            field: 'locationPrecision',
+            message: 'Ugyldig posisjonspresisjon.',
+          });
         }
         set['entitlements.locationPrecision'] = ent.locationPrecision;
       }

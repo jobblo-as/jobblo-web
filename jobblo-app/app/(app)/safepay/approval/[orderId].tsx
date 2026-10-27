@@ -228,14 +228,12 @@ export default function SafePayApprovalScreen() {
       }
       setPhotos((current) => [
         ...current,
-        ...result.assets
-          .slice(0, remaining)
-          .map((asset, index) => ({
-            uri: asset.uri,
-            name: asset.fileName ?? `review-${Date.now()}-${index}.jpg`,
-            type: asset.mimeType ?? 'image/jpeg',
-            size: asset.fileSize,
-          })),
+        ...result.assets.slice(0, remaining).map((asset, index) => ({
+          uri: asset.uri,
+          name: asset.fileName ?? `review-${Date.now()}-${index}.jpg`,
+          type: asset.mimeType ?? 'image/jpeg',
+          size: asset.fileSize,
+        })),
       ]);
     }
   };

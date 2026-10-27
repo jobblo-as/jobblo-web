@@ -675,13 +675,11 @@ function pickSuggestedCategories(raw, names) {
 exports.suggestCategories = async (req, res) => {
   try {
     if (!process.env.OPENAI_API_KEY) {
-      return res
-        .status(500)
-        .json({
-          success: false,
-          error: 'AI-tjenesten er ikke konfigurert',
-          message: 'Velg kategori selv.',
-        });
+      return res.status(500).json({
+        success: false,
+        error: 'AI-tjenesten er ikke konfigurert',
+        message: 'Velg kategori selv.',
+      });
     }
     const files = (req.files || []).slice(0, MAX_SUGGESTION_IMAGES);
     const text =

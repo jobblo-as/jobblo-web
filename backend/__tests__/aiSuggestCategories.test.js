@@ -5,18 +5,16 @@ jest.mock('openai', () => ({
   OpenAI: jest.fn().mockImplementation(() => ({ chat: { completions: { create: mockCreate } } })),
 }));
 jest.mock('../models/Category', () => ({
-  find: jest
-    .fn()
-    .mockReturnValue({
-      select: jest
-        .fn()
-        .mockResolvedValue([
-          { name: 'Maling' },
-          { name: 'Rengjøring' },
-          { name: 'Flytting' },
-          { name: 'Hagearbeid' },
-        ]),
-    }),
+  find: jest.fn().mockReturnValue({
+    select: jest
+      .fn()
+      .mockResolvedValue([
+        { name: 'Maling' },
+        { name: 'Rengjøring' },
+        { name: 'Flytting' },
+        { name: 'Hagearbeid' },
+      ]),
+  }),
 }));
 
 process.env.OPENAI_API_KEY = 'sk-test-not-real';

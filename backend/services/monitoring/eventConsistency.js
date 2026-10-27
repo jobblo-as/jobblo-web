@@ -261,13 +261,11 @@ const CHECKS = [
         .lean();
       return {
         count: rows.length,
-        samples: rows
-          .slice(0, 20)
-          .map((e) => ({
-            ref: e.eventId,
-            detail: `${e.type} · ${e.attempts} deliveries · ${e.status}`,
-            at: e.createdAt,
-          })),
+        samples: rows.slice(0, 20).map((e) => ({
+          ref: e.eventId,
+          detail: `${e.type} · ${e.attempts} deliveries · ${e.status}`,
+          at: e.createdAt,
+        })),
       };
     },
   },
@@ -340,14 +338,12 @@ const CHECKS = [
       const rows = orders.filter((o) => !have.has(String(o._id)));
       return {
         count: rows.length,
-        samples: rows
-          .slice(0, 20)
-          .map((o) => ({
-            ref: String(o._id),
-            link: 'job',
-            detail: `${o.paymentStatus} · ${o.agreedPrice ?? '?'} NOK · ${o.paymentIntentId || 'no PaymentIntent'}`,
-            at: o.updatedAt,
-          })),
+        samples: rows.slice(0, 20).map((o) => ({
+          ref: String(o._id),
+          link: 'job',
+          detail: `${o.paymentStatus} · ${o.agreedPrice ?? '?'} NOK · ${o.paymentIntentId || 'no PaymentIntent'}`,
+          at: o.updatedAt,
+        })),
       };
     },
   },
@@ -385,14 +381,12 @@ const CHECKS = [
       );
       return {
         count: rows.length,
-        samples: rows
-          .slice(0, 20)
-          .map((p) => ({
-            ref: String(p.orderId),
-            link: 'job',
-            detail: `Payment ${p.status} · order paymentStatus ${orders.get(String(p.orderId)).paymentStatus}`,
-            at: p.updatedAt,
-          })),
+        samples: rows.slice(0, 20).map((p) => ({
+          ref: String(p.orderId),
+          link: 'job',
+          detail: `Payment ${p.status} · order paymentStatus ${orders.get(String(p.orderId)).paymentStatus}`,
+          at: p.updatedAt,
+        })),
       };
     },
   },
@@ -413,14 +407,12 @@ const CHECKS = [
       ]);
       return {
         count: rows.length,
-        samples: rows
-          .slice(0, 20)
-          .map((r) => ({
-            ref: String(r._id),
-            link: 'job',
-            detail: `${r.n} open SafePay records`,
-            at: r.last,
-          })),
+        samples: rows.slice(0, 20).map((r) => ({
+          ref: String(r._id),
+          link: 'job',
+          detail: `${r.n} open SafePay records`,
+          at: r.last,
+        })),
       };
     },
   },
@@ -512,13 +504,11 @@ const CHECKS = [
       const groups = bursts(rows, (r) => `${r.channel}|${r.userId || r.to}|${r.template}`, MIN);
       return {
         count: groups.length,
-        samples: groups
-          .slice(0, 20)
-          .map((g) => ({
-            ref: g.key.split('|')[0],
-            detail: `${g.n}× ${g.key.split('|')[2]}`,
-            at: g.last,
-          })),
+        samples: groups.slice(0, 20).map((g) => ({
+          ref: g.key.split('|')[0],
+          detail: `${g.n}× ${g.key.split('|')[2]}`,
+          at: g.last,
+        })),
       };
     },
   },

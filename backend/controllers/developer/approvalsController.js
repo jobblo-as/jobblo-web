@@ -108,14 +108,12 @@ const submitAction = asyncHandler(async (req, res) => {
   if (accessOf(req.user) === 'superAdmin' || action.selfService) {
     // A critical-risk change needs an explicit second click after the reasons were shown.
     if (risk?.level === 'critical' && req.body?.acknowledgeRisk !== true) {
-      return res
-        .status(409)
-        .json({
-          success: false,
-          code: 'RISK_CONFIRM',
-          message: `Risk ${risk.score}/100 (critical). Review the reasons and confirm.`,
-          data: { risk, summary },
-        });
+      return res.status(409).json({
+        success: false,
+        code: 'RISK_CONFIRM',
+        message: `Risk ${risk.score}/100 (critical). Review the reasons and confirm.`,
+        data: { risk, summary },
+      });
     }
     try {
       await action.execute(payload, { actor: req.user._id, actorIp: clientIp(req), reason });
@@ -201,14 +199,12 @@ const approve = asyncHandler(async (req, res) => {
     return sendError(res, 'You cannot approve your own request.', 403);
   const action = ACTIONS[r.type];
   if (r.risk?.level === 'critical' && req.body?.acknowledgeRisk !== true) {
-    return res
-      .status(409)
-      .json({
-        success: false,
-        code: 'RISK_CONFIRM',
-        message: `Risk ${r.risk.score}/100 (critical). Review the reasons and confirm.`,
-        data: { risk: r.risk, summary: r.summary },
-      });
+    return res.status(409).json({
+      success: false,
+      code: 'RISK_CONFIRM',
+      message: `Risk ${r.risk.score}/100 (critical). Review the reasons and confirm.`,
+      data: { risk: r.risk, summary: r.summary },
+    });
   }
   r.reviewedBy = req.user._id;
   r.reviewedAt = new Date();

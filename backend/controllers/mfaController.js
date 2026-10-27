@@ -37,12 +37,10 @@ exports.status = async (req, res) => {
  */
 exports.sendSetupCode = async (req, res) => {
   if (req.user.mfaEnabledAt)
-    return res
-      .status(409)
-      .json({
-        error: 'An authenticator is already set up.',
-        message: 'An authenticator is already set up.',
-      });
+    return res.status(409).json({
+      error: 'An authenticator is already set up.',
+      message: 'An authenticator is already set up.',
+    });
   try {
     await stepUp.sendCode(req.user);
     audit(req, req.user._id, 'Requested an email code to set up the authenticator app');
@@ -77,12 +75,10 @@ exports.setup = async (req, res) => {
 exports.verify = async (req, res) => {
   const { code, backupCode } = req.body || {};
   if (!code && !backupCode)
-    return res
-      .status(400)
-      .json({
-        error: 'Code required',
-        message: 'Enter the 6-digit code from your authenticator app.',
-      });
+    return res.status(400).json({
+      error: 'Code required',
+      message: 'Enter the 6-digit code from your authenticator app.',
+    });
   try {
     const wasEnabled = Boolean(req.user.mfaEnabledAt);
     const r = await mfa.verify(req.user._id, req.sessionId, { code, backupCode });
@@ -103,24 +99,20 @@ exports.verify = async (req, res) => {
             )
             .catch(() => {});
         }
-        return res
-          .status(401)
-          .json({
-            error: 'Session ended',
-            message: 'For mange feil koder. Du er logget ut.',
-            code: 'MFA_SESSION_ENDED',
-          });
+        return res.status(401).json({
+          error: 'Session ended',
+          message: 'For mange feil koder. Du er logget ut.',
+          code: 'MFA_SESSION_ENDED',
+        });
       }
       // 400, not 401: the session is fine, the code is not — a 401 makes clients refresh and resend it.
-      return res
-        .status(400)
-        .json({
-          error: 'Invalid code',
-          message: backupCode
-            ? 'That backup code is not valid or was already used.'
-            : 'Wrong or expired code. Check the time on your phone and try the newest code.',
-          code: 'MFA_INVALID',
-        });
+      return res.status(400).json({
+        error: 'Invalid code',
+        message: backupCode
+          ? 'That backup code is not valid or was already used.'
+          : 'Wrong or expired code. Check the time on your phone and try the newest code.',
+        code: 'MFA_INVALID',
+      });
     }
     audit(
       req,

@@ -312,12 +312,10 @@ function appleWebStart(req, res, platform) {
   const config = appleWebConfig();
   const secret = platformStateSecret();
   if (!config || !secret) {
-    return res
-      .status(503)
-      .json({
-        code: 'apple_unavailable',
-        message: 'Apple-innlogging er ikke tilgjengelig akkurat nå.',
-      });
+    return res.status(503).json({
+      code: 'apple_unavailable',
+      message: 'Apple-innlogging er ikke tilgjengelig akkurat nå.',
+    });
   }
 
   const nonce = crypto.randomBytes(32).toString('hex');

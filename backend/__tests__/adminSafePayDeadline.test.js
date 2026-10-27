@@ -29,13 +29,11 @@ it.each([2, 3, 4])('accepts and audits an administrator setting of %i days', asy
     }),
   });
   GlobalConfig.findOneAndUpdate.mockReturnValue({
-    lean: jest
-      .fn()
-      .mockResolvedValue({
-        _id: 'config_1',
-        key: 'SAFEPAY_CONNECT_ONBOARDING_DEADLINE_DAYS',
-        value: days,
-      }),
+    lean: jest.fn().mockResolvedValue({
+      _id: 'config_1',
+      key: 'SAFEPAY_CONNECT_ONBOARDING_DEADLINE_DAYS',
+      value: days,
+    }),
   });
   const res = response();
 

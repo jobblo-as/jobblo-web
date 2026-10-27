@@ -85,13 +85,11 @@ async function faultMiddleware(req, res, next) {
   if (slow) await new Promise((r) => setTimeout(r, Math.min(slow.latencyMs || 0, 30_000)));
   const failing = find('http_error', { path });
   if (failing && Math.random() * 100 < (failing.errorRate ?? 100)) {
-    return res
-      .status(failing.statusCode || 503)
-      .json({
-        success: false,
-        message: 'Simulated failure (staging failure simulator).',
-        code: 'SIMULATED_FAULT',
-      });
+    return res.status(failing.statusCode || 503).json({
+      success: false,
+      message: 'Simulated failure (staging failure simulator).',
+      code: 'SIMULATED_FAULT',
+    });
   }
   return next();
 }

@@ -200,11 +200,9 @@ describe('chat-report evidence (M4)', () => {
   };
 
   beforeEach(() => {
-    jest
-      .spyOn(Chat, 'findById')
-      .mockReturnValue({
-        lean: async () => ({ _id: chatId, clientId: 'u1', providerId: 'u2', messages: [] }),
-      });
+    jest.spyOn(Chat, 'findById').mockReturnValue({
+      lean: async () => ({ _id: chatId, clientId: 'u1', providerId: 'u2', messages: [] }),
+    });
     jest.spyOn(ChatReport, 'findOne').mockReturnValue({ lean: async () => null });
     jest
       .spyOn(ChatReport, 'create')

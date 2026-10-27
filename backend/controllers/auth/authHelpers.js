@@ -247,12 +247,10 @@ const sendServerError = (res, error, context = 'Server error') => {
     return res.status(503).json({ error: 'Server busy, try again shortly', code: 'SERVER_BUSY' });
   }
   if (error?.code === 'PASSWORD_ATTEMPTS') {
-    return res
-      .status(429)
-      .json({
-        error: 'For mange feil passord. Prøv igjen om 15 minutter.',
-        code: 'PASSWORD_ATTEMPTS',
-      });
+    return res.status(429).json({
+      error: 'For mange feil passord. Prøv igjen om 15 minutter.',
+      code: 'PASSWORD_ATTEMPTS',
+    });
   }
   console.error(context, error);
 

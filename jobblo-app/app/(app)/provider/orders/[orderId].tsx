@@ -268,14 +268,12 @@ export default function ProviderOrderScreen() {
       quality: 0.85,
     });
     if (!result.canceled) {
-      const selected = result.assets
-        .slice(0, limit)
-        .map((asset, index) => ({
-          uri: asset.uri,
-          name: asset.fileName ?? `bevis-${Date.now()}-${index}.jpg`,
-          type: asset.mimeType ?? 'image/jpeg',
-          size: asset.fileSize,
-        }));
+      const selected = result.assets.slice(0, limit).map((asset, index) => ({
+        uri: asset.uri,
+        name: asset.fileName ?? `bevis-${Date.now()}-${index}.jpg`,
+        type: asset.mimeType ?? 'image/jpeg',
+        size: asset.fileSize,
+      }));
       setAssets((current) => [...current, ...selected]);
     }
   };
@@ -300,14 +298,12 @@ export default function ProviderOrderScreen() {
       }
       setAssets((current) => [
         ...current,
-        ...result.assets
-          .slice(0, limit)
-          .map((asset) => ({
-            uri: asset.uri,
-            name: asset.name,
-            type: asset.mimeType ?? 'application/octet-stream',
-            size: asset.size,
-          })),
+        ...result.assets.slice(0, limit).map((asset) => ({
+          uri: asset.uri,
+          name: asset.name,
+          type: asset.mimeType ?? 'application/octet-stream',
+          size: asset.size,
+        })),
       ]);
     }
   };

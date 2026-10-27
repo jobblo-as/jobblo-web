@@ -439,19 +439,17 @@ describe('the two simultaneous release events (released + updated)', () => {
   it('still fails if the record now holds a different pending change', async () => {
     const f = released();
     const first = f.SubscriptionModel.findOne.getMockImplementation();
-    f.SubscriptionModel.findOne
-      .mockImplementationOnce(first)
-      .mockImplementationOnce(() =>
-        query({
-          _id: subscriptionRecordId,
-          userId,
-          pendingPlanChange: {
-            ...pending(),
-            operationId: 'newer',
-            stripeScheduleId: 'sub_sched_new',
-          },
-        })
-      );
+    f.SubscriptionModel.findOne.mockImplementationOnce(first).mockImplementationOnce(() =>
+      query({
+        _id: subscriptionRecordId,
+        userId,
+        pendingPlanChange: {
+          ...pending(),
+          operationId: 'newer',
+          stripeScheduleId: 'sub_sched_new',
+        },
+      })
+    );
     await expect(processVerifiedEvent(f.event, 'test', f.stripe, f.overrides)).rejects.toThrow(
       'subscription_schedule_state_changed'
     );

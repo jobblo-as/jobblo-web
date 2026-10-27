@@ -467,14 +467,12 @@ describe('H7: every dispute path ends with money and order consistent', () => {
   };
   const transferred = () =>
     Payout.findOne.mockReturnValue({
-      lean: jest
-        .fn()
-        .mockResolvedValue({
-          status: 'transferred',
-          stripeTransferId: 'tr_9',
-          stripeConnectAccountId: 'acct_p',
-          netProviderAmount: 970,
-        }),
+      lean: jest.fn().mockResolvedValue({
+        status: 'transferred',
+        stripeTransferId: 'tr_9',
+        stripeConnectAccountId: 'acct_p',
+        netProviderAmount: 970,
+      }),
     });
 
   it('a full refund returns what the customer paid, the 3 % fee included', async () => {
@@ -492,17 +490,15 @@ describe('H7: every dispute path ends with money and order consistent', () => {
   it('on a paid-out order the transfer is reversed BEFORE the customer is refunded', async () => {
     const stripe = await withFee();
     stripe.transfers = {
-      retrieve: jest
-        .fn()
-        .mockResolvedValue({
-          id: 'tr_9',
-          livemode: false,
-          destination: 'acct_p',
-          source_transaction: 'ch_1',
-          amount: 97000,
-          amount_reversed: 0,
-          currency: 'nok',
-        }),
+      retrieve: jest.fn().mockResolvedValue({
+        id: 'tr_9',
+        livemode: false,
+        destination: 'acct_p',
+        source_transaction: 'ch_1',
+        amount: 97000,
+        amount_reversed: 0,
+        currency: 'nok',
+      }),
     };
     transferred();
     executeTransferReversal.mockResolvedValue({ reversal: { id: 'trr_1' } });
@@ -521,17 +517,15 @@ describe('H7: every dispute path ends with money and order consistent', () => {
   it('a failed reversal refunds nothing and leaves the dispute open and retryable', async () => {
     const stripe = await withFee();
     stripe.transfers = {
-      retrieve: jest
-        .fn()
-        .mockResolvedValue({
-          id: 'tr_9',
-          livemode: false,
-          destination: 'acct_p',
-          source_transaction: 'ch_1',
-          amount: 97000,
-          amount_reversed: 0,
-          currency: 'nok',
-        }),
+      retrieve: jest.fn().mockResolvedValue({
+        id: 'tr_9',
+        livemode: false,
+        destination: 'acct_p',
+        source_transaction: 'ch_1',
+        amount: 97000,
+        amount_reversed: 0,
+        currency: 'nok',
+      }),
     };
     transferred();
     executeTransferReversal.mockRejectedValue(
@@ -644,27 +638,23 @@ describe('money review follow-ups', () => {
     const base = await stripe.charges.retrieve();
     stripe.charges.retrieve.mockResolvedValue({ ...base, amount_refunded: 40000 }); // 400 of 1000 already refunded
     stripe.transfers = {
-      retrieve: jest
-        .fn()
-        .mockResolvedValue({
-          id: 'tr_9',
-          livemode: false,
-          destination: 'acct_p',
-          source_transaction: 'ch_1',
-          amount: 97000,
-          amount_reversed: 0,
-          currency: 'nok',
-        }),
+      retrieve: jest.fn().mockResolvedValue({
+        id: 'tr_9',
+        livemode: false,
+        destination: 'acct_p',
+        source_transaction: 'ch_1',
+        amount: 97000,
+        amount_reversed: 0,
+        currency: 'nok',
+      }),
     };
     Payout.findOne.mockReturnValue({
-      lean: jest
-        .fn()
-        .mockResolvedValue({
-          status: 'transferred',
-          stripeTransferId: 'tr_9',
-          stripeConnectAccountId: 'acct_p',
-          netProviderAmount: 970,
-        }),
+      lean: jest.fn().mockResolvedValue({
+        status: 'transferred',
+        stripeTransferId: 'tr_9',
+        stripeConnectAccountId: 'acct_p',
+        netProviderAmount: 970,
+      }),
     });
     const order = ORDER();
     const dispute = disputeDoc(order);

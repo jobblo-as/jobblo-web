@@ -320,13 +320,11 @@ exports.verifyEmail = async (req, res) => {
     user.set($set);
 
     if (require('../../middleware/auth').isInactiveAccount(user)) {
-      return res
-        .status(403)
-        .json({
-          error: 'Account inactive',
-          message: 'Kontoen din er deaktivert.',
-          code: 'account_inactive',
-        });
+      return res.status(403).json({
+        error: 'Account inactive',
+        message: 'Kontoen din er deaktivert.',
+        code: 'account_inactive',
+      });
     }
 
     const { accessToken, refreshToken } = await createSession(req, user._id);

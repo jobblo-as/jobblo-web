@@ -71,13 +71,11 @@ function isBlocked(ip) {
 function ipBlockGuard(req, res, next) {
   if (!entries.length) return next();
   if (!isBlocked(clientIp(req))) return next();
-  return res
-    .status(403)
-    .json({
-      error: 'Access denied',
-      message: 'Access from your network is blocked.',
-      code: 'IP_BLOCKED',
-    });
+  return res.status(403).json({
+    error: 'Access denied',
+    message: 'Access from your network is blocked.',
+    code: 'IP_BLOCKED',
+  });
 }
 
 function startIpBlocks() {
