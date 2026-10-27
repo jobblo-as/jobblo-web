@@ -18,7 +18,7 @@ jest.mock('../middleware/auth', () => ({
 }));
 jest.mock('../controllers/aiController', () => {
   const ok = (req, res) => res.json({ success: true });
-  return { analyzeJobImage: ok, generateJobInfo: ok, generateTitle: ok, generateFullJobListing: ok };
+  return { analyzeJobImage: ok, generateJobInfo: ok, generateTitle: ok, generateFullJobListing: ok, suggestCategories: ok, photoHint: ok };
 });
 jest.mock('../routes/api', () => {
   const actual = jest.requireActual('../routes/api');

@@ -44,6 +44,41 @@ router.post(
 	aiController.analyzeJobImage
 );
 
+// Camera helper hints: one small photo each, up to 6 per job, so a separate and larger budget
+// than the 20/h shared by the other AI features.
+const photoHintLimiter = makeLimiter('ai-photo-hint', {
+	windowMs: 60 * 60 * 1000,
+	max: 60,
+	keyGenerator: (req) => (req.userId ? `u:${req.userId}` : ipKeyGenerator(req.ip)),
+	standardHeaders: true,
+	legacyHeaders: false,
+	message: { success: false, error: 'For mange AI-forespørsler. Prøv igjen om en time.' },
+});
+
+// App "Legg ut oppdrag", camera: one photo ("image") + `count` (photos taken) + `lang` →
+// { hint, quality: 'ok'|'blurry'|'dark'|'unclear' }.
+router.post(
+	'/photo-hint',
+	authenticate,
+	photoHintLimiter,
+	imageUpload.single('image'),
+	checkFileTypes(IMAGE_TYPES),
+	capAiInput,
+	aiController.photoHint
+);
+
+// App "Legg ut oppdrag", category step: up to 3 photos (field "images") and/or `text` →
+// { suggestions: [category name, ...] }, at most 3, best first.
+router.post(
+	'/suggest-categories',
+	authenticate,
+	aiLimiter,
+	imageUpload.array('images', 3),
+	checkFileTypes(IMAGE_TYPES),
+	capAiInput,
+	aiController.suggestCategories
+);
+
 /**
  * @swagger
  * /api/ai/generate-job-info:
@@ -125,6 +160,15 @@ router.post('/generate-title', authenticate, aiLimiter, capAiInput, aiController
  *       400:
  *         description: Prompt is required
  */
-router.post('/generate-full-listing', authenticate, aiLimiter, capAiInput, aiController.generateFullJobListing);
+// JSON as before, or multipart with up to 3 photos in "images" (app "Legg ut oppdrag").
+router.post(
+	'/generate-full-listing',
+	authenticate,
+	aiLimiter,
+	imageUpload.array('images', 3),
+	checkFileTypes(IMAGE_TYPES),
+	capAiInput,
+	aiController.generateFullJobListing
+);
 
 module.exports = router;

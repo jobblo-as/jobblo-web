@@ -364,11 +364,17 @@ function supportsStrictSchema(model) {
   return /^(gpt-4o|gpt-4\.1|gpt-5|o[134])/.test(m);
 }
 
+const PHOTO_GUIDANCE =
+  ' Photos of the job are attached: what is clearly visible in them (the room, the surface, the items, their condition) counts as stated by the user — write it in. Do not guess what the photos do not show, and never mention the photos themselves.';
+
 function buildRequest(context, model) {
   const freeText = [context.task, context.description].filter(Boolean).join(' ');
   const lang = resolveLanguage(context.lang, freeText);
   const userWordCount = freeText.trim() ? freeText.trim().split(/\s+/).length : 0;
-  const budget = describeBudget(userWordCount);
+  // Photos (app post-job flow) carry facts the text does not: at least a "moderate" sketch,
+  // and what they clearly show counts as stated. Guessing what they do not show stays banned.
+  const base = describeBudget(context.hasImages ? Math.max(userWordCount, 8) : userWordCount);
+  const budget = context.hasImages ? { ...base, guidance: base.guidance + PHOTO_GUIDANCE } : base;
   const feature = context.feature || 'full-listing';
 
   const contextBlock = buildContextBlock({ ...context, lang });

@@ -34,6 +34,8 @@ const serviceSchema = new mongoose.Schema(
       type: { type: String, enum: ['Point'], default: 'Point' },
       coordinates: { type: [Number], index: '2dsphere' },
       address: { type: String },
+      // Norwegian postnummer (Kartverket), shown with the full address to the chosen provider.
+      postalCode: { type: String, trim: true, match: /^\d{4}$/ },
       city: { type: String },
     },
 

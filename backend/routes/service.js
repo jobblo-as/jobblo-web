@@ -153,6 +153,10 @@ router.get('/', cacheJson('services', 30), serviceController.getAllServices);
  */
 router.get('/my-posted', authenticate, serviceController.getMyPostedServices);
 
+// App "Legg ut oppdrag", price step: ?category=Maling&countyCode=03 → { count, low, median, high, scope }.
+// Before '/:id', which would otherwise take "price-stats" as a job id.
+router.get('/price-stats', authenticate, require('../controllers/services/priceStatsController').getPriceStats);
+
 /**
  * -------------------------------------------------------
  *  GEOJSON ROUTES
