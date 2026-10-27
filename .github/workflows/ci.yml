@@ -15,7 +15,7 @@ on:
 
 permissions:
   contents: read
-  # dorny/paths-filter and gitleaks-action read the PR's changed files / commits.
+  # dorny/paths-filter reads the PR's changed files.
   pull-requests: read
 
 concurrency:
@@ -149,11 +149,29 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
+      # The gitleaks CLI (MIT, free) rather than gitleaks-action, which needs a paid
+      # GITLEAKS_LICENSE for repositories owned by an organization (jobblo-as).
+      - name: Install gitleaks
+        run: |
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.18.4/gitleaks_8.18.4_linux_x64.tar.gz | tar -xz gitleaks
+          ./gitleaks version
+      - name: Scan the new commits
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # Required by gitleaks-action for repositories owned by an organization (free key).
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          # Same scope as gitleaks-action had: a PR's commits, or the commits a push added.
+          # A new branch (no "before") is scanned against main.
+          if [ -n "$PR_BASE" ]; then
+            range="$PR_BASE..$PR_HEAD"
+          elif [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ]; then
+            range="$BEFORE..$GITHUB_SHA"
+          else
+            range="origin/main..$GITHUB_SHA"
+          fi
+          echo "Scanning $range"
+          ./gitleaks detect --source . --redact --no-banner -v --log-opts="$range"
 
   # ── Mobile ─────────────────────────────────────────────────────────────────
   mobile:
