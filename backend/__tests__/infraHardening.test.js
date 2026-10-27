@@ -36,10 +36,15 @@ describe('scheduler stop on shutdown', () => {
         server: { listening: true, close: (cb) => { order.push('http'); cb(); } },
         extra: bg.stops,
       });
+      jest.useFakeTimers({ doNotFake: ['nextTick', 'setImmediate'] });
       await close('TEST');
       expect(order).toEqual(['scheduler', 'http']);
       expect(exit).toHaveBeenCalledWith(0);
+      // A finished shutdown leaves no deadline behind to exit(1) later.
+      jest.advanceTimersByTime(60_000);
+      expect(exit).not.toHaveBeenCalledWith(1);
     } finally {
+      jest.useRealTimers();
       jest.restoreAllMocks();
       process.removeAllListeners('SIGTERM');
       process.removeAllListeners('SIGINT');

@@ -33,6 +33,9 @@ function registerShutdown({ server, io, extra = [] }) {
     await step('redis', () => require('../config/redis').closeRedis());
     await step('mongodb', () => require('mongoose').disconnect());
     console.log('[shutdown] done');
+    // Done in time: the deadline must not fire later (with exit mocked in a test it did, and
+    // its exit(1) killed the whole Jest run).
+    clearTimeout(timer);
     process.exit(0);
   };
   // Last line of defence: a stray rejected promise (e.g. in a socket handler) used to
