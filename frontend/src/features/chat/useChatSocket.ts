@@ -3,6 +3,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { initSocket } from '../../socket/socket';
 import { useUserStore } from '../../stores/userStore';
 import { useChatQueries } from '../../features/chat/hook';
+import { applyIncomingMessage, applyMessagesRead, refreshChats } from './refreshChats';
+import type { ChatMessage } from '../../api/chatAPI';
 
 export const useChatSocket = (conversationId?: string) => {
   const queryClient = useQueryClient();
@@ -26,34 +28,26 @@ export const useChatSocket = (conversationId?: string) => {
         socket.emit('mark-as-read', { chatId: conversationId, userId });
       }
     };
+    // mark-as-read answers with messages-read, which updates the unread state in the caches.
     joinRooms();
-    if (conversationId) {
-      queryClient.invalidateQueries({ queryKey: ['chats'] });
-      window.dispatchEvent(new CustomEvent('chat-read'));
-    }
     const handleReconnect = () => {
       joinRooms();
       // Messages may have arrived while disconnected.
-      if (conversationId) queryClient.invalidateQueries({ queryKey: ['chat', conversationId] });
-      queryClient.invalidateQueries({ queryKey: ['chats'] });
+      refreshChats(queryClient, conversationId);
     };
 
-    // Socket listeners
-    const handleReceiveMessage = (data: { chatId: string }) => {
-      queryClient.invalidateQueries({ queryKey: ['chat', data.chatId] });
-      queryClient.invalidateQueries({ queryKey: ['chats'] });
+    // Socket listeners. The Header applies the same events (it listens on every page);
+    // applying one twice is harmless, the message is matched by _id.
+    const handleReceiveMessage = (data: { chatId: string; message?: ChatMessage }) => {
+      if (!applyIncomingMessage(queryClient, data.chatId, data.message)) refreshChats(queryClient, data.chatId);
 
       if (conversationId === data.chatId) {
         socket.emit('mark-as-read', { chatId: conversationId, userId });
-        window.dispatchEvent(new CustomEvent('chat-read'));
       }
     };
 
-    const handleMessagesRead = (data: { chatId: string }) => {
-      if (data.chatId === conversationId) {
-        queryClient.invalidateQueries({ queryKey: ['chat', data.chatId] });
-      }
-      queryClient.invalidateQueries({ queryKey: ['chats'] });
+    const handleMessagesRead = (data: { chatId: string; userId: string }) => {
+      applyMessagesRead(queryClient, data.chatId, data.userId);
     };
 
     const handleUserOnline = (onlineUserIds: string[]) => {
