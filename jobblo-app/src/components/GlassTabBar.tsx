@@ -17,7 +17,7 @@ const VISIBLE_TABS = ['index', 'create-job', 'messages', 'alerts', 'profile'];
  * Older iOS: frosted blur. Android: near-opaque white (no cheap native blur).
  * Both checks are needed: some iOS 26 betas lack the API and crash without the first.
  */
-const LIQUID_GLASS = Platform.OS === 'ios' && isGlassEffectAPIAvailable() && isLiquidGlassAvailable();
+export const LIQUID_GLASS = Platform.OS === 'ios' && isGlassEffectAPIAvailable() && isLiquidGlassAvailable();
 
 /** Height the floating bar covers at the bottom of the screen (bar + gap + home indicator). */
 export function useTabBarSpace() {

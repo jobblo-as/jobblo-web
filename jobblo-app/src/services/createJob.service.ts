@@ -25,6 +25,8 @@ export interface CreateJobFormValues {
   maxApplicants: string;
   urgent: boolean;
   address: string;
+  /** 4-digit postnummer; '' when unknown. */
+  postalCode: string;
   city: string;
   countyCode: string;
   municipalityCode: string;
@@ -40,6 +42,37 @@ export interface CreateJobFormValues {
   contactPhone: string;
   contactEmail: string;
   checklist: ChecklistItem[];
+}
+
+/** A blank job (new job in both the post-job flow and the old form). */
+export function emptyJobValues(): CreateJobFormValues {
+  return {
+    title: '',
+    description: '',
+    categories: [],
+    tags: [],
+    equipment: 'utstyrfri',
+    customerType: '',
+    maxApplicants: '0',
+    urgent: false,
+    address: '',
+    postalCode: '',
+    city: '',
+    countyCode: '',
+    municipalityCode: '',
+    areaCode: '',
+    coordinates: [0, 0],
+    fromDate: '',
+    toDate: '',
+    durationValue: '',
+    durationUnit: 'hours',
+    paymentType: 'Fastpris',
+    price: '',
+    hourlyRate: '',
+    contactPhone: '',
+    contactEmail: '',
+    checklist: [],
+  };
 }
 
 export interface CreateServiceResponse {
@@ -75,6 +108,7 @@ export function buildJobFormData(values: CreateJobFormValues, images: CreateJobI
   append('duration[value]', values.durationValue.trim());
   append('duration[unit]', values.durationUnit);
   append('location[address]', values.address.trim());
+  if (values.postalCode.trim()) append('location[postalCode]', values.postalCode.trim());
   append('location[city]', values.city.trim());
   append('location[type]', 'Point');
   append('location[coordinates][0]', String(values.coordinates[1]));

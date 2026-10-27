@@ -43,9 +43,17 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Jobblo trenger tilgang til bildene dine slik at du kan legge til bilder av oppdraget, profilbilde og dokumentasjon av utført arbeid.",
-          "cameraPermission": "Jobblo bruker kameraet slik at du kan ta bilder av oppdraget og dokumentere utført arbeid.",
+          "photosPermission": "Jobblo trenger tilgang til bildene dine slik at du kan legge til bilder av oppdraget, profilbilde og dokumentasjon av utført arbeid. Bilder i en annonse kan brukes av AI-hjelperen til å foreslå tekst.",
+          "cameraPermission": "Jobblo bruker kameraet slik at du kan ta bilder av oppdraget og dokumentere utført arbeid. Når du legger ut et oppdrag, gir AI-hjelperen tips om bildene og foreslår tekst til annonsen.",
           "microphonePermission": false
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Jobblo bruker kameraet slik at du kan ta bilder av oppdraget og dokumentere utført arbeid. Når du legger ut et oppdrag, gir AI-hjelperen tips om bildene og foreslår tekst til annonsen.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
         }
       ],
       [
