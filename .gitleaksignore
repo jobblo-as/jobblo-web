@@ -3,3 +3,9 @@
 
 # Fake password 'Passord123' for a mocked user in the e-mail verification test.
 5c361c9ebc7e2de0cc222b994a459fa3f877f18d:backend/__tests__/emailVerification.test.js:generic-api-key:188
+
+# Fake passwords in tests, flagged again after the Prettier commit moved their lines:
+# 'Angriper1Passord' (attacker's guess) in the e-mail verification test,
+# 'GammeltPassord1' (old password) in the password-reset test.
+cb55b0df2c9e64bc0d8ada93441359f6891834d4:backend/__tests__/emailVerification.test.js:generic-api-key:374
+cb55b0df2c9e64bc0d8ada93441359f6891834d4:backend/__tests__/passwordReset.realmongo.test.js:generic-api-key:194

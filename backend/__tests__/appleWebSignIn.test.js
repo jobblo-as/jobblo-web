@@ -375,8 +375,8 @@ test('native endpoint still verifies against the bundle id', async () => {
 
 test('the callback is mounted before the CSRF origin guard (Apple posts cross-site)', () => {
   const src = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
-  expect(src.indexOf("app.post('/api/auth/apple/callback'")).toBeGreaterThan(-1);
-  expect(src.indexOf("app.post('/api/auth/apple/callback'")).toBeLessThan(
-    src.indexOf('createCsrfOriginGuard(origins)')
-  );
+  // Whitespace-tolerant: Prettier puts the path on its own line.
+  const mount = src.search(/app\.post\(\s*'\/api\/auth\/apple\/callback'/);
+  expect(mount).toBeGreaterThan(-1);
+  expect(mount).toBeLessThan(src.indexOf('createCsrfOriginGuard(origins)'));
 });

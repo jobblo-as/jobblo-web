@@ -12,7 +12,8 @@ const ALLOWED = [
   ['app/(app)/_layout.tsx', 'fontSize: 10'],
   ['src/components/GlassTabBar.tsx', 'fontSize: 11'],
   ['app/(auth)/register.tsx', '✓</Text>'],
-  ['app/(app)/messages/index.tsx', "charAt(0) || 'U'"],
+  // the initial in the 24 px avatar badge
+  ['app/(app)/messages/index.tsx', 'text-[0.6875rem] font-semibold text-brand-text'],
 ];
 const bad = [];
 const walk = (dir) => {

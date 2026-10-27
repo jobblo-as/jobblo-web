@@ -32,11 +32,11 @@ export default function CompletedJobPage() {
   const navigate = useNavigate();
   const user = useUserStore((state) => state.user);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- was useState<any>; response shape is untyped
   const {
     data,
     isPending: isLoading,
     isError,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- was useState<any>; response shape is untyped
   } = useQuery<any>({
     queryKey: ['completed-job', orderId, serviceIdParam],
     enabled: !!orderId || !!serviceIdParam,
