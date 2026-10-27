@@ -60,13 +60,23 @@ function makeRes() {
   };
 }
 
-const req = (extra = {}) => ({ query: {}, body: {}, cookies: {}, headers: {}, protocol: 'https', get: () => 'api.test', ...extra });
+const req = (extra = {}) => ({
+  query: {},
+  body: {},
+  cookies: {},
+  headers: {},
+  protocol: 'https',
+  get: () => 'api.test',
+  ...extra,
+});
 
 /** Runs a start endpoint and returns the authorize URL's params plus the response. */
 function start(platform, query = { code_challenge: CHALLENGE, code_challenge_method: 'S256' }) {
   const res = makeRes();
   apple.appleWebStart(req({ query }), res, platform);
-  const params = res.location?.startsWith('https://appleid.apple.com/') ? new URL(res.location).searchParams : null;
+  const params = res.location?.startsWith('https://appleid.apple.com/')
+    ? new URL(res.location).searchParams
+    : null;
   return { res, params };
 }
 
@@ -95,7 +105,10 @@ async function callback(body, cookies = {}) {
   return res;
 }
 
-const selectable = (v) => ({ select: () => Promise.resolve(v), then: (r, j) => Promise.resolve(v).then(r, j) });
+const selectable = (v) => ({
+  select: () => Promise.resolve(v),
+  then: (r, j) => Promise.resolve(v).then(r, j),
+});
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -110,7 +123,9 @@ beforeEach(() => {
   delete process.env.APPLE_BUNDLE_ID;
   global.fetch = jest.fn(async () => ({
     ok: true,
-    json: async () => ({ keys: [{ ...publicKey.export({ format: 'jwk' }), kid: KID, alg: 'RS256', use: 'sig' }] }),
+    json: async () => ({
+      keys: [{ ...publicKey.export({ format: 'jwk' }), kid: KID, alg: 'RS256', use: 'sig' }],
+    }),
   }));
   User.findOne.mockImplementation(() => selectable(null));
   User.create.mockImplementation(async (doc) => ({ _id: 'new-user', ...doc }));
@@ -131,7 +146,9 @@ describe('start', () => {
       })
     );
     const state = jwt.decode(params.get('state'));
-    expect(state).toEqual(expect.objectContaining({ p: 'mobile', cc: CHALLENGE, n: params.get('nonce') }));
+    expect(state).toEqual(
+      expect.objectContaining({ p: 'mobile', cc: CHALLENGE, n: params.get('nonce') })
+    );
     expect(res.headers['Cache-Control']).toMatch(/no-store/);
   });
 
@@ -154,14 +171,20 @@ describe('start', () => {
 
   test('mobile start without an S256 challenge goes to the bridge error, not to Apple', () => {
     const { res } = start('mobile', { code_challenge: CHALLENGE, code_challenge_method: 'plain' });
-    expect(res.location).toBe('https://api.test/api/auth/mobile-return?state=error&code=apple_failed');
+    expect(res.location).toBe(
+      'https://api.test/api/auth/mobile-return?state=error&code=apple_failed'
+    );
   });
 
   test('web start sets an httpOnly SameSite=None binding cookie whose hash is in the state', () => {
     const { res, params } = start('web', {});
     const cookie = res.cookies.jobblo_apple_web;
-    expect(cookie.opts).toEqual(expect.objectContaining({ httpOnly: true, secure: true, sameSite: 'none' }));
-    expect(jwt.decode(params.get('state'))).toEqual(expect.objectContaining({ p: 'web', b: sha(cookie.value) }));
+    expect(cookie.opts).toEqual(
+      expect.objectContaining({ httpOnly: true, secure: true, sameSite: 'none' })
+    );
+    expect(jwt.decode(params.get('state'))).toEqual(
+      expect.objectContaining({ p: 'web', b: sha(cookie.value) })
+    );
   });
 });
 
@@ -175,9 +198,13 @@ describe('mobile callback', () => {
       user: JSON.stringify({ name: { firstName: 'Kari', lastName: 'Nordmann' }, email: 'x@y.z' }),
     });
     expect(res.statusCode).toBe(303);
-    expect(res.location).toMatch(/^https:\/\/api\.test\/api\/auth\/mobile-return\?state=success&code=[A-Za-z0-9_-]{43}$/);
+    expect(res.location).toMatch(
+      /^https:\/\/api\.test\/api\/auth\/mobile-return\?state=success&code=[A-Za-z0-9_-]{43}$/
+    );
     expect(res.location).not.toMatch(/token|h\.p\.s/);
-    expect(MobileOAuthCode.create).toHaveBeenCalledWith(expect.objectContaining({ userId: 'new-user', codeChallenge: CHALLENGE }));
+    expect(MobileOAuthCode.create).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 'new-user', codeChallenge: CHALLENGE })
+    );
     expect(User.create).toHaveBeenCalledWith(
       expect.objectContaining({
         name: 'Kari',
@@ -194,10 +221,16 @@ describe('mobile callback', () => {
     const existing = { _id: 'apple-user' };
     User.findOne.mockImplementation((q) => selectable(q.oauthProviders ? existing : null));
     const { params } = start('mobile');
-    const res = await callback({ state: params.get('state'), id_token: idToken(params.get('nonce')), user: '{not json' });
+    const res = await callback({
+      state: params.get('state'),
+      id_token: idToken(params.get('nonce')),
+      user: '{not json',
+    });
     expect(res.location).toMatch(/state=success&code=/);
     expect(User.create).not.toHaveBeenCalled();
-    expect(MobileOAuthCode.create).toHaveBeenCalledWith(expect.objectContaining({ userId: 'apple-user' }));
+    expect(MobileOAuthCode.create).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: 'apple-user' })
+    );
   });
 
   const refused = async (body, code) => {
@@ -210,34 +243,72 @@ describe('mobile callback', () => {
 
   test('nonce mismatch is refused', async () => {
     const { params } = start('mobile');
-    await refused({ state: params.get('state'), id_token: idToken('another-nonce') }, 'apple_invalid_token');
+    await refused(
+      { state: params.get('state'), id_token: idToken('another-nonce') },
+      'apple_invalid_token'
+    );
   });
 
   test('wrong audience (the iOS bundle id) is refused', async () => {
     const { params } = start('mobile');
-    await refused({ state: params.get('state'), id_token: idToken(params.get('nonce'), { aud: 'com.jobblo.app' }) }, 'apple_invalid_token');
+    await refused(
+      {
+        state: params.get('state'),
+        id_token: idToken(params.get('nonce'), { aud: 'com.jobblo.app' }),
+      },
+      'apple_invalid_token'
+    );
   });
 
   test('an e-mail owned by another account is refused, never linked', async () => {
     User.findOne.mockImplementation((q) => selectable(q.email ? { _id: 'pw-user' } : null));
     const { params } = start('mobile');
-    await refused({ state: params.get('state'), id_token: idToken(params.get('nonce')) }, 'apple_account_exists');
+    await refused(
+      { state: params.get('state'), id_token: idToken(params.get('nonce')) },
+      'apple_account_exists'
+    );
   });
 
   test('Apple-reported cancel reaches the app', async () => {
     const { params } = start('mobile');
-    await refused({ state: params.get('state'), error: 'user_cancelled_authorize' }, 'apple_cancelled');
+    await refused(
+      { state: params.get('state'), error: 'user_cancelled_authorize' },
+      'apple_cancelled'
+    );
   });
 
   test.each([
     ['missing', () => undefined],
-    ['forged (other secret)', () => jwt.sign({ p: 'mobile', cc: CHALLENGE, n: 'n' }, 'attacker', { audience: 'jobblo:apple-web-state' })],
-    ['expired', () => jwt.sign({ p: 'mobile', cc: CHALLENGE, n: 'n', exp: Math.floor(Date.now() / 1000) - 10 }, 'test-session-secret', { audience: 'jobblo:apple-web-state' })],
-    ['wrong audience (e.g. an access token)', () => jwt.sign({ p: 'mobile', cc: CHALLENGE, n: 'n' }, 'test-session-secret', { audience: 'jobblo:access' })],
-    ['tampered', () => {
-      const s = start('mobile').params.get('state');
-      return s.slice(0, -2) + (s.endsWith('A') ? 'BB' : 'AA');
-    }],
+    [
+      'forged (other secret)',
+      () =>
+        jwt.sign({ p: 'mobile', cc: CHALLENGE, n: 'n' }, 'attacker', {
+          audience: 'jobblo:apple-web-state',
+        }),
+    ],
+    [
+      'expired',
+      () =>
+        jwt.sign(
+          { p: 'mobile', cc: CHALLENGE, n: 'n', exp: Math.floor(Date.now() / 1000) - 10 },
+          'test-session-secret',
+          { audience: 'jobblo:apple-web-state' }
+        ),
+    ],
+    [
+      'wrong audience (e.g. an access token)',
+      () =>
+        jwt.sign({ p: 'mobile', cc: CHALLENGE, n: 'n' }, 'test-session-secret', {
+          audience: 'jobblo:access',
+        }),
+    ],
+    [
+      'tampered',
+      () => {
+        const s = start('mobile').params.get('state');
+        return s.slice(0, -2) + (s.endsWith('A') ? 'BB' : 'AA');
+      },
+    ],
   ])('%s state is refused', async (_n, make) => {
     const res = await callback({ state: make(), id_token: idToken('n') });
     expect(res.location).toBe('https://jobblo.no/login?error=apple_invalid_state');
@@ -253,7 +324,13 @@ describe('web callback', () => {
     const setCookies = jest.fn();
     const res = makeRes();
     res.cookie = (name, value) => setCookies(name, value);
-    await apple.appleWebCallback(req({ body: { state: params.get('state'), id_token: idToken(params.get('nonce')) }, cookies: { jobblo_apple_web: binding } }), res);
+    await apple.appleWebCallback(
+      req({
+        body: { state: params.get('state'), id_token: idToken(params.get('nonce')) },
+        cookies: { jobblo_apple_web: binding },
+      }),
+      res
+    );
     expect(res.statusCode).toBe(303);
     expect(res.location).toBe('https://jobblo.no/oauth-success');
     expect(createSession).toHaveBeenCalledWith(expect.anything(), 'new-user');
@@ -267,7 +344,10 @@ describe('web callback', () => {
     ['a different browser’s cookie', 'someone-else'],
   ])('%s is refused', async (_n, cookie) => {
     const { params } = start('web', {});
-    const res = await callback({ state: params.get('state'), id_token: idToken(params.get('nonce')) }, cookie ? { jobblo_apple_web: cookie } : {});
+    const res = await callback(
+      { state: params.get('state'), id_token: idToken(params.get('nonce')) },
+      cookie ? { jobblo_apple_web: cookie } : {}
+    );
     expect(res.location).toBe('https://jobblo.no/login?error=apple_invalid_state');
     expect(createSession).not.toHaveBeenCalled();
   });
@@ -276,15 +356,27 @@ describe('web callback', () => {
 test('native endpoint still verifies against the bundle id', async () => {
   const raw = crypto.randomBytes(32).toString('hex');
   const res = makeRes();
-  await apple.appleNativeSignIn({ body: { identityToken: idToken(sha(raw), { aud: 'com.jobblo.app' }), rawNonce: raw }, headers: {}, get: () => '' }, res);
+  await apple.appleNativeSignIn(
+    {
+      body: { identityToken: idToken(sha(raw), { aud: 'com.jobblo.app' }), rawNonce: raw },
+      headers: {},
+      get: () => '',
+    },
+    res
+  );
   expect(res.statusCode).toBe(200);
   const wrong = makeRes();
-  await apple.appleNativeSignIn({ body: { identityToken: idToken(sha(raw)), rawNonce: raw }, headers: {}, get: () => '' }, wrong);
+  await apple.appleNativeSignIn(
+    { body: { identityToken: idToken(sha(raw)), rawNonce: raw }, headers: {}, get: () => '' },
+    wrong
+  );
   expect(wrong.statusCode).toBe(401); // a Services-ID token is not an iOS-app token
 });
 
 test('the callback is mounted before the CSRF origin guard (Apple posts cross-site)', () => {
   const src = fs.readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
   expect(src.indexOf("app.post('/api/auth/apple/callback'")).toBeGreaterThan(-1);
-  expect(src.indexOf("app.post('/api/auth/apple/callback'")).toBeLessThan(src.indexOf('createCsrfOriginGuard(origins)'));
+  expect(src.indexOf("app.post('/api/auth/apple/callback'")).toBeLessThan(
+    src.indexOf('createCsrfOriginGuard(origins)')
+  );
 });

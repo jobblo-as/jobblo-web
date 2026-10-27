@@ -4,7 +4,12 @@ const errorLogSchema = new mongoose.Schema(
   {
     referenceId: { type: String, required: true, unique: true, index: true },
     errorCode: { type: String, required: true, index: true },
-    severity: { type: String, enum: ['info', 'warning', 'error', 'critical'], default: 'error', index: true },
+    severity: {
+      type: String,
+      enum: ['info', 'warning', 'error', 'critical'],
+      default: 'error',
+      index: true,
+    },
     message: { type: String, default: '' },
     technicalMessage: { type: String, default: null },
     stack: { type: String, default: null },
@@ -19,7 +24,12 @@ const errorLogSchema = new mongoose.Schema(
     metadata: { type: mongoose.Schema.Types.Mixed, default: {} },
     environment: { type: String, default: process.env.NODE_ENV || 'development' },
     // 'open' is shown as "New" in the developer dashboard.
-    status: { type: String, enum: ['open', 'investigating', 'resolved', 'reopened'], default: 'open', index: true },
+    status: {
+      type: String,
+      enum: ['open', 'investigating', 'resolved', 'reopened'],
+      default: 'open',
+      index: true,
+    },
     assignee: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     notes: [
       {

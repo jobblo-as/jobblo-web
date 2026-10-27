@@ -65,9 +65,10 @@ const updateConfig = asyncHandler(async (req, res) => {
   ) {
     return sendError(res, 'Connect-fristen må være et heltall mellom 1 og 30 dager.', 400);
   }
-  const previous = key === SAFEPAY_CONNECT_DEADLINE_KEY
-    ? await GlobalConfig.findOne({ key }).select('value').lean()
-    : null;
+  const previous =
+    key === SAFEPAY_CONNECT_DEADLINE_KEY
+      ? await GlobalConfig.findOne({ key }).select('value').lean()
+      : null;
   const config = await GlobalConfig.findOneAndUpdate(
     { key },
     { value, description },

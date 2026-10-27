@@ -25,7 +25,16 @@ const EXCLUDED = /^\/api\/(developer|mobile\/telemetry|docs)(\/|$)/;
 // Keys that are data, not schema (ids, emails, dates, numbers) collapse to "*".
 const DYNAMIC_KEY = /^[0-9a-f]{24}$|@|^\d|^\d{4}-\d{2}|^[0-9a-f-]{36}$/i;
 
-const typeOf = (v) => (v === null ? 'null' : Array.isArray(v) ? 'array' : v instanceof Date ? 'string' : v && v._bsontype === 'ObjectId' ? 'string' : typeof v);
+const typeOf = (v) =>
+  v === null
+    ? 'null'
+    : Array.isArray(v)
+      ? 'array'
+      : v instanceof Date
+        ? 'string'
+        : v && v._bsontype === 'ObjectId'
+          ? 'string'
+          : typeof v;
 
 /** Pure: { path → type } for a JSON value. Arrays use "[]"; only the first 5 items are walked. Unit-tested. */
 function shapeOf(value) {
@@ -58,7 +67,12 @@ function shapeOf(value) {
 }
 
 const toPairs = (map) => [...map].sort((a, b) => a[0].localeCompare(b[0]));
-const signature = (pairs) => crypto.createHash('sha1').update(pairs.map((p) => p.join(':')).join('|')).digest('hex').slice(0, 16);
+const signature = (pairs) =>
+  crypto
+    .createHash('sha1')
+    .update(pairs.map((p) => p.join(':')).join('|'))
+    .digest('hex')
+    .slice(0, 16);
 
 /** Pure: changes a new shape makes relative to earlier variants. Unit-tested. */
 function classify(prior, fields) {
@@ -81,23 +95,50 @@ function classify(prior, fields) {
   const underEmpty = (p) => {
     for (let i = p.indexOf('[]'); i !== -1; i = p.indexOf('[]', i + 2)) {
       const prefix = p.slice(0, i + 2);
-      if (now.get(p.slice(0, i)) === 'array' && !keys.some((k) => k.startsWith(prefix))) return true;
+      if (now.get(p.slice(0, i)) === 'array' && !keys.some((k) => k.startsWith(prefix)))
+        return true;
     }
     return false;
   };
-  const underNull = (p) => [...now].some(([k, t]) => t === 'null' && (p.startsWith(`${k}.`) || p.startsWith(`${k}[]`)));
+  const underNull = (p) =>
+    [...now].some(([k, t]) => t === 'null' && (p.startsWith(`${k}.`) || p.startsWith(`${k}[]`)));
   for (const [p, n] of presence) {
-    if (n / total >= REQUIRED_SHARE && !now.has(p) && !underEmpty(p) && !underNull(p)) changes.push({ kind: 'removed', breaking: true, path: p, detail: `present in ${Math.round((n / total) * 100)}% of ${total} earlier responses` });
+    if (n / total >= REQUIRED_SHARE && !now.has(p) && !underEmpty(p) && !underNull(p))
+      changes.push({
+        kind: 'removed',
+        breaking: true,
+        path: p,
+        detail: `present in ${Math.round((n / total) * 100)}% of ${total} earlier responses`,
+      });
   }
   for (const [p, t] of now) {
-    if (!presence.has(p)) changes.push({ kind: 'added', breaking: false, path: p, detail: `new ${t} field` });
-    else if (t !== 'null' && t !== 'mixed' && !types.get(p).has(t) && !(types.get(p).size === 1 && types.get(p).has('null'))) {
-      changes.push({ kind: 'type_changed', breaking: true, path: p, detail: `${[...types.get(p)].join('/')} → ${t}` });
+    if (!presence.has(p))
+      changes.push({ kind: 'added', breaking: false, path: p, detail: `new ${t} field` });
+    else if (
+      t !== 'null' &&
+      t !== 'mixed' &&
+      !types.get(p).has(t) &&
+      !(types.get(p).size === 1 && types.get(p).has('null'))
+    ) {
+      changes.push({
+        kind: 'type_changed',
+        breaking: true,
+        path: p,
+        detail: `${[...types.get(p)].join('/')} → ${t}`,
+      });
     }
   }
   // A removed parent implies its children; report the parent only.
   const removed = new Set(changes.filter((c) => c.kind === 'removed').map((c) => c.path));
-  return changes.filter((c) => !(c.kind === 'removed' && [...removed].some((r) => r !== c.path && (c.path.startsWith(`${r}.`) || c.path.startsWith(`${r}[]`)))));
+  return changes.filter(
+    (c) =>
+      !(
+        c.kind === 'removed' &&
+        [...removed].some(
+          (r) => r !== c.path && (c.path.startsWith(`${r}.`) || c.path.startsWith(`${r}[]`))
+        )
+      )
+  );
 }
 
 const buffer = new Map(); // key → Map(sig → { pairs, count, at })
@@ -109,7 +150,12 @@ function contractSampler(req, res, next) {
   const original = res.json.bind(res);
   res.json = (body) => {
     try {
-      const cls = res.statusCode >= 200 && res.statusCode < 300 ? '2xx' : res.statusCode >= 400 && res.statusCode < 500 ? '4xx' : null;
+      const cls =
+        res.statusCode >= 200 && res.statusCode < 300
+          ? '2xx'
+          : res.statusCode >= 400 && res.statusCode < 500
+            ? '4xx'
+            : null;
       if (cls && req.route) {
         const route = `${req.baseUrl || ''}${Array.isArray(req.route.path) ? req.route.path.join('|') : req.route.path}`;
         const key = `${req.method} ${route} ${cls}`;
@@ -142,7 +188,9 @@ async function flush() {
   buffer.clear();
   for (const [key, sigs] of batch) {
     const [method, route, status] = key.split(' ');
-    const doc = (await ApiContract.findOne({ method, route, status })) || new ApiContract({ method, route, status, firstSeen: new Date() });
+    const doc =
+      (await ApiContract.findOne({ method, route, status })) ||
+      new ApiContract({ method, route, status, firstSeen: new Date() });
     for (const [sig, s] of sigs) {
       const existing = doc.variants.find((v) => v.sig === sig);
       if (existing) {
@@ -150,8 +198,19 @@ async function flush() {
         existing.lastSeen = new Date();
       } else {
         const changes = classify(doc.variants, s.pairs);
-        if (changes.length) await ContractEvent.insertMany(changes.map((c) => ({ ...c, at: s.at, method, route, status, version, commit })));
-        doc.variants.push({ sig, count: s.count, firstSeen: s.at, lastSeen: new Date(), version, commit, fields: s.pairs });
+        if (changes.length)
+          await ContractEvent.insertMany(
+            changes.map((c) => ({ ...c, at: s.at, method, route, status, version, commit }))
+          );
+        doc.variants.push({
+          sig,
+          count: s.count,
+          firstSeen: s.at,
+          lastSeen: new Date(),
+          version,
+          commit,
+          fields: s.pairs,
+        });
         if (doc.variants.length > MAX_VARIANTS) {
           // ponytail: drop the least-seen variants beyond 30; their samples still count in `samples`.
           doc.variants.sort((a, b) => b.count - a.count);
@@ -167,34 +226,70 @@ async function flush() {
 
 function startContracts() {
   if (process.env.NODE_ENV === 'test') return;
-  setInterval(() => flush().catch((e) => console.error('[contracts] flush failed:', e.message)), 60_000).unref();
+  setInterval(
+    () => flush().catch((e) => console.error('[contracts] flush failed:', e.message)),
+    60_000
+  ).unref();
 }
 
 /** Pure: "/api/services/{id}" → "/api/services/:id". */
 const fromSwagger = (p) => p.replace(/\{([^}]+)\}/g, ':$1').replace(/(.)\/+$/, '$1');
-const normalize = (p) => p.replace(/:[^/]+/g, ':x').replace(/\/+$/, '').toLowerCase();
+const normalize = (p) =>
+  p
+    .replace(/:[^/]+/g, ':x')
+    .replace(/\/+$/, '')
+    .toLowerCase();
 
 /** Documented (Swagger) vs. routes with traffic in the last 30 days. */
 async function docsCoverage() {
   let documented = [];
   try {
     const spec = require('../../swagger');
-    documented = Object.entries(spec.paths || {}).flatMap(([p, ops]) => Object.keys(ops).filter((m) => ['get', 'post', 'put', 'patch', 'delete'].includes(m)).map((m) => `${m.toUpperCase()} ${fromSwagger(p)}`));
+    documented = Object.entries(spec.paths || {}).flatMap(([p, ops]) =>
+      Object.keys(ops)
+        .filter((m) => ['get', 'post', 'put', 'patch', 'delete'].includes(m))
+        .map((m) => `${m.toUpperCase()} ${fromSwagger(p)}`)
+    );
   } catch {
     /* no spec */
   }
   const traffic = await require('../../models/ApiMetricMinute').aggregate([
-    { $match: { minute: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }, route: { $regex: '^/api/', $not: /\/\*$|^\/api\/(developer|mobile\/telemetry|docs)/ } } },
+    {
+      $match: {
+        minute: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+        route: { $regex: '^/api/', $not: /\/\*$|^\/api\/(developer|mobile\/telemetry|docs)/ },
+      },
+    },
     { $group: { _id: { m: '$method', r: '$route' }, n: { $sum: '$count' } } },
   ]);
   const used = traffic.map((t) => ({ key: `${t._id.m} ${t._id.r}`, n: t.n }));
-  const docNorm = new Set(documented.map((d) => { const [m, p] = d.split(' '); return `${m} ${normalize(p)}`; }));
-  const usedNorm = new Set(used.map((u) => { const [m, p] = u.key.split(' '); return `${m} ${normalize(p)}`; }));
+  const docNorm = new Set(
+    documented.map((d) => {
+      const [m, p] = d.split(' ');
+      return `${m} ${normalize(p)}`;
+    })
+  );
+  const usedNorm = new Set(
+    used.map((u) => {
+      const [m, p] = u.key.split(' ');
+      return `${m} ${normalize(p)}`;
+    })
+  );
   return {
     documented: documented.length,
     used: used.length,
-    undocumented: used.filter((u) => { const [m, p] = u.key.split(' '); return !docNorm.has(`${m} ${normalize(p)}`); }).sort((a, b) => b.n - a.n),
-    unused: documented.filter((d) => { const [m, p] = d.split(' '); return !usedNorm.has(`${m} ${normalize(p)}`); }).sort(),
+    undocumented: used
+      .filter((u) => {
+        const [m, p] = u.key.split(' ');
+        return !docNorm.has(`${m} ${normalize(p)}`);
+      })
+      .sort((a, b) => b.n - a.n),
+    unused: documented
+      .filter((d) => {
+        const [m, p] = d.split(' ');
+        return !usedNorm.has(`${m} ${normalize(p)}`);
+      })
+      .sort(),
   };
 }
 
@@ -202,22 +297,40 @@ async function getContracts() {
   const ApiContract = require('../../models/ApiContract');
   const ContractEvent = require('../../models/ContractEvent');
   const [contracts, events, docs] = await Promise.all([
-    ApiContract.find().sort({ lastSeen: -1 }).select('method route status samples firstSeen lastSeen variants.sig variants.count variants.firstSeen variants.version').lean(),
+    ApiContract.find()
+      .sort({ lastSeen: -1 })
+      .select(
+        'method route status samples firstSeen lastSeen variants.sig variants.count variants.firstSeen variants.version'
+      )
+      .lean(),
     ContractEvent.find().sort({ at: -1 }).limit(200).populate('acknowledgedBy', 'name').lean(),
     docsCoverage(),
   ]);
   const breakingByRoute = {};
-  for (const e of events) if (e.breaking && !e.acknowledgedAt) breakingByRoute[`${e.method} ${e.route} ${e.status}`] = (breakingByRoute[`${e.method} ${e.route} ${e.status}`] || 0) + 1;
+  for (const e of events)
+    if (e.breaking && !e.acknowledgedAt)
+      breakingByRoute[`${e.method} ${e.route} ${e.status}`] =
+        (breakingByRoute[`${e.method} ${e.route} ${e.status}`] || 0) + 1;
   return {
     generatedAt: new Date(),
-    endpoints: contracts.map((c) => ({ ...c, variants: c.variants.length, openBreaking: breakingByRoute[`${c.method} ${c.route} ${c.status}`] || 0, stable: c.variants.length > 0 ? Math.round((Math.max(...c.variants.map((v) => v.count)) / Math.max(1, c.samples)) * 100) : null })),
+    endpoints: contracts.map((c) => ({
+      ...c,
+      variants: c.variants.length,
+      openBreaking: breakingByRoute[`${c.method} ${c.route} ${c.status}`] || 0,
+      stable:
+        c.variants.length > 0
+          ? Math.round((Math.max(...c.variants.map((v) => v.count)) / Math.max(1, c.samples)) * 100)
+          : null,
+    })),
     events,
     docs,
     summary: {
       endpoints: contracts.length,
       samples: contracts.reduce((a, c) => a + c.samples, 0),
       openBreaking: events.filter((e) => e.breaking && !e.acknowledgedAt).length,
-      additive7d: events.filter((e) => !e.breaking && Date.now() - new Date(e.at) < 7 * 24 * 60 * 60 * 1000).length,
+      additive7d: events.filter(
+        (e) => !e.breaking && Date.now() - new Date(e.at) < 7 * 24 * 60 * 60 * 1000
+      ).length,
       undocumented: docs.undocumented.length,
     },
   };
@@ -237,7 +350,12 @@ async function getContract(method, route, status) {
     }
   }
   const total = c.variants.reduce((a, v) => a + v.count, 0) || 1;
-  const events = await require('../../models/ContractEvent').find({ method, route, status }).sort({ at: -1 }).limit(50).populate('acknowledgedBy', 'name').lean();
+  const events = await require('../../models/ContractEvent')
+    .find({ method, route, status })
+    .sort({ at: -1 })
+    .limit(50)
+    .populate('acknowledgedBy', 'name')
+    .lean();
   return {
     method,
     route,
@@ -245,10 +363,39 @@ async function getContract(method, route, status) {
     samples: c.samples,
     firstSeen: c.firstSeen,
     lastSeen: c.lastSeen,
-    fields: [...presence].map(([path, n]) => ({ path, types: [...types.get(path)], presence: Math.round((n / total) * 1000) / 10, required: n / total >= REQUIRED_SHARE })).sort((a, b) => a.path.localeCompare(b.path)),
-    variants: c.variants.map((v) => ({ sig: v.sig, count: v.count, firstSeen: v.firstSeen, lastSeen: v.lastSeen, version: v.version, commit: v.commit, fieldCount: v.fields.length })).sort((a, b) => b.count - a.count),
+    fields: [...presence]
+      .map(([path, n]) => ({
+        path,
+        types: [...types.get(path)],
+        presence: Math.round((n / total) * 1000) / 10,
+        required: n / total >= REQUIRED_SHARE,
+      }))
+      .sort((a, b) => a.path.localeCompare(b.path)),
+    variants: c.variants
+      .map((v) => ({
+        sig: v.sig,
+        count: v.count,
+        firstSeen: v.firstSeen,
+        lastSeen: v.lastSeen,
+        version: v.version,
+        commit: v.commit,
+        fieldCount: v.fields.length,
+      }))
+      .sort((a, b) => b.count - a.count),
     events,
   };
 }
 
-module.exports = { shapeOf, signature, toPairs, classify, contractSampler, flush, startContracts, docsCoverage, getContracts, getContract, fromSwagger };
+module.exports = {
+  shapeOf,
+  signature,
+  toPairs,
+  classify,
+  contractSampler,
+  flush,
+  startContracts,
+  docsCoverage,
+  getContracts,
+  getContract,
+  fromSwagger,
+};

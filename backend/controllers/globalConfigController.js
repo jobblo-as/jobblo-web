@@ -17,20 +17,21 @@ const PUBLIC_CONFIG_KEYS = ['FREE_PRIVATE_JOBS_UNDER_10000', 'ADS_FOR_NON_SUBSCR
 exports.getConfigByKey = async (req, res) => {
   try {
     const { key } = req.params;
-    if (!PUBLIC_CONFIG_KEYS.includes(key)) return res.status(404).json({ message: 'Config not found' });
+    if (!PUBLIC_CONFIG_KEYS.includes(key))
+      return res.status(404).json({ message: 'Config not found' });
     let config = await GlobalConfig.findOne({ key });
 
-      // Fallback defaults if config is missing in DB
-      if (!config) {
-        const defaults = {
-          ADS_FOR_NON_SUBSCRIBERS: { value: false },
-          FREE_PRIVATE_JOBS_UNDER_10000: { value: false },
-          STRIPE_TEST_MODE: { value: false },
-        };
+    // Fallback defaults if config is missing in DB
+    if (!config) {
+      const defaults = {
+        ADS_FOR_NON_SUBSCRIBERS: { value: false },
+        FREE_PRIVATE_JOBS_UNDER_10000: { value: false },
+        STRIPE_TEST_MODE: { value: false },
+      };
 
-        if (defaults[key]) {
-          return res.status(200).json({ key, ...defaults[key], isDefault: true });
-        }
+      if (defaults[key]) {
+        return res.status(200).json({ key, ...defaults[key], isDefault: true });
+      }
 
       return res.status(404).json({ message: 'Config not found' });
     }

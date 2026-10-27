@@ -327,7 +327,9 @@ describe('the session store does not collide with the auth Session collection', 
   // The store is built in config/session.js; app.js mounts it.
   const appSource = stripComments(fs.readFileSync(path.join(ROOT, 'config', 'session.js'), 'utf8'));
   it('app.js mounts that session middleware', () => {
-    expect(stripComments(fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8'))).toMatch(/app\.use\('\/api\/auth', sessionMiddleware\(\)/); // scoped to the auth routes (all session readers live there)
+    expect(stripComments(fs.readFileSync(path.join(ROOT, 'app.js'), 'utf8'))).toMatch(
+      /app\.use\('\/api\/auth', sessionMiddleware\(\)/
+    ); // scoped to the auth routes (all session readers live there)
   });
   const sessionModel = stripComments(
     fs.readFileSync(path.join(ROOT, 'models', 'Session.js'), 'utf8')

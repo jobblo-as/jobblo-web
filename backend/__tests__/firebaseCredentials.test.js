@@ -55,7 +55,13 @@ const KEY_PATHS = [
   'certs/key.pem',
   'certs/key.p12',
 ];
-const NEEDED_PATHS = ['package.json', 'package-lock.json', 'server.js', 'config/passport.js', 'Dockerfile'];
+const NEEDED_PATHS = [
+  'package.json',
+  'package-lock.json',
+  'server.js',
+  'config/passport.js',
+  'Dockerfile',
+];
 
 describe('Docker build context excludes credentials', () => {
   it.each(KEY_PATHS)('backend/.dockerignore excludes %s', (p) => {
@@ -82,7 +88,10 @@ describe('Docker build context excludes credentials', () => {
           continue;
         }
         if (fs.statSync(abs).size > 2 * 1024 * 1024) continue;
-        if (/adminsdk|service-account/i.test(entry.name) || fs.readFileSync(abs, 'latin1').includes(KEY_MARKER)) {
+        if (
+          /adminsdk|service-account/i.test(entry.name) ||
+          fs.readFileSync(abs, 'latin1').includes(KEY_MARKER)
+        ) {
           offenders.push(rel);
         }
       }
@@ -117,7 +126,9 @@ describe('Dockerfile', () => {
   };
 
   it('fails the build when a private key is in the context', () => {
-    expect(runGuard({ 'package.json': '{}', 'leaked.json': `{"private_key":"${KEY_MARKER}\\nfake"}` })).toBe(1);
+    expect(
+      runGuard({ 'package.json': '{}', 'leaked.json': `{"private_key":"${KEY_MARKER}\\nfake"}` })
+    ).toBe(1);
   });
 
   it('passes for a clean context, including the Dockerfile itself and node_modules fixtures', () => {
@@ -136,7 +147,9 @@ describe('Git and CI', () => {
 
   it('no credential file or private key is tracked', () => {
     const tracked = execFileSync('git', ['ls-files'], { cwd: REPO, encoding: 'utf8' });
-    expect(tracked.split('\n').filter((f) => /adminsdk|service-account|\.pem$|\.p12$/i.test(f))).toEqual([]);
+    expect(
+      tracked.split('\n').filter((f) => /adminsdk|service-account|\.pem$|\.p12$/i.test(f))
+    ).toEqual([]);
     const grep = git('grep', '-lI', '-e', KEY_MARKER);
     expect(grep.stdout.trim()).toBe('');
   });
@@ -201,7 +214,9 @@ describe('Firebase Admin runtime credentials', () => {
     const error = jest.spyOn(console, 'error').mockImplementation(() => {});
     jest.doMock('firebase-admin/messaging', () => ({
       getMessaging: () => ({
-        sendEachForMulticast: jest.fn().mockRejectedValue(new Error('Could not load the default credentials')),
+        sendEachForMulticast: jest
+          .fn()
+          .mockRejectedValue(new Error('Could not load the default credentials')),
       }),
     }));
     const PushToken = require('../models/PushToken');
@@ -230,7 +245,9 @@ describe('Firebase Admin runtime credentials', () => {
       getApps: () => [],
       initializeApp: jest.fn(() => ({})),
     }));
-    jest.doMock('firebase-admin/messaging', () => ({ getMessaging: () => ({ sendEachForMulticast: send }) }));
+    jest.doMock('firebase-admin/messaging', () => ({
+      getMessaging: () => ({ sendEachForMulticast: send }),
+    }));
     jest.spyOn(console, 'error').mockImplementation(() => {});
     const PushToken = require('../models/PushToken');
     PushToken.find.mockReturnValueOnce({
@@ -254,10 +271,18 @@ describe('Firebase Admin runtime credentials', () => {
   });
 
   it('sendPushToUser queues the push instead of sending inline (in-process without Redis)', async () => {
-    jest.doMock('../services/queue', () => ({ enqueue: jest.fn().mockResolvedValue({ id: null, inline: true }) }));
+    jest.doMock('../services/queue', () => ({
+      enqueue: jest.fn().mockResolvedValue({ id: null, inline: true }),
+    }));
     const { enqueue } = require('../services/queue');
     const { sendPushToUser } = require('../services/pushNotifications');
-    await expect(sendPushToUser('u1', { title: 'Hei' })).resolves.toEqual({ id: null, inline: true });
-    expect(enqueue).toHaveBeenCalledWith('push', 'send', { userId: 'u1', message: { title: 'Hei' } });
+    await expect(sendPushToUser('u1', { title: 'Hei' })).resolves.toEqual({
+      id: null,
+      inline: true,
+    });
+    expect(enqueue).toHaveBeenCalledWith('push', 'send', {
+      userId: 'u1',
+      message: { title: 'Hei' },
+    });
   });
 });

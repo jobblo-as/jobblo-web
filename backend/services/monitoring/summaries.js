@@ -22,7 +22,17 @@ async function apiTotals(from, to) {
       },
     },
   ]);
-  if (!t || !t.count) return { count: 0, failed: 0, successRate: null, errorRate: null, avgMs: null, p95: null, p99: null, rps: 0 };
+  if (!t || !t.count)
+    return {
+      count: 0,
+      failed: 0,
+      successRate: null,
+      errorRate: null,
+      avgMs: null,
+      p95: null,
+      p99: null,
+      rps: 0,
+    };
   return {
     count: t.count,
     failed: t.failed,

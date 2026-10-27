@@ -190,10 +190,7 @@ describe('aiController failure handling', () => {
 
   test('the language the caller asked for is forwarded to the model', async () => {
     mockCreate.mockResolvedValue(completion(GOOD_OUTPUT));
-    await aiController.generateFullJobListing(
-      { body: { ...REQ.body, lang: 'en' } },
-      mockRes()
-    );
+    await aiController.generateFullJobListing({ body: { ...REQ.body, lang: 'en' } }, mockRes());
     expect(mockCreate.mock.calls[0][0].messages[0].content).toMatch(/in English/);
   });
 

@@ -11,7 +11,17 @@ const securityEventSchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: ['login_failed', 'rate_limited', 'ip_blocked', 'permission_denied', 'unauthenticated', 'token_expired', 'token_invalid', 'session_revoked', 'otp_failed'],
+      enum: [
+        'login_failed',
+        'rate_limited',
+        'ip_blocked',
+        'permission_denied',
+        'unauthenticated',
+        'token_expired',
+        'token_invalid',
+        'session_revoked',
+        'otp_failed',
+      ],
     },
     ip: { type: String, default: null },
     method: { type: String, default: null },

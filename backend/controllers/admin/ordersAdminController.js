@@ -1,5 +1,10 @@
 const Order = require('../../models/Order');
-const { asyncHandler, sendSuccess, sendError, buildPagination } = require('../../utils/apiResponse');
+const {
+  asyncHandler,
+  sendSuccess,
+  sendError,
+  buildPagination,
+} = require('../../utils/apiResponse');
 const { parsePagination, parseObjectId, parseSort, parseDate } = require('../../utils/pagination');
 const { logActivity } = require('../../services/admin/activityService');
 const {
@@ -23,11 +28,20 @@ const getOrders = asyncHandler(async (req, res) => {
   const query = {};
 
   if (req.query.status) {
-    const valid = ['pending','accepted','declined','in_progress','completed','cancelled','awaiting_payment','paid'];
+    const valid = [
+      'pending',
+      'accepted',
+      'declined',
+      'in_progress',
+      'completed',
+      'cancelled',
+      'awaiting_payment',
+      'paid',
+    ];
     if (valid.includes(req.query.status)) query.status = req.query.status;
   }
   if (req.query.paymentStatus) {
-    const valid = ['unpaid','pending','paid','refunded'];
+    const valid = ['unpaid', 'pending', 'paid', 'refunded'];
     if (valid.includes(req.query.paymentStatus)) query.paymentStatus = req.query.paymentStatus;
   }
 
@@ -136,7 +150,12 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
           },
           { new: true }
         );
-        if (!order) return sendError(res, 'Ordren ble endret samtidig, eller har en aktiv betaling. Prøv igjen.', 409);
+        if (!order)
+          return sendError(
+            res,
+            'Ordren ble endret samtidig, eller har en aktiv betaling. Prøv igjen.',
+            409
+          );
         // An unpaid award left the listing hidden ('awaiting_payment') and its applicants declined.
         await releaseListingAfterCancel(order);
       }
@@ -148,7 +167,16 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
     order = note
       ? await Order.findByIdAndUpdate(
           id,
-          { $push: { history: { action: 'admin_note', userId: req.user._id, timestamp: new Date(), data: { note } } } },
+          {
+            $push: {
+              history: {
+                action: 'admin_note',
+                userId: req.user._id,
+                timestamp: new Date(),
+                data: { note },
+              },
+            },
+          },
           { new: true }
         ).lean()
       : await Order.findById(id).lean();

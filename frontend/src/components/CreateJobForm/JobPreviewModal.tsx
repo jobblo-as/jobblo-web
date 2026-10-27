@@ -17,7 +17,13 @@ interface PreviewJob {
   tags: string[];
   location: { address: string; city: string; coordinates: [number, number] };
   duration: { value: number; unit: string };
-  userId: { _id: string; name: string; avatarUrl: string; verified: boolean; averageRating: number };
+  userId: {
+    _id: string;
+    name: string;
+    avatarUrl: string;
+    verified: boolean;
+    averageRating: number;
+  };
   promoted?: boolean;
   urgent?: boolean;
   experience?: string;

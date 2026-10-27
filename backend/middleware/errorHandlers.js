@@ -25,7 +25,10 @@ function uploadErrors(err, req, res, next) {
     return res.status(413).json({ error: messages[err.code] || 'Kunne ikke laste opp filen.' });
   }
   if (err && err.code === 'INVALID_FILE_TYPE') return res.status(400).json({ error: err.message });
-  if (err && err.type === 'entity.too.large') return res.status(413).json({ error: 'Innholdet er for stort. Prøv med færre eller mindre bilder.' });
+  if (err && err.type === 'entity.too.large')
+    return res
+      .status(413)
+      .json({ error: 'Innholdet er for stort. Prøv med færre eller mindre bilder.' });
   return next(err);
 }
 
@@ -36,30 +39,43 @@ async function errorHandler(err, req, res, next) {
   // A 404/400 from http-errors is not a server fault: it was logged as
   // INTERNAL_SERVER_ERROR, so every unknown URL filled the error log (M1).
   const clientErr = !isAppErr && status < 500;
-  const errorCode = isAppErr ? err.code : clientErr ? (err.code || `HTTP_${status}`) : 'INTERNAL_SERVER_ERROR';
-  const safeMessage = isAppErr ? err.message : clientErr && err.expose ? err.message : 'Internal server error.';
+  const errorCode = isAppErr
+    ? err.code
+    : clientErr
+      ? err.code || `HTTP_${status}`
+      : 'INTERNAL_SERVER_ERROR';
+  const safeMessage = isAppErr
+    ? err.message
+    : clientErr && err.expose
+      ? err.message
+      : 'Internal server error.';
 
-  if (!clientErr) try {
-    await logApplicationError({
-      error: err,
-      requestPath: req.path,
-      httpMethod: req.method,
-      httpStatus: status,
-      ip: req.ip || req.connection?.remoteAddress || 'unknown',
-      userAgent: req.get('user-agent') || 'unknown',
-      userId: req.user?._id || null,
-      correlationId: req.requestId || req.get('x-request-id') || null,
-      errorCode,
-      metadata: err.details || null,
-    });
-  } catch (logErr) {
-    console.error('Failed to log error:', logErr.message);
-  }
+  if (!clientErr)
+    try {
+      await logApplicationError({
+        error: err,
+        requestPath: req.path,
+        httpMethod: req.method,
+        httpStatus: status,
+        ip: req.ip || req.connection?.remoteAddress || 'unknown',
+        userAgent: req.get('user-agent') || 'unknown',
+        userId: req.user?._id || null,
+        correlationId: req.requestId || req.get('x-request-id') || null,
+        errorCode,
+        metadata: err.details || null,
+      });
+    } catch (logErr) {
+      console.error('Failed to log error:', logErr.message);
+    }
 
   res.status(isAppErr ? err.statusCode : status);
   return res.json({
     success: false,
-    error: { code: errorCode, referenceId: res.getHeader('X-Request-ID') || req.requestId || undefined, message: safeMessage },
+    error: {
+      code: errorCode,
+      referenceId: res.getHeader('X-Request-ID') || req.requestId || undefined,
+      message: safeMessage,
+    },
   });
 }
 

@@ -27,7 +27,9 @@ describe('memo single-flight', () => {
 
   test('a failed computation is not cached and the next call retries', async () => {
     cache._local.clear();
-    await expect(memo('perfq:err', 30, () => Promise.reject(new Error('boom')))).rejects.toThrow('boom');
+    await expect(memo('perfq:err', 30, () => Promise.reject(new Error('boom')))).rejects.toThrow(
+      'boom'
+    );
     expect(await memo('perfq:err', 30, () => 7)).toBe(7);
   });
 });
@@ -47,12 +49,16 @@ test('foldLocationStats counts each level like the three old $ne:null aggregatio
 });
 
 const uri = process.env.SAFEPAY_REAL_MONGO_URI;
-const run = uri && /^mongodb:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/[\w-]+-test(\?.*)?$/.test(uri) ? describe : describe.skip;
+const run =
+  uri && /^mongodb:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/[\w-]+-test(\?.*)?$/.test(uri)
+    ? describe
+    : describe.skip;
 
 /** Every stage name in a winning plan, e.g. ['LIMIT', 'FETCH', 'IXSCAN']. */
 const stages = (ex) => {
   const out = [];
-  const walk = (s) => s && (out.push(s.stage), walk(s.inputStage), (s.inputStages || []).forEach(walk));
+  const walk = (s) =>
+    s && (out.push(s.stage), walk(s.inputStage), (s.inputStages || []).forEach(walk));
   walk(ex.queryPlanner.winningPlan.queryPlan || ex.queryPlanner.winningPlan);
   return out;
 };
@@ -81,8 +87,21 @@ run('hot queries use an index (real MongoDB)', () => {
         createdAt: new Date(Date.now() - i * 6e4),
       }))
     );
-    await Order.collection.insertMany(Array.from({ length: 500 }, (_, i) => ({ serviceId: new mongoose.Types.ObjectId(), customerId: users[i % 200]._id, providerId: users[(i + 7) % 200]._id, status: 'paid', createdAt: new Date() })));
-    await Favorite.collection.insertMany(Array.from({ length: 500 }, (_, i) => ({ user: users[i % 200]._id, service: new mongoose.Types.ObjectId() })));
+    await Order.collection.insertMany(
+      Array.from({ length: 500 }, (_, i) => ({
+        serviceId: new mongoose.Types.ObjectId(),
+        customerId: users[i % 200]._id,
+        providerId: users[(i + 7) % 200]._id,
+        status: 'paid',
+        createdAt: new Date(),
+      }))
+    );
+    await Favorite.collection.insertMany(
+      Array.from({ length: 500 }, (_, i) => ({
+        user: users[i % 200]._id,
+        service: new mongoose.Types.ObjectId(),
+      }))
+    );
     await Promise.all([Service, Order, Favorite].map((M) => M.createIndexes()));
   });
   afterAll(async () => {
@@ -92,10 +111,17 @@ run('hot queries use an index (real MongoDB)', () => {
 
   // Every advertised sort, with and without a category filter: no in-memory SORT stage.
   for (const { value, sort } of SORT_OPTIONS) {
-    for (const [label, extra] of [['all', {}], ['category', { categories: { $in: ['Maling'] } }], ['urgent', { urgent: true }]]) {
+    for (const [label, extra] of [
+      ['all', {}],
+      ['category', { categories: { $in: ['Maling'] } }],
+      ['urgent', { urgent: true }],
+    ]) {
       if (label === 'urgent' && value !== 'newest') continue;
       test(`list ${value} / ${label} is index-sorted`, async () => {
-        const ex = await Service.find({ status: PUB, ...extra }).sort(sort).limit(25).explain('executionStats');
+        const ex = await Service.find({ status: PUB, ...extra })
+          .sort(sort)
+          .limit(25)
+          .explain('executionStats');
         expect(stages(ex)).not.toContain('SORT');
         expect(stages(ex)).not.toContain('COLLSCAN');
         expect(ex.executionStats.totalDocsExamined).toBeLessThanOrEqual(26);
@@ -104,7 +130,10 @@ run('hot queries use an index (real MongoDB)', () => {
   }
 
   test('urgent count does not fetch every public listing', async () => {
-    const ex = await mongoose.connection.db.command({ explain: { count: 'services', query: { status: PUB, urgent: true } }, verbosity: 'executionStats' });
+    const ex = await mongoose.connection.db.command({
+      explain: { count: 'services', query: { status: PUB, urgent: true } },
+      verbosity: 'executionStats',
+    });
     expect(ex.executionStats.totalDocsExamined).toBe(0);
   });
 
@@ -122,7 +151,8 @@ run('hot queries use an index (real MongoDB)', () => {
 
   test('dashboard stats aggregate equals the old hydrate-and-average result', async () => {
     const raters = await User.find({ reviewCount: { $gt: 0 }, isDeleted: { $ne: true } }).lean();
-    const old = Math.round((raters.reduce((s, u) => s + u.averageRating, 0) / raters.length) * 10) / 10;
+    const old =
+      Math.round((raters.reduce((s, u) => s + u.averageRating, 0) / raters.length) * 10) / 10;
     expect(await computeDashboardStats()).toEqual({
       activeJobs: await Service.countDocuments({ status: PUB }),
       totalUsers: await User.countDocuments({ isDeleted: { $ne: true } }),

@@ -98,4 +98,10 @@ const pickContactUpdates = (body) => {
   return updates;
 };
 
-module.exports = { escapeRegex, SERVICE_LIMITS, validateServiceFields, isValidId, pickContactUpdates };
+module.exports = {
+  escapeRegex,
+  SERVICE_LIMITS,
+  validateServiceFields,
+  isValidId,
+  pickContactUpdates,
+};

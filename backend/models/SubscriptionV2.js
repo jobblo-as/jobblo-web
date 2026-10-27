@@ -85,22 +85,24 @@ const subscriptionV2Schema = new mongoose.Schema(
     recoveryInvoiceId: { type: String, trim: true },
     recoveryUsagePeriodStart: Date,
     recoveryLeaseUntil: Date,
-    recoveryHistory: [{
-      invoiceId: { type: String, required: true },
-      action: {
-        type: String,
-        enum: [
-          'started',
-          'recovered',
-          'canceled',
-          'reconciliation_required',
-          'late_payment_reconciliation_required',
-        ],
-        required: true,
+    recoveryHistory: [
+      {
+        invoiceId: { type: String, required: true },
+        action: {
+          type: String,
+          enum: [
+            'started',
+            'recovered',
+            'canceled',
+            'reconciliation_required',
+            'late_payment_reconciliation_required',
+          ],
+          required: true,
+        },
+        at: { type: Date, required: true },
+        operationId: String,
       },
-      at: { type: Date, required: true },
-      operationId: String,
-    }],
+    ],
     paymentRecoveryStatus: {
       type: String,
       enum: ['none', 'retrying', 'recovered', 'exhausted'],
@@ -113,7 +115,8 @@ const subscriptionV2Schema = new mongoose.Schema(
 
 subscriptionV2Schema.path('currentPeriodEnd').validate(function (periodEnd) {
   const update = typeof this.getUpdate === 'function' ? this.getUpdate() : null;
-  const periodStart = this.currentPeriodStart ||
+  const periodStart =
+    this.currentPeriodStart ||
     update?.$set?.currentPeriodStart ||
     update?.$setOnInsert?.currentPeriodStart ||
     update?.currentPeriodStart;
@@ -122,10 +125,7 @@ subscriptionV2Schema.path('currentPeriodEnd').validate(function (periodEnd) {
 }, 'Billing period end must be after its start, and both dates must be provided together.');
 
 subscriptionV2Schema.index({ userId: 1 }, { unique: true });
-subscriptionV2Schema.index(
-  { stripeMode: 1, stripeSubscriptionId: 1 },
-  { unique: true }
-);
+subscriptionV2Schema.index({ stripeMode: 1, stripeSubscriptionId: 1 }, { unique: true });
 subscriptionV2Schema.index({ status: 1, currentPeriodEnd: 1 });
 subscriptionV2Schema.index({ stripeMode: 1, stripeCustomerId: 1 });
 subscriptionV2Schema.index({ paymentRecoveryStatus: 1, gracePeriodEndsAt: 1 });

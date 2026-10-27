@@ -39,7 +39,10 @@ const stripePaymentIncidentSchema = new mongoose.Schema(
     currency: String,
     reason: String,
     lastError: String,
-    resolutionOperationId: { type: mongoose.Schema.Types.ObjectId, ref: 'StripeFinancialOperation' },
+    resolutionOperationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'StripeFinancialOperation',
+    },
     adminAlertedAt: Date,
     recoveryLockedAt: Date, // lease lock for an admin transfer recovery in flight
     receivedAt: { type: Date, default: Date.now },

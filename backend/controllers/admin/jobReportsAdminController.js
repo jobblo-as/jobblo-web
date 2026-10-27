@@ -1,5 +1,10 @@
 const JobReport = require('../../models/JobReport');
-const { asyncHandler, sendSuccess, sendError, buildPagination } = require('../../utils/apiResponse');
+const {
+  asyncHandler,
+  sendSuccess,
+  sendError,
+  buildPagination,
+} = require('../../utils/apiResponse');
 const { parsePagination, parseObjectId, parseSort, parseDate } = require('../../utils/pagination');
 
 const SORT_FIELDS = ['createdAt', 'updatedAt'];
@@ -57,7 +62,9 @@ const getReportsSummary = asyncHandler(async (req, res) => {
   ]);
 
   const byStatus = {};
-  statusCounts.forEach((s) => { byStatus[s._id] = s.count; });
+  statusCounts.forEach((s) => {
+    byStatus[s._id] = s.count;
+  });
 
   return sendSuccess(res, {
     open: byStatus['open'] ?? 0,
@@ -100,7 +107,11 @@ const assignReport = asyncHandler(async (req, res) => {
   if (report.status === 'open') report.status = 'under_review';
   await report.save();
 
-  return sendSuccess(res, { report: await report.populate('assignedAdminId', 'name email') }, 'Rapport tildelt.');
+  return sendSuccess(
+    res,
+    { report: await report.populate('assignedAdminId', 'name email') },
+    'Rapport tildelt.'
+  );
 });
 
 // ── Status update / resolve ───────────────────────────────────────────────────

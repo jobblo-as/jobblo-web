@@ -246,9 +246,7 @@ describe('withdrawing an application', () => {
     expect(app.save).toHaveBeenCalled();
 
     // The owner's list used to just lose a row with no explanation.
-    expect(Notification.create).toHaveBeenCalledWith(
-      expect.objectContaining({ userId: OWNER })
-    );
+    expect(Notification.create).toHaveBeenCalledWith(expect.objectContaining({ userId: OWNER }));
   });
 });
 

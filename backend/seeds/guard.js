@@ -16,7 +16,11 @@ function describeTarget(uri) {
 }
 
 /** Throws unless seeding is allowed; returns "host/db" for logging. */
-function assertSafeToSeed({ uri = process.env.MONGO_URI, env = process.env, argv = process.argv } = {}) {
+function assertSafeToSeed({
+  uri = process.env.MONGO_URI,
+  env = process.env,
+  argv = process.argv,
+} = {}) {
   const { host, db } = describeTarget(uri);
   const target = `${host}/${db}`;
   if (env.NODE_ENV === 'production') {
@@ -24,7 +28,9 @@ function assertSafeToSeed({ uri = process.env.MONGO_URI, env = process.env, argv
   }
   const confirmed = argv.find((a) => a.startsWith('--yes-wipe='))?.slice('--yes-wipe='.length);
   if (confirmed !== db) {
-    throw new Error(`Seeding deletes existing data in ${target}. Run again with --yes-wipe=${db} to confirm.`);
+    throw new Error(
+      `Seeding deletes existing data in ${target}. Run again with --yes-wipe=${db} to confirm.`
+    );
   }
   return target;
 }

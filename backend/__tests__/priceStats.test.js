@@ -1,7 +1,12 @@
 const { priceStats } = require('../controllers/services/priceStatsController');
 
 test('too few prices → nothing to suggest', () => {
-  expect(priceStats([1000, 2000, 3000, 4000])).toEqual({ count: 4, low: null, median: null, high: null });
+  expect(priceStats([1000, 2000, 3000, 4000])).toEqual({
+    count: 4,
+    low: null,
+    median: null,
+    high: null,
+  });
 });
 
 test('10th / 50th / 90th percentile: one extreme job does not set the range', () => {

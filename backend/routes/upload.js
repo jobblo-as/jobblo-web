@@ -4,7 +4,12 @@ const router = express.Router();
 const multer = require('multer');
 const uploadController = require('../controllers/uploadController');
 const { authenticate } = require('../middleware/auth');
-const { checkFileTypes, IMAGE_TYPES, uploadLimiter, MULTIPART_LIMITS } = require('../middleware/upload');
+const {
+  checkFileTypes,
+  IMAGE_TYPES,
+  uploadLimiter,
+  MULTIPART_LIMITS,
+} = require('../middleware/upload');
 
 // vi bruker memoryStorage fordi vi sender filen direkte videre til Azure
 const upload = multer({
@@ -55,7 +60,14 @@ const upload = multer({
  *       401:
  *         description: Mangler eller ugyldig autentisering
  */
-router.post('/profile', authenticate, uploadLimiter, upload.single('image'), checkFileTypes(IMAGE_TYPES), uploadController.uploadProfileImage);
+router.post(
+  '/profile',
+  authenticate,
+  uploadLimiter,
+  upload.single('image'),
+  checkFileTypes(IMAGE_TYPES),
+  uploadController.uploadProfileImage
+);
 
 /**
  * @swagger

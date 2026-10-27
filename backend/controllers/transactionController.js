@@ -9,7 +9,8 @@ exports.getTransactions = async (req, res) => {
   try {
     const { search, type } = req.query;
     const { limit, skip } = parsePagination(req.query, { defaultLimit: 10 });
-    const searchRe = typeof search === 'string' && search.trim() ? escapeRegex(search.trim().slice(0, 100)) : null;
+    const searchRe =
+      typeof search === 'string' && search.trim() ? escapeRegex(search.trim().slice(0, 100)) : null;
     let query = {};
 
     // 1. Type Filter (subscription / extra_contact)

@@ -114,9 +114,7 @@ describe('deleteNotification ownership (F-53)', () => {
     await notificationController.deleteNotification(req(OWNER), res);
 
     expect(Notification.findByIdAndDelete).toHaveBeenCalledWith(String(NOTIF));
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ success: true })
-    );
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
   });
 });
 
@@ -141,10 +139,7 @@ describe('createTestNotification targeting (F-53)', () => {
       res
     );
 
-    expect(spy).toHaveBeenCalledWith(
-      null,
-      expect.objectContaining({ userId: String(OWNER) })
-    );
+    expect(spy).toHaveBeenCalledWith(null, expect.objectContaining({ userId: String(OWNER) }));
     spy.mockRestore();
   });
 });

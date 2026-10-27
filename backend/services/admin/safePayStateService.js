@@ -23,9 +23,7 @@ const PAYOUT_LOCK_LEASE_MS = 5 * 60 * 1000;
  * order that was sitting in it — the single most common place for an order to be
  * stuck.
  */
-const {
-  isValidTransition,
-} = require('../order/orderState');
+const { isValidTransition } = require('../order/orderState');
 
 /**
  * A transfer whose outcome is unknown must be reconciled first. Once the order is
@@ -35,7 +33,8 @@ const {
 function hasUnresolvedPayout(orderId) {
   return Payout.exists({ orderId, status: { $in: ['processing', 'reconciliation_required'] } });
 }
-const UNRESOLVED_PAYOUT_MESSAGE = 'En utbetaling for denne ordren avstemmes fortsatt med Stripe. Prøv igjen senere.';
+const UNRESOLVED_PAYOUT_MESSAGE =
+  'En utbetaling for denne ordren avstemmes fortsatt med Stripe. Prøv igjen senere.';
 
 /**
  * Open a dispute for a SafePay contract.
@@ -66,7 +65,15 @@ async function openDispute({
   // Prevent duplicate active dispute
   const existing = await Dispute.findOne({
     orderId,
-    status: { $in: ['open', 'under_review', 'waiting_for_customer', 'waiting_for_provider', 'evidence_submitted'] },
+    status: {
+      $in: [
+        'open',
+        'under_review',
+        'waiting_for_customer',
+        'waiting_for_provider',
+        'evidence_submitted',
+      ],
+    },
   });
   if (existing) throw new Error('Det finnes allerede en aktiv tvist for denne ordren');
   if (await hasUnresolvedPayout(orderId)) throw new Error(UNRESOLVED_PAYOUT_MESSAGE);
@@ -93,11 +100,13 @@ async function openDispute({
     payoutFrozen: true,
     previousOrderStatus,
     openedAt,
-    timeline: [{
-      action: 'dispute_opened',
-      actorId: openedByUserId,
-      note: `Tvist åpnet: ${title}`,
-    }],
+    timeline: [
+      {
+        action: 'dispute_opened',
+        actorId: openedByUserId,
+        note: `Tvist åpnet: ${title}`,
+      },
+    ],
   });
 
   // Claim the order before creating the dispute so a timeout refund cannot race it,
@@ -129,7 +138,9 @@ async function openDispute({
     { new: true }
   );
   if (!claimedOrder) {
-    throw new Error('Ordren er under refusjons- eller utbetalingsbehandling eller har endret status. Prøv igjen om litt.');
+    throw new Error(
+      'Ordren er under refusjons- eller utbetalingsbehandling eller har endret status. Prøv igjen om litt.'
+    );
   }
   order = claimedOrder;
   try {
@@ -211,4 +222,10 @@ async function openDispute({
   return dispute;
 }
 
-module.exports = { openDispute, hasUnresolvedPayout, UNRESOLVED_PAYOUT_MESSAGE, isValidTransition, DISPUTE_ELIGIBLE_STATUSES };
+module.exports = {
+  openDispute,
+  hasUnresolvedPayout,
+  UNRESOLVED_PAYOUT_MESSAGE,
+  isValidTransition,
+  DISPUTE_ELIGIBLE_STATUSES,
+};

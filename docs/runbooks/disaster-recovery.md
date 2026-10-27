@@ -2,11 +2,11 @@
 
 This runbook covers the production MongoDB. Today it runs on the VPS; it will move to MongoDB Atlas later. Status lives in the developer dashboard under **Infrastructure → Backup & DR**.
 
-| Target | Value | Where it is checked |
-|---|---|---|
-| RPO (max data loss) | `BACKUP_MAX_AGE_HOURS`, default 26 h | Critical alert `backup_stale` / `backup_missing` |
-| RTO (time to restore) | Measured by every restore drill, shown as "restore took …" | Weekly drill |
-| Retention | `BACKUP_RETENTION_DAYS`, default 14; the newest 3 are always kept | `prune` after each backup |
+| Target                | Value                                                             | Where it is checked                              |
+| --------------------- | ----------------------------------------------------------------- | ------------------------------------------------ |
+| RPO (max data loss)   | `BACKUP_MAX_AGE_HOURS`, default 26 h                              | Critical alert `backup_stale` / `backup_missing` |
+| RTO (time to restore) | Measured by every restore drill, shown as "restore took …"        | Weekly drill                                     |
+| Retention             | `BACKUP_RETENTION_DAYS`, default 14; the newest 3 are always kept | `prune` after each backup                        |
 
 ## 1. One-time setup on the VPS
 
@@ -29,12 +29,13 @@ This runbook covers the production MongoDB. Today it runs on the VPS; it will mo
    BACKUP_OFFSITE_CMD=rclone copyto {file} jobblo-offsite:jobblo-backups/{name}
    ```
    Give the offsite bucket its own retention or lifecycle rule, at least 30 days.
-5. Run once by hand and confirm the dashboard shows *Last backup* and *Offsite: Copied*:
+5. Run once by hand and confirm the dashboard shows _Last backup_ and _Offsite: Copied_:
    ```sh
    node scripts/backup.js backup && node scripts/backup.js drill
    ```
 
 **Safety notes:**
+
 - The MongoDB URI is passed to the tools through a temporary `0600` config file, never on the command line.
 - Error messages are stripped of credentials.
 
@@ -42,11 +43,12 @@ This runbook covers the production MongoDB. Today it runs on the VPS; it will mo
 
 - `scripts/backup.js` keeps working unchanged against the Atlas URI. Keep it as an independent, provider-neutral copy.
 - Turn on Atlas **Cloud Backup** for the cluster: a snapshot policy plus point-in-time restore if the tier allows it.
-- For the dashboard's snapshot list, create a **Service Account** with the *Project Read Only* role. Then set `ATLAS_CLIENT_ID`, `ATLAS_CLIENT_SECRET`, `ATLAS_GROUP_ID` (the project ID) and `ATLAS_CLUSTER_NAME`.
+- For the dashboard's snapshot list, create a **Service Account** with the _Project Read Only_ role. Then set `ATLAS_CLIENT_ID`, `ATLAS_CLIENT_SECRET`, `ATLAS_GROUP_ID` (the project ID) and `ATLAS_CLUSTER_NAME`.
 
 ## 3. Restore drill (weekly, and after any backup change)
 
 A drill:
+
 1. Verifies the archive's SHA-256.
 2. Restores it into `<db>_restore_drill` on the same server.
 3. Counts every collection against the counts recorded at backup time. A tolerance of max(5, 0.1%) covers writes made during the dump.

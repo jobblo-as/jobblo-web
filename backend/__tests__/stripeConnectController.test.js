@@ -61,7 +61,9 @@ beforeEach(() => {
         charges_enabled: false,
         metadata: { jobbloUserId: 'worker' },
       }),
-      createLoginLink: jest.fn().mockResolvedValue({ url: 'https://connect.stripe.test/dashboard' }),
+      createLoginLink: jest
+        .fn()
+        .mockResolvedValue({ url: 'https://connect.stripe.test/dashboard' }),
     },
     accountLinks: {
       create: jest.fn().mockResolvedValue({ url: 'https://connect.stripe.test/onboarding' }),
@@ -114,8 +116,25 @@ it('sends the app back through the mobile bridge, and rejects unknown platforms'
   delete process.env.MOBILE_RETURN_URL;
 
   // ...and the bridge hands off to the app's payout screen.
-  const page = { headers: {}, set(h, v) { Object.assign(this.headers, typeof h === 'string' ? { [h]: v } : h); return this; }, status(c) { this.statusCode = c; return this; }, send(b) { this.body = b; return this; } };
-  require('../controllers/SafePayCheckoutController').mobileReturn({ query: { state: 'connect' } }, page);
+  const page = {
+    headers: {},
+    set(h, v) {
+      Object.assign(this.headers, typeof h === 'string' ? { [h]: v } : h);
+      return this;
+    },
+    status(c) {
+      this.statusCode = c;
+      return this;
+    },
+    send(b) {
+      this.body = b;
+      return this;
+    },
+  };
+  require('../controllers/SafePayCheckoutController').mobileReturn(
+    { query: { state: 'connect' } },
+    page
+  );
   expect(page.statusCode).toBe(200);
   expect(page.body).toContain('href="jobblo://profile/settings/payout"');
 });
@@ -190,13 +209,18 @@ it('returns an actionable platform setup response for Stripe loss-liability reje
       email: 'worker@example.test',
     }),
   });
-  stripe.accounts.create.mockRejectedValue(Object.assign(new Error(
-    'Please review the responsibilities of managing losses for connected accounts at https://dashboard.stripe.com/settings/connect/platform-profile.'
-  ), {
-    type: 'StripeInvalidRequestError',
-    statusCode: 400,
-    requestId: 'req_safe_test',
-  }));
+  stripe.accounts.create.mockRejectedValue(
+    Object.assign(
+      new Error(
+        'Please review the responsibilities of managing losses for connected accounts at https://dashboard.stripe.com/settings/connect/platform-profile.'
+      ),
+      {
+        type: 'StripeInvalidRequestError',
+        statusCode: 400,
+        requestId: 'req_safe_test',
+      }
+    )
+  );
   const res = makeRes();
 
   await controller.createAccountLink({ userId: 'worker' }, res);
@@ -220,11 +244,13 @@ it('does not create an account when the selected-mode API key is invalid', async
 });
 
 it('does not silently replace an account missing from the selected Stripe mode', async () => {
-  stripe.accounts.retrieve.mockRejectedValue(Object.assign(new Error('No such account'), {
-    type: 'StripeInvalidRequestError',
-    code: 'resource_missing',
-    statusCode: 404,
-  }));
+  stripe.accounts.retrieve.mockRejectedValue(
+    Object.assign(new Error('No such account'), {
+      type: 'StripeInvalidRequestError',
+      code: 'resource_missing',
+      statusCode: 404,
+    })
+  );
   const res = makeRes();
 
   await controller.createAccountLink({ userId: 'worker' }, res);
@@ -287,8 +313,9 @@ it('uses one idempotency key for concurrent account creation requests', async ()
   ]);
 
   expect(stripe.accounts.create).toHaveBeenCalledTimes(2);
-  expect(stripe.accounts.create.mock.calls[0][1].idempotencyKey)
-    .toBe(stripe.accounts.create.mock.calls[1][1].idempotencyKey);
+  expect(stripe.accounts.create.mock.calls[0][1].idempotencyKey).toBe(
+    stripe.accounts.create.mock.calls[1][1].idempotencyKey
+  );
 });
 
 it('reuses Stripe idempotency after account creation succeeds but persistence fails', async () => {
@@ -310,8 +337,9 @@ it('reuses Stripe idempotency after account creation succeeds but persistence fa
 
   expect(first.statusCode).toBe(500);
   expect(second.body.url).toBe('https://connect.stripe.test/onboarding');
-  expect(stripe.accounts.create.mock.calls[0][1].idempotencyKey)
-    .toBe(stripe.accounts.create.mock.calls[1][1].idempotencyKey);
+  expect(stripe.accounts.create.mock.calls[0][1].idempotencyKey).toBe(
+    stripe.accounts.create.mock.calls[1][1].idempotencyKey
+  );
 });
 
 it('returns a retryable response when Stripe is unavailable', async () => {
@@ -322,9 +350,11 @@ it('returns a retryable response when Stripe is unavailable', async () => {
       email: 'worker@example.test',
     }),
   });
-  stripe.accounts.create.mockRejectedValue(Object.assign(new Error('timeout'), {
-    type: 'StripeConnectionError',
-  }));
+  stripe.accounts.create.mockRejectedValue(
+    Object.assign(new Error('timeout'), {
+      type: 'StripeConnectionError',
+    })
+  );
   const res = makeRes();
 
   await controller.createAccountLink({ userId: 'worker' }, res);

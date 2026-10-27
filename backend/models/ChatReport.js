@@ -1,22 +1,45 @@
 const mongoose = require('mongoose');
 
 const VALID_REPORT_TYPES = [
-  'harassment', 'abusive_language', 'threats', 'spam', 'scam_or_fraud',
-  'payment_issue', 'safepay_issue', 'work_not_completed', 'poor_quality',
-  'different_from_agreement', 'inappropriate_content', 'fake_profile',
-  'identity_issue', 'suspicious_link', 'privacy_violation',
-  'off_platform_payment_request', 'other',
+  'harassment',
+  'abusive_language',
+  'threats',
+  'spam',
+  'scam_or_fraud',
+  'payment_issue',
+  'safepay_issue',
+  'work_not_completed',
+  'poor_quality',
+  'different_from_agreement',
+  'inappropriate_content',
+  'fake_profile',
+  'identity_issue',
+  'suspicious_link',
+  'privacy_violation',
+  'off_platform_payment_request',
+  'other',
 ];
 
 const VALID_STATUSES = [
-  'open', 'under_review', 'waiting_for_reporter', 'waiting_for_reported_user',
-  'action_required', 'resolved', 'dismissed', 'closed',
+  'open',
+  'under_review',
+  'waiting_for_reporter',
+  'waiting_for_reported_user',
+  'action_required',
+  'resolved',
+  'dismissed',
+  'closed',
 ];
 
 const VALID_PRIORITIES = ['low', 'medium', 'high', 'urgent'];
 
 const evidenceSchema = new mongoose.Schema(
-  { fileUrl: String, fileType: String, description: String, uploadedAt: { type: Date, default: Date.now } },
+  {
+    fileUrl: String,
+    fileType: String,
+    description: String,
+    uploadedAt: { type: Date, default: Date.now },
+  },
   { _id: true }
 );
 
@@ -61,7 +84,12 @@ const chatReportSchema = new mongoose.Schema(
     scope: { type: String, enum: ['chat', 'message'], required: true },
 
     reportedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-    reportedUser: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    reportedUser: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+      index: true,
+    },
 
     reportType: { type: String, required: true, enum: VALID_REPORT_TYPES, index: true },
     title: { type: String, required: true, maxlength: 200 },

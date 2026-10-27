@@ -48,21 +48,21 @@ function idOf(value) {
 function isOwnedSubscription(subscription, record, mode) {
   return Boolean(
     subscription?.id === record.stripeSubscriptionId &&
-      subscription.livemode === (mode === 'live') &&
-      idOf(subscription.customer) === record.stripeCustomerId &&
-      subscription.metadata?.subscriptionV2 === 'true' &&
-      String(subscription.metadata?.userId) === String(record.userId) &&
-      String(subscription.metadata?.planId) === String(record.planId) &&
-      subscription.metadata?.stripeMode === mode
+    subscription.livemode === (mode === 'live') &&
+    idOf(subscription.customer) === record.stripeCustomerId &&
+    subscription.metadata?.subscriptionV2 === 'true' &&
+    String(subscription.metadata?.userId) === String(record.userId) &&
+    String(subscription.metadata?.planId) === String(record.planId) &&
+    subscription.metadata?.stripeMode === mode
   );
 }
 
 function invoiceMatchesSubscription(invoice, record, mode) {
   return Boolean(
     invoice?.id === record.recoveryInvoiceId &&
-      invoice.livemode === (mode === 'live') &&
-      idOf(invoice.customer) === record.stripeCustomerId &&
-      idOf(invoice.parent?.subscription_details?.subscription) === record.stripeSubscriptionId
+    invoice.livemode === (mode === 'live') &&
+    idOf(invoice.customer) === record.stripeCustomerId &&
+    idOf(invoice.parent?.subscription_details?.subscription) === record.stripeSubscriptionId
   );
 }
 
@@ -108,7 +108,10 @@ async function enqueueRecoveryEmails(record, invoiceId, at, EmailModel, env) {
   }
 }
 
-async function startRecovery({ record, invoice, subscription, mode, now = new Date() }, overrides = {}) {
+async function startRecovery(
+  { record, invoice, subscription, mode, now = new Date() },
+  overrides = {}
+) {
   if (!recoveryEnabled(overrides.env || process.env)) return { started: false, disabled: true };
   if (
     mode !== record.stripeMode ||
@@ -118,7 +121,8 @@ async function startRecovery({ record, invoice, subscription, mode, now = new Da
     idOf(invoice.parent?.subscription_details?.subscription) !== record.stripeSubscriptionId ||
     (subscription && !['active', 'past_due', 'unpaid'].includes(subscription.status)) ||
     (subscription && !isOwnedSubscription(subscription, record, mode))
-  ) return { started: false, ignored: true };
+  )
+    return { started: false, ignored: true };
 
   const deps = {
     SubscriptionModel: SubscriptionV2,
@@ -187,7 +191,13 @@ async function startRecovery({ record, invoice, subscription, mode, now = new Da
   ).lean();
   if (!updated) return { started: false, conflictingRecovery: true };
 
-  await enqueueRecoveryEmails(updated, invoice.id, now, deps.EmailModel, overrides.env || process.env);
+  await enqueueRecoveryEmails(
+    updated,
+    invoice.id,
+    now,
+    deps.EmailModel,
+    overrides.env || process.env
+  );
   return { started: true, recovery: updated };
 }
 
@@ -212,7 +222,8 @@ async function markRecovered({ record, invoice, subscription, now = new Date() }
     !invoiceMatchesSubscription(invoice, record, record.stripeMode) ||
     !isOwnedSubscription(subscription, record, record.stripeMode) ||
     subscription.status === 'canceled'
-  ) return false;
+  )
+    return false;
 
   const period = subscription.items?.data?.[0];
   const start = Number.isSafeInteger(period?.current_period_start)
@@ -223,38 +234,44 @@ async function markRecovered({ record, invoice, subscription, now = new Date() }
     : null;
   if (!start || !end || end <= start) throw new Error('recovery_period_unavailable');
 
-  const updated = record.paymentRecoveryStatus === 'recovered'
-    ? record
-    : await deps.SubscriptionModel.findOneAndUpdate(
-        {
-          _id: record._id,
-          paymentRecoveryStatus: 'retrying',
-          recoveryInvoiceId: invoice.id,
-          status: { $ne: 'canceled' },
-        },
-        {
-          $set: {
-            status: subscription.cancel_at_period_end ? 'canceling' : 'active',
-            currentPeriodStart: start,
-            currentPeriodEnd: end,
-            nextRenewalAt: end,
-            autoRenew: !subscription.cancel_at_period_end,
-            paymentRecoveryStatus: 'recovered',
-            recoveryLeaseUntil: null,
+  const updated =
+    record.paymentRecoveryStatus === 'recovered'
+      ? record
+      : await deps.SubscriptionModel.findOneAndUpdate(
+          {
+            _id: record._id,
+            paymentRecoveryStatus: 'retrying',
+            recoveryInvoiceId: invoice.id,
+            status: { $ne: 'canceled' },
           },
-          $push: {
-            recoveryHistory: { invoiceId: invoice.id, action: 'recovered', at: now },
+          {
+            $set: {
+              status: subscription.cancel_at_period_end ? 'canceling' : 'active',
+              currentPeriodStart: start,
+              currentPeriodEnd: end,
+              nextRenewalAt: end,
+              autoRenew: !subscription.cancel_at_period_end,
+              paymentRecoveryStatus: 'recovered',
+              recoveryLeaseUntil: null,
+            },
+            $push: {
+              recoveryHistory: { invoiceId: invoice.id, action: 'recovered', at: now },
+            },
           },
-        },
-        { new: true }
-      ).lean();
+          { new: true }
+        ).lean();
   if (!updated) return false;
 
   await deps.EmailModel.updateMany(
     {
       stripeMode: record.stripeMode,
       invoiceId: invoice.id,
-      kind: { $in: ['payment_failed', ...reminderSchedule(overrides.env || process.env).map(({ kind }) => kind)] },
+      kind: {
+        $in: [
+          'payment_failed',
+          ...reminderSchedule(overrides.env || process.env).map(({ kind }) => kind),
+        ],
+      },
       status: { $in: ['pending', 'sending'] },
     },
     { $set: { status: 'canceled' } }
@@ -303,7 +320,8 @@ async function markCanceled(record, invoice, operationId, overrides = {}) {
         $set: {
           status: 'failed',
           lastErrorCode: 'renewal_unpaid_subscription_canceled',
-          lastErrorMessage: 'The renewal was not paid within the grace period; the subscription was canceled.',
+          lastErrorMessage:
+            'The renewal was not paid within the grace period; the subscription was canceled.',
         },
       }
     );
@@ -313,7 +331,12 @@ async function markCanceled(record, invoice, operationId, overrides = {}) {
       {
         stripeMode: record.stripeMode,
         invoiceId: invoice.id,
-        kind: { $in: ['payment_failed', ...reminderSchedule(overrides.env || process.env).map(({ kind }) => kind)] },
+        kind: {
+          $in: [
+            'payment_failed',
+            ...reminderSchedule(overrides.env || process.env).map(({ kind }) => kind),
+          ],
+        },
         status: { $in: ['pending', 'sending'] },
       },
       { $set: { status: 'canceled' } }
@@ -377,7 +400,8 @@ async function recordLatePayment(record, invoice, overrides = {}) {
         status: 'reconciliation_required',
         stripeInvoiceId: invoice.id,
         lastErrorCode: 'late_payment_after_grace',
-        lastErrorMessage: 'Payment was collected after the recovery deadline and requires reconciliation.',
+        lastErrorMessage:
+          'Payment was collected after the recovery deadline and requires reconciliation.',
       },
     },
     { upsert: true, new: true }
@@ -435,7 +459,10 @@ function isRetryableStripeError(err) {
  * policy (reconciliation, nothing restored); payment in flight -> retry later; void
  * failing because a payment just won -> re-read and treat as paid.
  */
-async function voidGraceExpiredInvoice({ record, stripe, now = new Date(), start = false }, overrides = {}) {
+async function voidGraceExpiredInvoice(
+  { record, stripe, now = new Date(), start = false },
+  overrides = {}
+) {
   const deps = {
     SubscriptionModel: SubscriptionV2,
     OperationModel: SubscriptionBillingOperationV2,
@@ -445,7 +472,8 @@ async function voidGraceExpiredInvoice({ record, stripe, now = new Date(), start
   const mode = record?.stripeMode;
   const invoiceId = record?.recoveryInvoiceId;
   const subscriptionId = record?.stripeSubscriptionId;
-  if (!invoiceId || !subscriptionId || !['test', 'live'].includes(mode)) return { skipped: 'no_recovery_invoice' };
+  if (!invoiceId || !subscriptionId || !['test', 'live'].includes(mode))
+    return { skipped: 'no_recovery_invoice' };
 
   const expiry = await deps.OperationModel.findOne({
     stripeMode: mode,
@@ -458,7 +486,8 @@ async function voidGraceExpiredInvoice({ record, stripe, now = new Date(), start
     expiry.stripeInvoiceId !== invoiceId ||
     expiry.stripeSubscriptionId !== subscriptionId ||
     String(expiry.subscriptionId) !== String(record._id)
-  ) return { skipped: 'not_a_confirmed_grace_expiry' };
+  )
+    return { skipped: 'not_a_confirmed_grace_expiry' };
 
   const current = await deps.SubscriptionModel.findById(record._id).lean();
   if (
@@ -468,7 +497,8 @@ async function voidGraceExpiredInvoice({ record, stripe, now = new Date(), start
     current.recoveryInvoiceId !== invoiceId ||
     current.stripeSubscriptionId !== subscriptionId ||
     current.stripeMode !== mode
-  ) return { skipped: 'record_not_exhausted' };
+  )
+    return { skipped: 'record_not_exhausted' };
 
   const operationId = `grace-expiry-void:${subscriptionId}:${invoiceId}`;
   const idempotencyKey = `jobblo-subv2-${mode}-${operationId}`;
@@ -499,7 +529,8 @@ async function voidGraceExpiredInvoice({ record, stripe, now = new Date(), start
     operation.stripeInvoiceId !== invoiceId ||
     operation.stripeSubscriptionId !== subscriptionId ||
     String(operation.subscriptionId) !== String(current._id)
-  ) throw new Error('invoice_void_operation_ownership_mismatch');
+  )
+    throw new Error('invoice_void_operation_ownership_mismatch');
 
   const finish = async (status, fields = {}) => {
     await deps.OperationModel.updateOne(
@@ -508,14 +539,18 @@ async function voidGraceExpiredInvoice({ record, stripe, now = new Date(), start
     );
     return { status, ...fields };
   };
-  const review = (code) => finish('reconciliation_required', {
-    lastErrorCode: code,
-    lastErrorMessage: 'Grace-expiry invoice void needs manual review.',
-  });
+  const review = (code) =>
+    finish('reconciliation_required', {
+      lastErrorCode: code,
+      lastErrorMessage: 'Grace-expiry invoice void needs manual review.',
+    });
   const paidMeanwhile = async (invoice) => {
     // A payment won the race: existing late-payment policy, nothing restored.
     await recordLatePayment(current, invoice, deps);
-    return finish('failed', { lastErrorCode: 'invoice_paid_before_void', lastErrorMessage: 'The invoice was paid before it could be voided.' });
+    return finish('failed', {
+      lastErrorCode: 'invoice_paid_before_void',
+      lastErrorMessage: 'The invoice was paid before it could be voided.',
+    });
   };
   const retryLater = async (code) => {
     if ((operation.attempts || 0) + 1 >= VOID_MAX_ATTEMPTS) return review(code);
@@ -533,10 +568,14 @@ async function voidGraceExpiredInvoice({ record, stripe, now = new Date(), start
     }
     // Authoritative state, read immediately before the irreversible void.
     const invoice = await stripe.invoices.retrieve(invoiceId);
-    if (!invoiceMatchesSubscription(invoice, current, mode) || invoice.billing_reason !== 'subscription_cycle') {
+    if (
+      !invoiceMatchesSubscription(invoice, current, mode) ||
+      invoice.billing_reason !== 'subscription_cycle'
+    ) {
       return review('void_invoice_unverified');
     }
-    if (invoice.status === 'void') return finish('succeeded', { completedAt: now, lastErrorCode: null });
+    if (invoice.status === 'void')
+      return finish('succeeded', { completedAt: now, lastErrorCode: null });
     if (invoice.status === 'paid') return paidMeanwhile(invoice);
     if (invoice.status !== 'open') return review(`void_invoice_not_open_${invoice.status}`);
     if ((invoice.amount_paid || 0) > 0) return review('void_invoice_partially_paid');
@@ -546,9 +585,10 @@ async function voidGraceExpiredInvoice({ record, stripe, now = new Date(), start
       limit: 100,
       expand: ['data.payment.payment_intent'],
     });
-    const inFlight = (payments.data || []).some((p) =>
-      p.status === 'paid' ||
-      ['processing', 'requires_capture', 'succeeded'].includes(p.payment?.payment_intent?.status)
+    const inFlight = (payments.data || []).some(
+      (p) =>
+        p.status === 'paid' ||
+        ['processing', 'requires_capture', 'succeeded'].includes(p.payment?.payment_intent?.status)
     );
     if (inFlight) return retryLater('payment_in_progress');
 
@@ -556,7 +596,11 @@ async function voidGraceExpiredInvoice({ record, stripe, now = new Date(), start
     if (voided?.id !== invoiceId || voided.status !== 'void') return review('void_unconfirmed');
     await deps.SubscriptionModel.updateOne(
       { _id: current._id, recoveryInvoiceId: invoiceId },
-      { $push: { recoveryHistory: { invoiceId, action: 'renewal_invoice_voided', at: now, operationId } } }
+      {
+        $push: {
+          recoveryHistory: { invoiceId, action: 'renewal_invoice_voided', at: now, operationId },
+        },
+      }
     );
     return finish('succeeded', { completedAt: now, lastErrorCode: null });
   } catch (err) {
@@ -564,9 +608,13 @@ async function voidGraceExpiredInvoice({ record, stripe, now = new Date(), start
     try {
       const again = await stripe.invoices.retrieve(invoiceId);
       if (again?.id === invoiceId && again.status === 'paid') return paidMeanwhile(again);
-      if (again?.id === invoiceId && again.status === 'void') return finish('succeeded', { completedAt: now, lastErrorCode: null });
-    } catch { /* fall through */ }
-    if (isRetryableStripeError(err)) return retryLater(err.code || err.type || 'stripe_unavailable');
+      if (again?.id === invoiceId && again.status === 'void')
+        return finish('succeeded', { completedAt: now, lastErrorCode: null });
+    } catch {
+      /* fall through */
+    }
+    if (isRetryableStripeError(err))
+      return retryLater(err.code || err.type || 'stripe_unavailable');
     return review(err?.code || 'invoice_void_failed');
   }
 }
@@ -576,7 +624,9 @@ async function retryPendingInvoiceVoids(deps, now) {
   const pending = await deps.OperationModel.find({
     operationId: /^grace-expiry-void:/,
     status: 'pending',
-  }).limit(20).lean();
+  })
+    .limit(20)
+    .lean();
   for (const operation of pending) {
     try {
       const record = await deps.SubscriptionModel.findById(operation.subscriptionId).lean();
@@ -606,7 +656,9 @@ async function cancelExpiredRecoveries(overrides = {}) {
     gracePeriodEndsAt: { $lte: now },
     status: { $ne: 'canceled' },
     $or: [{ recoveryLeaseUntil: null }, { recoveryLeaseUntil: { $lte: now } }],
-  }).limit(50).lean();
+  })
+    .limit(50)
+    .lean();
   let processed = 0;
 
   for (const candidate of candidates) {
@@ -675,11 +727,11 @@ async function cancelExpiredRecoveries(overrides = {}) {
       if (
         !isOwnedSubscription(subscription, claimed, claimed.stripeMode) ||
         !invoiceMatchesSubscription(invoice, claimed, claimed.stripeMode)
-      ) throw new Error('recovery_stripe_ownership_unverified');
+      )
+        throw new Error('recovery_stripe_ownership_unverified');
 
-      const paidAtOf = (inv) => (inv.status_transitions?.paid_at
-        ? new Date(inv.status_transitions.paid_at * 1000)
-        : null);
+      const paidAtOf = (inv) =>
+        inv.status_transitions?.paid_at ? new Date(inv.status_transitions.paid_at * 1000) : null;
       const paidAt = paidAtOf(invoice);
       // Paid invoice: recovered if paid before the deadline, otherwise the existing
       // late-payment policy (manual reconciliation, access not restored).
@@ -688,8 +740,13 @@ async function cancelExpiredRecoveries(overrides = {}) {
           await recordLatePayment(claimed, paidInvoice, deps);
           return;
         }
-        const recovered = await markRecovered({ record: claimed, invoice: paidInvoice, subscription, now }, deps);
-        const latestRecord = recovered ? null : await deps.SubscriptionModel.findById(claimed._id).lean();
+        const recovered = await markRecovered(
+          { record: claimed, invoice: paidInvoice, subscription, now },
+          deps
+        );
+        const latestRecord = recovered
+          ? null
+          : await deps.SubscriptionModel.findById(claimed._id).lean();
         if (recovered || latestRecord?.paymentRecoveryStatus === 'recovered') {
           await deps.OperationModel.updateOne(
             { _id: operation._id },
@@ -698,7 +755,7 @@ async function cancelExpiredRecoveries(overrides = {}) {
         }
       };
       if (subscription.status === 'canceled') {
-        if (!await markCanceled(claimed, invoice, operationId, deps)) {
+        if (!(await markCanceled(claimed, invoice, operationId, deps))) {
           throw new Error('recovery_state_changed_during_cancellation');
         }
         await deps.OperationModel.updateOne(
@@ -739,11 +796,13 @@ async function cancelExpiredRecoveries(overrides = {}) {
         );
       }
       const finalSubscription = await stripe.subscriptions.retrieve(claimed.stripeSubscriptionId);
-      if (!isOwnedSubscription(finalSubscription, claimed, claimed.stripeMode) ||
-        finalSubscription.status !== 'canceled') {
+      if (
+        !isOwnedSubscription(finalSubscription, claimed, claimed.stripeMode) ||
+        finalSubscription.status !== 'canceled'
+      ) {
         throw new Error('recovery_cancellation_unconfirmed');
       }
-      if (!await markCanceled(claimed, invoice, operationId, deps)) {
+      if (!(await markCanceled(claimed, invoice, operationId, deps))) {
         throw new Error('recovery_state_changed_during_cancellation');
       }
       await deps.OperationModel.updateOne(
@@ -756,13 +815,22 @@ async function cancelExpiredRecoveries(overrides = {}) {
       // turn the completed cancellation into a reconciliation.
       if (graceExpiryInvoiceVoidEnabled(env)) {
         try {
-          await voidGraceExpiredInvoice({ record: claimed, stripe, now, start: true }, { ...deps, env });
+          await voidGraceExpiredInvoice(
+            { record: claimed, stripe, now, start: true },
+            { ...deps, env }
+          );
         } catch (voidError) {
           console.error('[Subscription V2] grace-expiry invoice void failed:', voidError.message);
         }
       }
     } catch (error) {
-      await recordReconciliation(claimed, { id: claimed.recoveryInvoiceId }, operationId, error, deps);
+      await recordReconciliation(
+        claimed,
+        { id: claimed.recoveryInvoiceId },
+        operationId,
+        error,
+        deps
+      );
       console.error('[Subscription V2] grace expiry requires reconciliation:', error.message);
     }
   }
@@ -794,7 +862,10 @@ async function dispatchRecoveryEmails(overrides = {}) {
       },
       { $or: [{ nextAttemptAt: null }, { nextAttemptAt: { $lte: now } }] },
     ],
-  }).sort({ scheduledAt: 1 }).limit(50).lean();
+  })
+    .sort({ scheduledAt: 1 })
+    .limit(50)
+    .lean();
   let sent = 0;
 
   for (const item of due) {
@@ -809,21 +880,37 @@ async function dispatchRecoveryEmails(overrides = {}) {
     try {
       const subscription = await deps.SubscriptionModel.findById(item.subscriptionId).lean();
       const reminder = item.kind === 'payment_failed' || /^reminder_day_[1-6]$/.test(item.kind);
-      if (reminder && (
-        !subscription ||
-        subscription.paymentRecoveryStatus !== 'retrying' ||
-        subscription.recoveryInvoiceId !== item.invoiceId ||
-        subscription.gracePeriodEndsAt <= now
-      )) {
-        await deps.EmailModel.updateOne({ _id: item._id, status: 'sending' }, { $set: { status: 'canceled' } });
+      if (
+        reminder &&
+        (!subscription ||
+          subscription.paymentRecoveryStatus !== 'retrying' ||
+          subscription.recoveryInvoiceId !== item.invoiceId ||
+          subscription.gracePeriodEndsAt <= now)
+      ) {
+        await deps.EmailModel.updateOne(
+          { _id: item._id, status: 'sending' },
+          { $set: { status: 'canceled' } }
+        );
         continue;
       }
-      if (item.kind === 'payment_recovered' && subscription?.paymentRecoveryStatus !== 'recovered') {
-        await deps.EmailModel.updateOne({ _id: item._id, status: 'sending' }, { $set: { status: 'canceled' } });
+      if (
+        item.kind === 'payment_recovered' &&
+        subscription?.paymentRecoveryStatus !== 'recovered'
+      ) {
+        await deps.EmailModel.updateOne(
+          { _id: item._id, status: 'sending' },
+          { $set: { status: 'canceled' } }
+        );
         continue;
       }
-      if (item.kind === 'subscription_canceled' && subscription?.paymentRecoveryStatus !== 'exhausted') {
-        await deps.EmailModel.updateOne({ _id: item._id, status: 'sending' }, { $set: { status: 'canceled' } });
+      if (
+        item.kind === 'subscription_canceled' &&
+        subscription?.paymentRecoveryStatus !== 'exhausted'
+      ) {
+        await deps.EmailModel.updateOne(
+          { _id: item._id, status: 'sending' },
+          { $set: { status: 'canceled' } }
+        );
         continue;
       }
       const user = await deps.UserModel.findById(item.userId).select('email name').lean();
@@ -841,7 +928,7 @@ async function dispatchRecoveryEmails(overrides = {}) {
       );
       sent += 1;
     } catch (error) {
-      const delay = Math.min(60 * 60 * 1000, 60 * 1000 * (2 ** Math.min(item.attempts || 0, 6)));
+      const delay = Math.min(60 * 60 * 1000, 60 * 1000 * 2 ** Math.min(item.attempts || 0, 6));
       await deps.EmailModel.updateOne(
         { _id: item._id, status: 'sending' },
         {

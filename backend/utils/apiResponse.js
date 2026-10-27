@@ -11,7 +11,13 @@
  * @param {object|null} pagination - Pagination metadata or null
  * @param {number} statusCode - HTTP status code (default 200)
  */
-const sendSuccess = (res, data = {}, message = 'Request completed successfully.', pagination = null, statusCode = 200) => {
+const sendSuccess = (
+  res,
+  data = {},
+  message = 'Request completed successfully.',
+  pagination = null,
+  statusCode = 200
+) => {
   return res.status(statusCode).json({
     success: true,
     message,

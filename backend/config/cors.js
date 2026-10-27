@@ -6,7 +6,13 @@
  * origins come from ALLOWED_ORIGINS (comma-separated) and FRONTEND_URL; in development the
  * usual localhost ports are added so nothing changes locally.
  */
-const DEV_ORIGINS = ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000', 'http://127.0.0.1:5173', 'http://127.0.0.1:5174'];
+const DEV_ORIGINS = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:5174',
+];
 
 const trim = (o) => o.trim().replace(/\/$/, '');
 

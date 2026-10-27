@@ -20,22 +20,29 @@ async function getProviderConnectDeadlineDays() {
   ).lean();
   const days = Number(config.value);
   if (!Number.isInteger(days) || days < MIN_DAYS || days > MAX_DAYS) {
-    throw new Error(`Invalid ${CONFIG_KEY} setting; expected an integer from ${MIN_DAYS} to ${MAX_DAYS}.`);
+    throw new Error(
+      `Invalid ${CONFIG_KEY} setting; expected an integer from ${MIN_DAYS} to ${MAX_DAYS}.`
+    );
   }
   return days;
 }
 
 function deadlineSnapshot(days, confirmedAt = new Date()) {
   if (!Number.isInteger(days) || days < MIN_DAYS || days > MAX_DAYS) {
-    throw new Error(`Provider Connect deadline must be an integer from ${MIN_DAYS} to ${MAX_DAYS} days.`);
+    throw new Error(
+      `Provider Connect deadline must be an integer from ${MIN_DAYS} to ${MAX_DAYS} days.`
+    );
   }
-  const testMinutes = process.env.NODE_ENV === 'production'
-    ? undefined
-    : process.env[TEST_MINUTE_OVERRIDE] === undefined
+  const testMinutes =
+    process.env.NODE_ENV === 'production'
       ? undefined
-      : Number(process.env[TEST_MINUTE_OVERRIDE]);
+      : process.env[TEST_MINUTE_OVERRIDE] === undefined
+        ? undefined
+        : Number(process.env[TEST_MINUTE_OVERRIDE]);
   if (testMinutes !== undefined && (!Number.isInteger(testMinutes) || testMinutes < 1)) {
-    throw new Error(`${TEST_MINUTE_OVERRIDE} must be a positive integer and is disabled in production.`);
+    throw new Error(
+      `${TEST_MINUTE_OVERRIDE} must be a positive integer and is disabled in production.`
+    );
   }
   return {
     paymentConfirmedAt: confirmedAt,

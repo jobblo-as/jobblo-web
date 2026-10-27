@@ -56,7 +56,9 @@ async function flush() {
   const counts = await drain();
   if (!counts.size) return 0;
   const Service = require('../models/Service');
-  const ops = [...counts].filter(([, n]) => n > 0).map(([id, n]) => ({ updateOne: { filter: { _id: id }, update: { $inc: { views: n } } } }));
+  const ops = [...counts]
+    .filter(([, n]) => n > 0)
+    .map(([id, n]) => ({ updateOne: { filter: { _id: id }, update: { $inc: { views: n } } } }));
   try {
     await Service.bulkWrite(ops, { ordered: false });
     return ops.length;

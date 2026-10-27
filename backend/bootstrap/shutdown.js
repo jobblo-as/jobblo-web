@@ -28,7 +28,10 @@ function registerShutdown({ server, io, extra = [] }) {
     // then socket.io: open WebSockets kept server.close() pending, so every restart with a
     // chat user online hit the deadline and exit(1) before queues, Redis and Mongo closed.
     if (io) await step('socket.io', () => new Promise((resolve) => io.close(() => resolve())));
-    await step('http', () => new Promise((resolve) => (server.listening ? server.close(() => resolve()) : resolve())));
+    await step(
+      'http',
+      () => new Promise((resolve) => (server.listening ? server.close(() => resolve()) : resolve()))
+    );
     await step('queue workers', () => require('../services/queue').stopWorkers());
     await step('redis', () => require('../config/redis').closeRedis());
     await step('mongodb', () => require('mongoose').disconnect());
@@ -41,7 +44,10 @@ function registerShutdown({ server, io, extra = [] }) {
   // Last line of defence: a stray rejected promise (e.g. in a socket handler) used to
   // exit the whole process. Log it and keep serving.
   process.on('unhandledRejection', (reason) => {
-    console.error('[process] unhandled rejection:', reason instanceof Error ? reason.stack : reason);
+    console.error(
+      '[process] unhandled rejection:',
+      reason instanceof Error ? reason.stack : reason
+    );
   });
   process.once('SIGTERM', () => close('SIGTERM'));
   process.once('SIGINT', () => close('SIGINT'));

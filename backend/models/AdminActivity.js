@@ -23,11 +23,25 @@ const adminActivitySchema = new mongoose.Schema(
       enum: [
         // Used by dispute, order, shop and Stripe incident admin actions. They were missing,
         // so logActivity's validation error was swallowed and those audit entries never saved.
-        'assigned', 'priority_changed', 'internal_note_added', 'resolved', 'reopened',
-        'safepay_dispute_opened', 'dispute_opened', 'dispute_resolved', 'dispute_reopened',
-        'admin_cancelled', 'admin_note', 'service_updated',
-        'shop_item_created', 'shop_item_updated', 'shop_item_toggled', 'shop_item_deleted',
-        'duplicate_payment_refund', 'stripe_chargeback_transfer_reversal', 'stripe_chargeback_lost',
+        'assigned',
+        'priority_changed',
+        'internal_note_added',
+        'resolved',
+        'reopened',
+        'safepay_dispute_opened',
+        'dispute_opened',
+        'dispute_resolved',
+        'dispute_reopened',
+        'admin_cancelled',
+        'admin_note',
+        'service_updated',
+        'shop_item_created',
+        'shop_item_updated',
+        'shop_item_toggled',
+        'shop_item_deleted',
+        'duplicate_payment_refund',
+        'stripe_chargeback_transfer_reversal',
+        'stripe_chargeback_lost',
         'login',
         'logout',
         'role_change',
@@ -137,6 +151,9 @@ const adminActivitySchema = new mongoose.Schema(
 adminActivitySchema.index({ createdAt: -1 });
 adminActivitySchema.index({ adminId: 1, createdAt: -1 });
 // Error copies expire after 90 days like ErrorLog; the audit trail (type 'audit') is kept.
-adminActivitySchema.index({ createdAt: 1 }, { expireAfterSeconds: 90 * 24 * 60 * 60, partialFilterExpression: { type: 'error' } });
+adminActivitySchema.index(
+  { createdAt: 1 },
+  { expireAfterSeconds: 90 * 24 * 60 * 60, partialFilterExpression: { type: 'error' } }
+);
 
 module.exports = mongoose.model('AdminActivity', adminActivitySchema);

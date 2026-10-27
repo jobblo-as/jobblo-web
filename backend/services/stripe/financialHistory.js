@@ -8,7 +8,8 @@ const User = require('../../models/User');
 const PAYOUT_STATUSES = new Set(['pending', 'in_transit', 'paid', 'failed', 'canceled']);
 const PAGE_SIZE = 100;
 const SYNC_LEASE_MS = 5 * 60 * 1000;
-const modeField = (livemode) => (livemode ? 'stripeConnectAccountId' : 'stripeConnectAccountIdTest');
+const modeField = (livemode) =>
+  livemode ? 'stripeConnectAccountId' : 'stripeConnectAccountIdTest';
 const idOf = (value) => (typeof value === 'string' ? value : value?.id || null);
 const dateFromUnix = (value) => (Number.isFinite(value) ? new Date(value * 1000) : null);
 
@@ -26,7 +27,9 @@ function safePayoutFailure(code) {
 
 async function providerForAccount(accountId, livemode) {
   if (!accountId) return null;
-  const provider = await User.findOne({ [modeField(livemode)]: accountId }).select('_id').lean();
+  const provider = await User.findOne({ [modeField(livemode)]: accountId })
+    .select('_id')
+    .lean();
   return provider?._id || null;
 }
 
@@ -79,8 +82,11 @@ async function recordStripeTransfer(transfer, { livemode, event, source = 'webho
   if (payout && payout.stripeConnectAccountId !== destination) {
     throw new Error('Stripe transfer destination does not match the local payout account');
   }
-  if (payout?.stripeLivemode !== null && payout?.stripeLivemode !== undefined &&
-      payout.stripeLivemode !== livemode) {
+  if (
+    payout?.stripeLivemode !== null &&
+    payout?.stripeLivemode !== undefined &&
+    payout.stripeLivemode !== livemode
+  ) {
     throw new Error('Stripe transfer mode does not match the local payout mode');
   }
   if (
@@ -95,7 +101,8 @@ async function recordStripeTransfer(transfer, { livemode, event, source = 'webho
       transfer.metadata?.orderId === String(payout.orderId) &&
       destination === payout.stripeConnectAccountId &&
       Number(transfer.amount) === Math.round(Number(payout.netProviderAmount) * 100) &&
-      String(transfer.currency || '').toLowerCase() === String(payout.currency || '').toLowerCase() &&
+      String(transfer.currency || '').toLowerCase() ===
+        String(payout.currency || '').toLowerCase() &&
       (payout.stripeLivemode === null ||
         payout.stripeLivemode === undefined ||
         payout.stripeLivemode === livemode);
@@ -127,8 +134,9 @@ async function recordStripeTransfer(transfer, { livemode, event, source = 'webho
       }
     );
   }
-  const providerId = payout?.providerId || await providerForAccount(destination, livemode);
-  const orderId = payout?.orderId ||
+  const providerId = payout?.providerId || (await providerForAccount(destination, livemode));
+  const orderId =
+    payout?.orderId ||
     (mongoose.Types.ObjectId.isValid(transfer.metadata?.orderId)
       ? transfer.metadata.orderId
       : undefined);
@@ -170,7 +178,10 @@ async function recordStripeTransfer(transfer, { livemode, event, source = 'webho
   );
 }
 
-async function recordStripeBankPayout(payout, { stripeAccountId, livemode, event, source = 'webhook' }) {
+async function recordStripeBankPayout(
+  payout,
+  { stripeAccountId, livemode, event, source = 'webhook' }
+) {
   const payoutId = idOf(payout);
   if (!payoutId || !stripeAccountId || typeof livemode !== 'boolean') {
     throw new Error('Stripe bank payout is missing account, identity, or mode fields');
@@ -365,9 +376,8 @@ async function reconcileConnectedAccountsBatch(stripe, livemode, { limit = 10 } 
     }
   }
 
-  const nextCursor = providers.length === limit
-    ? String(providers[providers.length - 1]._id)
-    : null;
+  const nextCursor =
+    providers.length === limit ? String(providers[providers.length - 1]._id) : null;
   await StripeFinancialSyncState.findOneAndUpdate(
     { key: schedulerKey },
     {

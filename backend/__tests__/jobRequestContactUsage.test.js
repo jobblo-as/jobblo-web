@@ -78,8 +78,12 @@ function application(data) {
     ...data,
     serviceId: { _id: data.serviceId, title: 'Painting', price: 12000 },
     customerId: { _id: data.customerId, name: 'Applicant' },
-    populate: jest.fn(async function populate() { return this; }),
-    toObject() { return { _id: this._id, serviceId: this.serviceId, customerId: this.customerId }; },
+    populate: jest.fn(async function populate() {
+      return this;
+    }),
+    toObject() {
+      return { _id: this._id, serviceId: this.serviceId, customerId: this.customerId };
+    },
   };
 }
 
@@ -121,25 +125,45 @@ describe('contact usage is tied only to successful JobRequests', () => {
 
     expect(res.statusCode).toBe(201);
     const created = JobRequest.create.mock.calls[0][0][0];
-    expect(consumeApplicationContact).toHaveBeenCalledWith({
-      userId: String(applicantId),
-      jobRequestId: created._id,
-      servicePrice: 12000,
-      serviceId: expect.anything(),
-    }, { session: sessions[0] });
-    expect(JobRequest.create).toHaveBeenCalledWith([expect.objectContaining({
-      _id: created._id,
-    })], { session: sessions[0] });
+    expect(consumeApplicationContact).toHaveBeenCalledWith(
+      {
+        userId: String(applicantId),
+        jobRequestId: created._id,
+        servicePrice: 12000,
+        serviceId: expect.anything(),
+      },
+      { session: sessions[0] }
+    );
+    expect(JobRequest.create).toHaveBeenCalledWith(
+      [
+        expect.objectContaining({
+          _id: created._id,
+        }),
+      ],
+      { session: sessions[0] }
+    );
     expect(sessions[0].withTransaction).toHaveBeenCalledTimes(1);
     expect(sessions[0].endSession).toHaveBeenCalledTimes(1);
     expect(res.body._id).toEqual(created._id);
   });
 
   test('a different job application by the same applicant consumes a distinct contact', async () => {
-    const secondService = { _id: otherServiceId, userId: ownerId, title: 'Other', price: 12000, status: 'open' };
-    Service.findById.mockResolvedValueOnce({
-      _id: serviceId, userId: ownerId, title: 'Painting', price: 12000, status: 'open',
-    }).mockResolvedValueOnce(secondService);
+    const secondService = {
+      _id: otherServiceId,
+      userId: ownerId,
+      title: 'Other',
+      price: 12000,
+      status: 'open',
+    };
+    Service.findById
+      .mockResolvedValueOnce({
+        _id: serviceId,
+        userId: ownerId,
+        title: 'Painting',
+        price: 12000,
+        status: 'open',
+      })
+      .mockResolvedValueOnce(secondService);
 
     const first = response();
     await orderController.createJobRequest(request(serviceId), first);
@@ -149,8 +173,10 @@ describe('contact usage is tied only to successful JobRequests', () => {
     const firstRequestId = JobRequest.create.mock.calls[0][0][0]._id;
     const secondRequestId = JobRequest.create.mock.calls[1][0][0]._id;
     expect(firstRequestId).not.toEqual(secondRequestId);
-    expect(consumeApplicationContact.mock.calls.map(([call]) => call.jobRequestId))
-      .toEqual([firstRequestId, secondRequestId]);
+    expect(consumeApplicationContact.mock.calls.map(([call]) => call.jobRequestId)).toEqual([
+      firstRequestId,
+      secondRequestId,
+    ]);
   });
 
   test('a block between applicant and owner refuses the application: no request, chat or contact used', async () => {
@@ -166,10 +192,13 @@ describe('contact usage is tied only to successful JobRequests', () => {
 
   test('invalid and duplicate pending applications consume nothing', async () => {
     const invalid = response();
-    await orderController.createJobRequest({
-      userId: String(applicantId),
-      body: { serviceId: 'bad-id' },
-    }, invalid);
+    await orderController.createJobRequest(
+      {
+        userId: String(applicantId),
+        body: { serviceId: 'bad-id' },
+      },
+      invalid
+    );
     expect(invalid.statusCode).toBe(400);
 
     JobRequest.findOne.mockResolvedValueOnce({ _id: new mongoose.Types.ObjectId() });
@@ -239,11 +268,13 @@ describe('contact usage is tied only to successful JobRequests', () => {
       [...persisted].some((entry) => String(entry.id) === String(_id))
     );
 
-    const results = await Promise.all([request(), request()].map(async (req) => {
-      const res = response();
-      await orderController.createJobRequest(req, res);
-      return res;
-    }));
+    const results = await Promise.all(
+      [request(), request()].map(async (req) => {
+        const res = response();
+        await orderController.createJobRequest(req, res);
+        return res;
+      })
+    );
 
     expect(results.map((res) => res.statusCode).sort()).toEqual([201, 400]);
     expect(JobRequest.create).toHaveBeenCalledTimes(2);
@@ -307,32 +338,40 @@ describe('contact usage is tied only to successful JobRequests', () => {
     expect(notify).not.toHaveBeenCalled();
   });
 
-  test.each(['accepted', 'declined'])('owner %s does not consume another contact', async (status) => {
-    const jobRequest = {
-      _id: new mongoose.Types.ObjectId(),
-      customerId: applicantId,
-      providerId: ownerId,
-      serviceId,
-      status: 'pending',
-      save: jest.fn(async function save() { return this; }),
-      populate: jest.fn(async function populate() {
-        this.serviceId = { _id: serviceId, title: 'Painting' };
-        return this;
-      }),
-    };
-    JobRequest.findById.mockResolvedValue(jobRequest);
-    Chat.findOne.mockResolvedValue({ _id: new mongoose.Types.ObjectId() });
+  test.each(['accepted', 'declined'])(
+    'owner %s does not consume another contact',
+    async (status) => {
+      const jobRequest = {
+        _id: new mongoose.Types.ObjectId(),
+        customerId: applicantId,
+        providerId: ownerId,
+        serviceId,
+        status: 'pending',
+        save: jest.fn(async function save() {
+          return this;
+        }),
+        populate: jest.fn(async function populate() {
+          this.serviceId = { _id: serviceId, title: 'Painting' };
+          return this;
+        }),
+      };
+      JobRequest.findById.mockResolvedValue(jobRequest);
+      Chat.findOne.mockResolvedValue({ _id: new mongoose.Types.ObjectId() });
 
-    const res = response();
-    await orderController.updateJobRequestStatus({
-      userId: String(ownerId),
-      params: { id: String(jobRequest._id) },
-      body: { status },
-    }, res);
+      const res = response();
+      await orderController.updateJobRequestStatus(
+        {
+          userId: String(ownerId),
+          params: { id: String(jobRequest._id) },
+          body: { status },
+        },
+        res
+      );
 
-    expect(jobRequest.status).toBe(status);
-    expect(consumeApplicationContact).not.toHaveBeenCalled();
-  });
+      expect(jobRequest.status).toBe(status);
+      expect(consumeApplicationContact).not.toHaveBeenCalled();
+    }
+  );
 });
 
 // Second review: S12 (first message unchecked) and S6 (accepting opened a chat with a blocked user).
@@ -344,7 +383,10 @@ describe('application message and block checks', () => {
     ['not a string', { $gt: '' }],
   ])('S12: refuses a %s application message before anything is stored', async (_label, message) => {
     const res = response();
-    await orderController.createJobRequest({ userId: String(applicantId), body: { serviceId: String(serviceId), message } }, res);
+    await orderController.createJobRequest(
+      { userId: String(applicantId), body: { serviceId: String(serviceId), message } },
+      res
+    );
     expect(res.statusCode).toBe(400);
     expect(JobRequest.create).not.toHaveBeenCalled();
     expect(Chat.create).not.toHaveBeenCalled();
@@ -352,12 +394,25 @@ describe('application message and block checks', () => {
 
   test('S6: accepting is refused between blocked users; declining still works', async () => {
     const User = require('../models/User');
-    const pending = () => ({ _id: new mongoose.Types.ObjectId(), customerId: applicantId, providerId: ownerId, serviceId, status: 'pending', populate: jest.fn(async function () { this.serviceId = { title: 'x' }; return this; }) });
+    const pending = () => ({
+      _id: new mongoose.Types.ObjectId(),
+      customerId: applicantId,
+      providerId: ownerId,
+      serviceId,
+      status: 'pending',
+      populate: jest.fn(async function () {
+        this.serviceId = { title: 'x' };
+        return this;
+      }),
+    });
     User.exists.mockResolvedValue({ _id: ownerId });
     try {
       JobRequest.findById.mockResolvedValue(pending());
       const res = response();
-      await orderController.updateJobRequestStatus({ userId: String(ownerId), params: { id: 'r' }, body: { status: 'accepted' } }, res);
+      await orderController.updateJobRequestStatus(
+        { userId: String(ownerId), params: { id: 'r' }, body: { status: 'accepted' } },
+        res
+      );
       expect(res.statusCode).toBe(403);
       expect(res.body.code).toBe('user_blocked');
       expect(JobRequest.findOneAndUpdate).not.toHaveBeenCalled();
@@ -365,7 +420,10 @@ describe('application message and block checks', () => {
 
       JobRequest.findById.mockResolvedValue(pending());
       const declined = response();
-      await orderController.updateJobRequestStatus({ userId: String(ownerId), params: { id: 'r' }, body: { status: 'declined' } }, declined);
+      await orderController.updateJobRequestStatus(
+        { userId: String(ownerId), params: { id: 'r' }, body: { status: 'declined' } },
+        declined
+      );
       expect(declined.statusCode).toBe(200);
     } finally {
       User.exists.mockResolvedValue(null);

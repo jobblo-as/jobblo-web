@@ -61,7 +61,8 @@ test('in-process: a hit is byte-identical to the miss, same headers; invalidate 
   const hit = await request(app).get('/x');
   expect([miss.headers['x-cache'], hit.headers['x-cache']]).toEqual(['MISS', 'HIT']);
   expect(hit.text).toBe(miss.text);
-  for (const h of ['content-type', 'content-length', 'etag']) expect(hit.headers[h]).toBe(miss.headers[h]);
+  for (const h of ['content-type', 'content-length', 'etag'])
+    expect(hit.headers[h]).toBe(miss.headers[h]);
   expect((await request(app).get('/x').set('If-None-Match', miss.headers.etag)).status).toBe(304);
   await cache.invalidate('pc');
   expect((await request(app).get('/x')).body.n).toBe(2);
@@ -75,7 +76,9 @@ test('Redis: L1 absorbs repeat reads, concurrent misses share one GET, invalidat
   const r = fakeRedis();
   const cache = loadCache(r);
   r.data.set('t:cache:pc:/y', JSON.stringify({ from: 'redis' }));
-  const app = express().get('/y', cache.cacheJson('pc', 60), (req, res) => res.json({ from: 'db' }));
+  const app = express().get('/y', cache.cacheJson('pc', 60), (req, res) =>
+    res.json({ from: 'db' })
+  );
   const all = await Promise.all([1, 2, 3, 4, 5].map(() => request(app).get('/y')));
   expect(all.map((x) => x.body.from)).toEqual(Array(5).fill('redis'));
   await request(app).get('/y');
@@ -94,7 +97,7 @@ test('Redis error or not ready = cache miss, the request still succeeds', async 
   const res = await request(app).get('/x');
   expect([res.status, res.headers['x-cache']]).toEqual([200, 'MISS']);
   r.status = 'reconnecting';
-  expect((await cache.get('nothing:here'))).toBeUndefined();
+  expect(await cache.get('nothing:here')).toBeUndefined();
   expect(r.calls.get).toBe(1); // not asked while reconnecting
 });
 
@@ -112,9 +115,19 @@ test('rate limiter still counts when SCRIPT LOAD failed at startup (Redis down a
   };
   jest.doMock('../config/redis', () => ({ PREFIX: 't', getRedis: () => client }));
   const { makeLimiter } = require('../middleware/rateLimiter');
-  const limiter = makeLimiter('perf-test', { windowMs: 60_000, max: 5, standardHeaders: true, legacyHeaders: false, validate: false });
+  const limiter = makeLimiter('perf-test', {
+    windowMs: 60_000,
+    max: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    validate: false,
+  });
   await new Promise((r) => setTimeout(r, 10)); // store.init settles
-  const res = await request(express().use(limiter).get('/', (req, res) => res.send('ok'))).get('/');
+  const res = await request(
+    express()
+      .use(limiter)
+      .get('/', (req, res) => res.send('ok'))
+  ).get('/');
   expect(res.status).toBe(200);
   expect(res.headers['ratelimit-remaining']).toBe('4'); // counted in Redis, not failed open
   const sha = client.call.mock.calls.find(([c]) => c === 'EVALSHA')[1];

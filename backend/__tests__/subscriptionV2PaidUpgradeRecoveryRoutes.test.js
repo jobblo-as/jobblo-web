@@ -12,9 +12,7 @@ jest.mock('../middleware/auth', () => ({
     return next();
   },
   requireAdmin: (req, res, next) =>
-    req.user?.role === 'superAdmin'
-      ? next()
-      : res.status(403).json({ code: 'ADMIN_REQUIRED' }),
+    req.user?.role === 'superAdmin' ? next() : res.status(403).json({ code: 'ADMIN_REQUIRED' }),
 }));
 jest.mock('../services/subscriptions/v2PaidUpgradeRecovery', () => ({
   PaidUpgradeRecoveryError: class PaidUpgradeRecoveryError extends Error {
@@ -51,10 +49,16 @@ afterAll(() => {
 
 describe('one-time paid upgrade reconciliation route', () => {
   test('requires authentication and a super-admin role', async () => {
-    expect((await request(app).post('/api/stripe/v2/admin/reconcile-paid-upgrade')).status).toBe(401);
-    expect((await request(app)
-      .post('/api/stripe/v2/admin/reconcile-paid-upgrade')
-      .set('Authorization', 'user')).status).toBe(403);
+    expect((await request(app).post('/api/stripe/v2/admin/reconcile-paid-upgrade')).status).toBe(
+      401
+    );
+    expect(
+      (
+        await request(app)
+          .post('/api/stripe/v2/admin/reconcile-paid-upgrade')
+          .set('Authorization', 'user')
+      ).status
+    ).toBe(403);
     expect(recovery.recoverPaidUpgrade).not.toHaveBeenCalled();
   });
 

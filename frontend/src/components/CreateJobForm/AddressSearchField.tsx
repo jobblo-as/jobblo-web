@@ -18,7 +18,15 @@ interface AddressSearchFieldProps {
  * One search field with Kartverket suggestions; replaces street + fylke + kommune + sted.
  * The same field as the app's (jobblo-app components/create-job/AddressSearchField).
  */
-export function AddressSearchField({ id, value, detail, confirmed, error, onSelect, onClear }: AddressSearchFieldProps) {
+export function AddressSearchField({
+  id,
+  value,
+  detail,
+  confirmed,
+  error,
+  onSelect,
+  onClear,
+}: AddressSearchFieldProps) {
   const [query, setQuery] = useState(value);
   const [hits, setHits] = useState<AddressHit[]>([]);
   const [loading, setLoading] = useState(false);
@@ -94,7 +102,11 @@ export function AddressSearchField({ id, value, detail, confirmed, error, onSele
               : 'border-gray-200 focus-within:border-[#2D7A4D] focus-within:ring-[#2D7A4D]/5'
         }`}
       >
-        {confirmed ? <CheckCircle2 size={17} className="shrink-0 text-[#2D7A4D]" /> : <Search size={17} className="shrink-0 text-gray-400" />}
+        {confirmed ? (
+          <CheckCircle2 size={17} className="shrink-0 text-[#2D7A4D]" />
+        ) : (
+          <Search size={17} className="shrink-0 text-gray-400" />
+        )}
         <input
           id={id}
           type="text"
@@ -117,17 +129,30 @@ export function AddressSearchField({ id, value, detail, confirmed, error, onSele
         />
         {loading ? <Loader2 size={16} className="shrink-0 animate-spin text-[#2D7A4D]" /> : null}
         {query && !loading ? (
-          <button type="button" onClick={clear} aria-label="Tøm adresse" className="-mr-1 rounded-full p-1 text-gray-500 hover:bg-gray-100">
+          <button
+            type="button"
+            onClick={clear}
+            aria-label="Tøm adresse"
+            className="-mr-1 rounded-full p-1 text-gray-500 hover:bg-gray-100"
+          >
             <X size={16} />
           </button>
         ) : null}
       </div>
 
       {showList ? (
-        <ul id={listId} role="listbox" className="absolute left-0 right-0 z-20 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+        <ul
+          id={listId}
+          role="listbox"
+          className="absolute left-0 right-0 z-20 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg"
+        >
           {hits.length ? (
             hits.map((hit, index) => (
-              <li key={`${hit.address}-${hit.postalCode}-${index}`} role="option" aria-selected={false}>
+              <li
+                key={`${hit.address}-${hit.postalCode}-${index}`}
+                role="option"
+                aria-selected={false}
+              >
                 <button
                   type="button"
                   // mousedown, not click: the input's blur would close the list first.
@@ -139,10 +164,14 @@ export function AddressSearchField({ id, value, detail, confirmed, error, onSele
                 >
                   <MapPin size={16} className="shrink-0 text-[#2D7A4D]" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium text-gray-900">{hit.address}</span>
+                    <span className="block truncate text-sm font-medium text-gray-900">
+                      {hit.address}
+                    </span>
                     <span className="block truncate text-xs text-gray-500">
                       {[hit.postalCode, hit.city].filter(Boolean).join(' ')}
-                      {hit.municipalityName && hit.municipalityName !== hit.city ? ` · ${hit.municipalityName}` : ''}
+                      {hit.municipalityName && hit.municipalityName !== hit.city
+                        ? ` · ${hit.municipalityName}`
+                        : ''}
                     </span>
                   </span>
                 </button>
@@ -150,7 +179,9 @@ export function AddressSearchField({ id, value, detail, confirmed, error, onSele
             ))
           ) : !loading ? (
             <li className="px-4 py-3 text-sm text-gray-500">
-              {failed ? 'Adressesøket svarer ikke. Prøv igjen, eller klikk i kartet.' : 'Fant ingen adresse. Prøv en annen skrivemåte, eller klikk i kartet.'}
+              {failed
+                ? 'Adressesøket svarer ikke. Prøv igjen, eller klikk i kartet.'
+                : 'Fant ingen adresse. Prøv en annen skrivemåte, eller klikk i kartet.'}
             </li>
           ) : null}
         </ul>
@@ -161,9 +192,13 @@ export function AddressSearchField({ id, value, detail, confirmed, error, onSele
           <AlertCircle size={12} /> {error}
         </p>
       ) : confirmed ? (
-        <p className="ml-1 text-[11px] font-medium text-[#2D7A4D] md:text-xs">Lokasjon bekreftet{detail ? ` · ${detail}` : ''}</p>
+        <p className="ml-1 text-[11px] font-medium text-[#2D7A4D] md:text-xs">
+          Lokasjon bekreftet{detail ? ` · ${detail}` : ''}
+        </p>
       ) : (
-        <p className="ml-1 text-[11px] text-gray-500 md:text-xs">Velg et forslag fra listen, eller klikk i kartet.</p>
+        <p className="ml-1 text-[11px] text-gray-500 md:text-xs">
+          Velg et forslag fra listen, eller klikk i kartet.
+        </p>
       )}
     </div>
   );

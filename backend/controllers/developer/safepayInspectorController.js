@@ -47,12 +47,39 @@ const COMPANIONS = {
   accepted: PRE_PAYMENT,
   declined: PRE_PAYMENT,
   awaiting_payment: PRE_PAYMENT,
-  paid: { payment: [null, 'completed'], safePay: [null, 'pending', 'payment_received', 'waiting_connect'], payout: [null] },
-  in_progress: { payment: [null, 'completed'], safePay: [null, 'payment_received', 'in_progress'], payout: [null] },
-  ready_for_review: { payment: [null, 'completed'], safePay: [null, 'payment_received', 'in_progress'], payout: OPEN_PAYOUT },
-  completed: { payment: [null, 'completed', 'released'], safePay: [null, 'completed'], payout: [...OPEN_PAYOUT, 'released_internal', 'processing', 'transferred'] },
+  paid: {
+    payment: [null, 'completed'],
+    safePay: [null, 'pending', 'payment_received', 'waiting_connect'],
+    payout: [null],
+  },
+  in_progress: {
+    payment: [null, 'completed'],
+    safePay: [null, 'payment_received', 'in_progress'],
+    payout: [null],
+  },
+  ready_for_review: {
+    payment: [null, 'completed'],
+    safePay: [null, 'payment_received', 'in_progress'],
+    payout: OPEN_PAYOUT,
+  },
+  completed: {
+    payment: [null, 'completed', 'released'],
+    safePay: [null, 'completed'],
+    payout: [...OPEN_PAYOUT, 'released_internal', 'processing', 'transferred'],
+  },
   disputed: { payment: [null, 'completed', 'disputed'], safePay: [null, 'disputed'], payout: ANY },
-  cancelled: { payment: [null, 'pending', 'refunded', 'partially_refunded'], safePay: [null, 'cancelled', 'automatically_cancelled', 'refunded', 'refund_pending', 'refund_failed'], payout: [null, 'cancelled'] },
+  cancelled: {
+    payment: [null, 'pending', 'refunded', 'partially_refunded'],
+    safePay: [
+      null,
+      'cancelled',
+      'automatically_cancelled',
+      'refunded',
+      'refund_pending',
+      'refund_failed',
+    ],
+    payout: [null, 'cancelled'],
+  },
 };
 
 /** Pure: rebuild the order's status path from its history. Unit-tested. */
@@ -75,16 +102,30 @@ function reconstructPath(order) {
 function machineIssues(order, { payment, sph, payout } = {}, path = reconstructPath(order)) {
   const issues = [];
   const add = (code, severity, detail) => issues.push({ code, severity, detail });
-  if (!ORDER_TRANSITIONS[order.status]) add('unknown_status', 'critical', `Order status "${order.status}" is not in the state machine`);
-  for (const s of path.steps.filter((x) => x.legal === false)) add('illegal_transition', 'high', `${s.from} → ${s.to} (${s.action}) is not an allowed transition`);
+  if (!ORDER_TRANSITIONS[order.status])
+    add('unknown_status', 'critical', `Order status "${order.status}" is not in the state machine`);
+  for (const s of path.steps.filter((x) => x.legal === false))
+    add(
+      'illegal_transition',
+      'high',
+      `${s.from} → ${s.to} (${s.action}) is not an allowed transition`
+    );
   if (path.recordedStatus && path.recordedStatus !== order.status) {
-    add('unrecorded_transition', 'medium', `Status is ${order.status} but history ends at ${path.recordedStatus} — changed without a history entry`);
+    add(
+      'unrecorded_transition',
+      'medium',
+      `Status is ${order.status} but history ends at ${path.recordedStatus} — changed without a history entry`
+    );
   }
   const expect = COMPANIONS[order.status];
   if (expect) {
     const check = (model, actual, allowed) => {
       if (allowed === ANY || allowed.includes(actual ?? null)) return;
-      add(`${model}_state_mismatch`, model === 'payment' ? 'high' : 'medium', `${model === 'safePay' ? 'SafePay history' : model[0].toUpperCase() + model.slice(1)} is ${actual} while the order is ${order.status} (expected ${allowed.map((a) => a ?? 'none').join(' / ')})`);
+      add(
+        `${model}_state_mismatch`,
+        model === 'payment' ? 'high' : 'medium',
+        `${model === 'safePay' ? 'SafePay history' : model[0].toUpperCase() + model.slice(1)} is ${actual} while the order is ${order.status} (expected ${allowed.map((a) => a ?? 'none').join(' / ')})`
+      );
     };
     check('payment', payment?.status, expect.payment);
     check('safePay', sph?.status, expect.safePay);
@@ -100,14 +141,26 @@ const SCAN = 2000;
 /** The machine, how orders move through it, and every order that broke it. */
 const getMachine = asyncHandler(async (req, res) => {
   const [orders, counts] = await Promise.all([
-    Order.find().sort({ updatedAt: -1 }).limit(SCAN).select('status paymentStatus history updatedAt serviceId agreedPrice').populate('serviceId', 'title').lean(),
+    Order.find()
+      .sort({ updatedAt: -1 })
+      .limit(SCAN)
+      .select('status paymentStatus history updatedAt serviceId agreedPrice')
+      .populate('serviceId', 'title')
+      .lean(),
     Order.aggregate([{ $group: { _id: '$status', n: { $sum: 1 } } }]),
   ]);
   const ids = orders.map((o) => o._id);
   const [payments, sphs, payouts] = await Promise.all([
-    Payment.find({ orderId: { $in: ids } }).select('orderId status').lean(),
-    SafePayHistory.find({ orderId: { $in: ids } }).sort({ createdAt: 1 }).select('orderId status').lean(), // newest wins in byOrder
-    Payout.find({ orderId: { $in: ids } }).select('orderId status').lean(),
+    Payment.find({ orderId: { $in: ids } })
+      .select('orderId status')
+      .lean(),
+    SafePayHistory.find({ orderId: { $in: ids } })
+      .sort({ createdAt: 1 })
+      .select('orderId status')
+      .lean(), // newest wins in byOrder
+    Payout.find({ orderId: { $in: ids } })
+      .select('orderId status')
+      .lean(),
   ]);
   const P = byOrder(payments);
   const S = byOrder(sphs);
@@ -125,7 +178,13 @@ const getMachine = asyncHandler(async (req, res) => {
       edges[key].n += 1;
     }
     for (const i of machineIssues(o, { payment: P[k], sph: S[k], payout: PO[k] }, path)) {
-      violations.push({ ...i, orderId: k, title: o.serviceId?.title || null, status: o.status, at: o.updatedAt });
+      violations.push({
+        ...i,
+        orderId: k,
+        title: o.serviceId?.title || null,
+        status: o.status,
+        at: o.updatedAt,
+      });
     }
   }
   const rank = { critical: 0, high: 1, medium: 2, low: 3 };
@@ -134,8 +193,15 @@ const getMachine = asyncHandler(async (req, res) => {
   for (const v of violations) byCode[v.code] = (byCode[v.code] || 0) + 1;
 
   return sendSuccess(res, {
-    states: Object.keys(ORDER_TRANSITIONS).map((s) => ({ status: s, count: counts.find((c) => c._id === s)?.n || 0, terminal: TERMINAL_STATUSES.includes(s) || !ORDER_TRANSITIONS[s].length, next: ORDER_TRANSITIONS[s] })),
-    unknownStates: counts.filter((c) => !ORDER_TRANSITIONS[c._id]).map((c) => ({ status: c._id, count: c.n })),
+    states: Object.keys(ORDER_TRANSITIONS).map((s) => ({
+      status: s,
+      count: counts.find((c) => c._id === s)?.n || 0,
+      terminal: TERMINAL_STATUSES.includes(s) || !ORDER_TRANSITIONS[s].length,
+      next: ORDER_TRANSITIONS[s],
+    })),
+    unknownStates: counts
+      .filter((c) => !ORDER_TRANSITIONS[c._id])
+      .map((c) => ({ status: c._id, count: c.n })),
     edges: Object.values(edges),
     companions: COMPANIONS,
     scanned: orders.length,
@@ -149,18 +215,33 @@ const getMachine = asyncHandler(async (req, res) => {
 /** One order walked through the machine. */
 const getOrderMachine = asyncHandler(async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) return sendError(res, 'Invalid id.', 400);
-  const [b, history] = await Promise.all([loadOrderBundle(req.params.id), Order.findById(req.params.id).select('history status').lean()]);
+  const [b, history] = await Promise.all([
+    loadOrderBundle(req.params.id),
+    Order.findById(req.params.id).select('history status').lean(),
+  ]);
   if (!b) return sendError(res, 'Order not found.', 404);
   const order = { ...b.order, history: history.history };
   const path = reconstructPath(order);
   const expect = COMPANIONS[order.status] || null;
   return sendSuccess(res, {
-    order: { _id: String(order._id), title: order.serviceId?.title || null, status: order.status, paymentStatus: order.paymentStatus, agreedPrice: order.agreedPrice, createdAt: order.createdAt, updatedAt: order.updatedAt },
+    order: {
+      _id: String(order._id),
+      title: order.serviceId?.title || null,
+      status: order.status,
+      paymentStatus: order.paymentStatus,
+      agreedPrice: order.agreedPrice,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
+    },
     path: path.steps,
     next: ORDER_TRANSITIONS[order.status] || [],
     companions: [
       { model: 'Payment', actual: b.payment?.status ?? null, expected: expect?.payment ?? null },
-      { model: 'SafePay history', actual: b.sph?.status ?? null, expected: expect?.safePay ?? null },
+      {
+        model: 'SafePay history',
+        actual: b.sph?.status ?? null,
+        expected: expect?.safePay ?? null,
+      },
       { model: 'Payout', actual: b.payout?.status ?? null, expected: expect?.payout ?? null },
       { model: 'Dispute', actual: b.dispute?.status ?? null, expected: null },
     ],
@@ -169,4 +250,11 @@ const getOrderMachine = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { ACTION_TO, COMPANIONS, reconstructPath, machineIssues, getMachine, getOrderMachine };
+module.exports = {
+  ACTION_TO,
+  COMPANIONS,
+  reconstructPath,
+  machineIssues,
+  getMachine,
+  getOrderMachine,
+};

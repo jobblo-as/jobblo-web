@@ -52,14 +52,27 @@ function fixture({
     stripePriceId: 'price_live',
     entitlements: { freeContact: 15, radius: 50 },
   };
-  const record = recordOverride === undefined
-    ? accountType === 'business'
-      ? { _id: subscriptionId, userId, planId, planType: accountType, stripeMode: 'test',
-        stripeCustomerId: 'cus_test', stripeSubscriptionId: 'sub_test', status: recordStatus,
-        currentPeriodStart: periodStart, currentPeriodEnd: periodEnd, pendingPlanChange: null,
-        paymentRecoveryStatus, gracePeriodEndsAt, recoveryUsagePeriodStart }
-      : null
-    : recordOverride;
+  const record =
+    recordOverride === undefined
+      ? accountType === 'business'
+        ? {
+            _id: subscriptionId,
+            userId,
+            planId,
+            planType: accountType,
+            stripeMode: 'test',
+            stripeCustomerId: 'cus_test',
+            stripeSubscriptionId: 'sub_test',
+            status: recordStatus,
+            currentPeriodStart: periodStart,
+            currentPeriodEnd: periodEnd,
+            pendingPlanChange: null,
+            paymentRecoveryStatus,
+            gracePeriodEndsAt,
+            recoveryUsagePeriodStart,
+          }
+        : null
+      : recordOverride;
   const stripeSubscription = {
     id: 'sub_test',
     customer: 'cus_test',
@@ -72,37 +85,44 @@ function fixture({
       planId: String(planId),
       stripeMode: 'test',
     },
-    items: { data: [{
-      current_period_start: periodStart.getTime() / 1000,
-      current_period_end: periodEnd.getTime() / 1000,
-      price: {
-        id: 'price_test',
-        active: true,
-        livemode: false,
-        currency: 'nok',
-        type: 'recurring',
-        unit_amount: 9900,
-        recurring: { interval: 'month', interval_count: 1 },
-      },
-    }] },
+    items: {
+      data: [
+        {
+          current_period_start: periodStart.getTime() / 1000,
+          current_period_end: periodEnd.getTime() / 1000,
+          price: {
+            id: 'price_test',
+            active: true,
+            livemode: false,
+            currency: 'nok',
+            type: 'recurring',
+            unit_amount: 9900,
+            recurring: { interval: 'month', interval_count: 1 },
+          },
+        },
+      ],
+    },
   };
   let freeUsage = null;
-  const storedUsage = noUsage ? null : usage || (record
-    ? {
-        _id: new mongoose.Types.ObjectId(),
-        userId,
-        subscriptionId,
-        planId,
-        periodType: 'paid',
-        billingPeriodStart: periodStart,
-        billingPeriodEnd: periodEnd,
-        includedContacts,
-        consumedIncludedContacts: 2,
-        purchasedExtraContacts: 7,
-        consumedExtraContacts: 1,
-        contactOperations: [],
-      }
-    : null);
+  const storedUsage = noUsage
+    ? null
+    : usage ||
+      (record
+        ? {
+            _id: new mongoose.Types.ObjectId(),
+            userId,
+            subscriptionId,
+            planId,
+            periodType: 'paid',
+            billingPeriodStart: periodStart,
+            billingPeriodEnd: periodEnd,
+            includedContacts,
+            consumedIncludedContacts: 2,
+            purchasedExtraContacts: 7,
+            consumedExtraContacts: 1,
+            contactOperations: [],
+          }
+        : null);
   const UsageModel = {
     findOneAndUpdate: jest.fn(async (_filter, update) => {
       if (record) {
@@ -240,21 +260,25 @@ describe('Subscription V2 entitlements and usage periods', () => {
   test('resolves the private Free plan and reads its allowance from plan data', async () => {
     const f = fixture();
     const result = await resolveEntitlements(userId, f.overrides);
-    expect(result).toEqual(expect.objectContaining({
-      status: 'free',
-      isPaid: false,
-      plan: { id: String(planId), name: 'Standard', price: 0 },
-      includedContacts: 5,
-      remainingIncludedContacts: 5,
-      period: expect.objectContaining({ type: 'free' }),
-    }));
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'free',
+        isPaid: false,
+        plan: { id: String(planId), name: 'Standard', price: 0 },
+        includedContacts: 5,
+        remainingIncludedContacts: 5,
+        period: expect.objectContaining({ type: 'free' }),
+      })
+    );
     expect(f.UsageModel.findOneAndUpdate).toHaveBeenCalledWith(
       { userId, billingPeriodStart: new Date('2026-10-01T00:00:00.000Z') },
-      { $setOnInsert: expect.objectContaining({
-        periodType: 'free',
-        includedContacts: 5,
-        consumedIncludedContacts: 0,
-      }) },
+      {
+        $setOnInsert: expect.objectContaining({
+          periodType: 'free',
+          includedContacts: 5,
+          consumedIncludedContacts: 0,
+        }),
+      },
       expect.objectContaining({ upsert: true })
     );
   });
@@ -263,13 +287,15 @@ describe('Subscription V2 entitlements and usage periods', () => {
     const f = fixture({ accountType: 'business', record: null });
     f.SubscriptionModel.findOne.mockReturnValue(query(null));
     const result = await resolveEntitlements(userId, f.overrides);
-    expect(result).toEqual(expect.objectContaining({
-      status: 'no_paid_plan',
-      plan: null,
-      includedContacts: 0,
-      remainingIncludedContacts: 0,
-      entitlements: {},
-    }));
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'no_paid_plan',
+        plan: null,
+        includedContacts: 0,
+        remainingIncludedContacts: 0,
+        entitlements: {},
+      })
+    );
     expect(f.UsageModel.findOneAndUpdate).not.toHaveBeenCalled();
   });
 
@@ -277,29 +303,33 @@ describe('Subscription V2 entitlements and usage periods', () => {
     ['active', false, 'active'],
     ['active', true, 'canceling'],
     ['past_due', false, 'past_due'],
-  ])('grants only the current verified paid period (%s, canceling=%s)', async (stripeStatus, cancelAtPeriodEnd, status) => {
-    const f = fixture({ accountType: 'business', stripeStatus, cancelAtPeriodEnd });
-    const result = await resolveEntitlements(userId, f.overrides);
-    expect(result).toEqual(expect.objectContaining({
-      status,
-      isPaid: true,
-      plan: { id: String(planId), name: 'Plus', price: 99 },
-      includedContacts: 5,
-      consumedIncludedContacts: 2,
-      remainingIncludedContacts: 3,
-      purchasedExtraContacts: 7,
-      consumedExtraContacts: 1,
-      period: {
-        start: start.toISOString(),
-        end: end.toISOString(),
-        type: 'paid',
-      },
-    }));
-    expect(f.stripe.subscriptions.retrieve).toHaveBeenCalledWith('sub_test', {
-      expand: ['items.data.price'],
-    });
-
-  });
+  ])(
+    'grants only the current verified paid period (%s, canceling=%s)',
+    async (stripeStatus, cancelAtPeriodEnd, status) => {
+      const f = fixture({ accountType: 'business', stripeStatus, cancelAtPeriodEnd });
+      const result = await resolveEntitlements(userId, f.overrides);
+      expect(result).toEqual(
+        expect.objectContaining({
+          status,
+          isPaid: true,
+          plan: { id: String(planId), name: 'Plus', price: 99 },
+          includedContacts: 5,
+          consumedIncludedContacts: 2,
+          remainingIncludedContacts: 3,
+          purchasedExtraContacts: 7,
+          consumedExtraContacts: 1,
+          period: {
+            start: start.toISOString(),
+            end: end.toISOString(),
+            type: 'paid',
+          },
+        })
+      );
+      expect(f.stripe.subscriptions.retrieve).toHaveBeenCalledWith('sub_test', {
+        expand: ['items.data.price'],
+      });
+    }
+  );
 
   test('retains the anchored paid usage during grace without opening a new quota period', async () => {
     const f = fixture({
@@ -311,14 +341,16 @@ describe('Subscription V2 entitlements and usage periods', () => {
     });
     const result = await resolveEntitlements(userId, f.overrides);
 
-    expect(result).toEqual(expect.objectContaining({
-      status: 'past_due',
-      isPaid: true,
-      includedContacts: 5,
-      consumedIncludedContacts: 2,
-      remainingIncludedContacts: 3,
-      period: { start: start.toISOString(), end: end.toISOString(), type: 'paid' },
-    }));
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'past_due',
+        isPaid: true,
+        includedContacts: 5,
+        consumedIncludedContacts: 2,
+        remainingIncludedContacts: 3,
+        period: { start: start.toISOString(), end: end.toISOString(), type: 'paid' },
+      })
+    );
     expect(f.UsageModel.findOne).toHaveBeenCalledWith({
       userId,
       subscriptionId,
@@ -339,12 +371,14 @@ describe('Subscription V2 entitlements and usage periods', () => {
     });
     const result = await resolveEntitlements(userId, f.overrides);
 
-    expect(result).toEqual(expect.objectContaining({
-      status: 'no_paid_plan',
-      isPaid: false,
-      plan: null,
-      includedContacts: 0,
-    }));
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'no_paid_plan',
+        isPaid: false,
+        plan: null,
+        includedContacts: 0,
+      })
+    );
     expect(f.PlanModel.findById).not.toHaveBeenCalled();
   });
 
@@ -373,13 +407,15 @@ describe('Subscription V2 entitlements and usage periods', () => {
       customer: 'cus_test',
       parent: { subscription_details: { subscription: 'sub_test' } },
       lines: {
-        data: [{
-          period: {
-            start: start.getTime() / 1000,
-            end: end.getTime() / 1000,
+        data: [
+          {
+            period: {
+              start: start.getTime() / 1000,
+              end: end.getTime() / 1000,
+            },
+            pricing: { price_details: { price: 'price_test' } },
           },
-          pricing: { price_details: { price: 'price_test' } },
-        }],
+        ],
       },
     };
     f.stripeSubscription.latest_invoice = invoice.id;
@@ -403,13 +439,15 @@ describe('Subscription V2 entitlements and usage periods', () => {
       customer: 'cus_test',
       parent: { subscription_details: { subscription: 'sub_test' } },
       lines: {
-        data: [{
-          period: {
-            start: start.getTime() / 1000 - 31 * 24 * 60 * 60,
-            end: start.getTime() / 1000,
+        data: [
+          {
+            period: {
+              start: start.getTime() / 1000 - 31 * 24 * 60 * 60,
+              end: start.getTime() / 1000,
+            },
+            pricing: { price_details: { price: 'price_test' } },
           },
-          pricing: { price_details: { price: 'price_test' } },
-        }],
+        ],
       },
     });
 
@@ -447,7 +485,12 @@ describe('Subscription V2 entitlements and usage periods', () => {
       lines: { data: [] },
     });
     function rollover(record) {
-      const f = fixture({ accountType: 'business', noUsage: true, now: new Date(start.getTime() + 20 * 60 * 1000), record });
+      const f = fixture({
+        accountType: 'business',
+        noUsage: true,
+        now: new Date(start.getTime() + 20 * 60 * 1000),
+        record,
+      });
       f.stripeSubscription.latest_invoice = 'in_renewal';
       f.UsageModel.findOne.mockImplementation((filter) =>
         query(filter.periodType === 'paid' && +filter.billingPeriodEnd === +start ? previous : null)
@@ -455,9 +498,17 @@ describe('Subscription V2 entitlements and usage periods', () => {
       return f;
     }
     const baseRecord = {
-      _id: subscriptionId, userId, planId, planType: 'business', stripeMode: 'test',
-      stripeCustomerId: 'cus_test', stripeSubscriptionId: 'sub_test', status: 'active',
-      currentPeriodStart: start, currentPeriodEnd: end, pendingPlanChange: null,
+      _id: subscriptionId,
+      userId,
+      planId,
+      planType: 'business',
+      stripeMode: 'test',
+      stripeCustomerId: 'cus_test',
+      stripeSubscriptionId: 'sub_test',
+      status: 'active',
+      currentPeriodStart: start,
+      currentPeriodEnd: end,
+      pendingPlanChange: null,
       paymentRecoveryStatus: 'none',
     };
 
@@ -467,16 +518,27 @@ describe('Subscription V2 entitlements and usage periods', () => {
         const f = rollover(baseRecord);
         f.stripe.invoices.retrieve.mockResolvedValue(renewalInvoice(status));
         const result = await resolveEntitlements(userId, f.overrides);
-        expect(result).toMatchObject({ isPaid: true, includedContacts: 15, remainingIncludedContacts: 6 });
+        expect(result).toMatchObject({
+          isPaid: true,
+          includedContacts: 15,
+          remainingIncludedContacts: 6,
+        });
         expect(result.period.end).toBe(start.toISOString());
         expect(f.UsageModel.findOneAndUpdate).not.toHaveBeenCalled(); // nothing new granted
       }
     );
 
     test('also covers the window before customer.subscription.updated is processed', async () => {
-      const f = rollover({ ...baseRecord, currentPeriodStart: previous.billingPeriodStart, currentPeriodEnd: start });
+      const f = rollover({
+        ...baseRecord,
+        currentPeriodStart: previous.billingPeriodStart,
+        currentPeriodEnd: start,
+      });
       f.stripe.invoices.retrieve.mockResolvedValue(renewalInvoice('draft'));
-      await expect(resolveEntitlements(userId, f.overrides)).resolves.toMatchObject({ isPaid: true, remainingIncludedContacts: 6 });
+      await expect(resolveEntitlements(userId, f.overrides)).resolves.toMatchObject({
+        isPaid: true,
+        remainingIncludedContacts: 6,
+      });
     });
 
     test('still fails closed for an invoice belonging to another subscription', async () => {
@@ -493,11 +555,13 @@ describe('Subscription V2 entitlements and usage periods', () => {
       now: end,
     });
     const result = await resolveEntitlements(userId, f.overrides);
-    expect(result).toEqual(expect.objectContaining({
-      isPaid: false,
-      status: 'no_paid_plan',
-      includedContacts: 0,
-    }));
+    expect(result).toEqual(
+      expect.objectContaining({
+        isPaid: false,
+        status: 'no_paid_plan',
+        includedContacts: 0,
+      })
+    );
     expect(f.stripe.subscriptions.retrieve).toHaveBeenCalled();
   });
 
@@ -533,12 +597,14 @@ describe('Subscription V2 entitlements and usage periods', () => {
       consumedIncludedContacts: 0,
       contactOperations: [],
     };
-    f.UsageModel.findOne.mockImplementation((filter) => query(
-      previousUsage.billingPeriodStart <= filter.billingPeriodStart.$lte &&
-        previousUsage.billingPeriodEnd > filter.billingPeriodEnd.$gt
-        ? previousUsage
-        : null
-    ));
+    f.UsageModel.findOne.mockImplementation((filter) =>
+      query(
+        previousUsage.billingPeriodStart <= filter.billingPeriodStart.$lte &&
+          previousUsage.billingPeriodEnd > filter.billingPeriodEnd.$gt
+          ? previousUsage
+          : null
+      )
+    );
     const invoice = {
       id: 'in_current_period',
       status: 'paid',
@@ -546,13 +612,15 @@ describe('Subscription V2 entitlements and usage periods', () => {
       customer: 'cus_test',
       parent: { subscription_details: { subscription: 'sub_test' } },
       lines: {
-        data: [{
-          period: {
-            start: periodStart.getTime() / 1000,
-            end: periodEnd.getTime() / 1000,
+        data: [
+          {
+            period: {
+              start: periodStart.getTime() / 1000,
+              end: periodEnd.getTime() / 1000,
+            },
+            pricing: { price_details: { price: 'price_test' } },
           },
-          pricing: { price_details: { price: 'price_test' } },
-        }],
+        ],
       },
     };
     f.stripeSubscription.latest_invoice = invoice.id;
@@ -560,16 +628,18 @@ describe('Subscription V2 entitlements and usage periods', () => {
 
     const result = await resolveEntitlements(userId, f.overrides);
 
-    expect(result).toEqual(expect.objectContaining({
-      includedContacts: 15,
-      consumedIncludedContacts: 0,
-      remainingIncludedContacts: 15,
-      period: {
-        start: periodStart.toISOString(),
-        end: periodEnd.toISOString(),
-        type: 'paid',
-      },
-    }));
+    expect(result).toEqual(
+      expect.objectContaining({
+        includedContacts: 15,
+        consumedIncludedContacts: 0,
+        remainingIncludedContacts: 15,
+        period: {
+          start: periodStart.toISOString(),
+          end: periodEnd.toISOString(),
+          type: 'paid',
+        },
+      })
+    );
     expect(f.UsageModel.findOneAndUpdate).toHaveBeenCalledWith(
       { userId, billingPeriodStart: periodStart },
       expect.objectContaining({
@@ -584,29 +654,38 @@ describe('Subscription V2 entitlements and usage periods', () => {
   });
 
   test('does not grant a future paid period after failed renewal without a matching paid usage record', async () => {
-    const f = fixture({ accountType: 'business', stripeStatus: 'unpaid', recordStatus: 'past_due' });
+    const f = fixture({
+      accountType: 'business',
+      stripeStatus: 'unpaid',
+      recordStatus: 'past_due',
+    });
     f.UsageModel.findOne.mockReturnValue(query(null));
     const result = await resolveEntitlements(userId, f.overrides);
-    expect(result).toEqual(expect.objectContaining({
-      status: 'past_due',
-      isPaid: false,
-      plan: null,
-      includedContacts: 0,
-    }));
+    expect(result).toEqual(
+      expect.objectContaining({
+        status: 'past_due',
+        isPaid: false,
+        plan: null,
+        includedContacts: 0,
+      })
+    );
   });
 
   test('uses the application transaction session for the contact counter update', async () => {
     const f = fixture();
     const session = {};
-    await consumeApplicationContact({
-      userId,
-      jobRequestId: new mongoose.Types.ObjectId(),
-      servicePrice: 12000,
-    }, {
-      ...f.overrides,
-      env: { SUBSCRIPTION_V2_ENTITLEMENTS_ENABLED: 'true' },
-      session,
-    });
+    await consumeApplicationContact(
+      {
+        userId,
+        jobRequestId: new mongoose.Types.ObjectId(),
+        servicePrice: 12000,
+      },
+      {
+        ...f.overrides,
+        env: { SUBSCRIPTION_V2_ENTITLEMENTS_ENABLED: 'true' },
+        session,
+      }
+    );
 
     expect(f.UsageModel.findOneAndUpdate.mock.calls.at(-1)[2]).toEqual(
       expect.objectContaining({ session })
@@ -615,15 +694,17 @@ describe('Subscription V2 entitlements and usage periods', () => {
 
   test('falls back to private Free after Stripe cancellation and rejects an unknown business Free tier', async () => {
     const privateAccount = fixture({ stripeStatus: 'canceled' });
-    privateAccount.SubscriptionModel.findOne.mockReturnValue(query({
-      _id: subscriptionId,
-      userId,
-      planId,
-      planType: 'private',
-      stripeMode: 'test',
-      stripeCustomerId: 'cus_test',
-      stripeSubscriptionId: 'sub_test',
-    }));
+    privateAccount.SubscriptionModel.findOne.mockReturnValue(
+      query({
+        _id: subscriptionId,
+        userId,
+        planId,
+        planType: 'private',
+        stripeMode: 'test',
+        stripeCustomerId: 'cus_test',
+        stripeSubscriptionId: 'sub_test',
+      })
+    );
     const result = await resolveEntitlements(userId, privateAccount.overrides);
     expect(result.status).toBe('free');
     expect(result.includedContacts).toBe(5);
@@ -669,7 +750,8 @@ describe('Subscription V2 entitlements and usage periods', () => {
     });
     f.UsageModel.updateOne = jest.fn(async (_filter, update) => {
       usage.consumedIncludedContacts += update.$inc.consumedIncludedContacts;
-      usage.contactOperations.find((item) => item.operationId === first.operationId).status = 'released';
+      usage.contactOperations.find((item) => item.operationId === first.operationId).status =
+        'released';
       return { modifiedCount: 1 };
     });
     const options = {
@@ -678,16 +760,22 @@ describe('Subscription V2 entitlements and usage periods', () => {
     };
 
     const simultaneous = await Promise.allSettled([
-      consumeApplicationContact({
-        userId,
-        jobRequestId: new mongoose.Types.ObjectId(),
-        servicePrice: 12000,
-      }, options),
-      consumeApplicationContact({
-        userId,
-        jobRequestId: new mongoose.Types.ObjectId(),
-        servicePrice: 12000,
-      }, options),
+      consumeApplicationContact(
+        {
+          userId,
+          jobRequestId: new mongoose.Types.ObjectId(),
+          servicePrice: 12000,
+        },
+        options
+      ),
+      consumeApplicationContact(
+        {
+          userId,
+          jobRequestId: new mongoose.Types.ObjectId(),
+          servicePrice: 12000,
+        },
+        options
+      ),
     ]);
     const first = simultaneous.find((result) => result.status === 'fulfilled')?.value;
     expect(first?.newlyConsumed).toBe(true);
@@ -695,11 +783,14 @@ describe('Subscription V2 entitlements and usage periods', () => {
     expect(simultaneous.find((result) => result.status === 'rejected')?.reason).toMatchObject({
       code: 'CONTACT_LIMIT_REACHED',
     });
-    const repeated = await consumeApplicationContact({
-      userId,
-      jobRequestId: first.operationId.replace('job-request:', ''),
-      servicePrice: 12000,
-    }, options);
+    const repeated = await consumeApplicationContact(
+      {
+        userId,
+        jobRequestId: first.operationId.replace('job-request:', ''),
+        servicePrice: 12000,
+      },
+      options
+    );
     expect(repeated.newlyConsumed).toBe(false);
     expect(usage.consumedIncludedContacts).toBe(1);
 
@@ -712,24 +803,32 @@ describe('Subscription V2 entitlements and usage periods', () => {
         $set: { 'contactOperations.$.status': 'released' },
       })
     );
-    await expect(consumeApplicationContact({
-      userId,
-      jobRequestId: first.operationId.replace('job-request:', ''),
-      servicePrice: 12000,
-    }, options)).rejects.toMatchObject({ code: 'APPLICATION_CONTACT_RELEASED' });
+    await expect(
+      consumeApplicationContact(
+        {
+          userId,
+          jobRequestId: first.operationId.replace('job-request:', ''),
+          servicePrice: 12000,
+        },
+        options
+      )
+    ).rejects.toMatchObject({ code: 'APPLICATION_CONTACT_RELEASED' });
   });
 
   test('honors only the explicitly enabled private low-value job exception', async () => {
     const f = fixture();
     f.overrides.GlobalConfigModel.findOne.mockReturnValue(query({ value: true }));
-    const result = await consumeApplicationContact({
-      userId,
-      jobRequestId: new mongoose.Types.ObjectId(),
-      servicePrice: 9999,
-    }, {
-      ...f.overrides,
-      env: { SUBSCRIPTION_V2_ENTITLEMENTS_ENABLED: 'true' },
-    });
+    const result = await consumeApplicationContact(
+      {
+        userId,
+        jobRequestId: new mongoose.Types.ObjectId(),
+        servicePrice: 9999,
+      },
+      {
+        ...f.overrides,
+        env: { SUBSCRIPTION_V2_ENTITLEMENTS_ENABLED: 'true' },
+      }
+    );
     expect(result).toMatchObject({ exempt: true, newlyConsumed: false });
     expect(f.UsageModel.findOneAndUpdate).toHaveBeenCalledTimes(1);
     expect(f.UsageModel.findOneAndUpdate.mock.calls[0][1]).not.toHaveProperty('$expr');
@@ -737,14 +836,17 @@ describe('Subscription V2 entitlements and usage periods', () => {
 
   test('keeps legacy applications outside V2 enforcement when its rollout flag is off', async () => {
     const f = fixture();
-    const result = await consumeApplicationContact({
-      userId,
-      jobRequestId: new mongoose.Types.ObjectId(),
-      servicePrice: 12000,
-    }, {
-      ...f.overrides,
-      env: {},
-    });
+    const result = await consumeApplicationContact(
+      {
+        userId,
+        jobRequestId: new mongoose.Types.ObjectId(),
+        servicePrice: 12000,
+      },
+      {
+        ...f.overrides,
+        env: {},
+      }
+    );
 
     expect(result).toEqual({ enabled: false, newlyConsumed: false });
     expect(f.SubscriptionModel.findOne).toHaveBeenCalledWith({ userId });
@@ -756,14 +858,17 @@ describe('Subscription V2 entitlements and usage periods', () => {
     const f = fixture();
     const { usage } = addPrivateV2UsageFixture(f);
     const jobRequestId = new mongoose.Types.ObjectId();
-    const result = await consumeApplicationContact({
-      userId,
-      jobRequestId,
-      servicePrice: 12000,
-    }, {
-      ...f.overrides,
-      env: {},
-    });
+    const result = await consumeApplicationContact(
+      {
+        userId,
+        jobRequestId,
+        servicePrice: 12000,
+      },
+      {
+        ...f.overrides,
+        env: {},
+      }
+    );
 
     expect(result).toMatchObject({
       enabled: true,
@@ -778,14 +883,17 @@ describe('Subscription V2 entitlements and usage periods', () => {
     addPrivateV2UsageFixture(f);
     f.overrides.GlobalConfigModel.findOne.mockReturnValue(query({ value: true }));
 
-    const result = await consumeApplicationContact({
-      userId,
-      jobRequestId: new mongoose.Types.ObjectId(),
-      servicePrice: 9999,
-    }, {
-      ...f.overrides,
-      env: {},
-    });
+    const result = await consumeApplicationContact(
+      {
+        userId,
+        jobRequestId: new mongoose.Types.ObjectId(),
+        servicePrice: 9999,
+      },
+      {
+        ...f.overrides,
+        env: {},
+      }
+    );
 
     expect(result).toMatchObject({ enabled: true, exempt: true, newlyConsumed: false });
     expect(f.UsageModel.findOneAndUpdate).not.toHaveBeenCalledWith(
@@ -801,14 +909,19 @@ describe('Subscription V2 entitlements and usage periods', () => {
       throw new Error('database unavailable');
     });
 
-    await expect(consumeApplicationContact({
-      userId,
-      jobRequestId: new mongoose.Types.ObjectId(),
-      servicePrice: 12000,
-    }, {
-      ...f.overrides,
-      env: {},
-    })).rejects.toMatchObject({
+    await expect(
+      consumeApplicationContact(
+        {
+          userId,
+          jobRequestId: new mongoose.Types.ObjectId(),
+          servicePrice: 12000,
+        },
+        {
+          ...f.overrides,
+          env: {},
+        }
+      )
+    ).rejects.toMatchObject({
       status: 503,
       code: 'SUBSCRIPTION_STATUS_UNAVAILABLE',
     });
@@ -845,8 +958,14 @@ describe('Subscription V2 entitlements and usage periods', () => {
     const firstId = new mongoose.Types.ObjectId();
     const secondId = new mongoose.Types.ObjectId();
 
-    await consumeApplicationContact({ userId, jobRequestId: firstId, servicePrice: 12000 }, options);
-    await consumeApplicationContact({ userId, jobRequestId: secondId, servicePrice: 12000 }, options);
+    await consumeApplicationContact(
+      { userId, jobRequestId: firstId, servicePrice: 12000 },
+      options
+    );
+    await consumeApplicationContact(
+      { userId, jobRequestId: secondId, servicePrice: 12000 },
+      options
+    );
 
     const current = await resolveEntitlements(userId, options);
     expect(usage.consumedIncludedContacts).toBe(2);
@@ -861,14 +980,24 @@ describe('Subscription V2 entitlements and usage periods', () => {
     const serviceId = new mongoose.Types.ObjectId();
     const purchaseModel = (rows) => ({
       findOneAndUpdate: jest.fn(async (filter, update) => {
-        const row = rows.find((r) => String(r.serviceId) === String(filter.serviceId) && r.status === filter.status);
+        const row = rows.find(
+          (r) => String(r.serviceId) === String(filter.serviceId) && r.status === filter.status
+        );
         if (!row) return null;
         Object.assign(row, update.$set);
         return row;
       }),
       exists: jest.fn(async () => null),
       countDocuments: jest.fn(async () => 0),
-      findOne: jest.fn(() => ({ sort() { return this; }, select() { return this; }, lean: async () => null })),
+      findOne: jest.fn(() => ({
+        sort() {
+          return this;
+        },
+        select() {
+          return this;
+        },
+        lean: async () => null,
+      })),
     });
 
     test('a paid extra contact for this job is used before the included allowance', async () => {
@@ -878,7 +1007,11 @@ describe('Subscription V2 entitlements and usage periods', () => {
       const rows = [{ serviceId, status: 'paid' }];
       const result = await consumeApplicationContact(
         { userId, jobRequestId: new mongoose.Types.ObjectId(), servicePrice: 12000, serviceId },
-        { ...f.overrides, env: { SUBSCRIPTION_V2_ENTITLEMENTS_ENABLED: 'true' }, ExtraContactModel: purchaseModel(rows) }
+        {
+          ...f.overrides,
+          env: { SUBSCRIPTION_V2_ENTITLEMENTS_ENABLED: 'true' },
+          ExtraContactModel: purchaseModel(rows),
+        }
       );
       expect(result).toMatchObject({ newlyConsumed: true, extra: true });
       expect(rows[0].status).toBe('consumed');
@@ -890,12 +1023,25 @@ describe('Subscription V2 entitlements and usage periods', () => {
       const { usage } = addPrivateV2UsageFixture(f);
       usage.consumedIncludedContacts = usage.includedContacts;
       // Like MongoDB's $expr guard: no included contact left, no update.
-      f.UsageModel.findOneAndUpdate.mockImplementation(async (filter) => (filter.$expr ? null : usage));
-      f.paidPlan.entitlements = { ...f.paidPlan.entitlements, perContactPrice: 29, maxContact: 2, ContactUnlock: 60 };
-      await expect(consumeApplicationContact(
-        { userId, jobRequestId: new mongoose.Types.ObjectId(), servicePrice: 12000, serviceId },
-        { ...f.overrides, env: { SUBSCRIPTION_V2_ENTITLEMENTS_ENABLED: 'true' }, ExtraContactModel: purchaseModel([]) }
-      )).rejects.toMatchObject({
+      f.UsageModel.findOneAndUpdate.mockImplementation(async (filter) =>
+        filter.$expr ? null : usage
+      );
+      f.paidPlan.entitlements = {
+        ...f.paidPlan.entitlements,
+        perContactPrice: 29,
+        maxContact: 2,
+        ContactUnlock: 60,
+      };
+      await expect(
+        consumeApplicationContact(
+          { userId, jobRequestId: new mongoose.Types.ObjectId(), servicePrice: 12000, serviceId },
+          {
+            ...f.overrides,
+            env: { SUBSCRIPTION_V2_ENTITLEMENTS_ENABLED: 'true' },
+            ExtraContactModel: purchaseModel([]),
+          }
+        )
+      ).rejects.toMatchObject({
         code: 'CONTACT_LIMIT_REACHED',
         extraContact: { available: true, priceNok: 29, maxPerPeriod: 2, cooldownMinutes: 60 },
       });

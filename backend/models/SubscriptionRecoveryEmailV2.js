@@ -31,13 +31,7 @@ const subscriptionRecoveryEmailV2Schema = new mongoose.Schema(
   { timestamps: true, collection: 'subscription_recovery_emails_v2' }
 );
 
-subscriptionRecoveryEmailV2Schema.index(
-  { stripeMode: 1, invoiceId: 1, kind: 1 },
-  { unique: true }
-);
+subscriptionRecoveryEmailV2Schema.index({ stripeMode: 1, invoiceId: 1, kind: 1 }, { unique: true });
 subscriptionRecoveryEmailV2Schema.index({ status: 1, scheduledAt: 1, nextAttemptAt: 1 });
 
-module.exports = mongoose.model(
-  'SubscriptionRecoveryEmailV2',
-  subscriptionRecoveryEmailV2Schema
-);
+module.exports = mongoose.model('SubscriptionRecoveryEmailV2', subscriptionRecoveryEmailV2Schema);

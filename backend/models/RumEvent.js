@@ -28,11 +28,25 @@ const rumEventSchema = new mongoose.Schema(
     source: { type: String, default: null },
     fingerprint: { type: String, default: null },
     // problem: render | not_found | chunk | api | console (JS errors stay type 'error')
-    kind: { type: String, enum: ['render', 'not_found', 'chunk', 'api', 'console', null], default: null },
+    kind: {
+      type: String,
+      enum: ['render', 'not_found', 'chunk', 'api', 'console', null],
+      default: null,
+    },
     status: { type: Number, default: null }, // api: HTTP status, 0 = network error
     // Last steps before an error/problem — masked on the client and again on intake.
     trail: {
-      type: [{ _id: false, at: Date, type: { type: String }, page: String, label: String, status: Number, ms: Number }],
+      type: [
+        {
+          _id: false,
+          at: Date,
+          type: { type: String },
+          page: String,
+          label: String,
+          status: Number,
+          ms: Number,
+        },
+      ],
       default: undefined,
     },
   },

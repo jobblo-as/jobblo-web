@@ -51,7 +51,11 @@ async function createAndPersist(stripe, user, field, replacing = null) {
     name: user.name,
     metadata: { userId: String(user._id) },
   };
-  const paramsHash = crypto.createHash('sha256').update(JSON.stringify(params)).digest('hex').slice(0, 16);
+  const paramsHash = crypto
+    .createHash('sha256')
+    .update(JSON.stringify(params))
+    .digest('hex')
+    .slice(0, 16);
   const customer = await stripe.customers.create(params, {
     idempotencyKey: `jobblo-customer:${field}:${user._id}:${replacing || 'none'}:${paramsHash}`,
   });
@@ -59,7 +63,9 @@ async function createAndPersist(stripe, user, field, replacing = null) {
     { _id: user._id, [field]: replacing || null },
     { $set: { [field]: customer.id } },
     { new: true }
-  ).select(field).lean();
+  )
+    .select(field)
+    .lean();
   let winner = customer.id;
   if (!stored) {
     // Someone else stored a customer for this mode first — use theirs.

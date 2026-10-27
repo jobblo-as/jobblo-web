@@ -1,9 +1,6 @@
 const Stripe = require('stripe');
 const { getStripeConfigurationForMode, getStripeForMode } = require('../../config/stripe');
-const {
-  recordVerifiedDelivery,
-  recordDeliveryProblem,
-} = require('./webhookReadiness');
+const { recordVerifiedDelivery, recordDeliveryProblem } = require('./webhookReadiness');
 const { claimEvent, markProcessed, releaseClaim } = require('./eventLedger');
 const { logApplicationError } = require('../../utils/errorLogger');
 const {
@@ -81,10 +78,7 @@ const PERMANENT_SAFEPAY_REJECTION_REASONS = new Set([
 ]);
 
 function isLegacySubscriptionSession(session) {
-  return (
-    session?.mode === 'subscription' ||
-    session?.metadata?.type === 'subscription'
-  );
+  return session?.mode === 'subscription' || session?.metadata?.type === 'subscription';
 }
 
 /** Paid extra contact (services/subscriptions/v2ExtraContacts.js). */
@@ -148,10 +142,7 @@ async function handleEvent(event, { io, stripe } = {}) {
   // a top-level import would close the cycle.
   const { confirmPaidSession } = require('../../controllers/SafePayCheckoutController');
   const Order = require('../../models/Order');
-  const {
-    recordStripeTransfer,
-    recordStripeBankPayout,
-  } = require('./financialHistory');
+  const { recordStripeTransfer, recordStripeBankPayout } = require('./financialHistory');
   const confirmSafePay = async (session) => {
     const confirmation = await confirmPaidSession(session, io);
     if (confirmation.ok) return { handled: 'safepay', result: confirmation };
@@ -224,7 +215,9 @@ async function handleEvent(event, { io, stripe } = {}) {
         return handleV2SubscriptionEvent(event, stripe);
       }
       if (isExtraContactSession(event.data.object)) {
-        return require('../subscriptions/v2ExtraContacts').expireExtraContactSession(event.data.object);
+        return require('../subscriptions/v2ExtraContacts').expireExtraContactSession(
+          event.data.object
+        );
       }
       if (isLegacySubscriptionSession(event.data.object)) {
         return { handled: 'subscription_rebuild_in_progress' };

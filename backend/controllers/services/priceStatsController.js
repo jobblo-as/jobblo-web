@@ -16,7 +16,12 @@ function priceStats(prices) {
   const xs = prices.filter((p) => Number.isFinite(p) && p > 0).sort((a, b) => a - b);
   if (xs.length < MIN_SAMPLES) return { count: xs.length, low: null, median: null, high: null };
   const at = (q) => xs[Math.min(xs.length - 1, Math.max(0, Math.round(q * (xs.length - 1))))];
-  return { count: xs.length, low: Math.round(at(0.1)), median: Math.round(at(0.5)), high: Math.round(at(0.9)) };
+  return {
+    count: xs.length,
+    low: Math.round(at(0.1)),
+    median: Math.round(at(0.5)),
+    high: Math.round(at(0.9)),
+  };
 }
 
 async function pricesFor(filter) {
@@ -29,8 +34,12 @@ async function pricesFor(filter) {
 }
 
 exports.getPriceStats = async (req, res) => {
-  const category = typeof req.query.category === 'string' ? req.query.category.trim().slice(0, 80) : '';
-  const countyCode = typeof req.query.countyCode === 'string' && /^\d{2}$/.test(req.query.countyCode) ? req.query.countyCode : '';
+  const category =
+    typeof req.query.category === 'string' ? req.query.category.trim().slice(0, 80) : '';
+  const countyCode =
+    typeof req.query.countyCode === 'string' && /^\d{2}$/.test(req.query.countyCode)
+      ? req.query.countyCode
+      : '';
   if (!category) return res.status(400).json({ error: 'category er påkrevd.' });
   try {
     if (countyCode) {

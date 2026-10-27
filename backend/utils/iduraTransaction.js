@@ -44,7 +44,10 @@ const INTENTS = Object.freeze({ LOGIN: 'login', LINK: 'link' });
  * starts again should have exactly one live transaction. Keeping a list would mean a
  * callback could be matched against a stale entry the user has moved on from.
  */
-function startTransaction(req, { intent, jobbloUserId, jobbloSessionId = null, state, nonce, codeVerifier }) {
+function startTransaction(
+  req,
+  { intent, jobbloUserId, jobbloSessionId = null, state, nonce, codeVerifier }
+) {
   if (!req.session) {
     throw new Error('startTransaction requires a session');
   }

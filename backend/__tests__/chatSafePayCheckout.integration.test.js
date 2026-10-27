@@ -224,9 +224,7 @@ describe('POST /api/chats/:chatId/payments SafePay integration', () => {
     });
 
     const checkout = () =>
-      request(app)
-        .post(`/api/chats/${CHAT_ID}/payments`)
-        .set('x-test-user', CUSTOMER);
+      request(app).post(`/api/chats/${CHAT_ID}/payments`).set('x-test-user', CUSTOMER);
     const responses = await Promise.all([checkout(), checkout()]);
 
     expect(responses.map(({ status }) => status).sort()).toEqual([200, 409]);

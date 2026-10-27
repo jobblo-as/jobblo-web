@@ -26,7 +26,15 @@ const STAGES = [
   { key: 'reviewed', label: 'Review left', optional: true, from: 'completed' },
 ];
 // How long a job may sit at a stage before it counts as stuck (waiting for the next stage).
-const STUCK_AFTER = { posted: 3 * DAY, first_bid: 7 * DAY, accepted: 2 * DAY, paid: 3 * DAY, started: 7 * DAY, delivered: 7 * DAY, completed: DAY };
+const STUCK_AFTER = {
+  posted: 3 * DAY,
+  first_bid: 7 * DAY,
+  accepted: 2 * DAY,
+  paid: 3 * DAY,
+  started: 7 * DAY,
+  delivered: 7 * DAY,
+  completed: DAY,
+};
 
 /** Pure: stage timestamps for one job from its records. Unit-tested. */
 function stagesOf({ service, firstBidAt, order, payment, payout, review }) {
@@ -38,7 +46,10 @@ function stagesOf({ service, firstBidAt, order, payment, payout, review }) {
     started: order?.startedAt || null,
     delivered: order?.readyForReviewAt || null,
     completed: order?.status === 'completed' ? order.completedAt || order.updatedAt : null,
-    paid_out: payout && ['released_internal', 'processing', 'transferred'].includes(payout.status) ? payout.transferCompletedAt || payout.createdAt : null,
+    paid_out:
+      payout && ['released_internal', 'processing', 'transferred'].includes(payout.status)
+        ? payout.transferCompletedAt || payout.createdAt
+        : null,
     reviewed: review?.createdAt || null,
   };
 }
@@ -50,21 +61,45 @@ function position(stages, { order, now = Date.now() } = {}) {
   let current = null;
   const skipped = [];
   let furthest = -1;
-  STAGES.forEach((s, i) => { if (stages[s.key]) furthest = i; });
+  STAGES.forEach((s, i) => {
+    if (stages[s.key]) furthest = i;
+  });
   for (let i = 0; i <= furthest; i++) {
     const s = STAGES[i];
-    if (stages[s.key]) { if (!skipped.length) current = s.key; }
-    else if (!s.optional) skipped.push(s.key);
+    if (stages[s.key]) {
+      if (!skipped.length) current = s.key;
+    } else if (!s.optional) skipped.push(s.key);
   }
-  const branch = order?.status === 'cancelled' ? (order.paymentStatus === 'refunded' || order.paymentStatus === 'partially_refunded' ? 'refunded' : 'cancelled') : order?.status === 'disputed' ? 'disputed' : order?.status === 'declined' ? 'declined' : null;
-  const done = current === 'reviewed' || (current === 'paid_out' && !STUCK_AFTER.paid_out) || branch === 'refunded' || branch === 'cancelled' || branch === 'declined';
+  const branch =
+    order?.status === 'cancelled'
+      ? order.paymentStatus === 'refunded' || order.paymentStatus === 'partially_refunded'
+        ? 'refunded'
+        : 'cancelled'
+      : order?.status === 'disputed'
+        ? 'disputed'
+        : order?.status === 'declined'
+          ? 'declined'
+          : null;
+  const done =
+    current === 'reviewed' ||
+    (current === 'paid_out' && !STUCK_AFTER.paid_out) ||
+    branch === 'refunded' ||
+    branch === 'cancelled' ||
+    branch === 'declined';
   const since = current ? new Date(stages[current]).getTime() : null;
   const waiting = current && !done && !branch ? now - since : null;
   const limit = current ? STUCK_AFTER[current] : null;
-  return { current, branch, skipped, waitingMs: waiting, stuck: Boolean(waiting && limit && waiting > limit) };
+  return {
+    current,
+    branch,
+    skipped,
+    waitingMs: waiting,
+    stuck: Boolean(waiting && limit && waiting > limit),
+  };
 }
 
-const pct = (sorted, p) => (sorted.length ? sorted[Math.min(sorted.length - 1, Math.floor((p / 100) * sorted.length))] : null);
+const pct = (sorted, p) =>
+  sorted.length ? sorted[Math.min(sorted.length - 1, Math.floor((p / 100) * sorted.length))] : null;
 
 /** Resolve any id (job, order, payment, payout, job request) to the job. */
 async function resolveServiceId(id) {
@@ -72,7 +107,10 @@ async function resolveServiceId(id) {
   if (await model('Service').exists({ _id: id })) return String(id);
   const order = await model('Order').findById(id).select('serviceId').lean();
   if (order) return String(order.serviceId);
-  for (const [m, field] of [['Payment', 'orderId'], ['Payout', 'orderId']]) {
+  for (const [m, field] of [
+    ['Payment', 'orderId'],
+    ['Payout', 'orderId'],
+  ]) {
     const r = await model(m).findById(id).select(field).lean();
     if (r) return resolveServiceId(String(r[field]));
   }
@@ -84,38 +122,90 @@ async function traceJob(anyId) {
   const serviceId = await resolveServiceId(anyId);
   if (!serviceId) return null;
   const [service, bids, orders, chats] = await Promise.all([
-    model('Service').findById(serviceId).populate('userId', 'name').select('title status price createdAt userId categories').lean(),
-    model('JobRequest').find({ serviceId }).sort({ createdAt: 1 }).populate('providerId', 'name').select('providerId status createdAt withdrawnAt').lean(),
-    model('Order').find({ serviceId }).sort({ createdAt: 1 }).populate('customerId providerId', 'name').select('status paymentStatus agreedPrice createdAt updatedAt paymentConfirmedAt startedAt readyForReviewAt completedAt customerId providerId chatId cancellationReason').lean(),
+    model('Service')
+      .findById(serviceId)
+      .populate('userId', 'name')
+      .select('title status price createdAt userId categories')
+      .lean(),
+    model('JobRequest')
+      .find({ serviceId })
+      .sort({ createdAt: 1 })
+      .populate('providerId', 'name')
+      .select('providerId status createdAt withdrawnAt')
+      .lean(),
+    model('Order')
+      .find({ serviceId })
+      .sort({ createdAt: 1 })
+      .populate('customerId providerId', 'name')
+      .select(
+        'status paymentStatus agreedPrice createdAt updatedAt paymentConfirmedAt startedAt readyForReviewAt completedAt customerId providerId chatId cancellationReason'
+      )
+      .lean(),
     model('ChatMessage').countDocuments({ serviceId }),
   ]);
   // The transaction is the latest order that got furthest; earlier cancelled attempts are listed as history.
-  const order = [...orders].reverse().find((o) => o.status !== 'cancelled') || orders[orders.length - 1] || null;
+  const order =
+    [...orders].reverse().find((o) => o.status !== 'cancelled') ||
+    orders[orders.length - 1] ||
+    null;
   const [payment, payout, review, disputes] = order
     ? await Promise.all([
-        model('Payment').findOne({ orderId: order._id }).select('status amount capturedAmountMinor refundedAmountMinor createdAt stripePaymentIntentId').lean(),
-        model('Payout').findOne({ orderId: order._id }).select('status netProviderAmount createdAt transferCompletedAt stripeTransferId').lean(),
+        model('Payment')
+          .findOne({ orderId: order._id })
+          .select(
+            'status amount capturedAmountMinor refundedAmountMinor createdAt stripePaymentIntentId'
+          )
+          .lean(),
+        model('Payout')
+          .findOne({ orderId: order._id })
+          .select('status netProviderAmount createdAt transferCompletedAt stripeTransferId')
+          .lean(),
         model('Review').findOne({ orderId: order._id }).select('rating createdAt').lean(),
-        model('Dispute').find({ orderId: order._id }).select('status title openedAt resolution').lean(),
+        model('Dispute')
+          .find({ orderId: order._id })
+          .select('status title openedAt resolution')
+          .lean(),
       ])
     : [null, null, null, []];
   const firstBid = bids[0];
-  const stages = stagesOf({ service, firstBidAt: firstBid?.createdAt, order, payment, payout, review });
+  const stages = stagesOf({
+    service,
+    firstBidAt: firstBid?.createdAt,
+    order,
+    payment,
+    payout,
+    review,
+  });
   const pos = position(stages, { order });
   let prev = null;
   const steps = STAGES.map((s) => {
     const at = stages[s.key];
     const base = s.from ? stages[s.from] : prev;
-    const step = { key: s.key, label: s.label, optional: Boolean(s.optional), at, afterMs: at && base ? new Date(at) - new Date(base) : null, skipped: pos.skipped.includes(s.key) };
+    const step = {
+      key: s.key,
+      label: s.label,
+      optional: Boolean(s.optional),
+      at,
+      afterMs: at && base ? new Date(at) - new Date(base) : null,
+      skipped: pos.skipped.includes(s.key),
+    };
     if (at && !s.from) prev = at;
     return step;
   });
   const detail = {
-    posted: service ? `${service.title} · by ${service.userId?.name || '—'}${service.price ? ` · ${service.price} kr` : ''}` : null,
-    first_bid: firstBid ? `${bids.length} bid(s) · first from ${firstBid.providerId?.name || '—'} · ${chats} chat(s)` : `no bids yet · ${chats} chat(s)`,
+    posted: service
+      ? `${service.title} · by ${service.userId?.name || '—'}${service.price ? ` · ${service.price} kr` : ''}`
+      : null,
+    first_bid: firstBid
+      ? `${bids.length} bid(s) · first from ${firstBid.providerId?.name || '—'} · ${chats} chat(s)`
+      : `no bids yet · ${chats} chat(s)`,
     accepted: order ? `${order.providerId?.name || '—'} for ${order.agreedPrice ?? '—'} kr` : null,
-    paid: payment ? `${(payment.capturedAmountMinor ?? payment.amount * 100) / 100} kr captured · ${payment.status}` : null,
-    paid_out: payout ? `${payout.netProviderAmount} kr · ${payout.status}${payout.stripeTransferId ? ` · ${payout.stripeTransferId}` : ''}` : null,
+    paid: payment
+      ? `${(payment.capturedAmountMinor ?? payment.amount * 100) / 100} kr captured · ${payment.status}`
+      : null,
+    paid_out: payout
+      ? `${payout.netProviderAmount} kr · ${payout.status}${payout.stripeTransferId ? ` · ${payout.stripeTransferId}` : ''}`
+      : null,
     reviewed: review ? `${review.rating}★` : null,
   };
   for (const s of steps) s.detail = detail[s.key] || null;
@@ -128,9 +218,27 @@ async function traceJob(anyId) {
     steps,
     ...pos,
     totalMs: stages.posted ? new Date(prev) - new Date(stages.posted) : null,
-    bids: bids.map((b) => ({ provider: b.providerId?.name || '—', status: b.withdrawnAt ? 'withdrawn' : b.status, at: b.createdAt })),
-    attempts: orders.filter((o) => order && String(o._id) !== String(order._id)).map((o) => ({ orderId: String(o._id), status: o.status, paymentStatus: o.paymentStatus, at: o.createdAt, reason: o.cancellationReason || null })),
-    disputes: disputes.map((d) => ({ id: String(d._id), status: d.status, title: d.title, at: d.openedAt, outcome: d.resolution?.outcome || null })),
+    bids: bids.map((b) => ({
+      provider: b.providerId?.name || '—',
+      status: b.withdrawnAt ? 'withdrawn' : b.status,
+      at: b.createdAt,
+    })),
+    attempts: orders
+      .filter((o) => order && String(o._id) !== String(order._id))
+      .map((o) => ({
+        orderId: String(o._id),
+        status: o.status,
+        paymentStatus: o.paymentStatus,
+        at: o.createdAt,
+        reason: o.cancellationReason || null,
+      })),
+    disputes: disputes.map((d) => ({
+      id: String(d._id),
+      status: d.status,
+      title: d.title,
+      at: d.openedAt,
+      outcome: d.resolution?.outcome || null,
+    })),
     refund: payment?.refundedAmountMinor ? payment.refundedAmountMinor / 100 : null,
   };
 }
@@ -138,16 +246,34 @@ async function traceJob(anyId) {
 /** Funnel, step durations and stuck jobs for jobs posted in the last `days`. */
 async function journeys(days = 90) {
   const since = new Date(Date.now() - days * DAY);
-  const services = await model('Service').find({ createdAt: { $gte: since } }).select('title createdAt status').lean();
+  const services = await model('Service')
+    .find({ createdAt: { $gte: since } })
+    .select('title createdAt status')
+    .lean();
   const ids = services.map((s) => s._id);
   const [firstBids, orders] = await Promise.all([
-    model('JobRequest').aggregate([{ $match: { serviceId: { $in: ids } } }, { $group: { _id: '$serviceId', at: { $min: '$createdAt' }, n: { $sum: 1 } } }]),
-    model('Order').find({ serviceId: { $in: ids } }).sort({ createdAt: 1 }).select('serviceId status paymentStatus createdAt updatedAt paymentConfirmedAt startedAt readyForReviewAt completedAt').lean(),
+    model('JobRequest').aggregate([
+      { $match: { serviceId: { $in: ids } } },
+      { $group: { _id: '$serviceId', at: { $min: '$createdAt' }, n: { $sum: 1 } } },
+    ]),
+    model('Order')
+      .find({ serviceId: { $in: ids } })
+      .sort({ createdAt: 1 })
+      .select(
+        'serviceId status paymentStatus createdAt updatedAt paymentConfirmedAt startedAt readyForReviewAt completedAt'
+      )
+      .lean(),
   ]);
   const orderIds = orders.map((o) => o._id);
   const [payouts, reviews] = await Promise.all([
-    model('Payout').find({ orderId: { $in: orderIds } }).select('orderId status createdAt transferCompletedAt').lean(),
-    model('Review').find({ orderId: { $in: orderIds } }).select('orderId createdAt').lean(),
+    model('Payout')
+      .find({ orderId: { $in: orderIds } })
+      .select('orderId status createdAt transferCompletedAt')
+      .lean(),
+    model('Review')
+      .find({ orderId: { $in: orderIds } })
+      .select('orderId createdAt')
+      .lean(),
   ]);
   const FB = new Map(firstBids.map((b) => [String(b._id), b]));
   const OB = new Map();
@@ -165,7 +291,13 @@ async function journeys(days = 90) {
   const stuck = [];
   for (const s of services) {
     const order = OB.get(String(s._id));
-    const st = stagesOf({ service: s, firstBidAt: FB.get(String(s._id))?.at, order, payout: order && PO.get(String(order._id)), review: order && RV.get(String(order._id)) });
+    const st = stagesOf({
+      service: s,
+      firstBidAt: FB.get(String(s._id))?.at,
+      order,
+      payout: order && PO.get(String(order._id)),
+      review: order && RV.get(String(order._id)),
+    });
     let prev = null;
     for (const stage of STAGES) {
       const at = st[stage.key];
@@ -177,17 +309,36 @@ async function journeys(days = 90) {
     }
     const pos = position(st, { order });
     if (pos.branch) branches[pos.branch] = (branches[pos.branch] || 0) + 1;
-    if (pos.stuck) stuck.push({ serviceId: String(s._id), title: s.title, stage: pos.current, waitingMs: pos.waitingMs, orderId: order ? String(order._id) : null });
+    if (pos.stuck)
+      stuck.push({
+        serviceId: String(s._id),
+        title: s.title,
+        stage: pos.current,
+        waitingMs: pos.waitingMs,
+        orderId: order ? String(order._id) : null,
+      });
   }
   stuck.sort((a, b) => b.waitingMs - a.waitingMs);
   return {
     days,
     jobs: services.length,
-    funnel: STAGES.map((s) => ({ key: s.key, label: s.label, reached: reached[s.key], share: services.length ? Math.round((reached[s.key] / services.length) * 1000) / 10 : null })),
+    funnel: STAGES.map((s) => ({
+      key: s.key,
+      label: s.label,
+      reached: reached[s.key],
+      share: services.length ? Math.round((reached[s.key] / services.length) * 1000) / 10 : null,
+    })),
     steps: STAGES.slice(1).map((s, i) => {
       const d = durations[s.key].sort((a, b) => a - b);
       const from = STAGES.find((x) => x.key === s.from) || STAGES[i];
-      return { from: from.key, to: s.key, label: `${from.label} → ${s.label}`, count: d.length, p50: pct(d, 50), p90: pct(d, 90) };
+      return {
+        from: from.key,
+        to: s.key,
+        label: `${from.label} → ${s.label}`,
+        count: d.length,
+        p50: pct(d, 50),
+        p90: pct(d, 90),
+      };
     }),
     branches,
     stuck: stuck.slice(0, 100),

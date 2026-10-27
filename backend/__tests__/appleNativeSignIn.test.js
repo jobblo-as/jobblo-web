@@ -68,7 +68,10 @@ async function call(body) {
   return res;
 }
 
-const selectable = (v) => ({ select: () => Promise.resolve(v), then: (r, j) => Promise.resolve(v).then(r, j) });
+const selectable = (v) => ({
+  select: () => Promise.resolve(v),
+  then: (r, j) => Promise.resolve(v).then(r, j),
+});
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -78,14 +81,20 @@ beforeEach(() => {
   delete process.env.APPLE_BUNDLE_ID; // default comes from jobblo-app/app.json (com.jobblo.app)
   global.fetch = jest.fn(async () => ({
     ok: true,
-    json: async () => ({ keys: [{ ...publicKey.export({ format: 'jwk' }), kid: KID, alg: 'RS256', use: 'sig' }] }),
+    json: async () => ({
+      keys: [{ ...publicKey.export({ format: 'jwk' }), kid: KID, alg: 'RS256', use: 'sig' }],
+    }),
   }));
   User.findOne.mockImplementation(() => selectable(null));
   User.create.mockImplementation(async (doc) => ({ _id: 'new-user', ...doc }));
 });
 
 test('valid token for a new Apple identity creates the user and returns an access token', async () => {
-  const res = await call({ identityToken: token(), rawNonce: RAW_NONCE, fullName: { givenName: 'Kari', familyName: 'Nordmann' } });
+  const res = await call({
+    identityToken: token(),
+    rawNonce: RAW_NONCE,
+    fullName: { givenName: 'Kari', familyName: 'Nordmann' },
+  });
   expect(res.statusCode).toBe(200);
   expect(res.body).toEqual({ accessToken: 'h.p.s' });
   expect(res.cookies.refreshToken).toBe('rt');
@@ -98,11 +107,17 @@ test('valid token for a new Apple identity creates the user and returns an acces
     })
   );
   expect(createSession).toHaveBeenCalledWith(expect.anything(), 'new-user');
-  expect(global.fetch).toHaveBeenCalledWith('https://appleid.apple.com/auth/keys', expect.anything());
+  expect(global.fetch).toHaveBeenCalledWith(
+    'https://appleid.apple.com/auth/keys',
+    expect.anything()
+  );
 });
 
 test('existing Apple user is reused, not recreated, and the JWKS is cached', async () => {
-  const existing = { _id: 'apple-user', oauthProviders: [{ provider: 'apple', providerId: '001234.apple.sub' }] };
+  const existing = {
+    _id: 'apple-user',
+    oauthProviders: [{ provider: 'apple', providerId: '001234.apple.sub' }],
+  };
   User.findOne.mockImplementation((q) => selectable(q.oauthProviders ? existing : null));
   const first = await call({ identityToken: token(), rawNonce: RAW_NONCE });
   const second = await call({ identityToken: token(), rawNonce: RAW_NONCE });
@@ -132,7 +147,20 @@ test.each([
   ['missing nonce', () => token({ nonce: undefined })],
   ['signed by another key', () => token({}, { key: other.privateKey })],
   ['unknown kid', () => token({}, { kid: 'nope' })],
-  ['HS256 forgery', () => jwt.sign({ iss: 'https://appleid.apple.com', aud: 'com.jobblo.app', sub: 's', nonce: sha(RAW_NONCE) }, 'secret', { keyid: KID })],
+  [
+    'HS256 forgery',
+    () =>
+      jwt.sign(
+        {
+          iss: 'https://appleid.apple.com',
+          aud: 'com.jobblo.app',
+          sub: 's',
+          nonce: sha(RAW_NONCE),
+        },
+        'secret',
+        { keyid: KID }
+      ),
+  ],
 ])('refuses %s', async (_name, make) => {
   const res = await call({ identityToken: make(), rawNonce: RAW_NONCE });
   expect(res.statusCode).toBe(401);
@@ -144,7 +172,10 @@ test.each([
 test('APPLE_BUNDLE_ID overrides the app.json default', async () => {
   process.env.APPLE_BUNDLE_ID = 'com.jobblo.staging';
   expect((await call({ identityToken: token(), rawNonce: RAW_NONCE })).statusCode).toBe(401);
-  expect((await call({ identityToken: token({ aud: 'com.jobblo.staging' }), rawNonce: RAW_NONCE })).statusCode).toBe(200);
+  expect(
+    (await call({ identityToken: token({ aud: 'com.jobblo.staging' }), rawNonce: RAW_NONCE }))
+      .statusCode
+  ).toBe(200);
 });
 
 test('malformed bodies are a 400', async () => {
@@ -154,7 +185,9 @@ test('malformed bodies are a 400', async () => {
 });
 
 test('inactive account gets no session', async () => {
-  User.findOne.mockImplementation((q) => selectable(q.oauthProviders ? { _id: 'u', accountStatus: 'deactivated' } : null));
+  User.findOne.mockImplementation((q) =>
+    selectable(q.oauthProviders ? { _id: 'u', accountStatus: 'deactivated' } : null)
+  );
   const res = await call({ identityToken: token(), rawNonce: RAW_NONCE });
   expect(res.statusCode).toBe(403);
   expect(createSession).not.toHaveBeenCalled();

@@ -33,7 +33,14 @@ export function RouteErrorElement() {
   React.useEffect(() => {
     let cancelled = false;
     const message = String((error as { message?: string } | null)?.message || 'Render error');
-    reportProblem(/dynamically imported module|Loading chunk|ChunkLoadError|Importing a module script failed/i.test(message) ? 'chunk' : 'render', message);
+    reportProblem(
+      /dynamically imported module|Loading chunk|ChunkLoadError|Importing a module script failed/i.test(
+        message
+      )
+        ? 'chunk'
+        : 'render',
+      message
+    );
     reportClientError(error).then((id) => {
       if (!cancelled) setReferenceId(id);
     });
@@ -50,9 +57,7 @@ export function RouteErrorElement() {
           Vi klarte ikke å vise denne siden. Prøv å laste den på nytt, eller gå tilbake til
           forsiden.
         </p>
-        {referenceId && (
-          <p className="mt-2 text-sm text-gray-400">Referanse: {referenceId}</p>
-        )}
+        {referenceId && <p className="mt-2 text-sm text-gray-400">Referanse: {referenceId}</p>}
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <button
             type="button"

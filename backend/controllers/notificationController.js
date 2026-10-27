@@ -16,7 +16,6 @@ exports.getAllNotifications = async (req, res) => {
       return res.status(400).json({ error: 'Invalid user ID' });
     }
 
-
     // Filter criteria
     const query = {
       $or: [{ userId: userId }, { userId: null, isSystem: true }],
@@ -49,9 +48,11 @@ exports.getAllNotifications = async (req, res) => {
     const broadcastIds = notifications.filter((n) => !n.userId).map((n) => n._id);
     const readIds = new Set(
       broadcastIds.length
-        ? (await Notification.find({ _id: { $in: broadcastIds }, readBy: userId }).select('_id').lean()).map((n) =>
-            String(n._id)
-          )
+        ? (
+            await Notification.find({ _id: { $in: broadcastIds }, readBy: userId })
+              .select('_id')
+              .lean()
+          ).map((n) => String(n._id))
         : []
     );
 
@@ -61,7 +62,9 @@ exports.getAllNotifications = async (req, res) => {
       total,
       currentPage: parseInt(page),
       totalPages: Math.ceil(total / limit),
-      data: notifications.map((n) => forViewer({ ...n, readBy: readIds.has(String(n._id)) ? [userId] : [] }, userId)),
+      data: notifications.map((n) =>
+        forViewer({ ...n, readBy: readIds.has(String(n._id)) ? [userId] : [] }, userId)
+      ),
     });
   } catch (error) {
     serverError(res, error);

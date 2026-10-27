@@ -52,16 +52,16 @@ function stripePriceMatches(price, plan, mode, item) {
   const productId = mode === 'test' ? plan.stripeProductIdTest : plan.stripeProductId;
   return Boolean(
     price &&
-      priceId &&
-      idOf(item.price) === priceId &&
-      price.active === true &&
-      price.livemode === (mode === 'live') &&
-      price.currency?.toLowerCase() === 'nok' &&
-      price.type === 'recurring' &&
-      price.recurring?.interval === 'month' &&
-      price.recurring?.interval_count === 1 &&
-      price.unit_amount === Math.round(plan.price * 100) &&
-      (!productId || idOf(price.product) === productId)
+    priceId &&
+    idOf(item.price) === priceId &&
+    price.active === true &&
+    price.livemode === (mode === 'live') &&
+    price.currency?.toLowerCase() === 'nok' &&
+    price.type === 'recurring' &&
+    price.recurring?.interval === 'month' &&
+    price.recurring?.interval_count === 1 &&
+    price.unit_amount === Math.round(plan.price * 100) &&
+    (!productId || idOf(price.product) === productId)
   );
 }
 
@@ -71,17 +71,17 @@ function invoiceConfirmsPeriod(invoice, record, period) {
   const expectedEnd = period.end.getTime() / 1000;
   return Boolean(
     invoice?.status === 'paid' &&
-      invoice.livemode === (record.stripeMode === 'live') &&
-      idOf(invoice.customer) === record.stripeCustomerId &&
-      subscriptionId === record.stripeSubscriptionId &&
-      invoice.lines?.data?.some((line) => {
-        const priceId = idOf(line.price || line.pricing?.price_details?.price);
-        return (
-          line.period?.start === expectedStart &&
-          line.period?.end === expectedEnd &&
-          priceId === idOf(period.item.price)
-        );
-      })
+    invoice.livemode === (record.stripeMode === 'live') &&
+    idOf(invoice.customer) === record.stripeCustomerId &&
+    subscriptionId === record.stripeSubscriptionId &&
+    invoice.lines?.data?.some((line) => {
+      const priceId = idOf(line.price || line.pricing?.price_details?.price);
+      return (
+        line.period?.start === expectedStart &&
+        line.period?.end === expectedEnd &&
+        priceId === idOf(period.item.price)
+      );
+    })
   );
 }
 
@@ -137,7 +137,8 @@ async function freeEntitlements(userId, accountType, now, deps, status = 'free')
     price: 0,
     isActive: { $ne: false },
   }).lean();
-  if (!plan) throw fail(503, 'FREE_PLAN_UNAVAILABLE', 'The private Free plan could not be verified.');
+  if (!plan)
+    throw fail(503, 'FREE_PLAN_UNAVAILABLE', 'The private Free plan could not be verified.');
   const period = freeCalendarPeriod(now);
   const usage = await createUsagePeriod({
     userId,
@@ -189,9 +190,8 @@ async function resolveEntitlements(userId, overrides = {}) {
   };
   const user = await deps.UserModel.findById(userId).select('role planType');
   if (!user) throw fail(404, 'USER_NOT_FOUND', 'The account could not be verified.');
-  const accountType = user.role === 'company' || user.planType === 'business'
-    ? 'business'
-    : 'private';
+  const accountType =
+    user.role === 'company' || user.planType === 'business' ? 'business' : 'private';
   const now = deps.now();
   const record = await deps.SubscriptionModel.findOne({ userId }).lean();
   if (!record) return freeEntitlements(userId, accountType, now, deps);
@@ -236,13 +236,16 @@ async function resolveEntitlements(userId, overrides = {}) {
     return freeEntitlements(userId, accountType, now, deps, 'no_paid_entitlement');
   }
   const period = stripePeriod(subscription);
-  if (!period) throw fail(503, 'SUBSCRIPTION_PERIOD_UNAVAILABLE', 'The billing period could not be verified.');
-  const inRecovery = record.paymentRecoveryStatus === 'retrying' &&
+  if (!period)
+    throw fail(503, 'SUBSCRIPTION_PERIOD_UNAVAILABLE', 'The billing period could not be verified.');
+  const inRecovery =
+    record.paymentRecoveryStatus === 'retrying' &&
     record.gracePeriodEndsAt instanceof Date &&
     now < record.gracePeriodEndsAt;
-  const cancellationEnd = subscription.cancel_at_period_end && Number.isSafeInteger(subscription.cancel_at)
-    ? new Date(subscription.cancel_at * 1000)
-    : period.end;
+  const cancellationEnd =
+    subscription.cancel_at_period_end && Number.isSafeInteger(subscription.cancel_at)
+      ? new Date(subscription.cancel_at * 1000)
+      : period.end;
   if (now >= cancellationEnd && !inRecovery) {
     return freeEntitlements(userId, accountType, now, deps, 'free');
   }
@@ -255,11 +258,19 @@ async function resolveEntitlements(userId, overrides = {}) {
     try {
       price = await stripe.prices.retrieve(price);
     } catch {
-      throw fail(503, 'SUBSCRIPTION_PRICE_UNAVAILABLE', 'The subscription price could not be verified.');
+      throw fail(
+        503,
+        'SUBSCRIPTION_PRICE_UNAVAILABLE',
+        'The subscription price could not be verified.'
+      );
     }
   }
   if (!stripePriceMatches(price, plan, record.stripeMode, period.item)) {
-    throw fail(503, 'SUBSCRIPTION_PRICE_UNVERIFIED', 'The subscription price could not be verified.');
+    throw fail(
+      503,
+      'SUBSCRIPTION_PRICE_UNVERIFIED',
+      'The subscription price could not be verified.'
+    );
   }
 
   let usage = inRecovery
@@ -281,8 +292,8 @@ async function resolveEntitlements(userId, overrides = {}) {
     record.status !== 'past_due' &&
     period.start.getTime() === new Date(record.currentPeriodStart).getTime() &&
     period.end.getTime() === new Date(record.currentPeriodEnd).getTime();
-  const renewalUnsettled = !usage && !inRecovery &&
-    subscription.status === 'active' && record.status !== 'past_due';
+  const renewalUnsettled =
+    !usage && !inRecovery && subscription.status === 'active' && record.status !== 'past_due';
   let latestInvoice = null;
   if (renewalUnsettled) {
     const invoice = subscription.latest_invoice;
@@ -334,7 +345,11 @@ async function resolveEntitlements(userId, overrides = {}) {
   }
   if (!usage) {
     if (subscription.status === 'active' && record.status !== 'past_due') {
-      throw fail(503, 'SUBSCRIPTION_USAGE_UNAVAILABLE', 'The paid usage period could not be verified.');
+      throw fail(
+        503,
+        'SUBSCRIPTION_USAGE_UNAVAILABLE',
+        'The paid usage period could not be verified.'
+      );
     }
     return freeEntitlements(userId, accountType, now, deps, 'past_due');
   }
@@ -347,7 +362,10 @@ async function resolveEntitlements(userId, overrides = {}) {
   );
 }
 
-async function ensurePaidUsagePeriod({ userId, subscriptionId, plan, start, end }, UsageModel = SubscriptionUsagePeriod) {
+async function ensurePaidUsagePeriod(
+  { userId, subscriptionId, plan, start, end },
+  UsageModel = SubscriptionUsagePeriod
+) {
   const usage = await createUsagePeriod({
     userId,
     subscriptionId,
@@ -378,14 +396,20 @@ async function ensurePaidUsagePeriod({ userId, subscriptionId, plan, start, end 
   return usage;
 }
 
-async function setPaidPeriodAllowance({ userId, subscriptionId, plan, start, end }, UsageModel = SubscriptionUsagePeriod) {
-  const usage = await ensurePaidUsagePeriod({
-    userId,
-    subscriptionId,
-    plan,
-    start,
-    end,
-  }, UsageModel);
+async function setPaidPeriodAllowance(
+  { userId, subscriptionId, plan, start, end },
+  UsageModel = SubscriptionUsagePeriod
+) {
+  const usage = await ensurePaidUsagePeriod(
+    {
+      userId,
+      subscriptionId,
+      plan,
+      start,
+      end,
+    },
+    UsageModel
+  );
   const result = await UsageModel.updateOne(
     { _id: usage._id },
     { $set: { planId: plan._id, includedContacts: plan.entitlements?.freeContact || 0 } }
@@ -420,11 +444,7 @@ async function consumeApplicationContact(
       v2Subscription = await deps.SubscriptionModel.findOne({ userId }).lean();
     } catch (error) {
       console.error('[Subscription V2] applicant subscription lookup failed:', error);
-      throw fail(
-        503,
-        'SUBSCRIPTION_STATUS_UNAVAILABLE',
-        'The subscription could not be verified.'
-      );
+      throw fail(503, 'SUBSCRIPTION_STATUS_UNAVAILABLE', 'The subscription could not be verified.');
     }
     if (!v2Subscription) return { enabled: false, newlyConsumed: false };
   }
@@ -448,20 +468,45 @@ async function consumeApplicationContact(
     userId,
     billingPeriodStart: new Date(entitlements.period.start),
   });
-  if (!usage) throw fail(503, 'SUBSCRIPTION_USAGE_UNAVAILABLE', 'The contact allowance could not be verified.');
+  if (!usage)
+    throw fail(
+      503,
+      'SUBSCRIPTION_USAGE_UNAVAILABLE',
+      'The contact allowance could not be verified.'
+    );
   const repeated = usage.contactOperations?.find(
     (entry) => entry.operationId === operationId && entry.status === 'consumed'
   );
-  if (repeated) return { enabled: true, newlyConsumed: false, usagePeriodId: usage._id, operationId };
+  if (repeated)
+    return { enabled: true, newlyConsumed: false, usagePeriodId: usage._id, operationId };
 
   // A paid extra contact bought for this job is used first: the applicant paid for this
   // specific application, and taking an included contact instead would strand it.
   const extraContacts = require('./v2ExtraContacts');
-  if (await extraContacts.consumePaidExtraContact(
-    { userId, serviceId, jobRequestId, usagePeriodId: usage._id, operationId, now: (deps.now || (() => new Date()))() },
-    { session: overrides.session, ...(overrides.ExtraContactModel && { Model: overrides.ExtraContactModel }), UsageModel: deps.UsageModel }
-  )) {
-    return { enabled: true, newlyConsumed: true, extra: true, usagePeriodId: usage._id, operationId };
+  if (
+    await extraContacts.consumePaidExtraContact(
+      {
+        userId,
+        serviceId,
+        jobRequestId,
+        usagePeriodId: usage._id,
+        operationId,
+        now: (deps.now || (() => new Date()))(),
+      },
+      {
+        session: overrides.session,
+        ...(overrides.ExtraContactModel && { Model: overrides.ExtraContactModel }),
+        UsageModel: deps.UsageModel,
+      }
+    )
+  ) {
+    return {
+      enabled: true,
+      newlyConsumed: true,
+      extra: true,
+      usagePeriodId: usage._id,
+      operationId,
+    };
   }
 
   const filter = {
@@ -491,12 +536,18 @@ async function consumeApplicationContact(
     const existing = await (overrides.session
       ? existingQuery.session(overrides.session)
       : existingQuery);
-    const operation = existing?.contactOperations?.find((entry) => entry.operationId === operationId);
+    const operation = existing?.contactOperations?.find(
+      (entry) => entry.operationId === operationId
+    );
     if (operation?.status === 'consumed') {
       return { enabled: true, newlyConsumed: false, usagePeriodId: usage._id, operationId };
     }
     if (operation?.status === 'released') {
-      throw fail(409, 'APPLICATION_CONTACT_RELEASED', 'This application contact was already released.');
+      throw fail(
+        409,
+        'APPLICATION_CONTACT_RELEASED',
+        'This application contact was already released.'
+      );
     }
     const quotaError = contactQuotaError(entitlements);
     if (quotaError.code === 'CONTACT_LIMIT_REACHED') {
@@ -516,7 +567,11 @@ async function consumeApplicationContact(
   return { enabled: true, newlyConsumed: true, usagePeriodId: usage._id, operationId };
 }
 
-async function releaseContact({ newlyConsumed, usagePeriodId, operationId }, actionExists, overrides = {}) {
+async function releaseContact(
+  { newlyConsumed, usagePeriodId, operationId },
+  actionExists,
+  overrides = {}
+) {
   if (!newlyConsumed) return;
   if (await actionExists()) return;
   const UsageModel = overrides.UsageModel || SubscriptionUsagePeriod;

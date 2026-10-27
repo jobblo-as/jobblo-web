@@ -19,7 +19,13 @@ jest.mock('../middleware/auth', () => {
     req.user = { _id: req.userId, role: req.get('x-role') || 'user' };
     next();
   };
-  return { authenticate: as, optionalAuthenticate: as, requireAdmin: (_q, _s, n) => n(), requireDeveloper: (_q, _s, n) => n(), requireRole: () => (_q, _s, n) => n() };
+  return {
+    authenticate: as,
+    optionalAuthenticate: as,
+    requireAdmin: (_q, _s, n) => n(),
+    requireDeveloper: (_q, _s, n) => n(),
+    requireRole: () => (_q, _s, n) => n(),
+  };
 });
 
 const express = require('express');
@@ -42,9 +48,11 @@ let deletes;
 beforeEach(() => {
   uploads = [];
   deletes = [];
-  jest.spyOn(BlockBlobClient.prototype, 'uploadData').mockImplementation(async function (data, opts) {
-    uploads.push({ url: this.url, type: opts.blobHTTPHeaders.blobContentType });
-  });
+  jest
+    .spyOn(BlockBlobClient.prototype, 'uploadData')
+    .mockImplementation(async function (data, opts) {
+      uploads.push({ url: this.url, type: opts.blobHTTPHeaders.blobContentType });
+    });
   jest.spyOn(BlockBlobClient.prototype, 'deleteIfExists').mockImplementation(async function () {
     deletes.push(this.url);
   });
@@ -62,25 +70,34 @@ describe('type from bytes', () => {
   });
 
   const app = express();
-  app.post('/img', multer({ storage: multer.memoryStorage() }).single('f'), checkFileTypes(IMAGE_TYPES), (req, res) =>
-    res.json({ type: req.file.mimetype })
+  app.post(
+    '/img',
+    multer({ storage: multer.memoryStorage() }).single('f'),
+    checkFileTypes(IMAGE_TYPES),
+    (req, res) => res.json({ type: req.file.mimetype })
   );
   app.use(uploadErrors);
 
   it('refuses an SVG or HTML file renamed and labelled as PNG', async () => {
     for (const bytes of [SVG, HTML]) {
-      const r = await request(app).post('/img').attach('f', bytes, { filename: 'a.png', contentType: 'image/png' });
+      const r = await request(app)
+        .post('/img')
+        .attach('f', bytes, { filename: 'a.png', contentType: 'image/png' });
       expect(r.status).toBe(400);
     }
   });
 
   it('refuses a PDF where only images are expected', async () => {
-    const r = await request(app).post('/img').attach('f', PDF, { filename: 'a.png', contentType: 'image/png' });
+    const r = await request(app)
+      .post('/img')
+      .attach('f', PDF, { filename: 'a.png', contentType: 'image/png' });
     expect(r.status).toBe(400);
   });
 
   it('replaces the client Content-Type with the real one', async () => {
-    const r = await request(app).post('/img').attach('f', PNG, { filename: 'a.html', contentType: 'text/html' });
+    const r = await request(app)
+      .post('/img')
+      .attach('f', PNG, { filename: 'a.html', contentType: 'text/html' });
     expect(r.status).toBe(200);
     expect(r.body.type).toBe('image/png');
   });
@@ -88,8 +105,14 @@ describe('type from bytes', () => {
 
 describe('private container + SAS', () => {
   it('stores private uploads in AZURE_PRIVATE_CONTAINER with a server-made name', async () => {
-    const { url } = await az.uploadBufferToAzure({ buffer: PDF, originalname: 'x.exe' }, 'report-evidence', { private: true });
-    expect(url).toMatch(/^https:\/\/acct\.blob\.core\.windows\.net\/private-evidence\/report-evidence\/[0-9a-f-]{36}\.pdf$/);
+    const { url } = await az.uploadBufferToAzure(
+      { buffer: PDF, originalname: 'x.exe' },
+      'report-evidence',
+      { private: true }
+    );
+    expect(url).toMatch(
+      /^https:\/\/acct\.blob\.core\.windows\.net\/private-evidence\/report-evidence\/[0-9a-f-]{36}\.pdf$/
+    );
     expect(uploads[0].type).toBe('application/pdf');
   });
 
@@ -104,13 +127,19 @@ describe('private container + SAS', () => {
     expect(signed.origin + signed.pathname).toBe(priv);
     expect(signed.searchParams.get('sp')).toBe('r');
     expect(signed.searchParams.get('sig')).toBeTruthy();
-    expect(new Date(signed.searchParams.get('se')) - Date.now()).toBeLessThanOrEqual(15 * 60 * 1000);
+    expect(new Date(signed.searchParams.get('se')) - Date.now()).toBeLessThanOrEqual(
+      15 * 60 * 1000
+    );
     expect(body.order.images[0]).toBe(pub);
   });
 
   it('deletes a private blob given its signed URL', async () => {
-    await az.deleteFromAzure('https://acct.blob.core.windows.net/private-evidence/orders/1/evidence/a.png?sv=x&sig=y');
-    expect(deletes).toEqual(['https://acct.blob.core.windows.net/private-evidence/orders/1/evidence/a.png']);
+    await az.deleteFromAzure(
+      'https://acct.blob.core.windows.net/private-evidence/orders/1/evidence/a.png?sv=x&sig=y'
+    );
+    expect(deletes).toEqual([
+      'https://acct.blob.core.windows.net/private-evidence/orders/1/evidence/a.png',
+    ]);
   });
 });
 
@@ -125,16 +154,24 @@ describe('ownership before upload', () => {
 
   it("PUT /users/:id for someone else's id uploads nothing", async () => {
     const app = mount('/api/users', require('../routes/users'));
-    const r = await request(app).put('/api/users/507f1f77bcf86cd799439011').set('x-user', 'u1').attach('avatar', PNG, 'a.png');
+    const r = await request(app)
+      .put('/api/users/507f1f77bcf86cd799439011')
+      .set('x-user', 'u1')
+      .attach('avatar', PNG, 'a.png');
     expect(r.status).toBe(403);
     expect(uploads).toHaveLength(0);
   });
 
   it("PUT /services/:id on someone else's listing uploads nothing", async () => {
     const Service = require('../models/Service');
-    jest.spyOn(Service, 'findById').mockReturnValue({ select: () => ({ lean: async () => ({ userId: 'owner' }) }) });
+    jest
+      .spyOn(Service, 'findById')
+      .mockReturnValue({ select: () => ({ lean: async () => ({ userId: 'owner' }) }) });
     const app = mount('/api/services', require('../routes/service'));
-    const r = await request(app).put('/api/services/507f1f77bcf86cd799439011').set('x-user', 'u1').attach('images', PNG, 'a.png');
+    const r = await request(app)
+      .put('/api/services/507f1f77bcf86cd799439011')
+      .set('x-user', 'u1')
+      .attach('images', PNG, 'a.png');
     expect(r.status).toBe(403);
     expect(uploads).toHaveLength(0);
   });
@@ -145,7 +182,12 @@ describe('chat-report evidence (M4)', () => {
   const ChatReport = require('../models/ChatReport');
   const User = require('../models/User');
   const chatId = '507f1f77bcf86cd799439011';
-  const body = { scope: 'chat', reportType: 'spam', title: 'Spam spam', description: 'This user keeps sending spam links.' };
+  const body = {
+    scope: 'chat',
+    reportType: 'spam',
+    title: 'Spam spam',
+    description: 'This user keeps sending spam links.',
+  };
 
   const app = express();
   app.use('/api/chats', require('../routes/chat'));
@@ -158,9 +200,15 @@ describe('chat-report evidence (M4)', () => {
   };
 
   beforeEach(() => {
-    jest.spyOn(Chat, 'findById').mockReturnValue({ lean: async () => ({ _id: chatId, clientId: 'u1', providerId: 'u2', messages: [] }) });
+    jest
+      .spyOn(Chat, 'findById')
+      .mockReturnValue({
+        lean: async () => ({ _id: chatId, clientId: 'u1', providerId: 'u2', messages: [] }),
+      });
     jest.spyOn(ChatReport, 'findOne').mockReturnValue({ lean: async () => null });
-    jest.spyOn(ChatReport, 'create').mockImplementation(async (doc) => ({ ...doc, _id: 'r1', status: 'open' }));
+    jest
+      .spyOn(ChatReport, 'create')
+      .mockImplementation(async (doc) => ({ ...doc, _id: 'r1', status: 'open' }));
     jest.spyOn(User, 'find').mockReturnValue({ select: () => ({ lean: async () => [] }) });
   });
 
@@ -200,7 +248,14 @@ describe('SafePay history role check (M4)', () => {
   const { getSafePayHistory } = require('../controllers/safepayController');
   const call = async (role) => {
     const res = { status: jest.fn(() => res), json: jest.fn(() => res) };
-    await getSafePayHistory({ params: { userId: '507f1f77bcf86cd799439011' }, userId: '507f1f77bcf86cd799439012', user: { role } }, res);
+    await getSafePayHistory(
+      {
+        params: { userId: '507f1f77bcf86cd799439011' },
+        userId: '507f1f77bcf86cd799439012',
+        user: { role },
+      },
+      res
+    );
     return res.status.mock.calls[0]?.[0] ?? 200;
   };
 

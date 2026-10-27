@@ -1,6 +1,11 @@
 const Category = require('../../models/Category');
 const Service = require('../../models/Service');
-const { asyncHandler, sendSuccess, sendError, buildPagination } = require('../../utils/apiResponse');
+const {
+  asyncHandler,
+  sendSuccess,
+  sendError,
+  buildPagination,
+} = require('../../utils/apiResponse');
 const { parsePagination, parseObjectId } = require('../../utils/pagination');
 const { logActivity } = require('../../services/admin/activityService');
 const { queryString } = require('../../utils/devQuery');
@@ -22,14 +27,15 @@ const getCategories = asyncHandler(async (req, res) => {
 
   const [total, categories] = await Promise.all([
     Category.countDocuments(query),
-    Category.find(query)
-      .sort({ sortOrder: 1, name: 1 })
-      .skip(skip)
-      .limit(limit)
-      .lean(),
+    Category.find(query).sort({ sortOrder: 1, name: 1 }).skip(skip).limit(limit).lean(),
   ]);
 
-  return sendSuccess(res, { categories }, 'Kategorier hentet.', buildPagination(total, page, limit));
+  return sendSuccess(
+    res,
+    { categories },
+    'Kategorier hentet.',
+    buildPagination(total, page, limit)
+  );
 });
 
 /**
@@ -42,7 +48,11 @@ const createCategory = asyncHandler(async (req, res) => {
   const existing = await Category.findOne({ name: name.trim() });
   if (existing) return sendError(res, 'En kategori med dette navnet finnes allerede.', 409);
 
-  const slug = name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  const slug = name
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '');
   const category = await Category.create({
     name: name.trim(),
     slug,
@@ -75,7 +85,11 @@ const updateCategory = asyncHandler(async (req, res) => {
   const update = {};
   if (name !== undefined) {
     update.name = name.trim();
-    update.slug = name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    update.slug = name
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '');
   }
   if (description !== undefined) update.description = description.trim();
   if (icon !== undefined) update.icon = icon.trim();
@@ -126,7 +140,11 @@ const toggleCategory = asyncHandler(async (req, res) => {
   category.isActive = !category.isActive;
   await category.save();
 
-  return sendSuccess(res, { category }, `Kategori ${category.isActive ? 'aktivert' : 'deaktivert'}.`);
+  return sendSuccess(
+    res,
+    { category },
+    `Kategori ${category.isActive ? 'aktivert' : 'deaktivert'}.`
+  );
 });
 
 module.exports = { getCategories, createCategory, updateCategory, deleteCategory, toggleCategory };

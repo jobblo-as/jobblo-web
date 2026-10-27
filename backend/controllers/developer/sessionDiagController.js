@@ -5,7 +5,13 @@ const diag = require('../../services/monitoring/sessionDiagnostics');
 const KINDS = ['js_error', 'render', 'not_found', 'chunk', 'api', 'console'];
 
 const getSessions = asyncHandler(async (req, res) =>
-  sendSuccess(res, await diag.overview({ days: [1, 7, 30].includes(Number(req.query.days)) ? Number(req.query.days) : 7, kind: KINDS.includes(req.query.kind) ? req.query.kind : undefined }))
+  sendSuccess(
+    res,
+    await diag.overview({
+      days: [1, 7, 30].includes(Number(req.query.days)) ? Number(req.query.days) : 7,
+      kind: KINDS.includes(req.query.kind) ? req.query.kind : undefined,
+    })
+  )
 );
 
 const getSession = asyncHandler(async (req, res) => {

@@ -55,8 +55,16 @@ const OrderRequestModal: React.FC<OrderRequestModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 id="order-request-title" className="text-lg font-bold text-gray-900">Send forespørsel</h2>
-          <button type="button" onClick={onClose} aria-label="Lukk" autoFocus className="p-1 rounded-lg hover:bg-gray-100 transition-colors">
+          <h2 id="order-request-title" className="text-lg font-bold text-gray-900">
+            Send forespørsel
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Lukk"
+            autoFocus
+            className="p-1 rounded-lg hover:bg-gray-100 transition-colors"
+          >
             <X size={20} className="text-gray-500" />
           </button>
         </div>
@@ -91,7 +99,8 @@ const OrderRequestModal: React.FC<OrderRequestModalProps> = ({
         ) : (
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Melding til leverandøren <span className="text-gray-400 font-normal">(valgfritt)</span>
+              Melding til leverandøren{' '}
+              <span className="text-gray-400 font-normal">(valgfritt)</span>
             </label>
             <textarea
               value={message}

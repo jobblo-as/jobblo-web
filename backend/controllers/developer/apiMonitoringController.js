@@ -60,7 +60,15 @@ const getApiMetrics = asyncHandler(async (req, res) => {
   const topClients = await ApiMetricMinute.aggregate([
     { $match: match },
     { $unwind: '$ips' },
-    { $group: { _id: '$ips.ip', requests: { $sum: '$ips.n' }, failed: { $sum: '$ips.failed' }, routes: { $addToSet: { $concat: ['$method', ' ', '$route'] } }, lastSeen: { $max: '$minute' } } },
+    {
+      $group: {
+        _id: '$ips.ip',
+        requests: { $sum: '$ips.n' },
+        failed: { $sum: '$ips.failed' },
+        routes: { $addToSet: { $concat: ['$method', ' ', '$route'] } },
+        lastSeen: { $max: '$minute' },
+      },
+    },
     { $sort: { requests: -1 } },
     { $limit: 25 },
   ]);
@@ -68,7 +76,13 @@ const getApiMetrics = asyncHandler(async (req, res) => {
   return sendSuccess(res, {
     range: { from, to, bucketMs },
     totals: { ...totals, live: liveSnapshot() },
-    clients: topClients.map((c) => ({ ip: c._id, requests: c.requests, failed: c.failed, endpoints: c.routes.length, lastSeen: c.lastSeen })),
+    clients: topClients.map((c) => ({
+      ip: c._id,
+      requests: c.requests,
+      failed: c.failed,
+      endpoints: c.routes.length,
+      lastSeen: c.lastSeen,
+    })),
     endpoints: endpoints.map((e) => ({
       method: e._id.method,
       route: e._id.route,
@@ -98,14 +112,23 @@ const getApiMetrics = asyncHandler(async (req, res) => {
 const getApiClients = asyncHandler(async (req, res) => {
   const { from, to, bucketMs } = parseRange(req.query);
   const match = { minute: { $gte: from, $lte: to } };
-  const ip = String(req.query.ip || '').trim().slice(0, 64);
+  const ip = String(req.query.ip || '')
+    .trim()
+    .slice(0, 64);
   if (ip) {
     const [endpoints, series, security] = await Promise.all([
       ApiMetricMinute.aggregate([
         { $match: { ...match, 'ips.ip': ip } },
         { $unwind: '$ips' },
         { $match: { 'ips.ip': ip } },
-        { $group: { _id: { method: '$method', route: '$route' }, requests: { $sum: '$ips.n' }, failed: { $sum: '$ips.failed' }, lastSeen: { $max: '$minute' } } },
+        {
+          $group: {
+            _id: { method: '$method', route: '$route' },
+            requests: { $sum: '$ips.n' },
+            failed: { $sum: '$ips.failed' },
+            lastSeen: { $max: '$minute' },
+          },
+        },
         { $sort: { requests: -1 } },
         { $limit: 100 },
       ]),
@@ -113,7 +136,13 @@ const getApiClients = asyncHandler(async (req, res) => {
         { $match: { ...match, 'ips.ip': ip } },
         { $unwind: '$ips' },
         { $match: { 'ips.ip': ip } },
-        { $group: { _id: bucketExpr('$minute', bucketMs), requests: { $sum: '$ips.n' }, failed: { $sum: '$ips.failed' } } },
+        {
+          $group: {
+            _id: bucketExpr('$minute', bucketMs),
+            requests: { $sum: '$ips.n' },
+            failed: { $sum: '$ips.failed' },
+          },
+        },
         { $sort: { _id: 1 } },
       ]),
       require('../../models/SecurityEvent').aggregate([
@@ -124,20 +153,46 @@ const getApiClients = asyncHandler(async (req, res) => {
     return sendSuccess(res, {
       ip,
       range: { from, to, bucketMs },
-      endpoints: endpoints.map((e) => ({ method: e._id.method, route: e._id.route, requests: e.requests, failed: e.failed, lastSeen: e.lastSeen })),
+      endpoints: endpoints.map((e) => ({
+        method: e._id.method,
+        route: e._id.route,
+        requests: e.requests,
+        failed: e.failed,
+        lastSeen: e.lastSeen,
+      })),
       series: series.map((s) => ({ t: s._id, requests: s.requests, failed: s.failed })),
       security: Object.fromEntries(security.map((s) => [s._id, s.n])),
     });
   }
   if (!req.query.route) return sendError(res, 'ip or route is required.', 400);
   const clients = await ApiMetricMinute.aggregate([
-    { $match: { ...match, route: String(req.query.route), ...(req.query.method && { method: String(req.query.method).toUpperCase() }) } },
+    {
+      $match: {
+        ...match,
+        route: String(req.query.route),
+        ...(req.query.method && { method: String(req.query.method).toUpperCase() }),
+      },
+    },
     { $unwind: '$ips' },
-    { $group: { _id: '$ips.ip', requests: { $sum: '$ips.n' }, failed: { $sum: '$ips.failed' }, lastSeen: { $max: '$minute' } } },
+    {
+      $group: {
+        _id: '$ips.ip',
+        requests: { $sum: '$ips.n' },
+        failed: { $sum: '$ips.failed' },
+        lastSeen: { $max: '$minute' },
+      },
+    },
     { $sort: { requests: -1 } },
     { $limit: 20 },
   ]);
-  return sendSuccess(res, { clients: clients.map((c) => ({ ip: c._id, requests: c.requests, failed: c.failed, lastSeen: c.lastSeen })) });
+  return sendSuccess(res, {
+    clients: clients.map((c) => ({
+      ip: c._id,
+      requests: c.requests,
+      failed: c.failed,
+      lastSeen: c.lastSeen,
+    })),
+  });
 });
 
 /** Recent error traces for one endpoint (request IDs to correlate). */

@@ -27,7 +27,8 @@ function dateOf(timestamp) {
 
 function periodOf(subscription) {
   const items = subscription?.items?.data || [];
-  if (items.length !== 1) throw fail(409, 'SUBSCRIPTION_STATE_UNSUPPORTED', 'Subscription items require review.');
+  if (items.length !== 1)
+    throw fail(409, 'SUBSCRIPTION_STATE_UNSUPPORTED', 'Subscription items require review.');
   const item = items[0];
   const start = dateOf(item.current_period_start);
   const end = dateOf(item.current_period_end);
@@ -44,14 +45,14 @@ function stripeModeMatches(subscription, mode) {
 function stripePriceIsMonthlyNok(price, mode) {
   return Boolean(
     price &&
-      price.active &&
-      price.livemode === (mode === 'live') &&
-      price.currency?.toLowerCase() === 'nok' &&
-      price.type === 'recurring' &&
-      price.recurring?.interval === 'month' &&
-      price.recurring?.interval_count === 1 &&
-      Number.isSafeInteger(price.unit_amount) &&
-      price.unit_amount > 0
+    price.active &&
+    price.livemode === (mode === 'live') &&
+    price.currency?.toLowerCase() === 'nok' &&
+    price.type === 'recurring' &&
+    price.recurring?.interval === 'month' &&
+    price.recurring?.interval_count === 1 &&
+    Number.isSafeInteger(price.unit_amount) &&
+    price.unit_amount > 0
   );
 }
 
@@ -84,7 +85,11 @@ function validateOwnership(record, subscription, userId) {
     idOf(subscription.customer) !== record.stripeCustomerId ||
     subscription.id !== record.stripeSubscriptionId
   ) {
-    throw fail(403, 'SUBSCRIPTION_OWNERSHIP_MISMATCH', 'The subscription could not be verified for this account.');
+    throw fail(
+      403,
+      'SUBSCRIPTION_OWNERSHIP_MISMATCH',
+      'The subscription could not be verified for this account.'
+    );
   }
 }
 
@@ -112,16 +117,23 @@ async function getSubscriptionContext(userId, overrides = {}) {
   }
   validateOwnership(record, subscription, userId);
   const period = periodOf(subscription);
-  const price = typeof period.item.price === 'string'
-    ? await stripe.prices.retrieve(period.item.price)
-    : period.item.price;
+  const price =
+    typeof period.item.price === 'string'
+      ? await stripe.prices.retrieve(period.item.price)
+      : period.item.price;
   if (!stripePriceIsMonthlyNok(price, record.stripeMode)) {
-    throw fail(409, 'SUBSCRIPTION_PRICE_INVALID', 'The current subscription price could not be verified.');
+    throw fail(
+      409,
+      'SUBSCRIPTION_PRICE_INVALID',
+      'The current subscription price could not be verified.'
+    );
   }
   const currentPlan = await deps.PlanModel.findById(record.planId).lean();
-  const expectedPriceId = currentPlan &&
+  const expectedPriceId =
+    currentPlan &&
     (record.stripeMode === 'test' ? currentPlan.stripePriceIdTest : currentPlan.stripePriceId);
-  const expectedProductId = currentPlan &&
+  const expectedProductId =
+    currentPlan &&
     (record.stripeMode === 'test' ? currentPlan.stripeProductIdTest : currentPlan.stripeProductId);
   if (
     !currentPlan ||
@@ -130,7 +142,11 @@ async function getSubscriptionContext(userId, overrides = {}) {
     price.unit_amount !== Math.round(currentPlan.price * 100) ||
     (expectedProductId && idOf(price.product) !== expectedProductId)
   ) {
-    throw fail(409, 'SUBSCRIPTION_PLAN_MISMATCH', 'The current subscription plan could not be verified.');
+    throw fail(
+      409,
+      'SUBSCRIPTION_PLAN_MISMATCH',
+      'The current subscription plan could not be verified.'
+    );
   }
   return { ...deps, record, stripe, subscription, period, price };
 }
@@ -218,7 +234,8 @@ async function createBillingPortalSession(userId, overrides = {}) {
     customer: context.record.stripeCustomerId,
     return_url: returnUrl,
   });
-  if (!session?.url) throw fail(503, 'BILLING_PORTAL_UNAVAILABLE', 'Payment method management is not available.');
+  if (!session?.url)
+    throw fail(503, 'BILLING_PORTAL_UNAVAILABLE', 'Payment method management is not available.');
   return { url: session.url };
 }
 
@@ -239,7 +256,11 @@ async function getBillingHistory(userId, overrides = {}) {
     customer.id !== context.record.stripeCustomerId ||
     String(customer.metadata?.userId) !== String(context.record.userId)
   ) {
-    throw fail(503, 'SUBSCRIPTION_CUSTOMER_UNVERIFIED', 'The billing account could not be verified.');
+    throw fail(
+      503,
+      'SUBSCRIPTION_CUSTOMER_UNVERIFIED',
+      'The billing account could not be verified.'
+    );
   }
   const subscriptionIds = new Set([
     context.record.stripeSubscriptionId,
@@ -247,23 +268,32 @@ async function getBillingHistory(userId, overrides = {}) {
   ]);
   const currentPlan = await context.PlanModel.findById(context.record.planId).lean();
   const historicalPlan = (subscriptionId) =>
-    (context.record.planHistory || []).find((entry) => entry.stripeSubscriptionId === subscriptionId)?.planName;
+    (context.record.planHistory || []).find(
+      (entry) => entry.stripeSubscriptionId === subscriptionId
+    )?.planName;
   const invoices = (invoicePage?.data || [])
-    .filter((invoice) =>
-      idOf(invoice.customer) === context.record.stripeCustomerId &&
-      subscriptionIds.has(idOf(invoice.parent?.subscription_details?.subscription || invoice.subscription))
+    .filter(
+      (invoice) =>
+        idOf(invoice.customer) === context.record.stripeCustomerId &&
+        subscriptionIds.has(
+          idOf(invoice.parent?.subscription_details?.subscription || invoice.subscription)
+        )
     )
     .map((invoice) => ({
       id: invoice.id,
       number: invoice.number || null,
       plan:
-        historicalPlan(idOf(invoice.parent?.subscription_details?.subscription || invoice.subscription)) ||
+        historicalPlan(
+          idOf(invoice.parent?.subscription_details?.subscription || invoice.subscription)
+        ) ||
         (idOf(invoice.parent?.subscription_details?.subscription || invoice.subscription) ===
         context.record.stripeSubscriptionId
           ? currentPlan?.name
           : '') ||
         '',
-      createdAt: Number.isSafeInteger(invoice.created) ? new Date(invoice.created * 1000).toISOString() : null,
+      createdAt: Number.isSafeInteger(invoice.created)
+        ? new Date(invoice.created * 1000).toISOString()
+        : null,
       amountPaid: (invoice.amount_paid || 0) / 100,
       amountDue: (invoice.amount_due || 0) / 100,
       currency: (invoice.currency || 'nok').toLowerCase(),
@@ -283,14 +313,15 @@ async function getBillingHistory(userId, overrides = {}) {
       createdAt: invoice.createdAt || '',
     })),
     invoices,
-    paymentMethod: paymentMethod && typeof paymentMethod !== 'string'
-      ? {
-          brand: paymentMethod.card?.brand || null,
-          last4: paymentMethod.card?.last4 || null,
-          expMonth: paymentMethod.card?.exp_month || null,
-          expYear: paymentMethod.card?.exp_year || null,
-        }
-      : null,
+    paymentMethod:
+      paymentMethod && typeof paymentMethod !== 'string'
+        ? {
+            brand: paymentMethod.card?.brand || null,
+            last4: paymentMethod.card?.last4 || null,
+            expMonth: paymentMethod.card?.exp_month || null,
+            expYear: paymentMethod.card?.exp_year || null,
+          }
+        : null,
     billingAddress: {
       name: customer.name || null,
       ...(customer.address || {}),
@@ -299,7 +330,11 @@ async function getBillingHistory(userId, overrides = {}) {
 }
 
 async function getInvoicePdf(userId, invoiceId, mode, overrides = {}) {
-  if (!['test', 'live'].includes(mode) || typeof invoiceId !== 'string' || !/^in_[A-Za-z0-9_]+$/.test(invoiceId)) {
+  if (
+    !['test', 'live'].includes(mode) ||
+    typeof invoiceId !== 'string' ||
+    !/^in_[A-Za-z0-9_]+$/.test(invoiceId)
+  ) {
     throw fail(404, 'INVOICE_NOT_FOUND', 'The invoice was not found.');
   }
   const context = await getSubscriptionContext(userId, overrides);
@@ -335,10 +370,20 @@ async function getTargetPlan(context, planId) {
     throw fail(403, 'plan_type_not_allowed', 'This plan is not available for your account type.');
   }
   if (!Number.isFinite(plan.price) || plan.price <= 0) {
-    throw fail(400, 'FREE_PLAN_CHANGE_NOT_ALLOWED', 'Free plans cannot be selected as a paid plan change.');
+    throw fail(
+      400,
+      'FREE_PLAN_CHANGE_NOT_ALLOWED',
+      'Free plans cannot be selected as a paid plan change.'
+    );
   }
-  const priceId = context.record.stripeMode === 'test' ? plan.stripePriceIdTest : plan.stripePriceId;
-  if (!priceId) throw fail(503, 'SUBSCRIPTION_PRICE_UNCONFIGURED', 'This plan is not configured for this Stripe mode.');
+  const priceId =
+    context.record.stripeMode === 'test' ? plan.stripePriceIdTest : plan.stripePriceId;
+  if (!priceId)
+    throw fail(
+      503,
+      'SUBSCRIPTION_PRICE_UNCONFIGURED',
+      'This plan is not configured for this Stripe mode.'
+    );
   let price;
   try {
     price = await context.stripe.prices.retrieve(priceId);
@@ -360,7 +405,11 @@ async function getTargetPlan(context, planId) {
 function classifyPlanChange(context, target) {
   if (String(context.record.planId) === String(target.plan._id)) return 'no_change';
   if (target.price.unit_amount === context.price.unit_amount) {
-    throw fail(409, 'PLAN_PRICE_EQUAL', 'Plans with equal prices require a separate change policy.');
+    throw fail(
+      409,
+      'PLAN_PRICE_EQUAL',
+      'Plans with equal prices require a separate change policy.'
+    );
   }
   return target.price.unit_amount > context.price.unit_amount ? 'immediate' : 'period_end';
 }
@@ -381,7 +430,11 @@ async function previewPlanChange(userId, planId, overrides = {}) {
     };
   }
   if (context.record.pendingPlanChange && strategy === 'immediate') {
-    throw fail(409, 'SUBSCRIPTION_PLAN_CHANGE_PENDING', 'Resolve the scheduled plan change before upgrading.');
+    throw fail(
+      409,
+      'SUBSCRIPTION_PLAN_CHANGE_PENDING',
+      'Resolve the scheduled plan change before upgrading.'
+    );
   }
   let amountDueNow = 0;
   let effectiveAt;
@@ -390,7 +443,13 @@ async function previewPlanChange(userId, planId, overrides = {}) {
     const invoice = await context.stripe.invoices.createPreview({
       subscription: context.record.stripeSubscriptionId,
       subscription_details: {
-        items: [{ id: context.period.item.id, price: target.priceId, quantity: context.period.item.quantity || 1 }],
+        items: [
+          {
+            id: context.period.item.id,
+            price: target.priceId,
+            quantity: context.period.item.quantity || 1,
+          },
+        ],
         proration_behavior: 'always_invoice',
         billing_cycle_anchor: 'unchanged',
         proration_date: prorationDate,
@@ -423,10 +482,18 @@ async function acquireOperation(context, operationType, targetPlanId = null) {
       String(existing.targetPlanId || '') !== String(targetPlanId || '') ||
       String(existing.stripeSubscriptionId) !== record.stripeSubscriptionId
     ) {
-      throw fail(409, 'SUBSCRIPTION_OPERATION_IN_PROGRESS', 'Another subscription change is being processed.');
+      throw fail(
+        409,
+        'SUBSCRIPTION_OPERATION_IN_PROGRESS',
+        'Another subscription change is being processed.'
+      );
     }
     if (existing.status === 'reconciliation_required') {
-      throw fail(503, 'SUBSCRIPTION_RECONCILIATION_REQUIRED', 'The previous subscription change needs reconciliation.');
+      throw fail(
+        503,
+        'SUBSCRIPTION_RECONCILIATION_REQUIRED',
+        'The previous subscription change needs reconciliation.'
+      );
     }
     return existing;
   }
@@ -453,16 +520,29 @@ async function acquireOperation(context, operationType, targetPlanId = null) {
       userId: record.userId,
       lifecycleLock: true,
     });
-    if (!raced) throw fail(503, 'SUBSCRIPTION_OPERATION_UNAVAILABLE', 'Could not prepare the subscription change.');
+    if (!raced)
+      throw fail(
+        503,
+        'SUBSCRIPTION_OPERATION_UNAVAILABLE',
+        'Could not prepare the subscription change.'
+      );
     if (
       raced.operationType !== operationType ||
       String(raced.targetPlanId || '') !== String(targetPlanId || '') ||
       String(raced.stripeSubscriptionId) !== record.stripeSubscriptionId
     ) {
-      throw fail(409, 'SUBSCRIPTION_OPERATION_IN_PROGRESS', 'Another subscription change is being processed.');
+      throw fail(
+        409,
+        'SUBSCRIPTION_OPERATION_IN_PROGRESS',
+        'Another subscription change is being processed.'
+      );
     }
     if (raced.status === 'reconciliation_required') {
-      throw fail(503, 'SUBSCRIPTION_RECONCILIATION_REQUIRED', 'The previous subscription change needs reconciliation.');
+      throw fail(
+        503,
+        'SUBSCRIPTION_RECONCILIATION_REQUIRED',
+        'The previous subscription change needs reconciliation.'
+      );
     }
     return raced;
   }
@@ -536,9 +616,11 @@ async function markScheduleCreationFailed(context, operation, err) {
 }
 
 function isStripeValidationError(err) {
-  return err?.type === 'StripeInvalidRequestError' &&
+  return (
+    err?.type === 'StripeInvalidRequestError' &&
     err?.rawType === 'invalid_request_error' &&
-    err?.statusCode === 400;
+    err?.statusCode === 400
+  );
 }
 
 async function cancelSubscription(userId, overrides = {}) {
@@ -548,18 +630,32 @@ async function cancelSubscription(userId, overrides = {}) {
   }
   if (context.subscription.cancel_at_period_end) {
     const end = context.period.end;
-    if (dateOf(context.subscription.cancel_at) && dateOf(context.subscription.cancel_at).getTime() !== end.getTime()) {
-      throw fail(409, 'SUBSCRIPTION_CANCELLATION_DATE_MISMATCH', 'The cancellation date requires review.');
+    if (
+      dateOf(context.subscription.cancel_at) &&
+      dateOf(context.subscription.cancel_at).getTime() !== end.getTime()
+    ) {
+      throw fail(
+        409,
+        'SUBSCRIPTION_CANCELLATION_DATE_MISMATCH',
+        'The cancellation date requires review.'
+      );
     }
     await context.SubscriptionModel.updateOne(
       { _id: context.record._id },
       { $set: { status: 'canceling', autoRenew: false, cancellationEffectiveAt: end } }
     );
     await completeOutstandingOperation(context, 'cancel');
-    return { message: 'Abonnementet avsluttes ved periodens slutt', effectiveAt: end.toISOString() };
+    return {
+      message: 'Abonnementet avsluttes ved periodens slutt',
+      effectiveAt: end.toISOString(),
+    };
   }
   if (context.record.pendingPlanChange || context.subscription.schedule) {
-    throw fail(409, 'SUBSCRIPTION_PLAN_CHANGE_PENDING', 'Resolve the scheduled plan change before canceling.');
+    throw fail(
+      409,
+      'SUBSCRIPTION_PLAN_CHANGE_PENDING',
+      'Resolve the scheduled plan change before canceling.'
+    );
   }
   const operation = await acquireOperation(context, 'cancel');
   try {
@@ -583,24 +679,32 @@ async function cancelSubscription(userId, overrides = {}) {
       { $set: { status: 'canceling', autoRenew: false, cancellationEffectiveAt: end } }
     );
     await completeOperation(context, operation, { stripeSubscriptionId: updated.id });
-    return { message: 'Abonnementet avsluttes ved periodens slutt', effectiveAt: end.toISOString() };
+    return {
+      message: 'Abonnementet avsluttes ved periodens slutt',
+      effectiveAt: end.toISOString(),
+    };
   } catch (err) {
     await markReconciliation(context, operation, err);
     if (err instanceof SubscriptionManagementError) throw err;
-    throw fail(503, 'SUBSCRIPTION_RECONCILIATION_REQUIRED', 'The cancellation result is being verified.');
+    throw fail(
+      503,
+      'SUBSCRIPTION_RECONCILIATION_REQUIRED',
+      'The cancellation result is being verified.'
+    );
   }
 }
 
 async function resumeSubscription(userId, overrides = {}) {
   const context = await getSubscriptionContext(userId, overrides);
-  if (
-    context.subscription.status !== 'active' ||
-    context.period.end <= new Date()
-  ) {
+  if (context.subscription.status !== 'active' || context.period.end <= new Date()) {
     throw fail(409, 'SUBSCRIPTION_NOT_RESUMABLE', 'This subscription can no longer be resumed.');
   }
   if (context.subscription.schedule || context.record.pendingPlanChange) {
-    throw fail(409, 'SUBSCRIPTION_PLAN_CHANGE_PENDING', 'Resolve the scheduled plan change before resuming.');
+    throw fail(
+      409,
+      'SUBSCRIPTION_PLAN_CHANGE_PENDING',
+      'Resolve the scheduled plan change before resuming.'
+    );
   }
   if (!context.subscription.cancel_at_period_end) {
     await completeOutstandingOperation(context, 'resume');
@@ -629,7 +733,11 @@ async function resumeSubscription(userId, overrides = {}) {
   } catch (err) {
     await markReconciliation(context, operation, err);
     if (err instanceof SubscriptionManagementError) throw err;
-    throw fail(503, 'SUBSCRIPTION_RECONCILIATION_REQUIRED', 'The resumption result is being verified.');
+    throw fail(
+      503,
+      'SUBSCRIPTION_RECONCILIATION_REQUIRED',
+      'The resumption result is being verified.'
+    );
   }
 }
 
@@ -646,7 +754,11 @@ async function scheduleDowngrade(context, target, operation, setStage) {
         message: 'Planendringen trer i kraft ved neste fornyelse',
       };
     }
-    throw fail(409, 'SUBSCRIPTION_PLAN_CHANGE_PENDING', 'Resolve the scheduled plan change before scheduling another.');
+    throw fail(
+      409,
+      'SUBSCRIPTION_PLAN_CHANGE_PENDING',
+      'Resolve the scheduled plan change before scheduling another.'
+    );
   }
   let scheduleId = idOf(subscription.schedule) || operation.stripeScheduleId;
   let schedule;
@@ -659,13 +771,18 @@ async function scheduleDowngrade(context, target, operation, setStage) {
       schedule.metadata?.stripeMode !== record.stripeMode ||
       !['active', 'not_started'].includes(schedule.status)
     ) {
-      throw fail(409, 'SUBSCRIPTION_SCHEDULE_NOT_OWNED', 'The existing Stripe schedule is not managed by Jobblo.');
+      throw fail(
+        409,
+        'SUBSCRIPTION_SCHEDULE_NOT_OWNED',
+        'The existing Stripe schedule is not managed by Jobblo.'
+      );
     }
-    if (
-      !record.pendingPlanChange &&
-      schedule.metadata?.operationId !== operation.operationId
-    ) {
-      throw fail(409, 'SUBSCRIPTION_PLAN_CHANGE_PENDING', 'An existing Stripe schedule requires review.');
+    if (!record.pendingPlanChange && schedule.metadata?.operationId !== operation.operationId) {
+      throw fail(
+        409,
+        'SUBSCRIPTION_PLAN_CHANGE_PENDING',
+        'An existing Stripe schedule requires review.'
+      );
     }
   } else {
     setStage('schedule_create');
@@ -673,7 +790,9 @@ async function scheduleDowngrade(context, target, operation, setStage) {
       {
         from_subscription: record.stripeSubscriptionId,
       },
-      { idempotencyKey: `jobblo-subv2-${record.stripeMode}-${operation.idempotencyKey}-schedule-create` }
+      {
+        idempotencyKey: `jobblo-subv2-${record.stripeMode}-${operation.idempotencyKey}-schedule-create`,
+      }
     );
     scheduleId = schedule.id;
     setStage('persist_schedule_id');
@@ -698,7 +817,11 @@ async function scheduleDowngrade(context, target, operation, setStage) {
     currentItems[0].price !== idOf(context.period.item.price) ||
     currentItems[0].quantity !== (context.period.item.quantity || 1)
   ) {
-    throw fail(409, 'SUBSCRIPTION_SCHEDULE_INVALID', 'The existing billing schedule does not match the current subscription.');
+    throw fail(
+      409,
+      'SUBSCRIPTION_SCHEDULE_INVALID',
+      'The existing billing schedule does not match the current subscription.'
+    );
   }
   const metadata = {
     subscriptionV2: 'true',
@@ -730,14 +853,15 @@ async function scheduleDowngrade(context, target, operation, setStage) {
       metadata,
       phases,
     },
-    { idempotencyKey: `jobblo-subv2-${record.stripeMode}-${operation.idempotencyKey}-schedule-update` }
+    {
+      idempotencyKey: `jobblo-subv2-${record.stripeMode}-${operation.idempotencyKey}-schedule-update`,
+    }
   );
   setStage('verify_schedule');
   const verifiedSchedule = await stripe.subscriptionSchedules.retrieve(scheduleId);
   const targetPhase = verifiedSchedule.phases?.find(
     (phase) =>
-      phase.start_date === end &&
-      phase.items?.some((item) => idOf(item.price) === target.priceId)
+      phase.start_date === end && phase.items?.some((item) => idOf(item.price) === target.priceId)
   );
   if (
     verifiedSchedule.status !== 'active' ||
@@ -749,7 +873,11 @@ async function scheduleDowngrade(context, target, operation, setStage) {
     verifiedSchedule.metadata?.operationId !== operation.operationId ||
     !targetPhase
   ) {
-    throw fail(503, 'SUBSCRIPTION_RECONCILIATION_REQUIRED', 'The scheduled plan change could not be verified.');
+    throw fail(
+      503,
+      'SUBSCRIPTION_RECONCILIATION_REQUIRED',
+      'The scheduled plan change could not be verified.'
+    );
   }
   setStage('persist_pending_plan');
   await context.SubscriptionModel.updateOne(
@@ -796,7 +924,9 @@ async function changePlan(userId, planId, overrides = {}) {
       String(pending.targetPlanId) === String(target.plan._id) &&
       pending.stripeScheduleId
     ) {
-      const schedule = await context.stripe.subscriptionSchedules.retrieve(pending.stripeScheduleId);
+      const schedule = await context.stripe.subscriptionSchedules.retrieve(
+        pending.stripeScheduleId
+      );
       const effectiveAt = Math.floor(new Date(pending.effectiveAt).getTime() / 1000);
       const targetPhase = schedule.phases?.find(
         (phase) =>
@@ -813,7 +943,11 @@ async function changePlan(userId, planId, overrides = {}) {
         !['active', 'not_started'].includes(schedule.status) ||
         !targetPhase
       ) {
-        throw fail(503, 'SUBSCRIPTION_RECONCILIATION_REQUIRED', 'The scheduled plan change needs verification.');
+        throw fail(
+          503,
+          'SUBSCRIPTION_RECONCILIATION_REQUIRED',
+          'The scheduled plan change needs verification.'
+        );
       }
       return {
         strategy: 'period_end',
@@ -821,7 +955,11 @@ async function changePlan(userId, planId, overrides = {}) {
         message: 'Planendringen trer i kraft ved neste fornyelse',
       };
     }
-    throw fail(409, 'SUBSCRIPTION_PLAN_CHANGE_PENDING', 'Resolve the scheduled plan change before upgrading.');
+    throw fail(
+      409,
+      'SUBSCRIPTION_PLAN_CHANGE_PENDING',
+      'Resolve the scheduled plan change before upgrading.'
+    );
   }
   const operation = await acquireOperation(context, operationType, target.plan._id);
   if (strategy === 'period_end') {
@@ -833,15 +971,25 @@ async function changePlan(userId, planId, overrides = {}) {
     } catch (err) {
       if (stage === 'schedule_create' && isStripeValidationError(err)) {
         await markScheduleCreationFailed(context, operation, err);
-        throw fail(502, 'SUBSCRIPTION_SCHEDULE_REJECTED', 'Stripe rejected the scheduled plan change request.');
+        throw fail(
+          502,
+          'SUBSCRIPTION_SCHEDULE_REJECTED',
+          'Stripe rejected the scheduled plan change request.'
+        );
       }
       await markReconciliation(context, operation, err, stage);
       if (err instanceof SubscriptionManagementError) throw err;
-      throw fail(503, 'SUBSCRIPTION_RECONCILIATION_REQUIRED', 'The scheduled change result is being verified.');
+      throw fail(
+        503,
+        'SUBSCRIPTION_RECONCILIATION_REQUIRED',
+        'The scheduled change result is being verified.'
+      );
     }
   }
 
-  const prorationDate = Math.floor(new Date(operation.prorationDate || Date.now()).getTime() / 1000);
+  const prorationDate = Math.floor(
+    new Date(operation.prorationDate || Date.now()).getTime() / 1000
+  );
   await context.OperationModel.updateOne(
     { _id: operation._id },
     {
@@ -853,7 +1001,13 @@ async function changePlan(userId, planId, overrides = {}) {
     await context.stripe.subscriptions.update(
       context.record.stripeSubscriptionId,
       {
-        items: [{ id: context.period.item.id, price: target.priceId, quantity: context.period.item.quantity || 1 }],
+        items: [
+          {
+            id: context.period.item.id,
+            price: target.priceId,
+            quantity: context.period.item.quantity || 1,
+          },
+        ],
         proration_behavior: 'always_invoice',
         payment_behavior: 'pending_if_incomplete',
         billing_cycle_anchor: 'unchanged',
@@ -868,7 +1022,11 @@ async function changePlan(userId, planId, overrides = {}) {
     };
   } catch (err) {
     await markReconciliation(context, operation, err);
-    throw fail(503, 'SUBSCRIPTION_RECONCILIATION_REQUIRED', 'The upgrade result is being verified.');
+    throw fail(
+      503,
+      'SUBSCRIPTION_RECONCILIATION_REQUIRED',
+      'The upgrade result is being verified.'
+    );
   }
 }
 
@@ -884,7 +1042,11 @@ async function cancelScheduledPlanChange(userId, overrides = {}) {
     !pending.operationId ||
     new Date(pending.effectiveAt).getTime() !== context.period.end.getTime()
   ) {
-    throw fail(503, 'SUBSCRIPTION_RECONCILIATION_REQUIRED', 'The scheduled change requires verification.');
+    throw fail(
+      503,
+      'SUBSCRIPTION_RECONCILIATION_REQUIRED',
+      'The scheduled change requires verification.'
+    );
   }
 
   const priorOperation = await context.OperationModel.findOne({
@@ -899,7 +1061,11 @@ async function cancelScheduledPlanChange(userId, overrides = {}) {
     status: 'succeeded',
   });
   if (!priorOperation) {
-    throw fail(503, 'SUBSCRIPTION_RECONCILIATION_REQUIRED', 'The scheduled change requires verification.');
+    throw fail(
+      503,
+      'SUBSCRIPTION_RECONCILIATION_REQUIRED',
+      'The scheduled change requires verification.'
+    );
   }
 
   const verifySchedule = async () => {
@@ -932,14 +1098,22 @@ async function cancelScheduledPlanChange(userId, overrides = {}) {
       (currentPhase.items[0].quantity || 1) !== (context.period.item.quantity || 1) ||
       !targetPhase
     ) {
-      throw fail(409, 'SUBSCRIPTION_SCHEDULE_NOT_OWNED', 'The scheduled change could not be verified.');
+      throw fail(
+        409,
+        'SUBSCRIPTION_SCHEDULE_NOT_OWNED',
+        'The scheduled change could not be verified.'
+      );
     }
     return schedule;
   };
 
   const schedule = await verifySchedule();
   if (!['active', 'not_started', 'released'].includes(schedule.status)) {
-    throw fail(409, 'SUBSCRIPTION_SCHEDULE_NOT_CANCELABLE', 'The scheduled change is no longer cancelable.');
+    throw fail(
+      409,
+      'SUBSCRIPTION_SCHEDULE_NOT_CANCELABLE',
+      'The scheduled change is no longer cancelable.'
+    );
   }
   const operation = await acquireOperation(context, 'cancel_plan_change', pending.targetPlanId);
   try {
@@ -958,7 +1132,8 @@ async function cancelScheduledPlanChange(userId, overrides = {}) {
       String(verifiedSchedule.metadata?.userId) !== String(context.record.userId) ||
       String(verifiedSchedule.metadata?.subscriptionId) !== String(context.record._id) ||
       verifiedSchedule.metadata?.stripeMode !== context.record.stripeMode
-    ) throw new Error('stripe_schedule_release_not_confirmed');
+    )
+      throw new Error('stripe_schedule_release_not_confirmed');
     const updated = await context.SubscriptionModel.updateOne(
       {
         _id: context.record._id,
@@ -967,9 +1142,13 @@ async function cancelScheduledPlanChange(userId, overrides = {}) {
       },
       { $set: { pendingPlanChange: null } }
     );
-    if (updated.matchedCount === 0 || (updated.matchedCount == null && updated.modifiedCount === 0)) {
+    if (
+      updated.matchedCount === 0 ||
+      (updated.matchedCount == null && updated.modifiedCount === 0)
+    ) {
       const current = await context.SubscriptionModel.findOne({ _id: context.record._id }).lean();
-      if (!current || current.pendingPlanChange) throw new Error('scheduled_plan_change_state_changed');
+      if (!current || current.pendingPlanChange)
+        throw new Error('scheduled_plan_change_state_changed');
     }
     await completeOperation(context, operation, {
       stripeSubscriptionId: context.record.stripeSubscriptionId,
@@ -979,7 +1158,11 @@ async function cancelScheduledPlanChange(userId, overrides = {}) {
   } catch (err) {
     await markReconciliation(context, operation, err);
     if (err instanceof SubscriptionManagementError) throw err;
-    throw fail(503, 'SUBSCRIPTION_RECONCILIATION_REQUIRED', 'The scheduled change result is being verified.');
+    throw fail(
+      503,
+      'SUBSCRIPTION_RECONCILIATION_REQUIRED',
+      'The scheduled change result is being verified.'
+    );
   }
 }
 

@@ -51,7 +51,8 @@ afterAll(async () => {
   await redis.closeRedis();
 });
 
-const maybe = (name, fn, timeout = 20000) => it(name, async () => (up ? fn() : console.warn(`[skip] no Redis at ${URL_}`)), timeout);
+const maybe = (name, fn, timeout = 20000) =>
+  it(name, async () => (up ? fn() : console.warn(`[skip] no Redis at ${URL_}`)), timeout);
 
 describe('queues on Redis (BullMQ)', () => {
   maybe('a worker picks up a queued job', async () => {
@@ -69,8 +70,16 @@ describe('queues on Redis (BullMQ)', () => {
     const queue = require('../services/queue');
     const { deliverPush } = require('../services/pushNotifications');
     deliverPush.mockReset();
-    deliverPush.mockRejectedValueOnce(new Error('fcm 503')).mockRejectedValueOnce(new Error('fcm 503')).mockResolvedValue(undefined);
-    const { id } = await queue.enqueue('push', 'send', { userId: 'u2', message: {} }, { attempts: 3, backoff: { type: 'fixed', delay: 50 } });
+    deliverPush
+      .mockRejectedValueOnce(new Error('fcm 503'))
+      .mockRejectedValueOnce(new Error('fcm 503'))
+      .mockResolvedValue(undefined);
+    const { id } = await queue.enqueue(
+      'push',
+      'send',
+      { userId: 'u2', message: {} },
+      { attempts: 3, backoff: { type: 'fixed', delay: 50 } }
+    );
     const job = await until(async () => {
       const j = await queue.getQueue('push').getJob(id);
       return j && (await j.getState()) === 'completed' ? j : null;
@@ -81,32 +90,58 @@ describe('queues on Redis (BullMQ)', () => {
     expect(job.attemptsStarted).toBe(3);
   });
 
-  maybe('a job that keeps failing ends in the failed list (dead letter) and can be retried', async () => {
-    const queue = require('../services/queue');
-    const { deliverPush } = require('../services/pushNotifications');
-    deliverPush.mockReset();
-    deliverPush.mockRejectedValue(new Error('permanently broken'));
-    const { id } = await queue.enqueue('push', 'send', { userId: 'u3', message: {} }, { attempts: 2, backoff: { type: 'fixed', delay: 50 } });
-    const job = await until(async () => {
-      const j = await queue.getQueue('push').getJob(id);
-      return j && (await j.getState()) === 'failed' ? j : null;
-    });
-    expect(job.failedReason).toMatch(/permanently broken/);
-    // Recovery: fix the cause, retry the dead job.
-    deliverPush.mockReset();
-    deliverPush.mockResolvedValue(undefined);
-    await job.retry();
-    await until(async () => (await queue.getQueue('push').getJob(id).then((j) => j.getState())) === 'completed');
-  });
+  maybe(
+    'a job that keeps failing ends in the failed list (dead letter) and can be retried',
+    async () => {
+      const queue = require('../services/queue');
+      const { deliverPush } = require('../services/pushNotifications');
+      deliverPush.mockReset();
+      deliverPush.mockRejectedValue(new Error('permanently broken'));
+      const { id } = await queue.enqueue(
+        'push',
+        'send',
+        { userId: 'u3', message: {} },
+        { attempts: 2, backoff: { type: 'fixed', delay: 50 } }
+      );
+      const job = await until(async () => {
+        const j = await queue.getQueue('push').getJob(id);
+        return j && (await j.getState()) === 'failed' ? j : null;
+      });
+      expect(job.failedReason).toMatch(/permanently broken/);
+      // Recovery: fix the cause, retry the dead job.
+      deliverPush.mockReset();
+      deliverPush.mockResolvedValue(undefined);
+      await job.retry();
+      await until(
+        async () =>
+          (await queue
+            .getQueue('push')
+            .getJob(id)
+            .then((j) => j.getState())) === 'completed'
+      );
+    }
+  );
 
   maybe('the Redis schedule is synced without resetting existing timers', async () => {
     const { syncRedisSchedule } = require('../services/scheduler');
     const q = require('../services/queue').getQueue('scheduler');
     const a = { name: 'testJobA', everyMs: 60_000, delayMs: 60_000 };
     const b = { name: 'testJobB', everyMs: 120_000, delayMs: 60_000 };
-    expect(await syncRedisSchedule(q, [a, b])).toEqual({ created: ['testJobA', 'testJobB'], kept: [], removed: [] });
-    expect(await syncRedisSchedule(q, [a, b])).toEqual({ created: [], kept: ['testJobA', 'testJobB'], removed: [] });
-    expect(await syncRedisSchedule(q, [{ ...a, everyMs: 30_000 }])).toEqual({ created: ['testJobA'], kept: [], removed: ['testJobB'] });
+    expect(await syncRedisSchedule(q, [a, b])).toEqual({
+      created: ['testJobA', 'testJobB'],
+      kept: [],
+      removed: [],
+    });
+    expect(await syncRedisSchedule(q, [a, b])).toEqual({
+      created: [],
+      kept: ['testJobA', 'testJobB'],
+      removed: [],
+    });
+    expect(await syncRedisSchedule(q, [{ ...a, everyMs: 30_000 }])).toEqual({
+      created: ['testJobA'],
+      kept: [],
+      removed: ['testJobB'],
+    });
     await syncRedisSchedule(q, []);
   });
 });
@@ -118,7 +153,17 @@ describe('rate limits on Redis', () => {
     const { makeLimiter } = require('../middleware/rateLimiter');
     const name = `shared-${Date.now()}`;
     // Two separate limiter instances = two server processes behind a load balancer.
-    const appFor = () => express().get('/', makeLimiter(name, { windowMs: 60_000, max: 3, standardHeaders: true, legacyHeaders: false }), (req, res) => res.send('ok'));
+    const appFor = () =>
+      express().get(
+        '/',
+        makeLimiter(name, {
+          windowMs: 60_000,
+          max: 3,
+          standardHeaders: true,
+          legacyHeaders: false,
+        }),
+        (req, res) => res.send('ok')
+      );
     const [one, two] = [appFor(), appFor()];
     const statuses = [];
     for (const app of [one, two, one, two]) statuses.push((await request(app).get('/')).status);

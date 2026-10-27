@@ -2,9 +2,37 @@
  * C3: what one user may see of another. The public projection is its own allow-list, search
  * never matches or returns email, and search text is matched literally.
  */
-const { PUBLIC_FIELDS, PUBLIC_USER_SELECT, sanitizeUserPublic, sanitizeUserOwner } = require('../utils/userProjections');
+const {
+  PUBLIC_FIELDS,
+  PUBLIC_USER_SELECT,
+  sanitizeUserPublic,
+  sanitizeUserOwner,
+} = require('../utils/userProjections');
 
-const PRIVATE = ['email', 'phone', 'address', 'addresses', 'postNumber', 'birthDate', 'gender', 'earnings', 'totalEarned', 'totalSpent', 'coins', 'lastLogin', 'googleId', 'stripeConnectAccountId', 'settings', 'notificationPreferences', 'accountStatus', 'subscriptionStatus', 'monthlyContactUsage', 'password', 'iban', 'bankAccountNumber'];
+const PRIVATE = [
+  'email',
+  'phone',
+  'address',
+  'addresses',
+  'postNumber',
+  'birthDate',
+  'gender',
+  'earnings',
+  'totalEarned',
+  'totalSpent',
+  'coins',
+  'lastLogin',
+  'googleId',
+  'stripeConnectAccountId',
+  'settings',
+  'notificationPreferences',
+  'accountStatus',
+  'subscriptionStatus',
+  'monthlyContactUsage',
+  'password',
+  'iban',
+  'bankAccountNumber',
+];
 
 const fullUser = () => ({
   _id: 'u1',
@@ -23,12 +51,23 @@ describe('public user projection', () => {
   it('strips every private field from a response, even if a query selected it', () => {
     const out = sanitizeUserPublic(fullUser());
     for (const k of PRIVATE) expect(out).not.toHaveProperty(k);
-    expect(out).toMatchObject({ _id: 'u1', name: 'Kari', bio: 'Maler', postSted: 'Oslo', identityVerified: true });
+    expect(out).toMatchObject({
+      _id: 'u1',
+      name: 'Kari',
+      bio: 'Maler',
+      postSted: 'Oslo',
+      identityVerified: true,
+    });
     expect(out).not.toHaveProperty('identityVerification');
   });
 
   it('keeps per-response stats the profile page shows', () => {
-    const out = sanitizeUserPublic({ ...fullUser(), averageResponseTimeMinutes: 12, totalJobRequests: 3, reviews: [] });
+    const out = sanitizeUserPublic({
+      ...fullUser(),
+      averageResponseTimeMinutes: 12,
+      totalJobRequests: 3,
+      reviews: [],
+    });
     expect(out).toMatchObject({ averageResponseTimeMinutes: 12, totalJobRequests: 3, reviews: [] });
   });
 
@@ -38,7 +77,11 @@ describe('public user projection', () => {
 
   it('the owner still sees their own email, phone and address', () => {
     const out = sanitizeUserOwner(fullUser());
-    expect(out).toMatchObject({ email: 'secret-email', phone: 'secret-phone', address: 'secret-address' });
+    expect(out).toMatchObject({
+      email: 'secret-email',
+      phone: 'secret-phone',
+      address: 'secret-address',
+    });
     expect(out).not.toHaveProperty('password');
   });
 });
@@ -46,11 +89,26 @@ describe('public user projection', () => {
 describe('user search', () => {
   jest.resetModules();
   const filters = [];
-  const chain = { select: () => chain, limit: () => Promise.resolve([{ _id: 'u2', name: 'Ola', email: 'ola@example.test', address: 'Gate 1' }]) };
+  const chain = {
+    select: () => chain,
+    limit: () =>
+      Promise.resolve([{ _id: 'u2', name: 'Ola', email: 'ola@example.test', address: 'Gate 1' }]),
+  };
   jest.doMock('../models/User', () => ({ find: (f) => (filters.push(f), chain) }));
   const { searchUsers } = require('../controllers/users/searchController');
   const run = async (q) => {
-    const res = { code: 0, body: null, status(c) { this.code = c; return this; }, json(b) { this.body = b; return this; } };
+    const res = {
+      code: 0,
+      body: null,
+      status(c) {
+        this.code = c;
+        return this;
+      },
+      json(b) {
+        this.body = b;
+        return this;
+      },
+    };
     await searchUsers({ query: { q }, userId: 'me' }, res);
     return res;
   };

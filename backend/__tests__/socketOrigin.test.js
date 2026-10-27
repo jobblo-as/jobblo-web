@@ -30,7 +30,7 @@ it('refuses a lookalike origin', async () => {
   expect((await handshake('http://localhost:5173.evil.example')).status).toBe(403);
 });
 
-it('accepts Jobblo\'s own origin', async () => {
+it("accepts Jobblo's own origin", async () => {
   const res = await handshake('http://localhost:5173');
   expect(res.status).toBe(200);
   expect(res.text).toMatch(/^0\{"sid"/);
@@ -43,7 +43,11 @@ it('accepts a request without an Origin (mobile app)', async () => {
 });
 
 it('accepts the API own origin (React Native on Android sends it) but not another site with that Host', async () => {
-  const at = (origin) => request(server).get('/socket.io/?EIO=4&transport=polling').set('Host', 'api.jobblo.test:5001').set('Origin', origin);
+  const at = (origin) =>
+    request(server)
+      .get('/socket.io/?EIO=4&transport=polling')
+      .set('Host', 'api.jobblo.test:5001')
+      .set('Origin', origin);
   expect((await at('http://api.jobblo.test:5001')).status).toBe(200);
   expect((await at('http://evil.example')).status).toBe(403);
   expect((await at('http://api.jobblo.test:5002')).status).toBe(403);

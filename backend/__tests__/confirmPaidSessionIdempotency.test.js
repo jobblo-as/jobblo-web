@@ -7,12 +7,24 @@
  * unique index the schema never declared, so both callers could win.
  */
 
-jest.mock('../models/Order', () => ({ findById: jest.fn(), findOneAndUpdate: jest.fn(), updateOne: jest.fn() }));
+jest.mock('../models/Order', () => ({
+  findById: jest.fn(),
+  findOneAndUpdate: jest.fn(),
+  updateOne: jest.fn(),
+}));
 jest.mock('../models/Payment', () => ({ updateOne: jest.fn() }));
-jest.mock('../models/User', () => ({ updateMany: jest.fn(), findById: jest.fn(), findByIdAndUpdate: jest.fn() }));
+jest.mock('../models/User', () => ({
+  updateMany: jest.fn(),
+  findById: jest.fn(),
+  findByIdAndUpdate: jest.fn(),
+}));
 jest.mock('../models/Notification', () => ({ create: jest.fn(), findById: jest.fn() }));
 jest.mock('../models/ChatMessage', () => ({ findById: jest.fn() }));
-jest.mock('../models/Service', () => ({ findById: jest.fn(), findByIdAndUpdate: jest.fn(), updateOne: jest.fn() }));
+jest.mock('../models/Service', () => ({
+  findById: jest.fn(),
+  findByIdAndUpdate: jest.fn(),
+  updateOne: jest.fn(),
+}));
 jest.mock('../models/SafePayHistory', () => ({ updateOne: jest.fn() }));
 jest.mock('../models/GlobalConfig', () => ({ findOneAndUpdate: jest.fn() }));
 jest.mock('../models/Review', () => ({ create: jest.fn(), findOne: jest.fn() }));
@@ -242,7 +254,9 @@ describe('confirmPaidSession', () => {
     Order.findById.mockResolvedValue(order());
 
     const result = await confirmPaidSession(
-      session({ metadata: { orderId: String(ORDER_ID), userId: String(new mongoose.Types.ObjectId()) } }),
+      session({
+        metadata: { orderId: String(ORDER_ID), userId: String(new mongoose.Types.ObjectId()) },
+      }),
       null
     );
 
@@ -352,9 +366,7 @@ describe('confirmPaidSession', () => {
       checkoutAttemptId: 'attempt_old',
       paymentIntentId: 'pi_test_2',
     };
-    Order.findById
-      .mockResolvedValueOnce(order())
-      .mockResolvedValueOnce(orderThatLostTheRace);
+    Order.findById.mockResolvedValueOnce(order()).mockResolvedValueOnce(orderThatLostTheRace);
     Payment.findOne.mockResolvedValue(null);
     Order.findOneAndUpdate.mockResolvedValue(null);
 

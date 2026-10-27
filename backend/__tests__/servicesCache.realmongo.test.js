@@ -10,13 +10,22 @@ const cache = require('../utils/cache');
 const { getServiceById } = require('../controllers/services/browseController');
 
 const uri = process.env.SAFEPAY_REAL_MONGO_URI;
-const run = uri && /^mongodb:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/[\w-]+-test(\?.*)?$/.test(uri) ? describe : describe.skip;
+const run =
+  uri && /^mongodb:\/\/(127\.0\.0\.1|localhost)(:\d+)?\/[\w-]+-test(\?.*)?$/.test(uri)
+    ? describe
+    : describe.skip;
 
 const call = async (req) => {
   const res = {
     statusCode: 200,
-    status(code) { this.statusCode = code; return this; },
-    json(body) { this.body = body; return this; },
+    status(code) {
+      this.statusCode = code;
+      return this;
+    },
+    json(body) {
+      this.body = body;
+      return this;
+    },
   };
   await getServiceById({ headers: {}, ...req }, res);
   return res;
@@ -37,7 +46,9 @@ run('services cache (real MongoDB)', () => {
   });
   beforeEach(async () => {
     cache._local.clear();
-    await mongoose.connection.collection('users').updateOne({ _id: ownerId }, { $set: { name: 'Ola' } }, { upsert: true }); // populated seller
+    await mongoose.connection
+      .collection('users')
+      .updateOne({ _id: ownerId }, { $set: { name: 'Ola' } }, { upsert: true }); // populated seller
     job = await Service.create({
       userId: ownerId,
       title: 'Male gjerde',
@@ -53,7 +64,10 @@ run('services cache (real MongoDB)', () => {
     expect(first.statusCode).toBe(200);
     expect(await cache.get(key(job._id))).toMatchObject({ title: 'Male gjerde' });
 
-    await Service.collection.updateOne({ _id: job._id }, { $set: { title: 'changed behind the cache' } }); // no hooks
+    await Service.collection.updateOne(
+      { _id: job._id },
+      { $set: { title: 'changed behind the cache' } }
+    ); // no hooks
     const second = await call({ params: { id: String(job._id) } });
     expect(second.body.title).toBe('Male gjerde');
   });

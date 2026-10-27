@@ -64,7 +64,9 @@ router.get('/vipps', optionalAuthenticate, (req, res) =>
 );
 // Sign in with Apple (Apple's web flow). 503 until APPLE_SERVICES_ID and APPLE_REDIRECT_URI
 // are set; the callback (POST /api/auth/apple/callback) is mounted in app.js.
-router.get('/apple', appleAuth.appleStartLimiter, (req, res) => appleAuth.appleWebStart(req, res, 'web'));
+router.get('/apple', appleAuth.appleStartLimiter, (req, res) =>
+  appleAuth.appleWebStart(req, res, 'web')
+);
 // optionalAuthenticate so a link callback can be checked against the session that started it.
 router.get('/vipps/callback', optionalAuthenticate, (req, res) =>
   vippsController.vippsCallback(req, res, { platform: 'web' })

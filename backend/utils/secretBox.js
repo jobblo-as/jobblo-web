@@ -13,9 +13,12 @@ function keyFor(purpose) {
   const raw = process.env.MFA_ENCRYPTION_KEY;
   if (raw) {
     const k = /^[0-9a-f]{64}$/i.test(raw) ? Buffer.from(raw, 'hex') : Buffer.from(raw, 'base64');
-    if (k.length !== 32) throw new Error('MFA_ENCRYPTION_KEY must be 32 bytes (64 hex chars or base64).');
+    if (k.length !== 32)
+      throw new Error('MFA_ENCRYPTION_KEY must be 32 bytes (64 hex chars or base64).');
     // A purpose-specific subkey from the configured key, too.
-    return purpose === 'totp-secret' ? k : Buffer.from(crypto.hkdfSync('sha256', k, 'jobblo-secretbox', purpose, 32));
+    return purpose === 'totp-secret'
+      ? k
+      : Buffer.from(crypto.hkdfSync('sha256', k, 'jobblo-secretbox', purpose, 32));
   }
   if (!process.env.JWT_SECRET) throw new Error('JWT_SECRET is not configured');
   return Buffer.from(crypto.hkdfSync('sha256', process.env.JWT_SECRET, 'jobblo-mfa', purpose, 32));
@@ -28,7 +31,12 @@ function createBox(purpose) {
       const iv = crypto.randomBytes(12);
       const cipher = crypto.createCipheriv('aes-256-gcm', keyFor(purpose), iv);
       const data = Buffer.concat([cipher.update(buf), cipher.final()]);
-      return ['v1', iv.toString('base64'), cipher.getAuthTag().toString('base64'), data.toString('base64')].join(':');
+      return [
+        'v1',
+        iv.toString('base64'),
+        cipher.getAuthTag().toString('base64'),
+        data.toString('base64'),
+      ].join(':');
     },
     /** Buffer out; throws if the value was tampered with or sealed for another purpose. */
     open(sealed) {

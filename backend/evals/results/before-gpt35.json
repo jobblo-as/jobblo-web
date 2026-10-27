@@ -44,11 +44,7 @@
         "title": "Maling av to soverom",
         "description": "Jeg trenger hjelp til å male to soverom. Kun vegger, ikke tak og ikke lister. Jeg har allerede kjøpt malingen.",
         "category": "Maling",
-        "skills": [
-          "Maling",
-          "Presisjon",
-          "Effektivitet"
-        ],
+        "skills": ["Maling", "Presisjon", "Effektivitet"],
         "paymentType": "Fastpris",
         "hourlyRate": 420,
         "suggestedPrice": 2520,
@@ -147,11 +143,7 @@
         "title": "Flyttevask av 3-roms leilighet i Bergen",
         "description": "Jeg trenger hjelp til flyttevask av 3-roms leilighet i Bergen. Ovn og vinduer skal rengjøres grundig for overtakelse.",
         "category": "Rengjøring",
-        "skills": [
-          "Rengjøring",
-          "Nøyaktighet",
-          "Effektivitet"
-        ],
+        "skills": ["Rengjøring", "Nøyaktighet", "Effektivitet"],
         "paymentType": "Fastpris",
         "hourlyRate": 360,
         "suggestedPrice": 1080,
@@ -249,11 +241,7 @@
         "title": "Flytting av sofa, dobbeltseng og flyttesker fra 2. etasje",
         "description": "Jeg trenger hjelp til å flytte en sofa, dobbeltseng og ca 10 flyttesker fra 2. etasje ned til varebil. Ingen heis tilgjengelig i bygget.",
         "category": "Flytting",
-        "skills": [
-          "Løfte",
-          "Transport",
-          "Organisering"
-        ],
+        "skills": ["Løfte", "Transport", "Organisering"],
         "paymentType": "Timepris",
         "hourlyRate": 400,
         "suggestedPrice": 1600,
@@ -352,10 +340,7 @@
         "title": "Montering av IKEA PAX garderobe",
         "description": "Jeg trenger hjelp til å montere 2 IKEA PAX garderobeskap. Jeg har verktøy som kan lånes.",
         "category": "Småjobber",
-        "skills": [
-          "Skrutrekker",
-          "Drill"
-        ],
+        "skills": ["Skrutrekker", "Drill"],
         "paymentType": "Timepris",
         "hourlyRate": 390,
         "suggestedPrice": 780,
@@ -458,11 +443,7 @@
         "title": "Klippe plen og trimme hekk av 300 kvm hage",
         "description": "Jeg trenger hjelp til å klippe plen og trimme hekk i en hage på ca 300 kvm. Hekken går rundt hele tomta.",
         "category": "Hagearbeid",
-        "skills": [
-          "Plenklipping",
-          "Hekktrimming",
-          "Hagearbeid"
-        ],
+        "skills": ["Plenklipping", "Hekktrimming", "Hagearbeid"],
         "paymentType": "Fastpris",
         "hourlyRate": 360,
         "suggestedPrice": 1440,
@@ -560,11 +541,7 @@
         "title": "Fikse dryppende vannlås under kjøkkenvasken",
         "description": "Jeg trenger hjelp til å fikse en dryppende vannlås under kjøkkenvasken. Har satt en bøtte under.",
         "category": "Rørlegger",
-        "skills": [
-          "Vannrør",
-          "Vannlekkasje",
-          "Vedlikehold"
-        ],
+        "skills": ["Vannrør", "Vannlekkasje", "Vedlikehold"],
         "paymentType": "Timepris",
         "hourlyRate": 620,
         "suggestedPrice": 1860,
@@ -662,11 +639,7 @@
         "title": "Montering av 4 nye stikkontakter i stua",
         "description": "Jeg trenger hjelp til å montere 4 nye stikkontakter i stua. Sikringsskapet er fra 2018.",
         "category": "Elektrisk",
-        "skills": [
-          "Elektriker",
-          "Installasjon",
-          "Sikkerhet"
-        ],
+        "skills": ["Elektriker", "Installasjon", "Sikkerhet"],
         "paymentType": "Anbud",
         "hourlyRate": 390,
         "suggestedPrice": 780,
@@ -764,11 +737,7 @@
         "title": "Snømåking av innkjørsel og trapp",
         "description": "Jeg trenger hjelp til å måke innkjørselen og trappen gjennom hele vinteren. Ca 40 kvm innkjørsel.",
         "category": "Snørydding",
-        "skills": [
-          "Snømåking",
-          "Vintervedlikehold",
-          "Fysisk arbeid"
-        ],
+        "skills": ["Snømåking", "Vintervedlikehold", "Fysisk arbeid"],
         "paymentType": "Timepris",
         "hourlyRate": 410,
         "suggestedPrice": 820,
@@ -866,11 +835,7 @@
         "title": "Vask og polering av bil i garasje",
         "description": "Jeg trenger hjelp til innvendig og utvendig vask av bil, samt polering. Bilen står i garasjen.",
         "category": "Bilvask",
-        "skills": [
-          "Vasking",
-          "Polering",
-          "Nøyaktighet"
-        ],
+        "skills": ["Vasking", "Polering", "Nøyaktighet"],
         "paymentType": "Fastpris",
         "hourlyRate": 360,
         "suggestedPrice": 1080,
@@ -968,11 +933,7 @@
         "title": "Fotografering av konfirmasjon",
         "description": "Jeg trenger hjelp til å fotografere konfirmasjonen min. Ønsker både portretter og bilder av selskapet. Ta kontakt hvis du er interessert!",
         "category": "Småjobber",
-        "skills": [
-          "Fotografering",
-          "Portrettfotografering",
-          "Selskapsfotografering"
-        ],
+        "skills": ["Fotografering", "Portrettfotografering", "Selskapsfotografering"],
         "paymentType": "Anbud",
         "hourlyRate": 390,
         "suggestedPrice": 780,
@@ -1070,11 +1031,7 @@
         "title": "Undervisning i matematikk R1 for datter, digitalt",
         "description": "Jeg trenger hjelp til matematikk R1 for datteren min, 2 ganger i uka. Kan være digitalt.",
         "category": "Småjobber",
-        "skills": [
-          "Matematikk",
-          "Undervisning",
-          "Digital"
-        ],
+        "skills": ["Matematikk", "Undervisning", "Digital"],
         "paymentType": "Timepris",
         "hourlyRate": 390,
         "suggestedPrice": 780,
@@ -1171,11 +1128,7 @@
         "title": "Maling av husfasade",
         "description": "Jeg trenger hjelp til å male husfasaden utvendig. Det er et stort hus, så jobben vil ta omtrent 2 timer. Jeg har allerede alt nødvendig utstyr.",
         "category": "Maling",
-        "skills": [
-          "Maling",
-          "Utendørs",
-          "Presisjon"
-        ],
+        "skills": ["Maling", "Utendørs", "Presisjon"],
         "paymentType": "Fastpris",
         "hourlyRate": 390,
         "suggestedPrice": 780,
@@ -1272,11 +1225,7 @@
         "title": "Hjelp med hjemmeoppgaver",
         "description": "Jeg trenger hjelp til diverse småjobber hjemme. Oppgavene inkluderer hagearbeid, rengjøring og annet forefallende arbeid. Ønsker en pålitelig person med erfaring og god arbeidsmoral.",
         "category": "Småjobber",
-        "skills": [
-          "Hagearbeid",
-          "Rengjøring",
-          "Pålitelig"
-        ],
+        "skills": ["Hagearbeid", "Rengjøring", "Pålitelig"],
         "paymentType": "Fastpris",
         "hourlyRate": 390,
         "suggestedPrice": 780,
@@ -1374,11 +1323,7 @@
         "title": "Membranlegging og flislegging av bad på 5 kvm",
         "description": "Trenger hjelp til å legge ny membran, flislegge gulv og vegger, samt montere dusjvegg på et bad i enebolig fra 1978. Sluk er byttet. Fliser er ikke kjøpt ennå.",
         "category": "Oppussing",
-        "skills": [
-          "Membranlegging",
-          "Flislegging",
-          "Montering"
-        ],
+        "skills": ["Membranlegging", "Flislegging", "Montering"],
         "paymentType": "Anbud",
         "hourlyRate": 440,
         "suggestedPrice": 3520,
@@ -1478,11 +1423,7 @@
         "title": "Ukentlig renhold av kontorlokale på 120 kvm",
         "description": "Jeg trenger hjelp til ukentlig renhold av kontorlokale på 120 kvm med 8 arbeidsplasser, ett møterom og ett toalett. Ønsker renhold én gang i uka, helst etter kl. 17. Vi holder rengjøringsmidler og støvsuger selv.",
         "category": "Rengjøring",
-        "skills": [
-          "Rengjøring",
-          "Punktlig",
-          "Selvstendig"
-        ],
+        "skills": ["Rengjøring", "Punktlig", "Selvstendig"],
         "paymentType": "Timepris",
         "hourlyRate": 360,
         "suggestedPrice": 1080,
@@ -1580,11 +1521,7 @@
         "title": "Oppussing av bad",
         "description": "Jeg trenger hjelp til oppussing av bad. Ønsker å oppgradere badet med nytt interiør og overflatebehandling.",
         "category": "Oppussing",
-        "skills": [
-          "Håndverk",
-          "Maling",
-          "Rørlegger"
-        ],
+        "skills": ["Håndverk", "Maling", "Rørlegger"],
         "paymentType": "Anbud",
         "hourlyRate": 440,
         "suggestedPrice": 3520,
@@ -1682,11 +1619,7 @@
         "title": "Maling av leilighet",
         "description": "Jeg trenger hjelp til å male leiligheten min. Jeg er usikker på hva det bør koste, så budsjettet er ikke bestemt enda.",
         "category": "Maling",
-        "skills": [
-          "Maling",
-          "Presisjon",
-          "Effektivitet"
-        ],
+        "skills": ["Maling", "Presisjon", "Effektivitet"],
         "paymentType": "Anbud",
         "hourlyRate": 420,
         "suggestedPrice": 2520,
@@ -1784,11 +1717,7 @@
         "title": "Transport av møbler",
         "description": "Jeg trenger hjelp til transport av noen møbler. Oppdraget innebærer å frakte møblene fra ett sted til et annet.",
         "category": "Transport",
-        "skills": [
-          "Transport",
-          "Løfting",
-          "Pakking"
-        ],
+        "skills": ["Transport", "Løfting", "Pakking"],
         "paymentType": "Timepris",
         "hourlyRate": 430,
         "suggestedPrice": 1720,
@@ -1886,11 +1815,7 @@
         "title": "Maling av to soverom",
         "description": "Jeg trenger hjelp til å male to soverom. Kun vegger. Jeg har allerede kjøpt malingen.",
         "category": "Maling",
-        "skills": [
-          "Maling",
-          "Veggmaling",
-          "Presisjon"
-        ],
+        "skills": ["Maling", "Veggmaling", "Presisjon"],
         "paymentType": "Fastpris",
         "hourlyRate": 420,
         "suggestedPrice": 2520,
@@ -1997,11 +1922,7 @@
         "title": "Flyttevask av 2-roms leilighet med ovn og vinduer",
         "description": "Jeg trenger hjelp til flyttevask av en 2-roms leilighet. Oppgaven inkluderer rengjøring av ovn og vinduer. Nøklene overleveres etter inspeksjon.",
         "category": "Rengjøring",
-        "skills": [
-          "Rengjøring",
-          "Vindusvask",
-          "Ovnrengjøring"
-        ],
+        "skills": ["Rengjøring", "Vindusvask", "Ovnrengjøring"],
         "paymentType": "Fastpris",
         "hourlyRate": 360,
         "suggestedPrice": 1080,
@@ -2108,11 +2029,7 @@
         "title": "Montering av IKEA-garderobe",
         "description": "Jeg trenger hjelp til å montere to IKEA-garderober. Verktøy kan lånes.",
         "category": "Småjobber",
-        "skills": [
-          "Montering",
-          "Verktøy",
-          "Møbel"
-        ],
+        "skills": ["Montering", "Verktøy", "Møbel"],
         "paymentType": "Timepris",
         "hourlyRate": 390,
         "suggestedPrice": 780,
@@ -2218,11 +2135,7 @@
         "title": "Maling av hjelp",
         "description": "Jeg trenger hjelp til å male en vegg på soverommet mitt. Jeg har alt nødvendig utstyr, men trenger noen til å utføre jobben.",
         "category": "Maling",
-        "skills": [
-          "Maling",
-          "Presisjon",
-          "Pålitelig"
-        ],
+        "skills": ["Maling", "Presisjon", "Pålitelig"],
         "paymentType": "Fastpris",
         "hourlyRate": 390,
         "suggestedPrice": 780,
@@ -2329,11 +2242,7 @@
         "title": "Hjelp med flytting neste helg",
         "description": "Jeg trenger hjelp til flytting av møbler og esker til ny bolig. Oppdraget vil ta omtrent 4 timer.",
         "category": "Flytting",
-        "skills": [
-          "Løfte tungt",
-          "Pakking",
-          "Transportering"
-        ],
+        "skills": ["Løfte tungt", "Pakking", "Transportering"],
         "paymentType": "Timepris",
         "hourlyRate": 400,
         "suggestedPrice": 1600,
@@ -2440,11 +2349,7 @@
         "title": "Maling av stue og gang",
         "description": "Jeg trenger hjelp til å male stua og gangen, som til sammen utgjør ca. 35 kvm. Jeg har allerede malingen klar, så det er bare arbeidskraften jeg trenger.",
         "category": "Maling",
-        "skills": [
-          "Maling",
-          "Presisjon",
-          "Effektivitet"
-        ],
+        "skills": ["Maling", "Presisjon", "Effektivitet"],
         "paymentType": "Fastpris",
         "hourlyRate": 420,
         "suggestedPrice": 2520,
@@ -2542,11 +2447,7 @@
         "title": "Hjelp med hagen",
         "description": "Jeg trenger hjelp til hagearbeid. Oppgaven inkluderer planting, luking og beskjæring av busker.",
         "category": "Hagearbeid",
-        "skills": [
-          "Planting",
-          "Luking",
-          "Beskjæring"
-        ],
+        "skills": ["Planting", "Luking", "Beskjæring"],
         "paymentType": "Timepris",
         "hourlyRate": 360,
         "suggestedPrice": 1440,
@@ -2649,11 +2550,7 @@
         "title": "Flyttevask av 3-roms leilighet",
         "description": "Jeg trenger hjelp til flyttevask av en 3-roms leilighet i Stavanger. Ønsker grundig rengjøring av alle rom inkludert kjøkken, bad og stue.",
         "category": "Rengjøring",
-        "skills": [
-          "Rengjøring",
-          "Nøyaktighet",
-          "Effektivitet"
-        ],
+        "skills": ["Rengjøring", "Nøyaktighet", "Effektivitet"],
         "paymentType": "Fastpris",
         "hourlyRate": 360,
         "suggestedPrice": 1440,
@@ -2751,11 +2648,7 @@
         "title": "Luking av ugress i bedene",
         "description": "Jeg trenger hjelp til luke ugress i bedene.",
         "category": "Hagearbeid",
-        "skills": [
-          "Ugressluking",
-          "Hagearbeid",
-          "Nøyaktighet"
-        ],
+        "skills": ["Ugressluking", "Hagearbeid", "Nøyaktighet"],
         "paymentType": "Timepris",
         "hourlyRate": 360,
         "suggestedPrice": 1440,
@@ -2853,11 +2746,7 @@
         "title": "Rensing av takrenner",
         "description": "Jeg trenger hjelp til å rense takrennene mine. I tillegg trenger jeg hjelp til å gjøre dette.",
         "category": "Småjobber",
-        "skills": [
-          "Rengjøring",
-          "Høyderedskaper",
-          "Nøyaktighet"
-        ],
+        "skills": ["Rengjøring", "Høyderedskaper", "Nøyaktighet"],
         "paymentType": "Fastpris",
         "hourlyRate": 390,
         "suggestedPrice": 780,

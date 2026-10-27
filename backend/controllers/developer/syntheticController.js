@@ -8,7 +8,14 @@ const { percentile } = require('../../middleware/requestMetrics');
 
 const HOUR = 60 * 60 * 1000;
 const audit = (req, description, metadata = {}) =>
-  logActivity({ adminId: req.user._id, action: 'other', description, metadata: { area: 'developer.synthetic', ...metadata }, ip: req.ip, userAgent: req.get('user-agent') || 'unknown' });
+  logActivity({
+    adminId: req.user._id,
+    action: 'other',
+    description,
+    metadata: { area: 'developer.synthetic', ...metadata },
+    ip: req.ip,
+    userAgent: req.get('user-agent') || 'unknown',
+  });
 
 /** Every probe with uptime (24 h / 7 d), latency and its last 24 h of runs. */
 const getSynthetic = asyncHandler(async (req, res) => {
@@ -24,11 +31,18 @@ const getSynthetic = asyncHandler(async (req, res) => {
           runs7d: { $sum: 1 },
           ok7d: { $sum: { $cond: ['$ok', 1, 0] } },
           runs24h: { $sum: { $cond: [{ $gte: ['$at', new Date(now - 24 * HOUR)] }, 1, 0] } },
-          ok24h: { $sum: { $cond: [{ $and: ['$ok', { $gte: ['$at', new Date(now - 24 * HOUR)] }] }, 1, 0] } },
+          ok24h: {
+            $sum: {
+              $cond: [{ $and: ['$ok', { $gte: ['$at', new Date(now - 24 * HOUR)] }] }, 1, 0],
+            },
+          },
         },
       },
     ]),
-    SyntheticRun.find({ at: { $gte: new Date(now - 24 * HOUR) } }).sort({ at: 1 }).select('key at ok latencyMs status error').lean(),
+    SyntheticRun.find({ at: { $gte: new Date(now - 24 * HOUR) } })
+      .sort({ at: 1 })
+      .select('key at ok latencyMs status error')
+      .lean(),
   ]);
   const series = {};
   for (const r of recent) (series[r.key] ||= []).push(r);
@@ -41,7 +55,10 @@ const getSynthetic = asyncHandler(async (req, res) => {
     let streak = 0;
     for (let i = runs.length - 1; i >= 0 && !runs[i].ok; i--) streak++;
     const s = byKey[p.key] || {};
-    const okLatencies = runs.filter((r) => r.ok).map((r) => r.latencyMs).sort((a, b) => a - b);
+    const okLatencies = runs
+      .filter((r) => r.ok)
+      .map((r) => r.latencyMs)
+      .sort((a, b) => a - b);
     return {
       key: p.key,
       name: p.name,
@@ -64,7 +81,9 @@ const getSynthetic = asyncHandler(async (req, res) => {
     config: {
       api: b.api,
       web: b.web,
-      loginJourney: Boolean(process.env.SYNTHETIC_USER_EMAIL && process.env.SYNTHETIC_USER_PASSWORD),
+      loginJourney: Boolean(
+        process.env.SYNTHETIC_USER_EMAIL && process.env.SYNTHETIC_USER_PASSWORD
+      ),
       intervalMin: Math.max(1, Number(process.env.SYNTHETIC_INTERVAL_MIN) || 5),
       enabled: process.env.ENABLE_SYNTHETIC !== 'false',
       allowedHosts: [...synthetic.allowedHosts()],
@@ -81,28 +100,48 @@ const getRuns = asyncHandler(async (req, res) => {
 const runNow = asyncHandler(async (req, res) => {
   const key = req.body?.key ? String(req.body.key).slice(0, 64) : null;
   const results = await synthetic.runAll({ key, trigger: 'manual' });
-  await audit(req, `Developer ran synthetic checks${key ? ` (${key})` : ''}`, { key, failed: results.filter((r) => !r.ok).map((r) => r.key) });
+  await audit(req, `Developer ran synthetic checks${key ? ` (${key})` : ''}`, {
+    key,
+    failed: results.filter((r) => !r.ok).map((r) => r.key),
+  });
   return sendSuccess(res, { results });
 });
 
 function parseCheck(body) {
-  const name = String(body?.name || '').trim().slice(0, 80);
-  const url = String(body?.url || '').trim().slice(0, 500);
+  const name = String(body?.name || '')
+    .trim()
+    .slice(0, 80);
+  const url = String(body?.url || '')
+    .trim()
+    .slice(0, 500);
   const method = body?.method === 'HEAD' ? 'HEAD' : 'GET';
   const expectStatus = Number(body?.expectStatus) || 200;
   const expectText = body?.expectText ? String(body.expectText).slice(0, 200) : null;
   if (!name) return { error: 'Name is required.' };
-  if (expectStatus < 100 || expectStatus > 599) return { error: 'Expected status must be 100–599.' };
+  if (expectStatus < 100 || expectStatus > 599)
+    return { error: 'Expected status must be 100–599.' };
   const blocked = synthetic.checkUrlAllowed(url);
   if (blocked) return { error: blocked };
-  return { value: { name, url, method, expectStatus, expectText: method === 'HEAD' ? null : expectText, enabled: body?.enabled !== false } };
+  return {
+    value: {
+      name,
+      url,
+      method,
+      expectStatus,
+      expectText: method === 'HEAD' ? null : expectText,
+      enabled: body?.enabled !== false,
+    },
+  };
 }
 
 const createCheck = asyncHandler(async (req, res) => {
   const { value, error } = parseCheck(req.body);
   if (error) return sendError(res, error, 400);
   const check = await SyntheticCheck.create({ ...value, createdBy: req.user._id });
-  await audit(req, `Developer added synthetic check "${check.name}"`, { checkId: String(check._id), url: check.url });
+  await audit(req, `Developer added synthetic check "${check.name}"`, {
+    checkId: String(check._id),
+    url: check.url,
+  });
   return sendSuccess(res, { check }, 'Check created.', null, 201);
 });
 
@@ -112,7 +151,11 @@ const updateCheck = asyncHandler(async (req, res) => {
   if (error) return sendError(res, error, 400);
   const check = await SyntheticCheck.findByIdAndUpdate(req.params.id, value, { new: true });
   if (!check) return sendError(res, 'Check not found.', 404);
-  await audit(req, `Developer updated synthetic check "${check.name}"`, { checkId: String(check._id), url: check.url, enabled: check.enabled });
+  await audit(req, `Developer updated synthetic check "${check.name}"`, {
+    checkId: String(check._id),
+    url: check.url,
+    enabled: check.enabled,
+  });
   return sendSuccess(res, { check });
 });
 
@@ -120,7 +163,10 @@ const deleteCheck = asyncHandler(async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) return sendError(res, 'Invalid id.', 400);
   const check = await SyntheticCheck.findByIdAndDelete(req.params.id);
   if (!check) return sendError(res, 'Check not found.', 404);
-  await audit(req, `Developer deleted synthetic check "${check.name}"`, { checkId: String(check._id), url: check.url });
+  await audit(req, `Developer deleted synthetic check "${check.name}"`, {
+    checkId: String(check._id),
+    url: check.url,
+  });
   return sendSuccess(res, {}, 'Check deleted.');
 });
 

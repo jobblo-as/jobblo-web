@@ -20,11 +20,14 @@ const {
  */
 describe('service sort contract', () => {
   describe('every advertised value is also an accepted value', () => {
-    it.each(getSortOptionsForClient().map((o) => o.value))('%s resolves to a real sort', (value) => {
-      const result = resolveSort(value);
-      expect(result.matched).toBe(true);
-      expect(Object.keys(result.sort).length).toBeGreaterThan(0);
-    });
+    it.each(getSortOptionsForClient().map((o) => o.value))(
+      '%s resolves to a real sort',
+      (value) => {
+        const result = resolveSort(value);
+        expect(result.matched).toBe(true);
+        expect(Object.keys(result.sort).length).toBeGreaterThan(0);
+      }
+    );
 
     it('advertises exactly the four canonical options', () => {
       expect(getSortOptionsForClient().map((o) => o.value)).toEqual([

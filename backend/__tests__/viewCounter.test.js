@@ -6,7 +6,12 @@ jest.mock('../models/Service', () => ({ bulkWrite: jest.fn(async () => ({})) }))
 const Service = require('../models/Service');
 const views = require('../utils/viewCounter');
 
-const incs = () => Object.fromEntries(Service.bulkWrite.mock.calls.at(-1)[0].map((o) => [o.updateOne.filter._id, o.updateOne.update.$inc.views]));
+const incs = () =>
+  Object.fromEntries(
+    Service.bulkWrite.mock.calls
+      .at(-1)[0]
+      .map((o) => [o.updateOne.filter._id, o.updateOne.update.$inc.views])
+  );
 
 beforeEach(() => {
   client = null;
@@ -40,7 +45,18 @@ it('with Redis: HINCRBY per view, drained atomically (HGETALL+DEL in one MULTI)'
     status: 'ready',
     hincrby: async (k, f, n) => (hash[f] = (hash[f] || 0) + n),
     multi: () => {
-      const m = { hgetall: () => (multi.push('hgetall'), m), del: () => (multi.push('del'), m), exec: async () => { const all = { ...hash }; for (const f of Object.keys(hash)) delete hash[f]; return [[null, all], [null, 1]]; } };
+      const m = {
+        hgetall: () => (multi.push('hgetall'), m),
+        del: () => (multi.push('del'), m),
+        exec: async () => {
+          const all = { ...hash };
+          for (const f of Object.keys(hash)) delete hash[f];
+          return [
+            [null, all],
+            [null, 1],
+          ];
+        },
+      };
       return m;
     },
   };
@@ -52,7 +68,23 @@ it('with Redis: HINCRBY per view, drained atomically (HGETALL+DEL in one MULTI)'
 });
 
 it('falls back to memory when the Redis write fails', async () => {
-  client = { status: 'ready', hincrby: async () => { throw new Error('boom'); }, multi: () => ({ hgetall() { return this; }, del() { return this; }, exec: async () => { throw new Error('boom'); } }) };
+  client = {
+    status: 'ready',
+    hincrby: async () => {
+      throw new Error('boom');
+    },
+    multi: () => ({
+      hgetall() {
+        return this;
+      },
+      del() {
+        return this;
+      },
+      exec: async () => {
+        throw new Error('boom');
+      },
+    }),
+  };
   await views.count('z');
   await views.flush();
   expect(incs()).toEqual({ z: 1 });

@@ -17,7 +17,12 @@ const db = () => mongoose.connection.db;
 async function dupGroups(collection, groupBy, match = {}) {
   const [r] = await db()
     .collection(collection)
-    .aggregate([{ $match: match }, { $group: { _id: groupBy, n: { $sum: 1 } } }, { $match: { n: { $gt: 1 } } }, { $group: { _id: null, groups: { $sum: 1 }, extra: { $sum: { $subtract: ['$n', 1] } } } }])
+    .aggregate([
+      { $match: match },
+      { $group: { _id: groupBy, n: { $sum: 1 } } },
+      { $match: { n: { $gt: 1 } } },
+      { $group: { _id: null, groups: { $sum: 1 }, extra: { $sum: { $subtract: ['$n', 1] } } } },
+    ])
     .toArray();
   return r || { groups: 0, extra: 0 };
 }
@@ -38,7 +43,12 @@ const MIGRATIONS = [
     run: 'node scripts/migrate-admin-role.js --dry-run, then --apply',
     async detect() {
       const n = await db().collection('users').countDocuments({ role: 'admin' });
-      return { pending: n > 0, detail: n ? `${n} user(s) still have role "admin" (not in the schema enum)` : 'No users with role "admin".' };
+      return {
+        pending: n > 0,
+        detail: n
+          ? `${n} user(s) still have role "admin" (not in the schema enum)`
+          : 'No users with role "admin".',
+      };
     },
   },
   {
@@ -49,7 +59,12 @@ const MIGRATIONS = [
     run: 'node scripts/fix-phone-index.js --apply',
     async detect() {
       const idx = (await indexes('users')).find((i) => i.key?.phone === 1 && i.unique);
-      return { pending: Boolean(idx), detail: idx ? `Unique index ${idx.name} still exists — second user with an empty phone fails with E11000.` : 'No unique phone index.' };
+      return {
+        pending: Boolean(idx),
+        detail: idx
+          ? `Unique index ${idx.name} still exists — second user with an empty phone fails with E11000.`
+          : 'No unique phone index.',
+      };
     },
   },
   {
@@ -60,10 +75,21 @@ const MIGRATIONS = [
     run: 'node scripts/migrate-subscription-usage-period-index.js',
     async detect() {
       const idx = await indexes('subscription_usage_periods');
-      const oldUnique = idx.find((i) => i.unique && i.key?.subscriptionId === 1 && i.key?.billingPeriodStart === 1);
-      const newUnique = idx.find((i) => i.unique && i.key?.userId === 1 && i.key?.billingPeriodStart === 1);
+      const oldUnique = idx.find(
+        (i) => i.unique && i.key?.subscriptionId === 1 && i.key?.billingPeriodStart === 1
+      );
+      const newUnique = idx.find(
+        (i) => i.unique && i.key?.userId === 1 && i.key?.billingPeriodStart === 1
+      );
       if (!idx.length) return { pending: false, detail: 'Collection not created yet.' };
-      return { pending: Boolean(oldUnique || !newUnique), detail: oldUnique ? 'Old unique (subscriptionId, billingPeriodStart) index still present.' : !newUnique ? 'Unique (userId, billingPeriodStart) index missing.' : 'Indexes match the target.' };
+      return {
+        pending: Boolean(oldUnique || !newUnique),
+        detail: oldUnique
+          ? 'Old unique (subscriptionId, billingPeriodStart) index still present.'
+          : !newUnique
+            ? 'Unique (userId, billingPeriodStart) index missing.'
+            : 'Indexes match the target.',
+      };
     },
   },
   {
@@ -74,7 +100,10 @@ const MIGRATIONS = [
     destructive: true,
     run: 'node scripts/dedupe-payment-records.js (report), then --apply — only with a verified backup',
     async detect() {
-      const [p, j] = await Promise.all([dupGroups('payments', '$orderId'), dupGroups('jobrequests', { s: '$serviceId', c: '$customerId' }, { status: 'pending' })]);
+      const [p, j] = await Promise.all([
+        dupGroups('payments', '$orderId'),
+        dupGroups('jobrequests', { s: '$serviceId', c: '$customerId' }, { status: 'pending' }),
+      ]);
       return {
         pending: p.groups + j.groups > 0,
         detail: `${p.groups} order(s) with duplicate Payments (${p.extra} extra rows), ${j.groups} duplicate pending application group(s). Blocks the unique indexes.`,
@@ -92,7 +121,26 @@ const MIGRATIONS = [
       const rows = await db()
         .collection('payments')
         .aggregate([
-          { $group: { _id: '$orderId', n: { $sum: 1 }, refs: { $sum: { $cond: [{ $or: [{ $gt: ['$stripePaymentIntentId', null] }, { $gt: ['$stripeSessionId', null] }] }, 1, 0] } } } },
+          {
+            $group: {
+              _id: '$orderId',
+              n: { $sum: 1 },
+              refs: {
+                $sum: {
+                  $cond: [
+                    {
+                      $or: [
+                        { $gt: ['$stripePaymentIntentId', null] },
+                        { $gt: ['$stripeSessionId', null] },
+                      ],
+                    },
+                    1,
+                    0,
+                  ],
+                },
+              },
+            },
+          },
           { $match: { n: { $gt: 1 }, refs: 0 } },
           { $lookup: { from: 'orders', localField: '_id', foreignField: '_id', as: 'o' } },
           { $match: { o: { $size: 0 } } },
@@ -100,7 +148,12 @@ const MIGRATIONS = [
         ])
         .toArray();
       const n = rows[0]?.n || 0;
-      return { pending: n > 0, detail: n ? `${n} duplicate group(s) with no order and no Stripe reference — candidates for the runbook, not for a shortcut.` : 'No orphan duplicate groups.' };
+      return {
+        pending: n > 0,
+        detail: n
+          ? `${n} duplicate group(s) with no order and no Stripe reference — candidates for the runbook, not for a shortcut.`
+          : 'No orphan duplicate groups.',
+      };
     },
   },
   {
@@ -112,8 +165,21 @@ const MIGRATIONS = [
     run: 'node scripts/merge-duplicate-chats.js (report), then --apply',
     async detect() {
       const coll = mongoose.model('Chat').collection.collectionName;
-      const r = await dupGroups(coll, { s: '$serviceId', a: { $min: ['$clientId', '$providerId'] }, b: { $max: ['$clientId', '$providerId'] } }, { serviceId: { $ne: null } });
-      return { pending: r.groups > 0, detail: r.groups ? `${r.groups} person-pair/job combination(s) have more than one conversation.` : 'No duplicated conversations.' };
+      const r = await dupGroups(
+        coll,
+        {
+          s: '$serviceId',
+          a: { $min: ['$clientId', '$providerId'] },
+          b: { $max: ['$clientId', '$providerId'] },
+        },
+        { serviceId: { $ne: null } }
+      );
+      return {
+        pending: r.groups > 0,
+        detail: r.groups
+          ? `${r.groups} person-pair/job combination(s) have more than one conversation.`
+          : 'No duplicated conversations.',
+      };
     },
   },
   {
@@ -128,8 +194,15 @@ const MIGRATIONS = [
         .find({ 'images.0': /blob\.core\.windows\.net/ })
         .project({ images: { $slice: 1 }, imageMetadata: 1 })
         .toArray();
-      const n = rows.filter((s) => !(s.imageMetadata || []).some((m) => m && m.url === s.images[0] && m.ogUrl)).length;
-      return { pending: n > 0, detail: n ? `${n} Azure listing(s) without an OG image — their share cards show a small thumbnail.` : 'Every Azure listing has an OG image.' };
+      const n = rows.filter(
+        (s) => !(s.imageMetadata || []).some((m) => m && m.url === s.images[0] && m.ogUrl)
+      ).length;
+      return {
+        pending: n > 0,
+        detail: n
+          ? `${n} Azure listing(s) without an OG image — their share cards show a small thumbnail.`
+          : 'Every Azure listing has an OG image.',
+      };
     },
   },
 ];
@@ -143,7 +216,12 @@ function schemaRules(schema) {
     if (p === '_id' || p === '__v' || p.includes('.$')) return;
     const enumValues = type.instance === 'String' ? type.enumValues || [] : [];
     if (enumValues.length) rules.push({ path: p, rule: 'enum', values: enumValues });
-    if (type.options?.required === true && type.options.default === undefined && !type.options.validate) rules.push({ path: p, rule: 'required' });
+    if (
+      type.options?.required === true &&
+      type.options.default === undefined &&
+      !type.options.validate
+    )
+      rules.push({ path: p, rule: 'required' });
   });
   return rules;
 }
@@ -157,13 +235,25 @@ async function schemaCompatibility() {
     if (!rules.length) continue;
     const results = await Promise.all(
       rules.map(async (r) => {
-        const filter = r.rule === 'enum' ? { [r.path]: { $exists: true, $nin: [...r.values, null] } } : { [r.path]: null };
+        const filter =
+          r.rule === 'enum'
+            ? { [r.path]: { $exists: true, $nin: [...r.values, null] } }
+            : { [r.path]: null };
         try {
           const count = await Model.collection.countDocuments(filter, { maxTimeMS: 3000 });
           if (!count) return null;
           const sample = await Model.collection.findOne(filter, { projection: { [r.path]: 1 } });
           const value = r.path.split('.').reduce((v, k) => v?.[k], sample);
-          return { model: name, collection: Model.collection.collectionName, path: r.path, rule: r.rule, count, sampleId: String(sample?._id || ''), value: r.rule === 'enum' ? String(value) : null, allowed: r.rule === 'enum' ? r.values : undefined };
+          return {
+            model: name,
+            collection: Model.collection.collectionName,
+            path: r.path,
+            rule: r.rule,
+            count,
+            sampleId: String(sample?._id || ''),
+            value: r.rule === 'enum' ? String(value) : null,
+            allowed: r.rule === 'enum' ? r.values : undefined,
+          };
         } catch {
           return null;
         }
@@ -180,11 +270,23 @@ async function incompatibleClients() {
   const [versions, breaking] = await Promise.all([
     require('../../models/MobileEvent').aggregate([
       { $match: { type: 'session', appVersion: { $ne: null } } },
-      { $group: { _id: { v: '$appVersion', p: '$platform' }, firstSeen: { $min: '$at' }, lastSeen: { $max: '$at' }, recent: { $sum: { $cond: [{ $gte: ['$at', since] }, 1, 0] } } } },
+      {
+        $group: {
+          _id: { v: '$appVersion', p: '$platform' },
+          firstSeen: { $min: '$at' },
+          lastSeen: { $max: '$at' },
+          recent: { $sum: { $cond: [{ $gte: ['$at', since] }, 1, 0] } },
+        },
+      },
       { $match: { lastSeen: { $gte: since } } },
       { $sort: { firstSeen: -1 } },
     ]),
-    require('../../models/ContractEvent').find({ breaking: true }).sort({ at: -1 }).limit(200).select('at method route path kind version acknowledgedAt').lean(),
+    require('../../models/ContractEvent')
+      .find({ breaking: true })
+      .sort({ at: -1 })
+      .limit(200)
+      .select('at method route path kind version acknowledgedAt')
+      .lean(),
   ]);
   return versions.map((v) => {
     const after = breaking.filter((b) => b.at > v.firstSeen);
@@ -207,18 +309,77 @@ function check(key, label, state, detail) {
 async function rollbackReadiness({ pendingDestructive, indexProblems, schemaIssues }) {
   const BackupRun = require('../../models/BackupRun');
   const [backup, drill, releases] = await Promise.all([
-    BackupRun.findOne({ kind: 'backup', status: 'succeeded' }).sort({ finishedAt: -1 }).select('finishedAt file sizeBytes').lean(),
-    BackupRun.findOne({ kind: 'drill', status: 'succeeded' }).sort({ finishedAt: -1 }).select('finishedAt').lean(),
-    require('../../models/Deployment').find().sort({ deployedAt: -1 }).limit(2).select('version commit deployedAt').lean(),
+    BackupRun.findOne({ kind: 'backup', status: 'succeeded' })
+      .sort({ finishedAt: -1 })
+      .select('finishedAt file sizeBytes')
+      .lean(),
+    BackupRun.findOne({ kind: 'drill', status: 'succeeded' })
+      .sort({ finishedAt: -1 })
+      .select('finishedAt')
+      .lean(),
+    require('../../models/Deployment')
+      .find()
+      .sort({ deployedAt: -1 })
+      .limit(2)
+      .select('version commit deployedAt')
+      .lean(),
   ]);
   const age = (d) => (d ? (Date.now() - +new Date(d)) / DAY : Infinity);
   return [
-    check('backup', 'Recent verified backup', !backup ? 'fail' : age(backup.finishedAt) <= 1.1 ? 'pass' : age(backup.finishedAt) <= 3 ? 'warn' : 'fail', backup ? `Last backup ${backup.finishedAt.toISOString()}${backup.file ? ` (${backup.file})` : ''}.` : 'No successful backup recorded — a bad migration cannot be undone.'),
-    check('drill', 'Restore drill in the last 30 days', !drill ? 'fail' : age(drill.finishedAt) <= 30 ? 'pass' : 'warn', drill ? `Last drill passed ${drill.finishedAt.toISOString()}.` : 'No restore has ever been proven to work.'),
-    check('previous', 'Previous release recorded', releases.length >= 2 ? 'pass' : 'warn', releases.length >= 2 ? `Roll back to ${releases[1].version}${releases[1].commit ? ` (${String(releases[1].commit).slice(0, 7)})` : ''}.` : 'Only one release recorded; the rollback target is not known.'),
-    check('indexes', 'No unique index missing', indexProblems ? 'fail' : 'pass', indexProblems ? `${indexProblems} unique index(es) missing or not unique — duplicates can be written right now.` : 'All declared unique indexes exist.'),
-    check('schema', 'Data matches the current schema', schemaIssues ? 'warn' : 'pass', schemaIssues ? `${schemaIssues} field rule(s) violated by stored documents; saving those documents fails validation.` : 'No stored document breaks a required/enum rule.'),
-    check('destructive', 'No destructive migration pending', pendingDestructive.length ? 'warn' : 'pass', pendingDestructive.length ? `Pending: ${pendingDestructive.join(', ')}. Take and verify a backup before running.` : 'Nothing destructive outstanding.'),
+    check(
+      'backup',
+      'Recent verified backup',
+      !backup
+        ? 'fail'
+        : age(backup.finishedAt) <= 1.1
+          ? 'pass'
+          : age(backup.finishedAt) <= 3
+            ? 'warn'
+            : 'fail',
+      backup
+        ? `Last backup ${backup.finishedAt.toISOString()}${backup.file ? ` (${backup.file})` : ''}.`
+        : 'No successful backup recorded — a bad migration cannot be undone.'
+    ),
+    check(
+      'drill',
+      'Restore drill in the last 30 days',
+      !drill ? 'fail' : age(drill.finishedAt) <= 30 ? 'pass' : 'warn',
+      drill
+        ? `Last drill passed ${drill.finishedAt.toISOString()}.`
+        : 'No restore has ever been proven to work.'
+    ),
+    check(
+      'previous',
+      'Previous release recorded',
+      releases.length >= 2 ? 'pass' : 'warn',
+      releases.length >= 2
+        ? `Roll back to ${releases[1].version}${releases[1].commit ? ` (${String(releases[1].commit).slice(0, 7)})` : ''}.`
+        : 'Only one release recorded; the rollback target is not known.'
+    ),
+    check(
+      'indexes',
+      'No unique index missing',
+      indexProblems ? 'fail' : 'pass',
+      indexProblems
+        ? `${indexProblems} unique index(es) missing or not unique — duplicates can be written right now.`
+        : 'All declared unique indexes exist.'
+    ),
+    check(
+      'schema',
+      'Data matches the current schema',
+      schemaIssues ? 'warn' : 'pass',
+      schemaIssues
+        ? `${schemaIssues} field rule(s) violated by stored documents; saving those documents fails validation.`
+        : 'No stored document breaks a required/enum rule.'
+    ),
+    check(
+      'destructive',
+      'No destructive migration pending',
+      pendingDestructive.length ? 'warn' : 'pass',
+      pendingDestructive.length
+        ? `Pending: ${pendingDestructive.join(', ')}. Take and verify a backup before running.`
+        : 'Nothing destructive outstanding.'
+    ),
   ];
 }
 
@@ -239,11 +400,17 @@ async function overview({ force = false } = {}) {
   const known = new Set(MIGRATIONS.map((m) => m.script));
   let unregistered = [];
   try {
-    unregistered = fs.readdirSync(SCRIPTS_DIR).filter((f) => MIGRATION_LIKE.test(f) && !known.has(f));
+    unregistered = fs
+      .readdirSync(SCRIPTS_DIR)
+      .filter((f) => MIGRATION_LIKE.test(f) && !known.has(f));
   } catch {
     /* scripts folder not shipped in this image */
   }
-  const [indexRows, schema, clients] = await Promise.all([require('../../controllers/developer/integrityController').indexCheck(), schemaCompatibility(), incompatibleClients()]);
+  const [indexRows, schema, clients] = await Promise.all([
+    require('../../controllers/developer/integrityController').indexCheck(),
+    schemaCompatibility(),
+    incompatibleClients(),
+  ]);
   const indexChanges = indexRows.filter((i) => i.severity !== 'info');
   const value = {
     at: new Date(),

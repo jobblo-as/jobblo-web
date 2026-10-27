@@ -18,13 +18,29 @@ const { serverError } = require('../../utils/serverError');
 
 const REQUEST_TTL_MS = 24 * 60 * 60 * 1000;
 const RANK = { readonly: 0, operations: 1, superAdmin: 2 };
-const accessOf = (user) => (user.role === 'superAdmin' ? 'superAdmin' : user.developerAccess || 'readonly');
+const accessOf = (user) =>
+  user.role === 'superAdmin' ? 'superAdmin' : user.developerAccess || 'readonly';
 const hasAccess = (user, min) => RANK[accessOf(user)] >= RANK[min];
 const requireAccess = (min) => (req, res, next) =>
-  hasAccess(req.user, min) ? next() : sendError(res, min === 'superAdmin' ? 'Only a Super Admin can do this.' : 'Read-only developers cannot make changes.', 403);
+  hasAccess(req.user, min)
+    ? next()
+    : sendError(
+        res,
+        min === 'superAdmin'
+          ? 'Only a Super Admin can do this.'
+          : 'Read-only developers cannot make changes.',
+        403
+      );
 const isId = (v) => mongoose.isValidObjectId(v) && String(v).length === 24;
 const audit = (req, description, metadata) =>
-  logActivity({ adminId: req.user._id, action: 'other', description, metadata: { area: 'developer.approvals', ...metadata }, ip: req.ip, userAgent: req.get('user-agent') || 'unknown' });
+  logActivity({
+    adminId: req.user._id,
+    action: 'other',
+    description,
+    metadata: { area: 'developer.approvals', ...metadata },
+    ip: req.ip,
+    userAgent: req.get('user-agent') || 'unknown',
+  });
 
 const getMe = asyncHandler(async (req, res) => {
   const access = accessOf(req.user);
@@ -47,10 +63,14 @@ const sendStepUp = asyncHandler(async (req, res) => {
   try {
     await stepUp.sendCode(req.user);
   } catch (err) {
-    return (err.status ? sendError(res, err.message, err.status) : serverError(res, err));
+    return err.status ? sendError(res, err.message, err.status) : serverError(res, err);
   }
   await audit(req, 'Requested step-up code', {});
-  return sendSuccess(res, { sentTo: require('../../services/monitoring/securityEvents').maskEmail(req.user.email) }, 'Code sent.');
+  return sendSuccess(
+    res,
+    { sentTo: require('../../services/monitoring/securityEvents').maskEmail(req.user.email) },
+    'Code sent.'
+  );
 });
 
 const verifyStepUp = asyncHandler(async (req, res) => {
@@ -60,11 +80,12 @@ const verifyStepUp = asyncHandler(async (req, res) => {
     return sendSuccess(res, result, 'Confirmed.');
   } catch (err) {
     await audit(req, 'Failed step-up authentication', { reason: err.message });
-    return (err.status ? sendError(res, err.message, err.status) : serverError(res, err));
+    return err.status ? sendError(res, err.message, err.status) : serverError(res, err);
   }
 });
 
-const readReason = (body) => (typeof body?.reason === 'string' ? body.reason.trim().slice(0, 500) : '');
+const readReason = (body) =>
+  typeof body?.reason === 'string' ? body.reason.trim().slice(0, 500) : '';
 
 /** Super Admin: execute now. Operations: open an approval request. Readonly: refused by route. */
 const submitAction = asyncHandler(async (req, res) => {
@@ -87,14 +108,32 @@ const submitAction = asyncHandler(async (req, res) => {
   if (accessOf(req.user) === 'superAdmin' || action.selfService) {
     // A critical-risk change needs an explicit second click after the reasons were shown.
     if (risk?.level === 'critical' && req.body?.acknowledgeRisk !== true) {
-      return res.status(409).json({ success: false, code: 'RISK_CONFIRM', message: `Risk ${risk.score}/100 (critical). Review the reasons and confirm.`, data: { risk, summary } });
+      return res
+        .status(409)
+        .json({
+          success: false,
+          code: 'RISK_CONFIRM',
+          message: `Risk ${risk.score}/100 (critical). Review the reasons and confirm.`,
+          data: { risk, summary },
+        });
     }
     try {
       await action.execute(payload, { actor: req.user._id, actorIp: clientIp(req), reason });
     } catch (err) {
-      return (err.status ? sendError(res, err.message, err.status) : serverError(res, err));
+      return err.status ? sendError(res, err.message, err.status) : serverError(res, err);
     }
-    await audit(req, `${summary} (${reason})`, { type: req.params.type, direct: true, key: payload.key, environment: process.env.NODE_ENV || 'development', after: payload.enabled, risk: risk && { score: risk.score, level: risk.level, acknowledged: req.body?.acknowledgeRisk === true } });
+    await audit(req, `${summary} (${reason})`, {
+      type: req.params.type,
+      direct: true,
+      key: payload.key,
+      environment: process.env.NODE_ENV || 'development',
+      after: payload.enabled,
+      risk: risk && {
+        score: risk.score,
+        level: risk.level,
+        acknowledged: req.body?.acknowledgeRisk === true,
+      },
+    });
     return sendSuccess(res, { executed: true, summary, risk }, 'Done.');
   }
 
@@ -107,20 +146,39 @@ const submitAction = asyncHandler(async (req, res) => {
     expiresAt: new Date(Date.now() + REQUEST_TTL_MS),
     risk,
   });
-  await audit(req, `Requested approval: ${summary} (${reason})`, { type: req.params.type, requestId: String(request._id) });
-  return sendSuccess(res, { executed: false, requestId: request._id, summary, risk }, 'Sent for Super Admin approval.', null, 201);
+  await audit(req, `Requested approval: ${summary} (${reason})`, {
+    type: req.params.type,
+    requestId: String(request._id),
+  });
+  return sendSuccess(
+    res,
+    { executed: false, requestId: request._id, summary, risk },
+    'Sent for Super Admin approval.',
+    null,
+    201
+  );
 });
 
 const listApprovals = asyncHandler(async (req, res) => {
-  await ChangeRequest.updateMany({ status: 'pending', expiresAt: { $lte: new Date() } }, { $set: { status: 'expired' } });
+  await ChangeRequest.updateMany(
+    { status: 'pending', expiresAt: { $lte: new Date() } },
+    { $set: { status: 'expired' } }
+  );
   const match = {};
   if (req.query.status) match.status = req.query.status;
   if (req.query.mine === 'true') match.requestedBy = req.user._id;
   const [requests, pending] = await Promise.all([
-    ChangeRequest.find(match).sort({ createdAt: -1 }).limit(200).populate('requestedBy reviewedBy', 'name role').lean(),
+    ChangeRequest.find(match)
+      .sort({ createdAt: -1 })
+      .limit(200)
+      .populate('requestedBy reviewedBy', 'name role')
+      .lean(),
     ChangeRequest.countDocuments({ status: 'pending' }),
   ]);
-  return sendSuccess(res, { pending, requests: requests.map((r) => ({ ...r, payload: { ...r.payload, requesterIp: undefined } })) });
+  return sendSuccess(res, {
+    pending,
+    requests: requests.map((r) => ({ ...r, payload: { ...r.payload, requesterIp: undefined } })),
+  });
 });
 
 async function loadPending(id) {
@@ -139,16 +197,30 @@ async function loadPending(id) {
 const approve = asyncHandler(async (req, res) => {
   const { r, error } = await loadPending(req.params.id);
   if (error) return sendError(res, ...error);
-  if (String(r.requestedBy) === String(req.user._id)) return sendError(res, 'You cannot approve your own request.', 403);
+  if (String(r.requestedBy) === String(req.user._id))
+    return sendError(res, 'You cannot approve your own request.', 403);
   const action = ACTIONS[r.type];
   if (r.risk?.level === 'critical' && req.body?.acknowledgeRisk !== true) {
-    return res.status(409).json({ success: false, code: 'RISK_CONFIRM', message: `Risk ${r.risk.score}/100 (critical). Review the reasons and confirm.`, data: { risk: r.risk, summary: r.summary } });
+    return res
+      .status(409)
+      .json({
+        success: false,
+        code: 'RISK_CONFIRM',
+        message: `Risk ${r.risk.score}/100 (critical). Review the reasons and confirm.`,
+        data: { risk: r.risk, summary: r.summary },
+      });
   }
   r.reviewedBy = req.user._id;
   r.reviewedAt = new Date();
   r.reviewNote = readReason({ reason: req.body?.note }) || null;
   try {
-    await action.execute(r.payload, { actor: req.user._id, actorIp: clientIp(req), requesterIp: r.payload.requesterIp, reason: r.reason, approvedVia: r._id });
+    await action.execute(r.payload, {
+      actor: req.user._id,
+      actorIp: clientIp(req),
+      requesterIp: r.payload.requesterIp,
+      reason: r.reason,
+      approvedVia: r._id,
+    });
     r.status = 'executed';
     r.executedAt = new Date();
   } catch (err) {
@@ -156,8 +228,17 @@ const approve = asyncHandler(async (req, res) => {
     r.error = String(err.message).slice(0, 300);
   }
   await r.save();
-  await audit(req, `Approved: ${r.summary} → ${r.status}`, { requestId: String(r._id), type: r.type, requestedBy: String(r.requestedBy), key: r.payload.key, environment: r.environment, after: r.payload.enabled });
-  return r.status === 'executed' ? sendSuccess(res, { status: r.status }, 'Approved and executed.') : sendError(res, `Approved, but execution failed: ${r.error}`, 409);
+  await audit(req, `Approved: ${r.summary} → ${r.status}`, {
+    requestId: String(r._id),
+    type: r.type,
+    requestedBy: String(r.requestedBy),
+    key: r.payload.key,
+    environment: r.environment,
+    after: r.payload.enabled,
+  });
+  return r.status === 'executed'
+    ? sendSuccess(res, { status: r.status }, 'Approved and executed.')
+    : sendError(res, `Approved, but execution failed: ${r.error}`, 409);
 });
 
 const reject = asyncHandler(async (req, res) => {
@@ -175,11 +256,24 @@ const reject = asyncHandler(async (req, res) => {
 const cancel = asyncHandler(async (req, res) => {
   const { r, error } = await loadPending(req.params.id);
   if (error) return sendError(res, ...error);
-  if (String(r.requestedBy) !== String(req.user._id)) return sendError(res, 'Only the requester can cancel.', 403);
+  if (String(r.requestedBy) !== String(req.user._id))
+    return sendError(res, 'Only the requester can cancel.', 403);
   r.status = 'cancelled';
   await r.save();
   await audit(req, `Cancelled request: ${r.summary}`, { requestId: String(r._id) });
   return sendSuccess(res, {}, 'Cancelled.');
 });
 
-module.exports = { accessOf, hasAccess, requireAccess, getMe, sendStepUp, verifyStepUp, submitAction, listApprovals, approve, reject, cancel };
+module.exports = {
+  accessOf,
+  hasAccess,
+  requireAccess,
+  getMe,
+  sendStepUp,
+  verifyStepUp,
+  submitAction,
+  listApprovals,
+  approve,
+  reject,
+  cancel,
+};

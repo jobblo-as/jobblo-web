@@ -155,7 +155,11 @@ router.get('/my-posted', authenticate, serviceController.getMyPostedServices);
 
 // App "Legg ut oppdrag", price step: ?category=Maling&countyCode=03 → { count, low, median, high, scope }.
 // Before '/:id', which would otherwise take "price-stats" as a job id.
-router.get('/price-stats', authenticate, require('../controllers/services/priceStatsController').getPriceStats);
+router.get(
+  '/price-stats',
+  authenticate,
+  require('../controllers/services/priceStatsController').getPriceStats
+);
 
 /**
  * -------------------------------------------------------
@@ -307,12 +311,22 @@ router.get('/:id', optionalAuthenticate, serviceController.getServiceById);
 async function ownsService(req, res, next) {
   if (!require('mongoose').isValidObjectId(req.params.id))
     return res.status(400).json({ error: 'Invalid service ID format' });
-  const service = await require('../models/Service').findById(req.params.id).select('userId').lean();
+  const service = await require('../models/Service')
+    .findById(req.params.id)
+    .select('userId')
+    .lean();
   if (!service) return res.status(404).json({ error: 'Service not found' });
-  if (String(service.userId) !== String(req.userId)) return res.status(403).json({ error: 'Unauthorized' });
+  if (String(service.userId) !== String(req.userId))
+    return res.status(403).json({ error: 'Unauthorized' });
   next();
 }
-router.put('/:id', authenticate, ownsService, upload.array('images', 6), serviceController.updateService);
+router.put(
+  '/:id',
+  authenticate,
+  ownsService,
+  upload.array('images', 6),
+  serviceController.updateService
+);
 
 /**
  * -------------------------------------------------------

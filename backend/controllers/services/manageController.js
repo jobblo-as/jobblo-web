@@ -12,7 +12,10 @@ const MAX_IMAGES = 6;
 const bodyImageError = (images, kept = []) => {
   const list = [].concat(images || []);
   if (list.length + kept.length > MAX_IMAGES) return `Maks ${MAX_IMAGES} bilder per oppdrag.`;
-  if (list.some((url) => typeof url !== 'string' || (!kept.includes(url) && !isOurPublicBlobUrl(url)))) return 'Bilde-URL er ikke tillatt. Last opp bildet først.';
+  if (
+    list.some((url) => typeof url !== 'string' || (!kept.includes(url) && !isOurPublicBlobUrl(url)))
+  )
+    return 'Bilde-URL er ikke tillatt. Last opp bildet først.';
   return null;
 };
 

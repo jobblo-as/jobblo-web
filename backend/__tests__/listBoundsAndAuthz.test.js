@@ -72,9 +72,19 @@ describe('M2: list endpoints are bounded', () => {
     ['lists', () => listController.getUserLists({ userId: OWNER, query: huge }, res())],
     ['orders', () => orderController.getAllOrders({ userId: OWNER, query: huge }, res())],
     ['job requests', () => orderController.getMyJobRequests({ userId: OWNER, query: huge }, res())],
-    ['user reviews', () => reviewController.getUserReviews({ params: { userId: OWNER }, query: huge }, res())],
+    [
+      'user reviews',
+      () => reviewController.getUserReviews({ params: { userId: OWNER }, query: huge }, res()),
+    ],
     ['all reviews', () => reviewController.getAllReviews({ query: huge }, res())],
-    ['user services', () => serviceController.getUserServices({ params: { id: OWNER }, userId: OWNER, query: huge }, res())],
+    [
+      'user services',
+      () =>
+        serviceController.getUserServices(
+          { params: { id: OWNER }, userId: OWNER, query: huge },
+          res()
+        ),
+    ],
   ])('%s caps the page at 100', async (_name, run) => {
     await run();
     expect(lastLimit()).toBe(100);
@@ -82,7 +92,10 @@ describe('M2: list endpoints are bounded', () => {
 
   it('applicants caps the page at 100', async () => {
     Service.findById.mockResolvedValue({ _id: SID, userId: OWNER });
-    await applicantController.getApplicantsForService({ params: { serviceId: SID }, userId: OWNER, query: huge }, res());
+    await applicantController.getApplicantsForService(
+      { params: { serviceId: SID }, userId: OWNER, query: huge },
+      res()
+    );
     expect(lastLimit()).toBe(100);
   });
 });
@@ -110,10 +123,16 @@ describe('M6a: time entries are participant-only', () => {
 
 describe('M6b: another user sees only public listings', () => {
   it('filters by public status for others, not for the owner', async () => {
-    await serviceController.getUserServices({ params: { id: OWNER }, userId: OTHER, query: {} }, res());
+    await serviceController.getUserServices(
+      { params: { id: OWNER }, userId: OTHER, query: {} },
+      res()
+    );
     expect(Service.find.mock.calls[0][0].status).toEqual({ $in: ['open', 'active'] });
 
-    await serviceController.getUserServices({ params: { id: OWNER }, userId: OWNER, query: {} }, res());
+    await serviceController.getUserServices(
+      { params: { id: OWNER }, userId: OWNER, query: {} },
+      res()
+    );
     expect(Service.find.mock.calls[1][0].status).toBeUndefined();
   });
 });
@@ -147,9 +166,15 @@ describe('M6d: public config is allowlisted', () => {
     expect(r.status).toHaveBeenCalledWith(404);
     expect(GlobalConfig.findOne).not.toHaveBeenCalled();
 
-    GlobalConfig.findOne.mockResolvedValueOnce({ key: 'FREE_PRIVATE_JOBS_UNDER_10000', value: true });
+    GlobalConfig.findOne.mockResolvedValueOnce({
+      key: 'FREE_PRIVATE_JOBS_UNDER_10000',
+      value: true,
+    });
     const ok = res();
-    await globalConfigController.getConfigByKey({ params: { key: 'FREE_PRIVATE_JOBS_UNDER_10000' } }, ok);
+    await globalConfigController.getConfigByKey(
+      { params: { key: 'FREE_PRIVATE_JOBS_UNDER_10000' } },
+      ok
+    );
     expect(ok.status).toHaveBeenCalledWith(200);
   });
 });

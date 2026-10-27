@@ -20,7 +20,11 @@ jest.mock('../routes/api', () => {
     if (req.session && req.query.save) req.session.probe = 1; // like the OAuth/BankID start endpoints
     res.json({ session: Boolean(req.session), login: typeof req.login, ip: req.ip, fresh });
   };
-  return { ...actual, mountRoutes: (app) => app.get(['/api/auth/probe', '/api/auth/web/probe', '/api/services/probe', '/probe'], probe) };
+  return {
+    ...actual,
+    mountRoutes: (app) =>
+      app.get(['/api/auth/probe', '/api/auth/web/probe', '/api/services/probe', '/probe'], probe),
+  };
 });
 
 describe('app.js session scoping', () => {
@@ -46,7 +50,9 @@ describe('app.js session scoping', () => {
 
   it('every router that reads req.session is mounted under /api/auth', () => {
     const { ROUTES } = jest.requireActual('../routes/api');
-    for (const [mount, file] of ROUTES) if (['./auth', './webOAuth', './mobileOAuth'].includes(file)) expect(mount.startsWith('/api/auth')).toBe(true);
+    for (const [mount, file] of ROUTES)
+      if (['./auth', './webOAuth', './mobileOAuth'].includes(file))
+        expect(mount.startsWith('/api/auth')).toBe(true);
   });
 
   it('req.ip is memoised and equals Express’s own trust-proxy answer', async () => {
@@ -63,14 +69,21 @@ describe('requestMetrics live window', () => {
     res.statusCode = status;
     res.json = () => {};
     res.locals = {};
-    requestMetrics({ originalUrl: '/api/x', method: 'GET', ip: '1.2.3.4', get: () => '' }, res, () => {});
+    requestMetrics(
+      { originalUrl: '/api/x', method: 'GET', ip: '1.2.3.4', get: () => '' },
+      res,
+      () => {}
+    );
     res.emit('finish');
   };
 
   it('keeps exactly the last 60 s across compactions', () => {
     let now = Date.now() + 120_000; // past any real request recorded above
     const spy = jest.spyOn(Date, 'now').mockImplementation(() => now);
-    for (let i = 0; i < 5000; i++) { hit(i % 10 === 0 ? 500 : 200); now += 20; } // 100 s of traffic
+    for (let i = 0; i < 5000; i++) {
+      hit(i % 10 === 0 ? 500 : 200);
+      now += 20;
+    } // 100 s of traffic
     const s = liveSnapshot();
     // entries with t >= now_last - 60000 survive: last 3001 hits (20 ms apart), 300 of them 5xx
     expect(s.requestsLastMin).toBe(3001);
@@ -87,9 +100,15 @@ describe('requestMetrics live window', () => {
     const spy = jest.spyOn(Date, 'now').mockImplementation(() => now);
     // Relative, not absolute µs: a busy CI box slows both runs alike, an O(window) step does not.
     const timed = (stepMs) => {
-      for (let i = 0; i < 110_000; i++) { hit(); now += stepMs; } // fill the window first
+      for (let i = 0; i < 110_000; i++) {
+        hit();
+        now += stepMs;
+      } // fill the window first
       const t0 = process.hrtime.bigint();
-      for (let i = 0; i < 20_000; i++) { hit(); now += stepMs; }
+      for (let i = 0; i < 20_000; i++) {
+        hit();
+        now += stepMs;
+      }
       return Number(process.hrtime.bigint() - t0);
     };
     now += 120_000;
@@ -108,7 +127,11 @@ describe('requestMetrics live window', () => {
     const unrouted = (url) => {
       const res = new EventEmitter();
       Object.assign(res, { statusCode: 404, json: () => {}, locals: {} });
-      requestMetrics({ originalUrl: url, method: 'GET', ip: '1.2.3.4', get: () => '' }, res, () => {});
+      requestMetrics(
+        { originalUrl: url, method: 'GET', ip: '1.2.3.4', get: () => '' },
+        res,
+        () => {}
+      );
       res.emit('finish');
     };
     for (let i = 0; i < 1500; i++) unrouted(`/api/x/${i}-uuid`); // ids in the 3rd segment

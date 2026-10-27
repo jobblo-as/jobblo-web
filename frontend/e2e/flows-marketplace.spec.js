@@ -5,8 +5,17 @@ import { expect, mockApi, watchErrors, SERVICE } from './helpers/app.js';
 
 test.describe.configure({ timeout: 120_000 });
 
-const OTHER = { ...SERVICE, _id: '64b000000000000000000002', title: 'TEST Flytte sofa', categories: ['Flytting'], urgent: true };
-const page1 = (data) => ({ data, pagination: { total: data.length, totalPages: 1, page: 1, limit: 16 } });
+const OTHER = {
+  ...SERVICE,
+  _id: '64b000000000000000000002',
+  title: 'TEST Flytte sofa',
+  categories: ['Flytting'],
+  urgent: true,
+};
+const page1 = (data) => ({
+  data,
+  pagination: { total: data.length, totalPages: 1, page: 1, limit: 16 },
+});
 
 test('search and the urgent filter go to the API and narrow the list', async ({ page }) => {
   const errors = watchErrors(page);
@@ -15,7 +24,8 @@ test('search and the urgent filter go to the API and narrow the list', async ({ 
       'GET /api/services': ({ url }) => {
         const q = url.searchParams;
         let list = [SERVICE, OTHER];
-        if (q.get('search')) list = list.filter((s) => s.title.toLowerCase().includes(q.get('search').toLowerCase()));
+        if (q.get('search'))
+          list = list.filter((s) => s.title.toLowerCase().includes(q.get('search').toLowerCase()));
         if (q.get('urgent') === 'true') list = list.filter((s) => s.urgent);
         return page1(list);
       },
@@ -31,11 +41,18 @@ test('search and the urgent filter go to the API and narrow the list', async ({ 
   await expect(page).toHaveURL(/search=male/);
   await expect(page.getByText(OTHER.title)).toHaveCount(0);
   await expect(page.getByText(SERVICE.title).first()).toBeVisible();
-  expect(calls.some((c) => c.pathname === '/api/services' && /search=male/.test(c.search))).toBe(true);
+  expect(calls.some((c) => c.pathname === '/api/services' && /search=male/.test(c.search))).toBe(
+    true
+  );
 
   await page.getByLabel('Tøm søket').click();
-  await page.getByRole('switch', { name: /Haster/ }).first().click();
-  await expect.poll(() => calls.some((c) => c.pathname === '/api/services' && /urgent=true/.test(c.search))).toBe(true);
+  await page
+    .getByRole('switch', { name: /Haster/ })
+    .first()
+    .click();
+  await expect
+    .poll(() => calls.some((c) => c.pathname === '/api/services' && /urgent=true/.test(c.search)))
+    .toBe(true);
   await expect(page.getByText(SERVICE.title)).toHaveCount(0);
   await expect(page.getByText(OTHER.title).first()).toBeVisible();
   expect(errors).toEqual([]);
@@ -61,7 +78,11 @@ function jobRoutes(extra = {}) {
   return {
     [`GET /api/services/${SERVICE._id}`]: () => SERVICE,
     'GET /api/connect/status': () => ({ payoutReady: true }),
-    'GET /api/stripe/v2/entitlements': () => ({ includedContacts: 5, consumedIncludedContacts: 0, remainingIncludedContacts: 5 }),
+    'GET /api/stripe/v2/entitlements': () => ({
+      includedContacts: 5,
+      consumedIncludedContacts: 0,
+      remainingIncludedContacts: 5,
+    }),
     'GET /api/config/FREE_PRIVATE_JOBS_UNDER_10000': () => ({ value: false }),
     ...extra,
   };
@@ -71,15 +92,26 @@ test('a provider applies to a job with a message', async ({ page }) => {
   const errors = watchErrors(page);
   const { calls } = await mockApi(page, {
     as: 'provider',
-    routes: jobRoutes({ 'POST /api/orders/request': ({ body }) => ({ _id: 'req-1', serviceId: body.serviceId, status: 'pending' }) }),
+    routes: jobRoutes({
+      'POST /api/orders/request': ({ body }) => ({
+        _id: 'req-1',
+        serviceId: body.serviceId,
+        status: 'pending',
+      }),
+    }),
   });
   await page.goto(`/job-listing/${SERVICE._id}`);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText(SERVICE.title);
   await page.getByRole('button', { name: 'Send forespørsel', exact: true }).first().click();
-  await page.getByPlaceholder('Skriv en melding til leverandøren...').fill('Hei, jeg kan gjøre dette på lørdag.');
+  await page
+    .getByPlaceholder('Skriv en melding til leverandøren...')
+    .fill('Hei, jeg kan gjøre dette på lørdag.');
   await page.getByRole('button', { name: 'Send forespørsel', exact: true }).last().click();
   await expect(page.getByText('Forespørsel sendt! Venter på godkjenning.')).toBeVisible();
-  expect(calls.find((c) => c.pathname === '/api/orders/request').body).toMatchObject({ serviceId: SERVICE._id, message: 'Hei, jeg kan gjøre dette på lørdag.' });
+  expect(calls.find((c) => c.pathname === '/api/orders/request').body).toMatchObject({
+    serviceId: SERVICE._id,
+    message: 'Hei, jeg kan gjøre dette på lørdag.',
+  });
   expect(errors).toEqual([]);
 });
 
@@ -101,21 +133,37 @@ test('a visitor who applies is sent to log in', async ({ page }) => {
 test('saving a listing, then browsing favourite lists', async ({ page }) => {
   const errors = watchErrors(page);
   const saved = new Set();
-  const list = { _id: 'list-1', name: 'Oppussing', services: [SERVICE], userId: '64a000000000000000000002', createdAt: '2026-10-20T10:00:00.000Z' };
+  const list = {
+    _id: 'list-1',
+    name: 'Oppussing',
+    services: [SERVICE],
+    userId: '64a000000000000000000002',
+    createdAt: '2026-10-20T10:00:00.000Z',
+  };
   const { calls } = await mockApi(page, {
     as: 'provider',
     routes: jobRoutes({
-      '~POST ^/api/favorites/': ({ url }) => { saved.add(url.pathname.split('/').pop()); return { success: true }; },
-      '~DELETE ^/api/favorites/': ({ url }) => { saved.delete(url.pathname.split('/').pop()); return { success: true }; },
+      '~POST ^/api/favorites/': ({ url }) => {
+        saved.add(url.pathname.split('/').pop());
+        return { success: true };
+      },
+      '~DELETE ^/api/favorites/': ({ url }) => {
+        saved.delete(url.pathname.split('/').pop());
+        return { success: true };
+      },
       'GET /api/lists': () => [list],
       'GET /api/lists/list-1': () => list,
-      'GET /api/favorites': () => ({ favorites: [...saved].map((id) => ({ _id: `fav-${id}`, service: { ...SERVICE, _id: id } })) }),
+      'GET /api/favorites': () => ({
+        favorites: [...saved].map((id) => ({ _id: `fav-${id}`, service: { ...SERVICE, _id: id } })),
+      }),
     }),
   });
   await page.goto(`/job-listing/${SERVICE._id}`);
   await page.getByRole('button', { name: 'Lagre oppdraget' }).click();
   await expect(page.getByRole('button', { name: 'Fjern fra lagrede' })).toBeVisible();
-  expect(calls.some((c) => c.method === 'POST' && c.pathname === `/api/favorites/${SERVICE._id}`)).toBe(true);
+  expect(
+    calls.some((c) => c.method === 'POST' && c.pathname === `/api/favorites/${SERVICE._id}`)
+  ).toBe(true);
   await page.goto('/favorites');
   await page.getByText('Oppussing').first().click();
   await expect(page).toHaveURL(/\/favorites\/list\/list-1$/);
@@ -126,8 +174,13 @@ test('saving a listing, then browsing favourite lists', async ({ page }) => {
 test('publish a job: step 1 validates, a complete draft (edit mode) is saved', async ({ page }) => {
   const errors = watchErrors(page);
   const full = {
-    ...SERVICE, countyCode: '03', municipalityCode: '0301', images: ['https://example.test/a.jpg'],
-    fromDate: '2026-11-01', toDate: '2026-11-02', duration: { value: 2, unit: 'hours' },
+    ...SERVICE,
+    countyCode: '03',
+    municipalityCode: '0301',
+    images: ['https://example.test/a.jpg'],
+    fromDate: '2026-11-01',
+    toDate: '2026-11-02',
+    duration: { value: 2, unit: 'hours' },
   };
   const { calls } = await mockApi(page, {
     as: 'user',
@@ -148,7 +201,9 @@ test('publish a job: step 1 validates, a complete draft (edit mode) is saved', a
   await page.goto(`/Publish-job/${SERVICE._id}`);
   await expect(page.getByRole('heading', { name: 'Rediger oppdraget' })).toBeVisible();
   await expect(page.locator(`input[value="${SERVICE.title}"]`)).toHaveCount(1);
-  expect(calls.some((c) => c.pathname === `/api/services/${SERVICE._id}` && c.method === 'GET')).toBe(true);
+  expect(
+    calls.some((c) => c.pathname === `/api/services/${SERVICE._id}` && c.method === 'GET')
+  ).toBe(true);
   // Two pages, not four: page 2 holds place/time/price with checklist and contact folded in.
   await expect(page.getByText('Steg 1 av 2')).toBeVisible();
   await page.getByRole('button', { name: /Neste/ }).first().click();
@@ -159,7 +214,11 @@ test('publish a job: step 1 validates, a complete draft (edit mode) is saved', a
   await page.getByText('Kontaktinformasjon (Valgfritt)').click();
   await expect(page.locator('#job-email')).toBeVisible();
   await page.getByRole('button', { name: /Publiser oppdrag/ }).click();
-  await expect.poll(() => calls.some((c) => c.pathname === `/api/services/${SERVICE._id}` && c.method === 'PUT')).toBe(true);
+  await expect
+    .poll(() =>
+      calls.some((c) => c.pathname === `/api/services/${SERVICE._id}` && c.method === 'PUT')
+    )
+    .toBe(true);
   expect(errors).toEqual([]);
 });
 
@@ -168,19 +227,28 @@ test('a new job starts with the profile e-mail as contact', async ({ page }) => 
   await page.goto('/Publish-job');
   await expect(page.getByRole('heading', { name: 'Legg ut et oppdrag' })).toBeVisible();
   // The autosaved draft (IndexedDB) carries the prefilled contact, no step-4 walk needed.
-  const draftEmail = () => page.evaluate(() => new Promise((resolve) => {
-    const open = indexedDB.open('jobblo-form-db');
-    open.onerror = () => resolve(null);
-    open.onsuccess = () => {
-      const req = open.result.transaction('job-form-data').objectStore('job-form-data').get('current-form');
-      req.onsuccess = () => resolve(req.result?.data?.email ?? null);
-      req.onerror = () => resolve(null);
-    };
-  }));
+  const draftEmail = () =>
+    page.evaluate(
+      () =>
+        new Promise((resolve) => {
+          const open = indexedDB.open('jobblo-form-db');
+          open.onerror = () => resolve(null);
+          open.onsuccess = () => {
+            const req = open.result
+              .transaction('job-form-data')
+              .objectStore('job-form-data')
+              .get('current-form');
+            req.onsuccess = () => resolve(req.result?.data?.email ?? null);
+            req.onerror = () => resolve(null);
+          };
+        })
+    );
   await expect.poll(draftEmail).toBe('customer@example.test');
 });
 
-test('AI draft is reviewed in a popup and never replaces typed text unless ticked', async ({ page }) => {
+test('AI draft is reviewed in a popup and never replaces typed text unless ticked', async ({
+  page,
+}) => {
   const errors = watchErrors(page);
   const { calls } = await mockApi(page, {
     as: 'user',
@@ -188,10 +256,17 @@ test('AI draft is reviewed in a popup and never replaces typed text unless ticke
       'POST /api/ai/generate-full-listing': () => ({
         success: true,
         data: {
-          title: 'AI-tittel', description: 'AI skrev denne beskrivelsen av oppdraget.', category: 'Maling',
-          skills: [], duration: { value: 3, unit: 'hours' }, locationRelevance: 'on-site',
-          priceRange: null, suggestedPrice: 2500, pricingReasoning: 'Estimat basert på 3 timer.',
-          paymentType: 'Fastpris', isEstimate: true,
+          title: 'AI-tittel',
+          description: 'AI skrev denne beskrivelsen av oppdraget.',
+          category: 'Maling',
+          skills: [],
+          duration: { value: 3, unit: 'hours' },
+          locationRelevance: 'on-site',
+          priceRange: null,
+          suggestedPrice: 2500,
+          pricingReasoning: 'Estimat basert på 3 timer.',
+          paymentType: 'Fastpris',
+          isEstimate: true,
         },
       }),
     },
@@ -212,18 +287,29 @@ test('AI draft is reviewed in a popup and never replaces typed text unless ticke
 
   await expect(dialog).toBeHidden();
   await expect(page.locator('#job-title')).toHaveValue('Min egen tittel');
-  await expect(page.locator('#job-description')).toHaveValue('AI skrev denne beskrivelsen av oppdraget.');
+  await expect(page.locator('#job-description')).toHaveValue(
+    'AI skrev denne beskrivelsen av oppdraget.'
+  );
   expect(calls.some((c) => c.pathname === '/api/ai/generate-full-listing')).toBe(true);
   expect(errors).toEqual([]);
 });
 
-test('"Dine utkast": typing saves a server draft, a listed draft opens, and can be deleted', async ({ page }) => {
+test('"Dine utkast": typing saves a server draft, a listed draft opens, and can be deleted', async ({
+  page,
+}) => {
   const errors = watchErrors(page);
   const { calls } = await mockApi(page, {
     as: 'user',
     routes: {
-      'GET /api/job-drafts': () => ({ drafts: [{ _id: 'd1', title: 'Utkast fra mobilen', updatedAt: '2026-10-20T10:00:00Z' }] }),
-      'GET /api/job-drafts/d1': () => ({ draft: { _id: 'd1', data: { title: 'Utkast fra mobilen', description: 'Skrevet på telefonen i går kveld.' } } }),
+      'GET /api/job-drafts': () => ({
+        drafts: [{ _id: 'd1', title: 'Utkast fra mobilen', updatedAt: '2026-10-20T10:00:00Z' }],
+      }),
+      'GET /api/job-drafts/d1': () => ({
+        draft: {
+          _id: 'd1',
+          data: { title: 'Utkast fra mobilen', description: 'Skrevet på telefonen i går kveld.' },
+        },
+      }),
       'POST /api/job-drafts': () => ({ status: 201, json: { draft: { _id: 'd2' } } }),
       'PUT /api/job-drafts/d2': () => ({ draft: { _id: 'd2' } }),
       'DELETE /api/job-drafts/d1': () => ({ ok: true }),
@@ -235,8 +321,12 @@ test('"Dine utkast": typing saves a server draft, a listed draft opens, and can 
 
   // Typing a title saves it on the server (debounced, once).
   await page.locator('#job-title').fill('Vaske vinduer');
-  await expect.poll(() => calls.filter((c) => c.method === 'POST' && c.pathname === '/api/job-drafts').length).toBe(1);
-  expect(calls.find((c) => c.method === 'POST' && c.pathname === '/api/job-drafts').body.data.title).toBe('Vaske vinduer');
+  await expect
+    .poll(() => calls.filter((c) => c.method === 'POST' && c.pathname === '/api/job-drafts').length)
+    .toBe(1);
+  expect(
+    calls.find((c) => c.method === 'POST' && c.pathname === '/api/job-drafts').body.data.title
+  ).toBe('Vaske vinduer');
 
   // A listed draft opens in the form.
   await list.getByText('Utkast fra mobilen').click();
@@ -244,15 +334,24 @@ test('"Dine utkast": typing saves a server draft, a listed draft opens, and can 
   await expect(page.locator('#job-title')).toHaveValue('Utkast fra mobilen');
 
   await list.getByRole('button', { name: /Slett utkastet Utkast fra mobilen/ }).click();
-  await expect.poll(() => calls.some((c) => c.method === 'DELETE' && c.pathname === '/api/job-drafts/d1')).toBe(true);
+  await expect
+    .poll(() => calls.some((c) => c.method === 'DELETE' && c.pathname === '/api/job-drafts/d1'))
+    .toBe(true);
   expect(errors).toEqual([]);
 });
 
-test('address: one Kartverket search fills postnummer, sted, fylke and kommune, and they are published', async ({ page }) => {
+test('address: one Kartverket search fills postnummer, sted, fylke and kommune, and they are published', async ({
+  page,
+}) => {
   const errors = watchErrors(page);
   const full = {
-    ...SERVICE, countyCode: '03', municipalityCode: '0301', images: ['https://example.test/a.jpg'],
-    fromDate: '2026-11-01', toDate: '2026-11-02', duration: { value: 2, unit: 'hours' },
+    ...SERVICE,
+    countyCode: '03',
+    municipalityCode: '0301',
+    images: ['https://example.test/a.jpg'],
+    fromDate: '2026-11-01',
+    toDate: '2026-11-02',
+    duration: { value: 2, unit: 'hours' },
   };
   const { calls } = await mockApi(page, {
     as: 'user',
@@ -266,9 +365,22 @@ test('address: one Kartverket search fills postnummer, sted, fylke and kommune, 
     },
   });
   // Kartverket's address register, answered locally.
-  await page.route('https://ws.geonorge.no/**', (route) => route.fulfill({
-    json: { adresser: [{ adressetekst: 'Bryggen 1', postnummer: '5003', poststed: 'BERGEN', kommunenummer: '4601', kommunenavn: 'BERGEN', representasjonspunkt: { lat: 60.397, lon: 5.324 } }] },
-  }));
+  await page.route('https://ws.geonorge.no/**', (route) =>
+    route.fulfill({
+      json: {
+        adresser: [
+          {
+            adressetekst: 'Bryggen 1',
+            postnummer: '5003',
+            poststed: 'BERGEN',
+            kommunenummer: '4601',
+            kommunenavn: 'BERGEN',
+            representasjonspunkt: { lat: 60.397, lon: 5.324 },
+          },
+        ],
+      },
+    })
+  );
 
   await page.goto(`/Publish-job/${SERVICE._id}`);
   await page.getByRole('button', { name: /Neste/ }).first().click();
@@ -283,10 +395,23 @@ test('address: one Kartverket search fills postnummer, sted, fylke and kommune, 
   await expect(page.locator('#job-city')).toHaveValue('Bergen');
 
   await page.getByRole('button', { name: /Publiser oppdrag/ }).click();
-  await expect.poll(() => calls.some((c) => c.method === 'PUT' && c.pathname === `/api/services/${SERVICE._id}`)).toBe(true);
-  const sent = String(calls.find((c) => c.method === 'PUT' && c.pathname === `/api/services/${SERVICE._id}`).body);
-  for (const [field, value] of [['location[postalCode]', '5003'], ['location[city]', 'Bergen'], ['countyCode', '46'], ['municipalityCode', '4601']]) {
-    expect(sent).toMatch(new RegExp(`name="${field.replace(/[[\]]/g, '\\$&')}"\\r?\\n\\r?\\n${value}\\r?\\n`));
+  await expect
+    .poll(() =>
+      calls.some((c) => c.method === 'PUT' && c.pathname === `/api/services/${SERVICE._id}`)
+    )
+    .toBe(true);
+  const sent = String(
+    calls.find((c) => c.method === 'PUT' && c.pathname === `/api/services/${SERVICE._id}`).body
+  );
+  for (const [field, value] of [
+    ['location[postalCode]', '5003'],
+    ['location[city]', 'Bergen'],
+    ['countyCode', '46'],
+    ['municipalityCode', '4601'],
+  ]) {
+    expect(sent).toMatch(
+      new RegExp(`name="${field.replace(/[[\]]/g, '\\$&')}"\\r?\\n\\r?\\n${value}\\r?\\n`)
+    );
   }
   expect(errors).toEqual([]);
 });

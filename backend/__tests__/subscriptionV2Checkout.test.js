@@ -272,10 +272,14 @@ describe('Subscription V2 checkout service', () => {
 
   test('blocks an existing V2 subscriber and fails closed on V2 status lookup errors', async () => {
     const v2 = fixture({
-      SubscriptionV2Model: { findOne: () => ({ lean: async () => ({
-        stripeMode: 'test',
-        stripeSubscriptionId: 'sub_v2',
-      }) }) },
+      SubscriptionV2Model: {
+        findOne: () => ({
+          lean: async () => ({
+            stripeMode: 'test',
+            stripeSubscriptionId: 'sub_v2',
+          }),
+        }),
+      },
     });
     v2.stripe.subscriptions.retrieve.mockResolvedValue({ status: 'active' });
     await expect(startCheckout(v2)).rejects.toMatchObject({ code: 'active_subscription_exists' });
@@ -328,14 +332,16 @@ describe('Subscription V2 checkout service', () => {
       }),
       { idempotencyKey: `jobblo-subv2-customer-test-${createdOperation.operationId}` }
     );
-    expect(f.dependencies.UserModel.findByIdAndUpdate).toHaveBeenCalledWith(
-      userId,
-      { stripeCustomerIdTest: 'cus_created' }
-    );
+    expect(f.dependencies.UserModel.findByIdAndUpdate).toHaveBeenCalledWith(userId, {
+      stripeCustomerIdTest: 'cus_created',
+    });
   });
 
   test('rejects another account checkout in progress and duplicate request creation', async () => {
-    const pendingOperation = { ...fixture().operation, targetPlanId: new mongoose.Types.ObjectId() };
+    const pendingOperation = {
+      ...fixture().operation,
+      targetPlanId: new mongoose.Types.ObjectId(),
+    };
     const otherPlan = fixture({
       OperationModel: {
         findOne: jest.fn(async () => pendingOperation),
@@ -410,18 +416,20 @@ describe('Subscription V2 checkout service', () => {
     });
     f.stripe.checkout.sessions.retrieve.mockResolvedValue(session);
 
-    await expect(getSubscriptionCheckoutStatus(userId, sessionId, f.dependencies)).resolves.toEqual({
-      payment_status: 'paid',
-      provisioning_status: 'complete',
-      checkout_status: 'complete',
-      plan: 'Plus',
-      planType: 'private',
-      amount: 99,
-      currency: 'nok',
-      discountAmount: 0,
-      coupon: null,
-      subscription_status: 'active',
-    });
+    await expect(getSubscriptionCheckoutStatus(userId, sessionId, f.dependencies)).resolves.toEqual(
+      {
+        payment_status: 'paid',
+        provisioning_status: 'complete',
+        checkout_status: 'complete',
+        plan: 'Plus',
+        planType: 'private',
+        amount: 99,
+        currency: 'nok',
+        discountAmount: 0,
+        coupon: null,
+        subscription_status: 'active',
+      }
+    );
     expect(f.dependencies.OperationModel.updateOne).not.toHaveBeenCalled();
   });
 
@@ -451,21 +459,24 @@ describe('Subscription V2 checkout service', () => {
       currency: 'nok',
     };
     f.stripe.checkout.sessions.retrieve.mockResolvedValue(session);
-    await expect(getSubscriptionCheckoutStatus(userId, sessionId, f.dependencies))
-      .resolves.toEqual(expect.objectContaining({
+    await expect(getSubscriptionCheckoutStatus(userId, sessionId, f.dependencies)).resolves.toEqual(
+      expect.objectContaining({
         payment_status: 'paid',
         provisioning_status: 'pending',
         checkout_status: 'processing',
-      }));
+      })
+    );
 
     session.amount_total = 10000;
-    await expect(getSubscriptionCheckoutStatus(userId, sessionId, f.dependencies))
-      .rejects.toMatchObject({ status: 503, code: 'SUBSCRIPTION_CHECKOUT_RECONCILIATION_REQUIRED' });
+    await expect(
+      getSubscriptionCheckoutStatus(userId, sessionId, f.dependencies)
+    ).rejects.toMatchObject({ status: 503, code: 'SUBSCRIPTION_CHECKOUT_RECONCILIATION_REQUIRED' });
     session.amount_total = 9900;
 
     f.dependencies.OperationModel.findOne.mockReturnValue({ lean: async () => null });
-    await expect(getSubscriptionCheckoutStatus(userId, 'cs_test_other', f.dependencies))
-      .rejects.toMatchObject({ status: 404, code: 'CHECKOUT_SESSION_NOT_FOUND' });
+    await expect(
+      getSubscriptionCheckoutStatus(userId, 'cs_test_other', f.dependencies)
+    ).rejects.toMatchObject({ status: 404, code: 'CHECKOUT_SESSION_NOT_FOUND' });
   });
 
   test('feature flag is opt-in and return URL configuration is validated', () => {

@@ -12,20 +12,37 @@ const URI = 'mongodb://seeduser:hunter2@10.255.255.1:27017/jobblo-dev?authSource
 describe('assertSafeToSeed', () => {
   it('describes the target without credentials', () => {
     expect(describeTarget(URI)).toEqual({ host: '10.255.255.1:27017', db: 'jobblo-dev' });
-    expect(describeTarget('mongodb+srv://u:p@cluster0.example.net/prod')).toEqual({ host: 'cluster0.example.net', db: 'prod' });
+    expect(describeTarget('mongodb+srv://u:p@cluster0.example.net/prod')).toEqual({
+      host: 'cluster0.example.net',
+      db: 'prod',
+    });
   });
 
   it('refuses production, even with the confirmation flag', () => {
-    expect(() => assertSafeToSeed({ uri: URI, env: { NODE_ENV: 'production' }, argv: ['--yes-wipe=jobblo-dev'] })).toThrow(/NODE_ENV=production/);
+    expect(() =>
+      assertSafeToSeed({
+        uri: URI,
+        env: { NODE_ENV: 'production' },
+        argv: ['--yes-wipe=jobblo-dev'],
+      })
+    ).toThrow(/NODE_ENV=production/);
   });
 
   it('refuses without confirmation or with the wrong database name', () => {
-    expect(() => assertSafeToSeed({ uri: URI, env: {}, argv: [] })).toThrow(/--yes-wipe=jobblo-dev/);
-    expect(() => assertSafeToSeed({ uri: URI, env: {}, argv: ['--yes-wipe=other'] })).toThrow(/--yes-wipe=jobblo-dev/);
+    expect(() => assertSafeToSeed({ uri: URI, env: {}, argv: [] })).toThrow(
+      /--yes-wipe=jobblo-dev/
+    );
+    expect(() => assertSafeToSeed({ uri: URI, env: {}, argv: ['--yes-wipe=other'] })).toThrow(
+      /--yes-wipe=jobblo-dev/
+    );
   });
 
   it('allows a confirmed non-production run and never echoes the password', () => {
-    const target = assertSafeToSeed({ uri: URI, env: { NODE_ENV: 'development' }, argv: ['--yes-wipe=jobblo-dev'] });
+    const target = assertSafeToSeed({
+      uri: URI,
+      env: { NODE_ENV: 'development' },
+      argv: ['--yes-wipe=jobblo-dev'],
+    });
     expect(target).toBe('10.255.255.1:27017/jobblo-dev');
     expect(target).not.toMatch(/hunter2|seeduser/);
   });

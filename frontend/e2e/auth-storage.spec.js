@@ -25,7 +25,8 @@ async function mockApi(page, server, { refreshDelayMs = 0 } = {}) {
 
     if (pathname === '/api/auth/refresh-token') {
       if (refreshDelayMs) await new Promise((r) => setTimeout(r, refreshDelayMs));
-      if (!server.session) return route.fulfill({ status: 401, json: { error: 'Refresh token missing' } });
+      if (!server.session)
+        return route.fulfill({ status: 401, json: { error: 'Refresh token missing' } });
       n += 1;
       return route.fulfill({ json: { accessToken: `at-${server.session._id}-${n}` } });
     }
@@ -87,7 +88,9 @@ test('reload restores a legitimate session from the refresh cookie', async ({ pa
   expect(new URL(page.url()).pathname).toBe('/profile');
 });
 
-test('old persisted tokens are erased on first load; preferences and other keys survive', async ({ page }) => {
+test('old persisted tokens are erased on first load; preferences and other keys survive', async ({
+  page,
+}) => {
   await page.addInitScript(() => {
     if (sessionStorage.getItem('seeded')) return;
     sessionStorage.setItem('seeded', '1');
@@ -130,7 +133,11 @@ test('hand-edited storage cannot authenticate a visitor', async ({ page }) => {
       'user-storage',
       JSON.stringify({
         version: 1,
-        state: { user: { _id: 'alice', role: 'user' }, tokens: { accessToken: 'tampered' }, isAuthenticated: true },
+        state: {
+          user: { _id: 'alice', role: 'user' },
+          tokens: { accessToken: 'tampered' },
+          isAuthenticated: true,
+        },
       })
     );
   });
@@ -145,7 +152,10 @@ test('a stored superAdmin role cannot open the admin dashboard', async ({ page }
   await page.addInitScript(() => {
     localStorage.setItem(
       'user-storage',
-      JSON.stringify({ version: 1, state: { user: { _id: 'alice', role: 'superAdmin' }, isAuthenticated: true } })
+      JSON.stringify({
+        version: 1,
+        state: { user: { _id: 'alice', role: 'superAdmin' }, isAuthenticated: true },
+      })
     );
   });
   await mockApi(page, { session: ALICE }); // server says: ordinary user
@@ -163,7 +173,9 @@ test('protected routes wait for the bootstrap instead of bouncing to /login', as
   expect(new URL(page.url()).pathname).toBe('/profile');
 });
 
-test('logout clears auth state; the next account does not inherit the previous profile', async ({ page }) => {
+test('logout clears auth state; the next account does not inherit the previous profile', async ({
+  page,
+}) => {
   const server = { session: ALICE };
   const calls = await mockApi(page, server);
   await page.goto('/profile');
@@ -190,8 +202,12 @@ test('an expired refresh session signs the browser out without a loop', async ({
   await page.waitForURL('**/login');
   expect((await auth(page)).isAuthenticated).toBe(false);
   // Bounded: one bootstrap attempt after reload, no retry storm.
-  const afterReload = calls.slice(calls.findLastIndex((c) => c.pathname === '/api/auth/profile') + 1);
-  expect(afterReload.filter((c) => c.pathname === '/api/auth/refresh-token').length).toBeLessThanOrEqual(2);
+  const afterReload = calls.slice(
+    calls.findLastIndex((c) => c.pathname === '/api/auth/profile') + 1
+  );
+  expect(
+    afterReload.filter((c) => c.pathname === '/api/auth/refresh-token').length
+  ).toBeLessThanOrEqual(2);
 });
 
 test('no page URL ever carries a token', async ({ page }) => {

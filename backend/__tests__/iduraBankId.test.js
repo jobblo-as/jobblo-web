@@ -639,7 +639,10 @@ describe('16 & 21. e-mail and callback parameters cannot choose the account', ()
     grantReturns(VALID_CLAIMS);
     User.findById.mockReturnValue({ select: async () => ({ _id: 'session-user' }) });
     const res = makeRes();
-    await controller.iduraCallback(makeReq({ query: cbQuery(), session: sessionWithTransaction(), ...who }), res);
+    await controller.iduraCallback(
+      makeReq({ query: cbQuery(), session: sessionWithTransaction(), ...who }),
+      res
+    );
     expect(res.redirectedTo).toContain('error=');
     expectNothingWritten();
   });

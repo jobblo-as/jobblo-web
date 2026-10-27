@@ -10,7 +10,12 @@ const HANDLERS = {
   email: {
     /** One-time code. The code travels sealed; it is opened only here, at send time. */
     otp: async ({ to, name, otpSealed, purpose }) => {
-      await require('../../utils/emailService').deliverOtpEmail(to, otpBox().open(otpSealed).toString('utf8'), name, purpose);
+      await require('../../utils/emailService').deliverOtpEmail(
+        to,
+        otpBox().open(otpSealed).toString('utf8'),
+        name,
+        purpose
+      );
       return { sent: true };
     },
     /** Plain-text security notice to an account owner (queueSecurityAlertEmail). */
@@ -27,7 +32,8 @@ const HANDLERS = {
     },
   },
   push: {
-    send: async ({ userId, message }) => require('../pushNotifications').deliverPush(userId, message),
+    send: async ({ userId, message }) =>
+      require('../pushNotifications').deliverPush(userId, message),
   },
   scheduler: {
     /** One run of a scheduled lifecycle job (services/scheduler). One worker picks it up — fleet-wide. */

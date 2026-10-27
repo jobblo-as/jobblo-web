@@ -4,7 +4,12 @@ const multer = require('multer');
 const SafePayCheckoutController = require('../controllers/SafePayCheckoutController');
 const safePayController = require('../controllers/safepayController');
 const { authenticate } = require('../middleware/auth');
-const { checkFileTypes, IMAGE_TYPES, uploadLimiter, MULTIPART_LIMITS } = require('../middleware/upload');
+const {
+  checkFileTypes,
+  IMAGE_TYPES,
+  uploadLimiter,
+  MULTIPART_LIMITS,
+} = require('../middleware/upload');
 
 router.get('/details/:orderId', authenticate, SafePayCheckoutController.getCheckoutDetails);
 router.post('/create-session', authenticate, SafePayCheckoutController.createSafePaySession);

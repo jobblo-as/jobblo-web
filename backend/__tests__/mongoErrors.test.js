@@ -37,7 +37,9 @@ describe('translateMongoError', () => {
 
   it('still identifies the field when only the driver message is available', () => {
     const err = Object.assign(
-      new Error('E11000 duplicate key error collection: jobblo.users index: orgNumber_1 dup key: {}'),
+      new Error(
+        'E11000 duplicate key error collection: jobblo.users index: orgNumber_1 dup key: {}'
+      ),
       { code: 11000 }
     );
 

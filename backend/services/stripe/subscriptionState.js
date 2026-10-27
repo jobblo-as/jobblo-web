@@ -87,10 +87,12 @@ async function findBillingCapableSubscription(stripe, userId) {
       operationType: 'checkout',
       status: { $in: ['pending', 'reconciliation_required'] },
     });
-    v2Record = await db.collection('subscription_v2').findOne(
-      { userId: objectId },
-      { projection: { stripeSubscriptionId: 1, stripeMode: 1, status: 1 } }
-    );
+    v2Record = await db
+      .collection('subscription_v2')
+      .findOne(
+        { userId: objectId },
+        { projection: { stripeSubscriptionId: 1, stripeMode: 1, status: 1 } }
+      );
   } catch (err) {
     throw verificationUnavailable(err);
   }

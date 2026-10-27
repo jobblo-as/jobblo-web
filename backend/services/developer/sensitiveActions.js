@@ -27,8 +27,10 @@ const ACTIONS = {
       const t = ipBlocks.parseTarget(ip);
       if (t.error) throw bad(t.error);
       const hours = expiresInHours === null ? null : Number(expiresInHours ?? 24);
-      if (hours !== null && (!Number.isFinite(hours) || hours <= 0 || hours > MAX_BLOCK_HOURS)) throw bad(`Duration must be 1–${MAX_BLOCK_HOURS} hours, or always.`);
-      if (await require('../../models/IpBlock').exists({ target: t.target })) throw bad('This IP is already blocked.', 409);
+      if (hours !== null && (!Number.isFinite(hours) || hours <= 0 || hours > MAX_BLOCK_HOURS))
+        throw bad(`Duration must be 1–${MAX_BLOCK_HOURS} hours, or always.`);
+      if (await require('../../models/IpBlock').exists({ target: t.target }))
+        throw bad('This IP is already blocked.', 409);
       return { target: t.target, hours };
     },
     summary: (p) => `Block ${p.target} ${p.hours === null ? 'always' : `for ${p.hours}h`}`,
@@ -36,9 +38,17 @@ const ACTIONS = {
       // Never lock out the person requesting or the person approving.
       const list = ipBlocks.build([{ target: p.target }]);
       for (const ip of [ctx.actorIp, ctx.requesterIp].filter(Boolean)) {
-        if (list.check(ip, family(ip))) throw bad(`That would block ${ip === ctx.actorIp ? 'your own' : "the requester's"} IP address.`);
+        if (list.check(ip, family(ip)))
+          throw bad(
+            `That would block ${ip === ctx.actorIp ? 'your own' : "the requester's"} IP address.`
+          );
       }
-      await require('../../models/IpBlock').create({ target: p.target, reason: ctx.reason, createdBy: ctx.actor, expiresAt: p.hours === null ? null : new Date(Date.now() + p.hours * 60 * MINUTE) });
+      await require('../../models/IpBlock').create({
+        target: p.target,
+        reason: ctx.reason,
+        createdBy: ctx.actor,
+        expiresAt: p.hours === null ? null : new Date(Date.now() + p.hours * 60 * MINUTE),
+      });
       await ipBlocks.refresh();
     },
   },
@@ -67,12 +77,15 @@ const ACTIONS = {
     prepare: async ({ limiter, client }) => {
       const { LIMITERS } = require('../../middleware/rateLimiter');
       if (!LIMITERS.has(limiter)) throw bad('Unknown rate limiter.');
-      if (typeof client !== 'string' || !client.trim() || client.length > 200) throw bad('Client key (IP or u:<id>) is required.');
+      if (typeof client !== 'string' || !client.trim() || client.length > 200)
+        throw bad('Client key (IP or u:<id>) is required.');
       return { limiter, client: client.trim(), target: `${limiter} / ${client.trim()}` };
     },
     summary: (p) => `Reset rate limit ${p.limiter} for ${p.client}`,
     execute: async (p) => {
-      await require('../../middleware/rateLimiter').LIMITERS.get(p.limiter).limiter.resetKey(p.client);
+      await require('../../middleware/rateLimiter')
+        .LIMITERS.get(p.limiter)
+        .limiter.resetKey(p.client);
       require('../monitoring/redisInsights').clearMemo(); // the page shows the reset at once
     },
   },
@@ -83,12 +96,16 @@ const ACTIONS = {
       // A string only: an array would pass the test and become $in in the update below.
       if (typeof key !== 'string' || !FLAG_KEY.test(key)) throw bad('Not a feature flag.');
       if (typeof enabled !== 'boolean') throw bad('enabled must be true or false.');
-      if (!(await require('../../models/GlobalConfig').exists({ key }))) throw bad('Feature flag not found.', 404);
+      if (!(await require('../../models/GlobalConfig').exists({ key })))
+        throw bad('Feature flag not found.', 404);
       return { key, enabled };
     },
     summary: (p) => `Turn ${p.enabled ? 'ON' : 'OFF'} feature flag ${p.key}`,
     execute: async (p) => {
-      await require('../../models/GlobalConfig').updateOne({ key: p.key }, { $set: { value: p.enabled } });
+      await require('../../models/GlobalConfig').updateOne(
+        { key: p.key },
+        { $set: { value: p.enabled } }
+      );
     },
   },
 
@@ -105,11 +122,17 @@ const ACTIONS = {
       if (!Object.keys(clean).length) throw bad('Nothing to change.');
       return { thresholds: clean };
     },
-    summary: (p) => `Set alert thresholds: ${Object.entries(p.thresholds).map(([k, v]) => `${k}=${v}`).join(', ')}`,
+    summary: (p) =>
+      `Set alert thresholds: ${Object.entries(p.thresholds)
+        .map(([k, v]) => `${k}=${v}`)
+        .join(', ')}`,
     execute: async (p) => {
       await require('../../models/GlobalConfig').updateOne(
         { key: CONFIG_KEY },
-        { $set: Object.fromEntries(Object.entries(p.thresholds).map(([k, v]) => [`value.${k}`, v])), $setOnInsert: { description: 'Developer dashboard alert thresholds' } },
+        {
+          $set: Object.fromEntries(Object.entries(p.thresholds).map(([k, v]) => [`value.${k}`, v])),
+          $setOnInsert: { description: 'Developer dashboard alert thresholds' },
+        },
         { upsert: true }
       );
     },
@@ -124,18 +147,25 @@ const ACTIONS = {
         if (targets?.[s.key] === undefined) continue;
         const n = Number(targets[s.key]);
         // Below 90 % an "objective" stops meaning anything; 100 % leaves no budget at all.
-        if (!Number.isFinite(n) || n < 90 || n >= 100) throw bad(`Target for ${s.name} must be between 90 and 99.999.`);
+        if (!Number.isFinite(n) || n < 90 || n >= 100)
+          throw bad(`Target for ${s.name} must be between 90 and 99.999.`);
         clean[s.key] = Math.round(n * 1000) / 1000;
       }
       if (!Object.keys(clean).length) throw bad('Nothing to change.');
       return { targets: clean };
     },
-    summary: (p) => `Set SLO targets: ${Object.entries(p.targets).map(([k, v]) => `${k}=${v}%`).join(', ')}`,
+    summary: (p) =>
+      `Set SLO targets: ${Object.entries(p.targets)
+        .map(([k, v]) => `${k}=${v}%`)
+        .join(', ')}`,
     execute: async (p) => {
       const { CONFIG_KEY } = require('../monitoring/slo');
       await require('../../models/GlobalConfig').updateOne(
         { key: CONFIG_KEY },
-        { $set: Object.fromEntries(Object.entries(p.targets).map(([k, v]) => [`value.${k}`, v])), $setOnInsert: { description: 'Developer dashboard SLO targets' } },
+        {
+          $set: Object.fromEntries(Object.entries(p.targets).map(([k, v]) => [`value.${k}`, v])),
+          $setOnInsert: { description: 'Developer dashboard SLO targets' },
+        },
         { upsert: true }
       );
     },
@@ -144,15 +174,22 @@ const ACTIONS = {
   developer_access: {
     label: 'Change developer access',
     prepare: async ({ userId, access }) => {
-      if (!['readonly', 'operations'].includes(access)) throw bad('Access must be readonly or operations.');
+      if (!['readonly', 'operations'].includes(access))
+        throw bad('Access must be readonly or operations.');
       if (!isId(userId)) throw bad('Invalid user.');
-      const u = await require('../../models/User').findOne({ _id: userId, role: 'developer' }).select('name').lean();
+      const u = await require('../../models/User')
+        .findOne({ _id: userId, role: 'developer' })
+        .select('name')
+        .lean();
       if (!u) throw bad('Developer not found.', 404);
       return { userId, access, name: u.name };
     },
     summary: (p) => `Set ${p.name}'s developer access to ${p.access}`,
     execute: async (p) => {
-      await require('../../models/User').updateOne({ _id: p.userId, role: 'developer' }, { $set: { developerAccess: p.access } });
+      await require('../../models/User').updateOne(
+        { _id: p.userId, role: 'developer' },
+        { $set: { developerAccess: p.access } }
+      );
     },
   },
 };

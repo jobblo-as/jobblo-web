@@ -16,21 +16,72 @@ const HOUR = 60 * 60 * 1000;
 const MINUTE = 60 * 1000;
 // Minute test deadlines (disabled in production, see providerConnectDeadline.js) need a
 // check every minute, or the start-deadline refund lags up to 15 minutes behind.
-const SAFEPAY_CHECK_MS = process.env.NODE_ENV !== 'production' && process.env.SAFEPAY_CONNECT_TEST_DEADLINE_MINUTES
-  ? MINUTE
-  : 15 * MINUTE;
+const SAFEPAY_CHECK_MS =
+  process.env.NODE_ENV !== 'production' && process.env.SAFEPAY_CONNECT_TEST_DEADLINE_MINUTES
+    ? MINUTE
+    : 15 * MINUTE;
 
 const SCHEDULE = [
-  { name: 'autoReleaseStaleReviews', fn: jobs.autoReleaseStaleReviews, everyMs: 6 * HOUR, delayMs: 2 * MINUTE },
-  { name: 'warnBeforeAutoRelease', fn: jobs.warnBeforeAutoRelease, everyMs: 12 * HOUR, delayMs: 3 * MINUTE },
-  { name: 'retryFailedPayouts', fn: jobs.retryFailedPayouts, everyMs: 2 * HOUR, delayMs: 4 * MINUTE },
-  { name: 'cleanupAbandonedOrders', fn: jobs.cleanupAbandonedOrders, everyMs: 6 * HOUR, delayMs: 5 * MINUTE },
-  { name: 'recordSafePayConnectReadiness', fn: jobs.recordSafePayConnectReadiness, everyMs: SAFEPAY_CHECK_MS, delayMs: 60 * 1000 },
-  { name: 'cancelExpiredUnconnectedSafePayOrders', fn: jobs.cancelExpiredUnconnectedSafePayOrders, everyMs: SAFEPAY_CHECK_MS, delayMs: 90 * 1000 },
-  { name: 'reconcileMoneyState', fn: jobs.reconcileMoneyState, everyMs: 24 * HOUR, delayMs: 6 * MINUTE },
-  { name: 'reconcileStripeFinancialHistory', fn: jobs.reconcileStripeFinancialHistory, everyMs: 24 * HOUR, delayMs: 7 * MINUTE },
-  { name: 'cancelExpiredSubscriptionRecoveries', fn: jobs.cancelExpiredSubscriptionRecoveries, everyMs: MINUTE, delayMs: 8 * MINUTE },
-  { name: 'dispatchSubscriptionRecoveryEmails', fn: jobs.dispatchSubscriptionRecoveryEmails, everyMs: 5 * MINUTE, delayMs: 9 * MINUTE },
+  {
+    name: 'autoReleaseStaleReviews',
+    fn: jobs.autoReleaseStaleReviews,
+    everyMs: 6 * HOUR,
+    delayMs: 2 * MINUTE,
+  },
+  {
+    name: 'warnBeforeAutoRelease',
+    fn: jobs.warnBeforeAutoRelease,
+    everyMs: 12 * HOUR,
+    delayMs: 3 * MINUTE,
+  },
+  {
+    name: 'retryFailedPayouts',
+    fn: jobs.retryFailedPayouts,
+    everyMs: 2 * HOUR,
+    delayMs: 4 * MINUTE,
+  },
+  {
+    name: 'cleanupAbandonedOrders',
+    fn: jobs.cleanupAbandonedOrders,
+    everyMs: 6 * HOUR,
+    delayMs: 5 * MINUTE,
+  },
+  {
+    name: 'recordSafePayConnectReadiness',
+    fn: jobs.recordSafePayConnectReadiness,
+    everyMs: SAFEPAY_CHECK_MS,
+    delayMs: 60 * 1000,
+  },
+  {
+    name: 'cancelExpiredUnconnectedSafePayOrders',
+    fn: jobs.cancelExpiredUnconnectedSafePayOrders,
+    everyMs: SAFEPAY_CHECK_MS,
+    delayMs: 90 * 1000,
+  },
+  {
+    name: 'reconcileMoneyState',
+    fn: jobs.reconcileMoneyState,
+    everyMs: 24 * HOUR,
+    delayMs: 6 * MINUTE,
+  },
+  {
+    name: 'reconcileStripeFinancialHistory',
+    fn: jobs.reconcileStripeFinancialHistory,
+    everyMs: 24 * HOUR,
+    delayMs: 7 * MINUTE,
+  },
+  {
+    name: 'cancelExpiredSubscriptionRecoveries',
+    fn: jobs.cancelExpiredSubscriptionRecoveries,
+    everyMs: MINUTE,
+    delayMs: 8 * MINUTE,
+  },
+  {
+    name: 'dispatchSubscriptionRecoveryEmails',
+    fn: jobs.dispatchSubscriptionRecoveryEmails,
+    everyMs: 5 * MINUTE,
+    delayMs: 9 * MINUTE,
+  },
 ];
 
 // In-app backups only when asked for (BACKUP_SCHEDULE_HOURS); host cron with scripts/backup.js is the default.
@@ -92,7 +143,10 @@ async function runOnce(job) {
  * left alone: re-creating it on every boot would restart its timer, and a 24 h job on an
  * instance that redeploys daily would never run. Schedulers for removed jobs are deleted.
  */
-async function syncRedisSchedule(queue = require('../queue').getQueue('scheduler'), schedule = SCHEDULE) {
+async function syncRedisSchedule(
+  queue = require('../queue').getQueue('scheduler'),
+  schedule = SCHEDULE
+) {
   const existing = new Map((await queue.getJobSchedulers(0, -1)).map((s) => [s.key || s.id, s]));
   const changes = { created: [], kept: [], removed: [] };
   for (const job of schedule) {
@@ -100,7 +154,11 @@ async function syncRedisSchedule(queue = require('../queue').getQueue('scheduler
     if (current && Number(current.every) === job.everyMs) {
       changes.kept.push(job.name);
     } else {
-      await queue.upsertJobScheduler(job.name, { every: job.everyMs, startDate: Date.now() + job.delayMs }, { name: 'run', data: { job: job.name } });
+      await queue.upsertJobScheduler(
+        job.name,
+        { every: job.everyMs, startDate: Date.now() + job.delayMs },
+        { name: 'run', data: { job: job.name } }
+      );
       changes.created.push(job.name);
     }
     existing.delete(job.name);
@@ -123,7 +181,11 @@ function startScheduler() {
   if (require('../queue').usingRedis()) {
     state.mode = 'redis';
     syncRedisSchedule()
-      .then((c) => console.log(`[scheduler] Redis schedule: ${c.created.length} created, ${c.kept.length} kept, ${c.removed.length} removed`))
+      .then((c) =>
+        console.log(
+          `[scheduler] Redis schedule: ${c.created.length} created, ${c.kept.length} kept, ${c.removed.length} removed`
+        )
+      )
       .catch((err) => console.error('[scheduler] could not sync the Redis schedule:', err.message));
     return { stop: () => {} };
   }

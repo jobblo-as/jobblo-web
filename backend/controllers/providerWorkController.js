@@ -64,9 +64,11 @@ exports.startJob = async (req, res) => {
       return res.status(403).json({ error: 'Kun utfører kan starte jobben' });
     if (order.status === 'in_progress') return res.json({ message: 'Allerede startet', order });
     if (!(await ensureProviderConnectReady(req, res, order.providerId))) return;
-    if (['processing', 'pending', 'reconciliation_required', 'failed', 'manual_review'].includes(
-      order.providerConnectTimeout?.status
-    )) {
+    if (
+      ['processing', 'pending', 'reconciliation_required', 'failed', 'manual_review'].includes(
+        order.providerConnectTimeout?.status
+      )
+    ) {
       return res.status(409).json({
         error: 'Refusjon eller manuell behandling pågår. Oppdraget kan ikke startes nå.',
       });
@@ -108,14 +110,17 @@ exports.startJob = async (req, res) => {
         return res.json({ message: 'Allerede startet', order: current });
       }
       if (
-        ['processing', 'pending', 'reconciliation_required', 'failed', 'manual_review']
-          .includes(current?.providerConnectTimeout?.status)
+        ['processing', 'pending', 'reconciliation_required', 'failed', 'manual_review'].includes(
+          current?.providerConnectTimeout?.status
+        )
       ) {
         return res.status(409).json({
           error: 'Refusjon eller manuell behandling pågår. Oppdraget kan ikke startes nå.',
         });
       }
-      return res.status(409).json({ error: 'Oppdraget kan ikke startes fordi statusen er endret.' });
+      return res
+        .status(409)
+        .json({ error: 'Oppdraget kan ikke startes fordi statusen er endret.' });
     }
     if (updated.chatId) {
       const chat = await Chat.findById(updated.chatId);
@@ -283,7 +288,9 @@ exports.uploadEvidence = async (req, res) => {
     const { uploadBufferToAzure } = require('../utils/azureUpload');
     const urls = [];
     for (const file of files) {
-      const { url } = await uploadBufferToAzure(file, `orders/${orderId}/evidence`, { private: true });
+      const { url } = await uploadBufferToAzure(file, `orders/${orderId}/evidence`, {
+        private: true,
+      });
       urls.push(url);
     }
     const upd = {

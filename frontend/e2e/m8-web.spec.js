@@ -16,25 +16,41 @@ async function mockApi(page, me) {
     const { pathname } = new URL(route.request().url());
     calls.push(pathname);
     const ok = (data) => route.fulfill({ json: { success: true, data } });
-    if (pathname === '/api/auth/refresh-token') return route.fulfill({ json: { accessToken: 'at' } });
+    if (pathname === '/api/auth/refresh-token')
+      return route.fulfill({ json: { accessToken: 'at' } });
     if (pathname === '/api/auth/profile') return route.fulfill({ json: me });
-    if (pathname === '/api/auth/mfa') return route.fulfill({ json: { required: true, enabled: true, verified: true } });
+    if (pathname === '/api/auth/mfa')
+      return route.fulfill({ json: { required: true, enabled: true, verified: true } });
     if (pathname === '/api/auth/logout') return route.fulfill({ json: { ok: true } });
     if (pathname === '/api/developer/me') {
-      return ok({ ...me, environment: 'test', access: 'readonly', can: { triage: true, request: false, execute: false, approve: false } });
+      return ok({
+        ...me,
+        environment: 'test',
+        access: 'readonly',
+        can: { triage: true, request: false, execute: false, approve: false },
+      });
     }
     if (pathname.startsWith('/api/categories')) return route.fulfill({ json: [] });
     // Console pages render their error state rather than crash on an empty payload.
-    if (pathname.startsWith('/api/developer/')) return route.fulfill({ status: 500, json: { message: 'mock' } });
+    if (pathname.startsWith('/api/developer/'))
+      return route.fulfill({ status: 500, json: { message: 'mock' } });
     return ok({});
   });
   return calls;
 }
 
 const devQueries = (page) =>
-  page.evaluate(() => window.__jobbloQueryClient?.getQueryCache().getAll().filter((q) => q.queryKey[0] === 'dev').length ?? 0);
+  page.evaluate(
+    () =>
+      window.__jobbloQueryClient
+        ?.getQueryCache()
+        .getAll()
+        .filter((q) => q.queryKey[0] === 'dev').length ?? 0
+  );
 
-test('signing out from the developer menu clears the previous user’s cached data', async ({ page }) => {
+test('signing out from the developer menu clears the previous user’s cached data', async ({
+  page,
+}) => {
   await mockApi(page, DEV);
   await page.goto('/developer');
   await expect.poll(() => devQueries(page)).toBeGreaterThan(0);
@@ -71,13 +87,18 @@ test('create-job labels point at their inputs', async ({ page }) => {
   await expect(page.getByLabel(/Beskrivelse/)).toHaveAttribute('id', 'job-description');
 });
 
-test('account deletion sends the current password and explains REAUTH_REQUIRED', async ({ page }) => {
+test('account deletion sends the current password and explains REAUTH_REQUIRED', async ({
+  page,
+}) => {
   await mockApi(page, USER);
   const bodies = [];
   await page.route(`${API}/api/users/user-1`, (route) => {
     if (route.request().method() !== 'DELETE') return route.fallback();
     bodies.push(route.request().postDataJSON());
-    return route.fulfill({ status: 403, json: { code: 'REAUTH_REQUIRED', error: 'Logg inn på nytt for å slette kontoen.' } });
+    return route.fulfill({
+      status: 403,
+      json: { code: 'REAUTH_REQUIRED', error: 'Logg inn på nytt for å slette kontoen.' },
+    });
   });
   await page.addInitScript(() => localStorage.setItem('cookie-consent', 'rejected')); // banner covers the button
   await page.goto('/settings/delete-account');
@@ -88,7 +109,9 @@ test('account deletion sends the current password and explains REAUTH_REQUIRED',
   expect(bodies).toEqual([{ currentPassword: 'hunter22' }]);
 });
 
-test('MFA: a failed status load offers "Try again" and a correct code then lets the developer in', async ({ page }) => {
+test('MFA: a failed status load offers "Try again" and a correct code then lets the developer in', async ({
+  page,
+}) => {
   await mockApi(page, DEV);
   let up = false; // the status endpoint fails until the test clicks "Try again"
   await page.route(`${API}/api/auth/mfa`, (route) => {
@@ -105,12 +128,17 @@ test('MFA: a failed status load offers "Try again" and a correct code then lets 
   await expect(page).toHaveURL(/\/developer$/);
 });
 
-test('coins: redeeming is one request, disabled while pending, with a success toast', async ({ page }) => {
+test('coins: redeeming is one request, disabled while pending, with a success toast', async ({
+  page,
+}) => {
   await mockApi(page, { ...USER, pointsBalance: 500 });
   let buys = 0;
   await page.route(`${API}/api/jobbloShop/**`, async (route) => {
     const { pathname } = new URL(route.request().url());
-    if (pathname.endsWith('/all')) return route.fulfill({ json: [{ _id: 1, title: 'Gavekort', description: 'x', coins: 100, category: 'Gave' }] });
+    if (pathname.endsWith('/all'))
+      return route.fulfill({
+        json: [{ _id: 1, title: 'Gavekort', description: 'x', coins: 100, category: 'Gave' }],
+      });
     buys += 1;
     await new Promise((r) => setTimeout(r, 1000));
     return route.fulfill({ json: { ok: true } });
@@ -125,12 +153,15 @@ test('coins: redeeming is one request, disabled while pending, with a success to
   expect(buys).toBe(1);
 });
 
-test('subscription success waits for the session: signed out goes to /login, no API call first', async ({ page }) => {
+test('subscription success waits for the session: signed out goes to /login, no API call first', async ({
+  page,
+}) => {
   const calls = [];
   await page.route(`${API}/api/**`, (route) => {
     const { pathname } = new URL(route.request().url());
     calls.push(pathname);
-    if (pathname === '/api/auth/refresh-token') return route.fulfill({ status: 401, json: { message: 'no session' } });
+    if (pathname === '/api/auth/refresh-token')
+      return route.fulfill({ status: 401, json: { message: 'no session' } });
     return route.fulfill({ json: { success: true, data: {} } });
   });
   await page.goto('/subscription/success?session_id=cs_test_1');
@@ -144,10 +175,13 @@ const idb = (page, op, record) =>
     ([op, record]) =>
       new Promise((resolve, reject) => {
         const open = indexedDB.open('jobblo-form-db', 1);
-        open.onupgradeneeded = () => open.result.createObjectStore('job-form-data', { keyPath: 'id' });
+        open.onupgradeneeded = () =>
+          open.result.createObjectStore('job-form-data', { keyPath: 'id' });
         open.onerror = () => reject(open.error);
         open.onsuccess = () => {
-          const store = open.result.transaction(['job-form-data'], 'readwrite').objectStore('job-form-data');
+          const store = open.result
+            .transaction(['job-form-data'], 'readwrite')
+            .objectStore('job-form-data');
           const req = op === 'put' ? store.put(record) : store.count();
           req.onsuccess = () => resolve(req.result);
           req.onerror = () => reject(req.error);
@@ -155,7 +189,13 @@ const idb = (page, op, record) =>
       }),
     [op, record]
   );
-const draft = (ownerId) => ({ id: 'current-form', ownerId, data: { title: 'Forrige brukers jobb' }, images: [], createdAt: Date.now() });
+const draft = (ownerId) => ({
+  id: 'current-form',
+  ownerId,
+  data: { title: 'Forrige brukers jobb' },
+  images: [],
+  createdAt: Date.now(),
+});
 
 test('another user’s create-job draft is not shown', async ({ page }) => {
   await mockApi(page, USER);

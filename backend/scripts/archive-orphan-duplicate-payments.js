@@ -29,23 +29,45 @@ const arg = (name) => {
   const next = process.argv[process.argv.indexOf(hit) + 1];
   return next && !next.startsWith('--') ? next : true;
 };
-const STRIPE_FIELDS = ['stripePaymentIntentId', 'stripeSessionId', 'stripeEventId', 'stripeRefundId', 'paymentProviderId', 'transactionId', 'capturedAmountMinor'];
+const STRIPE_FIELDS = [
+  'stripePaymentIntentId',
+  'stripeSessionId',
+  'stripeEventId',
+  'stripeRefundId',
+  'paymentProviderId',
+  'transactionId',
+  'capturedAmountMinor',
+];
 
 async function scan(db) {
   const payments = db.collection('payments');
-  const groups = await payments.aggregate([{ $group: { _id: '$orderId', ids: { $push: '$_id' }, n: { $sum: 1 } } }, { $match: { n: { $gt: 1 } } }]).toArray();
+  const groups = await payments
+    .aggregate([
+      { $group: { _id: '$orderId', ids: { $push: '$_id' }, n: { $sum: 1 } } },
+      { $match: { n: { $gt: 1 } } },
+    ])
+    .toArray();
   const archivable = [];
   const needsReview = [];
   for (const g of groups) {
-    const docs = await payments.find({ _id: { $in: g.ids } }).sort({ createdAt: 1 }).toArray();
-    const orderExists = Boolean(await db.collection('orders').findOne({ _id: g._id }, { projection: { _id: 1 } }));
+    const docs = await payments
+      .find({ _id: { $in: g.ids } })
+      .sort({ createdAt: 1 })
+      .toArray();
+    const orderExists = Boolean(
+      await db.collection('orders').findOne({ _id: g._id }, { projection: { _id: 1 } })
+    );
     const related = {
       safePayHistory: await db.collection('safepayhistories').countDocuments({ orderId: g._id }),
       payouts: await db.collection('payouts').countDocuments({ orderId: g._id }),
-      financialOps: await db.collection('stripefinancialoperations').countDocuments({ orderId: g._id }),
+      financialOps: await db
+        .collection('stripefinancialoperations')
+        .countDocuments({ orderId: g._id }),
       incidents: await db.collection('stripepaymentincidents').countDocuments({ orderId: g._id }),
     };
-    const hasStripe = docs.some((d) => STRIPE_FIELDS.some((f) => d[f] !== undefined && d[f] !== null));
+    const hasStripe = docs.some((d) =>
+      STRIPE_FIELDS.some((f) => d[f] !== undefined && d[f] !== null)
+    );
     const hasRelated = Object.values(related).some(Boolean);
     const row = { orderId: String(g._id), count: g.n, orderExists, hasStripe, related, docs };
     if (!orderExists && !hasStripe && !hasRelated) archivable.push(row);
@@ -64,14 +86,24 @@ async function verifyStripe(rows) {
       console.log(`  ${testMode ? 'TEST' : 'LIVE'}: not checked (${err.message})`);
       continue;
     }
-    const account = await stripe.accounts.retrieve().then((a) => a.id).catch(() => 'unknown');
+    const account = await stripe.accounts
+      .retrieve()
+      .then((a) => a.id)
+      .catch(() => 'unknown');
     for (const r of rows) {
       const q = `metadata['orderId']:'${r.orderId}'`;
-      const pis = await stripe.paymentIntents.search({ query: q }).then((x) => x.data.map((p) => `${p.id}/${p.status}`)).catch((e) => [`search failed: ${e.code || e.message}`]);
-      console.log(`  ${testMode ? 'TEST' : 'LIVE'} ${account} order ${r.orderId}: ${pis.length ? pis.join(', ') : 'no PaymentIntent with this orderId'}`);
+      const pis = await stripe.paymentIntents
+        .search({ query: q })
+        .then((x) => x.data.map((p) => `${p.id}/${p.status}`))
+        .catch((e) => [`search failed: ${e.code || e.message}`]);
+      console.log(
+        `  ${testMode ? 'TEST' : 'LIVE'} ${account} order ${r.orderId}: ${pis.length ? pis.join(', ') : 'no PaymentIntent with this orderId'}`
+      );
     }
   }
-  console.log('  NOTE: only the CURRENT Stripe accounts were searched. Old/rotated accounts must be checked in their dashboards (see runbook).');
+  console.log(
+    '  NOTE: only the CURRENT Stripe accounts were searched. Old/rotated accounts must be checked in their dashboards (see runbook).'
+  );
 }
 
 (async () => {
@@ -81,22 +113,35 @@ async function verifyStripe(rows) {
 
   const restoreBatch = arg('restore');
   if (restoreBatch) {
-    const archived = await db.collection('payments_archive').find({ archiveBatch: restoreBatch }).toArray();
+    const archived = await db
+      .collection('payments_archive')
+      .find({ archiveBatch: restoreBatch })
+      .toArray();
     if (!archived.length) throw new Error(`No archived rows for batch ${restoreBatch}.`);
     // Pre-flight BEFORE any write: restoring duplicates is impossible while the unique
     // index exists, and a half-done restore must never happen.
     const indexes = await db.collection('payments').indexes();
     const unique = indexes.find((i) => i.unique && i.key && i.key.orderId === 1);
     if (unique) {
-      if (!arg('drop-unique-index')) throw new Error(`payments has a unique orderId index (${unique.name}); restoring duplicates needs --drop-unique-index. Nothing was changed.`);
+      if (!arg('drop-unique-index'))
+        throw new Error(
+          `payments has a unique orderId index (${unique.name}); restoring duplicates needs --drop-unique-index. Nothing was changed.`
+        );
       await db.collection('payments').dropIndex(unique.name);
       console.log(`Dropped ${unique.name} so the duplicates can be restored.`);
     }
-    const docs = archived.map(({ archivedAt, archiveReason, archiveBatch, archiveBackupRef, archiveDb, ...d }) => d);
+    const docs = archived.map(
+      ({ archivedAt, archiveReason, archiveBatch, archiveBackupRef, archiveDb, ...d }) => d
+    );
     // Idempotent: upsert by _id, so re-running after any interruption converges.
-    await db.collection('payments').bulkWrite(docs.map((d) => ({ replaceOne: { filter: { _id: d._id }, replacement: d, upsert: true } })), { ordered: true });
+    await db.collection('payments').bulkWrite(
+      docs.map((d) => ({ replaceOne: { filter: { _id: d._id }, replacement: d, upsert: true } })),
+      { ordered: true }
+    );
     await db.collection('payments_archive').deleteMany({ archiveBatch: restoreBatch });
-    console.log(`Restored ${docs.length} row(s) from batch ${restoreBatch} into payments (${dbName}).`);
+    console.log(
+      `Restored ${docs.length} row(s) from batch ${restoreBatch} into payments (${dbName}).`
+    );
     return mongoose.disconnect();
   }
 
@@ -104,14 +149,33 @@ async function verifyStripe(rows) {
   const rows = archivable.reduce((a, r) => a + r.count, 0);
   console.log(`Database: ${dbName}`);
   console.log(`Duplicate groups: ${groups.length}`);
-  console.log(`\nCandidates (order gone, no Stripe reference, no related money records): ${archivable.length} group(s), ${rows} row(s)`);
-  archivable.forEach((r) => console.log(`  order ${r.orderId}: ${r.count} rows, status ${[...new Set(r.docs.map((d) => d.status))].join('/')}, amount ${[...new Set(r.docs.map((d) => d.amount))].join('/')}, created ${r.docs[0].createdAt?.toISOString()} … ${r.docs[r.docs.length - 1].createdAt?.toISOString()}`));
-  console.log(`\nNeeds human review (order exists, Stripe-linked, or related money records): ${needsReview.length}`);
-  needsReview.forEach((r) => console.log(`  order ${r.orderId}: ${r.count} rows, orderExists=${r.orderExists}, stripe=${r.hasStripe}, related=${JSON.stringify(r.related)}`));
+  console.log(
+    `\nCandidates (order gone, no Stripe reference, no related money records): ${archivable.length} group(s), ${rows} row(s)`
+  );
+  archivable.forEach((r) =>
+    console.log(
+      `  order ${r.orderId}: ${r.count} rows, status ${[...new Set(r.docs.map((d) => d.status))].join('/')}, amount ${[...new Set(r.docs.map((d) => d.amount))].join('/')}, created ${r.docs[0].createdAt?.toISOString()} … ${r.docs[r.docs.length - 1].createdAt?.toISOString()}`
+    )
+  );
+  console.log(
+    `\nNeeds human review (order exists, Stripe-linked, or related money records): ${needsReview.length}`
+  );
+  needsReview.forEach((r) =>
+    console.log(
+      `  order ${r.orderId}: ${r.count} rows, orderExists=${r.orderExists}, stripe=${r.hasStripe}, related=${JSON.stringify(r.related)}`
+    )
+  );
 
   const exportPath = arg('export');
   if (exportPath && exportPath !== true) {
-    fs.writeFileSync(exportPath, JSON.stringify({ database: dbName, generatedAt: new Date(), archivable, needsReview }, null, 2));
+    fs.writeFileSync(
+      exportPath,
+      JSON.stringify(
+        { database: dbName, generatedAt: new Date(), archivable, needsReview },
+        null,
+        2
+      )
+    );
     console.log(`\nWrote full records for manual review to ${exportPath}`);
   }
   if (arg('verify-stripe')) {
@@ -126,17 +190,32 @@ async function verifyStripe(rows) {
 
   const backupRef = arg('backup-ref');
   const reviewed = Number(arg('reviewed'));
-  if (!backupRef || backupRef === true) throw new Error('--apply needs --backup-ref=<id of a backup you have test-restored>.');
-  if (reviewed !== rows) throw new Error(`--reviewed=${arg('reviewed')} does not match the ${rows} candidate row(s) — re-run the review.`);
+  if (!backupRef || backupRef === true)
+    throw new Error('--apply needs --backup-ref=<id of a backup you have test-restored>.');
+  if (reviewed !== rows)
+    throw new Error(
+      `--reviewed=${arg('reviewed')} does not match the ${rows} candidate row(s) — re-run the review.`
+    );
   if (!archivable.length) {
     console.log('Nothing to archive.');
     return mongoose.disconnect();
   }
   const batch = `dup-${new Date().toISOString().slice(0, 10)}-${crypto.randomBytes(3).toString('hex')}`;
-  const docs = archivable.flatMap((r) => r.docs.map((d) => ({ ...d, archivedAt: new Date(), archiveReason: 'orphan-duplicate-no-stripe-ref', archiveBatch: batch, archiveBackupRef: backupRef, archiveDb: dbName })));
+  const docs = archivable.flatMap((r) =>
+    r.docs.map((d) => ({
+      ...d,
+      archivedAt: new Date(),
+      archiveReason: 'orphan-duplicate-no-stripe-ref',
+      archiveBatch: batch,
+      archiveBackupRef: backupRef,
+      archiveDb: dbName,
+    }))
+  );
   await db.collection('payments_archive').insertMany(docs, { ordered: true });
   const res = await db.collection('payments').deleteMany({ _id: { $in: docs.map((d) => d._id) } });
-  console.log(`\nArchived ${docs.length} row(s) to payments_archive as batch ${batch}; removed ${res.deletedCount}.`);
+  console.log(
+    `\nArchived ${docs.length} row(s) to payments_archive as batch ${batch}; removed ${res.deletedCount}.`
+  );
   console.log(`Undo with: node scripts/archive-orphan-duplicate-payments.js --restore=${batch}`);
   if (needsReview.length) {
     console.log('Unique index NOT built: some groups still need review.');

@@ -10,7 +10,12 @@
 jest.mock('../models/ChatMessage', () => ({ findById: jest.fn() }));
 jest.mock('../models/Order', () => ({ findOne: jest.fn(), findById: jest.fn() }));
 jest.mock('../models/User', () => ({ findById: jest.fn(), exists: jest.fn(async () => null) }));
-jest.mock('../models/Service', () => ({ findById: jest.fn(), findByIdAndUpdate: jest.fn(), findOneAndUpdate: jest.fn(async () => ({})), updateOne: jest.fn(async () => ({})) }));
+jest.mock('../models/Service', () => ({
+  findById: jest.fn(),
+  findByIdAndUpdate: jest.fn(),
+  findOneAndUpdate: jest.fn(async () => ({})),
+  updateOne: jest.fn(async () => ({})),
+}));
 jest.mock('../config/stripe', () => ({ getStripe: jest.fn() }));
 jest.mock('../services/stripe/customers', () => ({ resolveStripeCustomer: jest.fn() }));
 
@@ -89,9 +94,7 @@ describe('createContract authorization', () => {
   it('refuses a chat participant who owns neither side of the listing', async () => {
     const stranger = new mongoose.Types.ObjectId();
     Chat.findById.mockReturnValue({
-      populate: jest
-        .fn()
-        .mockResolvedValue(ownerInitiatedChat({ providerId: { _id: stranger } })),
+      populate: jest.fn().mockResolvedValue(ownerInitiatedChat({ providerId: { _id: stranger } })),
     });
 
     const req = {
@@ -127,7 +130,14 @@ describe('createContract authorization', () => {
     expect(Order.findOne).toHaveBeenCalledWith(
       expect.objectContaining({
         status: {
-          $in: ['awaiting_payment', 'paid', 'in_progress', 'ready_for_review', 'disputed', 'completed'],
+          $in: [
+            'awaiting_payment',
+            'paid',
+            'in_progress',
+            'ready_for_review',
+            'disputed',
+            'completed',
+          ],
         },
       })
     );
@@ -141,23 +151,45 @@ describe('deleteChat only hides the conversation for the caller', () => {
     ['no order', null],
     ['a completed order', 'order_1'],
   ])('keeps a chat with %s and hides it for the caller', async (_label, orderId) => {
-    Chat.findById.mockReturnValue({ select: jest.fn().mockResolvedValue({ _id: CHAT_ID, clientId: OWNER_ID, providerId: APPLICANT_ID, orderId }) });
+    Chat.findById.mockReturnValue({
+      select: jest
+        .fn()
+        .mockResolvedValue({ _id: CHAT_ID, clientId: OWNER_ID, providerId: APPLICANT_ID, orderId }),
+    });
     Chat.findByIdAndDelete = jest.fn().mockResolvedValue({});
     Chat.updateOne = jest.fn().mockResolvedValue({ modifiedCount: 1 });
 
-    const res = { ...makeRes(), end() { return this; } };
-    await chatController.deleteChat({ user: { id: String(APPLICANT_ID) }, params: { chatId: String(CHAT_ID) } }, res);
+    const res = {
+      ...makeRes(),
+      end() {
+        return this;
+      },
+    };
+    await chatController.deleteChat(
+      { user: { id: String(APPLICANT_ID) }, params: { chatId: String(CHAT_ID) } },
+      res
+    );
 
     expect(res.statusCode).toBe(204);
     expect(Chat.findByIdAndDelete).not.toHaveBeenCalled();
-    expect(Chat.updateOne).toHaveBeenCalledWith({ _id: String(CHAT_ID) }, { $addToSet: { deletedFor: String(APPLICANT_ID) } });
+    expect(Chat.updateOne).toHaveBeenCalledWith(
+      { _id: String(CHAT_ID) },
+      { $addToSet: { deletedFor: String(APPLICANT_ID) } }
+    );
   });
 
   it('still refuses an outsider', async () => {
-    Chat.findById.mockReturnValue({ select: jest.fn().mockResolvedValue({ _id: CHAT_ID, clientId: OWNER_ID, providerId: APPLICANT_ID }) });
+    Chat.findById.mockReturnValue({
+      select: jest
+        .fn()
+        .mockResolvedValue({ _id: CHAT_ID, clientId: OWNER_ID, providerId: APPLICANT_ID }),
+    });
     Chat.updateOne = jest.fn();
     const res = makeRes();
-    await chatController.deleteChat({ user: { id: String(new mongoose.Types.ObjectId()) }, params: { chatId: String(CHAT_ID) } }, res);
+    await chatController.deleteChat(
+      { user: { id: String(new mongoose.Types.ObjectId()) }, params: { chatId: String(CHAT_ID) } },
+      res
+    );
     expect(res.statusCode).toBe(403);
     expect(Chat.updateOne).not.toHaveBeenCalled();
   });

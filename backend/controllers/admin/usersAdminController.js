@@ -153,7 +153,11 @@ const changeUserRole = asyncHandler(async (req, res) => {
 
   const { role } = req.body;
   if (!role || !ASSIGNABLE_ROLES.includes(role)) {
-    return sendError(res, `Ugyldig rolle. Tilgjengelige roller: ${ASSIGNABLE_ROLES.join(', ')}.`, 400);
+    return sendError(
+      res,
+      `Ugyldig rolle. Tilgjengelige roller: ${ASSIGNABLE_ROLES.join(', ')}.`,
+      400
+    );
   }
 
   // Prevent demoting self

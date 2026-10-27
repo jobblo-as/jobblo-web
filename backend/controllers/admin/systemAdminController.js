@@ -131,7 +131,11 @@ const getSystemErrors = asyncHandler(async (req, res) => {
     const query = {};
     if (queryString(req.query.severity)) query.severity = queryString(req.query.severity);
     if (queryString(req.query.code)) query.errorCode = queryString(req.query.code);
-    if (req.query.route) query.route = { $regex: escapeRegex(queryString(req.query.route).slice(0, 100)), $options: 'i' };
+    if (req.query.route)
+      query.route = {
+        $regex: escapeRegex(queryString(req.query.route).slice(0, 100)),
+        $options: 'i',
+      };
 
     if (req.query.dateFrom || req.query.dateTo) {
       query.createdAt = {};

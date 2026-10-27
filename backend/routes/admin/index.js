@@ -32,9 +32,18 @@ router.use(authenticate, requireAdmin, adminLimiter);
 
 router.get('/stripe/webhook-readiness', stripeWebhookHealthController.getWebhookReadiness);
 router.get('/stripe/payment-incidents', stripePaymentIncidentController.list);
-router.post('/stripe/payment-incidents/:id/refund-duplicate', stripePaymentIncidentController.refundDuplicatePayment);
-router.post('/stripe/payment-incidents/:id/reverse-chargeback-transfer', stripePaymentIncidentController.reverseChargebackTransfer);
-router.post('/stripe/payment-incidents/:id/close-lost-chargeback', stripePaymentIncidentController.closeLostChargebackWithoutTransfer);
+router.post(
+  '/stripe/payment-incidents/:id/refund-duplicate',
+  stripePaymentIncidentController.refundDuplicatePayment
+);
+router.post(
+  '/stripe/payment-incidents/:id/reverse-chargeback-transfer',
+  stripePaymentIncidentController.reverseChargebackTransfer
+);
+router.post(
+  '/stripe/payment-incidents/:id/close-lost-chargeback',
+  stripePaymentIncidentController.closeLostChargebackWithoutTransfer
+);
 router.get('/billing/subscriptions/summary', subscriptionRebuildInProgress);
 router.post('/billing/subscriptions/reconcile', financeSyncLimiter, subscriptionRebuildInProgress);
 
@@ -58,7 +67,10 @@ router.get('/overview', dashboardController.getOverview);
 router.get('/users', usersAdminController.getUsers);
 router.post('/users', usersAdminController.createUser);
 router.get('/users/:id', usersAdminController.getUserById);
-router.get('/users/:id/overview', require('../../controllers/admin/userOverviewController').getUserOverview);
+router.get(
+  '/users/:id/overview',
+  require('../../controllers/admin/userOverviewController').getUserOverview
+);
 router.put('/users/:id/role', usersAdminController.changeUserRole);
 router.post('/users/:id/mfa/reset', require('../../controllers/mfaController').resetForUser);
 router.put('/users/:id/status', usersAdminController.updateUserStatus);
@@ -72,7 +84,10 @@ router.delete('/users/:id/sessions', usersAdminController.revokeUserSessions);
 router.get('/orders', ordersAdminController.getOrders);
 router.get('/orders/:id', ordersAdminController.getOrderById);
 // Full lifecycle (payment, SafePay, payout, disputes, timeline, health) — same view as Job Diagnostics.
-router.get('/orders/:id/details', require('../../controllers/developer/diagnosticsController').getJob);
+router.get(
+  '/orders/:id/details',
+  require('../../controllers/developer/diagnosticsController').getJob
+);
 router.put('/orders/:id/status', ordersAdminController.updateOrderStatus);
 
 // ── Services ───────────────────────────────────────────────────────────────
@@ -106,7 +121,10 @@ router.get('/safepay/finance/bank-payouts', safePayFinanceController.getAdminBan
 router.get('/safepay/finance/bank-payouts/:id', safePayFinanceController.getAdminBankPayout);
 router.get('/safepay/finance/summary', safePayFinanceController.getAdminSummary);
 router.post('/safepay/finance/reconcile', financeSyncLimiter, safePayFinanceController.reconcile);
-router.get('/safepay/finance/reconciliation-issues', safePayFinanceController.getReconciliationIssues);
+router.get(
+  '/safepay/finance/reconciliation-issues',
+  safePayFinanceController.getReconciliationIssues
+);
 router.get('/safepay/:orderId', safePayAdminController.getSafePayDetail);
 router.get('/safepay/:orderId/timeline', safePayAdminController.getSafePayTimeline);
 router.get('/safepay/:orderId/chat', safePayAdminController.getSafePayChat);
@@ -198,7 +216,10 @@ router.put('/maintenance', contentAdminController.toggleMaintenanceMode);
 const multer = require('multer');
 router.post(
   '/chat-reports/:reportId/evidence',
-  multer({ storage: multer.memoryStorage(), limits: { ...upload.MULTIPART_LIMITS, fileSize: 5 * 1024 * 1024, files: 5 } }).array('files', 5),
+  multer({
+    storage: multer.memoryStorage(),
+    limits: { ...upload.MULTIPART_LIMITS, fileSize: 5 * 1024 * 1024, files: 5 },
+  }).array('files', 5),
   upload.checkFileTypes(upload.DOCUMENT_TYPES),
   evidenceUploadController.uploadEvidence
 );

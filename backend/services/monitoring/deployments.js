@@ -16,7 +16,15 @@ const HOUR = 60 * 60 * 1000;
 
 function gitHead() {
   try {
-    return execFileSync('git', ['rev-parse', '--short=12', 'HEAD'], { cwd: __dirname, stdio: ['ignore', 'pipe', 'ignore'], timeout: 2000 }).toString().trim() || null;
+    return (
+      execFileSync('git', ['rev-parse', '--short=12', 'HEAD'], {
+        cwd: __dirname,
+        stdio: ['ignore', 'pipe', 'ignore'],
+        timeout: 2000,
+      })
+        .toString()
+        .trim() || null
+    );
   } catch {
     return null;
   }
@@ -62,7 +70,12 @@ function judge(before, after, { newErrors = 0 } = {}) {
   const reasons = [];
   const MIN = 50;
   if (before.requests < MIN || after.requests < MIN) {
-    return { verdict: 'insufficient', reasons: [`Needs ≥ ${MIN} requests on each side (before ${before.requests}, after ${after.requests}).`] };
+    return {
+      verdict: 'insufficient',
+      reasons: [
+        `Needs ≥ ${MIN} requests on each side (before ${before.requests}, after ${after.requests}).`,
+      ],
+    };
   }
   let regression = false;
   let warning = false;
@@ -84,12 +97,21 @@ function judge(before, after, { newErrors = 0 } = {}) {
   }
   if (newErrors > 0) {
     warning = true;
-    reasons.push(`${newErrors} new error type${newErrors === 1 ? '' : 's'} first seen after the release`);
+    reasons.push(
+      `${newErrors} new error type${newErrors === 1 ? '' : 's'} first seen after the release`
+    );
   }
   if (regression) return { verdict: 'regression', reasons };
   if (warning) return { verdict: 'warning', reasons };
-  const improved = (errA < errB * 0.5 && before.c5xx >= 5) || (before.p95 && after.p95 && after.p95 < before.p95 * 0.7);
-  return { verdict: improved ? 'improved' : 'healthy', reasons: improved ? ['Errors or latency went down after the release.'] : ['No meaningful change in errors or latency.'] };
+  const improved =
+    (errA < errB * 0.5 && before.c5xx >= 5) ||
+    (before.p95 && after.p95 && after.p95 < before.p95 * 0.7);
+  return {
+    verdict: improved ? 'improved' : 'healthy',
+    reasons: improved
+      ? ['Errors or latency went down after the release.']
+      : ['No meaningful change in errors or latency.'],
+  };
 }
 
 const USER_ROUTES = { route: { $not: /^\/api\/(developer|mobile\/telemetry)/ } };
@@ -110,18 +132,40 @@ async function apiWindow(from, to) {
     },
   ]);
   if (!r) return { requests: 0, c5xx: 0, p95: null, slowShare: null };
-  return { requests: r.requests, c5xx: r.c5xx, p95: r.requests ? Math.round(r.p95w / r.requests) : null, slowShare: r.slowCounted ? r.slow / r.slowCounted : null };
+  return {
+    requests: r.requests,
+    c5xx: r.c5xx,
+    p95: r.requests ? Math.round(r.p95w / r.requests) : null,
+    slowShare: r.slowCounted ? r.slow / r.slowCounted : null,
+  };
 }
 
 /** Error groups (code + route + message) whose first occurrence is inside [from, to). */
 async function newErrorGroups(from, to) {
   return require('../../models/ErrorLog').aggregate([
     { $match: { createdAt: { $lt: to } } },
-    { $group: { _id: { code: '$errorCode', route: '$route', message: '$message' }, first: { $min: '$createdAt' }, n: { $sum: { $cond: [{ $gte: ['$createdAt', from] }, 1, 0] } }, id: { $last: '$_id' } } },
+    {
+      $group: {
+        _id: { code: '$errorCode', route: '$route', message: '$message' },
+        first: { $min: '$createdAt' },
+        n: { $sum: { $cond: [{ $gte: ['$createdAt', from] }, 1, 0] } },
+        id: { $last: '$_id' },
+      },
+    },
     { $match: { first: { $gte: from } } },
     { $sort: { n: -1 } },
     { $limit: 20 },
-    { $project: { _id: 0, errorCode: '$_id.code', route: '$_id.route', message: '$_id.message', firstSeen: '$first', count: '$n', id: 1 } },
+    {
+      $project: {
+        _id: 0,
+        errorCode: '$_id.code',
+        route: '$_id.route',
+        message: '$_id.message',
+        firstSeen: '$first',
+        count: '$n',
+        id: 1,
+      },
+    },
   ]);
 }
 
@@ -129,8 +173,23 @@ async function newErrorGroups(from, to) {
 async function routeDiffs(beforeFrom, at, afterTo) {
   const rows = await require('../../models/ApiMetricMinute').aggregate([
     { $match: { minute: { $gte: beforeFrom, $lt: afterTo }, ...USER_ROUTES } },
-    { $project: { key: { $concat: ['$method', ' ', '$route'] }, side: { $cond: [{ $lt: ['$minute', at] }, 'before', 'after'] }, count: 1, c5xx: 1, p95w: { $multiply: ['$p95', '$count'] } } },
-    { $group: { _id: { key: '$key', side: '$side' }, n: { $sum: '$count' }, c5xx: { $sum: '$c5xx' }, p95w: { $sum: '$p95w' } } },
+    {
+      $project: {
+        key: { $concat: ['$method', ' ', '$route'] },
+        side: { $cond: [{ $lt: ['$minute', at] }, 'before', 'after'] },
+        count: 1,
+        c5xx: 1,
+        p95w: { $multiply: ['$p95', '$count'] },
+      },
+    },
+    {
+      $group: {
+        _id: { key: '$key', side: '$side' },
+        n: { $sum: '$count' },
+        c5xx: { $sum: '$c5xx' },
+        p95w: { $sum: '$p95w' },
+      },
+    },
   ]);
   const by = {};
   for (const r of rows) {
@@ -153,7 +212,11 @@ async function routeDiffs(beforeFrom, at, afterTo) {
 /** Window either side of `at`: the requested hours, cut short by the next release or now. */
 function windows(at, nextAt, hours) {
   const span = Math.min(hours * HOUR, (nextAt ? nextAt.getTime() : Date.now()) - at.getTime());
-  return { span: Math.max(span, 0), before: [new Date(at.getTime() - span), at], after: [at, new Date(at.getTime() + span)] };
+  return {
+    span: Math.max(span, 0),
+    before: [new Date(at.getTime() - span), at],
+    after: [at, new Date(at.getTime() + span)],
+  };
 }
 
 module.exports = { identity, recordBoot, judge, apiWindow, newErrorGroups, routeDiffs, windows };

@@ -23,10 +23,18 @@ const { getOverview } = require('../controllers/admin/dashboardController');
 
 function emptyQuery() {
   return {
-    sort() { return this; },
-    limit() { return this; },
-    populate() { return this; },
-    select() { return this; },
+    sort() {
+      return this;
+    },
+    limit() {
+      return this;
+    },
+    populate() {
+      return this;
+    },
+    select() {
+      return this;
+    },
     lean: async () => [],
   };
 }
@@ -37,7 +45,9 @@ test('admin overview reports active subscriptions from V2 records only', async (
   require('../models/Order').find.mockReturnValue(emptyQuery());
   require('../models/AdminActivity').find.mockReturnValue(emptyQuery());
   const res = {
-    status: jest.fn(function status() { return this; }),
+    status: jest.fn(function status() {
+      return this;
+    }),
     json: jest.fn(),
   };
 

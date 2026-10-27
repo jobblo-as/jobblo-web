@@ -11,7 +11,9 @@ require('./env');
 
 const PREFIX = process.env.REDIS_PREFIX || 'jobblo';
 // Off under jest unless a test opts in (REDIS_IN_TESTS=true): unit tests never need a Redis server.
-const enabled = () => Boolean(process.env.REDIS_URL) && (process.env.NODE_ENV !== 'test' || process.env.REDIS_IN_TESTS === 'true');
+const enabled = () =>
+  Boolean(process.env.REDIS_URL) &&
+  (process.env.NODE_ENV !== 'test' || process.env.REDIS_IN_TESTS === 'true');
 
 let shared = null;
 const connections = new Set();
@@ -41,7 +43,14 @@ function track(client, label) {
 
 function newClient(label, options = {}) {
   const IORedis = require('ioredis');
-  return track(new IORedis(process.env.REDIS_URL, { connectionName: `jobblo:${label}`, enableOfflineQueue: true, ...options }), label);
+  return track(
+    new IORedis(process.env.REDIS_URL, {
+      connectionName: `jobblo:${label}`,
+      enableOfflineQueue: true,
+      ...options,
+    }),
+    label
+  );
 }
 
 /** The shared command client (cache, rate limits, health). null when Redis is off. */
@@ -50,7 +59,12 @@ function getRedis() {
   // Auto-pipelining: commands issued in the same tick (one rate-limit EVALSHA + one cache GET per
   // request, hundreds of requests at once) go out in one write instead of one syscall each.
   // Safe here: the shared client never runs blocking or subscribe commands.
-  if (!shared) shared = newClient('shared', { maxRetriesPerRequest: 1, connectTimeout: 5000, enableAutoPipelining: true });
+  if (!shared)
+    shared = newClient('shared', {
+      maxRetriesPerRequest: 1,
+      connectTimeout: 5000,
+      enableAutoPipelining: true,
+    });
   return shared;
 }
 
@@ -75,7 +89,8 @@ async function pingRedis() {
 }
 
 /** This instance's own Redis connections and their state (Redis Overview page). */
-const connectionStates = () => [...connections].map((c) => ({ label: c.jobbloLabel, status: c.status }));
+const connectionStates = () =>
+  [...connections].map((c) => ({ label: c.jobbloLabel, status: c.status }));
 
 async function closeRedis() {
   await Promise.allSettled([...connections].map((c) => c.quit().catch(() => c.disconnect())));
@@ -83,4 +98,15 @@ async function closeRedis() {
   shared = null;
 }
 
-module.exports = { PREFIX, enabled, getRedis, newClient, bullConnection, isReady, pingRedis, closeRedis, connectionStates, state };
+module.exports = {
+  PREFIX,
+  enabled,
+  getRedis,
+  newClient,
+  bullConnection,
+  isReady,
+  pingRedis,
+  closeRedis,
+  connectionStates,
+  state,
+};

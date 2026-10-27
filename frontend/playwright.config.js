@@ -23,7 +23,8 @@ export default defineConfig({
     {
       // e2e/vite.e2e.config.mjs = the app's vite.config.ts with its own dep cache, so this
       // server does not re-optimise over the 5173 dev server and hang lazy routes.
-      command: 'npx vite --config e2e/vite.e2e.config.mjs --host 127.0.0.1 --port 5176 --strictPort',
+      command:
+        'npx vite --config e2e/vite.e2e.config.mjs --host 127.0.0.1 --port 5176 --strictPort',
       url: 'http://127.0.0.1:5176',
       timeout: 60_000,
       reuseExistingServer: false,
@@ -37,7 +38,8 @@ export default defineConfig({
       // Same app with a build-time flag on (e2e/apple-signin.spec.js): VITE_* is baked in at
       // startup, so "enabled" needs its own server. It shares 5176's dep cache: VITE_* values
       // are not part of the optimiser hash, so neither server re-optimises over the other.
-      command: 'npx vite --config e2e/vite.e2e.config.mjs --host 127.0.0.1 --port 5177 --strictPort',
+      command:
+        'npx vite --config e2e/vite.e2e.config.mjs --host 127.0.0.1 --port 5177 --strictPort',
       url: 'http://127.0.0.1:5177',
       timeout: 60_000,
       reuseExistingServer: false,

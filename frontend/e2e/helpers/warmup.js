@@ -10,7 +10,9 @@ export default async function warmup(config) {
   const browser = await chromium.launch();
   try {
     const page = await browser.newPage();
-    await page.route('http://127.0.0.1:5017/**', (route) => route.fulfill({ status: 401, json: {} }));
+    await page.route('http://127.0.0.1:5017/**', (route) =>
+      route.fulfill({ status: 401, json: {} })
+    );
     await page.goto(`${baseURL}/login`, { timeout: 300_000 });
     await page.getByPlaceholder('deg@eksempel.no').waitFor({ timeout: 300_000 });
   } finally {

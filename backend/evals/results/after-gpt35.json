@@ -44,11 +44,7 @@
         "title": "Maling av to soverom — kun vegger",
         "description": "Jeg trenger hjelp til å male to soverom. Det er kun veggene som skal males, tak og lister er ikke inkludert. Jeg har allerede kjøpt malingen, så det er selve jobben jeg trenger hjelp til.",
         "category": "Maling",
-        "skills": [
-          "maler",
-          "maling av vegger",
-          "nøyaktig arbeid"
-        ],
+        "skills": ["maler", "maling av vegger", "nøyaktig arbeid"],
         "openQuestions": [
           "Hvor store er rommene?",
           "Må det sparkles eller forbehandles først?",
@@ -157,11 +153,7 @@
         "title": "Flyttevask av 3-roms leilighet i Bergen",
         "description": "Jeg trenger hjelp til å utføre flyttevask av en 3-roms leilighet i Bergen. Oppgaven inkluderer rengjøring av ovn og vinduer. Arbeidet må være ferdigstilt før overtakelse.",
         "category": "Rengjøring",
-        "skills": [
-          "flyttevask",
-          "ovnrengjøring",
-          "vindusvask"
-        ],
+        "skills": ["flyttevask", "ovnrengjøring", "vindusvask"],
         "openQuestions": [
           "Hvor stort er arealet som skal rengjøres?",
           "Er det spesielle ønsker eller krav til rengjøringen?",
@@ -274,11 +266,7 @@
         "title": "Flyttehjelp — bæring fra 2. etasje til varebil",
         "description": "Jeg trenger hjelp til å bære en sofa, dobbeltseng og cirka 10 flyttesker fra 2. etasje ned til en varebil. Bygget har ingen heis, så det vil kreve bæring i trappene. Jeg trenger noen som kan hjelpe meg med denne oppgaven.",
         "category": "Flytting",
-        "skills": [
-          "Bæring",
-          "Flytting",
-          "Fysisk styrke"
-        ],
+        "skills": ["Bæring", "Flytting", "Fysisk styrke"],
         "openQuestions": [
           "Hvor stor er avstanden fra inngangen til varebilen?",
           "Er det behov for spesielle løfte- eller bærehjelpemidler?",
@@ -387,10 +375,7 @@
         "title": "Montering av IKEA PAX garderobe — 2 skap",
         "description": "Jeg trenger hjelp til å montere to IKEA PAX garderobeskap. Jeg har verktøy som kan lånes. Detaljer som omfang og tidspunkt for jobben må avklares.",
         "category": "Småjobber",
-        "skills": [
-          "Møbelmontering",
-          "Verktøykunnskap"
-        ],
+        "skills": ["Møbelmontering", "Verktøykunnskap"],
         "openQuestions": [
           "Hvor store er skapene?",
           "Er det behov for montering av tilleggsutstyr?",
@@ -498,10 +483,7 @@
         "title": "Plenklipping og hekktrimming på 300 kvm tomt",
         "description": "Jeg trenger hjelp til å klippe plenen og trimme hekken på en ca 300 kvm stor tomt. Hekken går rundt hele eiendommen. Detaljer som omfang, utstyr og tidspunkt for arbeidet må avklares.",
         "category": "Hagearbeid",
-        "skills": [
-          "Plenklipping",
-          "Hekktrimming"
-        ],
+        "skills": ["Plenklipping", "Hekktrimming"],
         "openQuestions": [
           "Hvor høyt skal hekken klippes?",
           "Skal gresset samles opp eller klippes det bare?",
@@ -609,11 +591,7 @@
         "title": "Reparasjon av vannlås under kjøkkenvasken",
         "description": "Jeg har lagt merke til at det drypper fra vannlåsen under kjøkkenvasken min, og har satt en bøtte for å samle opp vannet. Jeg trenger hjelp til å reparere dette problemet.",
         "category": "Rørlegger",
-        "skills": [
-          "Rørleggerarbeid",
-          "Vannlåsreparasjon",
-          "Vannlekkasje"
-        ],
+        "skills": ["Rørleggerarbeid", "Vannlåsreparasjon", "Vannlekkasje"],
         "openQuestions": [
           "Hvor lenge har problemet pågått?",
           "Er det andre lekkasjer i nærheten?",
@@ -721,9 +699,7 @@
         "title": "Installasjon av 4 nye stikkontakter i stua",
         "description": "Jeg trenger hjelp til å installere 4 nye stikkontakter i stua. Sikringsskapet er fra 2018, og jeg ønsker å oppgradere stikkontaktene. Jeg har ikke spesifisert om det er behov for ekstra kabler eller annet materiale.",
         "category": "Elektrisk",
-        "skills": [
-          "Elektriker"
-        ],
+        "skills": ["Elektriker"],
         "openQuestions": [
           "Er det behov for ekstra kabler eller materiale?",
           "Når ønsker du at jobben skal utføres?"
@@ -830,11 +806,7 @@
         "title": "Snømåking av innkjørsel og trapp",
         "description": "Jeg trenger hjelp til å måke innkjørselen og trappen min gjennom hele vinteren. Innkjørselen er omtrent 40 kvm. Jeg ser etter noen som kan ta seg av snømåkingen jevnlig for å holde området trygt og fremkommelig.",
         "category": "Snørydding",
-        "skills": [
-          "snømåking",
-          "vedlikehold",
-          "vinterarbeid"
-        ],
+        "skills": ["snømåking", "vedlikehold", "vinterarbeid"],
         "openQuestions": [
           "Hvor ofte skal snømåkingen utføres?",
           "Er det behov for strøing i tillegg?",
@@ -942,11 +914,7 @@
         "title": "Bilvask og polering — innvendig og utvendig",
         "description": "Jeg trenger hjelp til å vaske og polere bilen min. Arbeidet inkluderer både innvendig og utvendig vask, samt polering. Bilen står i garasjen klar for jobben.",
         "category": "Bilvask",
-        "skills": [
-          "Bilvask",
-          "Polering",
-          "Rengjøring"
-        ],
+        "skills": ["Bilvask", "Polering", "Rengjøring"],
         "openQuestions": [
           "Hvor stor er bilen?",
           "Skal det brukes spesielle produkter eller utstyr?",
@@ -1054,11 +1022,7 @@
         "title": "Fotograf til konfirmasjon — portretter og selskapsbilder",
         "description": "Jeg trenger en dyktig fotograf til konfirmasjonen min. Jeg ønsker både portretter og bilder av selskapet. Detaljer som tid, sted og antall bilder kan avklares senere.",
         "category": "Småjobber",
-        "skills": [
-          "Fotografering",
-          "Portrettfotografering",
-          "Selskapsfotografering"
-        ],
+        "skills": ["Fotografering", "Portrettfotografering", "Selskapsfotografering"],
         "openQuestions": [
           "Hvor mange timer fotografering trengs?",
           "Ønskes redigering av bildene?",
@@ -1167,10 +1131,7 @@
         "title": "Privatundervisning i matematikk R1",
         "description": "Jeg trenger hjelp til å gi privatundervisning i matematikk R1 til datteren min. Ønsker 2 økter i uken, og det kan foregå digitalt. Jeg ser etter en dyktig person som kan hjelpe henne med faget.",
         "category": "Småjobber",
-        "skills": [
-          "Matematikkundervisning",
-          "R1-kompetanse"
-        ],
+        "skills": ["Matematikkundervisning", "R1-kompetanse"],
         "openQuestions": [
           "Hvor lenge skal hver økt vare?",
           "Ønskes det spesifikk erfaring med undervisning?",
@@ -1281,9 +1242,7 @@
         "title": "Malerhjelp søkes",
         "description": "Jeg trenger hjelp med maling. Detaljer må avklares, så jeg ser etter en maler som kan komme og se på oppdraget før vi bestemmer omfanget og prisen.",
         "category": "Maling",
-        "skills": [
-          "Maler"
-        ],
+        "skills": ["Maler"],
         "openQuestions": [
           "Hvilke rom eller flater skal males?",
           "Innvendig eller utvendig?",
@@ -1391,9 +1350,7 @@
         "title": "Hjelp med småjobber hjemme",
         "description": "Jeg trenger litt hjelp med diverse småjobber hjemme. Detaljene kan vi avklare sammen, så jeg ser etter noen som kan bistå og gi pris når oppgavene er spesifisert.",
         "category": "Småjobber",
-        "skills": [
-          "Generell handyman-kompetanse"
-        ],
+        "skills": ["Generell handyman-kompetanse"],
         "openQuestions": [
           "Hvilke konkrete oppgaver trenger hjelp med?",
           "Er det behov for spesialverktøy?",
@@ -1501,11 +1458,7 @@
         "title": "Oppussing av bad på 5 kvm i enebolig fra 1978",
         "description": "Jeg skal pusse opp et bad på 5 kvm i en enebolig fra 1978. Membran og fliser er allerede revet ut av oss selv. Jeg trenger noen som kan legge ny membran, flislegge gulv og vegger, og montere dusjvegg. Sluket ble byttet i fjor. Vi har ikke kjøpt fliser ennå, så det er kun arbeidet med legging av membran, flislegging og montering av dusjvegg som trengs.",
         "category": "Oppussing",
-        "skills": [
-          "Membranlegging",
-          "Flislegging",
-          "Montering av dusjvegg"
-        ],
+        "skills": ["Membranlegging", "Flislegging", "Montering av dusjvegg"],
         "openQuestions": [
           "Hvilken type fliser ønskes?",
           "Ønskes varmekabler under gulvet?",
@@ -1615,11 +1568,7 @@
         "title": "Ukentlig renhold av kontorlokale på 120 kvm",
         "description": "Jeg trenger ukentlig renhold av et kontorlokale på 120 kvm i Trondheim. Kontoret har 8 arbeidsplasser, ett møterom og ett toalett. Ønsker rengjøring én gang i uka, helst etter kl. 17. Jeg har allerede rengjøringsmidler og støvsuger tilgjengelig.",
         "category": "Rengjøring",
-        "skills": [
-          "rengjøring",
-          "vedlikehold",
-          "renhold"
-        ],
+        "skills": ["rengjøring", "vedlikehold", "renhold"],
         "openQuestions": [],
         "paymentType": "Timepris",
         "hourlyRate": 360,
@@ -1718,11 +1667,7 @@
         "title": "Oppussing av bad",
         "description": "Jeg trenger hjelp til oppussing av et bad. Flislegging, maling eller annet arbeid kan være nødvendig. Detaljene må avklares sammen.",
         "category": "Oppussing",
-        "skills": [
-          "flislegging",
-          "maling",
-          "oppussing"
-        ],
+        "skills": ["flislegging", "maling", "oppussing"],
         "openQuestions": [
           "Hva er tilstanden til badet nå?",
           "Hvor stort er badet?",
@@ -1831,10 +1776,7 @@
         "title": "Maling av leilighet — pris usikker",
         "description": "Jeg trenger hjelp til å male en leilighet. Jeg er usikker på kostnaden, så budsjettet er ikke fastsatt enda. Detaljene om omfanget av jobben må avklares.",
         "category": "Maling",
-        "skills": [
-          "maler",
-          "maling av leilighet"
-        ],
+        "skills": ["maler", "maling av leilighet"],
         "openQuestions": [
           "Hvor stor er leiligheten?",
           "Hvilke rom skal males?",
@@ -1944,9 +1886,7 @@
         "title": "Møbeltransport",
         "description": "Jeg trenger hjelp til å transportere noen møbler. Detaljer som antall, størrelse og avstand er ikke spesifisert ennå.",
         "category": "Transport",
-        "skills": [
-          "møbeltransport"
-        ],
+        "skills": ["møbeltransport"],
         "openQuestions": [
           "Hvor mange møbler skal transporteres?",
           "Hvor store er møblene?",
@@ -2054,11 +1994,7 @@
         "title": "Painting two bedrooms — walls only",
         "description": "I need help painting two bedrooms, focusing only on the walls as the ceilings and trim are not included. The paint has already been purchased, so the task is solely the painting work itself.",
         "category": "Maling",
-        "skills": [
-          "Painting",
-          "Wall painting",
-          "Attention to detail"
-        ],
+        "skills": ["Painting", "Wall painting", "Attention to detail"],
         "openQuestions": [
           "Roughly how large are the rooms?",
           "Does any prep or filling need doing first?"
@@ -2160,10 +2096,7 @@
         "title": "Move-out cleaning for 2-bedroom apartment with oven and windows",
         "description": "I need a thorough move-out cleaning for my 2-bedroom apartment. The job includes cleaning the oven and windows. I will hand over the keys after the inspection, so attention to detail is crucial.",
         "category": "Rengjøring",
-        "skills": [
-          "Cleaning",
-          "Attention to detail"
-        ],
+        "skills": ["Cleaning", "Attention to detail"],
         "openQuestions": [
           "What is the approximate size of the apartment?",
           "Are there any specific cleaning products or equipment you prefer to be used?"
@@ -2265,10 +2198,7 @@
         "title": "Assembling 2 IKEA wardrobes",
         "description": "I need help assembling 2 IKEA wardrobes. I have tools available that can be borrowed for the job. The wardrobes are still in their flat packs and need to be put together.",
         "category": "Småjobber",
-        "skills": [
-          "Furniture assembly",
-          "Handyman skills"
-        ],
+        "skills": ["Furniture assembly", "Handyman skills"],
         "openQuestions": [
           "What are the models of the IKEA wardrobes?",
           "Is there a specific location where you want the wardrobes assembled?",
@@ -2375,9 +2305,7 @@
         "title": "Painting assistance needed",
         "description": "I need help with a painting job. The details are not settled yet, so I am looking for someone who can assess the scope and provide a price once we have agreed on what is included.",
         "category": "Maling",
-        "skills": [
-          "Painting"
-        ],
+        "skills": ["Painting"],
         "openQuestions": [
           "Which rooms or surfaces need painting?",
           "Indoors or outdoors?",
@@ -2481,9 +2409,7 @@
         "title": "Moving help needed next weekend",
         "description": "I require assistance with moving next weekend. Details to be discussed. Please provide your hourly rate for this job.",
         "category": "Transport",
-        "skills": [
-          "Moving"
-        ],
+        "skills": ["Moving"],
         "openQuestions": [
           "How many items need to be moved?",
           "Is there any heavy or fragile furniture?",
@@ -2591,11 +2517,7 @@
         "title": "Maling av stue og gang — 35 kvm totalt",
         "description": "Jeg trenger hjelp til å male stua og gangen, totalt ca 35 kvm. Jeg har allerede kjøpt malingen som skal brukes. Jobben består av å male veggene i disse to rommene. Tak og lister er ikke inkludert i oppdraget. Jeg ser etter en maler som kan ta seg av dette maleoppdraget for meg.",
         "category": "Maling",
-        "skills": [
-          "Maler",
-          "Maling av vegg",
-          "Innvendig maling"
-        ],
+        "skills": ["Maler", "Maling av vegg", "Innvendig maling"],
         "openQuestions": [
           "Må det sparkles eller forbehandles før maling?",
           "Når passer det at arbeidet gjøres?"
@@ -2706,9 +2628,7 @@
         "title": "Hjelp med hagearbeid",
         "description": "Jeg trenger hjelp med hagearbeidet mitt. Detaljene er ikke spesifisert ennå, men oppgavene kan inkludere alt fra plenklipping og buskrydding til planting og luking. Jeg ser etter noen som kan komme og vurdere hva som trengs gjort, og gi meg en pris basert på oppgavene vi blir enige om.",
         "category": "Hagearbeid",
-        "skills": [
-          "Hagearbeid"
-        ],
+        "skills": ["Hagearbeid"],
         "openQuestions": [
           "Hvilke konkrete oppgaver skal utføres?",
           "Hvor stort er hageområdet?",
@@ -2822,11 +2742,7 @@
         "title": "Flyttevask av 3-roms leilighet",
         "description": "Jeg trenger hjelp til å utføre flyttevask i en 3-roms leilighet i Stavanger. Jeg ønsker grundig rengjøring av alle rom og overflater for å sikre at leiligheten er klar for neste beboer.",
         "category": "Rengjøring",
-        "skills": [
-          "flyttevask",
-          "grundig rengjøring",
-          "nøyaktighet"
-        ],
+        "skills": ["flyttevask", "grundig rengjøring", "nøyaktighet"],
         "openQuestions": [
           "Hvor stort er leiligheten?",
           "Er det spesielle områder som trenger ekstra oppmerksomhet?",
@@ -2938,10 +2854,7 @@
         "title": "Luking av ugress i bedene",
         "description": "Jeg trenger hjelp til å luke ugress i bedene mine. Det er viktig for meg å få bedene frie for ugress for å opprettholde en fin hage. Jeg har ikke spesifisert størrelsen på bedene, men de er av en slik størrelse at det vil ta litt tid å fullføre jobben. Ugresslukingen er hovedfokuset, og jeg vil sørge for at nødvendig utstyr er tilgjengelig.",
         "category": "Hagearbeid",
-        "skills": [
-          "Luking av ugress",
-          "Hagearbeid"
-        ],
+        "skills": ["Luking av ugress", "Hagearbeid"],
         "openQuestions": [
           "Hvor store er bedene som trenger luking?",
           "Er det tilgang til vann i nærheten for eventuell vanning?"
@@ -3048,11 +2961,7 @@
         "title": "Gutter cleaning needed",
         "description": "I need help with cleaning my gutters. They require thorough cleaning to remove debris and ensure proper drainage. I am looking for a provider who can safely access the gutters and complete the task efficiently.",
         "category": "Småjobber",
-        "skills": [
-          "Gutter cleaning",
-          "Attention to detail",
-          "Safety procedures"
-        ],
+        "skills": ["Gutter cleaning", "Attention to detail", "Safety procedures"],
         "openQuestions": [],
         "paymentType": "Fixed price",
         "hourlyRate": 390,

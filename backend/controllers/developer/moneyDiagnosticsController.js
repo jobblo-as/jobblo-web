@@ -26,7 +26,10 @@ const getPayments = asyncHandler(async (req, res) => {
     // Search by payment / order / user id, or a Stripe id.
     const or = [{ stripePaymentIntentId: q }, { stripeSessionId: q }, { stripeRefundId: q }];
     if (isId(q)) {
-      const orders = await Order.find({ $or: [{ _id: q }, { customerId: q }, { providerId: q }] }).select('_id').limit(200).lean();
+      const orders = await Order.find({ $or: [{ _id: q }, { customerId: q }, { providerId: q }] })
+        .select('_id')
+        .limit(200)
+        .lean();
       or.push({ _id: q }, { orderId: { $in: orders.map((o) => o._id) } });
     }
     match.$or = or;
@@ -34,31 +37,45 @@ const getPayments = asyncHandler(async (req, res) => {
   }
 
   const base = { createdAt: { $gte: from, $lte: to } };
-  const [rows, total, byStatus, byRefund, byMode, amounts, incidents, failedOps] = await Promise.all([
-    Payment.find(match)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .populate({ path: 'orderId', select: 'status paymentStatus customerId providerId agreedPrice', populate: { path: 'customerId providerId', select: 'name' } })
-      .lean(),
-    Payment.countDocuments(match),
-    groupCount(Payment, 'status', base),
-    groupCount(Payment, 'refundStatus', base),
-    groupCount(Payment, 'stripeLivemode', base),
-    Payment.aggregate([
-      { $match: base },
-      { $group: { _id: null, gross: { $sum: '$amount' }, refundedMinor: { $sum: '$refundedAmountMinor' }, n: { $sum: 1 } } },
-    ]),
-    StripePaymentIncident.aggregate([
-      { $match: { createdAt: { $gte: from, $lte: to } } },
-      { $group: { _id: { kind: '$kind', status: '$status' }, n: { $sum: 1 } } },
-    ]),
-    StripeFinancialOperation.find({ status: { $in: ['failed', 'reconciliation_required'] } })
-      .sort({ updatedAt: -1 })
-      .limit(20)
-      .select('operationKey type status orderId stripeMode amount currency lastErrorCode lastErrorMessage failedAt updatedAt')
-      .lean(),
-  ]);
+  const [rows, total, byStatus, byRefund, byMode, amounts, incidents, failedOps] =
+    await Promise.all([
+      Payment.find(match)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate({
+          path: 'orderId',
+          select: 'status paymentStatus customerId providerId agreedPrice',
+          populate: { path: 'customerId providerId', select: 'name' },
+        })
+        .lean(),
+      Payment.countDocuments(match),
+      groupCount(Payment, 'status', base),
+      groupCount(Payment, 'refundStatus', base),
+      groupCount(Payment, 'stripeLivemode', base),
+      Payment.aggregate([
+        { $match: base },
+        {
+          $group: {
+            _id: null,
+            gross: { $sum: '$amount' },
+            refundedMinor: { $sum: '$refundedAmountMinor' },
+            n: { $sum: 1 },
+          },
+        },
+      ]),
+      StripePaymentIncident.aggregate([
+        { $match: { createdAt: { $gte: from, $lte: to } } },
+        { $group: { _id: { kind: '$kind', status: '$status' }, n: { $sum: 1 } } },
+      ]),
+      StripeFinancialOperation.find({ status: { $in: ['failed', 'reconciliation_required'] } })
+        .sort({ updatedAt: -1 })
+        .limit(20)
+        .select(
+          'operationKey type status orderId stripeMode amount currency lastErrorCode lastErrorMessage failedAt updatedAt'
+        )
+        .lean(),
+    ]);
 
   return sendSuccess(
     res,
@@ -113,14 +130,23 @@ const getSafePay = asyncHandler(async (req, res) => {
       },
     ]),
     scanOrders(),
-    groupCount(Order, 'providerConnectTimeout.status', { 'providerConnectTimeout.status': { $ne: null } }),
+    groupCount(Order, 'providerConnectTimeout.status', {
+      'providerConnectTimeout.status': { $ne: null },
+    }),
   ]);
 
   return sendSuccess(
     res,
     {
       range: { from, to },
-      summary: { byStatus, byRefund, timeoutStates, amounts: amounts[0] ? { ...amounts[0], _id: undefined, refunded: amounts[0].refundedMinor / 100 } : null },
+      summary: {
+        byStatus,
+        byRefund,
+        timeoutStates,
+        amounts: amounts[0]
+          ? { ...amounts[0], _id: undefined, refunded: amounts[0].refundedMinor / 100 }
+          : null,
+      },
       stuck: stuck.slice(0, 100).map(({ order, issues }) => ({
         orderId: order._id,
         status: order.status,
@@ -128,7 +154,10 @@ const getSafePay = asyncHandler(async (req, res) => {
         updatedAt: order.updatedAt,
         issues,
       })),
-      rules: { autoReleaseDays: jobs.config().autoReleaseDays, abandonedOrderHours: jobs.config().abandonedOrderHours },
+      rules: {
+        autoReleaseDays: jobs.config().autoReleaseDays,
+        abandonedOrderHours: jobs.config().abandonedOrderHours,
+      },
       records: rows,
     },
     'SafePay retrieved.',

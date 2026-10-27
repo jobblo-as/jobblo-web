@@ -217,8 +217,8 @@ export default function CreateJobForm({
                             {showSmartFillInput ? 'Beskriv oppdraget' : 'Smart-utfylling'}
                           </h2>
                           <p className="mt-1 max-w-md text-[0.8125rem] leading-relaxed text-[#63665F]">
-                            Fortell kort hva som skal gjøres — ta gjerne med størrelse,
-                            tilstand og tidspunkt, så lager vi et utkast du kan se over før noe fylles inn.
+                            Fortell kort hva som skal gjøres — ta gjerne med størrelse, tilstand og
+                            tidspunkt, så lager vi et utkast du kan se over før noe fylles inn.
                           </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-1">
@@ -310,8 +310,9 @@ export default function CreateJobForm({
                   scrolled into view. */}
               <div
                 data-invalid={errors?.images ? 'true' : undefined}
-                className={`box-card-custom p-5 md:p-6 transition-colors ${errors?.images ? 'border-[#B4453A]' : ''
-                  }`}
+                className={`box-card-custom p-5 md:p-6 transition-colors ${
+                  errors?.images ? 'border-[#B4453A]' : ''
+                }`}
               >
                 <div className="mb-5 flex items-start gap-3">
                   <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#EAF1E9] text-[#2E6641]">
@@ -333,16 +334,17 @@ export default function CreateJobForm({
                   initialFiles={selectedImages}
                 />
                 {/* AI analyse button — shown when at least one image is ready */}
-                {(selectedImages.length > 0 || currentImages.length > 0) && imageAnalysis.status !== 'loading' && (
-                  <button
-                    type="button"
-                    onClick={() => void triggerImageAnalysis()}
-                    className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#2E6641] bg-[#EAF1E9] px-4 py-2 text-[0.8125rem] font-semibold text-[#2E6641] transition-colors hover:bg-[#d6eadc] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E6641]/25"
-                  >
-                    <Sparkles size={15} strokeWidth={2} />
-                    Analyser bilde med AI
-                  </button>
-                )}
+                {(selectedImages.length > 0 || currentImages.length > 0) &&
+                  imageAnalysis.status !== 'loading' && (
+                    <button
+                      type="button"
+                      onClick={() => void triggerImageAnalysis()}
+                      className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#2E6641] bg-[#EAF1E9] px-4 py-2 text-[0.8125rem] font-semibold text-[#2E6641] transition-colors hover:bg-[#d6eadc] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E6641]/25"
+                    >
+                      <Sparkles size={15} strokeWidth={2} />
+                      Analyser bilde med AI
+                    </button>
+                  )}
                 {imageAnalysis.status === 'loading' && (
                   <span className="mt-3 inline-flex items-center gap-2 text-[0.8125rem] text-[#63665F]">
                     <Loader2 size={15} className="animate-spin text-[#2E6641]" />
@@ -351,8 +353,15 @@ export default function CreateJobForm({
                 )}
                 {imageAnalysis.status === 'success' && imageAnalysis.durationRange && (
                   <p className="mt-2 text-xs text-[#63665F]">
-                    Estimert tid: {imageAnalysis.durationRange.min}–{imageAnalysis.durationRange.max}{' '}
-                    {({ minutes: 'minutter', hours: 'timer', days: 'dager' } as Record<string, string>)[imageAnalysis.durationRange.unit] ?? 'timer'}. Pris og tid er estimater.
+                    Estimert tid: {imageAnalysis.durationRange.min}–
+                    {imageAnalysis.durationRange.max}{' '}
+                    {(
+                      { minutes: 'minutter', hours: 'timer', days: 'dager' } as Record<
+                        string,
+                        string
+                      >
+                    )[imageAnalysis.durationRange.unit] ?? 'timer'}
+                    . Pris og tid er estimater.
                   </p>
                 )}
                 {errors?.images && (
@@ -425,11 +434,15 @@ export default function CreateJobForm({
                 setChecklistItems={setChecklistItems}
                 currentCategory={Array.isArray(categories) ? categories[0] : categories}
               />
-              <ContactInformation phone={phone} setPhone={setPhone} email={email} setEmail={setEmail} errors={errors} />
+              <ContactInformation
+                phone={phone}
+                setPhone={setPhone}
+                email={email}
+                setEmail={setEmail}
+                errors={errors}
+              />
             </div>
           )}
-
-
         </div>
 
         <FormActions

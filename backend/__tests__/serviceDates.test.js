@@ -20,5 +20,7 @@ test('an empty end date is no end date, not "Ugyldig til-dato"', () => {
 test('real date problems are still refused', () => {
   expect(validateServiceFields(body({ toDate: 'not-a-date' }))).toBe('Ugyldig til-dato.');
   expect(validateServiceFields(body({ fromDate: '2026-13-45' }))).toBe('Ugyldig fra-dato.');
-  expect(validateServiceFields(body({ fromDate: '2026-11-10', toDate: '2026-11-02' }))).toMatch(/Sluttdato/);
+  expect(validateServiceFields(body({ fromDate: '2026-11-10', toDate: '2026-11-02' }))).toMatch(
+    /Sluttdato/
+  );
 });

@@ -1,10 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const {
-  ALL_LIFECYCLE_EVENTS,
-  LEGACY_ALIASES,
-  ORDER_EVENTS,
-} = require('../constants/orderEvents');
+const { ALL_LIFECYCLE_EVENTS, LEGACY_ALIASES, ORDER_EVENTS } = require('../constants/orderEvents');
 const { stripComments } = require('../test-utils/stripComments');
 
 /**
@@ -71,7 +67,12 @@ describe('order lifecycle socket contract', () => {
 
   it('emits at least the events the audit identified as load-bearing', () => {
     // If any of these stops being emitted, a screen somewhere silently goes stale.
-    for (const critical of ['order_ready_for_review', 'job_started', 'order_paid', 'order_completed']) {
+    for (const critical of [
+      'order_ready_for_review',
+      'job_started',
+      'order_paid',
+      'order_completed',
+    ]) {
       expect(emitted.has(critical)).toBe(true);
     }
   });

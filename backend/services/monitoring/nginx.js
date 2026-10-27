@@ -22,7 +22,11 @@ const LOG_TAIL_BYTES = 4 * 1024 * 1024;
 const MAX_CACHE_FILES = 50_000;
 
 const run = (file, args, timeout = 4000) =>
-  new Promise((resolve) => execFile(file, args, { timeout, windowsHide: true }, (err, stdout, stderr) => resolve({ err, out: `${stdout}${stderr}` })));
+  new Promise((resolve) =>
+    execFile(file, args, { timeout, windowsHide: true }, (err, stdout, stderr) =>
+      resolve({ err, out: `${stdout}${stderr}` })
+    )
+  );
 
 /** Pure: parse the stub_status page. */
 function parseStubStatus(text) {
@@ -47,14 +51,22 @@ async function stubStatus() {
     const res = await fetch(STATUS_URL(), { signal: AbortSignal.timeout(2000) });
     if (!res.ok) return { available: false, reason: `${STATUS_URL()} answered HTTP ${res.status}` };
     const parsed = parseStubStatus(await res.text());
-    return parsed ? { available: true, ...parsed } : { available: false, reason: 'Unexpected stub_status format' };
+    return parsed
+      ? { available: true, ...parsed }
+      : { available: false, reason: 'Unexpected stub_status format' };
   } catch (e) {
-    return { available: false, reason: `${STATUS_URL()} not reachable (${e.cause?.code || e.message}). Install deploy/nginx/jobblo-http.conf.` };
+    return {
+      available: false,
+      reason: `${STATUS_URL()} not reachable (${e.cause?.code || e.message}). Install deploy/nginx/jobblo-http.conf.`,
+    };
   }
 }
 
 const pct = (part, total) => (total ? Math.round((part / total) * 1000) / 10 : null);
-const percentile = (sorted, p) => (sorted.length ? sorted[Math.min(sorted.length - 1, Math.ceil((p / 100) * sorted.length) - 1)] : null);
+const percentile = (sorted, p) =>
+  sorted.length
+    ? sorted[Math.min(sorted.length - 1, Math.ceil((p / 100) * sorted.length) - 1)]
+    : null;
 
 /** Pure: summarize jobblo_json log lines (newest last). Unparseable lines are counted, not thrown. */
 function summarizeAccessLog(lines, now = Date.now()) {
@@ -64,7 +76,15 @@ function summarizeAccessLog(lines, now = Date.now()) {
     if (!line.trim()) continue;
     try {
       const r = JSON.parse(line);
-      rows.push({ t: Date.parse(r.t), s: Number(r.s), rt: Number(r.rt), ut: parseFloat(r.ut), c: r.c || '', u: String(r.u || ''), m: r.m });
+      rows.push({
+        t: Date.parse(r.t),
+        s: Number(r.s),
+        rt: Number(r.rt),
+        ut: parseFloat(r.ut),
+        c: r.c || '',
+        u: String(r.u || ''),
+        m: r.m,
+      });
     } catch {
       bad += 1;
     }
@@ -86,8 +106,14 @@ function summarizeAccessLog(lines, now = Date.now()) {
     if (Number.isFinite(r.rt)) e.ms.push(r.rt * 1000);
     byPath.set(key, e);
   }
-  const upstream = api.map((r) => r.ut * 1000).filter(Number.isFinite).sort((a, b) => a - b);
-  const total = rows.map((r) => r.rt * 1000).filter(Number.isFinite).sort((a, b) => a - b);
+  const upstream = api
+    .map((r) => r.ut * 1000)
+    .filter(Number.isFinite)
+    .sort((a, b) => a - b);
+  const total = rows
+    .map((r) => r.rt * 1000)
+    .filter(Number.isFinite)
+    .sort((a, b) => a - b);
   return {
     lines: rows.length,
     unparsed: bad,
@@ -102,7 +128,15 @@ function summarizeAccessLog(lines, now = Date.now()) {
     topPaths: [...byPath.values()]
       .sort((a, b) => b.n - a.n)
       .slice(0, 12)
-      .map((e) => ({ path: e.path, requests: e.n, hitRate: pct(e.hit, e.n), p95Ms: percentile(e.ms.sort((a, b) => a - b), 95) })),
+      .map((e) => ({
+        path: e.path,
+        requests: e.n,
+        hitRate: pct(e.hit, e.n),
+        p95Ms: percentile(
+          e.ms.sort((a, b) => a - b),
+          95
+        ),
+      })),
   };
 }
 
@@ -119,7 +153,10 @@ async function accessLog() {
     if (start > 0) lines.shift(); // first line is cut in half
     return { available: true, file, sizeBytes: size, ...summarizeAccessLog(lines) };
   } catch (e) {
-    return { available: false, reason: `${file}: ${e.code || e.message}. Add the jobblo_json access_log from deploy/nginx/jobblo-server.conf and make the file readable by the API user (e.g. group adm).` };
+    return {
+      available: false,
+      reason: `${file}: ${e.code || e.message}. Add the jobblo_json access_log from deploy/nginx/jobblo-server.conf and make the file readable by the API user (e.g. group adm).`,
+    };
   }
 }
 
@@ -132,8 +169,20 @@ async function processes() {
         if (!/^\d+$/.test(pid)) continue;
         const status = await fs.promises.readFile(`/proc/${pid}/status`, 'utf8').catch(() => '');
         if (!/^Name:\s*nginx\s*$/m.test(status)) continue;
-        const cmd = (await fs.promises.readFile(`/proc/${pid}/cmdline`, 'utf8').catch(() => '')).replace(/\0/g, ' ').trim();
-        list.push({ pid: Number(pid), ppid: Number(/^PPid:\s*(\d+)/m.exec(status)?.[1]), role: /master/.test(cmd) ? 'master' : /cache manager|cache loader/.test(cmd) ? 'cache' : 'worker', rssBytes: Number(/^VmRSS:\s*(\d+)/m.exec(status)?.[1] || 0) * 1024, command: cmd.slice(0, 120) });
+        const cmd = (await fs.promises.readFile(`/proc/${pid}/cmdline`, 'utf8').catch(() => ''))
+          .replace(/\0/g, ' ')
+          .trim();
+        list.push({
+          pid: Number(pid),
+          ppid: Number(/^PPid:\s*(\d+)/m.exec(status)?.[1]),
+          role: /master/.test(cmd)
+            ? 'master'
+            : /cache manager|cache loader/.test(cmd)
+              ? 'cache'
+              : 'worker',
+          rssBytes: Number(/^VmRSS:\s*(\d+)/m.exec(status)?.[1] || 0) * 1024,
+          command: cmd.slice(0, 120),
+        });
       }
       return { available: true, list };
     } catch (e) {
@@ -141,13 +190,23 @@ async function processes() {
     }
   }
   if (process.platform === 'win32') {
-    const { err, out } = await run('tasklist', ['/FI', 'IMAGENAME eq nginx.exe', '/FO', 'CSV', '/NH'], 20_000); // tasklist is slow
+    const { err, out } = await run(
+      'tasklist',
+      ['/FI', 'IMAGENAME eq nginx.exe', '/FO', 'CSV', '/NH'],
+      20_000
+    ); // tasklist is slow
     if (err) return { available: false, reason: err.message, list: [] };
     const list = out
       .split(/\r?\n/)
       .filter((l) => l.startsWith('"nginx.exe"'))
       .map((l) => l.split('","').map((c) => c.replace(/"/g, '')))
-      .map((c) => ({ pid: Number(c[1]), ppid: null, role: 'process', rssBytes: Number(c[4].replace(/[^\d]/g, '')) * 1024, command: 'nginx.exe' }));
+      .map((c) => ({
+        pid: Number(c[1]),
+        ppid: null,
+        role: 'process',
+        rssBytes: Number(c[4].replace(/[^\d]/g, '')) * 1024,
+        command: 'nginx.exe',
+      }));
     return { available: true, list };
   }
   return { available: false, reason: `Not supported on ${process.platform}`, list: [] };
@@ -173,7 +232,11 @@ async function cacheDir() {
     await walk(dir);
     return { available: true, dir, files, bytes, truncated };
   } catch (e) {
-    return { available: false, dir, reason: `${e.code || e.message} (the API user may not be allowed to read it)` };
+    return {
+      available: false,
+      dir,
+      reason: `${e.code || e.message} (the API user may not be allowed to read it)`,
+    };
   }
 }
 
@@ -184,8 +247,21 @@ async function version() {
 }
 
 async function nginxOverview() {
-  const [status, log, procs, cache, ver] = await Promise.all([stubStatus(), accessLog(), processes(), cacheDir(), version()]);
-  return { version: ver, status, accessLog: log, processes: procs, cacheDir: cache, config: { statusUrl: STATUS_URL(), accessLog: ACCESS_LOG(), cacheDir: CACHE_DIR() } };
+  const [status, log, procs, cache, ver] = await Promise.all([
+    stubStatus(),
+    accessLog(),
+    processes(),
+    cacheDir(),
+    version(),
+  ]);
+  return {
+    version: ver,
+    status,
+    accessLog: log,
+    processes: procs,
+    cacheDir: cache,
+    config: { statusUrl: STATUS_URL(), accessLog: ACCESS_LOG(), cacheDir: CACHE_DIR() },
+  };
 }
 
 module.exports = { nginxOverview, accessLog, parseStubStatus, summarizeAccessLog };

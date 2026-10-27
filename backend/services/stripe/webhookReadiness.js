@@ -41,9 +41,7 @@ async function getStripeWebhookReadiness(providedConfig) {
       ready: false,
       status: 'invalid_configuration',
       mode: config.mode,
-      reason: !config.keyModeValid
-        ? 'stripe_api_key_mode_mismatch'
-        : 'webhook_secret_invalid',
+      reason: !config.keyModeValid ? 'stripe_api_key_mode_mismatch' : 'webhook_secret_invalid',
     };
   }
 

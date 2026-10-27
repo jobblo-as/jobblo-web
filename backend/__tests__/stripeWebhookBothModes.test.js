@@ -33,8 +33,24 @@ const { stripeWebhook } = require('../services/stripe/webhookDispatcher');
 
 const signer = Stripe('sk_test_signer');
 const CONFIG = {
-  test: { testMode: true, mode: 'test', secretKey: 'sk_test_x', keyModeValid: true, webhookSecret: 'whsec_test_one', webhookSecretValid: true, fingerprint: 'fp_test' },
-  live: { testMode: false, mode: 'live', secretKey: 'sk_live_x', keyModeValid: true, webhookSecret: 'whsec_live_two', webhookSecretValid: true, fingerprint: 'fp_live' },
+  test: {
+    testMode: true,
+    mode: 'test',
+    secretKey: 'sk_test_x',
+    keyModeValid: true,
+    webhookSecret: 'whsec_test_one',
+    webhookSecretValid: true,
+    fingerprint: 'fp_test',
+  },
+  live: {
+    testMode: false,
+    mode: 'live',
+    secretKey: 'sk_live_x',
+    keyModeValid: true,
+    webhookSecret: 'whsec_live_two',
+    webhookSecretValid: true,
+    fingerprint: 'fp_live',
+  },
 };
 let clients;
 
@@ -48,9 +64,18 @@ function deliver(livemode, secret) {
   });
   const res = {
     statusCode: 200,
-    status(c) { this.statusCode = c; return this; },
-    send(b) { this.body = b; return this; },
-    json(b) { this.body = b; return this; },
+    status(c) {
+      this.statusCode = c;
+      return this;
+    },
+    send(b) {
+      this.body = b;
+      return this;
+    },
+    json(b) {
+      this.body = b;
+      return this;
+    },
   };
   const req = {
     body: Buffer.from(payload),
@@ -66,7 +91,9 @@ beforeEach(() => {
   clients = { true: Stripe('sk_test_client'), false: Stripe('sk_live_client') };
   // Toggle switched to TEST while live events are still in flight.
   stripeConfig.getStripeConfiguration.mockResolvedValue(CONFIG.test);
-  stripeConfig.getStripeConfigurationForMode.mockImplementation((t) => (t ? CONFIG.test : CONFIG.live));
+  stripeConfig.getStripeConfigurationForMode.mockImplementation((t) =>
+    t ? CONFIG.test : CONFIG.live
+  );
   stripeConfig.getStripeForMode.mockImplementation(async (t) => clients[t]);
   ledger.claimEvent.mockResolvedValue({ claimed: true });
 });
@@ -74,7 +101,9 @@ beforeEach(() => {
 it('processes a live refund signed with the live secret while the toggle says test', async () => {
   const res = await deliver(true, CONFIG.live.webhookSecret);
   expect(res.statusCode).toBe(200);
-  expect(recordStripePaymentLifecycle).toHaveBeenCalledWith(expect.objectContaining({ livemode: true }));
+  expect(recordStripePaymentLifecycle).toHaveBeenCalledWith(
+    expect.objectContaining({ livemode: true })
+  );
   expect(stripeConfig.getStripeForMode).toHaveBeenLastCalledWith(false);
   expect(readiness.recordVerifiedDelivery).toHaveBeenCalledWith(CONFIG.live, 'evt_live_refund');
 });
@@ -95,7 +124,9 @@ it('rejects an event signed by neither secret, without claiming it', async () =>
 it('rejects a live event signed with the test secret (swapped secrets, not a mode switch)', async () => {
   const res = await deliver(true, CONFIG.test.webhookSecret);
   expect(res.statusCode).toBe(400);
-  expect(logApplicationError).toHaveBeenCalledWith(expect.objectContaining({ errorCode: 'STRIPE_WEBHOOK_MODE_MISMATCH' }));
+  expect(logApplicationError).toHaveBeenCalledWith(
+    expect.objectContaining({ errorCode: 'STRIPE_WEBHOOK_MODE_MISMATCH' })
+  );
   expect(ledger.claimEvent).not.toHaveBeenCalled();
 });
 

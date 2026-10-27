@@ -37,9 +37,7 @@ export default function ForgotPasswordStepEmail({
         <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
           <Mail size={22} className="text-black" />
         </div>
-        <h1 className="text-[28px] font-bold text-black leading-tight mb-2">
-          Glemt passordet?
-        </h1>
+        <h1 className="text-[28px] font-bold text-black leading-tight mb-2">Glemt passordet?</h1>
         <p className="text-base text-[#6B7280]">
           Skriv inn e-postadressen din. Vi sender deg en 6-sifret kode.
         </p>
@@ -54,7 +52,9 @@ export default function ForgotPasswordStepEmail({
             type="email"
             value={email}
             placeholder="deg@eksempel.no"
-            onChange={(e) => { onEmailChange(e.target.value); }}
+            onChange={(e) => {
+              onEmailChange(e.target.value);
+            }}
             error={emailError || serverError}
             className="rounded-lg border-black focus:border-black placeholder:text-gray-400 h-12"
             onKeyDown={(e) => e.key === 'Enter' && onSubmit()}

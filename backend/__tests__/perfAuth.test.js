@@ -3,12 +3,31 @@
  * minute per session (it was a write on every authenticated request).
  */
 process.env.JWT_SECRET = 'test-secret';
-jest.mock('../models/Session', () => ({ findOne: jest.fn(), updateOne: jest.fn(async () => ({})) }));
+jest.mock('../models/Session', () => ({
+  findOne: jest.fn(),
+  updateOne: jest.fn(async () => ({})),
+}));
 jest.mock('../models/User', () => {
   const { Schema } = jest.requireActual('mongoose');
-  return { findById: jest.fn(), schema: new Schema({ name: String, skills: { type: [String], default: undefined }, verified: { type: Boolean, default: false } }) };
+  return {
+    findById: jest.fn(),
+    schema: new Schema({
+      name: String,
+      skills: { type: [String], default: undefined },
+      verified: { type: Boolean, default: false },
+    }),
+  };
 });
-jest.mock('jsonwebtoken', () => ({ ...jest.requireActual('jsonwebtoken'), verify: jest.fn(() => ({ id: 'u1', sid: 's1', typ: 'access', aud: 'jobblo:access', iss: 'jobblo-api' })) }));
+jest.mock('jsonwebtoken', () => ({
+  ...jest.requireActual('jsonwebtoken'),
+  verify: jest.fn(() => ({
+    id: 'u1',
+    sid: 's1',
+    typ: 'access',
+    aud: 'jobblo:access',
+    iss: 'jobblo-api',
+  })),
+}));
 
 const Session = require('../models/Session');
 const User = require('../models/User');
@@ -16,9 +35,27 @@ const { authenticate } = require('../middleware/auth');
 
 const run = async (lastUsed) => {
   Session.findOne.mockReturnValue({ lean: async () => ({ _id: 's1', userId: 'u1', lastUsed }) });
-  User.findById.mockReturnValue({ select: () => ({ lean: async () => ({ _id: { toString: () => 'u1' }, name: 'A', role: 'user' }) }) });
-  const req = { cookies: {}, headers: { authorization: 'Bearer t' }, originalUrl: '/api/x', get: () => '' };
-  const res = { status() { return this; }, json(b) { this.body = b; return this; }, clearCookie() {} };
+  User.findById.mockReturnValue({
+    select: () => ({
+      lean: async () => ({ _id: { toString: () => 'u1' }, name: 'A', role: 'user' }),
+    }),
+  });
+  const req = {
+    cookies: {},
+    headers: { authorization: 'Bearer t' },
+    originalUrl: '/api/x',
+    get: () => '',
+  };
+  const res = {
+    status() {
+      return this;
+    },
+    json(b) {
+      this.body = b;
+      return this;
+    },
+    clearCookie() {},
+  };
   const next = jest.fn();
   await authenticate(req, res, next);
   return { req, res, next };

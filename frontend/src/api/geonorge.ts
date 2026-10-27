@@ -28,7 +28,9 @@ interface RawAddress {
 
 /** "NORDRE LAND" → "Nordre Land", "AURSKOG-HØLAND" → "Aurskog-Høland". */
 const titleCase = (value = '') =>
-  value.toLowerCase().replace(/(^|[\s-])([a-zæøåäöü])/g, (_m, sep: string, ch: string) => sep + ch.toUpperCase());
+  value
+    .toLowerCase()
+    .replace(/(^|[\s-])([a-zæøåäöü])/g, (_m, sep: string, ch: string) => sep + ch.toUpperCase());
 
 function toHit(raw: RawAddress): AddressHit | null {
   const lat = raw.representasjonspunkt?.lat;
@@ -62,6 +64,8 @@ export function searchAddresses(query: string, signal?: AbortSignal): Promise<Ad
 
 /** Nearest address to a map tap / GPS position, or null when there is none within 250 m. */
 export async function addressAt(lat: number, lng: number): Promise<AddressHit | null> {
-  const hits = await fetchHits(`${BASE}/punktsok?lat=${lat}&lon=${lng}&radius=250&treffPerSide=1&utkoordsys=4258`);
+  const hits = await fetchHits(
+    `${BASE}/punktsok?lat=${lat}&lon=${lng}&radius=250&treffPerSide=1&utkoordsys=4258`
+  );
   return hits[0] ?? null;
 }

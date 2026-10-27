@@ -39,7 +39,10 @@ export function AiDraftReviewDialog({
             <Dialog.Title className="flex items-center gap-2 text-[1.0625rem] font-bold tracking-[-0.02em] text-[#0B0B0B]">
               <Sparkles size={17} className="text-[#2E6641]" /> Forslag til utkast
             </Dialog.Title>
-            <Dialog.Close aria-label="Lukk" className="-m-1 rounded-lg p-1 text-[#63665F] hover:bg-[#F2F3EE]">
+            <Dialog.Close
+              aria-label="Lukk"
+              className="-m-1 rounded-lg p-1 text-[#63665F] hover:bg-[#F2F3EE]"
+            >
               <X size={18} />
             </Dialog.Close>
           </div>
@@ -60,7 +63,12 @@ export function AiDraftReviewDialog({
                   <span className="min-w-0">
                     <span className="block text-[0.8125rem] font-semibold text-[#0B0B0B]">
                       {row.label}
-                      {row.overwrites && <span className="font-normal text-[#9A5B13]"> · erstatter det du har skrevet</span>}
+                      {row.overwrites && (
+                        <span className="font-normal text-[#9A5B13]">
+                          {' '}
+                          · erstatter det du har skrevet
+                        </span>
+                      )}
                     </span>
                     <span className="mt-0.5 block whitespace-pre-line break-words text-[0.875rem] leading-relaxed text-[#63665F] line-clamp-4">
                       {row.value}

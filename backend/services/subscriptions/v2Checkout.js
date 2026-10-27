@@ -199,7 +199,11 @@ async function createSubscriptionCheckoutSession({ user, planId, couponCode }, o
     throw error(403, 'plan_type_not_allowed', 'This plan is not available for your account type.');
   }
   if (!Number.isFinite(plan.price) || plan.price <= 0) {
-    throw error(400, 'FREE_PLAN_CHECKOUT_NOT_ALLOWED', 'Free plans cannot be purchased through Stripe.');
+    throw error(
+      400,
+      'FREE_PLAN_CHECKOUT_NOT_ALLOWED',
+      'Free plans cannot be purchased through Stripe.'
+    );
   }
 
   const configuration = await deps.getConfiguration();
@@ -209,28 +213,44 @@ async function createSubscriptionCheckoutSession({ user, planId, couponCode }, o
     !['test', 'live'].includes(configuration.mode) ||
     configuration.testMode !== (configuration.mode === 'test')
   ) {
-    throw error(503, 'STRIPE_CONFIGURATION_UNAVAILABLE', 'Subscription payments are not configured.');
+    throw error(
+      503,
+      'STRIPE_CONFIGURATION_UNAVAILABLE',
+      'Subscription payments are not configured.'
+    );
   }
   const mode = configuration.mode;
   const testMode = configuration.testMode;
   const priceId = testMode ? plan.stripePriceIdTest : plan.stripePriceId;
   const productId = testMode ? plan.stripeProductIdTest : plan.stripeProductId;
   if (!priceId) {
-    throw error(503, 'SUBSCRIPTION_PRICE_UNCONFIGURED', 'This plan is not configured for checkout.');
+    throw error(
+      503,
+      'SUBSCRIPTION_PRICE_UNCONFIGURED',
+      'This plan is not configured for checkout.'
+    );
   }
 
   let stripe;
   try {
     stripe = await deps.stripeForMode(testMode);
   } catch {
-    throw error(503, 'STRIPE_CONFIGURATION_UNAVAILABLE', 'Subscription payments are not configured.');
+    throw error(
+      503,
+      'STRIPE_CONFIGURATION_UNAVAILABLE',
+      'Subscription payments are not configured.'
+    );
   }
 
   let price;
   try {
     price = await stripe.prices.retrieve(priceId);
   } catch {
-    throw error(503, 'SUBSCRIPTION_PRICE_INVALID', 'The selected plan price could not be verified.');
+    throw error(
+      503,
+      'SUBSCRIPTION_PRICE_INVALID',
+      'The selected plan price could not be verified.'
+    );
   }
   if (
     !price ||
@@ -243,7 +263,11 @@ async function createSubscriptionCheckoutSession({ user, planId, couponCode }, o
     price.unit_amount !== Math.round(plan.price * 100) ||
     (productId && stripeId(price.product) !== productId)
   ) {
-    throw error(503, 'SUBSCRIPTION_PRICE_INVALID', 'The selected plan price could not be verified.');
+    throw error(
+      503,
+      'SUBSCRIPTION_PRICE_INVALID',
+      'The selected plan price could not be verified.'
+    );
   }
 
   let operation = await assertNoExistingSubscription(user, mode, deps);
@@ -329,7 +353,11 @@ async function createSubscriptionCheckoutSession({ user, planId, couponCode }, o
       if (!customer || customer.deleted) {
         customerId = null;
       } else if (customer.metadata?.userId !== String(user._id)) {
-        throw error(503, 'STRIPE_CUSTOMER_OWNERSHIP_UNVERIFIED', 'Could not verify the billing account.');
+        throw error(
+          503,
+          'STRIPE_CUSTOMER_OWNERSHIP_UNVERIFIED',
+          'Could not verify the billing account.'
+        );
       }
     } catch (err) {
       if (isResourceMissing(err)) customerId = null;
@@ -339,11 +367,14 @@ async function createSubscriptionCheckoutSession({ user, planId, couponCode }, o
   if (!customerId) {
     let customer;
     try {
-      customer = await stripe.customers.create({
-        email: user.email,
-        name: [user.name, user.lastName].filter(Boolean).join(' '),
-        metadata: { userId: String(user._id) },
-      }, { idempotencyKey: `jobblo-subv2-customer-${mode}-${operation.operationId}` });
+      customer = await stripe.customers.create(
+        {
+          email: user.email,
+          name: [user.name, user.lastName].filter(Boolean).join(' '),
+          metadata: { userId: String(user._id) },
+        },
+        { idempotencyKey: `jobblo-subv2-customer-${mode}-${operation.operationId}` }
+      );
       await deps.UserModel.findByIdAndUpdate(user._id, { [customerField]: customer.id });
     } catch {
       throw error(503, 'STRIPE_CUSTOMER_UNAVAILABLE', 'Could not prepare the billing account.');
@@ -419,7 +450,11 @@ async function createSubscriptionCheckoutSession({ user, planId, couponCode }, o
         },
       }
     );
-    throw error(503, 'STRIPE_CHECKOUT_UNAVAILABLE', 'Could not start checkout. Please contact support.');
+    throw error(
+      503,
+      'STRIPE_CHECKOUT_UNAVAILABLE',
+      'Could not start checkout. Please contact support.'
+    );
   }
 
   await deps.OperationModel.updateOne(
@@ -466,7 +501,11 @@ async function getSubscriptionCheckoutStatus(userId, sessionId, overrides = {}) 
     const stripe = await deps.stripeForMode(operation.stripeMode === 'test');
     session = await stripe.checkout.sessions.retrieve(sessionId);
   } catch {
-    throw error(503, 'SUBSCRIPTION_CHECKOUT_STATUS_UNAVAILABLE', 'Could not verify checkout status.');
+    throw error(
+      503,
+      'SUBSCRIPTION_CHECKOUT_STATUS_UNAVAILABLE',
+      'Could not verify checkout status.'
+    );
   }
   const metadata = session?.metadata || {};
   if (
@@ -486,7 +525,12 @@ async function getSubscriptionCheckoutStatus(userId, sessionId, overrides = {}) 
   }
 
   const plan = await deps.PlanModel.findById(operation.targetPlanId).lean();
-  if (!plan) throw error(503, 'SUBSCRIPTION_CHECKOUT_STATUS_UNAVAILABLE', 'Could not verify checkout status.');
+  if (!plan)
+    throw error(
+      503,
+      'SUBSCRIPTION_CHECKOUT_STATUS_UNAVAILABLE',
+      'Could not verify checkout status.'
+    );
   if (
     (session.currency && session.currency.toLowerCase() !== 'nok') ||
     (Number.isSafeInteger(session.amount_total) &&
@@ -494,7 +538,11 @@ async function getSubscriptionCheckoutStatus(userId, sessionId, overrides = {}) 
     (session.status === 'complete' &&
       (!Number.isSafeInteger(session.amount_total) || !session.currency))
   ) {
-    throw error(503, 'SUBSCRIPTION_CHECKOUT_RECONCILIATION_REQUIRED', 'The checkout payment requires reconciliation.');
+    throw error(
+      503,
+      'SUBSCRIPTION_CHECKOUT_RECONCILIATION_REQUIRED',
+      'The checkout payment requires reconciliation.'
+    );
   }
 
   const stripeSubscriptionId = stripeId(session.subscription);
@@ -503,9 +551,9 @@ async function getSubscriptionCheckoutStatus(userId, sessionId, overrides = {}) 
     : null;
   const provisioned = Boolean(
     current &&
-      current.stripeMode === operation.stripeMode &&
-      current.stripeSubscriptionId === stripeSubscriptionId &&
-      current.stripeCustomerId === operation.stripeCustomerId
+    current.stripeMode === operation.stripeMode &&
+    current.stripeSubscriptionId === stripeSubscriptionId &&
+    current.stripeCustomerId === operation.stripeCustomerId
   );
   const paid = ['paid', 'no_payment_required'].includes(session.payment_status);
   const failed = session.status === 'expired' || operation.status === 'failed';
@@ -517,8 +565,12 @@ async function getSubscriptionCheckoutStatus(userId, sessionId, overrides = {}) 
       : failed
         ? 'failed'
         : paid
-          ? operation.status === 'reconciliation_required' ? 'reconciliation_required' : 'processing'
-          : session.status === 'open' ? 'open' : 'pending',
+          ? operation.status === 'reconciliation_required'
+            ? 'reconciliation_required'
+            : 'processing'
+          : session.status === 'open'
+            ? 'open'
+            : 'pending',
     plan: plan.name,
     planType: plan.type,
     amount: Number.isSafeInteger(session.amount_total) ? session.amount_total / 100 : plan.price,

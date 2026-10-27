@@ -92,7 +92,8 @@ function filesOf(req) {
 // it) and `email[$ne]=x` into an operator object. Neither is anything our forms send.
 function badFormValue(v) {
   if (Array.isArray(v)) return v.length > 100 || v.some(badFormValue);
-  if (v && typeof v === 'object') return Object.keys(v).some((k) => k.startsWith('$') || badFormValue(v[k]));
+  if (v && typeof v === 'object')
+    return Object.keys(v).some((k) => k.startsWith('$') || badFormValue(v[k]));
   return false;
 }
 
@@ -110,22 +111,23 @@ function checkMultipartBody(req, res, next) {
  */
 function checkFileTypes(allowed) {
   // Every multer route runs this next, so the body guard rides along here instead of per route.
-  return (req, res, next) => checkMultipartBody(req, res, () => {
-    for (const file of filesOf(req)) {
-      const type = sniffFileType(file.buffer);
-      if (!allowed.includes(type)) {
-        const err = new Error(
-          allowed.includes('application/pdf')
-            ? 'Ugyldig filtype. Last opp JPG, PNG, WEBP eller PDF.'
-            : 'Ugyldig filtype. Last opp JPG, PNG eller WEBP.'
-        );
-        err.code = 'INVALID_FILE_TYPE';
-        return next(err);
+  return (req, res, next) =>
+    checkMultipartBody(req, res, () => {
+      for (const file of filesOf(req)) {
+        const type = sniffFileType(file.buffer);
+        if (!allowed.includes(type)) {
+          const err = new Error(
+            allowed.includes('application/pdf')
+              ? 'Ugyldig filtype. Last opp JPG, PNG, WEBP eller PDF.'
+              : 'Ugyldig filtype. Last opp JPG, PNG eller WEBP.'
+          );
+          err.code = 'INVALID_FILE_TYPE';
+          return next(err);
+        }
+        file.mimetype = type;
       }
-      file.mimetype = type;
-    }
-    next();
-  });
+      next();
+    });
 }
 
 // Upload each buffered file to Azure, then attach: file.path = URL,

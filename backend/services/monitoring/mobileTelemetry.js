@@ -27,7 +27,11 @@ function fingerprint(name, message, stack) {
     .map((l) => l.trim())
     .find((l) => /^at |@/.test(l));
   const fn = frame ? frame.replace(/^at /, '').split(/[ (@]/)[0] : '';
-  return crypto.createHash('sha1').update(`${name || ''}|${msg}|${fn}`).digest('hex').slice(0, 16);
+  return crypto
+    .createHash('sha1')
+    .update(`${name || ''}|${msg}|${fn}`)
+    .digest('hex')
+    .slice(0, 16);
 }
 
 /** Pure: validate one batch into documents. Unit-tested. */
@@ -52,7 +56,9 @@ function normalize(body, userId = null, now = Date.now()) {
     if (!e || !TYPES.includes(e.type)) continue;
     const t = Number(new Date(e.at));
     // Clock skew and replays: accept events from the last 7 days, never from the future.
-    const at = new Date(Number.isFinite(t) && t <= now + 5 * 60 * 1000 && t >= now - 7 * DAY ? t : now);
+    const at = new Date(
+      Number.isFinite(t) && t <= now + 5 * 60 * 1000 && t >= now - 7 * DAY ? t : now
+    );
     const doc = { ...base, type: e.type, at, screen: str(e.screen, 120) };
     if (e.type === 'error') {
       doc.name = str(e.name, 80) || 'Error';
@@ -70,7 +76,10 @@ function normalize(body, userId = null, now = Date.now()) {
     }
     docs.push(doc);
   }
-  return { docs, dropped: events.length - docs.length + Math.max(0, (ctx.events?.length || 0) - MAX_BATCH) };
+  return {
+    docs,
+    dropped: events.length - docs.length + Math.max(0, (ctx.events?.length || 0) - MAX_BATCH),
+  };
 }
 
 async function ingest(req, res) {

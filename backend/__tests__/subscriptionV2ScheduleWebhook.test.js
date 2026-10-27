@@ -16,7 +16,10 @@ const periodEnd = Math.floor(new Date('2026-11-16T21:48:09Z').getTime() / 1000);
 const nextPeriodEnd = Math.floor(new Date('2026-12-16T21:48:09Z').getTime() / 1000);
 
 function query(value) {
-  return { lean: async () => value, then: (resolve, reject) => Promise.resolve(value).then(resolve, reject) };
+  return {
+    lean: async () => value,
+    then: (resolve, reject) => Promise.resolve(value).then(resolve, reject),
+  };
 }
 
 function fixture({ status = 'active', pending = null } = {}) {
@@ -100,19 +103,21 @@ function fixture({ status = 'active', pending = null } = {}) {
     cancel_at_period_end: false,
     metadata: { subscriptionV2: 'true' },
     items: {
-      data: [{
-        current_period_start: periodStart,
-        current_period_end: periodEnd,
-        quantity: 1,
-        price: {
-          id: currentPriceId,
-          active: true,
-          livemode: false,
-          currency: 'nok',
-          type: 'recurring',
-          recurring: { interval: 'month', interval_count: 1 },
+      data: [
+        {
+          current_period_start: periodStart,
+          current_period_end: periodEnd,
+          quantity: 1,
+          price: {
+            id: currentPriceId,
+            active: true,
+            livemode: false,
+            currency: 'nok',
+            type: 'recurring',
+            recurring: { interval: 'month', interval_count: 1 },
+          },
         },
-      }],
+      ],
     },
   };
   const eventDoc = { _id: new mongoose.Types.ObjectId(), status: 'processing' };
@@ -121,7 +126,9 @@ function fixture({ status = 'active', pending = null } = {}) {
     updateOne: jest.fn(async () => ({ matchedCount: 1, modifiedCount: 1 })),
   };
   const PlanModel = {
-    findById: jest.fn((id) => query(String(id) === String(currentPlanId) ? currentPlan : targetPlan)),
+    findById: jest.fn((id) =>
+      query(String(id) === String(currentPlanId) ? currentPlan : targetPlan)
+    ),
   };
   const OperationModel = { findOne: jest.fn(() => query(operation)) };
   const EventModel = {
@@ -131,18 +138,21 @@ function fixture({ status = 'active', pending = null } = {}) {
   const stripe = {
     subscriptionSchedules: { retrieve: jest.fn(async () => schedule) },
     subscriptions: { retrieve: jest.fn(async () => subscription) },
-    prices: { retrieve: jest.fn(async () => ({
-      id: targetPriceId,
-      active: true,
-      livemode: false,
-      currency: 'nok',
-      type: 'recurring',
-      recurring: { interval: 'month', interval_count: 1 },
-    })) },
+    prices: {
+      retrieve: jest.fn(async () => ({
+        id: targetPriceId,
+        active: true,
+        livemode: false,
+        currency: 'nok',
+        type: 'recurring',
+        recurring: { interval: 'month', interval_count: 1 },
+      })),
+    },
   };
   const event = {
     id: `evt_schedule_${status}`,
-    type: status === 'canceled' ? 'subscription_schedule.canceled' : 'subscription_schedule.updated',
+    type:
+      status === 'canceled' ? 'subscription_schedule.canceled' : 'subscription_schedule.updated',
     livemode: false,
     data: { object: { id: scheduleId, metadata } },
   };
@@ -219,10 +229,9 @@ test('acknowledges schedule creation and waits for the target-phase update', asy
   });
 
   expect(f.stripe.subscriptionSchedules.retrieve).toHaveBeenCalledWith(scheduleId);
-  expect(f.stripe.subscriptions.retrieve).toHaveBeenCalledWith(
-    subscriptionId,
-    { expand: ['latest_invoice', 'items.data.price'] }
-  );
+  expect(f.stripe.subscriptions.retrieve).toHaveBeenCalledWith(subscriptionId, {
+    expand: ['latest_invoice', 'items.data.price'],
+  });
   expect(f.SubscriptionModel.findOne).toHaveBeenCalledWith({
     userId,
     stripeMode: 'test',
@@ -247,8 +256,9 @@ test('does not process a metadata-less schedule creation when canonical ownershi
   };
   f.SubscriptionModel.findOne.mockReturnValue(query(null));
 
-  await expect(processVerifiedEvent(f.event, 'test', f.stripe, f.overrides))
-    .rejects.toThrow('subscription_schedule_owner_mismatch');
+  await expect(processVerifiedEvent(f.event, 'test', f.stripe, f.overrides)).rejects.toThrow(
+    'subscription_schedule_owner_mismatch'
+  );
 
   expect(f.SubscriptionModel.updateOne).not.toHaveBeenCalled();
   expect(f.EventModel.updateOne).toHaveBeenLastCalledWith(
@@ -270,10 +280,9 @@ test('ignores a metadata-less schedule creation after canonical Stripe verificat
     handled: 'subscription_event_ignored',
   });
 
-  expect(f.stripe.subscriptions.retrieve).toHaveBeenCalledWith(
-    subscriptionId,
-    { expand: ['latest_invoice', 'items.data.price'] }
-  );
+  expect(f.stripe.subscriptions.retrieve).toHaveBeenCalledWith(subscriptionId, {
+    expand: ['latest_invoice', 'items.data.price'],
+  });
   expect(f.SubscriptionModel.findOne).not.toHaveBeenCalled();
   expect(f.SubscriptionModel.updateOne).not.toHaveBeenCalled();
 });
@@ -349,9 +358,14 @@ test('clears a schedule released in Stripe (e.g. billing portal), where Stripe n
   await expect(processVerifiedEvent(f.event, 'test', f.stripe, f.overrides)).resolves.toEqual({
     handled: 'subscription_schedule_cleared',
   });
-  expect(f.SubscriptionModel.findOne).toHaveBeenCalledWith(expect.objectContaining({ stripeSubscriptionId: subscriptionId }));
+  expect(f.SubscriptionModel.findOne).toHaveBeenCalledWith(
+    expect.objectContaining({ stripeSubscriptionId: subscriptionId })
+  );
   expect(f.SubscriptionModel.updateOne).toHaveBeenCalledWith(
-    expect.objectContaining({ _id: subscriptionRecordId, 'pendingPlanChange.stripeScheduleId': scheduleId }),
+    expect.objectContaining({
+      _id: subscriptionRecordId,
+      'pendingPlanChange.stripeScheduleId': scheduleId,
+    }),
     { $set: { pendingPlanChange: null } }
   );
 });
@@ -370,11 +384,21 @@ test('clears a released schedule on a record activated without stripePriceId (ne
   f.schedule.subscription = null;
   f.schedule.released_subscription = subscriptionId;
   // Activation never stored the top-level price, so this stayed "transition pending" forever.
-  f.SubscriptionModel.findOne.mockImplementation(() => query({
-    _id: subscriptionRecordId, userId, planId: currentPlanId, planType: 'private', stripeMode: 'test',
-    stripeCustomerId: customerId, stripeSubscriptionId: subscriptionId, status: 'active',
-    currentPeriodStart: new Date(periodStart * 1000), currentPeriodEnd: new Date(periodEnd * 1000), pendingPlanChange: pending,
-  }));
+  f.SubscriptionModel.findOne.mockImplementation(() =>
+    query({
+      _id: subscriptionRecordId,
+      userId,
+      planId: currentPlanId,
+      planType: 'private',
+      stripeMode: 'test',
+      stripeCustomerId: customerId,
+      stripeSubscriptionId: subscriptionId,
+      status: 'active',
+      currentPeriodStart: new Date(periodStart * 1000),
+      currentPeriodEnd: new Date(periodEnd * 1000),
+      pendingPlanChange: pending,
+    })
+  );
 
   await expect(processVerifiedEvent(f.event, 'test', f.stripe, f.overrides)).resolves.toEqual({
     handled: 'subscription_schedule_cleared',
@@ -383,8 +407,12 @@ test('clears a released schedule on a record activated without stripePriceId (ne
 
 describe('the two simultaneous release events (released + updated)', () => {
   const pending = () => ({
-    targetPlanId, targetPlanType: 'private', targetStripePriceId: targetPriceId,
-    effectiveAt: new Date(periodEnd * 1000), operationId, stripeScheduleId: scheduleId,
+    targetPlanId,
+    targetPlanType: 'private',
+    targetStripePriceId: targetPriceId,
+    effectiveAt: new Date(periodEnd * 1000),
+    operationId,
+    stripeScheduleId: scheduleId,
   });
   const released = () => {
     const f = fixture({ status: 'released', pending: pending() });
@@ -400,7 +428,9 @@ describe('the two simultaneous release events (released + updated)', () => {
     const first = f.SubscriptionModel.findOne.getMockImplementation();
     f.SubscriptionModel.findOne
       .mockImplementationOnce(first) // initial read: pending still set
-      .mockImplementationOnce(() => query({ _id: subscriptionRecordId, userId, pendingPlanChange: null }));
+      .mockImplementationOnce(() =>
+        query({ _id: subscriptionRecordId, userId, pendingPlanChange: null })
+      );
     await expect(processVerifiedEvent(f.event, 'test', f.stripe, f.overrides)).resolves.toEqual({
       handled: 'subscription_schedule_already_cleared',
     });
@@ -411,9 +441,20 @@ describe('the two simultaneous release events (released + updated)', () => {
     const first = f.SubscriptionModel.findOne.getMockImplementation();
     f.SubscriptionModel.findOne
       .mockImplementationOnce(first)
-      .mockImplementationOnce(() => query({ _id: subscriptionRecordId, userId, pendingPlanChange: { ...pending(), operationId: 'newer', stripeScheduleId: 'sub_sched_new' } }));
-    await expect(processVerifiedEvent(f.event, 'test', f.stripe, f.overrides))
-      .rejects.toThrow('subscription_schedule_state_changed');
+      .mockImplementationOnce(() =>
+        query({
+          _id: subscriptionRecordId,
+          userId,
+          pendingPlanChange: {
+            ...pending(),
+            operationId: 'newer',
+            stripeScheduleId: 'sub_sched_new',
+          },
+        })
+      );
+    await expect(processVerifiedEvent(f.event, 'test', f.stripe, f.overrides)).rejects.toThrow(
+      'subscription_schedule_state_changed'
+    );
   });
 });
 
@@ -422,10 +463,13 @@ test('a released schedule pointing at another subscription is still rejected', a
   f.event.type = 'subscription_schedule.released';
   f.schedule.subscription = null;
   f.schedule.released_subscription = 'sub_someone_else';
-  f.SubscriptionModel.findOne.mockImplementation((q) => query(q.stripeSubscriptionId === subscriptionId ? {} : null));
+  f.SubscriptionModel.findOne.mockImplementation((q) =>
+    query(q.stripeSubscriptionId === subscriptionId ? {} : null)
+  );
 
-  await expect(processVerifiedEvent(f.event, 'test', f.stripe, f.overrides))
-    .rejects.toThrow('subscription_schedule_owner_mismatch');
+  await expect(processVerifiedEvent(f.event, 'test', f.stripe, f.overrides)).rejects.toThrow(
+    'subscription_schedule_owner_mismatch'
+  );
   expect(f.SubscriptionModel.updateOne).not.toHaveBeenCalled();
 });
 
@@ -445,8 +489,9 @@ test('rejects a canonical Stripe customer mismatch without changing the pending 
   const f = fixture();
   f.subscription.customer = 'cus_someone_else';
 
-  await expect(processVerifiedEvent(f.event, 'test', f.stripe, f.overrides))
-    .rejects.toThrow('subscription_schedule_owner_mismatch');
+  await expect(processVerifiedEvent(f.event, 'test', f.stripe, f.overrides)).rejects.toThrow(
+    'subscription_schedule_owner_mismatch'
+  );
 
   expect(f.SubscriptionModel.updateOne).not.toHaveBeenCalled();
   expect(f.EventModel.updateOne).toHaveBeenLastCalledWith(

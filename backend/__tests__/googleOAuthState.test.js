@@ -52,10 +52,17 @@ const webOAuth = require('../routes/webOAuth');
 
 // ── Fake Google: the authorization code is the key into this table ──────────────
 const googleProfiles = {
-  'code-victim-google': { id: 'g-victim', emails: [{ value: 'victim@gmail.test', verified: true }] },
+  'code-victim-google': {
+    id: 'g-victim',
+    emails: [{ value: 'victim@gmail.test', verified: true }],
+  },
   'code-attacker': { id: 'g-attacker', emails: [{ value: 'attacker@gmail.test', verified: true }] },
   'code-returning': { id: 'g-returning', emails: [{ value: 'ret@gmail.test', verified: true }] },
-  'code-brand-new': { id: 'g-new', emails: [{ value: 'new@gmail.test', verified: true }], displayName: 'New' },
+  'code-brand-new': {
+    id: 'g-new',
+    emails: [{ value: 'new@gmail.test', verified: true }],
+    displayName: 'New',
+  },
 };
 const strategy = passport._strategies['google-web'];
 strategy._oauth2.getOAuthAccessToken = (code, _params, cb) => {
@@ -91,7 +98,9 @@ beforeEach(() => {
     const match = filter.oauthProviders?.$elemMatch;
     const found = [...users.values()].find((u) =>
       match
-        ? u.oauthProviders.some((p) => p.provider === match.provider && p.providerId === match.providerId)
+        ? u.oauthProviders.some(
+            (p) => p.provider === match.provider && p.providerId === match.providerId
+          )
         : u.email === filter.email
     );
     return query(found || null);
@@ -160,7 +169,10 @@ describe('Google OAuth state', () => {
     const state = await start(browser);
     expect(await callback(browser, { code: 'code-brand-new', state })).toBe(LOGGED_IN('created'));
     expect(User.create).toHaveBeenCalledWith(
-      expect.objectContaining({ email: 'new@gmail.test', oauthProviders: [{ provider: 'google', providerId: 'g-new' }] })
+      expect.objectContaining({
+        email: 'new@gmail.test',
+        oauthProviders: [{ provider: 'google', providerId: 'g-new' }],
+      })
     );
   });
 
@@ -181,7 +193,9 @@ describe('Google OAuth state', () => {
   });
 
   it('3b. rejects a callback when no flow was ever started in this browser', async () => {
-    expect(await callback(request.agent(app), { code: 'code-returning', state: 'x' })).toBe(INVALID_STATE);
+    expect(await callback(request.agent(app), { code: 'code-returning', state: 'x' })).toBe(
+      INVALID_STATE
+    );
   });
 
   it('4. rejects a wrong state', async () => {
@@ -240,7 +254,9 @@ describe('Google OAuth state', () => {
     for (const who of [OTHER, { id: 'victim', sid: 'a-different-session' }, undefined]) {
       const browser = request.agent(app);
       const state = await start(browser, { link: true, user: VICTIM });
-      expect(await callback(browser, { code: 'code-victim-google', state, user: who })).toBe(INVALID_STATE);
+      expect(await callback(browser, { code: 'code-victim-google', state, user: who })).toBe(
+        INVALID_STATE
+      );
     }
     expect(victim.oauthProviders).toEqual([]);
   });
@@ -262,7 +278,9 @@ describe('Google OAuth state', () => {
     const now = Date.now();
     const spy = jest.spyOn(Date, 'now').mockReturnValue(now + 11 * 60 * 1000);
     try {
-      expect(await callback(browser, { code: 'code-victim-google', state, user: VICTIM })).toBe(INVALID_STATE);
+      expect(await callback(browser, { code: 'code-victim-google', state, user: VICTIM })).toBe(
+        INVALID_STATE
+      );
     } finally {
       spy.mockRestore();
     }
@@ -274,7 +292,9 @@ describe('Google OAuth state', () => {
     const browser = request.agent(app);
     await start(browser, { link: true, user: VICTIM }); // abandoned at Google
     const state = await start(browser, { user: VICTIM }); // plain "Sign in with Google"
-    expect(await callback(browser, { code: 'code-brand-new', state, user: VICTIM })).toBe(LOGGED_IN('created'));
+    expect(await callback(browser, { code: 'code-brand-new', state, user: VICTIM })).toBe(
+      LOGGED_IN('created')
+    );
     expect(victim.oauthProviders).toEqual([]);
   });
 

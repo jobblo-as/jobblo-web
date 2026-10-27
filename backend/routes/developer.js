@@ -192,5 +192,4 @@ router.get('/redis/realtime', redisCtl.getRedisRealtime);
 router.get('/redis/alerts', redisCtl.getRedisAlerts);
 router.get('/redis/audit', redisCtl.getRedisAudit);
 
-
 module.exports = router;

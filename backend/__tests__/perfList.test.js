@@ -10,16 +10,32 @@ const { getAllServices } = require('../controllers/services/browseController');
 let selected;
 beforeEach(() => {
   selected = [];
-  const chain = { select: (s) => (selected.push(s), chain), populate: () => chain, lean: () => chain, skip: () => chain, limit: () => chain, sort: async () => [] };
+  const chain = {
+    select: (s) => (selected.push(s), chain),
+    populate: () => chain,
+    lean: () => chain,
+    skip: () => chain,
+    limit: () => chain,
+    sort: async () => [],
+  };
   jest.spyOn(Service, 'find').mockReturnValue(chain);
   jest.spyOn(Service, 'countDocuments').mockResolvedValue(42);
-  jest.spyOn(NorwayMunicipality, 'find').mockReturnValue({ select: () => ({ lean: async () => [{ code: '0301' }] }) });
-  jest.spyOn(require('../services/monitoring/searchHealth'), 'recordSearch').mockImplementation(() => {});
+  jest
+    .spyOn(NorwayMunicipality, 'find')
+    .mockReturnValue({ select: () => ({ lean: async () => [{ code: '0301' }] }) });
+  jest
+    .spyOn(require('../services/monitoring/searchHealth'), 'recordSearch')
+    .mockImplementation(() => {});
 });
 afterEach(() => jest.restoreAllMocks());
 
 const list = async (query) => {
-  const res = { json: jest.fn(), status() { return this; } };
+  const res = {
+    json: jest.fn(),
+    status() {
+      return this;
+    },
+  };
   await getAllServices({ query }, res);
   return res.json.mock.calls[0][0];
 };

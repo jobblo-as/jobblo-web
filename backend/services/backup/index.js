@@ -30,12 +30,17 @@ function config() {
     mongorestore: process.env.MONGORESTORE_BIN || 'mongorestore',
     retentionDays: num(process.env.BACKUP_RETENTION_DAYS, 14),
     maxAgeHours: num(process.env.BACKUP_MAX_AGE_HOURS, 26),
-    scheduleHours: process.env.BACKUP_SCHEDULE_HOURS ? num(process.env.BACKUP_SCHEDULE_HOURS, 24) : null,
+    scheduleHours: process.env.BACKUP_SCHEDULE_HOURS
+      ? num(process.env.BACKUP_SCHEDULE_HOURS, 24)
+      : null,
     offsiteCmd: process.env.BACKUP_OFFSITE_CMD || null,
   };
 }
 
-const redact = (s) => String(s || '').replace(/(mongodb(?:\+srv)?:\/\/)[^@\s/]+@/gi, '$1***@').slice(-1500);
+const redact = (s) =>
+  String(s || '')
+    .replace(/(mongodb(?:\+srv)?:\/\/)[^@\s/]+@/gi, '$1***@')
+    .slice(-1500);
 
 /** Spawn without a shell; resolves with stderr, rejects with the tail of stderr. */
 function run(bin, args, timeoutMs = 6 * HOUR) {
@@ -47,7 +52,13 @@ function run(bin, args, timeoutMs = 6 * HOUR) {
     child.stderr.on('data', (d) => (err = (err + d).slice(-8000)));
     child.on('error', (e) => {
       clearTimeout(timer);
-      reject(new Error(e.code === 'ENOENT' ? `${bin} not found — install MongoDB Database Tools or set its path` : e.message));
+      reject(
+        new Error(
+          e.code === 'ENOENT'
+            ? `${bin} not found — install MongoDB Database Tools or set its path`
+            : e.message
+        )
+      );
     });
     child.on('close', (code) => {
       clearTimeout(timer);
@@ -63,7 +74,9 @@ function run(bin, args, timeoutMs = 6 * HOUR) {
  */
 async function withUriConfig(dir, fn) {
   const file = path.join(dir, `.tools-${crypto.randomBytes(6).toString('hex')}.yaml`);
-  await fs.promises.writeFile(file, `uri: ${JSON.stringify(process.env.MONGO_URI)}\n`, { mode: 0o600 });
+  await fs.promises.writeFile(file, `uri: ${JSON.stringify(process.env.MONGO_URI)}\n`, {
+    mode: 0o600,
+  });
   try {
     return await fn(`--config=${file}`);
   } finally {
@@ -74,13 +87,21 @@ async function withUriConfig(dir, fn) {
 const sha256 = (file) =>
   new Promise((resolve, reject) => {
     const h = crypto.createHash('sha256');
-    fs.createReadStream(file).on('data', (d) => h.update(d)).on('end', () => resolve(h.digest('hex'))).on('error', reject);
+    fs.createReadStream(file)
+      .on('data', (d) => h.update(d))
+      .on('end', () => resolve(h.digest('hex')))
+      .on('error', reject);
   });
 
 async function collectionCounts(db) {
   const list = await db.listCollections({ type: 'collection' }, { nameOnly: true }).toArray();
-  const names = list.map((c) => c.name).filter((n) => !n.startsWith('system.')).sort();
-  return Promise.all(names.map(async (name) => ({ name, count: await db.collection(name).countDocuments() })));
+  const names = list
+    .map((c) => c.name)
+    .filter((n) => !n.startsWith('system.'))
+    .sort();
+  return Promise.all(
+    names.map(async (name) => ({ name, count: await db.collection(name).countDocuments() }))
+  );
 }
 
 /** Pure: drill counts vs. counts recorded at backup time. Unit-tested. */
@@ -95,18 +116,32 @@ function compareCounts(expected, actual) {
 }
 
 /** Split a command line on whitespace and fill {file} / {name}. No shell is involved. */
-const offsiteArgs = (cmd, file) => cmd.trim().split(/\s+/).map((a) => a.replaceAll('{file}', file).replaceAll('{name}', path.basename(file)));
+const offsiteArgs = (cmd, file) =>
+  cmd
+    .trim()
+    .split(/\s+/)
+    .map((a) => a.replaceAll('{file}', file).replaceAll('{name}', path.basename(file)));
 
 function requireReady() {
   const c = config();
-  if (!c.dir) throw Object.assign(new Error('Backups are not configured: set BACKUP_DIR.'), { status: 400 });
-  if (mongoose.connection.readyState !== 1) throw Object.assign(new Error('Database is not connected.'), { status: 503 });
+  if (!c.dir)
+    throw Object.assign(new Error('Backups are not configured: set BACKUP_DIR.'), { status: 400 });
+  if (mongoose.connection.readyState !== 1)
+    throw Object.assign(new Error('Database is not connected.'), { status: 503 });
   return c;
 }
 
 async function assertIdle(kind) {
-  const busy = await BackupRun.findOne({ kind, status: 'running', startedAt: { $gte: new Date(Date.now() - 6 * HOUR) } }).lean();
-  if (busy) throw Object.assign(new Error(`A ${kind} is already running (started ${busy.startedAt.toISOString()}).`), { status: 409 });
+  const busy = await BackupRun.findOne({
+    kind,
+    status: 'running',
+    startedAt: { $gte: new Date(Date.now() - 6 * HOUR) },
+  }).lean();
+  if (busy)
+    throw Object.assign(
+      new Error(`A ${kind} is already running (started ${busy.startedAt.toISOString()}).`),
+      { status: 409 }
+    );
 }
 
 async function finish(doc, started, err) {
@@ -127,12 +162,22 @@ async function startBackup({ trigger = 'cron', by = null } = {}) {
   const started = Date.now();
   const stamp = new Date(started).toISOString().replace(/[:.]/g, '-');
   const file = path.join(c.dir, `${db.databaseName}-${stamp}.archive.gz`);
-  const doc = await BackupRun.create({ kind: 'backup', trigger, by, host: os.hostname(), database: db.databaseName, startedAt: new Date(started), file: path.basename(file) });
+  const doc = await BackupRun.create({
+    kind: 'backup',
+    trigger,
+    by,
+    host: os.hostname(),
+    database: db.databaseName,
+    startedAt: new Date(started),
+    file: path.basename(file),
+  });
 
   const done = (async () => {
     try {
       doc.collections = await collectionCounts(db);
-      await withUriConfig(c.dir, (cfg) => run(c.mongodump, [cfg, `--db=${db.databaseName}`, `--archive=${file}`, '--gzip']));
+      await withUriConfig(c.dir, (cfg) =>
+        run(c.mongodump, [cfg, `--db=${db.databaseName}`, `--archive=${file}`, '--gzip'])
+      );
       doc.sizeBytes = (await fs.promises.stat(file)).size;
       doc.sha256 = await sha256(file);
       if (c.offsiteCmd) {
@@ -159,27 +204,61 @@ async function startBackup({ trigger = 'cron', by = null } = {}) {
 async function startDrill({ backupId = null, trigger = 'cron', by = null } = {}) {
   const c = requireReady();
   await assertIdle('drill');
-  const query = { kind: 'backup', status: 'succeeded', deletedAt: null, ...(backupId ? { _id: backupId } : {}) };
+  const query = {
+    kind: 'backup',
+    status: 'succeeded',
+    deletedAt: null,
+    ...(backupId ? { _id: backupId } : {}),
+  };
   const backup = await BackupRun.findOne(query).sort({ startedAt: -1 });
   if (!backup) throw Object.assign(new Error('No restorable backup found.'), { status: 404 });
   const source = backup.database;
   const target = `${source}${DRILL_SUFFIX}`;
-  if (target === mongoose.connection.db.databaseName || !target.endsWith(DRILL_SUFFIX)) throw new Error('Refusing to restore into the live database.');
+  if (target === mongoose.connection.db.databaseName || !target.endsWith(DRILL_SUFFIX))
+    throw new Error('Refusing to restore into the live database.');
 
   const started = Date.now();
-  const doc = await BackupRun.create({ kind: 'drill', trigger, by, host: os.hostname(), database: source, startedAt: new Date(started), backupId: backup._id, restoredDb: target, file: backup.file });
+  const doc = await BackupRun.create({
+    kind: 'drill',
+    trigger,
+    by,
+    host: os.hostname(),
+    database: source,
+    startedAt: new Date(started),
+    backupId: backup._id,
+    restoredDb: target,
+    file: backup.file,
+  });
   const scratch = mongoose.connection.client.db(target);
 
   const done = (async () => {
     try {
       const file = path.join(c.dir, backup.file);
-      if ((await sha256(file)) !== backup.sha256) throw new Error('Checksum mismatch: the backup file changed or is corrupt.');
+      if ((await sha256(file)) !== backup.sha256)
+        throw new Error('Checksum mismatch: the backup file changed or is corrupt.');
       await scratch.dropDatabase();
       await withUriConfig(c.dir, (cfg) =>
-        run(c.mongorestore, [cfg, `--archive=${file}`, '--gzip', `--nsInclude=${source}.*`, `--nsFrom=${source}.*`, `--nsTo=${target}.*`, '--drop', '--stopOnError'])
+        run(c.mongorestore, [
+          cfg,
+          `--archive=${file}`,
+          '--gzip',
+          `--nsInclude=${source}.*`,
+          `--nsFrom=${source}.*`,
+          `--nsTo=${target}.*`,
+          '--drop',
+          '--stopOnError',
+        ])
       );
       doc.mismatches = compareCounts(backup.collections || [], await collectionCounts(scratch));
-      await finish(doc, started, doc.mismatches.length ? new Error(`${doc.mismatches.length} collection(s) restored with a different document count`) : null);
+      await finish(
+        doc,
+        started,
+        doc.mismatches.length
+          ? new Error(
+              `${doc.mismatches.length} collection(s) restored with a different document count`
+            )
+          : null
+      );
     } catch (e) {
       await finish(doc, started, e);
     } finally {
@@ -194,7 +273,11 @@ async function startDrill({ backupId = null, trigger = 'cron', by = null } = {})
 async function prune() {
   const c = config();
   if (!c.dir) return 0;
-  const keep = await BackupRun.find({ kind: 'backup', status: 'succeeded', deletedAt: null }).sort({ startedAt: -1 }).limit(KEEP_AT_LEAST).select('_id').lean();
+  const keep = await BackupRun.find({ kind: 'backup', status: 'succeeded', deletedAt: null })
+    .sort({ startedAt: -1 })
+    .limit(KEEP_AT_LEAST)
+    .select('_id')
+    .lean();
   const old = await BackupRun.find({
     kind: 'backup',
     deletedAt: null,
@@ -220,9 +303,14 @@ async function toolsVersion() {
       const p = spawn(bin, ['--version'], { windowsHide: true });
       p.stdout.on('data', (d) => (out += d));
       p.on('error', () => resolve(null));
-      p.on('close', (code) => resolve(code === 0 ? (out.match(/version:\s*(\S+)/) || [])[1] || 'installed' : null));
+      p.on('close', (code) =>
+        resolve(code === 0 ? (out.match(/version:\s*(\S+)/) || [])[1] || 'installed' : null)
+      );
     });
-  const [mongodump, mongorestore] = await Promise.all([version(c.mongodump), version(c.mongorestore)]);
+  const [mongodump, mongorestore] = await Promise.all([
+    version(c.mongodump),
+    version(c.mongorestore),
+  ]);
   toolsCache = { at: Date.now(), value: { mongodump, mongorestore } };
   return toolsCache.value;
 }
@@ -236,4 +324,15 @@ async function diskFree(dir) {
   }
 }
 
-module.exports = { config, startBackup, startDrill, prune, toolsVersion, diskFree, compareCounts, offsiteArgs, redact, DRILL_SUFFIX };
+module.exports = {
+  config,
+  startBackup,
+  startDrill,
+  prune,
+  toolsVersion,
+  diskFree,
+  compareCounts,
+  offsiteArgs,
+  redact,
+  DRILL_SUFFIX,
+};

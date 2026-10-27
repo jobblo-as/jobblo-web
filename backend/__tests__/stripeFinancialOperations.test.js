@@ -141,7 +141,8 @@ describe('durable Stripe refund operations', () => {
           currency: 'nok',
           livemode: false,
         }),
-        listReversals: jest.fn()
+        listReversals: jest
+          .fn()
           .mockResolvedValueOnce({ data: [], has_more: false })
           .mockResolvedValue({ data: [reversal], has_more: false }),
         createReversal: jest.fn().mockResolvedValue(reversal),
@@ -186,16 +187,18 @@ describe('durable Stripe refund operations', () => {
         createReversal: jest.fn(),
       },
     };
-    await expect(executeTransferReversal(stripe, {
-      operationKey: 'dispute:one:reverse:1000',
-      orderId: 'order_1',
-      stripeMode: 'test',
-      paymentIntentId: 'pi_test_1',
-      chargeId: 'ch_test_1',
-      transferId: 'tr_test_1',
-      amount: 1000,
-      currency: 'NOK',
-    })).rejects.toMatchObject({ code: 'STRIPE_REVERSAL_EXCEEDS_REMAINING' });
+    await expect(
+      executeTransferReversal(stripe, {
+        operationKey: 'dispute:one:reverse:1000',
+        orderId: 'order_1',
+        stripeMode: 'test',
+        paymentIntentId: 'pi_test_1',
+        chargeId: 'ch_test_1',
+        transferId: 'tr_test_1',
+        amount: 1000,
+        currency: 'NOK',
+      })
+    ).rejects.toMatchObject({ code: 'STRIPE_REVERSAL_EXCEEDS_REMAINING' });
     expect(stripe.transfers.createReversal).not.toHaveBeenCalled();
   });
 });

@@ -14,19 +14,37 @@ import { ago, dateTime } from '@/lib/devFormat';
 /* Small building blocks every developer page is assembled from. All are thin
  * wrappers over the shadcn primitives in ./ui so the whole dashboard reads as one. */
 
-export function PageHeader({ title, description, actions }: { title: string; description?: string; actions?: ReactNode }) {
+export function PageHeader({
+  title,
+  description,
+  actions,
+}: {
+  title: string;
+  description?: string;
+  actions?: ReactNode;
+}) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">{title}</h1>
         {description && <p className="mt-1 text-sm text-muted-foreground">{description}</p>}
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2 sm:shrink-0 sm:justify-end">{actions}</div>}
+      {actions && (
+        <div className="flex flex-wrap items-center gap-2 sm:shrink-0 sm:justify-end">
+          {actions}
+        </div>
+      )}
     </div>
   );
 }
 
-export function RangeSelect({ value, onChange }: { value: string; onChange: (v: RangeKey) => void }) {
+export function RangeSelect({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: RangeKey) => void;
+}) {
   return (
     <Select value={value} onValueChange={(v) => onChange(v as RangeKey)}>
       <SelectTrigger size="sm" className="w-40 bg-card" aria-label="Time range">
@@ -86,14 +104,18 @@ export function StatCard({
   return (
     <Card size="sm" className="gap-2">
       <CardHeader className="flex items-center justify-between gap-2">
-        <CardDescription className="text-xs font-medium tracking-wide uppercase">{label}</CardDescription>
+        <CardDescription className="text-xs font-medium tracking-wide uppercase">
+          {label}
+        </CardDescription>
         {icon && <span className={cn('[&_svg]:size-4', TONE_TEXT[tone])}>{icon}</span>}
       </CardHeader>
       <CardContent>
         {loading ? (
           <Skeleton className="h-7 w-24" />
         ) : (
-          <div className="text-2xl font-semibold tracking-tight tabular-nums text-foreground">{value}</div>
+          <div className="text-2xl font-semibold tracking-tight tabular-nums text-foreground">
+            {value}
+          </div>
         )}
         {hint && <div className="mt-1 text-xs text-muted-foreground">{hint}</div>}
       </CardContent>
@@ -198,7 +220,15 @@ const STATUS_TONE: Record<string, Tone> = {
 };
 const STATUS_LABEL: Record<string, string> = { open: 'New' };
 
-export function StatusBadge({ status: raw, label, tone }: { status: string | null | undefined; label?: string; tone?: Tone }) {
+export function StatusBadge({
+  status: raw,
+  label,
+  tone,
+}: {
+  status: string | null | undefined;
+  label?: string;
+  tone?: Tone;
+}) {
   // Records from older code paths can miss a status field; never crash a page over it.
   const status = raw == null || raw === '' ? 'unknown' : String(raw);
   const t = tone || STATUS_TONE[status] || 'neutral';
@@ -220,20 +250,37 @@ const METHOD_TONE: Record<string, string> = {
 export function MethodBadge({ method }: { method?: string | null }) {
   const m = (method || 'other').toUpperCase();
   return (
-    <Badge variant="outline" className={cn('w-14 justify-center font-mono text-[10px]', METHOD_TONE[m] || TONE_SOFT.neutral)}>
+    <Badge
+      variant="outline"
+      className={cn(
+        'w-14 justify-center font-mono text-[10px]',
+        METHOD_TONE[m] || TONE_SOFT.neutral
+      )}
+    >
       {m}
     </Badge>
   );
 }
 
-export function Meter({ value, label, detail }: { value: number | null | undefined; label: string; detail?: ReactNode }) {
+export function Meter({
+  value,
+  label,
+  detail,
+}: {
+  value: number | null | undefined;
+  label: string;
+  detail?: ReactNode;
+}) {
   const v = value ?? 0;
-  const color = v >= 90 ? '[&>div]:bg-red-500' : v >= 75 ? '[&>div]:bg-amber-500' : '[&>div]:bg-primary';
+  const color =
+    v >= 90 ? '[&>div]:bg-red-500' : v >= 75 ? '[&>div]:bg-amber-500' : '[&>div]:bg-primary';
   return (
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between text-xs">
         <span className="font-medium text-foreground">{label}</span>
-        <span className="tabular-nums text-muted-foreground">{value === null || value === undefined ? 'n/a' : `${v}%`}</span>
+        <span className="tabular-nums text-muted-foreground">
+          {value === null || value === undefined ? 'n/a' : `${v}%`}
+        </span>
       </div>
       <Progress value={v} className={cn('h-1.5 bg-muted', color)} />
       {detail && <div className="text-xs text-muted-foreground">{detail}</div>}
@@ -255,18 +302,40 @@ export function KeyValue({ items }: { items: [string, ReactNode][] }) {
 }
 
 export function Mono({ children, className }: { children: ReactNode; className?: string }) {
-  return <code className={cn('rounded-sm bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground', className)}>{children}</code>;
+  return (
+    <code
+      className={cn(
+        'rounded-sm bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground',
+        className
+      )}
+    >
+      {children}
+    </code>
+  );
 }
 
 export function JsonView({ value, className }: { value: unknown; className?: string }) {
   return (
-    <pre className={cn('max-h-80 overflow-auto rounded-md border bg-muted/40 p-3 font-mono text-xs leading-relaxed text-foreground', className)}>
+    <pre
+      className={cn(
+        'max-h-80 overflow-auto rounded-md border bg-muted/40 p-3 font-mono text-xs leading-relaxed text-foreground',
+        className
+      )}
+    >
       {JSON.stringify(value, null, 2)}
     </pre>
   );
 }
 
-export function EmptyState({ title, description, icon }: { title: string; description?: string; icon?: ReactNode }) {
+export function EmptyState({
+  title,
+  description,
+  icon,
+}: {
+  title: string;
+  description?: string;
+  icon?: ReactNode;
+}) {
   return (
     <div className="flex flex-col items-center justify-center gap-2 px-4 py-10 text-center">
       <div className="flex size-9 items-center justify-center rounded-md border bg-muted/50 text-muted-foreground [&_svg]:size-4">
@@ -305,8 +374,15 @@ export function ErrorState({ error, onRetry }: { error: unknown; onRetry?: () =>
 export function LiveDot({ on = true }: { on?: boolean }) {
   return (
     <span className="relative flex size-2">
-      {on && <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" />}
-      <span className={cn('relative inline-flex size-2 rounded-full', on ? 'bg-emerald-500' : 'bg-muted-foreground/40')} />
+      {on && (
+        <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+      )}
+      <span
+        className={cn(
+          'relative inline-flex size-2 rounded-full',
+          on ? 'bg-emerald-500' : 'bg-muted-foreground/40'
+        )}
+      />
     </span>
   );
 }
@@ -319,7 +395,13 @@ const SEVERITY_DOT: Record<string, string> = {
 };
 
 /** Detected problems (stuck / inconsistent state), most severe first. */
-export function IssueList({ issues, empty = 'No issues detected.' }: { issues: Issue[]; empty?: string }) {
+export function IssueList({
+  issues,
+  empty = 'No issues detected.',
+}: {
+  issues: Issue[];
+  empty?: string;
+}) {
   if (!issues.length)
     return (
       <div className="flex items-center gap-2 rounded-md border border-emerald-200/70 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
@@ -358,15 +440,24 @@ export function Timeline({ events, reverse }: { events: TimelineEvent[]; reverse
     <ol className="relative space-y-3 border-l pl-5">
       {list.map((e, i) => (
         <li key={i} className="relative">
-          <span className={cn('absolute top-1.5 -left-[25px] size-2.5 rounded-full ring-4', TL_DOT[e.tone || 'neutral'])} />
+          <span
+            className={cn(
+              'absolute top-1.5 -left-[25px] size-2.5 rounded-full ring-4',
+              TL_DOT[e.tone || 'neutral']
+            )}
+          />
           <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-            <span className="text-sm font-medium text-foreground first-letter:uppercase">{e.title}</span>
+            <span className="text-sm font-medium text-foreground first-letter:uppercase">
+              {e.title}
+            </span>
             <span className="text-xs text-muted-foreground" title={dateTime(e.at)}>
               {ago(e.at)}
             </span>
           </div>
           <div className="flex flex-wrap gap-x-2 text-xs text-muted-foreground">
-            <span className="rounded-sm bg-muted px-1 font-mono text-[10px] uppercase">{e.source}</span>
+            <span className="rounded-sm bg-muted px-1 font-mono text-[10px] uppercase">
+              {e.source}
+            </span>
             {e.by && <span>by {e.by}</span>}
             {e.detail && <span className="min-w-0 break-all">{e.detail}</span>}
           </div>
@@ -377,7 +468,15 @@ export function Timeline({ events, reverse }: { events: TimelineEvent[]; reverse
 }
 
 /** A {key: count} map as labelled horizontal bars. */
-export function CountBars({ counts, onSelect, selected }: { counts: Record<string, number>; onSelect?: (k: string) => void; selected?: string }) {
+export function CountBars({
+  counts,
+  onSelect,
+  selected,
+}: {
+  counts: Record<string, number>;
+  onSelect?: (k: string) => void;
+  selected?: string;
+}) {
   const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
   const max = Math.max(1, ...entries.map(([, n]) => n));
   if (!entries.length) return <p className="text-sm text-muted-foreground">No data.</p>;
@@ -389,11 +488,18 @@ export function CountBars({ counts, onSelect, selected }: { counts: Record<strin
             type="button"
             disabled={!onSelect}
             onClick={() => onSelect?.(selected === k ? '' : k)}
-            className={cn('grid w-full grid-cols-[minmax(0,9rem)_1fr_auto] items-center gap-3 rounded-sm px-1 py-0.5 text-left text-xs', onSelect && 'hover:bg-muted', selected === k && 'bg-accent')}
+            className={cn(
+              'grid w-full grid-cols-[minmax(0,9rem)_1fr_auto] items-center gap-3 rounded-sm px-1 py-0.5 text-left text-xs',
+              onSelect && 'hover:bg-muted',
+              selected === k && 'bg-accent'
+            )}
           >
             <span className="truncate text-foreground">{k.replace(/_/g, ' ')}</span>
             <span className="h-1.5 overflow-hidden rounded-full bg-muted">
-              <span className="block h-full rounded-full bg-primary/70" style={{ width: `${(n / max) * 100}%` }} />
+              <span
+                className="block h-full rounded-full bg-primary/70"
+                style={{ width: `${(n / max) * 100}%` }}
+              />
             </span>
             <span className="tabular-nums text-muted-foreground">{n.toLocaleString()}</span>
           </button>

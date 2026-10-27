@@ -20,7 +20,9 @@ exports.openDisputeByUser = async (req, res) => {
     const { reasonCategory, title, description } = req.body;
 
     if (!reasonCategory || !title?.trim() || !description?.trim()) {
-      return res.status(400).json({ success: false, message: 'Kategori, tittel og beskrivelse er påkrevd.' });
+      return res
+        .status(400)
+        .json({ success: false, message: 'Kategori, tittel og beskrivelse er påkrevd.' });
     }
 
     const order = await Order.findById(orderId);
@@ -70,8 +72,10 @@ exports.getDisputeByOrder = async (req, res) => {
     const order = await Order.findById(orderId).select('customerId providerId').lean();
     if (!order) return res.status(404).json({ success: false, message: 'Kontrakt ikke funnet.' });
 
-    const isParticipant = String(order.customerId) === String(userId) || String(order.providerId) === String(userId);
-    if (!isParticipant) return res.status(403).json({ success: false, message: 'Ikke autorisert.' });
+    const isParticipant =
+      String(order.customerId) === String(userId) || String(order.providerId) === String(userId);
+    if (!isParticipant)
+      return res.status(403).json({ success: false, message: 'Ikke autorisert.' });
 
     // The projection that used to sit here (`.select('-messages.isInternal')`)
     // stripped the very flag the filter below tests. With the field gone,
@@ -108,7 +112,8 @@ exports.addUserDisputeMessage = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(disputeId)) {
       return res.status(400).json({ success: false, message: 'Ugyldig tvist-ID.' });
     }
-    if (!message?.trim()) return res.status(400).json({ success: false, message: 'Melding er påkrevd.' });
+    if (!message?.trim())
+      return res.status(400).json({ success: false, message: 'Melding er påkrevd.' });
 
     const dispute = await Dispute.findById(disputeId).populate('orderId', 'customerId providerId');
     if (!dispute) return res.status(404).json({ success: false, message: 'Tvist ikke funnet.' });
@@ -116,9 +121,16 @@ exports.addUserDisputeMessage = async (req, res) => {
     const order = dispute.orderId;
     const isCustomer = String(order.customerId) === String(userId);
     const isProvider = String(order.providerId) === String(userId);
-    if (!isCustomer && !isProvider) return res.status(403).json({ success: false, message: 'Ikke autorisert.' });
+    if (!isCustomer && !isProvider)
+      return res.status(403).json({ success: false, message: 'Ikke autorisert.' });
 
-    const ACTIVE = ['open','under_review','waiting_for_customer','waiting_for_provider','evidence_submitted'];
+    const ACTIVE = [
+      'open',
+      'under_review',
+      'waiting_for_customer',
+      'waiting_for_provider',
+      'evidence_submitted',
+    ];
     if (!ACTIVE.includes(dispute.status)) {
       return res.status(400).json({ success: false, message: 'Tvisten er avsluttet.' });
     }
@@ -132,13 +144,21 @@ exports.addUserDisputeMessage = async (req, res) => {
       { _id: dispute._id, status: dispute.status },
       {
         $push: {
-          messages: { senderId: userId, senderRole: isCustomer ? 'customer' : 'provider', message: message.trim(), isInternal: false },
+          messages: {
+            senderId: userId,
+            senderRole: isCustomer ? 'customer' : 'provider',
+            message: message.trim(),
+            isInternal: false,
+          },
         },
         ...(answersRequest ? { $set: { status: 'evidence_submitted' } } : {}),
       },
       { runValidators: true }
     );
-    if (!updated) return res.status(409).json({ success: false, message: 'Tvisten ble endret samtidig. Prøv igjen.' });
+    if (!updated)
+      return res
+        .status(409)
+        .json({ success: false, message: 'Tvisten ble endret samtidig. Prøv igjen.' });
     return res.json({ success: true, message: 'Melding sendt.' });
   } catch {
     return res.status(500).json({ success: false, message: 'Serverfeil.' });

@@ -29,7 +29,12 @@ function diskUsage() {
     const s = fs.statfsSync(process.platform === 'win32' ? process.cwd().slice(0, 3) : '/');
     const total = s.blocks * s.bsize;
     const free = s.bavail * s.bsize;
-    return { total, free, used: total - free, percent: total ? Math.round(((total - free) / total) * 100) : null };
+    return {
+      total,
+      free,
+      used: total - free,
+      percent: total ? Math.round(((total - free) / total) * 100) : null,
+    };
   } catch {
     return null;
   }

@@ -23,7 +23,10 @@ exports.getFavorites = async (req, res) => {
       .limit(limit)
       // A favourite must not become a way to read a listing once it leaves the public
       // set (draft, awaiting_payment, completed...): only public ones, or the caller's own.
-      .populate({ path: 'service', match: { $or: [{ status: { $in: PUBLIC_SERVICE_STATUSES } }, { userId }] } })
+      .populate({
+        path: 'service',
+        match: { $or: [{ status: { $in: PUBLIC_SERVICE_STATUSES } }, { userId }] },
+      })
       .populate('user', 'name avatarUrl');
     const visible = favorites.filter((f) => f.service); // clients read fav.service._id
 

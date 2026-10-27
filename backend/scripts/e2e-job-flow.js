@@ -31,7 +31,8 @@ const head = (msg) => console.log(`\n[${++step}] ${msg}`);
 
 function fail(what, detail) {
   console.error(`\n  ✗ FAILED at step ${step}: ${what}`);
-  if (detail !== undefined) console.error('    ', typeof detail === 'string' ? detail : JSON.stringify(detail, null, 2));
+  if (detail !== undefined)
+    console.error('    ', typeof detail === 'string' ? detail : JSON.stringify(detail, null, 2));
   process.exit(1);
 }
 
@@ -122,7 +123,8 @@ async function register(role, label) {
       account_number: 'NO9386011117947',
     },
   });
-  if (!connect.payouts_enabled) fail('test Connect account is not payouts-enabled', connect.requirements);
+  if (!connect.payouts_enabled)
+    fail('test Connect account is not payouts-enabled', connect.requirements);
 
   const mongoose = require('mongoose');
   await mongoose.connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 15000 });
@@ -142,7 +144,12 @@ async function register(role, label) {
       description: 'Automated end-to-end test of the SafePay money path.',
       price: 2500,
       categories: ['Maling'],
-      location: { type: 'Point', coordinates: [10.7461, 59.9127], address: 'Testveien 1', city: 'Oslo' },
+      location: {
+        type: 'Point',
+        coordinates: [10.7461, 59.9127],
+        address: 'Testveien 1',
+        city: 'Oslo',
+      },
       duration: { value: 2, unit: 'hours' },
       equipment: 'utstyrfri',
       tags: [],
@@ -170,9 +177,13 @@ async function register(role, label) {
   log(`orderId=${orderId}`);
 
   head('Checkout details reflect the 3 % fee');
-  const details = await api('GET', `/api/safepay-checkout/details/${orderId}`, { token: customer.token });
+  const details = await api('GET', `/api/safepay-checkout/details/${orderId}`, {
+    token: customer.token,
+  });
   const calc = details.calculation || {};
-  log(`base=${calc.basePrice}  fee=${calc.fee}  total=${calc.total}  providerNet=${calc.providerNet}`);
+  log(
+    `base=${calc.basePrice}  fee=${calc.fee}  total=${calc.total}  providerNet=${calc.providerNet}`
+  );
   if (calc.fee !== Math.round(calc.basePrice * 0.03)) fail('fee is not 3 % of base', calc);
   if (calc.total !== calc.basePrice + calc.fee) fail('total != base + fee', calc);
   if (calc.providerNet !== calc.basePrice - calc.fee) fail('providerNet != base - fee', calc);
@@ -198,30 +209,63 @@ async function register(role, label) {
   // A Checkout Session cannot be completed over the API, and the webhook no longer trusts the
   // event body: it re-reads the session from Stripe before marking anything paid. So a
   // correctly signed but made-up "completed" event must leave the order unpaid.
-  const webhookSecretVar = process.env.STRIPE_TEST_WEBHOOK_SECRET ? 'STRIPE_TEST_WEBHOOK_SECRET' : 'STRIPE_WEBHOOK_SECRET';
+  const webhookSecretVar = process.env.STRIPE_TEST_WEBHOOK_SECRET
+    ? 'STRIPE_TEST_WEBHOOK_SECRET'
+    : 'STRIPE_WEBHOOK_SECRET';
   const webhookSecret = process.env[webhookSecretVar];
-  if (!webhookSecret) fail('Neither STRIPE_TEST_WEBHOOK_SECRET nor STRIPE_WEBHOOK_SECRET is set', 'Use the secret the server verifies with (for `stripe listen`, the one it prints).');
+  if (!webhookSecret)
+    fail(
+      'Neither STRIPE_TEST_WEBHOOK_SECRET nor STRIPE_WEBHOOK_SECRET is set',
+      'Use the secret the server verifies with (for `stripe listen`, the one it prints).'
+    );
   const forged = JSON.stringify({
     id: `evt_e2e_forged_${stamp}`,
     object: 'event',
     livemode: false, // the webhook refuses an event whose mode differs from its signing secret's
     type: 'checkout.session.completed',
-    data: { object: { id: sessionId, object: 'checkout.session', status: 'complete', payment_status: 'paid', metadata: { orderId: String(orderId), userId: String(customer.id), type: 'safepay_payment' } } },
+    data: {
+      object: {
+        id: sessionId,
+        object: 'checkout.session',
+        status: 'complete',
+        payment_status: 'paid',
+        metadata: {
+          orderId: String(orderId),
+          userId: String(customer.id),
+          type: 'safepay_payment',
+        },
+      },
+    },
   });
   const forgedRes = await fetch(`${API}/api/stripe/webhook`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'stripe-signature': stripe.webhooks.generateTestHeaderString({ payload: forged, secret: webhookSecret }) },
+    headers: {
+      'Content-Type': 'application/json',
+      'stripe-signature': stripe.webhooks.generateTestHeaderString({
+        payload: forged,
+        secret: webhookSecret,
+      }),
+    },
     body: forged,
   });
-  if (forgedRes.status !== 200) fail(`forged webhook → ${forgedRes.status} (signed with ${webhookSecretVar})`, await forgedRes.text());
+  if (forgedRes.status !== 200)
+    fail(
+      `forged webhook → ${forgedRes.status} (signed with ${webhookSecretVar})`,
+      await forgedRes.text()
+    );
   const afterForged = await api('GET', `/api/orders/${orderId}`, { token: customer.token });
-  if (afterForged.paymentStatus === 'paid' || afterForged.status !== 'awaiting_payment') fail('a forged event marked the order paid', afterForged);
+  if (afterForged.paymentStatus === 'paid' || afterForged.status !== 'awaiting_payment')
+    fail('a forged event marked the order paid', afterForged);
   log(`refused: order still ${afterForged.status}/${afterForged.paymentStatus}`);
 
   head('Pay the Checkout session in a browser with a test card');
   // Needs Playwright (frontend/node_modules) and `stripe listen --forward-to <API>/api/stripe/webhook`
   // running with the same signing secret, so Stripe's real checkout.session.completed arrives.
-  const { chromium } = require(require.resolve('@playwright/test', { paths: [require('path').join(__dirname, '../../frontend')] }));
+  const { chromium } = require(
+    require.resolve('@playwright/test', {
+      paths: [require('path').join(__dirname, '../../frontend')],
+    })
+  );
   const browser = await chromium.launch();
   try {
     const page = await browser.newPage();
@@ -238,7 +282,10 @@ async function register(role, label) {
     await page.locator('#cardCvc').fill('123');
     await fillIf('#billingName', 'E2E Customer');
     await fillIf('#billingPostalCode', '0150');
-    await page.locator('[data-testid="hosted-payment-submit-button"], button[type="submit"]').first().click();
+    await page
+      .locator('[data-testid="hosted-payment-submit-button"], button[type="submit"]')
+      .first()
+      .click();
     // Ask Stripe rather than waiting for the redirect: the success URL is the web app, which
     // does not have to be running for this script.
     let cs;
@@ -250,7 +297,10 @@ async function register(role, label) {
     if (cs.payment_status !== 'paid') {
       const shot = require('path').join(require('os').tmpdir(), `e2e-checkout-${stamp}.png`);
       await page.screenshot({ path: shot, fullPage: true });
-      fail(`Checkout session not paid at Stripe (status ${cs.status}/${cs.payment_status})`, `screenshot: ${shot}`);
+      fail(
+        `Checkout session not paid at Stripe (status ${cs.status}/${cs.payment_status})`,
+        `screenshot: ${shot}`
+      );
     }
     log(`paid with 4242 4242 4242 4242 — Stripe: session ${cs.status}/${cs.payment_status}`);
   } finally {
@@ -266,7 +316,12 @@ async function register(role, label) {
   }
   log(`status=${paid.status}  paymentStatus=${paid.paymentStatus}`);
   if (!['paid', 'in_progress'].includes(paid.status)) {
-    fail('order did not reach paid within 2 minutes of paying', 'Is `stripe listen --forward-to ' + API + '/api/stripe/webhook` running, and does the server use the secret it printed?');
+    fail(
+      'order did not reach paid within 2 minutes of paying',
+      'Is `stripe listen --forward-to ' +
+        API +
+        '/api/stripe/webhook` running, and does the server use the secret it printed?'
+    );
   }
 
   head('Provider starts the job');
@@ -298,13 +353,20 @@ async function register(role, label) {
 
   const payout = await require('../models/Payout').findOne({ orderId });
   if (!payout) fail('no Payout record was written', null);
-  log(`payout status=${payout.status}  net=${payout.netProviderAmount} kr  transfer=${payout.stripeTransferId}`);
+  log(
+    `payout status=${payout.status}  net=${payout.netProviderAmount} kr  transfer=${payout.stripeTransferId}`
+  );
   if (payout.status !== 'transferred') fail('payout never reached "transferred"', payout.status);
 
   const transfer = await stripe.transfers.retrieve(payout.stripeTransferId);
-  log(`stripe transfer ${transfer.id}: ${transfer.amount / 100} ${transfer.currency} → ${transfer.destination}`);
+  log(
+    `stripe transfer ${transfer.id}: ${transfer.amount / 100} ${transfer.currency} → ${transfer.destination}`
+  );
   if (transfer.amount !== calc.providerNet * 100) {
-    fail('transferred amount != providerNet', { transferred: transfer.amount / 100, expected: calc.providerNet });
+    fail('transferred amount != providerNet', {
+      transferred: transfer.amount / 100,
+      expected: calc.providerNet,
+    });
   }
 
   console.log(`\n${'─'.repeat(60)}\nWalked every step without an unexpected status.\n`);

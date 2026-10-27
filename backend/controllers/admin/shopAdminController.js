@@ -1,5 +1,10 @@
 const JobbloShop = require('../../models/JobbloShop');
-const { sendSuccess, sendError, asyncHandler, buildPagination } = require('../../utils/apiResponse');
+const {
+  sendSuccess,
+  sendError,
+  asyncHandler,
+  buildPagination,
+} = require('../../utils/apiResponse');
 const { parsePagination } = require('../../utils/pagination');
 const { logActivity } = require('../../services/admin/activityService');
 const { queryString } = require('../../utils/devQuery');
@@ -54,7 +59,14 @@ const updateShopItem = asyncHandler(async (req, res) => {
 
   const item = await JobbloShop.findByIdAndUpdate(
     id,
-    { $set: { ...(title !== undefined && { title }), ...(description !== undefined && { description }), ...(coins !== undefined && { coins }), ...(category !== undefined && { category }) } },
+    {
+      $set: {
+        ...(title !== undefined && { title }),
+        ...(description !== undefined && { description }),
+        ...(coins !== undefined && { coins }),
+        ...(category !== undefined && { category }),
+      },
+    },
     { new: true, runValidators: true }
   );
 

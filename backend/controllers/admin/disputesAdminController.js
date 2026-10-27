@@ -8,18 +8,39 @@ const Chat = require('../../models/ChatMessage');
 const Notification = require('../../models/Notification');
 const User = require('../../models/User');
 const { logApplicationError } = require('../../utils/errorLogger');
-const { asyncHandler, sendSuccess, sendError, buildPagination } = require('../../utils/apiResponse');
+const {
+  asyncHandler,
+  sendSuccess,
+  sendError,
+  buildPagination,
+} = require('../../utils/apiResponse');
 const { parsePagination, parseObjectId, parseSort, parseDate } = require('../../utils/pagination');
 const { logActivity } = require('../../services/admin/activityService');
 const { notify } = require('../../services/notifications');
 const { getStripeForMode } = require('../../config/stripe');
-const { executeRefund, executeTransferReversal } = require('../../services/stripe/financialOperations');
-const { DISPUTE_ELIGIBLE_STATUSES, hasUnresolvedPayout, UNRESOLVED_PAYOUT_MESSAGE } = require('../../services/admin/safePayStateService');
+const {
+  executeRefund,
+  executeTransferReversal,
+} = require('../../services/stripe/financialOperations');
+const {
+  DISPUTE_ELIGIBLE_STATUSES,
+  hasUnresolvedPayout,
+  UNRESOLVED_PAYOUT_MESSAGE,
+} = require('../../services/admin/safePayStateService');
 
 const SORT_FIELDS = ['createdAt', 'updatedAt', 'openedAt'];
 /** A `pending` resolution idle this long is no longer being run by a live request. */
 const PENDING_RESOLUTION_RETRY_MS = 10 * 60 * 1000;
-const VALID_STATUSES = ['open','under_review','waiting_for_customer','waiting_for_provider','evidence_submitted','resolved','closed','cancelled'];
+const VALID_STATUSES = [
+  'open',
+  'under_review',
+  'waiting_for_customer',
+  'waiting_for_provider',
+  'evidence_submitted',
+  'resolved',
+  'closed',
+  'cancelled',
+];
 const VALID_PRIORITIES = ['low', 'medium', 'high', 'critical'];
 
 function stripeId(value) {
@@ -48,7 +69,8 @@ async function verifyDisputePayment(stripe, order, payment) {
     String(session.metadata?.orderId) !== String(order._id) ||
     String(session.metadata?.userId) !== String(order.customerId) ||
     session.amount_total !== expectedAmount ||
-    String(session.currency).toLowerCase() !== String(order.checkoutCurrency || 'nok').toLowerCase() ||
+    String(session.currency).toLowerCase() !==
+      String(order.checkoutCurrency || 'nok').toLowerCase() ||
     intent.id !== payment.stripePaymentIntentId ||
     intent.status !== 'succeeded' ||
     intent.amount_received !== expectedAmount ||
@@ -125,15 +147,22 @@ const getDisputesSummary = asyncHandler(async (req, res) => {
   ]);
 
   const byStatus = {};
-  statusCounts.forEach((s) => { byStatus[s._id] = s.count; });
+  statusCounts.forEach((s) => {
+    byStatus[s._id] = s.count;
+  });
   const byPriority = {};
-  priorityCounts.forEach((p) => { byPriority[p._id] = p.count; });
+  priorityCounts.forEach((p) => {
+    byPriority[p._id] = p.count;
+  });
 
   const resolvedThisMonth = await Dispute.countDocuments({
     status: 'resolved',
     updatedAt: { $gte: startOfMonth },
   });
-  const unassigned = await Dispute.countDocuments({ assignedAdminId: null, status: { $in: ['open', 'under_review'] } });
+  const unassigned = await Dispute.countDocuments({
+    assignedAdminId: null,
+    status: { $in: ['open', 'under_review'] },
+  });
 
   return sendSuccess(res, {
     open: byStatus['open'] ?? 0,
@@ -154,7 +183,10 @@ const getDisputeById = asyncHandler(async (req, res) => {
   if (!id) return sendError(res, 'Ugyldig tvist-ID.', 400);
 
   const dispute = await Dispute.findById(id)
-    .populate('orderId', 'status paymentStatus agreedPrice createdAt serviceId customerId providerId')
+    .populate(
+      'orderId',
+      'status paymentStatus agreedPrice createdAt serviceId customerId providerId'
+    )
     .populate('openedBy', 'name email role avatarUrl accountStatus verified')
     .populate('openedAgainst', 'name email role avatarUrl accountStatus verified')
     .populate('serviceId', 'title price status categories')
@@ -186,8 +218,17 @@ const assignDispute = asyncHandler(async (req, res) => {
   const updated = await Dispute.findOneAndUpdate(
     { _id: id, status: dispute.status },
     {
-      $set: { assignedAdminId: req.user._id, status: dispute.status === 'open' ? 'under_review' : dispute.status },
-      $push: { timeline: { action: 'assigned', actorId: req.user._id, note: `Tvist tildelt til ${req.user.name}` } },
+      $set: {
+        assignedAdminId: req.user._id,
+        status: dispute.status === 'open' ? 'under_review' : dispute.status,
+      },
+      $push: {
+        timeline: {
+          action: 'assigned',
+          actorId: req.user._id,
+          note: `Tvist tildelt til ${req.user.name}`,
+        },
+      },
     },
     { new: true, runValidators: true }
   );
@@ -232,7 +273,13 @@ const updateDisputeStatus = asyncHandler(async (req, res) => {
     { _id: id, status: dispute.status }, // CAS: never over a concurrent resolve
     {
       $set: { status },
-      $push: { timeline: { action: `status_changed_to_${status}`, actorId: req.user._id, note: note ?? `Status endret til ${status}` } },
+      $push: {
+        timeline: {
+          action: `status_changed_to_${status}`,
+          actorId: req.user._id,
+          note: note ?? `Status endret til ${status}`,
+        },
+      },
     },
     { new: true, runValidators: true }
   );
@@ -266,8 +313,17 @@ const requestInformation = asyncHandler(async (req, res) => {
     {
       $set: { status: from === 'customer' ? 'waiting_for_customer' : 'waiting_for_provider' },
       $push: {
-        messages: { senderId: req.user._id, senderRole: 'admin', message: message.trim(), isInternal: false },
-        timeline: { action: `information_requested_from_${from}`, actorId: req.user._id, note: `Admin ba om informasjon fra ${from}` },
+        messages: {
+          senderId: req.user._id,
+          senderRole: 'admin',
+          message: message.trim(),
+          isInternal: false,
+        },
+        timeline: {
+          action: `information_requested_from_${from}`,
+          actorId: req.user._id,
+          note: `Admin ba om informasjon fra ${from}`,
+        },
       },
     },
     { new: true, runValidators: true }
@@ -355,14 +411,29 @@ const resolveDispute = asyncHandler(async (req, res) => {
 
   const { outcome, reason, customerAmount, providerAmount } = req.body;
 
-  const VALID_OUTCOMES = ['release_to_provider','full_refund_to_customer','partial_refund','split_payment','cancel_without_payment','no_action'];
+  const VALID_OUTCOMES = [
+    'release_to_provider',
+    'full_refund_to_customer',
+    'partial_refund',
+    'split_payment',
+    'cancel_without_payment',
+    'no_action',
+  ];
   if (!outcome || !VALID_OUTCOMES.includes(outcome)) {
     return sendError(res, `Ugyldig utfall. Tillatte: ${VALID_OUTCOMES.join(', ')}.`, 400);
   }
   if (!reason?.trim()) return sendError(res, 'Begrunnelse er påkrevd.', 400);
   // Amounts become Stripe refunds/transfers: finite numbers, never negative, at most øre precision.
   for (const amount of [customerAmount, providerAmount]) {
-    if (amount != null && !(typeof amount === 'number' && Number.isFinite(amount) && amount >= 0 && Math.round(amount * 100) / 100 === amount)) {
+    if (
+      amount != null &&
+      !(
+        typeof amount === 'number' &&
+        Number.isFinite(amount) &&
+        amount >= 0 &&
+        Math.round(amount * 100) / 100 === amount
+      )
+    ) {
       return sendError(res, 'Beløp må være et tall ≥ 0 med høyst to desimaler.', 400);
     }
   }
@@ -370,7 +441,13 @@ const resolveDispute = asyncHandler(async (req, res) => {
   const dispute = await Dispute.findById(id).populate('orderId');
   if (!dispute) return sendError(res, 'Tvist ikke funnet.', 404);
 
-  const ACTIVE_STATUSES = ['open', 'under_review', 'waiting_for_customer', 'waiting_for_provider', 'evidence_submitted'];
+  const ACTIVE_STATUSES = [
+    'open',
+    'under_review',
+    'waiting_for_customer',
+    'waiting_for_provider',
+    'evidence_submitted',
+  ];
   if (!ACTIVE_STATUSES.includes(dispute.status)) {
     return sendError(res, 'Tvisten er ikke aktiv og kan ikke løses.', 400);
   }
@@ -399,9 +476,10 @@ const resolveDispute = asyncHandler(async (req, res) => {
   const fee = Math.round(securedAmount * 0.03);
   // A full refund returns what the customer actually paid, the 3 % fee included — the
   // same as the start-deadline refund. It used to return the job price only.
-  const paidTotal = Number.isSafeInteger(order.checkoutAmountMinor) && order.checkoutAmountMinor > 0
-    ? order.checkoutAmountMinor / 100
-    : securedAmount + fee;
+  const paidTotal =
+    Number.isSafeInteger(order.checkoutAmountMinor) && order.checkoutAmountMinor > 0
+      ? order.checkoutAmountMinor / 100
+      : securedAmount + fee;
   const cust = customerAmount ?? 0;
   const prov = providerAmount ?? 0;
 
@@ -427,23 +505,37 @@ const resolveDispute = asyncHandler(async (req, res) => {
   const plan = (() => {
     switch (outcome) {
       case 'release_to_provider':
-        return { refund: 0, payout: securedAmount, payoutFee: fee, payment: 'released', order: 'completed' };
+        return {
+          refund: 0,
+          payout: securedAmount,
+          payoutFee: fee,
+          payment: 'released',
+          order: 'completed',
+        };
       case 'full_refund_to_customer':
-        return { refund: paidTotal, payout: 0, payoutFee: 0, payment: 'refunded', order: 'cancelled' };
+        return {
+          refund: paidTotal,
+          payout: 0,
+          payoutFee: 0,
+          payment: 'refunded',
+          order: 'cancelled',
+        };
       case 'partial_refund':
       case 'split_payment':
         return {
           refund: cust,
           payout: prov,
           payoutFee: 0, // `prov` is already the provider's net share
-          payment: cust > 0 && prov === 0 ? 'refunded' : cust > 0 ? 'partially_refunded' : 'completed',
+          payment:
+            cust > 0 && prov === 0 ? 'refunded' : cust > 0 ? 'partially_refunded' : 'completed',
           order: prov > 0 ? 'completed' : 'cancelled',
         };
       case 'cancel_without_payment':
         return {
-          refund: payment && ['completed', 'released', 'disputed'].includes(payment.status)
-            ? paidTotal
-            : 0,
+          refund:
+            payment && ['completed', 'released', 'disputed'].includes(payment.status)
+              ? paidTotal
+              : 0,
           payout: 0,
           payoutFee: 0,
           payment: payment ? 'refunded' : 'pending',
@@ -542,12 +634,16 @@ const resolveDispute = asyncHandler(async (req, res) => {
         ['processing', 'reconciliation_required'].includes(existingPayout?.status) &&
         !existingPayout.stripeTransferId
       ) {
-        const error = new Error('A prior transfer attempt must be reconciled before dispute money can move.');
+        const error = new Error(
+          'A prior transfer attempt must be reconciled before dispute money can move.'
+        );
         error.code = 'PAYOUT_RECONCILIATION_REQUIRED';
         throw error;
       }
       if (!['test', 'live'].includes(order.checkoutMode)) {
-        throw new Error('Payment mode is missing; financial recovery requires manual reconciliation.');
+        throw new Error(
+          'Payment mode is missing; financial recovery requires manual reconciliation.'
+        );
       }
       stripe = await getStripeForMode(order.checkoutMode === 'test');
       if (payment) {
@@ -566,7 +662,9 @@ const resolveDispute = asyncHandler(async (req, res) => {
       // replays the failure. A new resolve starts a new attempt instead.
       refundKey = base;
       for (let n = 2; n <= 20; n += 1) {
-        const op = await StripeFinancialOperation.findOne({ operationKey: refundKey }).select('status').lean();
+        const op = await StripeFinancialOperation.findOne({ operationKey: refundKey })
+          .select('status')
+          .lean();
         if (op?.status !== 'failed') break;
         refundKey = `${base}:attempt${n}`;
       }
@@ -576,7 +674,9 @@ const resolveDispute = asyncHandler(async (req, res) => {
       });
       const remaining = Number(charge.amount) - Number(charge.amount_refunded || 0);
       if (!inFlight && Math.round(plan.refund * 100) > remaining) {
-        const error = new Error(`The refund exceeds what is still refundable on the payment (${remaining / 100} NOK).`);
+        const error = new Error(
+          `The refund exceeds what is still refundable on the payment (${remaining / 100} NOK).`
+        );
         error.code = 'DISPUTE_REFUND_EXCEEDS_REMAINING';
         throw error;
       }
@@ -591,7 +691,9 @@ const resolveDispute = asyncHandler(async (req, res) => {
       ...(refundKey ? { operationKey: { $ne: refundKey } } : {}),
     });
     if (earlierRefund) {
-      const error = new Error('An earlier refund of this dispute must be finished with the same outcome and amounts, or reconciled in Stripe.');
+      const error = new Error(
+        'An earlier refund of this dispute must be finished with the same outcome and amounts, or reconciled in Stripe.'
+      );
       error.code = 'DISPUTE_REFUND_RECONCILIATION_REQUIRED';
       throw error;
     }
@@ -615,7 +717,9 @@ const resolveDispute = asyncHandler(async (req, res) => {
           !Number.isSafeInteger(remainingAmount) ||
           remainingAmount < targetAmount
         ) {
-          throw new Error('Existing provider transfer cannot safely satisfy the approved dispute outcome.');
+          throw new Error(
+            'Existing provider transfer cannot safely satisfy the approved dispute outcome.'
+          );
         }
         stripeTransferId = transfer.id;
         const reversalAmount = remainingAmount - targetAmount;
@@ -713,7 +817,8 @@ const resolveDispute = asyncHandler(async (req, res) => {
       await dispute.save();
       if (refundResult.status !== 'succeeded') {
         return res.status(202).json({
-          message: 'Refunderingen behandles fortsatt av Stripe. Tvisten forblir åpen til betalingen er bekreftet.',
+          message:
+            'Refunderingen behandles fortsatt av Stripe. Tvisten forblir åpen til betalingen er bekreftet.',
           code: 'refund_pending',
           stripeRefundId,
           stripeRefundStatus,
@@ -741,9 +846,10 @@ const resolveDispute = asyncHandler(async (req, res) => {
       ip: req.ip,
       userAgent: req.headers['user-agent'],
       userId: req.user?._id,
-      errorCode: dispute.resolution.moneyState === 'reconciliation_required'
-        ? 'DISPUTE_RESOLUTION_RECONCILIATION_REQUIRED'
-        : 'DISPUTE_RESOLUTION_MONEY_FAILED',
+      errorCode:
+        dispute.resolution.moneyState === 'reconciliation_required'
+          ? 'DISPUTE_RESOLUTION_RECONCILIATION_REQUIRED'
+          : 'DISPUTE_RESOLUTION_MONEY_FAILED',
       source: 'dispute_resolution',
       metadata: {
         disputeId: String(dispute._id),
@@ -788,7 +894,12 @@ const resolveDispute = asyncHandler(async (req, res) => {
   if (plan.order === 'cancelled') {
     await Payout.updateOne(
       { orderId: order._id, status: { $in: ['pending', 'failed', 'released_internal'] } },
-      { $set: { status: 'cancelled', failureReason: 'Dispute resolved with a refund to the customer; no payout.' } }
+      {
+        $set: {
+          status: 'cancelled',
+          failureReason: 'Dispute resolved with a refund to the customer; no payout.',
+        },
+      }
     );
   }
 
@@ -796,7 +907,8 @@ const resolveDispute = asyncHandler(async (req, res) => {
   order.status = orderStatus;
   // Back to review after a no_action ruling: a fresh review window and warning, or the
   // auto-release (and its warning) ran from the pre-dispute date.
-  if (orderStatus === 'ready_for_review') Object.assign(order, { readyForReviewAt: new Date(), autoReleaseWarnedAt: null });
+  if (orderStatus === 'ready_for_review')
+    Object.assign(order, { readyForReviewAt: new Date(), autoReleaseWarnedAt: null });
   order.history.push({
     action: 'dispute_resolved',
     userId: req.user._id,
@@ -808,7 +920,11 @@ const resolveDispute = asyncHandler(async (req, res) => {
   if (order.chatId) {
     await Chat.findByIdAndUpdate(order.chatId, {
       status:
-        orderStatus === 'completed' ? 'completed' : orderStatus === 'cancelled' ? 'cancelled' : 'paid',
+        orderStatus === 'completed'
+          ? 'completed'
+          : orderStatus === 'cancelled'
+            ? 'cancelled'
+            : 'paid',
     });
   }
 
@@ -884,15 +1000,28 @@ const reopenDispute = asyncHandler(async (req, res) => {
   // or pay out a second time. That needs a manual correction in Stripe.
   const old = dispute.resolution || {};
   if (old.stripeRefundId || old.stripeTransferId || old.stripeReversalId) {
-    return sendError(res, 'Tvisten har allerede flyttet penger og kan ikke gjenåpnes. Korriger i Stripe.', 409);
+    return sendError(
+      res,
+      'Tvisten har allerede flyttet penger og kan ikke gjenåpnes. Korriger i Stripe.',
+      409
+    );
   }
   const otherActive = await Dispute.findOne({
     _id: { $ne: dispute._id },
     orderId: dispute.orderId,
-    status: { $in: ['open', 'under_review', 'waiting_for_customer', 'waiting_for_provider', 'evidence_submitted'] },
+    status: {
+      $in: [
+        'open',
+        'under_review',
+        'waiting_for_customer',
+        'waiting_for_provider',
+        'evidence_submitted',
+      ],
+    },
   }).select('_id');
   if (otherActive) return sendError(res, 'Ordren har allerede en aktiv tvist.', 409);
-  if (await hasUnresolvedPayout(dispute.orderId)) return sendError(res, UNRESOLVED_PAYOUT_MESSAGE, 409);
+  if (await hasUnresolvedPayout(dispute.orderId))
+    return sendError(res, UNRESOLVED_PAYOUT_MESSAGE, 409);
 
   // Put the order back under the dispute, with the same guards as opening one: never
   // while a transfer holds the order lock or a start-deadline refund is running.
@@ -901,20 +1030,39 @@ const reopenDispute = asyncHandler(async (req, res) => {
     {
       _id: dispute.orderId,
       status: { $in: [...DISPUTE_ELIGIBLE_STATUSES, 'disputed'] },
-      'providerConnectTimeout.status': { $nin: ['processing', 'pending', 'reconciliation_required', 'failed', 'manual_review'] },
-      $or: [{ payoutLockId: null }, { payoutLockedAt: { $lte: new Date(now.getTime() - 5 * 60 * 1000) } }],
+      'providerConnectTimeout.status': {
+        $nin: ['processing', 'pending', 'reconciliation_required', 'failed', 'manual_review'],
+      },
+      $or: [
+        { payoutLockId: null },
+        { payoutLockedAt: { $lte: new Date(now.getTime() - 5 * 60 * 1000) } },
+      ],
     },
     {
       $set: { status: 'disputed' },
-      $push: { history: { action: 'dispute_reopened', userId: req.user._id, timestamp: now, data: { disputeId: dispute._id } } },
+      $push: {
+        history: {
+          action: 'dispute_reopened',
+          userId: req.user._id,
+          timestamp: now,
+          data: { disputeId: dispute._id },
+        },
+      },
     },
     { new: false }
   ).select('status');
   if (!order) {
-    return sendError(res, 'Ordren kan ikke settes under tvist nå (refusjon eller utbetaling pågår, eller ordren er avsluttet).', 409);
+    return sendError(
+      res,
+      'Ordren kan ikke settes under tvist nå (refusjon eller utbetaling pågår, eller ordren er avsluttet).',
+      409
+    );
   }
   if (order.status !== 'disputed') dispute.previousOrderStatus = order.status;
-  await Payment.updateOne({ orderId: dispute.orderId, status: { $in: ['completed', 'released'] } }, { $set: { status: 'disputed' } });
+  await Payment.updateOne(
+    { orderId: dispute.orderId, status: { $in: ['completed', 'released'] } },
+    { $set: { status: 'disputed' } }
+  );
 
   // The old resolution kept `resolve` refusing ("already resolved") forever.
   dispute.resolution = undefined;

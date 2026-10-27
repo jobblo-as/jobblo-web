@@ -24,9 +24,7 @@ exports.list = async (req, res) => {
   try {
     const page = Math.max(1, Math.min(1000, Number(req.query.page) || 1));
     const limit = Math.max(1, Math.min(100, Number(req.query.limit) || 20));
-    const query = req.query.status
-      ? { status: req.query.status }
-      : { status: 'manual_review' };
+    const query = req.query.status ? { status: req.query.status } : { status: 'manual_review' };
     const [items, total] = await Promise.all([
       StripePaymentIncident.find(query)
         .sort({ createdAt: -1, _id: -1 })
@@ -77,7 +75,9 @@ exports.refundDuplicatePayment = async (req, res) => {
     }
 
     const stripe = await getStripeForMode(incident.livemode === false);
-    const originalSession = await stripe.checkout.sessions.retrieve(incident.originalCheckoutSessionId);
+    const originalSession = await stripe.checkout.sessions.retrieve(
+      incident.originalCheckoutSessionId
+    );
     const originalIntent = await stripe.paymentIntents.retrieve(incident.originalPaymentIntentId);
     const originalChargeId = idOf(originalIntent.latest_charge);
     const originalCharge = originalChargeId
@@ -98,7 +98,8 @@ exports.refundDuplicatePayment = async (req, res) => {
       String(originalSession.metadata?.orderId) !== String(order._id) ||
       String(originalSession.metadata?.userId) !== String(order.customerId) ||
       originalSession.amount_total !== order.checkoutAmountMinor ||
-      String(originalSession.currency).toUpperCase() !== String(order.checkoutCurrency).toUpperCase() ||
+      String(originalSession.currency).toUpperCase() !==
+        String(order.checkoutCurrency).toUpperCase() ||
       originalIntent.status !== 'succeeded' ||
       originalIntent.livemode !== incident.livemode ||
       originalIntent.amount_received !== order.checkoutAmountMinor ||
@@ -108,7 +109,8 @@ exports.refundDuplicatePayment = async (req, res) => {
       originalCharge.paid !== true ||
       originalCharge.captured !== true ||
       originalCharge.amount !== order.checkoutAmountMinor ||
-      String(originalCharge.currency).toUpperCase() !== String(order.checkoutCurrency).toUpperCase() ||
+      String(originalCharge.currency).toUpperCase() !==
+        String(order.checkoutCurrency).toUpperCase() ||
       idOf(originalCharge.payment_intent) !== incident.originalPaymentIntentId ||
       idOf(originalCharge.customer) !== incident.stripeCustomerId ||
       originalCharge.livemode !== incident.livemode ||
@@ -171,7 +173,8 @@ exports.refundDuplicatePayment = async (req, res) => {
     });
     if (result.status === 'succeeded') {
       incident.status = 'reconciled';
-      incident.reason = 'The separately verified duplicate SafePay charge was refunded after administrator approval.';
+      incident.reason =
+        'The separately verified duplicate SafePay charge was refunded after administrator approval.';
       await incident.save();
       return res.json({
         status: 'refunded',
@@ -302,9 +305,10 @@ exports.reverseChargebackTransfer = async (req, res) => {
       return res.status(409).json({ code: 'chargeback_transfer_not_found' });
     }
     const transfer = await stripe.transfers.retrieve(transferId);
-    const expectedTransferAmount = payout?.netProviderAmount == null
-      ? transferRecord?.amount
-      : Math.round(Number(payout.netProviderAmount) * 100);
+    const expectedTransferAmount =
+      payout?.netProviderAmount == null
+        ? transferRecord?.amount
+        : Math.round(Number(payout.netProviderAmount) * 100);
     const reversedAmount = transfer.amount_reversed === undefined ? 0 : transfer.amount_reversed;
     const remainingAmount = transfer.amount - reversedAmount;
     const destinationAccount = destinationAccountForRecovery(payout, transferRecord);
@@ -334,7 +338,11 @@ exports.reverseChargebackTransfer = async (req, res) => {
     // for the same Stripe dispute; counting this incident alone let each of them recover
     // the chargeback again. The cap covers all incidents of one Stripe dispute.
     const siblingIds = incident.stripeDisputeId
-      ? (await StripePaymentIncident.find({ stripeDisputeId: incident.stripeDisputeId }).select('_id').lean()).map((i) => i._id)
+      ? (
+          await StripePaymentIncident.find({ stripeDisputeId: incident.stripeDisputeId })
+            .select('_id')
+            .lean()
+        ).map((i) => i._id)
       : [incident._id];
     // The cap is read-then-create, so two concurrent approvals both passed it. One lease
     // lock per Stripe dispute (on its lowest incident id) serialises them until the
@@ -345,7 +353,10 @@ exports.reverseChargebackTransfer = async (req, res) => {
     const locked = await StripePaymentIncident.findOneAndUpdate(
       {
         _id: lockId,
-        $or: [{ recoveryLockedAt: null }, { recoveryLockedAt: { $lte: new Date(lockedAt.getTime() - 5 * 60 * 1000) } }],
+        $or: [
+          { recoveryLockedAt: null },
+          { recoveryLockedAt: { $lte: new Date(lockedAt.getTime() - 5 * 60 * 1000) } },
+        ],
       },
       { $set: { recoveryLockedAt: lockedAt } }
     );
@@ -357,10 +368,14 @@ exports.reverseChargebackTransfer = async (req, res) => {
         type: 'transfer_reversal',
         status: { $in: ['pending', 'succeeded', 'reconciliation_required'] },
         operationKey: { $ne: operationKey },
-      }).select('amount').lean();
+      })
+        .select('amount')
+        .lean();
       const alreadyRecovered = priorRecoveries.reduce((sum, op) => sum + Number(op.amount || 0), 0);
       if (amount > incident.amount - alreadyRecovered) {
-        return res.status(409).json({ code: 'chargeback_recovery_exceeds_incident', alreadyRecovered });
+        return res
+          .status(409)
+          .json({ code: 'chargeback_recovery_exceeds_incident', alreadyRecovered });
       }
 
       result = await executeTransferReversal(stripe, {
@@ -376,7 +391,10 @@ exports.reverseChargebackTransfer = async (req, res) => {
         currency: incident.currency,
       });
     } finally {
-      await StripePaymentIncident.updateOne({ _id: lockId, recoveryLockedAt: lockedAt }, { $set: { recoveryLockedAt: null } });
+      await StripePaymentIncident.updateOne(
+        { _id: lockId, recoveryLockedAt: lockedAt },
+        { $set: { recoveryLockedAt: null } }
+      );
     }
     incident.providerTransferId = transferId;
     incident.resolutionOperationId = result.operation._id;
@@ -399,7 +417,11 @@ exports.reverseChargebackTransfer = async (req, res) => {
         incident.reason = 'Stripe confirmed transfer recovery for the recorded chargeback amount.';
         if (incident.stripeDisputeId) {
           await StripePaymentIncident.updateMany(
-            { stripeDisputeId: incident.stripeDisputeId, _id: { $ne: incident._id }, status: 'manual_review' },
+            {
+              stripeDisputeId: incident.stripeDisputeId,
+              _id: { $ne: incident._id },
+              status: 'manual_review',
+            },
             { $set: { status: 'reconciled', reason: incident.reason } }
           );
         }
@@ -449,10 +471,17 @@ exports.closeLostChargebackWithoutTransfer = async (req, res) => {
     }
     const reason = typeof req.body?.reason === 'string' ? req.body.reason.trim() : '';
     if (reason.length < 8) {
-      return res.status(400).json({ code: 'invalid_close_request', message: 'Angi en begrunnelse på minst 8 tegn.' });
+      return res
+        .status(400)
+        .json({ code: 'invalid_close_request', message: 'Angi en begrunnelse på minst 8 tegn.' });
     }
     const incident = await StripePaymentIncident.findById(req.params.id);
-    if (!incident || incident.kind !== 'charge_dispute' || incident.status !== 'manual_review' || !incident.stripeDisputeId) {
+    if (
+      !incident ||
+      incident.kind !== 'charge_dispute' ||
+      incident.status !== 'manual_review' ||
+      !incident.stripeDisputeId
+    ) {
       return res.status(409).json({ code: 'chargeback_not_closable' });
     }
     const [order, payment, payout, transferRecord] = await Promise.all([
@@ -465,7 +494,11 @@ exports.closeLostChargebackWithoutTransfer = async (req, res) => {
       return res.status(409).json({ code: 'chargeback_payment_mismatch' });
     }
     // Any transfer, or an attempt whose outcome is unknown, goes through the reversal path.
-    if (transferRecord || payout?.stripeTransferId || (payout && !['pending', 'failed', 'released_internal', 'cancelled'].includes(payout.status))) {
+    if (
+      transferRecord ||
+      payout?.stripeTransferId ||
+      (payout && !['pending', 'failed', 'released_internal', 'cancelled'].includes(payout.status))
+    ) {
       return res.status(409).json({ code: 'chargeback_transfer_exists' });
     }
 
@@ -489,22 +522,45 @@ exports.closeLostChargebackWithoutTransfer = async (req, res) => {
     // Payout first: while the incident is still in review no new transfer can start.
     if (payout) {
       const cancelled = await Payout.updateOne(
-        { _id: payout._id, status: { $in: ['pending', 'failed', 'released_internal', 'cancelled'] }, stripeTransferId: null },
-        { $set: { status: 'cancelled', failureReason: 'Stripe chargeback lost; the customer was refunded by the bank.' } }
+        {
+          _id: payout._id,
+          status: { $in: ['pending', 'failed', 'released_internal', 'cancelled'] },
+          stripeTransferId: null,
+        },
+        {
+          $set: {
+            status: 'cancelled',
+            failureReason: 'Stripe chargeback lost; the customer was refunded by the bank.',
+          },
+        }
       );
-      if (!cancelled.matchedCount) return res.status(409).json({ code: 'chargeback_transfer_exists' });
+      if (!cancelled.matchedCount)
+        return res.status(409).json({ code: 'chargeback_transfer_exists' });
     }
     await Payment.updateOne({ _id: payment._id }, { $set: { status: 'refunded' } });
     await Order.updateOne(
       { _id: order._id, status: { $ne: 'cancelled' } },
       {
         $set: { status: 'cancelled', paymentStatus: 'refunded' },
-        $push: { history: { action: 'stripe_chargeback_lost', userId: req.user._id, timestamp: new Date(), data: { stripeDisputeId: incident.stripeDisputeId, reason } } },
+        $push: {
+          history: {
+            action: 'stripe_chargeback_lost',
+            userId: req.user._id,
+            timestamp: new Date(),
+            data: { stripeDisputeId: incident.stripeDisputeId, reason },
+          },
+        },
       }
     );
     await StripePaymentIncident.updateMany(
       { stripeDisputeId: incident.stripeDisputeId, status: 'manual_review' },
-      { $set: { status: 'reconciled', disputeStatus: 'lost', reason: `Chargeback lost before any payout; closed by admin: ${reason}` } }
+      {
+        $set: {
+          status: 'reconciled',
+          disputeStatus: 'lost',
+          reason: `Chargeback lost before any payout; closed by admin: ${reason}`,
+        },
+      }
     );
     await logActivity({
       adminId: req.user._id,
@@ -512,7 +568,11 @@ exports.closeLostChargebackWithoutTransfer = async (req, res) => {
       targetModel: 'Order',
       targetId: order._id,
       description: `Admin closed a lost Stripe chargeback with no provider transfer: ${reason}`,
-      metadata: { incidentId: String(incident._id), stripeDisputeId: incident.stripeDisputeId, amountMinor: dispute.amount },
+      metadata: {
+        incidentId: String(incident._id),
+        stripeDisputeId: incident.stripeDisputeId,
+        amountMinor: dispute.amount,
+      },
       ip: req.ip,
       userAgent: req.get?.('user-agent') || 'unknown',
     });

@@ -92,10 +92,20 @@ it('F3: refuses to open a dispute while the order has a payout whose transfer ou
   Order.findById.mockResolvedValue(order);
   Dispute.findOne.mockResolvedValue(null);
   Payout.exists.mockResolvedValueOnce({ _id: 'payout_1' });
-  await expect(openDispute({
-    orderId: order._id, openedByUserId: order.customerId, openedByRole: 'customer',
-    reasonCategory: 'other', title: 'Tittel', description: 'Beskrivelse', adminId: order.customerId,
-  })).rejects.toThrow(/avstemmes/);
-  expect(Payout.exists).toHaveBeenCalledWith({ orderId: order._id, status: { $in: ['processing', 'reconciliation_required'] } });
+  await expect(
+    openDispute({
+      orderId: order._id,
+      openedByUserId: order.customerId,
+      openedByRole: 'customer',
+      reasonCategory: 'other',
+      title: 'Tittel',
+      description: 'Beskrivelse',
+      adminId: order.customerId,
+    })
+  ).rejects.toThrow(/avstemmes/);
+  expect(Payout.exists).toHaveBeenCalledWith({
+    orderId: order._id,
+    status: { $in: ['processing', 'reconciliation_required'] },
+  });
   expect(Order.findOneAndUpdate).not.toHaveBeenCalled();
 });

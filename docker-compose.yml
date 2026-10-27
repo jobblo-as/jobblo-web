@@ -15,7 +15,7 @@ services:
     # Map port 5001 on THIS computer only (127.0.0.1) to the container. Without the
     # address Docker publishes it on every network interface, reachable from the LAN.
     ports:
-      - "127.0.0.1:5001:5001"
+      - '127.0.0.1:5001:5001'
 
     # Load your secrets/settings from backend/.env.development
     env_file:
@@ -45,7 +45,7 @@ services:
 
     # Open the app at http://localhost:5173 (this computer only, not the LAN)
     ports:
-      - "127.0.0.1:5173:5173"
+      - '127.0.0.1:5173:5173'
 
     # Load frontend settings from frontend/.env
     env_file:

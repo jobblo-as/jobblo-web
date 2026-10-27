@@ -26,7 +26,11 @@ jest.mock('../models/Order', () => {
   return Order;
 });
 jest.mock('../models/User', () => ({ findById: jest.fn(), exists: jest.fn() }));
-jest.mock('../models/Service', () => ({ findById: jest.fn(), findByIdAndUpdate: jest.fn(), updateOne: jest.fn() }));
+jest.mock('../models/Service', () => ({
+  findById: jest.fn(),
+  findByIdAndUpdate: jest.fn(),
+  updateOne: jest.fn(),
+}));
 jest.mock('../models/JobRequest', () => ({ findOne: jest.fn() }));
 jest.mock('../models/Dispute', () => ({ findOne: jest.fn() }));
 jest.mock('../models/ChatReport', () => ({ findOne: jest.fn() }));
@@ -45,10 +49,7 @@ const User = require('../models/User');
 const Service = require('../models/Service');
 const JobRequest = require('../models/JobRequest');
 const { createSafePaySession } = require('../controllers/SafePayCheckoutController');
-const {
-  enabled,
-  consumeApplicationContact,
-} = require('../services/subscriptions/v2Entitlements');
+const { enabled, consumeApplicationContact } = require('../services/subscriptions/v2Entitlements');
 const chatController = require('../controllers/chatController');
 
 const OWNER = new mongoose.Types.ObjectId();
@@ -106,7 +107,9 @@ describe('updateAgreedPrice', () => {
     // value. Letting these diverge meant agreeing 5000, setting the chat to 3, paying
     // 3 kr, and still having the 5000 kr order marked fully paid.
     Chat.findById.mockReturnValue(populateChain(chatDoc({ orderId: ORDER })));
-    require('../models/Order').findById.mockReturnValue({ select: () => ({ lean: async () => ({ status: 'awaiting_payment' }) }) });
+    require('../models/Order').findById.mockReturnValue({
+      select: () => ({ lean: async () => ({ status: 'awaiting_payment' }) }),
+    });
 
     const res = makeRes();
     await chatController.updateAgreedPrice(
@@ -176,7 +179,11 @@ describe('updateAgreedPrice', () => {
 
     const res = makeRes();
     await chatController.updateAgreedPrice(
-      { user: { id: String(WORKER) }, params: { chatId: String(CHAT) }, body: { agreedPrice: 90000 } },
+      {
+        user: { id: String(WORKER) },
+        params: { chatId: String(CHAT) },
+        body: { agreedPrice: 90000 },
+      },
       res
     );
 
@@ -226,7 +233,10 @@ describe('updateAgreedPrice', () => {
     let res;
     for (let i = 1; i <= 31; i++) {
       res = makeRes();
-      await chatController.updateAgreedPrice({ user: { id: String(OWNER) }, params: { chatId }, body: { agreedPrice: i } }, res);
+      await chatController.updateAgreedPrice(
+        { user: { id: String(OWNER) }, params: { chatId }, body: { agreedPrice: i } },
+        res
+      );
     }
 
     expect(res.statusCode).toBe(429);
@@ -234,12 +244,17 @@ describe('updateAgreedPrice', () => {
   });
 
   it('createContract refuses a blocked pair (S6)', async () => {
-    const chat = chatDoc({ serviceId: { _id: SERVICE, userId: OWNER, price: 1000, checklist: [] } });
+    const chat = chatDoc({
+      serviceId: { _id: SERVICE, userId: OWNER, price: 1000, checklist: [] },
+    });
     Chat.findById.mockReturnValue(populateChain(chat));
     User.exists.mockResolvedValueOnce({ _id: WORKER });
 
     const res = makeRes();
-    await chatController.createContract({ user: { id: String(OWNER) }, params: { chatId: String(CHAT) }, body: {} }, res);
+    await chatController.createContract(
+      { user: { id: String(OWNER) }, params: { chatId: String(CHAT) }, body: {} },
+      res
+    );
 
     expect(res.statusCode).toBe(403);
     expect(res.body.code).toBe('user_blocked');
@@ -314,7 +329,9 @@ describe('sendMessage hygiene', () => {
 
   /** findById(...).select(...) reads it; the atomic updateOne appends to it. */
   function storeChat(chat) {
-    Chat.findById.mockReturnValue(Object.assign(Promise.resolve(chat), { select: () => Promise.resolve(chat) }));
+    Chat.findById.mockReturnValue(
+      Object.assign(Promise.resolve(chat), { select: () => Promise.resolve(chat) })
+    );
     Chat.updateOne.mockImplementation(async (_filter, update) => {
       chat.messages.push(update.$push.messages);
       Object.assign(chat, update.$set);
@@ -324,7 +341,15 @@ describe('sendMessage hygiene', () => {
   const send = (userId, text, chatId = CHAT) => {
     const res = makeRes();
     return chatController
-      .sendMessage({ user: { id: String(userId) }, params: { chatId: String(chatId) }, body: { text }, app: { get: () => null } }, res)
+      .sendMessage(
+        {
+          user: { id: String(userId) },
+          params: { chatId: String(chatId) },
+          body: { text },
+          app: { get: () => null },
+        },
+        res
+      )
       .then(() => res);
   };
 
@@ -337,7 +362,12 @@ describe('sendMessage hygiene', () => {
 
     const res = makeRes();
     await chatController.sendMessage(
-      { user: { id: String(OWNER) }, params: { chatId: String(CHAT) }, body: { text }, app: { get: () => null } },
+      {
+        user: { id: String(OWNER) },
+        params: { chatId: String(CHAT) },
+        body: { text },
+        app: { get: () => null },
+      },
       res
     );
 
@@ -391,12 +421,15 @@ describe('sendMessage hygiene', () => {
 
     for (let i = 0; i < 20; i += 1) {
       const res = makeRes();
-      await chatController.sendMessage({
-        user: { id: String(OWNER) },
-        params: { chatId: String(CHAT) },
-        body: { text: `Progress update ${i}` },
-        app: { get: () => null },
-      }, res);
+      await chatController.sendMessage(
+        {
+          user: { id: String(OWNER) },
+          params: { chatId: String(CHAT) },
+          body: { text: `Progress update ${i}` },
+          app: { get: () => null },
+        },
+        res
+      );
       expect(res.statusCode).toBe(201);
     }
 
@@ -411,21 +444,27 @@ describe('sendMessage hygiene', () => {
     Chat.updateOne.mockRejectedValueOnce(new Error('chat write failed'));
 
     const failed = makeRes();
-    await chatController.sendMessage({
-      user: { id: String(OWNER) },
-      params: { chatId: String(CHAT) },
-      body: { text: 'Retry me' },
-      app: { get: () => null },
-    }, failed);
+    await chatController.sendMessage(
+      {
+        user: { id: String(OWNER) },
+        params: { chatId: String(CHAT) },
+        body: { text: 'Retry me' },
+        app: { get: () => null },
+      },
+      failed
+    );
     expect(failed.statusCode).toBe(500);
 
     const retried = makeRes();
-    await chatController.sendMessage({
-      user: { id: String(OWNER) },
-      params: { chatId: String(CHAT) },
-      body: { text: 'Retry me' },
-      app: { get: () => null },
-    }, retried);
+    await chatController.sendMessage(
+      {
+        user: { id: String(OWNER) },
+        params: { chatId: String(CHAT) },
+        body: { text: 'Retry me' },
+        app: { get: () => null },
+      },
+      retried
+    );
     expect(retried.statusCode).toBe(201);
     expect(consumeApplicationContact).not.toHaveBeenCalled();
   });
@@ -445,13 +484,16 @@ describe('sendMessage hygiene', () => {
     const res = await send(WORKER, 'hei');
     expect(res.statusCode).toBe(409);
     expect(res.body.code).toBe('chat_full');
-    expect(Chat.updateOne.mock.calls[0][0].$expr).toEqual({ $lt: [{ $bsonSize: '$$ROOT' }, 15 * 1024 * 1024] });
+    expect(Chat.updateOne.mock.calls[0][0].$expr).toEqual({
+      $lt: [{ $bsonSize: '$$ROOT' }, 15 * 1024 * 1024],
+    });
   });
 
   it('M7: limits how fast one user can send into one chat', async () => {
     const chatId = new mongoose.Types.ObjectId(); // own counter key
     storeChat({ ...chatDoc(), _id: chatId });
-    for (let i = 0; i < 30; i += 1) expect((await send(WORKER, `m${i}`, chatId)).statusCode).toBe(201);
+    for (let i = 0; i < 30; i += 1)
+      expect((await send(WORKER, `m${i}`, chatId)).statusCode).toBe(201);
     const limited = await send(WORKER, 'one too many', chatId);
     expect(limited.statusCode).toBe(429);
     expect((await send(OWNER, 'the other side still can', chatId)).statusCode).toBe(201);
@@ -460,13 +502,18 @@ describe('sendMessage hygiene', () => {
 
 describe('createOrGetChat usage accounting', () => {
   it('M4: refuses to open a chat between users when one has blocked the other', async () => {
-    User.findById.mockReturnValue({ select: jest.fn().mockResolvedValue({ _id: WORKER, name: 'Worker' }) });
+    User.findById.mockReturnValue({
+      select: jest.fn().mockResolvedValue({ _id: WORKER, name: 'Worker' }),
+    });
     User.exists.mockResolvedValue({ _id: WORKER });
     const res = makeRes();
-    await chatController.createOrGetChat({
-      user: { id: String(OWNER) },
-      body: { providerId: String(WORKER), serviceId: String(SERVICE) },
-    }, res);
+    await chatController.createOrGetChat(
+      {
+        user: { id: String(OWNER) },
+        body: { providerId: String(WORKER), serviceId: String(SERVICE) },
+      },
+      res
+    );
     expect(res.statusCode).toBe(403);
     expect(res.body.code).toBe('user_blocked');
     expect(Chat.findOneAndUpdate).not.toHaveBeenCalled();
@@ -489,10 +536,13 @@ describe('createOrGetChat usage accounting', () => {
     Chat.findById.mockReturnValue(populateChain({ _id: CHAT }));
 
     const res = makeRes();
-    await chatController.createOrGetChat({
-      user: { id: String(OWNER) },
-      body: { providerId: String(WORKER), serviceId: String(SERVICE) },
-    }, res);
+    await chatController.createOrGetChat(
+      {
+        user: { id: String(OWNER) },
+        body: { providerId: String(WORKER), serviceId: String(SERVICE) },
+      },
+      res
+    );
 
     expect(res.body).toEqual({ _id: CHAT });
     expect(consumeApplicationContact).not.toHaveBeenCalled();

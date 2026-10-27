@@ -26,7 +26,11 @@ export const changeSubscription = async (planId?: string) =>
   (await mainLink.post('/api/stripe/subscription/change', { planId })).data;
 
 export const getSubscriptionInvoicePdf = async ({ id, mode }: { id: string; mode: string }) =>
-  (await mainLink.get(`/api/stripe/subscription/invoices/${encodeURIComponent(id)}/pdf?mode=${mode}`)).data;
+  (
+    await mainLink.get(
+      `/api/stripe/subscription/invoices/${encodeURIComponent(id)}/pdf?mode=${mode}`
+    )
+  ).data;
 
 export const createCheckoutSession = async (planId: string) =>
   (await mainLink.post('/api/stripe/create-checkout-session', { planId })).data;
@@ -45,7 +49,8 @@ export const getExtraContactStatus = async (sessionId: string) =>
   (await mainLink.get<{ status: string }>(`/api/stripe/extra-contact-status/${sessionId}`)).data;
 
 // ── Stripe Connect (payouts) ──────────────────────────────────────────────────
-export const getConnectStatus = async <T = { payoutReady?: boolean }>() => (await mainLink.get<T>('/api/connect/status')).data;
+export const getConnectStatus = async <T = { payoutReady?: boolean }>() =>
+  (await mainLink.get<T>('/api/connect/status')).data;
 
 export const refreshConnectStatus = async () => (await mainLink.post('/api/connect/refresh')).data;
 

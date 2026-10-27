@@ -116,7 +116,11 @@ async function verifyAppleIdentityToken(identityToken, expectedNonce, audience) 
 
   const expected = Buffer.from(typeof expectedNonce === 'string' ? expectedNonce : '');
   const actual = Buffer.from(typeof claims.nonce === 'string' ? claims.nonce : '');
-  if (!expected.length || expected.length !== actual.length || !crypto.timingSafeEqual(expected, actual)) {
+  if (
+    !expected.length ||
+    expected.length !== actual.length ||
+    !crypto.timingSafeEqual(expected, actual)
+  ) {
     throw new Error('nonce mismatch');
   }
   if (typeof claims.sub !== 'string' || !claims.sub.trim()) throw new Error('no sub');
@@ -197,7 +201,8 @@ async function appleAccount(claims, fullName) {
       return {
         status: 409,
         code: 'apple_account_exists',
-        message: 'Det finnes allerede en konto med denne e-postadressen. Logg inn med e-post og passord først.',
+        message:
+          'Det finnes allerede en konto med denne e-postadressen. Logg inn med e-post og passord først.',
       };
     case 'create':
       if (!decision.email) {
@@ -221,7 +226,11 @@ async function appleAccount(claims, fullName) {
       break;
     default:
       // invalid_identity cannot happen past verify (sub checked); linking is not offered here.
-      return { status: 401, code: 'apple_invalid_token', message: 'Apple-innloggingen mislyktes. Prøv igjen.' };
+      return {
+        status: 401,
+        code: 'apple_invalid_token',
+        message: 'Apple-innloggingen mislyktes. Prøv igjen.',
+      };
   }
 
   if (user.isDeleted || ['inactive', 'deactivated'].includes(user.accountStatus)) {
@@ -268,7 +277,9 @@ const WEB_BINDING_COOKIE_OPTIONS = {
 function appleWebConfig() {
   const clientId = process.env.APPLE_SERVICES_ID?.trim();
   const redirectUri = process.env.APPLE_REDIRECT_URI?.trim();
-  return clientId && redirectUri && /^https:\/\//i.test(redirectUri) ? { clientId, redirectUri } : null;
+  return clientId && redirectUri && /^https:\/\//i.test(redirectUri)
+    ? { clientId, redirectUri }
+    : null;
 }
 
 /** The decoded state when THIS server signed it in the last 10 minutes, else null. */
@@ -301,7 +312,12 @@ function appleWebStart(req, res, platform) {
   const config = appleWebConfig();
   const secret = platformStateSecret();
   if (!config || !secret) {
-    return res.status(503).json({ code: 'apple_unavailable', message: 'Apple-innlogging er ikke tilgjengelig akkurat nå.' });
+    return res
+      .status(503)
+      .json({
+        code: 'apple_unavailable',
+        message: 'Apple-innlogging er ikke tilgjengelig akkurat nå.',
+      });
   }
 
   const nonce = crypto.randomBytes(32).toString('hex');
@@ -313,7 +329,10 @@ function appleWebStart(req, res, platform) {
   } else {
     const binding = crypto.randomBytes(32).toString('base64url');
     claims.b = sha256Hex(binding);
-    res.cookie(WEB_BINDING_COOKIE, binding, { ...WEB_BINDING_COOKIE_OPTIONS, maxAge: APPLE_STATE_TTL_S * 1000 });
+    res.cookie(WEB_BINDING_COOKIE, binding, {
+      ...WEB_BINDING_COOKIE_OPTIONS,
+      maxAge: APPLE_STATE_TTL_S * 1000,
+    });
   }
 
   const query = new URLSearchParams({
@@ -322,7 +341,11 @@ function appleWebStart(req, res, platform) {
     response_type: 'code id_token',
     scope: 'name email',
     response_mode: 'form_post',
-    state: jwt.sign(claims, secret, { algorithm: 'HS256', audience: APPLE_STATE_AUDIENCE, expiresIn: APPLE_STATE_TTL_S }),
+    state: jwt.sign(claims, secret, {
+      algorithm: 'HS256',
+      audience: APPLE_STATE_AUDIENCE,
+      expiresIn: APPLE_STATE_TTL_S,
+    }),
     nonce,
   });
   // %20 as Apple's own JS writes it; no value holds a literal '+' (that would be %2B).
@@ -357,11 +380,15 @@ async function appleWebCallback(req, res) {
     console.warn('Apple web sign-in: missing, forged or expired state');
     return back('apple_invalid_state');
   }
-  if (platform === 'web' && !(typeof binding === 'string' && sameHash(sha256Hex(binding), state.b))) {
+  if (
+    platform === 'web' &&
+    !(typeof binding === 'string' && sameHash(sha256Hex(binding), state.b))
+  ) {
     console.warn('Apple web sign-in: state not bound to this browser');
     return back('apple_invalid_state');
   }
-  if (typeof body.id_token !== 'string' || body.id_token.length > 8192) return back('apple_invalid_token');
+  if (typeof body.id_token !== 'string' || body.id_token.length > 8192)
+    return back('apple_invalid_token');
 
   let claims;
   try {
@@ -377,7 +404,13 @@ async function appleWebCallback(req, res) {
     if (platform === 'mobile') {
       return res.redirect(
         303,
-        await signedInDestination({ req, res, platform, userId: account.user._id, codeChallenge: state.cc })
+        await signedInDestination({
+          req,
+          res,
+          platform,
+          userId: account.user._id,
+          codeChallenge: state.cc,
+        })
       );
     }
     const { accessToken, refreshToken } = await createSession(req, account.user._id);

@@ -49,7 +49,11 @@ function v2DisabledResponse(res, code, message) {
   });
 }
 
-function compatibilityRequest(action, flags = [], disabledCode = 'SUBSCRIPTION_V2_MANAGEMENT_DISABLED') {
+function compatibilityRequest(
+  action,
+  flags = [],
+  disabledCode = 'SUBSCRIPTION_V2_MANAGEMENT_DISABLED'
+) {
   return async (req, res) => {
     if (flags.some((flag) => !flag())) {
       return v2DisabledResponse(
@@ -103,16 +107,20 @@ async function legacySubscription(userId) {
   try {
     current = (await management.getCurrentSubscription(userId)).subscription;
   } catch (err) {
-    if (!(err instanceof management.SubscriptionManagementError) || err.code !== 'SUBSCRIPTION_NOT_FOUND') {
+    if (
+      !(err instanceof management.SubscriptionManagementError) ||
+      err.code !== 'SUBSCRIPTION_NOT_FOUND'
+    ) {
       throw err;
     }
   }
   const planEntitlements = resolved.entitlements || {};
-  const status = current?.stripeStatus === 'canceled'
-    ? 'cancelled'
-    : current?.stripeStatus === 'incomplete_expired' || (current && !resolved.isPaid)
-      ? 'expired'
-      : resolved.status;
+  const status =
+    current?.stripeStatus === 'canceled'
+      ? 'cancelled'
+      : current?.stripeStatus === 'incomplete_expired' || (current && !resolved.isPaid)
+        ? 'expired'
+        : resolved.status;
   const contacts = {
     includedLimit: resolved.includedContacts,
     includedUsed: resolved.consumedIncludedContacts,
@@ -172,18 +180,20 @@ exports.getPlanCatalogue = async (_req, res) => {
       .select('_id name price type entitlements featuresText isActive')
       .sort({ type: 1, price: 1 })
       .lean();
-    return res.json(plans.map((plan) => ({
-      _id: plan._id,
-      name: plan.name,
-      price: plan.price,
-      type: plan.type,
-      entitlements: plan.entitlements,
-      featuresText: plan.featuresText || [],
-      isActive: plan.isActive,
-      features: plan.featuresText || [],
-      freeViews: plan.entitlements?.freeContact || 0,
-      pricePerExtraView: plan.entitlements?.perContactPrice || 0,
-    })));
+    return res.json(
+      plans.map((plan) => ({
+        _id: plan._id,
+        name: plan.name,
+        price: plan.price,
+        type: plan.type,
+        entitlements: plan.entitlements,
+        featuresText: plan.featuresText || [],
+        isActive: plan.isActive,
+        features: plan.featuresText || [],
+        freeViews: plan.entitlements?.freeContact || 0,
+        pricePerExtraView: plan.entitlements?.perContactPrice || 0,
+      }))
+    );
   } catch (err) {
     console.error('[Subscription V2] plan catalogue lookup failed:', err);
     return res.status(503).json({
@@ -266,12 +276,8 @@ exports.getCurrentSubscription = managementRequest((userId) =>
 exports.createBillingPortalSession = managementRequest((userId) =>
   management.createBillingPortalSession(userId)
 );
-exports.cancelSubscription = managementRequest((userId) =>
-  management.cancelSubscription(userId)
-);
-exports.resumeSubscription = managementRequest((userId) =>
-  management.resumeSubscription(userId)
-);
+exports.cancelSubscription = managementRequest((userId) => management.cancelSubscription(userId));
+exports.resumeSubscription = managementRequest((userId) => management.resumeSubscription(userId));
 exports.previewPlanChange = managementRequest((userId, req) =>
   management.previewPlanChange(userId, req.body?.planId)
 );
@@ -290,10 +296,12 @@ exports.reconcilePaidUpgrade = async (req, res) => {
     });
   }
   try {
-    return res.json(await paidUpgradeRecovery.recoverPaidUpgrade({
-      adminId: req.user?._id,
-      confirmation: req.body?.confirmation,
-    }));
+    return res.json(
+      await paidUpgradeRecovery.recoverPaidUpgrade({
+        adminId: req.user?._id,
+        confirmation: req.body?.confirmation,
+      })
+    );
   } catch (err) {
     if (err instanceof paidUpgradeRecovery.PaidUpgradeRecoveryError) {
       return res.status(err.status).json({ code: err.code, message: err.message });
@@ -312,8 +320,23 @@ const { logActivity } = require('../services/admin/activityService');
 // Admin-editable plan entitlements. Price, name, type and isActive stay locked: the price
 // is tied to the Stripe Price that checkout verifies amounts against, the name is how
 // clients match a plan, and deactivating the free plan breaks every free user.
-const PLAN_NUMBER_ENTITLEMENTS = ['freeContact', 'radius', 'numberOfCustomers', 'maxJobsValue', 'perContactPrice', 'ContactUnlock', 'maxContact', 'visibilityLevel'];
-const PLAN_INTEGER_ENTITLEMENTS = ['freeContact', 'numberOfCustomers', 'ContactUnlock', 'maxContact', 'visibilityLevel'];
+const PLAN_NUMBER_ENTITLEMENTS = [
+  'freeContact',
+  'radius',
+  'numberOfCustomers',
+  'maxJobsValue',
+  'perContactPrice',
+  'ContactUnlock',
+  'maxContact',
+  'visibilityLevel',
+];
+const PLAN_INTEGER_ENTITLEMENTS = [
+  'freeContact',
+  'numberOfCustomers',
+  'ContactUnlock',
+  'maxContact',
+  'visibilityLevel',
+];
 const PLAN_LOCKED_FIELDS = {
   name: (v) => String(v ?? '').trim(),
   price: (v) => Number(v),
@@ -328,7 +351,8 @@ exports.updatePlanEntitlements = async (req, res) => {
       return res.status(400).json({ code: 'PLAN_ID_INVALID', message: 'Ugyldig plan-ID.' });
     }
     const plan = await SubscriptionPlan.findById(req.params.id).lean();
-    if (!plan) return res.status(404).json({ code: 'PLAN_NOT_FOUND', message: 'Planen finnes ikke.' });
+    if (!plan)
+      return res.status(404).json({ code: 'PLAN_NOT_FOUND', message: 'Planen finnes ikke.' });
     const body = req.body || {};
 
     for (const [field, normalize] of Object.entries(PLAN_LOCKED_FIELDS)) {
@@ -345,19 +369,37 @@ exports.updatePlanEntitlements = async (req, res) => {
     const ent = body.entitlements;
     if (ent !== undefined) {
       if (!ent || typeof ent !== 'object' || Array.isArray(ent)) {
-        return res.status(400).json({ code: 'PLAN_ENTITLEMENTS_INVALID', message: 'Ugyldige rettigheter.' });
+        return res
+          .status(400)
+          .json({ code: 'PLAN_ENTITLEMENTS_INVALID', message: 'Ugyldige rettigheter.' });
       }
       for (const key of PLAN_NUMBER_ENTITLEMENTS) {
         if (ent[key] === undefined || ent[key] === null || ent[key] === '') continue;
         const n = Number(ent[key]);
-        if (!Number.isFinite(n) || n < 0 || (PLAN_INTEGER_ENTITLEMENTS.includes(key) && !Number.isInteger(n))) {
-          return res.status(400).json({ code: 'PLAN_ENTITLEMENT_INVALID', field: key, message: `${key} må være et gyldig tall (0 eller mer).` });
+        if (
+          !Number.isFinite(n) ||
+          n < 0 ||
+          (PLAN_INTEGER_ENTITLEMENTS.includes(key) && !Number.isInteger(n))
+        ) {
+          return res
+            .status(400)
+            .json({
+              code: 'PLAN_ENTITLEMENT_INVALID',
+              field: key,
+              message: `${key} må være et gyldig tall (0 eller mer).`,
+            });
         }
         set[`entitlements.${key}`] = n;
       }
       if (ent.locationPrecision !== undefined) {
         if (!['exact', 'approximate'].includes(ent.locationPrecision)) {
-          return res.status(400).json({ code: 'PLAN_ENTITLEMENT_INVALID', field: 'locationPrecision', message: 'Ugyldig posisjonspresisjon.' });
+          return res
+            .status(400)
+            .json({
+              code: 'PLAN_ENTITLEMENT_INVALID',
+              field: 'locationPrecision',
+              message: 'Ugyldig posisjonspresisjon.',
+            });
         }
         set['entitlements.locationPrecision'] = ent.locationPrecision;
       }
@@ -366,8 +408,14 @@ exports.updatePlanEntitlements = async (req, res) => {
       }
     }
     if (body.featuresText !== undefined) {
-      if (!Array.isArray(body.featuresText) || body.featuresText.length > 20 || body.featuresText.some((t) => typeof t !== 'string' || t.length > 200)) {
-        return res.status(400).json({ code: 'PLAN_FEATURES_INVALID', message: 'Ugyldig funksjonsliste.' });
+      if (
+        !Array.isArray(body.featuresText) ||
+        body.featuresText.length > 20 ||
+        body.featuresText.some((t) => typeof t !== 'string' || t.length > 200)
+      ) {
+        return res
+          .status(400)
+          .json({ code: 'PLAN_FEATURES_INVALID', message: 'Ugyldig funksjonsliste.' });
       }
       set.featuresText = body.featuresText.map((t) => t.trim()).filter(Boolean);
     }
@@ -375,7 +423,11 @@ exports.updatePlanEntitlements = async (req, res) => {
       return res.status(400).json({ code: 'PLAN_NO_CHANGES', message: 'Ingen endringer å lagre.' });
     }
 
-    const updated = await SubscriptionPlan.findByIdAndUpdate(plan._id, { $set: set }, { new: true, runValidators: true }).lean();
+    const updated = await SubscriptionPlan.findByIdAndUpdate(
+      plan._id,
+      { $set: set },
+      { new: true, runValidators: true }
+    ).lean();
     const changes = {};
     for (const [path, to] of Object.entries(set)) {
       const from = path.split('.').reduce((v, k) => v?.[k], plan);
@@ -394,24 +446,38 @@ exports.updatePlanEntitlements = async (req, res) => {
     return res.json(updated);
   } catch (err) {
     console.error('[plans] entitlement update failed:', err);
-    return res.status(500).json({ code: 'PLAN_UPDATE_FAILED', message: 'Kunne ikke lagre planen.' });
+    return res
+      .status(500)
+      .json({ code: 'PLAN_UPDATE_FAILED', message: 'Kunne ikke lagre planen.' });
   }
 };
 
 const extraContacts = require('../services/subscriptions/v2ExtraContacts');
 
 function sendExtraContactError(res, err, fallbackCode) {
-  if (err instanceof extraContacts.ExtraContactError || err instanceof entitlements.V2EntitlementError) {
-    return res.status(err.status).json({ code: err.code, message: err.message, ...(err.details || {}) });
+  if (
+    err instanceof extraContacts.ExtraContactError ||
+    err instanceof entitlements.V2EntitlementError
+  ) {
+    return res
+      .status(err.status)
+      .json({ code: err.code, message: err.message, ...(err.details || {}) });
   }
   console.error('[extra-contact] request failed:', err);
-  return res.status(503).json({ code: fallbackCode, message: 'Ekstra kontakt er ikke tilgjengelig nå. Prøv igjen.' });
+  return res
+    .status(503)
+    .json({ code: fallbackCode, message: 'Ekstra kontakt er ikke tilgjengelig nå. Prøv igjen.' });
 }
 
 /** POST /api/stripe/create-extra-contact-payment { serviceId } */
 exports.createExtraContactPayment = async (req, res) => {
   try {
-    return res.json(await extraContacts.createExtraContactCheckout({ userId: req.user?._id, serviceId: req.body?.serviceId }));
+    return res.json(
+      await extraContacts.createExtraContactCheckout({
+        userId: req.user?._id,
+        serviceId: req.body?.serviceId,
+      })
+    );
   } catch (err) {
     return sendExtraContactError(res, err, 'EXTRA_CONTACT_CHECKOUT_UNAVAILABLE');
   }
@@ -420,7 +486,12 @@ exports.createExtraContactPayment = async (req, res) => {
 /** GET /api/stripe/extra-contact-status/:sessionId */
 exports.extraContactPaymentStatus = async (req, res) => {
   try {
-    return res.json(await extraContacts.getExtraContactStatus({ userId: req.user?._id, sessionId: req.params.sessionId }));
+    return res.json(
+      await extraContacts.getExtraContactStatus({
+        userId: req.user?._id,
+        sessionId: req.params.sessionId,
+      })
+    );
   } catch (err) {
     return sendExtraContactError(res, err, 'EXTRA_CONTACT_STATUS_UNAVAILABLE');
   }
@@ -430,7 +501,7 @@ exports.getEntitlements = async (req, res) => {
   try {
     const userId = req.user?._id;
     if (!entitlements.enabled()) {
-      const hasV2Subscription = userId && await SubscriptionV2.exists({ userId });
+      const hasV2Subscription = userId && (await SubscriptionV2.exists({ userId }));
       if (!hasV2Subscription) {
         return res.status(503).json({
           code: 'SUBSCRIPTION_V2_ENTITLEMENTS_DISABLED',
@@ -454,11 +525,7 @@ exports.getEntitlements = async (req, res) => {
 exports.getLegacySubscription = async (req, res) => {
   const userId = req.user?._id;
   if (!userId) {
-    return v2DisabledResponse(
-      res,
-      'AUTHENTICATION_REQUIRED',
-      'Authentication required.'
-    );
+    return v2DisabledResponse(res, 'AUTHENTICATION_REQUIRED', 'Authentication required.');
   }
 
   if (!managementEnabled() || !entitlementsEnabled()) {

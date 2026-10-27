@@ -29,11 +29,26 @@ export function CategoryIcon({
   strokeWidth?: number;
   className?: string;
 }) {
-  const Fallback = () => <DynamicIcon name={fallback} size={size} strokeWidth={strokeWidth} className={className} aria-hidden="true" />;
+  const Fallback = () => (
+    <DynamicIcon
+      name={fallback}
+      size={size}
+      strokeWidth={strokeWidth}
+      className={className}
+      aria-hidden="true"
+    />
+  );
   return (
     <span className="inline-flex shrink-0" style={{ width: size, height: size }}>
       {name ? (
-        <DynamicIcon name={kebab(name) as IconName} fallback={Fallback} size={size} strokeWidth={strokeWidth} className={className} aria-hidden="true" />
+        <DynamicIcon
+          name={kebab(name) as IconName}
+          fallback={Fallback}
+          size={size}
+          strokeWidth={strokeWidth}
+          className={className}
+          aria-hidden="true"
+        />
       ) : (
         <Fallback />
       )}

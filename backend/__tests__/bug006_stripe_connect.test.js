@@ -202,10 +202,21 @@ describe('BUG-006: Stripe Connect & Sensitive Data Leak Prevention', () => {
       const providerId = '507f1f77bcf86cd799439013';
 
       Order.findById.mockReturnValue({
-        lean: () => buildOrder({ orderId, providerId, customerId: '507f1f77bcf86cd799439014', serviceId: '507f1f77bcf86cd799439015' }),
+        lean: () =>
+          buildOrder({
+            orderId,
+            providerId,
+            customerId: '507f1f77bcf86cd799439014',
+            serviceId: '507f1f77bcf86cd799439015',
+          }),
       });
       Payment.findOne.mockReturnValue({
-        lean: () => ({ status: 'completed', stripeSessionId: 'cs_test_123', stripePaymentIntentId: 'pi_test_123', stripeLivemode: false }),
+        lean: () => ({
+          status: 'completed',
+          stripeSessionId: 'cs_test_123',
+          stripePaymentIntentId: 'pi_test_123',
+          stripeLivemode: false,
+        }),
       });
       Payout.findOne.mockResolvedValue(null);
       User.findById.mockReturnValue({
@@ -237,10 +248,21 @@ describe('BUG-006: Stripe Connect & Sensitive Data Leak Prevention', () => {
       const providerId = '507f1f77bcf86cd799439023';
 
       Order.findById.mockReturnValue({
-        lean: () => buildOrder({ orderId, providerId, customerId: '507f1f77bcf86cd799439024', serviceId: '507f1f77bcf86cd799439025' }),
+        lean: () =>
+          buildOrder({
+            orderId,
+            providerId,
+            customerId: '507f1f77bcf86cd799439024',
+            serviceId: '507f1f77bcf86cd799439025',
+          }),
       });
       Payment.findOne.mockReturnValue({
-        lean: () => ({ status: 'completed', stripeSessionId: 'cs_test_123', stripePaymentIntentId: 'pi_test_123', stripeLivemode: false }),
+        lean: () => ({
+          status: 'completed',
+          stripeSessionId: 'cs_test_123',
+          stripePaymentIntentId: 'pi_test_123',
+          stripeLivemode: false,
+        }),
       });
       Payout.findOne.mockResolvedValue(null);
       User.findById.mockReturnValue({
@@ -280,10 +302,21 @@ describe('BUG-006: Stripe Connect & Sensitive Data Leak Prevention', () => {
       const providerId = '507f1f77bcf86cd799439033';
 
       Order.findById.mockReturnValue({
-        lean: () => buildOrder({ orderId, providerId, customerId: '507f1f77bcf86cd799439034', serviceId: '507f1f77bcf86cd799439035' }),
+        lean: () =>
+          buildOrder({
+            orderId,
+            providerId,
+            customerId: '507f1f77bcf86cd799439034',
+            serviceId: '507f1f77bcf86cd799439035',
+          }),
       });
       Payment.findOne.mockReturnValue({
-        lean: () => ({ status: 'completed', stripeSessionId: 'cs_test_123', stripePaymentIntentId: 'pi_test_123', stripeLivemode: false }),
+        lean: () => ({
+          status: 'completed',
+          stripeSessionId: 'cs_test_123',
+          stripePaymentIntentId: 'pi_test_123',
+          stripeLivemode: false,
+        }),
       });
       Payout.findOne.mockResolvedValue(null);
 
@@ -322,7 +355,9 @@ describe('BUG-006: Stripe Connect & Sensitive Data Leak Prevention', () => {
         }),
         expect.objectContaining({
           // One key per attempt (H6): a fixed key replayed a refused attempt's error for 24 h.
-          idempotencyKey: expect.stringMatching(new RegExp(`^transfer_payout_order_${orderId}_\\d+$`)),
+          idempotencyKey: expect.stringMatching(
+            new RegExp(`^transfer_payout_order_${orderId}_\\d+$`)
+          ),
         })
       );
 
@@ -347,10 +382,22 @@ describe('BUG-006: Stripe Connect & Sensitive Data Leak Prevention', () => {
         payment_intent: 'pi_test_123',
       });
       Order.findById.mockReturnValue({
-        lean: () => buildOrder({ orderId, providerId, customerId: '507f1f77bcf86cd799439054', serviceId: '507f1f77bcf86cd799439055', checkoutMode: 'live' }),
+        lean: () =>
+          buildOrder({
+            orderId,
+            providerId,
+            customerId: '507f1f77bcf86cd799439054',
+            serviceId: '507f1f77bcf86cd799439055',
+            checkoutMode: 'live',
+          }),
       });
       Payment.findOne.mockReturnValue({
-        lean: () => ({ status: 'completed', stripeSessionId: 'cs_test_123', stripePaymentIntentId: 'pi_test_123', stripeLivemode: true }),
+        lean: () => ({
+          status: 'completed',
+          stripeSessionId: 'cs_test_123',
+          stripePaymentIntentId: 'pi_test_123',
+          stripeLivemode: true,
+        }),
       });
       Payout.findOne.mockResolvedValue(null);
       User.findById.mockReturnValue({
@@ -366,7 +413,11 @@ describe('BUG-006: Stripe Connect & Sensitive Data Leak Prevention', () => {
         payouts_enabled: true,
         capabilities: { transfers: 'active' },
       });
-      mockStripe.transfers.create.mockResolvedValue({ id: 'tr_live_9999', amount: 97000, currency: 'nok' });
+      mockStripe.transfers.create.mockResolvedValue({
+        id: 'tr_live_9999',
+        amount: 97000,
+        currency: 'nok',
+      });
 
       await releasePayoutToProvider({
         orderId,
@@ -399,10 +450,21 @@ describe('BUG-006: Stripe Connect & Sensitive Data Leak Prevention', () => {
       };
 
       Order.findById.mockReturnValue({
-        lean: () => buildOrder({ orderId, providerId: '507f1f77bcf86cd799439043', customerId: '507f1f77bcf86cd799439044', serviceId: '507f1f77bcf86cd799439045' }),
+        lean: () =>
+          buildOrder({
+            orderId,
+            providerId: '507f1f77bcf86cd799439043',
+            customerId: '507f1f77bcf86cd799439044',
+            serviceId: '507f1f77bcf86cd799439045',
+          }),
       });
       Payment.findOne.mockReturnValue({
-        lean: () => ({ status: 'completed', stripeSessionId: 'cs_test_123', stripePaymentIntentId: 'pi_test_123', stripeLivemode: false }),
+        lean: () => ({
+          status: 'completed',
+          stripeSessionId: 'cs_test_123',
+          stripePaymentIntentId: 'pi_test_123',
+          stripeLivemode: false,
+        }),
       });
       Payout.findOne.mockResolvedValue(existingPayout);
 
@@ -447,12 +509,13 @@ describe('BUG-006: Stripe Connect & Sensitive Data Leak Prevention', () => {
         metadata: { payoutId: payout._id },
       };
       Order.findById.mockReturnValue({
-        lean: () => buildOrder({
-          orderId,
-          providerId,
-          customerId: '507f1f77bcf86cd799439014',
-          serviceId: '507f1f77bcf86cd799439015',
-        }),
+        lean: () =>
+          buildOrder({
+            orderId,
+            providerId,
+            customerId: '507f1f77bcf86cd799439014',
+            serviceId: '507f1f77bcf86cd799439015',
+          }),
       });
       Payment.findOne.mockReturnValue({
         lean: () => ({
@@ -470,7 +533,9 @@ describe('BUG-006: Stripe Connect & Sensitive Data Leak Prevention', () => {
           payoutEnabled: true,
         }),
       });
-      mockStripe.transfers.list = jest.fn().mockResolvedValue({ data: [transfer], has_more: false });
+      mockStripe.transfers.list = jest
+        .fn()
+        .mockResolvedValue({ data: [transfer], has_more: false });
 
       const result = await releasePayoutToProvider({
         orderId,

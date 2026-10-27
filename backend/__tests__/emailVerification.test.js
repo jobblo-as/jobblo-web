@@ -13,20 +13,44 @@
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret';
 
 jest.mock('../models/User', () => ({
-  findOne: jest.fn(), findById: jest.fn(), create: jest.fn(), updateOne: jest.fn(), findOneAndUpdate: jest.fn(), deleteOne: jest.fn(),
+  findOne: jest.fn(),
+  findById: jest.fn(),
+  create: jest.fn(),
+  updateOne: jest.fn(),
+  findOneAndUpdate: jest.fn(),
+  deleteOne: jest.fn(),
 }));
 jest.mock('../models/Session', () => ({ deleteMany: jest.fn() }));
 jest.mock('../models/IdentityClaim', () => ({ deleteMany: jest.fn() }));
-jest.mock('../utils/emailService', () => ({ sendOtpEmail: jest.fn(), queueSecurityAlertEmail: jest.fn() }));
-jest.mock('../utils/tokenUtils', () => ({ generateTokens: jest.fn(), verifyToken: jest.fn(), createSession: jest.fn(async () => ({ accessToken: 'at', refreshToken: 'rt' })) }));
-jest.mock('../config/iduraClient', () => ({ isIduraConfigured: () => true, createTransactionSecrets: jest.fn(), buildAuthorizationUrl: jest.fn(), exchangeCode: jest.fn() }));
+jest.mock('../utils/emailService', () => ({
+  sendOtpEmail: jest.fn(),
+  queueSecurityAlertEmail: jest.fn(),
+}));
+jest.mock('../utils/tokenUtils', () => ({
+  generateTokens: jest.fn(),
+  verifyToken: jest.fn(),
+  createSession: jest.fn(async () => ({ accessToken: 'at', refreshToken: 'rt' })),
+}));
+jest.mock('../config/iduraClient', () => ({
+  isIduraConfigured: () => true,
+  createTransactionSecrets: jest.fn(),
+  buildAuthorizationUrl: jest.fn(),
+  exchangeCode: jest.fn(),
+}));
 
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const Session = require('../models/Session');
 const { sendOtpEmail } = require('../utils/emailService');
 const { createSession } = require('../utils/tokenUtils');
-const { register, login, verifyEmail, resendVerification, sendEmailCode, confirmEmailCode } = require('../controllers/auth/loginController');
+const {
+  register,
+  login,
+  verifyEmail,
+  resendVerification,
+  sendEmailCode,
+  confirmEmailCode,
+} = require('../controllers/auth/loginController');
 const { sanitizeUser } = require('../controllers/auth/authHelpers');
 const { sanitizeUserOwner, OWN_USER_SELECT } = require('../utils/userProjections');
 const { verifyOtp } = require('../controllers/auth/passwordController');
@@ -35,9 +59,27 @@ const { resolveOAuthLogin } = require('../utils/oauthLinking');
 const { startIduraAuth } = require('../controllers/iduraAuthController');
 
 const mkRes = () => ({
-  code: 200, body: null, location: null,
-  status(c) { this.code = c; return this; }, json(b) { this.body = b; return this; },
-  cookie() { return this; }, set() { return this; }, redirect(url) { this.location = url; return this; },
+  code: 200,
+  body: null,
+  location: null,
+  status(c) {
+    this.code = c;
+    return this;
+  },
+  json(b) {
+    this.body = b;
+    return this;
+  },
+  cookie() {
+    return this;
+  },
+  set() {
+    return this;
+  },
+  redirect(url) {
+    this.location = url;
+    return this;
+  },
 });
 const selectable = (row) => ({ select: async () => row });
 const HASH = bcrypt.hashSync('Passord123', 4);
@@ -45,8 +87,22 @@ const NEW = new Date('2026-11-01'); // after EMAIL_PROOF_CUTOFF
 const LEGACY = new Date('2026-01-01');
 let n = 0;
 const mail = () => `kari${++n}@example.test`;
-const signUp = (email, extra = {}) => ({ body: { name: 'Kari', lastName: 'N', email, password: 'Passord123', acceptedTerms: true, ...extra }, headers: {} });
-const run = async (handler, req) => { const res = mkRes(); await handler({ headers: {}, ip: '203.0.113.5', ...req }, res); return res; };
+const signUp = (email, extra = {}) => ({
+  body: {
+    name: 'Kari',
+    lastName: 'N',
+    email,
+    password: 'Passord123',
+    acceptedTerms: true,
+    ...extra,
+  },
+  headers: {},
+});
+const run = async (handler, req) => {
+  const res = mkRes();
+  await handler({ headers: {}, ip: '203.0.113.5', ...req }, res);
+  return res;
+};
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -67,7 +123,12 @@ describe('register', () => {
     expect(User.create.mock.calls[0][0].emailVerifiedAt).toBeUndefined();
     await new Promise(setImmediate);
     expect(User.updateOne.mock.calls[0][1].$set.otpPurpose).toBe('verify-email');
-    expect(sendOtpEmail).toHaveBeenCalledWith(email, expect.stringMatching(/^\d{6}$/), 'Kari', 'verify-email');
+    expect(sendOtpEmail).toHaveBeenCalledWith(
+      email,
+      expect.stringMatching(/^\d{6}$/),
+      'Kari',
+      'verify-email'
+    );
   });
 
   it('a failing verification mail does not undo the sign-up', async () => {
@@ -102,7 +163,8 @@ describe('register', () => {
   it('mails one address at most 5 times an hour (legacy resend)', async () => {
     const email = mail();
     User.findOne.mockReturnValue(selectable({ _id: 'pend2', email, name: 'X', createdAt: NEW }));
-    for (let i = 0; i < 7; i += 1) expect((await run(resendVerification, { body: { email } })).code).toBe(200);
+    for (let i = 0; i < 7; i += 1)
+      expect((await run(resendVerification, { body: { email } })).code).toBe(200);
     expect(sendOtpEmail).toHaveBeenCalledTimes(5);
   });
 });
@@ -110,7 +172,16 @@ describe('register', () => {
 describe('login', () => {
   it('an unverified post-cutoff account logs in normally', async () => {
     const email = mail();
-    User.findOne.mockReturnValue(selectable({ _id: 'u1', email, name: 'K', password: HASH, accountStatus: 'active', createdAt: NEW }));
+    User.findOne.mockReturnValue(
+      selectable({
+        _id: 'u1',
+        email,
+        name: 'K',
+        password: HASH,
+        accountStatus: 'active',
+        createdAt: NEW,
+      })
+    );
     const res = await run(login, { body: { email, password: 'Passord123' } });
     expect(res.code).toBe(200);
     expect(res.body.accessToken).toBe('at');
@@ -120,7 +191,9 @@ describe('login', () => {
 
   it('a legacy account without emailVerifiedAt counts as confirmed', async () => {
     const email = mail();
-    User.findOne.mockReturnValue(selectable({ _id: 'u2', email, password: HASH, accountStatus: 'active', createdAt: LEGACY }));
+    User.findOne.mockReturnValue(
+      selectable({ _id: 'u2', email, password: HASH, accountStatus: 'active', createdAt: LEGACY })
+    );
     const res = await run(login, { body: { email, password: 'Passord123' } });
     expect(res.code).toBe(200);
     expect(res.body.user.emailVerified).toBe(true);
@@ -128,7 +201,9 @@ describe('login', () => {
 
   it('wrong password is still just 401', async () => {
     const email = mail();
-    User.findOne.mockReturnValue(selectable({ _id: 'u3', email, password: HASH, accountStatus: 'active', createdAt: NEW }));
+    User.findOne.mockReturnValue(
+      selectable({ _id: 'u3', email, password: HASH, accountStatus: 'active', createdAt: NEW })
+    );
     const res = await run(login, { body: { email, password: 'Feil12345' } });
     expect(res.code).toBe(401);
   });
@@ -140,9 +215,17 @@ describe('confirming the e-mail from the profile (signed in)', () => {
   it('send-code mails a verify-email code to the account\u2019s own address', async () => {
     const user = me();
     User.findById.mockReturnValue(selectable(user));
-    const res = await run(sendEmailCode, { userId: 'me1', body: { email: 'attacker@example.test' } });
+    const res = await run(sendEmailCode, {
+      userId: 'me1',
+      body: { email: 'attacker@example.test' },
+    });
     expect(res.code).toBe(200);
-    expect(sendOtpEmail).toHaveBeenCalledWith(user.email, expect.stringMatching(/^\d{6}$/), 'K', 'verify-email');
+    expect(sendOtpEmail).toHaveBeenCalledWith(
+      user.email,
+      expect.stringMatching(/^\d{6}$/),
+      'K',
+      'verify-email'
+    );
     expect(User.updateOne.mock.calls[0][1].$set.otpPurpose).toBe('verify-email');
   });
 
@@ -160,11 +243,16 @@ describe('confirming the e-mail from the profile (signed in)', () => {
 
   it('verify: the right code stamps emailVerifiedAt and nothing else (no password, no BankID `verified`)', async () => {
     User.findById.mockReturnValue(selectable(me()));
-    User.findOneAndUpdate.mockImplementation(() => ({ select: async () => ({ _id: 'me1', passwordResetToken: sha256('123456') }) }));
+    User.findOneAndUpdate.mockImplementation(() => ({
+      select: async () => ({ _id: 'me1', passwordResetToken: sha256('123456') }),
+    }));
     const res = await run(confirmEmailCode, { userId: 'me1', body: { code: '123456' } });
     expect(res.code).toBe(200);
     expect(res.body).toEqual({ emailVerified: true });
-    expect(User.findOneAndUpdate.mock.calls[0][0]).toMatchObject({ _id: 'me1', otpPurpose: 'verify-email' });
+    expect(User.findOneAndUpdate.mock.calls[0][0]).toMatchObject({
+      _id: 'me1',
+      otpPurpose: 'verify-email',
+    });
     const [filter, update] = User.updateOne.mock.calls[0];
     expect(filter).toEqual({ _id: 'me1' });
     expect(Object.keys(update.$set)).toEqual(['emailVerifiedAt']);
@@ -174,9 +262,15 @@ describe('confirming the e-mail from the profile (signed in)', () => {
 
   it('verify: a wrong or malformed code changes nothing', async () => {
     User.findById.mockReturnValue(selectable(me()));
-    User.findOneAndUpdate.mockImplementation(() => ({ select: async () => ({ _id: 'me1', passwordResetToken: sha256('999999') }) }));
-    expect((await run(confirmEmailCode, { userId: 'me1', body: { code: '123456' } })).code).toBe(400);
-    expect((await run(confirmEmailCode, { userId: 'me1', body: { code: { $ne: 1 } } })).code).toBe(400);
+    User.findOneAndUpdate.mockImplementation(() => ({
+      select: async () => ({ _id: 'me1', passwordResetToken: sha256('999999') }),
+    }));
+    expect((await run(confirmEmailCode, { userId: 'me1', body: { code: '123456' } })).code).toBe(
+      400
+    );
+    expect((await run(confirmEmailCode, { userId: 'me1', body: { code: { $ne: 1 } } })).code).toBe(
+      400
+    );
     expect(User.updateOne.mock.calls.some(([, u]) => u.$set?.emailVerifiedAt)).toBe(false);
   });
 
@@ -193,18 +287,37 @@ describe('confirming the e-mail from the profile (signed in)', () => {
 describe('owner profile reports emailVerified (separate from BankID `verified`)', () => {
   it('false for an unconfirmed post-cutoff account, true when confirmed or legacy; `verified` untouched', () => {
     expect(OWN_USER_SELECT.split(' ')).toContain('emailVerifiedAt');
-    expect(sanitizeUserOwner({ _id: 'a', createdAt: NEW, verified: true })).toMatchObject({ emailVerified: false, verified: true });
-    expect(sanitizeUserOwner({ _id: 'b', createdAt: NEW, emailVerifiedAt: NEW, verified: false })).toMatchObject({ emailVerified: true, verified: false });
+    expect(sanitizeUserOwner({ _id: 'a', createdAt: NEW, verified: true })).toMatchObject({
+      emailVerified: false,
+      verified: true,
+    });
+    expect(
+      sanitizeUserOwner({ _id: 'b', createdAt: NEW, emailVerifiedAt: NEW, verified: false })
+    ).toMatchObject({ emailVerified: true, verified: false });
     expect(sanitizeUserOwner({ _id: 'c', createdAt: LEGACY }).emailVerified).toBe(true);
     expect(sanitizeUser({ _id: 'd', createdAt: NEW }).emailVerified).toBe(false);
   });
 });
 
 describe('verify-email', () => {
-  const pendingRow = (email, code = '123456') => ({ _id: 'p1', email, passwordResetToken: sha256(code), passwordResetAttempts: 1 });
+  const pendingRow = (email, code = '123456') => ({
+    _id: 'p1',
+    email,
+    passwordResetToken: sha256(code),
+    passwordResetAttempts: 1,
+  });
   const account = (email, extra = {}) => ({
-    _id: 'p1', email, name: 'K', password: HASH, accountStatus: 'active', createdAt: NEW, oauthProviders: [],
-    set(v) { Object.assign(this, v); }, ...extra,
+    _id: 'p1',
+    email,
+    name: 'K',
+    password: HASH,
+    accountStatus: 'active',
+    createdAt: NEW,
+    oauthProviders: [],
+    set(v) {
+      Object.assign(this, v);
+    },
+    ...extra,
   });
 
   it('a right code verifies the address and signs in, like the old register response', async () => {
@@ -215,7 +328,10 @@ describe('verify-email', () => {
     expect(res.code).toBe(200);
     expect(res.body.accessToken).toBe('at');
     expect(res.body.user.password).toBeUndefined();
-    expect(User.findOneAndUpdate.mock.calls[0][0]).toMatchObject({ email, otpPurpose: 'verify-email' });
+    expect(User.findOneAndUpdate.mock.calls[0][0]).toMatchObject({
+      email,
+      otpPurpose: 'verify-email',
+    });
     const update = User.updateOne.mock.calls[0][1];
     expect(update.$set.emailVerifiedAt).toBeInstanceOf(Date);
     expect(update.$set.password).toBeUndefined(); // same password: kept
@@ -225,7 +341,9 @@ describe('verify-email', () => {
 
   it('a wrong code neither verifies nor signs in', async () => {
     const email = mail();
-    User.findOneAndUpdate.mockImplementation(() => ({ select: async () => pendingRow(email, '999999') }));
+    User.findOneAndUpdate.mockImplementation(() => ({
+      select: async () => pendingRow(email, '999999'),
+    }));
     const res = await run(verifyEmail, { body: { email, code: '123456', password: 'Passord123' } });
     expect(res.code).toBe(400);
     expect(createSession).not.toHaveBeenCalled();
@@ -235,8 +353,12 @@ describe('verify-email', () => {
   it('when someone else registered the address first, the mailbox owner’s password replaces theirs', async () => {
     const email = mail();
     User.findOneAndUpdate.mockImplementation(() => ({ select: async () => pendingRow(email) }));
-    User.findById.mockReturnValue(selectable(account(email, { oauthProviders: [{ provider: 'google', providerId: 'x' }] })));
-    const res = await run(verifyEmail, { body: { email, code: '123456', password: 'Eierens1Passord' } });
+    User.findById.mockReturnValue(
+      selectable(account(email, { oauthProviders: [{ provider: 'google', providerId: 'x' }] }))
+    );
+    const res = await run(verifyEmail, {
+      body: { email, code: '123456', password: 'Eierens1Passord' },
+    });
     expect(res.code).toBe(200);
     const { $set } = User.updateOne.mock.calls[0][1];
     expect(await bcrypt.compare('Eierens1Passord', $set.password)).toBe(true);
@@ -248,7 +370,9 @@ describe('verify-email', () => {
     const email = mail();
     User.findOneAndUpdate.mockImplementation(() => ({ select: async () => pendingRow(email) }));
     User.findById.mockReturnValue(selectable(account(email, { emailVerifiedAt: new Date() })));
-    const res = await run(verifyEmail, { body: { email, code: '123456', password: 'Angriper1Passord' } });
+    const res = await run(verifyEmail, {
+      body: { email, code: '123456', password: 'Angriper1Passord' },
+    });
     expect(res.code).toBe(400);
     expect(User.updateOne.mock.calls.some(([, u]) => u.$set?.password)).toBe(false);
     expect(createSession).not.toHaveBeenCalled();
@@ -264,7 +388,8 @@ describe('verify-email', () => {
 describe('an unverified e-mail locks nothing (it only backs account recovery)', () => {
   it('the Connect onboarding routes have no e-mail gate', () => {
     const router = require('../routes/connect');
-    const names = (path) => router.stack.find((l) => l.route?.path === path).route.stack.map((s) => s.handle.name);
+    const names = (path) =>
+      router.stack.find((l) => l.route?.path === path).route.stack.map((s) => s.handle.name);
     expect(names('/account')).not.toContain('requireVerifiedEmail');
     expect(names('/account-link')).not.toContain('requireVerifiedEmail');
   });
@@ -280,15 +405,33 @@ describe('OAuth sign-in', () => {
   it('a provider-verified e-mail stamps emailVerifiedAt on the linked account', async () => {
     const user = { _id: 'g1', email: 'g@example.test' };
     User.findOne.mockResolvedValue(user);
-    const out = await resolveOAuthLogin({ provider: 'google', providerId: 'sub1', email: 'G@example.test', emailVerified: true });
+    const out = await resolveOAuthLogin({
+      provider: 'google',
+      providerId: 'sub1',
+      email: 'G@example.test',
+      emailVerified: true,
+    });
     expect(out.outcome).toBe('login');
-    expect(User.updateOne).toHaveBeenCalledWith({ _id: 'g1' }, { $set: { emailVerifiedAt: expect.any(Date) } });
+    expect(User.updateOne).toHaveBeenCalledWith(
+      { _id: 'g1' },
+      { $set: { emailVerifiedAt: expect.any(Date) } }
+    );
   });
 
   it('an unverified or different provider e-mail stamps nothing', async () => {
     User.findOne.mockResolvedValue({ _id: 'g2', email: 'g2@example.test' });
-    await resolveOAuthLogin({ provider: 'vipps', providerId: 'sub2', email: 'g2@example.test', emailVerified: undefined });
-    await resolveOAuthLogin({ provider: 'vipps', providerId: 'sub2', email: 'other@example.test', emailVerified: true });
+    await resolveOAuthLogin({
+      provider: 'vipps',
+      providerId: 'sub2',
+      email: 'g2@example.test',
+      emailVerified: undefined,
+    });
+    await resolveOAuthLogin({
+      provider: 'vipps',
+      providerId: 'sub2',
+      email: 'other@example.test',
+      emailVerified: true,
+    });
     expect(User.updateOne).not.toHaveBeenCalled();
   });
 });

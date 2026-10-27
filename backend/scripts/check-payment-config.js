@@ -57,7 +57,9 @@ const note = (m) => console.log(`        ${m}`);
     try {
       const stripe = require('stripe')(key, { apiVersion: STRIPE_API_VERSION });
       const balance = await stripe.balance.retrieve();
-      ok(`Stripe reachable — balance currencies: ${balance.available.map((b) => b.currency).join(', ')}`);
+      ok(
+        `Stripe reachable — balance currencies: ${balance.available.map((b) => b.currency).join(', ')}`
+      );
     } catch (err) {
       bad(`Stripe rejected the key: ${err.type || ''} ${err.message}`);
     }
@@ -68,7 +70,9 @@ const note = (m) => console.log(`        ${m}`);
   console.log('\nReturn URLs (FRONTEND_URL)');
   const frontend = process.env.FRONTEND_URL?.trim();
   if (!frontend) {
-    bad('FRONTEND_URL is NOT SET — success_url becomes "undefined/safepay/…" and Stripe rejects it');
+    bad(
+      'FRONTEND_URL is NOT SET — success_url becomes "undefined/safepay/…" and Stripe rejects it'
+    );
   } else if (!/^https?:\/\//i.test(frontend)) {
     bad(`FRONTEND_URL must be absolute, got "${frontend}"`);
   } else {
@@ -137,7 +141,9 @@ const note = (m) => console.log(`        ${m}`);
   } else {
     const keyIsTest = !key.startsWith('sk_live_');
     if (testMode === keyIsTest) {
-      ok(`toggle says ${testMode ? 'TEST' : 'LIVE'} and the key is a ${keyIsTest ? 'test' : 'live'} key`);
+      ok(
+        `toggle says ${testMode ? 'TEST' : 'LIVE'} and the key is a ${keyIsTest ? 'test' : 'live'} key`
+      );
     } else {
       bad(
         `STRIPE_TEST_MODE says ${testMode ? 'TEST' : 'LIVE'} but ${keyName} is a ${keyIsTest ? 'TEST' : 'LIVE'} key`
@@ -150,7 +156,9 @@ const note = (m) => console.log(`        ${m}`);
   note('the dashboard webhook endpoint must be set to this same version');
 
   console.log('\n' + '─'.repeat(58));
-  console.log(problems === 0 ? 'No configuration problems found.\n' : `${problems} problem(s) found.\n`);
+  console.log(
+    problems === 0 ? 'No configuration problems found.\n' : `${problems} problem(s) found.\n`
+  );
   process.exit(problems === 0 ? 0 : 1);
 })().catch((err) => {
   console.error('check failed:', err.message);

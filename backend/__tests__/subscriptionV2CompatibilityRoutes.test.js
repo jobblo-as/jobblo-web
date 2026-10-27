@@ -164,11 +164,13 @@ describe('legacy URLs backed by Subscription V2', () => {
       .set('Authorization', '******');
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual(expect.objectContaining({
-      includedContacts: 35,
-      consumedIncludedContacts: 1,
-      remainingIncludedContacts: 34,
-    }));
+    expect(response.body).toEqual(
+      expect.objectContaining({
+        includedContacts: 35,
+        consumedIncludedContacts: 1,
+        remainingIncludedContacts: 34,
+      })
+    );
     expect(SubscriptionV2.exists).toHaveBeenCalledWith({ userId: mockUserId });
     expect(entitlements.resolveEntitlements).toHaveBeenCalledWith(mockUserId);
   });
@@ -207,11 +209,13 @@ describe('legacy URLs backed by Subscription V2', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.subscription.plan).toBe('Pro');
-    expect(response.body.subscription.contacts).toEqual(expect.objectContaining({
-      includedLimit: 35,
-      includedUsed: 1,
-      includedRemaining: 34,
-    }));
+    expect(response.body.subscription.contacts).toEqual(
+      expect.objectContaining({
+        includedLimit: 35,
+        includedUsed: 1,
+        includedRemaining: 34,
+      })
+    );
     expect(SubscriptionV2.exists).toHaveBeenCalledWith({ userId: mockUserId });
     expect(management.cancelSubscription).not.toHaveBeenCalled();
   });
@@ -261,17 +265,19 @@ describe('legacy URLs backed by Subscription V2', () => {
     const response = await request(app).get('/api/plans');
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual([expect.objectContaining({
-      _id: String(seeded._id),
-      name: 'Plus',
-      price: 99,
-      type: 'private',
-      freeViews: 15,
-      pricePerExtraView: 29,
-      features: ['15 kontakter'],
-      featuresText: ['15 kontakter'],
-      isActive: true,
-    })]);
+    expect(response.body).toEqual([
+      expect.objectContaining({
+        _id: String(seeded._id),
+        name: 'Plus',
+        price: 99,
+        type: 'private',
+        freeViews: 15,
+        pricePerExtraView: 29,
+        features: ['15 kontakter'],
+        featuresText: ['15 kontakter'],
+        isActive: true,
+      }),
+    ]);
     expect(response.body[0]).not.toHaveProperty('stripePriceId');
     expect(SubscriptionPlan.find).toHaveBeenCalledWith({ isActive: { $ne: false } });
   });
@@ -298,7 +304,9 @@ describe('legacy URLs backed by Subscription V2', () => {
 
   test('maps checkout and status requests to the existing V2 checkout service', async () => {
     enabledFlags();
-    checkout.createSubscriptionCheckoutSession.mockResolvedValue({ url: 'https://checkout.test/session' });
+    checkout.createSubscriptionCheckoutSession.mockResolvedValue({
+      url: 'https://checkout.test/session',
+    });
     checkout.getSubscriptionCheckoutStatus.mockResolvedValue({
       payment_status: 'paid',
       provisioning_status: 'pending',
@@ -324,11 +332,13 @@ describe('legacy URLs backed by Subscription V2', () => {
       .get('/api/stripe/checkout-session/cs_test_owned')
       .set('Authorization', 'Bearer test');
     expect(status.status).toBe(200);
-    expect(status.body).toEqual(expect.objectContaining({
-      payment_status: 'paid',
-      provisioning_status: 'pending',
-      checkout_status: 'processing',
-    }));
+    expect(status.body).toEqual(
+      expect.objectContaining({
+        payment_status: 'paid',
+        provisioning_status: 'pending',
+        checkout_status: 'processing',
+      })
+    );
     expect(checkout.getSubscriptionCheckoutStatus).toHaveBeenCalledWith(
       mockUserId,
       'cs_test_owned'
@@ -364,25 +374,27 @@ describe('legacy URLs backed by Subscription V2', () => {
       .get('/api/stripe/subscription')
       .set('Authorization', 'Bearer test');
     expect(response.status).toBe(200);
-    expect(response.body.subscription).toEqual(expect.objectContaining({
-      hasPlan: true,
-      plan: 'Plus',
-      planId: 'plan-v2',
-      status: 'past_due',
-      stripeSubscriptionId: 'sub_owned',
-      contacts: {
-        includedLimit: 15,
-        includedUsed: 4,
-        includedRemaining: 11,
-        perContactPrice: 29,
-        contactUnlockMinutes: 60,
-        paidPurchased: 2,
-        paidUsed: 1,
-        paidAvailable: 1,
-        totalPaidForExtraContacts: 58,
-      },
-      paymentRecovery: { active: true, status: 'retrying' },
-    }));
+    expect(response.body.subscription).toEqual(
+      expect.objectContaining({
+        hasPlan: true,
+        plan: 'Plus',
+        planId: 'plan-v2',
+        status: 'past_due',
+        stripeSubscriptionId: 'sub_owned',
+        contacts: {
+          includedLimit: 15,
+          includedUsed: 4,
+          includedRemaining: 11,
+          perContactPrice: 29,
+          contactUnlockMinutes: 60,
+          paidPurchased: 2,
+          paidUsed: 1,
+          paidAvailable: 1,
+          totalPaidForExtraContacts: 58,
+        },
+        paymentRecovery: { active: true, status: 'retrying' },
+      })
+    );
     expect(entitlements.resolveEntitlements).toHaveBeenCalledWith(mockUserId);
     expect(Transaction.aggregate).toHaveBeenCalledWith([
       {
@@ -428,7 +440,11 @@ describe('legacy URLs backed by Subscription V2', () => {
     management.cancelScheduledPlanChange.mockResolvedValue({ canceled: true });
     management.resumeSubscription.mockResolvedValue({ message: 'resume', effectiveAt: 'end' });
     management.createBillingPortalSession.mockResolvedValue({ url: 'https://billing.test' });
-    management.previewPlanChange.mockResolvedValue({ strategy: 'immediate', amountDueNow: 25, currency: 'nok' });
+    management.previewPlanChange.mockResolvedValue({
+      strategy: 'immediate',
+      amountDueNow: 25,
+      currency: 'nok',
+    });
     management.changePlan.mockResolvedValue({ strategy: 'period_end', effectiveAt: 'end' });
     management.getBillingHistory.mockResolvedValue({ invoices: [], payments: [] });
     management.getInvoicePdf.mockResolvedValue({ url: 'https://invoice.test/pdf' });
@@ -438,10 +454,18 @@ describe('legacy URLs backed by Subscription V2', () => {
     const cancelChange = await auth(request(app).post('/api/stripe/subscription/change/cancel'));
     const resume = await auth(request(app).post('/api/stripe/subscription/resume'));
     const portal = await auth(request(app).post('/api/stripe/subscription/portal'));
-    const preview = await auth(request(app).post('/api/stripe/subscription/change/preview').send({ planId: 'target' }));
-    const change = await auth(request(app).post('/api/stripe/subscription/change').send({ planId: 'target' }));
-    const history = await auth(request(app).get('/api/stripe/subscription/billing-history?mode=all'));
-    const pdf = await auth(request(app).get('/api/stripe/subscription/invoices/in_1/pdf?mode=test'));
+    const preview = await auth(
+      request(app).post('/api/stripe/subscription/change/preview').send({ planId: 'target' })
+    );
+    const change = await auth(
+      request(app).post('/api/stripe/subscription/change').send({ planId: 'target' })
+    );
+    const history = await auth(
+      request(app).get('/api/stripe/subscription/billing-history?mode=all')
+    );
+    const pdf = await auth(
+      request(app).get('/api/stripe/subscription/invoices/in_1/pdf?mode=test')
+    );
 
     expect(cancel.body.message).toBe('cancel');
     expect(cancelChange.body.canceled).toBe(true);

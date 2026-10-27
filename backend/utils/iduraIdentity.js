@@ -107,7 +107,10 @@ function buildIdentityVerification(claims) {
 
   const name =
     str(claims.name) ||
-    [str(claims.given_name) || str(claims.givenname), str(claims.family_name) || str(claims.surname)]
+    [
+      str(claims.given_name) || str(claims.givenname),
+      str(claims.family_name) || str(claims.surname),
+    ]
       .filter(Boolean)
       .join(' ') ||
     undefined;

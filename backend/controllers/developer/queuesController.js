@@ -8,11 +8,18 @@ const { STUCK_MS, queueStats } = require('../../services/monitoring/workQueues')
 
 // ── 8b. Queues page ───
 const getQueues = asyncHandler(async (req, res) => {
-  const [queues, broker] = await Promise.all([queueStats(), require('../../services/queue/admin').overview()]);
+  const [queues, broker] = await Promise.all([
+    queueStats(),
+    require('../../services/queue/admin').overview(),
+  ]);
   return sendSuccess(res, {
     broker,
     queues,
-    scheduler: { enabled: scheduler.state.enabled, mode: scheduler.state.mode, jobs: scheduler.SCHEDULE.map((j) => ({ name: j.name, everyMs: j.everyMs })) },
+    scheduler: {
+      enabled: scheduler.state.enabled,
+      mode: scheduler.state.mode,
+      jobs: scheduler.SCHEDULE.map((j) => ({ name: j.name, everyMs: j.everyMs })),
+    },
     stuckAfterMinutes: STUCK_MS / MINUTE,
   });
 });
@@ -22,10 +29,22 @@ const queueAction = (fn, verb) =>
   asyncHandler(async (req, res) => {
     try {
       const result = await fn(req.params.queue, req.params.id);
-      logActivity({ adminId: req.user._id, action: 'other', description: `Queue ${req.params.queue}: ${verb}${req.params.id ? ` job ${req.params.id}` : ''}`, metadata: { area: 'developer.queues', queue: req.params.queue, jobId: req.params.id || null, result }, ip: req.ip, userAgent: req.get('user-agent') || 'unknown' });
+      logActivity({
+        adminId: req.user._id,
+        action: 'other',
+        description: `Queue ${req.params.queue}: ${verb}${req.params.id ? ` job ${req.params.id}` : ''}`,
+        metadata: {
+          area: 'developer.queues',
+          queue: req.params.queue,
+          jobId: req.params.id || null,
+          result,
+        },
+        ip: req.ip,
+        userAgent: req.get('user-agent') || 'unknown',
+      });
       return sendSuccess(res, result, `${verb} done.`);
     } catch (err) {
-      return (err.status ? sendError(res, err.message, err.status) : serverError(res, err));
+      return err.status ? sendError(res, err.message, err.status) : serverError(res, err);
     }
   });
 const qa = () => require('../../services/queue/admin');

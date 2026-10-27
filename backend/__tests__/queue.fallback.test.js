@@ -3,7 +3,9 @@
  * without REDIS_URL jobs run in-process; with REDIS_URL pointing at a dead server the
  * enqueue times out and the job runs in-process instead.
  */
-jest.mock('../services/pushNotifications', () => ({ deliverPush: jest.fn().mockResolvedValue(undefined) }));
+jest.mock('../services/pushNotifications', () => ({
+  deliverPush: jest.fn().mockResolvedValue(undefined),
+}));
 
 const until = async (fn, ms = 6000) => {
   const end = Date.now() + ms;
@@ -56,15 +58,26 @@ it('OTP codes never sit in a job payload in clear text', async () => {
   const { sealOtp } = require('../services/queue/handlers');
   const sealed = sealOtp('123456');
   expect(sealed).not.toContain('123456');
-  expect(require('../utils/secretBox').createBox('queued-otp').open(sealed).toString()).toBe('123456');
+  expect(require('../utils/secretBox').createBox('queued-otp').open(sealed).toString()).toBe(
+    '123456'
+  );
   // Sealed for the queue ≠ readable as an authenticator secret.
   expect(() => require('../utils/secretBox').createBox('totp-secret').open(sealed)).toThrow();
 });
 
 it('the console sees job data redacted: no codes, masked emails, push text reduced to its title', () => {
   const { redactJobData } = require('../services/queue/admin');
-  expect(redactJobData({ to: 'kari.nord@example.no', name: 'Kari', otpSealed: 'v1:abc' })).toEqual({ to: expect.not.stringContaining('kari.nord'), name: 'Kari', otpSealed: '[hidden]' });
-  expect(redactJobData({ userId: 'u1', message: { title: 'Ny melding', body: 'Hei, ring meg på 91234567', data: {} } })).toEqual({ userId: 'u1', message: { title: 'Ny melding', fields: ['title', 'body', 'data'] } });
+  expect(redactJobData({ to: 'kari.nord@example.no', name: 'Kari', otpSealed: 'v1:abc' })).toEqual({
+    to: expect.not.stringContaining('kari.nord'),
+    name: 'Kari',
+    otpSealed: '[hidden]',
+  });
+  expect(
+    redactJobData({
+      userId: 'u1',
+      message: { title: 'Ny melding', body: 'Hei, ring meg på 91234567', data: {} },
+    })
+  ).toEqual({ userId: 'u1', message: { title: 'Ny melding', fields: ['title', 'body', 'data'] } });
   expect(redactJobData({ job: 'reconcileMoneyState' })).toEqual({ job: 'reconcileMoneyState' });
 });
 
@@ -72,8 +85,21 @@ it('Redis slow, not down: a job that lands after the fallback is withdrawn, so i
   jest.useFakeTimers({ doNotFake: ['setImmediate', 'nextTick', 'queueMicrotask'] });
   let land;
   const remove = jest.fn().mockResolvedValue(undefined);
-  jest.doMock('bullmq', () => ({ Queue: jest.fn(() => ({ on: () => {}, add: () => new Promise((r) => { land = r; }) })) }));
-  jest.doMock('../config/redis', () => ({ enabled: () => true, bullConnection: () => ({}), PREFIX: 't', closeRedis: async () => {} }));
+  jest.doMock('bullmq', () => ({
+    Queue: jest.fn(() => ({
+      on: () => {},
+      add: () =>
+        new Promise((r) => {
+          land = r;
+        }),
+    })),
+  }));
+  jest.doMock('../config/redis', () => ({
+    enabled: () => true,
+    bullConnection: () => ({}),
+    PREFIX: 't',
+    closeRedis: async () => {},
+  }));
   jest.spyOn(console, 'error').mockImplementation(() => {});
   try {
     const { enqueue } = require('../services/queue');
@@ -96,8 +122,15 @@ it('Redis slow, not down: a job that lands after the fallback is withdrawn, so i
 
 it('Redis down: queue errors are logged once per 30 s, not once per reconnect attempt', () => {
   const listeners = {};
-  jest.doMock('bullmq', () => ({ Queue: jest.fn(() => ({ on: (ev, fn) => (listeners[ev] = fn) })) }));
-  jest.doMock('../config/redis', () => ({ enabled: () => true, bullConnection: () => ({}), PREFIX: 't', closeRedis: async () => {} }));
+  jest.doMock('bullmq', () => ({
+    Queue: jest.fn(() => ({ on: (ev, fn) => (listeners[ev] = fn) })),
+  }));
+  jest.doMock('../config/redis', () => ({
+    enabled: () => true,
+    bullConnection: () => ({}),
+    PREFIX: 't',
+    closeRedis: async () => {},
+  }));
   const log = jest.spyOn(console, 'error').mockImplementation(() => {});
   try {
     require('../services/queue').getQueue('email');

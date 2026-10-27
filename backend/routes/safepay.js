@@ -6,7 +6,12 @@ const disputeController = require('../controllers/disputeController');
 const providerWorkController = require('../controllers/providerWorkController');
 const financeController = require('../controllers/safepayFinanceController');
 const { authenticate } = require('../middleware/auth');
-const { checkFileTypes, DOCUMENT_TYPES, uploadLimiter, MULTIPART_LIMITS } = require('../middleware/upload');
+const {
+  checkFileTypes,
+  DOCUMENT_TYPES,
+  uploadLimiter,
+  MULTIPART_LIMITS,
+} = require('../middleware/upload');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -27,16 +32,39 @@ router.get('/orders/:orderId', authenticate, providerWorkController.getOrderDeta
 
 // ── Provider actions ──────────────────────────────────────────────────────────
 router.post('/orders/:orderId/start', authenticate, providerWorkController.startJob);
-router.post('/orders/:orderId/ready-for-review', authenticate, providerWorkController.markReadyForReview);
-router.post('/orders/:orderId/evidence', authenticate, uploadLimiter, upload.array('files', 10), checkFileTypes(DOCUMENT_TYPES), providerWorkController.uploadEvidence);
+router.post(
+  '/orders/:orderId/ready-for-review',
+  authenticate,
+  providerWorkController.markReadyForReview
+);
+router.post(
+  '/orders/:orderId/evidence',
+  authenticate,
+  uploadLimiter,
+  upload.array('files', 10),
+  checkFileTypes(DOCUMENT_TYPES),
+  providerWorkController.uploadEvidence
+);
 router.delete('/orders/:orderId/evidence', authenticate, providerWorkController.deleteEvidence);
-router.patch('/orders/:orderId/provider-checklist/:itemId', authenticate, providerWorkController.updateProviderChecklist);
+router.patch(
+  '/orders/:orderId/provider-checklist/:itemId',
+  authenticate,
+  providerWorkController.updateProviderChecklist
+);
 
 // ── Customer actions ──────────────────────────────────────────────────────────
-router.patch('/orders/:orderId/customer-checklist/:itemId', authenticate, providerWorkController.updateCustomerChecklist);
+router.patch(
+  '/orders/:orderId/customer-checklist/:itemId',
+  authenticate,
+  providerWorkController.updateCustomerChecklist
+);
 
 // ── Payment reconciliation ────────────────────────────────────────────────────
-router.post('/orders/:orderId/reconcile-payment', authenticate, providerWorkController.reconcilePayment);
+router.post(
+  '/orders/:orderId/reconcile-payment',
+  authenticate,
+  providerWorkController.reconcilePayment
+);
 
 // ── Legacy routes (backward compat) ──────────────────────────────────────────
 router.post('/contract/:orderId/start', authenticate, providerWorkController.startJob);
@@ -47,7 +75,11 @@ router.post('/contract/:orderId/start', authenticate, providerWorkController.sta
 // The hardened replacement is POST /api/safepay-checkout/approve (approveAndPayout).
 router.get('/history', authenticate, safePayController.getSafePayHistory);
 router.get('/history/:userId', authenticate, safePayController.getSafePayHistory);
-router.put('/contract/:orderId/checklist/:itemId', authenticate, safePayController.updateChecklistItem);
+router.put(
+  '/contract/:orderId/checklist/:itemId',
+  authenticate,
+  safePayController.updateChecklistItem
+);
 
 // Financial history is read-only; listing it never creates a Stripe transfer or payout.
 router.get('/finance/transfers', authenticate, financeController.getTransfers);

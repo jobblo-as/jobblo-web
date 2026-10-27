@@ -10,7 +10,11 @@ const upload = multer({
 });
 
 const chatController = require('../controllers/chatController');
-const { submitChatReport, getMyChatReports, reportSubmitLimiter } = require('../controllers/chatReportController');
+const {
+  submitChatReport,
+  getMyChatReports,
+  reportSubmitLimiter,
+} = require('../controllers/chatReportController');
 const { authenticate } = require('../middleware/auth');
 
 // Applying already consumes contact entitlement on /orders/request. Opening that

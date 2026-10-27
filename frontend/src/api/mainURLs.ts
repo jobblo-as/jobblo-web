@@ -31,16 +31,19 @@ const timing = (config: unknown, status: number) => {
 };
 
 // Response interceptor that maps known error shape to simpler form (redundant but safe)
-mainLink.interceptors.response.use((r) => {
-  timing(r.config, r.status);
-  return r;
-}, (err) => {
-  timing(err?.config, err?.response?.status ?? 0);
-  const data = err?.response?.data;
-  if (data && data.error) {
-    err.apiError = data.error;
+mainLink.interceptors.response.use(
+  (r) => {
+    timing(r.config, r.status);
+    return r;
+  },
+  (err) => {
+    timing(err?.config, err?.response?.status ?? 0);
+    const data = err?.response?.data;
+    if (data && data.error) {
+      err.apiError = data.error;
+    }
+    return Promise.reject(err);
   }
-  return Promise.reject(err);
-});
+);
 
 export default mainLink;

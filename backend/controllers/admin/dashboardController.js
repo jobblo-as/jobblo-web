@@ -6,7 +6,12 @@ const Review = require('../../models/Review');
 const Notification = require('../../models/Notification');
 const AdminActivity = require('../../models/AdminActivity');
 const SubscriptionV2 = require('../../models/SubscriptionV2');
-const { asyncHandler, sendSuccess, sendError, buildPagination } = require('../../utils/apiResponse');
+const {
+  asyncHandler,
+  sendSuccess,
+  sendError,
+  buildPagination,
+} = require('../../utils/apiResponse');
 
 /**
  * GET /api/admin/overview
@@ -78,9 +83,7 @@ const getOverview = asyncHandler(async (req, res) => {
     Order.countDocuments(),
 
     // Orders grouped by status
-    Order.aggregate([
-      { $group: { _id: '$status', count: { $sum: 1 } } },
-    ]),
+    Order.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
 
     // Orders this month
     Order.countDocuments({ createdAt: { $gte: startOfMonth } }),
@@ -135,11 +138,7 @@ const getOverview = asyncHandler(async (req, res) => {
     ]),
 
     // Latest 10 admin activity records
-    AdminActivity.find()
-      .sort({ createdAt: -1 })
-      .limit(10)
-      .populate('adminId', 'name email')
-      .lean(),
+    AdminActivity.find().sort({ createdAt: -1 }).limit(10).populate('adminId', 'name email').lean(),
 
     // Recent users
     User.find({ isDeleted: { $ne: true } })

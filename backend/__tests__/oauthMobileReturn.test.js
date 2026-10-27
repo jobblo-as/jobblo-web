@@ -540,7 +540,9 @@ describe('no return URL is ever taken from the caller', () => {
     );
     expect(sources['controllers/vippsController.js']).toMatch(/takeOAuthPlatform\(req\)/);
     // Calling it is not enough: without the import the Google callback threw a ReferenceError.
-    expect(sources['routes/auth.js']).toMatch(/\{[^}]*\btakeOAuthPlatform\b[^}]*\}\s*=\s*require\('\.\.\/utils\/oauthReturn'\)/);
+    expect(sources['routes/auth.js']).toMatch(
+      /\{[^}]*\btakeOAuthPlatform\b[^}]*\}\s*=\s*require\('\.\.\/utils\/oauthReturn'\)/
+    );
     for (const name of ['routes/auth.js', 'controllers/vippsController.js']) {
       expect(sources[name]).not.toMatch(/query\.platform/);
     }

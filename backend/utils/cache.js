@@ -82,7 +82,13 @@ async function store(key, buf, ttlSec) {
   if (!client) return; // ponytail: not written through while Redis reconnects; the next miss after it is back writes it
   try {
     // GT: the index lives as long as its longest-lived member.
-    await client.multi().set(fullKey(key), buf, 'EX', ttlSec).sadd(indexKey(key), fullKey(key)).expire(indexKey(key), ttlSec, 'GT').expire(indexKey(key), ttlSec, 'NX').exec();
+    await client
+      .multi()
+      .set(fullKey(key), buf, 'EX', ttlSec)
+      .sadd(indexKey(key), fullKey(key))
+      .expire(indexKey(key), ttlSec, 'GT')
+      .expire(indexKey(key), ttlSec, 'NX')
+      .exec();
   } catch {
     /* cache is best effort */
   }
@@ -103,7 +109,8 @@ return #k`;
 async function invalidate(namespace) {
   generation += 1;
   inflight.clear();
-  for (const k of local.keys()) if (k === namespace || k.startsWith(`${namespace}:`)) local.delete(k);
+  for (const k of local.keys())
+    if (k === namespace || k.startsWith(`${namespace}:`)) local.delete(k);
   const client = redis.getRedis();
   if (!client) return;
   try {
@@ -148,7 +155,8 @@ function cacheJson(namespace, ttlSec, { ignoreQuery = false } = {}) {
       const send = res.send;
       res.send = (chunk) => {
         res.send = send;
-        if (typeof chunk === 'string' && gen === generation) void store(key, Buffer.from(chunk), ttlSec);
+        if (typeof chunk === 'string' && gen === generation)
+          void store(key, Buffer.from(chunk), ttlSec);
         return send.call(res, chunk);
       };
       return json(body);

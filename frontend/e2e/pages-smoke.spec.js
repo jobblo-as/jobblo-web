@@ -12,37 +12,177 @@ const ID = '64c000000000000000000001';
 const JOB = SERVICE._id;
 
 const anon = [
-  '/', '/home', '/oppdragstakere', '/search', '/search/job', '/search/job/Maling',
-  `/jobs/${JOB}`, `/job-listing/${JOB}`, `/profile/${ID}`, '/team',
-  '/support', '/delete-account', '/sale-subscription-terms', '/cookies',
-  '/about', '/user-term', '/kampanjevilkar', '/upcoming', '/login', '/register', '/forgot-password',
+  '/',
+  '/home',
+  '/oppdragstakere',
+  '/search',
+  '/search/job',
+  '/search/job/Maling',
+  `/jobs/${JOB}`,
+  `/job-listing/${JOB}`,
+  `/profile/${ID}`,
+  '/team',
+  '/support',
+  '/delete-account',
+  '/sale-subscription-terms',
+  '/cookies',
+  '/about',
+  '/user-term',
+  '/kampanjevilkar',
+  '/upcoming',
+  '/login',
+  '/register',
+  '/forgot-password',
 ];
 
-const settings = ['', 'name', 'bio', 'picture', 'banner', 'email', 'phone', 'addresses', 'safepay', 'payout',
-  'password', 'delete-account', 'location', 'upcoming', 'visibility', 'blocked', 'cookies', 'sessions', 'about',
-  'notifications', 'subscriptions', 'seeker'].map((s) => `/settings${s ? `/${s}` : ''}`);
+const settings = [
+  '',
+  'name',
+  'bio',
+  'picture',
+  'banner',
+  'email',
+  'phone',
+  'addresses',
+  'safepay',
+  'payout',
+  'password',
+  'delete-account',
+  'location',
+  'upcoming',
+  'visibility',
+  'blocked',
+  'cookies',
+  'sessions',
+  'about',
+  'notifications',
+  'subscriptions',
+  'seeker',
+].map((s) => `/settings${s ? `/${s}` : ''}`);
 
 const user = [
-  `/completed-job/${ID}`, `/job-applicants/${JOB}`, '/my-applicants',
-  `/provider/orders/${ID}`, `/safepay/checkout/${ID}`, '/safepay/success', `/safepay/approval/${ID}`,
-  '/profile', '/mine-annonser', '/Publish-job', `/Publish-job/${JOB}`, '/alerts', ...settings,
-  '/favorites', `/favorites/list/${ID}`, '/coins', '/messages', `/messages/${ID}`, '/membership', '/subscription/success',
+  `/completed-job/${ID}`,
+  `/job-applicants/${JOB}`,
+  '/my-applicants',
+  `/provider/orders/${ID}`,
+  `/safepay/checkout/${ID}`,
+  '/safepay/success',
+  `/safepay/approval/${ID}`,
+  '/profile',
+  '/mine-annonser',
+  '/Publish-job',
+  `/Publish-job/${JOB}`,
+  '/alerts',
+  ...settings,
+  '/favorites',
+  `/favorites/list/${ID}`,
+  '/coins',
+  '/messages',
+  `/messages/${ID}`,
+  '/membership',
+  '/subscription/success',
 ];
 
-const dashboard = ['', 'users', `users/${ID}`, 'services', `services/${JOB}/edit`, 'orders', `orders/${ID}`, 'reviews',
-  'categories', 'voucher', 'transactions', 'notifications', 'roadmap', 'plans', 'safepay', 'finance-history',
-  'subscription-billing', `safepay/${ID}`, 'disputes', `disputes/${ID}`, 'chat-review', 'chats', `chats/${ID}`,
-  'chat-reports', `chat-reports/${ID}`, 'job-reports', `job-reports/${ID}`, 'system-health', 'homepage-cms',
-  'campaigns', 'settings', 'navigation-footer', 'announcements', 'maintenance', 'shop',
+const dashboard = [
+  '',
+  'users',
+  `users/${ID}`,
+  'services',
+  `services/${JOB}/edit`,
+  'orders',
+  `orders/${ID}`,
+  'reviews',
+  'categories',
+  'voucher',
+  'transactions',
+  'notifications',
+  'roadmap',
+  'plans',
+  'safepay',
+  'finance-history',
+  'subscription-billing',
+  `safepay/${ID}`,
+  'disputes',
+  `disputes/${ID}`,
+  'chat-review',
+  'chats',
+  `chats/${ID}`,
+  'chat-reports',
+  `chat-reports/${ID}`,
+  'job-reports',
+  `job-reports/${ID}`,
+  'system-health',
+  'homepage-cms',
+  'campaigns',
+  'settings',
+  'navigation-footer',
+  'announcements',
+  'maintenance',
+  'shop',
 ].map((s) => `/dashboard${s ? `/${s}` : ''}`);
 
-const developer = ['', 'api', 'errors', 'server', 'mongo', 'scheduler', 'webhooks', 'audit', 'tools', 'payments',
-  'safepay', 'subscriptions', 'reconciliation', 'users', 'jobs', 'logs', 'live', 'security', 'flags', 'performance',
-  'notifications', 'queues', 'redis', 'redis/keys', 'tickets', 'deployments', 'incidents', 'reports', 'settings', 'ips',
-  'approvals', 'investigate', 'integrity', 'backups', 'safepay-machine', 'synthetic', 'mobile', 'dependencies', 'slo',
-  'deployment-impact', 'costs', 'capacity', 'config-drift', 'failure-simulator', 'fraud', 'contracts', 'connect',
-  'ledger', 'transactions', 'rum', 'risk', 'quality', 'sessions', 'search', 'privacy', 'runbooks', 'migrations',
-  'event-consistency', 'marketplace', 'impact', 'not-built-yet',
+const developer = [
+  '',
+  'api',
+  'errors',
+  'server',
+  'mongo',
+  'scheduler',
+  'webhooks',
+  'audit',
+  'tools',
+  'payments',
+  'safepay',
+  'subscriptions',
+  'reconciliation',
+  'users',
+  'jobs',
+  'logs',
+  'live',
+  'security',
+  'flags',
+  'performance',
+  'notifications',
+  'queues',
+  'redis',
+  'redis/keys',
+  'tickets',
+  'deployments',
+  'incidents',
+  'reports',
+  'settings',
+  'ips',
+  'approvals',
+  'investigate',
+  'integrity',
+  'backups',
+  'safepay-machine',
+  'synthetic',
+  'mobile',
+  'dependencies',
+  'slo',
+  'deployment-impact',
+  'costs',
+  'capacity',
+  'config-drift',
+  'failure-simulator',
+  'fraud',
+  'contracts',
+  'connect',
+  'ledger',
+  'transactions',
+  'rum',
+  'risk',
+  'quality',
+  'sessions',
+  'search',
+  'privacy',
+  'runbooks',
+  'migrations',
+  'event-consistency',
+  'marketplace',
+  'impact',
+  'not-built-yet',
 ].map((s) => `/developer${s ? `/${s}` : ''}`);
 
 // Redirect routes: [path, role, where it must land].
@@ -67,7 +207,10 @@ test.describe.configure({ timeout: 300_000 });
 async function goto(page, path) {
   // The dev server restarts when another process touches its config; retry a refused connection.
   for (let i = 0; ; i++) {
-    try { await page.goto(path, { waitUntil: 'domcontentloaded', timeout: 60_000 }); break; } catch (e) {
+    try {
+      await page.goto(path, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+      break;
+    } catch (e) {
       if (i >= 4 || !/ERR_CONNECTION_(REFUSED|RESET)/.test(e.message)) throw e;
       await page.waitForTimeout(3000);
     }
@@ -101,9 +244,16 @@ async function sweep(page, paths, as, fallback = 'empty') {
   for (const path of paths) {
     errors.length = 0;
     await goto(page, path);
-    await expect.soft(page, `${path}: stays on its URL`).toHaveURL((u) => decodeURI(u.pathname) === path);
-    await expect.soft(page.getByRole('heading', { name: 'Noe gikk galt' }), `${path}: error boundary`).toHaveCount(0);
-    if (!path.endsWith('not-built-yet')) await expect.soft(page.getByRole('heading', { name: 'Siden finnes ikke' }), `${path}: 404`).toHaveCount(0);
+    await expect
+      .soft(page, `${path}: stays on its URL`)
+      .toHaveURL((u) => decodeURI(u.pathname) === path);
+    await expect
+      .soft(page.getByRole('heading', { name: 'Noe gikk galt' }), `${path}: error boundary`)
+      .toHaveCount(0);
+    if (!path.endsWith('not-built-yet'))
+      await expect
+        .soft(page.getByRole('heading', { name: 'Siden finnes ikke' }), `${path}: 404`)
+        .toHaveCount(0);
     await expect.soft(page.locator('body'), `${path}: blank page`).not.toHaveText(/^s*$/);
     await page.waitForTimeout(300); // let late effects (second fetch, socket) settle
     const relevant = fallback === 'down' ? errors.filter((e) => e.startsWith('pageerror')) : errors;
@@ -111,10 +261,14 @@ async function sweep(page, paths, as, fallback = 'empty') {
   }
 }
 
-const chunks = (list, n) => Array.from({ length: Math.ceil(list.length / n) }, (_, i) => list.slice(i * n, i * n + n));
+const chunks = (list, n) =>
+  Array.from({ length: Math.ceil(list.length / n) }, (_, i) => list.slice(i * n, i * n + n));
 
 // Public and signed-in user pages: unknown API calls answer with an empty success.
-for (const [group, as, paths] of [['anonymous', null, anon], ['user', 'user', user]]) {
+for (const [group, as, paths] of [
+  ['anonymous', null, anon],
+  ['user', 'user', user],
+]) {
   chunks(paths, 12).forEach((part, i) => {
     test(`${group} pages render (${i + 1}): ${part[0]} …`, ({ page }) => sweep(page, part, as));
   });
@@ -124,9 +278,13 @@ for (const [group, as, paths] of [['anonymous', null, anon], ['user', 'user', us
 // shape the backend sends, so they are swept with the API down instead: every page must
 // show its own error state, never crash. (Happy paths: flows-*.spec.js, developer-console,
 // redis-console.)
-for (const [group, as, paths] of [['superAdmin', 'superAdmin', dashboard], ['developer', 'developer', developer]]) {
+for (const [group, as, paths] of [
+  ['superAdmin', 'superAdmin', dashboard],
+  ['developer', 'developer', developer],
+]) {
   chunks(paths, 12).forEach((part, i) => {
-    test(`${group} pages survive the API being down (${i + 1}): ${part[0]} …`, ({ page }) => sweep(page, part, as, 'down'));
+    test(`${group} pages survive the API being down (${i + 1}): ${part[0]} …`, ({ page }) =>
+      sweep(page, part, as, 'down'));
   });
 }
 

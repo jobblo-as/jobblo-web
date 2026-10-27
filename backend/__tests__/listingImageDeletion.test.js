@@ -36,7 +36,11 @@ jest.mock('@azure/storage-blob', () => ({
   },
 }));
 
-jest.mock('../models/Service', () => ({ findById: jest.fn(), exists: jest.fn(), create: jest.fn() }));
+jest.mock('../models/Service', () => ({
+  findById: jest.fn(),
+  exists: jest.fn(),
+  create: jest.fn(),
+}));
 jest.mock('../models/JobRequest', () => ({}));
 jest.mock('../models/Order', () => ({ find: jest.fn(), updateMany: jest.fn() }));
 jest.mock('../models/Review', () => ({ deleteMany: jest.fn() }));
@@ -65,7 +69,12 @@ const OWN_PHOTO = 'job_images/33333333-3333-4333-8333-333333333333.png';
 const OWN_OG = 'job_images/og/44444444-4444-4444-8444-444444444444.jpg';
 const OWN_LEGACY = `job_images/${OWNER}/55555555-5555-4555-8555-555555555555.jpg`;
 
-const ownMeta = { url: URL_OF(OWN_PHOTO), blobName: OWN_PHOTO, ogUrl: URL_OF(OWN_OG), ogBlobName: OWN_OG };
+const ownMeta = {
+  url: URL_OF(OWN_PHOTO),
+  blobName: OWN_PHOTO,
+  ogUrl: URL_OF(OWN_OG),
+  ogBlobName: OWN_OG,
+};
 
 /** Other listings in the "database", for the shared-reference check. */
 let otherListings;
@@ -115,7 +124,15 @@ beforeEach(() => {
   jest.spyOn(console, 'error').mockImplementation(() => {});
   mockAzure.failDeletes = false;
   store.clear();
-  for (const name of [VICTIM_AVATAR, VICTIM_LISTING_PHOTO, VICTIM_LISTING_OG, ORDER_EVIDENCE, OWN_PHOTO, OWN_OG, OWN_LEGACY]) {
+  for (const name of [
+    VICTIM_AVATAR,
+    VICTIM_LISTING_PHOTO,
+    VICTIM_LISTING_OG,
+    ORDER_EVIDENCE,
+    OWN_PHOTO,
+    OWN_OG,
+    OWN_LEGACY,
+  ]) {
     store.set(name, true);
   }
   otherListings = [
@@ -123,7 +140,12 @@ beforeEach(() => {
       _id: new mongoose.Types.ObjectId(),
       images: [URL_OF(VICTIM_LISTING_PHOTO)],
       imageMetadata: [
-        { url: URL_OF(VICTIM_LISTING_PHOTO), blobName: VICTIM_LISTING_PHOTO, ogUrl: URL_OF(VICTIM_LISTING_OG), ogBlobName: VICTIM_LISTING_OG },
+        {
+          url: URL_OF(VICTIM_LISTING_PHOTO),
+          blobName: VICTIM_LISTING_PHOTO,
+          ogUrl: URL_OF(VICTIM_LISTING_OG),
+          ogBlobName: VICTIM_LISTING_OG,
+        },
       ],
     },
   ];
@@ -140,7 +162,10 @@ beforeEach(() => {
 describe('owner image removal (updateService imagesToDelete)', () => {
   it('1/8. deletes the owner’s verified image and its OG derivative', async () => {
     const doc = listing([ownMeta]);
-    await serviceController.updateService(updateReq(doc, { imagesToDelete: [ownMeta.url] }), mockRes());
+    await serviceController.updateService(
+      updateReq(doc, { imagesToDelete: [ownMeta.url] }),
+      mockRes()
+    );
     expect(store.has(OWN_PHOTO)).toBe(false);
     expect(store.has(OWN_OG)).toBe(false);
     expect(doc.images).toEqual([]);
@@ -157,7 +182,10 @@ describe('owner image removal (updateService imagesToDelete)', () => {
   it('2. a non-owner cannot remove images at all', async () => {
     const doc = listing([ownMeta]);
     const res = mockRes();
-    await serviceController.updateService(updateReq(doc, { imagesToDelete: [ownMeta.url] }, OTHER_USER), res);
+    await serviceController.updateService(
+      updateReq(doc, { imagesToDelete: [ownMeta.url] }, OTHER_USER),
+      res
+    );
     expect(res.status).toHaveBeenCalledWith(403);
     expect(store.has(OWN_PHOTO)).toBe(true);
   });
@@ -166,23 +194,37 @@ describe('owner image removal (updateService imagesToDelete)', () => {
     for (const name of [VICTIM_AVATAR, ORDER_EVIDENCE]) {
       const forged = { url: URL_OF(name), blobName: name };
       const doc = listing([forged]);
-      await serviceController.updateService(updateReq(doc, { imagesToDelete: forged.url }), mockRes());
+      await serviceController.updateService(
+        updateReq(doc, { imagesToDelete: forged.url }),
+        mockRes()
+      );
       expect(store.has(name)).toBe(true);
       expect(doc.imageMetadata).toEqual([]); // the bogus entry is still dropped from the listing
     }
   });
 
   it("3b. a forged entry naming another listing's photo is not deleted", async () => {
-    const forged = { url: URL_OF(VICTIM_LISTING_PHOTO), blobName: VICTIM_LISTING_PHOTO, ogUrl: URL_OF(VICTIM_LISTING_OG), ogBlobName: VICTIM_LISTING_OG };
+    const forged = {
+      url: URL_OF(VICTIM_LISTING_PHOTO),
+      blobName: VICTIM_LISTING_PHOTO,
+      ogUrl: URL_OF(VICTIM_LISTING_OG),
+      ogBlobName: VICTIM_LISTING_OG,
+    };
     const doc = listing([forged]);
-    await serviceController.updateService(updateReq(doc, { imagesToDelete: forged.url }), mockRes());
+    await serviceController.updateService(
+      updateReq(doc, { imagesToDelete: forged.url }),
+      mockRes()
+    );
     expect(store.has(VICTIM_LISTING_PHOTO)).toBe(true);
     expect(store.has(VICTIM_LISTING_OG)).toBe(true);
   });
 
   it('6. a blobName that does not match its own URL (legacy / mismatched) fails safe', async () => {
     const mismatched = { url: URL_OF(OWN_PHOTO), blobName: VICTIM_LISTING_PHOTO };
-    const cloudinary = { url: 'https://res.cloudinary.com/x/image/upload/v1/job_images/a.jpg', blobName: 'job_images/a' };
+    const cloudinary = {
+      url: 'https://res.cloudinary.com/x/image/upload/v1/job_images/a.jpg',
+      blobName: 'job_images/a',
+    };
     const doc = listing([mismatched, cloudinary]);
     await serviceController.updateService(
       updateReq(doc, { imagesToDelete: [mismatched.url, cloudinary.url] }),
@@ -215,7 +257,10 @@ describe('owner image removal (updateService imagesToDelete)', () => {
   it('a failed save deletes nothing from storage', async () => {
     const doc = listing([ownMeta]);
     doc.save.mockRejectedValue(new Error('db down'));
-    await serviceController.updateService(updateReq(doc, { imagesToDelete: [ownMeta.url] }), mockRes());
+    await serviceController.updateService(
+      updateReq(doc, { imagesToDelete: [ownMeta.url] }),
+      mockRes()
+    );
     expect(store.has(OWN_PHOTO)).toBe(true);
   });
 });
@@ -262,7 +307,9 @@ describe('metadata injection (create / update)', () => {
     await serviceController.createService(
       {
         userId: String(OWNER),
-        files: [{ path: ownMeta.url, filename: OWN_PHOTO, ogPath: ownMeta.ogUrl, ogFilename: OWN_OG }],
+        files: [
+          { path: ownMeta.url, filename: OWN_PHOTO, ogPath: ownMeta.ogUrl, ogFilename: OWN_OG },
+        ],
         body: {
           title: 'Male stuen min',
           description: 'Trenger hjelp til å male stuen, ca 30 kvm.',
@@ -291,7 +338,8 @@ describe('whole-listing deletion', () => {
     expect(doc.deleteOne).toHaveBeenCalled();
     expect(store.has(OWN_PHOTO)).toBe(false);
     expect(store.has(OWN_OG)).toBe(false);
-    for (const name of [VICTIM_AVATAR, VICTIM_LISTING_PHOTO, ORDER_EVIDENCE]) expect(store.has(name)).toBe(true);
+    for (const name of [VICTIM_AVATAR, VICTIM_LISTING_PHOTO, ORDER_EVIDENCE])
+      expect(store.has(name)).toBe(true);
   });
 
   it('deletes no blobs when the document delete fails', async () => {

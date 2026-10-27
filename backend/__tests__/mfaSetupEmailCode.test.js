@@ -10,9 +10,26 @@ const stepUp = require('../services/developer/stepUp');
 const mfa = require('../services/auth/mfa');
 const controller = require('../controllers/mfaController');
 
-const user = (extra = {}) => ({ _id: 'u1', email: 'dev@example.test', name: 'Dev', mfaEnabledAt: null, ...extra });
+const user = (extra = {}) => ({
+  _id: 'u1',
+  email: 'dev@example.test',
+  name: 'Dev',
+  mfaEnabledAt: null,
+  ...extra,
+});
 const call = async (fn, req) => {
-  const res = { code: 200, body: null, status(c) { this.code = c; return this; }, json(b) { this.body = b; return this; } };
+  const res = {
+    code: 200,
+    body: null,
+    status(c) {
+      this.code = c;
+      return this;
+    },
+    json(b) {
+      this.body = b;
+      return this;
+    },
+  };
   await fn({ ip: '1.2.3.4', get: () => 'jest', sessionId: 's1', body: {}, ...req }, res);
   return res;
 };
@@ -38,14 +55,20 @@ describe('POST /api/auth/mfa/setup', () => {
 
   it('keeps the attempt limit of the email code (429)', async () => {
     stepUp.verifyCode.mockRejectedValue(fail('Too many wrong attempts. Request a new code.', 429));
-    expect((await call(controller.setup, { user: user(), body: { emailCode: '111111' } })).code).toBe(429);
+    expect(
+      (await call(controller.setup, { user: user(), body: { emailCode: '111111' } })).code
+    ).toBe(429);
   });
 
   it('starts setup only after the right code, for this user and session', async () => {
     stepUp.verifyCode.mockResolvedValue({ token: 't' });
     mfa.startSetup.mockResolvedValue({ secret: 'ABCD EFGH', otpauthUrl: 'otpauth://totp/x' });
     const res = await call(controller.setup, { user: user(), body: { emailCode: '123456' } });
-    expect(stepUp.verifyCode).toHaveBeenCalledWith(expect.objectContaining({ _id: 'u1' }), 's1', '123456');
+    expect(stepUp.verifyCode).toHaveBeenCalledWith(
+      expect.objectContaining({ _id: 'u1' }),
+      's1',
+      '123456'
+    );
     expect(res.code).toBe(200);
     expect(res.body).toEqual({ secret: 'ABCD EFGH', otpauthUrl: 'otpauth://totp/x' });
   });

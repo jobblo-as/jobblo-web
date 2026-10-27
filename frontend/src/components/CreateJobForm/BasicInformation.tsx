@@ -69,7 +69,10 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({
       {/* 1. Title Section */}
       <div className="box-card-custom rounded-[14px] p-4 md:p-6">
         <div className="flex items-center justify-between mb-4">
-          <label htmlFor="job-title" className="text-[11px] md:text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
+          <label
+            htmlFor="job-title"
+            className="text-[11px] md:text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2"
+          >
             Tittel <span className="text-red-500">*</span>
           </label>
           <div className="flex items-center gap-3">
@@ -104,7 +107,10 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({
       <div
         className={`box-card-custom rounded-[14px] p-4 md:p-6 border transition-colors ${errors?.categories ? 'border-red-500' : 'border-transparent'}`}
       >
-        <label htmlFor="job-category-search" className="text-[11px] md:text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2 mb-4">
+        <label
+          htmlFor="job-category-search"
+          className="text-[11px] md:text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2 mb-4"
+        >
           Velg kategori <span className="text-red-500">*</span>
         </label>
 
@@ -170,7 +176,10 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({
       <div className="box-card-custom rounded-[14px] p-4 md:p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex flex-col gap-1">
-            <label htmlFor="job-description" className="text-[11px] md:text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
+            <label
+              htmlFor="job-description"
+              className="text-[11px] md:text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2"
+            >
               Beskrivelse <span className="text-red-500">*</span>
             </label>
             <div className="flex items-center gap-1.5 text-[9px] md:text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full w-fit">
@@ -178,7 +187,6 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({
               Min. 20 tegn
             </div>
           </div>
-
         </div>
         <div className="relative">
           <textarea
@@ -232,7 +240,10 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({
 
       {/* 4. Skills/Tags Section */}
       <div className="box-card-custom rounded-[14px] p-4 md:p-6">
-        <label htmlFor="job-tags" className="text-[11px] md:text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2 mb-4">
+        <label
+          htmlFor="job-tags"
+          className="text-[11px] md:text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2 mb-4"
+        >
           Ferdigheter / Tags
         </label>
         <div className="space-y-4">

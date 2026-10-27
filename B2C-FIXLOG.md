@@ -6,25 +6,25 @@ Newest first. One issue per entry, each tested before moving on.
 Audit and full issue backlog: `C:\Users\aliha\.claude\plans\jobblo-b2c-launch-zazzy-bee.md`
 Severity scale: **P0** launch blocker · **P1** critical · **P2** important · **P3** polish
 
-| # | Issue | Severity | Status |
-|---|---|---|---|
-| 17 | Login rate limit locked out ten honest users per IP per hour | P1 | ✅ Done |
-| 16 | Support tickets rejected for signed-in users (found by running the app) | P1 | ✅ Done |
-| 15 | Disputes, account deletion, support tickets, settings overwrites, dead code | P1–P3 | ✅ Done |
-| 14 | Phase 2–4 sweep: auth redirects, statuses, crashes, security, consent, prod hardening | P0–P2 | ✅ Done |
-| 13 | Job creation: map pinned jobs to the poster, edit corrupted jobs, draft wiped on failure | P1 | ✅ Done |
-| 12 | Chat payment funnel dead; everyone routed as provider | P0 | ✅ Done |
-| 11 | SafePay contract showed hardcoded date/duration/city, fake card, dead Vipps/Apple Pay | P0 | ✅ Done |
-| 10 | `/Anmeldelser` served hardcoded fake customer reviews | P0 | ✅ Done |
-| 9 | "Velg uten SafePay" faked hiring an applicant | P0 | ✅ Done |
-| 8 | Notification endpoints had no ownership checks; test route unauthenticated | P0 | ✅ Done |
-| 7 | Socket handlers had no authorization — any chat readable/writable | P0 | ✅ Done |
-| 6 | `POST /api/reviews` had no eligibility check — anyone could 1-star anyone | P0 | ✅ Done |
-| 5 | Payout failure reported to the customer as "money sent" | P0 | ✅ Done |
-| 4 | Payment success page declared "Betaling bekreftet!" without verifying | P0 | ✅ Done |
-| 3 | Legacy payout endpoint released funds without payment/state/dispute checks | P0 | ✅ Done |
-| 2 | SafePay payment confirmation had no Stripe webhook | P0 | ✅ Done, needs deploy config |
-| 1 | Dead routes, no error boundary, placeholder text | P0 | ✅ Done |
+| #   | Issue                                                                                    | Severity | Status                       |
+| --- | ---------------------------------------------------------------------------------------- | -------- | ---------------------------- |
+| 17  | Login rate limit locked out ten honest users per IP per hour                             | P1       | ✅ Done                      |
+| 16  | Support tickets rejected for signed-in users (found by running the app)                  | P1       | ✅ Done                      |
+| 15  | Disputes, account deletion, support tickets, settings overwrites, dead code              | P1–P3    | ✅ Done                      |
+| 14  | Phase 2–4 sweep: auth redirects, statuses, crashes, security, consent, prod hardening    | P0–P2    | ✅ Done                      |
+| 13  | Job creation: map pinned jobs to the poster, edit corrupted jobs, draft wiped on failure | P1       | ✅ Done                      |
+| 12  | Chat payment funnel dead; everyone routed as provider                                    | P0       | ✅ Done                      |
+| 11  | SafePay contract showed hardcoded date/duration/city, fake card, dead Vipps/Apple Pay    | P0       | ✅ Done                      |
+| 10  | `/Anmeldelser` served hardcoded fake customer reviews                                    | P0       | ✅ Done                      |
+| 9   | "Velg uten SafePay" faked hiring an applicant                                            | P0       | ✅ Done                      |
+| 8   | Notification endpoints had no ownership checks; test route unauthenticated               | P0       | ✅ Done                      |
+| 7   | Socket handlers had no authorization — any chat readable/writable                        | P0       | ✅ Done                      |
+| 6   | `POST /api/reviews` had no eligibility check — anyone could 1-star anyone                | P0       | ✅ Done                      |
+| 5   | Payout failure reported to the customer as "money sent"                                  | P0       | ✅ Done                      |
+| 4   | Payment success page declared "Betaling bekreftet!" without verifying                    | P0       | ✅ Done                      |
+| 3   | Legacy payout endpoint released funds without payment/state/dispute checks               | P0       | ✅ Done                      |
+| 2   | SafePay payment confirmation had no Stripe webhook                                       | P0       | ✅ Done, needs deploy config |
+| 1   | Dead routes, no error boundary, placeholder text                                         | P0       | ✅ Done                      |
 
 ---
 
@@ -32,7 +32,7 @@ Severity scale: **P0** launch blocker · **P1** critical · **P2** important · 
 
 **Severity:** P1 · **Audit ref:** F-19 (rate-limiting half) · **Found by:** hitting it while testing
 
-`authLimiter` allowed **10 requests per IP per hour** across login *and* register, and counted
+`authLimiter` allowed **10 requests per IP per hour** across login _and_ register, and counted
 successes. Ten ordinary sign-ins locked out everyone behind that address for an hour. A household, an
 office or a café shares one public IP; behind a CDN or load balancer the entire user base does —
 which is what the audit meant by "this will look like a total outage on launch day". I hit it myself
@@ -42,17 +42,17 @@ The failure mode is worse than it sounds: the control did nothing extra against 
 fails, and would be caught either way) while reliably locking out legitimate users (who succeed, and
 were spending the same budget).
 
-| File | Change |
-|---|---|
-| `backend/middleware/rateLimiter.js` | `skipSuccessfulRequests: true`; window 1 h → 15 min; max 10 → 20 **failed** attempts; message translated |
-| `backend/__tests__/authRateLimit.test.js` | **new** — 2 tests |
+| File                                      | Change                                                                                                   |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `backend/middleware/rateLimiter.js`       | `skipSuccessfulRequests: true`; window 1 h → 15 min; max 10 → 20 **failed** attempts; message translated |
+| `backend/__tests__/authRateLimit.test.js` | **new** — 2 tests                                                                                        |
 
 `skipSuccessfulRequests` is the whole fix: the budget is now spent by whoever is guessing passwords,
 never by whoever knows theirs. Twenty wrong guesses per 15 minutes per IP still stops credential
-stuffing; it just no longer stops customers. The old copy — *"Too many login/register attempts,
-please try again after an hour"* — was also English and promised an hour-long lockout, which the
+stuffing; it just no longer stops customers. The old copy — _"Too many login/register attempts,
+please try again after an hour"_ — was also English and promised an hour-long lockout, which the
 audit's message inventory lists as unexplained; it is now
-*"For mange mislykkede forsøk. Prøv igjen om 15 minutter."*
+_"For mange mislykkede forsøk. Prøv igjen om 15 minutter."_
 
 ### Verification
 
@@ -77,11 +77,11 @@ field for members and sends only `{subject, message}`. With nothing populating `
 failed for logged-in customers — the exact inverse of the intent. The route's own comment claimed
 the middleware set `req.userId`; it did not.
 
-| File | Change |
-|---|---|
-| `backend/middleware/auth.js` | **new** `optionalAuthenticate` — recognises a caller when it can, continues anonymously when it cannot |
-| `backend/routes/support.js` | `POST /tickets` now runs `optionalAuthenticate` |
-| `backend/__tests__/optionalAuthenticate.test.js` | **new** — 4 tests |
+| File                                             | Change                                                                                                 |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
+| `backend/middleware/auth.js`                     | **new** `optionalAuthenticate` — recognises a caller when it can, continues anonymously when it cannot |
+| `backend/routes/support.js`                      | `POST /tickets` now runs `optionalAuthenticate`                                                        |
+| `backend/__tests__/optionalAuthenticate.test.js` | **new** — 4 tests                                                                                      |
 
 `optionalAuthenticate` delegates to `authenticate` verbatim rather than re-implementing token
 handling, and passes it a response stub that swallows the rejection. The contract that matters is
@@ -119,12 +119,12 @@ internal admin notes. **Neither was called from anywhere in the B2C frontend.** 
 escalated a payment problem got a toast and then nothing — no status, no thread, no way to add
 evidence.
 
-| File | Change |
-|---|---|
-| `frontend/src/features/disputes/hooks.ts` | **new** — `useDispute`; treats 404 as "no dispute", which is the ordinary answer, not a failure |
-| `frontend/src/components/SafePay/DisputePanel.tsx` | **new** — status, reason, description, admin resolution, full message thread, and a reply box that closes when the dispute does |
-| `frontend/src/constants/disputes.ts` | **new** — reason options **scoped by role**, status labels, active-status list mirroring the controller |
-| `SafePayApproval.tsx` / `ProviderOrderDetailPage.tsx` | render the panel; hide "opprett en tvist" once one exists |
+| File                                                  | Change                                                                                                                          |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `frontend/src/features/disputes/hooks.ts`             | **new** — `useDispute`; treats 404 as "no dispute", which is the ordinary answer, not a failure                                 |
+| `frontend/src/components/SafePay/DisputePanel.tsx`    | **new** — status, reason, description, admin resolution, full message thread, and a reply box that closes when the dispute does |
+| `frontend/src/constants/disputes.ts`                  | **new** — reason options **scoped by role**, status labels, active-status list mirroring the controller                         |
+| `SafePayApproval.tsx` / `ProviderOrderDetailPage.tsx` | render the panel; hide "opprett en tvist" once one exists                                                                       |
 
 **Self-accusing reason lists.** Both sides offered the identical full list, so the customer could
 file "Kunde samarbeider ikke" and the provider "Tilbyder samarbeider ikke" — each party able to open
@@ -132,10 +132,10 @@ a dispute accusing themselves. `disputeReasonOptions(role)` now returns only wha
 legitimately claim.
 
 **`revieweeRole` — deliberately NOT flipped.** The audit calls the values inverted, and they are:
-`'poster'` is written when the *provider* is reviewed and `'seeker'` when the *customer* is. But
+`'poster'` is written when the _provider_ is reviewed and `'seeker'` when the _customer_ is. But
 every write and the single live read (`CompletedJobPage`) agree with each other, so the labels users
 see are correct — `reviewsAPI.ts`, the only thing that could filter by role, has no callers.
-Flipping the values means migrating every existing Review document *and* changing three call sites
+Flipping the values means migrating every existing Review document _and_ changing three call sites
 in one commit; getting it half-right inverts the labels in production. The inversion is now
 documented on the model and at the write site so nobody fixes one half. **This is naming debt, not
 a user-visible bug.**
@@ -144,8 +144,8 @@ a user-visible bug.**
 
 The button ran `toast.success('Kommer snart')`. The endpoint it should have called,
 `DELETE /api/users/:id`, did `User.findByIdAndDelete` — a hard delete with **no checks at all**,
-directly contradicting the comment on the model's own `isDeleted` field: *"Soft delete — admin
-action only. Never hard-delete users with financial history."*
+directly contradicting the comment on the model's own `isDeleted` field: _"Soft delete — admin
+action only. Never hard-delete users with financial history."_
 
 Two guards, then anonymisation:
 
@@ -274,12 +274,12 @@ end. 47 files changed, +702/−416, plus 3 new backend files and 6 new frontend 
 
 ### Auth & navigation
 
-| Ref | What was wrong | Fix |
-|---|---|---|
-| F-06 | `ProtectedRoute`'s modal called `navigate(-1)` on cancel. On a cold deep link there is no history entry, so the user sat on a page with only a header and footer and no way out. | Replaced the modal with `<Navigate to="/login" state={{ from }} replace />`. |
-| F-07 | `ProtectedRoute` wrote `state.from` and **nothing read it**; `useAuth` hardcoded `/home`. Anyone following a shared job, notification or checkout link lost their destination. | `redirectAfterAuth()` in `useAuth`, also honoured by `PublicRoute`. Only same-origin paths are accepted, so a crafted state can't redirect off-site. |
-| F-13 | `/subscription/success` navigated to `/dashboard`; `AdminProtectedRoute` bounced every ordinary user to `/profile`, or `/login` if auth was lost during the Stripe round-trip. The paid funnel ended in a redirect bounce. | Now `/membership`. Page translated. |
-| F-20 | The OAuth JWT stayed in the URL, so it persisted in history and `document.referrer`. Vipps/Google `?error=` redirects were never read — a failed login landed on a blank form. | `history.replaceState` scrubs the token (cookies are already set by the same handler); `?error=` now shows the failure state. |
+| Ref  | What was wrong                                                                                                                                                                                                             | Fix                                                                                                                                                  |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| F-06 | `ProtectedRoute`'s modal called `navigate(-1)` on cancel. On a cold deep link there is no history entry, so the user sat on a page with only a header and footer and no way out.                                           | Replaced the modal with `<Navigate to="/login" state={{ from }} replace />`.                                                                         |
+| F-07 | `ProtectedRoute` wrote `state.from` and **nothing read it**; `useAuth` hardcoded `/home`. Anyone following a shared job, notification or checkout link lost their destination.                                             | `redirectAfterAuth()` in `useAuth`, also honoured by `PublicRoute`. Only same-origin paths are accepted, so a crafted state can't redirect off-site. |
+| F-13 | `/subscription/success` navigated to `/dashboard`; `AdminProtectedRoute` bounced every ordinary user to `/profile`, or `/login` if auth was lost during the Stripe round-trip. The paid funnel ended in a redirect bounce. | Now `/membership`. Page translated.                                                                                                                  |
+| F-20 | The OAuth JWT stayed in the URL, so it persisted in history and `document.referrer`. Vipps/Google `?error=` redirects were never read — a failed login landed on a blank form.                                             | `history.replaceState` scrubs the token (cookies are already set by the same handler); `?error=` now shows the failure state.                        |
 
 ### Status vocabulary (F-41)
 
@@ -325,7 +325,7 @@ New `src/constants/statuses.ts`. The three checks that leaked to users:
 - **F-57** — `Alert.tsx`'s delete handlers awaited with no catch, so on failure the promise rejected
   unhandled and **the confirm dialog never closed**. Four of eight favourite-list mutations had no
   `onError` at all; all eight now share one handler.
-- **F-54** — "Se" sent *everyone* to `/provider/orders/:id`, so a customer told "Din forespørsel er
+- **F-54** — "Se" sent _everyone_ to `/provider/orders/:id`, so a customer told "Din forespørsel er
   godkjent" landed on the provider's work page, and a deleted order produced
   `/provider/orders/null`. New `utils/orderRoute.ts`; it also marks the notification read, which it
   never did.
@@ -339,16 +339,16 @@ search-engine visibility checkbox with no state and no API — a privacy promise
 
 ### Backend security
 
-| Ref | Fix |
-|---|---|
+| Ref  | Fix                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | F-19 | `origin: true` reflected **any** origin while sending credentials, so any website could make authenticated calls for a logged-in user. Now an allowlist from `ALLOWED_ORIGINS`/`FRONTEND_URL` (localhost still allowed in dev). Added `app.set('trust proxy')` — without it every request behind a load balancer shares one IP, so `authLimiter`'s 10/hour became **10 logins per hour for the entire user base**. Session cookie now `secure`+`httpOnly` in production, with its own `SESSION_SECRET` instead of reusing `JWT_SECRET`. |
-| F-39 | `updateService` ended with `Object.assign(service, otherFields)` carrying `status`, `userId`, `promoted`, `urgent` and `views` — free promotion, re-opening a job that already had a paid contract, or reassigning the listing. Replaced with a whitelist; `urgent` now re-checks the subscription on update as it already did on create. |
-| F-40 | `multer({ storage })` had no `limits` and no `fileFilter`; the 2 MB cap was client-only, and the storage engine uploads *before* the controller runs. Added 8 MB / 6 files / MIME allowlist, and a translating error handler (a too-large file used to become a bare 500). `upload.array('images', 5)` also disagreed with the UI's "inntil 6 bilder" — a 6th file produced an unhandled error. |
-| F-46 | Review photos are posted base64 inside JSON against `express.json()`'s default **100 KB** limit, so every real phone photo died in the body parser. Raised to 12 MB. |
-| F-14 | New `utils/mongoErrors.js`. `updateUser` returned `err.message`, so changing your e-mail to one in use surfaced `E11000 duplicate key error collection: jobblo.users index: email_1 dup key: { email: "x@y.no" }` in a toast — leaking schema internals and confirming which addresses are registered. |
-| F-18 | The backend checked length ≥ 8 only, while the client required upper+lower+digit — so any non-browser client could create `aaaaaaaa` accounts. `validatePasswordStrength` now enforces it at all three sites and reports the actual reason. |
-| F-49 | Removed 13 `console.log` calls that dumped whole applicant, review and user documents — names, e-mails, ids — into container logs on every contract creation and every review. |
-| F-59 | Swagger UI was mounted unauthenticated in production; now dev-only unless `ENABLE_API_DOCS=true`. `logger('dev')` no longer runs in production. |
+| F-39 | `updateService` ended with `Object.assign(service, otherFields)` carrying `status`, `userId`, `promoted`, `urgent` and `views` — free promotion, re-opening a job that already had a paid contract, or reassigning the listing. Replaced with a whitelist; `urgent` now re-checks the subscription on update as it already did on create.                                                                                                                                                                                               |
+| F-40 | `multer({ storage })` had no `limits` and no `fileFilter`; the 2 MB cap was client-only, and the storage engine uploads _before_ the controller runs. Added 8 MB / 6 files / MIME allowlist, and a translating error handler (a too-large file used to become a bare 500). `upload.array('images', 5)` also disagreed with the UI's "inntil 6 bilder" — a 6th file produced an unhandled error.                                                                                                                                         |
+| F-46 | Review photos are posted base64 inside JSON against `express.json()`'s default **100 KB** limit, so every real phone photo died in the body parser. Raised to 12 MB.                                                                                                                                                                                                                                                                                                                                                                    |
+| F-14 | New `utils/mongoErrors.js`. `updateUser` returned `err.message`, so changing your e-mail to one in use surfaced `E11000 duplicate key error collection: jobblo.users index: email_1 dup key: { email: "x@y.no" }` in a toast — leaking schema internals and confirming which addresses are registered.                                                                                                                                                                                                                                  |
+| F-18 | The backend checked length ≥ 8 only, while the client required upper+lower+digit — so any non-browser client could create `aaaaaaaa` accounts. `validatePasswordStrength` now enforces it at all three sites and reports the actual reason.                                                                                                                                                                                                                                                                                             |
+| F-49 | Removed 13 `console.log` calls that dumped whole applicant, review and user documents — names, e-mails, ids — into container logs on every contract creation and every review.                                                                                                                                                                                                                                                                                                                                                          |
+| F-59 | Swagger UI was mounted unauthenticated in production; now dev-only unless `ENABLE_API_DOCS=true`. `logger('dev')` no longer runs in production.                                                                                                                                                                                                                                                                                                                                                                                         |
 
 ### Consent, config and production build
 
@@ -371,7 +371,7 @@ search-engine visibility checkbox with no state and no API — a privacy promise
   `ChatWindow` logging the entire chat object on every render.
 - **F-21** — the logout the UI actually calls never cleared the React Query cache, so on a shared
   browser the previous user's profile and chats stayed rendered. `disconnectSocket()` also sat
-  *after* the awaited network call, so an offline or 500 logout left the socket connected as the old
+  _after_ the awaited network call, so an offline or 500 logout left the socket connected as the old
   user.
 - **F-22/F-62** — `lang="en"` → `nb`, added `viewport-fit=cover`, removed the duplicate Leaflet CSS
   CDN link (already imported from npm, and a third-party hard render dependency), fixed the
@@ -380,7 +380,7 @@ search-engine visibility checkbox with no state and no API — a privacy promise
 
 ### Honest instead of fake (F-08, F-09)
 
-Neither could be *implemented* unattended; both were made truthful.
+Neither could be _implemented_ unattended; both were made truthful.
 
 - **F-08** — "Slett profil" ran `toast.success('Kommer snart')`: a green success toast, on a page
   promising irreversible deletion, for a GDPR Art. 17 right. `DELETE /api/users/:id` exists, but
@@ -396,7 +396,7 @@ Neither could be *implemented* unattended; both were made truthful.
 - New tests: `serviceUpdateWhitelist.test.js` (5) and `mongoErrors.test.js` (7). Full backend suite
   **179 passed, 9 failed** — the same pre-existing `chatReport.test.js` failures as every previous
   fix.
-- Frontend typecheck **353 → 349**, verified by diffing sorted error *sets* at four checkpoints. The
+- Frontend typecheck **353 → 349**, verified by diffing sorted error _sets_ at four checkpoints. The
   three errors I introduced along the way (unused imports left by deletions) were caught and fixed;
   everything else is line-shift.
 - ESLint clean on all new and rewritten files.
@@ -442,10 +442,10 @@ Optional: `SESSION_SECRET`, `TRUST_PROXY`, `ENABLE_API_DOCS`, `VITE_ADSENSE_CLIE
 Two of the audit's claims had already been fixed and are **not** part of this change:
 
 - F-11's "publishes silently pinned to Oslo" — `useCreateJobForm.validateStep(2)` already blocked on
-  `!coordinates` (line 523), and `StepIndicator` only allows jumping *backwards*
+  `!coordinates` (line 523), and `StepIndicator` only allows jumping _backwards_
   (`isClickable = stepNumber <= currentStep`), so step 4 is unreachable without a pin. The Oslo fallback was
   still in the payload, though, and is reachable one way: `loadFormData()` restores `currentStep` from
-  IndexedDB, so a draft saved at step 4 *before* that rule existed restores past the check.
+  IndexedDB, so a draft saved at step 4 _before_ that rule existed restores past the check.
 - F-42's "step 4 is a required step whose data is thrown away" — the step is labelled
   **"Kontaktinformasjon (Valgfritt)"** and `jobValidationSchema` has no `phone` rule at all. Nobody is forced
   through it. The data was still being discarded, which is the part that needed fixing.
@@ -475,31 +475,31 @@ The code comment ("Clear the draft only after a successful POST") described the 
 
 **5. Editing a job corrupted it.** Both entry points built `initialData` with fields missing:
 
-| Missing | Consequence |
-|---|---|
-| `paymentType`, `hourlyRate` *(MineAnnonser)* | a **Timepris** job silently reopened as **Fastpris** with the rate blanked |
-| `latitude`/`longitude` *(both)* | coordinates started null → step 2 blocked → the map auto-located → **the job moved to the editor's position** |
-| `countyCode`/`municipalityCode`/`areaCode` *(both)* | location codes cleared on save → job disappeared from area search |
-| `maxApplicants` *(both)* | reset to 0 |
-| `categories` | `MineAnnonser` did `.join(', ')` → `["Hage","Maling"]` became one category `"Hage, Maling"`; `LeggUtOppdrag` took `[0]` and dropped the rest |
+| Missing                                             | Consequence                                                                                                                                  |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `paymentType`, `hourlyRate` _(MineAnnonser)_        | a **Timepris** job silently reopened as **Fastpris** with the rate blanked                                                                   |
+| `latitude`/`longitude` _(both)_                     | coordinates started null → step 2 blocked → the map auto-located → **the job moved to the editor's position**                                |
+| `countyCode`/`municipalityCode`/`areaCode` _(both)_ | location codes cleared on save → job disappeared from area search                                                                            |
+| `maxApplicants` _(both)_                            | reset to 0                                                                                                                                   |
+| `categories`                                        | `MineAnnonser` did `.join(', ')` → `["Hage","Maling"]` became one category `"Hage, Maling"`; `LeggUtOppdrag` took `[0]` and dropped the rest |
 
 **6. Every publish failure said the same thing.** `toast.error('Det oppstod en feil ved sending av
 oppdraget. Prøv igjen.')` for 400, 403, 413 and 500 alike, so nothing was actionable and users just retried.
 
 ### What changed
 
-| File | Change |
-|---|---|
-| `frontend/src/utils/getErrorMessage.ts` | **new** — normalises both backend error shapes (legacy `{error:'text'}` and the `{error:{code,message}}` envelope) into one Norwegian string, with status-specific fallbacks |
-| `frontend/src/components/CreateJobForm/LocationPickerMap.tsx` | removed the auto-geolocate mount effect; the "Bruk min nåværende posisjon" button is unchanged |
-| `frontend/src/components/CreateJobForm/TimeAndPlace.tsx` | reverse-geocode no longer overwrites `city` when a kommune is selected (that field is locked to the kommune name) |
-| `frontend/src/hooks/useCreateJobForm.ts` | require fylke + kommune in `validateStep(2)` and name them in the toast; hard coordinates guard in `handleFinalSubmit` that returns the user to step 2; removed the Oslo fallbacks; send `contactPhone`/`contactEmail`; only clear the draft when `!isEditMode`; use `getErrorMessage`; dropped the bogus "telefon mangler" from the step-4 message |
-| `frontend/src/components/CreateJobForm/CreateJobForm.tsx` | widened its duplicate `InitialData` interface so the new fields aren't rejected as excess properties |
-| `frontend/src/pages/LeggUtOppdragPage/LeggUtOppdrag.tsx` | re-throws on failure (preserving the draft) and drops its duplicate toast; passes coordinates, location codes, all categories, `hourlyRate`, `maxApplicants` |
-| `frontend/src/pages/MyJobsPage/MineAnnonser.tsx` | same `initialData` completion incl. `paymentType`; `mutateAsync` so a failed save actually rejects |
-| `frontend/src/features/{services,jobDetail}/types.ts` | declared the fields the edit forms read |
-| `backend/models/Service.js` | added `contactPhone`/`contactEmail` with **`select: false`** |
-| `backend/controllers/serviceController.js` | `pickContactUpdates()` helper; `getMyPostedServices` opts into the contact fields |
+| File                                                          | Change                                                                                                                                                                                                                                                                                                                                              |
+| ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `frontend/src/utils/getErrorMessage.ts`                       | **new** — normalises both backend error shapes (legacy `{error:'text'}` and the `{error:{code,message}}` envelope) into one Norwegian string, with status-specific fallbacks                                                                                                                                                                        |
+| `frontend/src/components/CreateJobForm/LocationPickerMap.tsx` | removed the auto-geolocate mount effect; the "Bruk min nåværende posisjon" button is unchanged                                                                                                                                                                                                                                                      |
+| `frontend/src/components/CreateJobForm/TimeAndPlace.tsx`      | reverse-geocode no longer overwrites `city` when a kommune is selected (that field is locked to the kommune name)                                                                                                                                                                                                                                   |
+| `frontend/src/hooks/useCreateJobForm.ts`                      | require fylke + kommune in `validateStep(2)` and name them in the toast; hard coordinates guard in `handleFinalSubmit` that returns the user to step 2; removed the Oslo fallbacks; send `contactPhone`/`contactEmail`; only clear the draft when `!isEditMode`; use `getErrorMessage`; dropped the bogus "telefon mangler" from the step-4 message |
+| `frontend/src/components/CreateJobForm/CreateJobForm.tsx`     | widened its duplicate `InitialData` interface so the new fields aren't rejected as excess properties                                                                                                                                                                                                                                                |
+| `frontend/src/pages/LeggUtOppdragPage/LeggUtOppdrag.tsx`      | re-throws on failure (preserving the draft) and drops its duplicate toast; passes coordinates, location codes, all categories, `hourlyRate`, `maxApplicants`                                                                                                                                                                                        |
+| `frontend/src/pages/MyJobsPage/MineAnnonser.tsx`              | same `initialData` completion incl. `paymentType`; `mutateAsync` so a failed save actually rejects                                                                                                                                                                                                                                                  |
+| `frontend/src/features/{services,jobDetail}/types.ts`         | declared the fields the edit forms read                                                                                                                                                                                                                                                                                                             |
+| `backend/models/Service.js`                                   | added `contactPhone`/`contactEmail` with **`select: false`**                                                                                                                                                                                                                                                                                        |
+| `backend/controllers/serviceController.js`                    | `pickContactUpdates()` helper; `getMyPostedServices` opts into the contact fields                                                                                                                                                                                                                                                                   |
 
 ### Judgment calls
 
@@ -510,26 +510,28 @@ path would have published it to every anonymous visitor — trading a data-loss 
 in explicitly. That needed no new middleware and no endpoint sweep.
 
 **Blank contact values are ignored on update.** There are two edit entry points, and `/Publish-job/:id` reads
-the *public* endpoint, which will never return these fields — so it always submits empty strings. Assigning
+the _public_ endpoint, which will never return these fields — so it always submits empty strings. Assigning
 those would erase a saved phone number just because the user edited from a screen that couldn't see it.
 `pickContactUpdates` trims and drops blanks, so an empty field is a no-op.
 
-**Auto-geolocation was removed, not made smarter.** The map is the *confirmation* step for where the job
+**Auto-geolocation was removed, not made smarter.** The map is the _confirmation_ step for where the job
 happens. Prefilling it with the poster's position is wrong by default and defeats the purpose of asking.
 
 ### Verification
+
 - New `backend/__tests__/serviceContactFields.test.js` — **5 tests, all passing**: fields persist, both are
   `select: false`, the old `phone`/`email` names are still dropped, a blank update does not erase a saved
   value, and a real value still applies.
 - Full backend suite: **167 passed, 9 failed** — the same pre-existing `chatReport.test.js` failures as every
   previous fix (162 + my 5 new).
-- Frontend typecheck: **354 → 353**, verified by diffing the sorted error *sets* across a `git stash`. All 11
+- Frontend typecheck: **354 → 353**, verified by diffing the sorted error _sets_ across a `git stash`. All 11
   apparent "new" errors are pre-existing ones at shifted line numbers; the one real change is
   `useCreateJobForm.ts(98,18) maxApplicants does not exist on InitialData`, now fixed.
 - ESLint on all changed files: no new violations (`getErrorMessage.ts` and `LocationPickerMap.tsx` clean).
 
 ### Still to test manually
-1. **Create a job from a different city than you are in.** The map must open *empty* with "Klikk på kartet for
+
+1. **Create a job from a different city than you are in.** The map must open _empty_ with "Klikk på kartet for
    å sette lokasjon" — no pin, no green badge, no city auto-filled.
 2. Try "Neste" on step 2 without a fylke/kommune → toast must name them.
 3. **Edit a Timepris job from "Mine annonser"** → payment type stays Timepris, hourly rate intact, all
@@ -540,8 +542,9 @@ happens. Prefilling it with the poster's position is wrong by default and defeat
 6. Confirm `GET /api/services/:id` as a logged-out visitor does **not** contain `contactPhone`/`contactEmail`.
 
 ### Known follow-ups (not touched)
+
 - `/Publish-job/:id` cannot prefill the contact fields (public endpoint). Harmless today because blanks are
-  ignored, but it also means the form cannot *clear* a saved value. Fixing properly needs optional auth on
+  ignored, but it also means the form cannot _clear_ a saved value. Fixing properly needs optional auth on
   `getServiceById`, which does not exist in the codebase yet.
 - `previewJobData` still falls back to Oslo coordinates for the preview map. Display-only, and the publish
   guard now stops that value ever being saved.
@@ -558,10 +561,13 @@ happens. Prefilling it with the poster's position is wrong by default and defeat
 **Audit ref:** F-52
 
 ### The problem
+
 `ChatWindow.tsx:169` decided the viewer's role with:
+
 ```ts
 const isServiceOwner = activeChat?.serviceId?.userId === userId;
 ```
+
 Every chat-fetching populate in `chatController.js` (lines 35, 59, 79, 99, 328, 375) used the projection
 `'title description images price categories'` — **`userId` was not selected**. So `serviceId.userId` was
 always `undefined` and `isServiceOwner` was permanently `false`. Two consequences:
@@ -573,22 +579,26 @@ always `undefined` and `isServiceOwner` was permanently `false`. Two consequence
   they do not own.
 
 ### What changed
-| File | Change |
-|---|---|
-| `backend/controllers/chatController.js` | added `userId` to all six `serviceId` populate projections (lines 195/264 already used a full populate) |
+
+| File                                                 | Change                                                                                                                        |
+| ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `backend/controllers/chatController.js`              | added `userId` to all six `serviceId` populate projections (lines 195/264 already used a full populate)                       |
 | `frontend/src/components/messagelist/ChatWindow.tsx` | `String()`-coerced comparison guarded against a missing id, so an ObjectId/string mismatch can't silently reintroduce the bug |
 
 ### Why `serviceId.userId` and not `Chat.clientId`
-`Chat.clientId` is whoever *initiated* the chat (`chatController.js:29,49` — it is `req.userId`). Today the
+
+`Chat.clientId` is whoever _initiated_ the chat (`chatController.js:29,49` — it is `req.userId`). Today the
 only caller is `ApplicantsPage.handleStartChat`, i.e. the poster, so `clientId` happens to equal the service
 owner — but that is incidental. If an applicant ever gets a "message the poster" button, `clientId` inverts.
 `serviceId.userId` is the job's actual owner and is correct either way, so the populate was the right fix
 rather than switching the source.
 
 ### Verification
+
 - Backend modules load; frontend typecheck **354, zero new errors**.
 
 ### Still to test manually
+
 1. As the **job poster**, open the chat with an applicant → "Opprett kontrakt" / "Start fiks ferdig-betaling"
    is now visible (it never was).
 2. As the poster, click through to the order → lands on `/safepay/checkout/:id` (or `/safepay/approval/:id`
@@ -604,8 +614,10 @@ rather than switching the source.
 **Audit ref:** F-38
 
 ### The problem
-The panel headed *"Digital kontrakt — generert automatisk"*, with the footnote *"Den er juridisk bindende og
-beskytter deg ved eventuell tvist"*, printed:
+
+The panel headed _"Digital kontrakt — generert automatisk"_, with the footnote _"Den er juridisk bindende og
+beskytter deg ved eventuell tvist"_, printed:
+
 - `Dato: Lørdag 24. mai 2026` — hardcoded
 - `Estimert tid: Ca. 2 timer` — hardcoded
 - `Sted: … || 'Frogner, Oslo'` — a hardcoded fallback city
@@ -617,20 +629,23 @@ a card. The provider's rating also fell back to a fabricated `4.9` for anyone wi
 `ApplicantsPage.tsx:194` carried the same hardcoded `Ca. 2 timer`.
 
 ### What changed
-| File | Change |
-|---|---|
-| `backend/controllers/SafePayCheckoutController.js` | `getCheckoutDetails` populate now selects `fromDate toDate duration` (the comment said "duration hidden for now" — that is why the UI invented it) |
-| `backend/controllers/applicantController.js` | `duration` added to the `service` payload |
-| `frontend/src/utils/timeFormatter.ts` | new `toJobDuration({value, unit})` → Norwegian text, or `null` so callers omit the row. Handles the model's mixed English/Norwegian unit enum. Shared by both pages rather than duplicating a label map |
-| `frontend/src/pages/SafePayPage/SafePayCheckout.tsx` | Sted / Dato / Estimert tid now render real order data and are **omitted entirely when absent**; date via the existing Norwegian `dateFormatter`, with a range when `toDate` differs. Fake card and the two non-functional payment options replaced by an honest "Kort — du fullfører betalingen sikkert hos Stripe i neste steg". Rating shows the real value or "Ingen vurderinger ennå". Removed the now-unused `paymentMethod` state, `Apple` and `useState` imports |
-| `frontend/src/pages/ApplicantsPage/ApplicantsPage.tsx` | real duration, row hidden when the job has none |
+
+| File                                                   | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `backend/controllers/SafePayCheckoutController.js`     | `getCheckoutDetails` populate now selects `fromDate toDate duration` (the comment said "duration hidden for now" — that is why the UI invented it)                                                                                                                                                                                                                                                                                                                      |
+| `backend/controllers/applicantController.js`           | `duration` added to the `service` payload                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `frontend/src/utils/timeFormatter.ts`                  | new `toJobDuration({value, unit})` → Norwegian text, or `null` so callers omit the row. Handles the model's mixed English/Norwegian unit enum. Shared by both pages rather than duplicating a label map                                                                                                                                                                                                                                                                 |
+| `frontend/src/pages/SafePayPage/SafePayCheckout.tsx`   | Sted / Dato / Estimert tid now render real order data and are **omitted entirely when absent**; date via the existing Norwegian `dateFormatter`, with a range when `toDate` differs. Fake card and the two non-functional payment options replaced by an honest "Kort — du fullfører betalingen sikkert hos Stripe i neste steg". Rating shows the real value or "Ingen vurderinger ennå". Removed the now-unused `paymentMethod` state, `Apple` and `useState` imports |
+| `frontend/src/pages/ApplicantsPage/ApplicantsPage.tsx` | real duration, row hidden when the job has none                                                                                                                                                                                                                                                                                                                                                                                                                         |
 
 Vipps/Apple Pay should be re-added here **only** once the backend forwards the chosen method to Stripe.
 
 ### Verification
+
 - Frontend typecheck **354, zero new errors**; no new lint violations.
 
 ### Still to test manually
+
 1. Job created **with** dates and a duration → checkout shows those exact values.
 2. Job created **without** them → those rows are absent (no invented values, no empty rows).
 3. Job spanning two dates → shown as a range.
@@ -645,20 +660,23 @@ Vipps/Apple Pay should be re-added here **only** once the backend forwards the c
 **Audit ref:** F-36
 
 ### The problem
-`AnmeldelserPage.tsx` made **no API call at all**. It rendered two invented reviews — *"Illyas — Veldig stort
-og fin vegg, jeg er sjalu"*, *"Dulahi — Knuste den benken og fikk pengene"*, both dated `04.01.2002`, with
+
+`AnmeldelserPage.tsx` made **no API call at all**. It rendered two invented reviews — _"Illyas — Veldig stort
+og fin vegg, jeg er sjalu"_, _"Dulahi — Knuste den benken og fikk pengene"_, both dated `04.01.2002`, with
 `https://via.placeholder.com/40` avatars — plus a hardcoded 4.5 average and a review count of 2, presented to
 every visitor as their own reviews. The route was **public**, with no guard.
 
 ### What I verified
+
 The only link to `/Anmeldelser` is `ProfileMenuSection.tsx:38`, which is **dead code** (reachable only via the
 unused `components/profile/index.ts` barrel; nothing renders that component). So the route was orphaned —
 unreachable through the UI but live by direct URL and indexable by search engines.
 
 ### What changed — route removed, not wired
-| File | Change |
-|---|---|
-| `frontend/src/routing/Routes.tsx` | route registration and the lazy import removed, with a note explaining why |
+
+| File                                                     | Change                                                                              |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `frontend/src/routing/Routes.tsx`                        | route registration and the lazy import removed, with a note explaining why          |
 | `frontend/src/pages/AnmeldelserPage/AnmeldelserPage.tsx` | prominent header warning that it renders fake data and must not be re-enabled as-is |
 
 Wiring it to real data was the alternative, but nothing links to it, and doing it properly needs the
@@ -667,6 +685,7 @@ to a `ProtectedRoute` (it shows the signed-in user's own reviews, so it cannot s
 build, not a launch fix. The file is kept so the layout work isn't lost.
 
 ### Verification
+
 - Frontend typecheck **354, zero new errors** (`AnmeldelserPage` is simply no longer in the build graph).
 
 ---
@@ -677,19 +696,24 @@ build, not a launch fix. The file is kept so the layout work isn't lost.
 **Audit ref:** F-35
 
 ### The problem
+
 `ApplicantsPage.tsx:463-471` rendered a button whose entire handler was:
+
 ```tsx
 onClick={() => { toast.success('Bruker valgt uten SafePay'); }}
 ```
+
 No API call. No contract created, no applicant selected, nobody notified — while the poster saw a green
 success toast and believed they had hired someone. The applicant was never contacted.
 
 ### What changed
+
 `frontend/src/pages/ApplicantsPage/ApplicantsPage.tsx` — button removed, with a comment recording why.
 Hiring outside escrow is not an implemented flow, so there was nothing to wire it to; "Velg og start SafePay"
 and "Send melding" are untouched. `toast` is still used elsewhere in the file, so the import stays.
 
 ### Verification
+
 - Repo-wide search for "uten SafePay" returns only the explanatory comment.
 - Frontend typecheck **354, zero new errors**.
 
@@ -701,6 +725,7 @@ and "Send melding" are untouched. `toast` is still used elsewhere in the file, s
 **Audit ref:** F-53
 
 ### The problem
+
 - `markAsRead` (`notificationController.js`) did `findById` then `findByIdAndUpdate` with **no comparison
   between the notification's owner and the caller** — any authenticated user could mark any other user's
   notification read.
@@ -711,12 +736,13 @@ and "Send melding" are untouched. `toast` is still used elsewhere in the file, s
   arbitrary notifications into any user's tray — a ready-made phishing surface inside Jobblo's own UI.
 
 ### What changed
-| File | Change |
-|---|---|
+
+| File                                            | Change                                                                                                                                        |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `backend/controllers/notificationController.js` | `markAsRead`: 403 unless the caller owns the notification (system broadcasts, `userId: null`, still allowed — they are addressed to everyone) |
-| | `deleteNotification`: fetch first, then 403 unless the caller owns it; system broadcasts refused outright |
-| | `createTestNotification`: recipient is now `req.userId`; the body `userId` is ignored |
-| `backend/routes/notifications.js` | added `authenticate` to `POST /test` |
+|                                                 | `deleteNotification`: fetch first, then 403 unless the caller owns it; system broadcasts refused outright                                     |
+|                                                 | `createTestNotification`: recipient is now `req.userId`; the body `userId` is ignored                                                         |
+| `backend/routes/notifications.js`               | added `authenticate` to `POST /test`                                                                                                          |
 
 **System broadcasts deliberately treated separately.** They are a live admin feature
 (`createSystemNotification` → `userId: null, isSystem: true`, shown in every user's list). Marking one read
@@ -724,12 +750,14 @@ stays allowed; **deleting** one is now refused, because it is a single shared do
 it would remove the announcement for everybody.
 
 ### Verification
+
 - `backend/__tests__/notificationOwnership.test.js` added — 7 assertions, all passing: cross-user mark refused,
   own mark allowed, system mark still allowed, cross-user delete refused, system delete refused, own delete
   works, and the test endpoint can only ever target the caller.
 - No frontend caller of `/api/notifications/test` exists, so adding auth breaks nothing.
 
 ### Known follow-ups in this area (deliberately not fixed here — correctness, not ownership)
+
 - Marking a **system** notification read still flips the shared `read` flag for every user. The model already
   has a `readBy` array intended for per-user state; nothing writes or reads it. Fixing this properly also
   needs `getNotifications` / `getUnreadCount` to compute per-user read state.
@@ -749,19 +777,20 @@ it would remove the announcement for everybody.
 The Socket.IO **handshake** is properly authenticated (`chat.socket.js:7-40` — cookie JWT plus a DB session
 check). Every event handler after it was not:
 
-| Handler | Hole |
-|---|---|
-| `join-chat` | `socket.join(\`chat-${chatId}\`)` with **no membership check** — any authenticated user who knew or guessed a chat id received every `receive-message` broadcast in that conversation |
-| `send-message` | loaded the chat and pushed a message with **no participant check** — any authenticated user could inject messages into any conversation |
-| `setup` | joined a room named by a **client-supplied** userId and registered that id in `onlineUsers` — join another user's private room, fake their presence |
-| `mark-as-read` | took `userId` from the **client payload** — spoofable read receipts |
-| `server.js` `join` | `socket.join(\`user_${userId}\`)` from a **client-supplied** id. This is the worst one: `orderController`, `providerWorkController` and `SafePayCheckoutController` all emit order and payment events to `user_<id>`, so an attacker emitting `join` with a victim's id received their entire order and payment stream |
+| Handler            | Hole                                                                                                                                                                                                                                                                                                             |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `join-chat`        | `socket.join(\`chat-${chatId}\`)`with **no membership check** — any authenticated user who knew or guessed a chat id received every`receive-message` broadcast in that conversation                                                                                                                              |
+| `send-message`     | loaded the chat and pushed a message with **no participant check** — any authenticated user could inject messages into any conversation                                                                                                                                                                          |
+| `setup`            | joined a room named by a **client-supplied** userId and registered that id in `onlineUsers` — join another user's private room, fake their presence                                                                                                                                                              |
+| `mark-as-read`     | took `userId` from the **client payload** — spoofable read receipts                                                                                                                                                                                                                                              |
+| `server.js` `join` | `socket.join(\`user_${userId}\`)`from a **client-supplied** id. This is the worst one:`orderController`, `providerWorkController`and`SafePayCheckoutController`all emit order and payment events to`user_<id>`, so an attacker emitting `join` with a victim's id received their entire order and payment stream |
 
 ### What changed
-| File | Change |
-|---|---|
+
+| File                             | Change                                                                                                                                                                                                                                                                                            |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `backend/sockets/chat.socket.js` | added a shared `isChatParticipant(chat, userId)` helper (participants are `clientId` / `providerId`); applied it to `join-chat`, `send-message` and `mark-as-read`; `setup` and `mark-as-read` now use `socket.userId` and ignore client payloads. Refused joins/sends emit a `chat-error` event. |
-| `backend/server.js` | `join` now uses `socket.userId` and ignores the payload. Safe because `chatSocket(io)` registers its `io.use()` handshake middleware before this handler, and `io.use` applies to every connection on the instance. |
+| `backend/server.js`              | `join` now uses `socket.userId` and ignores the payload. Safe because `chatSocket(io)` registers its `io.use()` handshake middleware before this handler, and `io.use` applies to every connection on the instance.                                                                               |
 
 **Backward compatible:** all five frontend emitters still send their old payloads
 (`useChatSocket.ts:22,25,26,37`, `Header.tsx:78,81`, `notifications/hooks.ts:39,66`); the extra fields are now
@@ -769,11 +798,13 @@ simply ignored. Admin chat viewing goes over HTTP, not sockets, so it is unaffec
 alone — nothing anywhere emits to `service_*` rooms, so it carries no data.
 
 ### Verification
+
 - `backend/__tests__/chatSocketAuth.test.js` added — 6 assertions, all passing: participant can join, outsider
   refused and not joined; participant's message saved, outsider's message not appended and not saved; `setup`
   ignores a supplied id; `mark-as-read` from an outsider does not write.
 
 ### Known follow-up
+
 - Nothing on the frontend listens for the new `chat-error` event, so a refused join is silent to the user.
   Acceptable for launch (it only fires on an unauthorised attempt), but worth wiring up with **F-56**
   (message-send failures are silent).
@@ -795,10 +826,11 @@ in it, or that the reviewee was the counterparty. It then recomputed and wrote t
 **Any authenticated account could permanently damage any user's public rating** with a single request.
 
 Two read routes were also missing `authenticate`, unlike every neighbouring line:
-`GET /orders/:orderId/review` (populates *both* parties' names and avatars — deanonymises the pair to anyone
+`GET /orders/:orderId/review` (populates _both_ parties' names and avatars — deanonymises the pair to anyone
 holding an order id) and `GET /reviews` (dumps the entire review table, unpaginated).
 
 ### What I verified first
+
 The **only** live caller of `createReview` is `ProviderOrderDetailPage.tsx:246` — the provider reviewing the
 customer — and its form is gated on `status === 'completed' && isProvider`, so a backend `completed`
 requirement matches the UI exactly. `reviewsAPI.ts` has **zero importers** (dead module) and
@@ -806,16 +838,18 @@ requirement matches the UI exactly. `reviewsAPI.ts` has **zero importers** (dead
 server-side inside `approveAndPayout`, not through this endpoint, so it is unaffected.
 
 ### What changed
-| File | Change |
-|---|---|
+
+| File                                      | Change                                                                                                                                                                                                                                                                                       |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `backend/controllers/reviewController.js` | `createReview`: requires a valid `orderId`; 404 if the order is missing; 403 unless the reviewer is the order's customer or provider; 400 unless `status === 'completed'`; 400 unless `revieweeId` is the counterparty. `serviceId` is now taken from the order instead of the request body. |
-| | `getReviewByOrderId`: 400 on a bad id, 404 if the order is missing, 403 unless the caller is a participant |
-| `backend/routes/review.js` | added `authenticate` to `GET /orders/:orderId/review` and `GET /reviews` |
+|                                           | `getReviewByOrderId`: 400 on a bad id, 404 if the order is missing, 403 unless the caller is a participant                                                                                                                                                                                   |
+| `backend/routes/review.js`                | added `authenticate` to `GET /orders/:orderId/review` and `GET /reviews`                                                                                                                                                                                                                     |
 
 `revieweeRole` was deliberately left as a pass-through — the audit found its semantics are inverted
 (**F-47**), but changing it here would break the existing read filters. That is a separate fix.
 
 ### Verification
+
 - `backend/__tests__/reviewEligibility.test.js` added — 9 assertions, all passing: stranger refused (403),
   non-completed order refused, non-counterparty refused, missing order refused, nonexistent order 404,
   legitimate provider→customer review allowed (201), `serviceId` taken from the order not the body, and
@@ -824,6 +858,7 @@ server-side inside `approveAndPayout`, not through this endpoint, so it is unaff
   it in `.catch(() => null)`, so it degrades gracefully.
 
 ### Known follow-up
+
 - `getAllReviews` is now authenticated but still returns every review with no pagination. Nothing in B2C calls
   it (admin has its own `/api/admin/reviews`), so it is low risk, but it should be paginated or removed.
 - The PII `console.log`s in this controller (**F-49**) were left in place — separate item.
@@ -838,13 +873,13 @@ server-side inside `approveAndPayout`, not through this endpoint, so it is unaff
 ### The problem
 
 When the Stripe Connect transfer fails, `approveAndPayout` returns **HTTP 200** with
-`{ message: 'Jobb godkjent', payoutWarning, payoutErrorCode }`. That status is *correct* — the approval
+`{ message: 'Jobb godkjent', payoutWarning, payoutErrorCode }`. That status is _correct_ — the approval
 itself succeeded, the order is completed, and the provider is notified separately. The failure was entirely
 on the frontend: `SafePayApproval.tsx` did `onSuccess: () => { setIsSuccess(true); toast.success('Jobb godkjent!'); }`
 and **never read `payoutWarning`**.
 
-So on a failed transfer the customer saw a green checkmark, *"Pengene er lagt til {provider} sin saldo"*, the
-full amount in large green type, and *"Tilgjenelig innen 1–2 virkedager"* — while no money had moved and the
+So on a failed transfer the customer saw a green checkmark, _"Pengene er lagt til {provider} sin saldo"_, the
+full amount in large green type, and _"Tilgjenelig innen 1–2 virkedager"_ — while no money had moved and the
 provider's `earnings` was deliberately not incremented. Both parties believed the worker had been paid.
 
 The two most common causes are exactly the ones a launch will hit: the provider hasn't finished Stripe Connect
@@ -853,6 +888,7 @@ onboarding (`PAYOUT_SETUP_REQUIRED` / `PAYOUT_NOT_ENABLED`), or a transient Stri
 ### What changed — frontend only
 
 `frontend/src/pages/SafePayPage/SafePayApproval.tsx`:
+
 - Added `payoutWarning` state; `onSuccess` now reads the response body and stores it.
 - On a payout failure the toast is a neutral warning (`'Jobb godkjent, men utbetalingen er ikke fullført.'`),
   **not** `toast.success`.
@@ -866,11 +902,13 @@ real state transition that must not be rolled back because a transfer failed —
 right provider notification. The bug was that nobody read the warning it was already sending.
 
 ### Verification
+
 - Frontend typecheck: **354 errors, unchanged — zero new**.
 - Lint on the file: 7 → 6 errors (I typed my own callback rather than adding an `any`); all 6 remaining are
   pre-existing (`Home`/`MessageCircle`/`Bell` unused, three older `any`s).
 
 ### Still to test manually
+
 1. Approve a job for a provider who has **not** completed Stripe Connect onboarding → amber icon,
    the Connect-setup explanation, "Utbetaling ikke fullført", and no success toast.
 2. Approve a job for a fully onboarded provider → unchanged green success path.
@@ -889,13 +927,14 @@ right provider notification. The bug was that nobody read the warning it was alr
 response body**. The status query was also `enabled: !!sessionId`, so with no `session_id` in the URL it never
 ran at all — `isLoading` stayed false and the page rendered straight to success.
 
-Result: anyone could open `/safepay/success?orderId=<anything>` and be told *"Betaling bekreftet! … Pengene er
-nå trygt lagret hos SafePay"*. Even with a real `session_id`, the success UI rendered whether Stripe reported
+Result: anyone could open `/safepay/success?orderId=<anything>` and be told _"Betaling bekreftet! … Pengene er
+nå trygt lagret hos SafePay"_. Even with a real `session_id`, the success UI rendered whether Stripe reported
 `paid`, `unpaid`, or the request errored outright — the error case only fired a toast behind the success screen.
 
 ### What I had to be careful about
 
 The page is **not** only a Stripe return URL. Two live flows reach it with no `session_id`:
+
 - `ApplicantsPage.tsx:111` → `/safepay/success?orderId=…`
 - step 3 ("Jobb utføres") of the SafePay steps bar, `SafePaySteps.tsx:20`
 
@@ -906,18 +945,19 @@ and the chat checkout uses a third shape, `?session_id=…&chatId=…` with no `
 
 `frontend/src/pages/SafePayPage/SafePaySuccess.tsx` now derives an explicit
 `paymentState: 'verifying' | 'paid' | 'pending' | 'unverified'` from two independent sources:
+
 - the Stripe session status (authoritative — the backend retrieves the session live), and
 - the order's own `paymentStatus` / `status` from the details endpoint we already fetch, which covers the
   no-`session_id` entry points.
 
 Behaviour per state:
 
-| State | Condition | UI |
-|---|---|---|
-| `verifying` | either query loading | spinner (as before) |
-| `paid` | either source confirms payment | the existing success screen, unchanged |
-| `pending` | a source answered and said not paid | "Betalingen er ikke fullført" + "Sjekk på nytt" + "Gå til betaling" |
-| `unverified` | nothing could be checked | "Vi fikk ikke bekreftet betalingen" + same recovery CTAs |
+| State        | Condition                           | UI                                                                  |
+| ------------ | ----------------------------------- | ------------------------------------------------------------------- |
+| `verifying`  | either query loading                | spinner (as before)                                                 |
+| `paid`       | either source confirms payment      | the existing success screen, unchanged                              |
+| `pending`    | a source answered and said not paid | "Betalingen er ikke fullført" + "Sjekk på nytt" + "Gå til betaling" |
+| `unverified` | nothing could be checked            | "Vi fikk ikke bekreftet betalingen" + same recovery CTAs            |
 
 The steps bar is now only rendered in the `paid` state, so it can't imply step 3 is reached on an unpaid order.
 The error toast now fires only when verification genuinely failed — a confirmed "not paid yet" is a legitimate
@@ -929,12 +969,14 @@ Cases walked through: no params at all (was the exploit — now `unverified`); `
 403 on both lookups (now `unverified` instead of a full success page).
 
 ### Verification
+
 - Frontend typecheck: **354 errors, unchanged — zero new**. The one apparent new entry
   (`providerName` unused) is the same pre-existing error shifted from line 46 to line 77 by the added code;
   confirmed by diffing the before/after error sets.
 - Lint on the file: 2 errors, both pre-existing (`ArrowRight`, `providerName` unused).
 
 ### Still to test manually
+
 1. `/safepay/success` with **no query params** → "Vi fikk ikke bekreftet betalingen", **not** success.
 2. `/safepay/success?orderId=<a paid order>` → success (proves ApplicantsPage / steps-bar flows still work).
 3. `/safepay/success?orderId=<an awaiting_payment order>` → "Betalingen er ikke fullført".
@@ -966,17 +1008,17 @@ and did **not** check for an active dispute. It then unconditionally set `paymen
 A customer could therefore `POST` to it on an order still sitting in `awaiting_payment` and trigger a payout
 of money the platform had never collected — or force a payout out from under an open dispute.
 
-### Verification done *before* changing anything
+### Verification done _before_ changing anything
 
 Searched the whole repo (frontend, backend, **and the `mobile/` React Native app**):
 
-| Reference | Location | Live? |
-|---|---|---|
-| Route registration | `backend/routes/safepay.js:41` | the only executable link |
-| Controller method | `backend/controllers/safepayController.js:319` | **no callers other than the route** |
-| Frontend API wrapper | `frontend/src/api/safePayAPI.ts:22` | **zero callers** |
-| Direct URL calls | none anywhere | — |
-| Mobile app | zero matches for `safepay` / `payout` / `/complete` | does not use SafePay at all |
+| Reference            | Location                                            | Live?                               |
+| -------------------- | --------------------------------------------------- | ----------------------------------- |
+| Route registration   | `backend/routes/safepay.js:41`                      | the only executable link            |
+| Controller method    | `backend/controllers/safepayController.js:319`      | **no callers other than the route** |
+| Frontend API wrapper | `frontend/src/api/safePayAPI.ts:22`                 | **zero callers**                    |
+| Direct URL calls     | none anywhere                                       | —                                   |
+| Mobile app           | zero matches for `safepay` / `payout` / `/complete` | does not use SafePay at all         |
 
 `safePayAPI.ts` has exactly **one** importer — `pages/ChatView/ChatView.tsx` — and it imports only
 `createContract`. `ChatView.tsx` is itself dead code: nothing imports it, and it is not in `Routes.tsx`
@@ -992,19 +1034,20 @@ same rating recalculation, same payout call — plus the three guards the legacy
 
 ### What changed
 
-| File | Change |
-|---|---|
-| `backend/routes/safepay.js` | removed the route; left a comment recording why and naming the replacement |
-| `backend/controllers/safepayController.js` | deleted `completeJobAndPayout` and its doc block (273 lines) |
-| `frontend/src/api/safePayAPI.ts` | deleted the now-dead `completeJobAndPayout` wrapper |
-| `backend/services/payout/releasePayoutToProvider.js` | corrected the header comment that listed it as a valid release path |
-| `backend/services/payoutService.js` | same, in the shared-helper doc block |
+| File                                                 | Change                                                                     |
+| ---------------------------------------------------- | -------------------------------------------------------------------------- |
+| `backend/routes/safepay.js`                          | removed the route; left a comment recording why and naming the replacement |
+| `backend/controllers/safepayController.js`           | deleted `completeJobAndPayout` and its doc block (273 lines)               |
+| `frontend/src/api/safePayAPI.ts`                     | deleted the now-dead `completeJobAndPayout` wrapper                        |
+| `backend/services/payout/releasePayoutToProvider.js` | corrected the header comment that listed it as a valid release path        |
+| `backend/services/payoutService.js`                  | same, in the shared-helper doc block                                       |
 
 Deliberately **not** touched: `approveAndPayout` and the whole `/api/safepay-checkout` flow; the sibling
 legacy routes on lines 40/42/43 (`/contract/:orderId/start`, `/history/:userId`,
 `/contract/:orderId/checklist/:itemId`) — out of scope for F-32.
 
 ### Verification after the change
+
 - Repo-wide search for `completeJobAndPayout` and `contract/*/complete` → only three hits remain, all
   **documentation**: this log, the removal comment in `routes/safepay.js`, and the historical note in
   `releasePayoutToProvider.js`. **No executable reference survives.**
@@ -1017,6 +1060,7 @@ legacy routes on lines 40/42/43 (`/contract/:orderId/start`, `/history/:userId`,
 - Frontend typecheck: **no new errors**, none in `safePayAPI.ts`.
 
 ### Remaining risk
+
 - **Low.** The endpoint had no callers, so no client can regress. A third-party or older deployed client
   calling it directly would now get a 404 — but no such caller exists in this repo or the mobile app, and
   the wrapper that would have made one possible was never used.
@@ -1038,6 +1082,7 @@ nothing). Payment was recorded only as a side effect of the browser landing back
 which fires `GET /api/safepay-checkout/status/:sessionId`.
 
 If the tab closed, the phone switched apps, or the network dropped on the redirect:
+
 - Stripe captured the money;
 - the order stayed `awaiting_payment` / `unpaid`;
 - the provider was never notified and could not start work;
@@ -1047,19 +1092,21 @@ The only recovery path, `reconcilePayment`, was permanently dead: it bails on `i
 and `checkoutSessionId` was **never persisted** — because it wasn't in the `Order` schema, and Mongoose strict
 mode (the default) silently drops unknown paths.
 
-That same root cause broke three other things: `updateCustomerChecklist` wrote *only* dropped fields, so it
+That same root cause broke three other things: `updateCustomerChecklist` wrote _only_ dropped fields, so it
 returned `200 {message:'Sjekkliste bekreftet'}` and changed nothing; all lifecycle timestamps were `undefined`;
 and `ready_for_review` sat outside the status enum, so any later `order.save()` on such a document threw.
 
 ### What changed
 
 **`backend/models/Order.js`** — additive schema fix (the root cause)
+
 - Added `ready_for_review` to the `status` enum.
 - Added the reconciliation fields: `checkoutSessionId`, `checkoutSessionStatus`, `checkoutSessionCreatedAt`, `paymentIntentId`, `paymentConfirmedAt`.
 - Added the lifecycle fields: `startedAt`, `readyForReviewAt`, `completedAt`, `completionNote`, `price`.
 - Added the two-sided checklist fields: `providerCompleted{,At,By}`, `customerConfirmed{,At,By}`.
 
 **`backend/controllers/SafePayCheckoutController.js`**
+
 - Extracted the payment-confirmation transition out of `checkoutSessionStatus` into one shared
   `confirmPaidSession(session, io)`, so the redirect path and the webhook cannot drift. It is idempotent:
   it short-circuits on already-paid orders and treats a lost `findOneAndUpdate` race as "already confirmed".
@@ -1086,11 +1133,13 @@ picks the signing secret matching whichever mode `getStripe()` is using.
 4. If a proxy/WAF sits in front of the API, make sure it does not rewrite or re-encode the request body on that path.
 
 ### Verification done
+
 - All modules load; `backend/__tests__/orderSchema.test.js` added — 5 assertions, all passing.
 - Full backend suite: 140 passed. The 9 failures in `chatReport.test.js` are **pre-existing** — confirmed by
   stashing these changes and re-running, which produced the identical 9 failures.
 
 ### Still to test manually (needs a deployed endpoint + Stripe test mode)
+
 1. Complete a test payment, **kill the tab before the redirect** → the order must still become `paid`,
    the provider must get the notification, and "Start jobb" must be available.
 2. Re-open checkout for that order → must refuse with `409 Ordre er allerede betalt.`, not offer a second payment.
@@ -1100,6 +1149,7 @@ picks the signing secret matching whichever mode `getStripe()` is using.
 5. Provider ticks a checklist item, customer confirms it → the `✓ Bekreftet` badge now renders.
 
 ### Known follow-ups from the same area (not in this fix)
+
 - ~~**F-32** legacy payout endpoint with no payment or status check.~~ **Done — see Fix #3.**
 - ~~**F-33** payout failure reported as success.~~ **Done — see Fix #5.**
 - ~~**F-37** `/safepay/success` declared confirmation without reading the response.~~ **Done — see Fix #4.**
@@ -1112,6 +1162,7 @@ picks the signing secret matching whichever mode `getStripe()` is using.
 **Audit refs:** F-51, F-03, F-02, F-05
 
 ### The problem
+
 - `TopResults.tsx` / `InfiniteResults.tsx` sent homepage search results to `/service/:id` — **not a registered route**.
   Clicking a job on the landing page, the app's primary discovery surface, hit a wordless 404.
 - `PricingPage` was `lazy()`-imported in `Routes.tsx` but **never registered**, so the upsell CTA 404'd.
@@ -1123,26 +1174,29 @@ picks the signing secret matching whichever mode `getStripe()` is using.
   painted a literal `;` at the top of every protected page.
 
 ### What changed
-| File | Change |
-|---|---|
-| `frontend/src/components/landing/Search/TopResults.tsx:80` | `/service/${id}` → `/job-listing/${id}` |
-| `frontend/src/components/landing/Search/InfiniteResults.tsx:118` | same |
-| `frontend/src/components/job/RelatedJobs.tsx:45` | bare `/job-listing` → `/home` |
-| `frontend/src/components/shared/CookieBanner.tsx:51` | `/cookie-policy` → `/cookies` |
-| `frontend/src/routing/Routes.tsx` | registered `pricing` (public) and `favorites` (protected); added `errorElement` to `/` **and** to `login`/`register`/`forgot-password` (siblings of `/`, so the root element would not have covered them) |
-| `frontend/src/components/ErrorBoundary.tsx` | extracted shared `reportClientError`; added `RouteErrorElement` (Norwegian copy, "Prøv igjen" + "Til forsiden", reports to the existing `/api/errors/client`) |
-| `frontend/src/pages/NotFoundPage/NotFoundPage.tsx` | Norwegian copy + two links (the `Link` import was already there, unused) |
-| `frontend/src/components/shared/ProtectedRoute.tsx:21,51` | replaced placeholder text; removed the stray `;` |
+
+| File                                                             | Change                                                                                                                                                                                                    |
+| ---------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `frontend/src/components/landing/Search/TopResults.tsx:80`       | `/service/${id}` → `/job-listing/${id}`                                                                                                                                                                   |
+| `frontend/src/components/landing/Search/InfiniteResults.tsx:118` | same                                                                                                                                                                                                      |
+| `frontend/src/components/job/RelatedJobs.tsx:45`                 | bare `/job-listing` → `/home`                                                                                                                                                                             |
+| `frontend/src/components/shared/CookieBanner.tsx:51`             | `/cookie-policy` → `/cookies`                                                                                                                                                                             |
+| `frontend/src/routing/Routes.tsx`                                | registered `pricing` (public) and `favorites` (protected); added `errorElement` to `/` **and** to `login`/`register`/`forgot-password` (siblings of `/`, so the root element would not have covered them) |
+| `frontend/src/components/ErrorBoundary.tsx`                      | extracted shared `reportClientError`; added `RouteErrorElement` (Norwegian copy, "Prøv igjen" + "Til forsiden", reports to the existing `/api/errors/client`)                                             |
+| `frontend/src/pages/NotFoundPage/NotFoundPage.tsx`               | Norwegian copy + two links (the `Link` import was already there, unused)                                                                                                                                  |
+| `frontend/src/components/shared/ProtectedRoute.tsx:21,51`        | replaced placeholder text; removed the stray `;`                                                                                                                                                          |
 
 `pricing` is **public** deliberately: the job-detail CTA is reachable by logged-out visitors, and gating it
 would just move the dead end.
 
 ### Verification done
+
 - Typecheck 379 → **377** errors. Before/after diff: **zero new errors**; two fixed, including
   `'PricingPage' is declared but never used` — the exact symptom of the missing route.
 - Lint: no new violations (new code typed with `unknown`, not `any`).
 
 ### Still to test manually
+
 1. Landing page → search a job → click a result → job detail, not a 404
 2. Job detail → upgrade modal → "Se alle abonnementer" → pricing page (logged out too)
 3. Open a favourite list → back → favourites page
@@ -1164,7 +1218,7 @@ Two consequences worth knowing:
 
 - Frontend typecheck dropped from 377 to **354** errors — 24 of them were `TS2307 Cannot find module` and their
   cascading implicit-`any` errors, now resolved. Nothing to do with any code fix.
-- One error became newly *visible*: `src/components/Ui/message-scroller.tsx:88` (`"icon-sm"` not assignable to
+- One error became newly _visible_: `src/components/Ui/message-scroller.tsx:88` (`"icon-sm"` not assignable to
   the Button size union). It was previously masked because the whole module failed to resolve. Pre-existing,
   untouched by any fix so far.
 
@@ -1180,11 +1234,11 @@ tests. Backend on **:5001**, frontend on **:5174**, MongoDB on the default local
 Three values in the supplied env files needed changing to make the system actually run, each
 recorded as a comment in the file next to the change:
 
-| Var | Was | Now | Why |
-|---|---|---|---|
-| `MONGO_URI` | `…/jobblo-dev` | `…/jobblo_dev` | The hyphenated database is empty (0 users, 0 services). The seeded data — 18 users, 41 services, 15 orders — is in the underscored one. |
-| `FRONTEND_URL` | `http://localhost:5173/` | `http://localhost:5174/` | Port 5173 is held by an unrelated Vite server. OAuth callbacks are built from this value, so it must match the port actually served. Started with `--port 5174 --strictPort` so it cannot drift. |
-| `VITE_GOOGLE_MAPS_API_KEY` | *(unset)* | *(supplied)* | Without it step 2 of "Legg ut oppdrag" cannot set coordinates, which Fix #13 made mandatory — posting a job was impossible. Verified against the Geocoding, Maps JS and Places APIs. |
+| Var                        | Was                      | Now                      | Why                                                                                                                                                                                              |
+| -------------------------- | ------------------------ | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `MONGO_URI`                | `…/jobblo-dev`           | `…/jobblo_dev`           | The hyphenated database is empty (0 users, 0 services). The seeded data — 18 users, 41 services, 15 orders — is in the underscored one.                                                          |
+| `FRONTEND_URL`             | `http://localhost:5173/` | `http://localhost:5174/` | Port 5173 is held by an unrelated Vite server. OAuth callbacks are built from this value, so it must match the port actually served. Started with `--port 5174 --strictPort` so it cannot drift. |
+| `VITE_GOOGLE_MAPS_API_KEY` | _(unset)_                | _(supplied)_             | Without it step 2 of "Legg ut oppdrag" cannot set coordinates, which Fix #13 made mandatory — posting a job was impossible. Verified against the Geocoding, Maps JS and Places APIs.             |
 
 `STRIPE_SECRET_KEY` is the **test** key; the live key is commented out on the line above it. Verified
 against Stripe: account `acct_1SpDsl…`, country NO, `livemode: false`.

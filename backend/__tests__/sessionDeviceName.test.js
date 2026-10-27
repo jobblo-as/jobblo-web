@@ -4,7 +4,8 @@
  */
 const { deviceNameFrom } = require('../utils/tokenUtils');
 
-const from = (value) => deviceNameFrom({ headers: value === undefined ? {} : { 'x-device-name': value } });
+const from = (value) =>
+  deviceNameFrom({ headers: value === undefined ? {} : { 'x-device-name': value } });
 
 it('keeps a normal model name', () => {
   expect(from('iPhone 15 Pro')).toBe('iPhone 15 Pro');
@@ -13,7 +14,9 @@ it('keeps a normal model name', () => {
 });
 
 it('strips markup and control characters, collapses spaces, caps the length', () => {
-  expect(from('  Samsung\u0000 SM-S911B\n<script>alert(1)</script>')).toBe('Samsung SM-S911Bscriptalert(1)/script');
+  expect(from('  Samsung\u0000 SM-S911B\n<script>alert(1)</script>')).toBe(
+    'Samsung SM-S911Bscriptalert(1)/script'
+  );
   expect(from('x'.repeat(100))).toHaveLength(60);
 });
 

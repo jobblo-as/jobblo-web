@@ -111,8 +111,12 @@ describe('uploadBufferToAzure', () => {
   });
 
   it('refuses bytes that are not JPEG/PNG/WebP/PDF (SVG labelled image/png)', async () => {
-    const svg = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>');
-    await expect(uploadBufferToAzure(file('a.png', 'image/png', svg), 'hero')).rejects.toMatchObject({
+    const svg = Buffer.from(
+      '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>'
+    );
+    await expect(
+      uploadBufferToAzure(file('a.png', 'image/png', svg), 'hero')
+    ).rejects.toMatchObject({
       code: 'INVALID_FILE_TYPE',
     });
     expect(store.size).toBe(0);

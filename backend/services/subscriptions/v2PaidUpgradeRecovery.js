@@ -50,7 +50,8 @@ function priceIdOf(line) {
 
 function periodOf(subscription) {
   const items = subscription.items?.data || [];
-  if (items.length !== 1) throw fail(409, 'RECOVERY_SUBSCRIPTION_ITEMS_INVALID', 'Subscription items are ambiguous.');
+  if (items.length !== 1)
+    throw fail(409, 'RECOVERY_SUBSCRIPTION_ITEMS_INVALID', 'Subscription items are ambiguous.');
   const item = items[0];
   const start = new Date(item.current_period_start * 1000);
   const end = new Date(item.current_period_end * 1000);
@@ -61,19 +62,20 @@ function periodOf(subscription) {
 }
 
 function eventRequestMatches(event, operation) {
-  return event.request?.idempotency_key ===
-    `jobblo-subv2-test-${operation.idempotencyKey}`;
+  return event.request?.idempotency_key === `jobblo-subv2-test-${operation.idempotencyKey}`;
 }
 
 function assertInvoiceLines(invoice, subscriptionId) {
   const lines = invoice.lines?.data || [];
-  const target = lines.filter((line) =>
-    priceIdOf(line) === KNOWN_UPGRADE.priceId &&
-    equalId(line.parent?.subscription_item_details?.subscription, subscriptionId)
+  const target = lines.filter(
+    (line) =>
+      priceIdOf(line) === KNOWN_UPGRADE.priceId &&
+      equalId(line.parent?.subscription_item_details?.subscription, subscriptionId)
   );
-  const previous = lines.filter((line) =>
-    priceIdOf(line) === KNOWN_UPGRADE.previousPriceId &&
-    equalId(line.parent?.subscription_item_details?.subscription, subscriptionId)
+  const previous = lines.filter(
+    (line) =>
+      priceIdOf(line) === KNOWN_UPGRADE.previousPriceId &&
+      equalId(line.parent?.subscription_item_details?.subscription, subscriptionId)
   );
   if (
     target.length !== 1 ||
@@ -88,7 +90,11 @@ function assertInvoiceLines(invoice, subscriptionId) {
     target[0].currency?.toLowerCase() !== 'nok' ||
     previous[0].currency?.toLowerCase() !== 'nok'
   ) {
-    throw fail(409, 'RECOVERY_INVOICE_LINES_MISMATCH', 'The paid invoice does not uniquely prove this plan change.');
+    throw fail(
+      409,
+      'RECOVERY_INVOICE_LINES_MISMATCH',
+      'The paid invoice does not uniquely prove this plan change.'
+    );
   }
 }
 
@@ -112,39 +118,57 @@ async function recoverPaidUpgrade({ adminId, confirmation }, overrides = {}) {
     deps.connection.host !== '127.0.0.1' ||
     deps.connection.name !== 'jobblo-dev'
   ) {
-    throw fail(403, 'RECOVERY_SCOPE_REJECTED', 'This one-time recovery is restricted to its confirmed local TEST record.');
+    throw fail(
+      403,
+      'RECOVERY_SCOPE_REJECTED',
+      'This one-time recovery is restricted to its confirmed local TEST record.'
+    );
   }
 
   const hello = await deps.connection.db.admin().command({ hello: 1 });
   if (!hello.setName && hello.msg !== 'isdbgrid') {
-    throw fail(503, 'RECOVERY_TRANSACTIONS_UNAVAILABLE', 'The local MongoDB does not support atomic multi-record transactions.');
+    throw fail(
+      503,
+      'RECOVERY_TRANSACTIONS_UNAVAILABLE',
+      'The local MongoDB does not support atomic multi-record transactions.'
+    );
   }
 
   const config = await deps.stripeConfiguration();
   if (config.mode !== 'test' || !config.keyModeValid) {
-    throw fail(503, 'RECOVERY_STRIPE_MODE_MISMATCH', 'The selected Stripe credentials are not verified TEST credentials.');
+    throw fail(
+      503,
+      'RECOVERY_STRIPE_MODE_MISMATCH',
+      'The selected Stripe credentials are not verified TEST credentials.'
+    );
   }
   const stripe = await deps.stripeForMode(true);
   const account = await stripe.accounts.retrieve();
   if (account.id !== KNOWN_UPGRADE.accountId) {
-    throw fail(503, 'RECOVERY_STRIPE_ACCOUNT_MISMATCH', 'The Stripe TEST account does not match this recovery.');
+    throw fail(
+      503,
+      'RECOVERY_STRIPE_ACCOUNT_MISMATCH',
+      'The Stripe TEST account does not match this recovery.'
+    );
   }
 
-  const [customer, subscription, invoice, invoiceEvent, subscriptionEvent, invoices] = await Promise.all([
-    stripe.customers.retrieve(KNOWN_UPGRADE.customerId),
-    stripe.subscriptions.retrieve(KNOWN_UPGRADE.subscriptionId, { expand: ['items.data.price'] }),
-    stripe.invoices.retrieve(KNOWN_UPGRADE.invoiceId, {
-      expand: ['lines.data.price', 'payments.data.payment.payment_intent'],
-    }),
-    stripe.events.retrieve(KNOWN_UPGRADE.invoiceEventId),
-    stripe.events.retrieve(KNOWN_UPGRADE.subscriptionEventId),
-    stripe.invoices.list({ subscription: KNOWN_UPGRADE.subscriptionId, limit: 100 }),
-  ]);
+  const [customer, subscription, invoice, invoiceEvent, subscriptionEvent, invoices] =
+    await Promise.all([
+      stripe.customers.retrieve(KNOWN_UPGRADE.customerId),
+      stripe.subscriptions.retrieve(KNOWN_UPGRADE.subscriptionId, { expand: ['items.data.price'] }),
+      stripe.invoices.retrieve(KNOWN_UPGRADE.invoiceId, {
+        expand: ['lines.data.price', 'payments.data.payment.payment_intent'],
+      }),
+      stripe.events.retrieve(KNOWN_UPGRADE.invoiceEventId),
+      stripe.events.retrieve(KNOWN_UPGRADE.subscriptionEventId),
+      stripe.invoices.list({ subscription: KNOWN_UPGRADE.subscriptionId, limit: 100 }),
+    ]);
   const period = periodOf(subscription);
   assertInvoiceLines(invoice, subscription.id);
-  const targetPrice = typeof period.item.price === 'string'
-    ? await stripe.prices.retrieve(period.item.price)
-    : period.item.price;
+  const targetPrice =
+    typeof period.item.price === 'string'
+      ? await stripe.prices.retrieve(period.item.price)
+      : period.item.price;
 
   const userObjectId = new mongoose.Types.ObjectId(KNOWN_UPGRADE.userId);
   const targetPlanObjectId = new mongoose.Types.ObjectId(KNOWN_UPGRADE.targetPlanId);
@@ -172,10 +196,7 @@ async function recoverPaidUpgrade({ adminId, confirmation }, overrides = {}) {
         ],
       }).lean(),
       deps.OperationModel.find({
-        $or: [
-          { stripeSubscriptionId: KNOWN_UPGRADE.subscriptionId },
-          { userId: userObjectId },
-        ],
+        $or: [{ stripeSubscriptionId: KNOWN_UPGRADE.subscriptionId }, { userId: userObjectId }],
         operationType: { $in: ['upgrade', 'downgrade'] },
         status: { $in: ['pending', 'processing', 'reconciliation_required', 'succeeded'] },
       }).lean(),
@@ -196,8 +217,14 @@ async function recoverPaidUpgrade({ adminId, confirmation }, overrides = {}) {
         billingPeriodStart: period.start,
         billingPeriodEnd: period.end,
       }).lean(),
-      deps.EventModel.find({ stripeMode: 'test', stripeEventId: KNOWN_UPGRADE.invoiceEventId }).lean(),
-      deps.EventModel.find({ stripeMode: 'test', stripeEventId: KNOWN_UPGRADE.subscriptionEventId }).lean(),
+      deps.EventModel.find({
+        stripeMode: 'test',
+        stripeEventId: KNOWN_UPGRADE.invoiceEventId,
+      }).lean(),
+      deps.EventModel.find({
+        stripeMode: 'test',
+        stripeEventId: KNOWN_UPGRADE.subscriptionEventId,
+      }).lean(),
       deps.SubscriptionModel.countDocuments({
         _id: record._id,
         'planHistory.operationId': KNOWN_UPGRADE.operationId,
@@ -266,15 +293,26 @@ async function recoverPaidUpgrade({ adminId, confirmation }, overrides = {}) {
       invoiceEvents[0]?.eventType === 'invoice.paid' &&
       subscriptionEvents[0]?.eventType === 'customer.subscription.updated' &&
       historyCount === 1 &&
-      invoices.data.filter((item) => item.billing_reason === 'subscription_update' && item.status === 'paid').length === 1 &&
+      invoices.data.filter(
+        (item) => item.billing_reason === 'subscription_update' && item.status === 'paid'
+      ).length === 1 &&
       invoices.data.filter((item) => item.id === KNOWN_UPGRADE.invoiceId).length === 1 &&
       ownerRecords.length === 1 &&
       relatedOperations.length === 1 &&
       relatedOperations[0]._id.toString() === exactOperation._id.toString()
     ) {
-      return { reconciled: true, alreadyReconciled: true, plan: targetPlan.name, invoiceId: invoice.id };
+      return {
+        reconciled: true,
+        alreadyReconciled: true,
+        plan: targetPlan.name,
+        invoiceId: invoice.id,
+      };
     }
-    throw fail(409, 'RECOVERY_ALREADY_SUCCEEDED_MISMATCH', 'The recorded successful reconciliation does not match canonical TEST state.');
+    throw fail(
+      409,
+      'RECOVERY_ALREADY_SUCCEEDED_MISMATCH',
+      'The recorded successful reconciliation does not match canonical TEST state.'
+    );
   }
 
   if (
@@ -310,7 +348,11 @@ async function recoverPaidUpgrade({ adminId, confirmation }, overrides = {}) {
     relatedOperations.length !== 1 ||
     relatedOperations[0]._id.toString() !== exactOperation._id.toString()
   ) {
-    throw fail(409, 'RECOVERY_LOCAL_OWNERSHIP_MISMATCH', 'The local subscription and pending upgrade are not an unambiguous match.');
+    throw fail(
+      409,
+      'RECOVERY_LOCAL_OWNERSHIP_MISMATCH',
+      'The local subscription and pending upgrade are not an unambiguous match.'
+    );
   }
 
   if (
@@ -338,7 +380,11 @@ async function recoverPaidUpgrade({ adminId, confirmation }, overrides = {}) {
     period.start.getTime() !== new Date(record.currentPeriodStart).getTime() ||
     period.end.getTime() !== new Date(record.currentPeriodEnd).getTime()
   ) {
-    throw fail(409, 'RECOVERY_STRIPE_SUBSCRIPTION_MISMATCH', 'The canonical TEST subscription does not match the expected upgrade.');
+    throw fail(
+      409,
+      'RECOVERY_STRIPE_SUBSCRIPTION_MISMATCH',
+      'The canonical TEST subscription does not match the expected upgrade.'
+    );
   }
 
   if (
@@ -364,15 +410,26 @@ async function recoverPaidUpgrade({ adminId, confirmation }, overrides = {}) {
     invoice.parent?.subscription_details?.metadata?.subscriptionV2 !== 'true' ||
     invoice.parent?.subscription_details?.metadata?.userId !== KNOWN_UPGRADE.userId ||
     invoice.parent?.subscription_details?.metadata?.planId !== KNOWN_UPGRADE.targetPlanId ||
-    invoice.parent?.subscription_details?.metadata?.operationId !== KNOWN_UPGRADE.previousOperationId ||
+    invoice.parent?.subscription_details?.metadata?.operationId !==
+      KNOWN_UPGRADE.previousOperationId ||
     invoice.parent?.subscription_details?.metadata?.stripeMode !== 'test'
   ) {
-    throw fail(409, 'RECOVERY_INVOICE_PAYMENT_MISMATCH', 'The invoice is not a settled TEST payment for this subscription.');
+    throw fail(
+      409,
+      'RECOVERY_INVOICE_PAYMENT_MISMATCH',
+      'The invoice is not a settled TEST payment for this subscription.'
+    );
   }
   const [invoiceEvents, subscriptionEvents, usage, matchingOldOperation, successfulHistory] =
     await Promise.all([
-      deps.EventModel.find({ stripeMode: 'test', stripeEventId: KNOWN_UPGRADE.invoiceEventId }).lean(),
-      deps.EventModel.find({ stripeMode: 'test', stripeEventId: KNOWN_UPGRADE.subscriptionEventId }).lean(),
+      deps.EventModel.find({
+        stripeMode: 'test',
+        stripeEventId: KNOWN_UPGRADE.invoiceEventId,
+      }).lean(),
+      deps.EventModel.find({
+        stripeMode: 'test',
+        stripeEventId: KNOWN_UPGRADE.subscriptionEventId,
+      }).lean(),
       deps.UsageModel.find({
         userId: userObjectId,
         subscriptionId: record._id,
@@ -407,7 +464,8 @@ async function recoverPaidUpgrade({ adminId, confirmation }, overrides = {}) {
     idOf(subscriptionEvent.data?.object) !== KNOWN_UPGRADE.subscriptionId ||
     !eventRequestMatches(subscriptionEvent, exactOperation) ||
     invoiceEvent.request?.id !== subscriptionEvent.request?.id ||
-    invoiceEvent.data.object.parent?.subscription_details?.metadata?.operationId !== KNOWN_UPGRADE.previousOperationId ||
+    invoiceEvent.data.object.parent?.subscription_details?.metadata?.operationId !==
+      KNOWN_UPGRADE.previousOperationId ||
     subscriptionEvent.data.object.metadata?.operationId !== KNOWN_UPGRADE.previousOperationId ||
     subscriptionEvent.data.previous_attributes?.metadata?.planId !== KNOWN_UPGRADE.previousPlanId ||
     !matchingOldOperation ||
@@ -420,12 +478,17 @@ async function recoverPaidUpgrade({ adminId, confirmation }, overrides = {}) {
     matchingOldOperation.targetPlanId != null ||
     exactOperation.attempts < 1 ||
     !exactOperation.prorationDate ||
-    invoice.lines?.data?.filter((line) => priceIdOf(line) === KNOWN_UPGRADE.priceId)
-      .some((line) => line.period?.start !== Math.floor(exactOperation.prorationDate.getTime() / 1000)) ||
+    invoice.lines?.data
+      ?.filter((line) => priceIdOf(line) === KNOWN_UPGRADE.priceId)
+      .some(
+        (line) => line.period?.start !== Math.floor(exactOperation.prorationDate.getTime() / 1000)
+      ) ||
     invoiceLedger?.status !== 'failed' ||
     subscriptionLedger?.status !== 'failed' ||
     successfulHistory !== 0 ||
-    invoices.data.filter((item) => item.billing_reason === 'subscription_update' && item.status === 'paid').length !== 1 ||
+    invoices.data.filter(
+      (item) => item.billing_reason === 'subscription_update' && item.status === 'paid'
+    ).length !== 1 ||
     invoices.data.filter((item) => item.id === KNOWN_UPGRADE.invoiceId).length !== 1 ||
     usage.length !== 1 ||
     usage[0].periodType !== 'paid' ||
@@ -433,166 +496,214 @@ async function recoverPaidUpgrade({ adminId, confirmation }, overrides = {}) {
     !Number.isSafeInteger(usage[0].consumedIncludedContacts) ||
     usage[0].consumedIncludedContacts < 0
   ) {
-    throw fail(409, 'RECOVERY_EVIDENCE_AMBIGUOUS', 'Stripe payment, event, operation, or usage evidence is ambiguous.');
+    throw fail(
+      409,
+      'RECOVERY_EVIDENCE_AMBIGUOUS',
+      'Stripe payment, event, operation, or usage evidence is ambiguous.'
+    );
   }
 
   const session = await deps.connection.startSession();
   try {
     let result;
-    await session.withTransaction(async () => {
-      const freshRecord = await deps.SubscriptionModel.findById(record._id).session(session).lean();
-      const freshOperation = await deps.OperationModel.findById(exactOperation._id).session(session).lean();
-      const freshUsage = await deps.UsageModel.findById(usage[0]._id).session(session).lean();
-      const freshInvoiceEvent = await deps.EventModel.findById(invoiceLedger._id).session(session).lean();
-      const freshSubscriptionEvent = await deps.EventModel.findById(subscriptionLedger._id).session(session).lean();
-      if (
-        !freshRecord ||
-        !freshOperation ||
-        !freshUsage ||
-        freshOperation.status !== 'pending' ||
-        freshOperation.lifecycleLock !== true ||
-        !equalId(freshRecord.planId, previousPlanObjectId) ||
-        freshRecord.stripeSubscriptionId !== KNOWN_UPGRADE.subscriptionId ||
-        !['failed'].includes(freshInvoiceEvent?.status) ||
-        !['failed'].includes(freshSubscriptionEvent?.status)
-      ) {
-        throw fail(409, 'RECOVERY_STATE_CHANGED', 'The recovery records changed before the transaction began.');
-      }
+    await session.withTransaction(
+      async () => {
+        const freshRecord = await deps.SubscriptionModel.findById(record._id)
+          .session(session)
+          .lean();
+        const freshOperation = await deps.OperationModel.findById(exactOperation._id)
+          .session(session)
+          .lean();
+        const freshUsage = await deps.UsageModel.findById(usage[0]._id).session(session).lean();
+        const freshInvoiceEvent = await deps.EventModel.findById(invoiceLedger._id)
+          .session(session)
+          .lean();
+        const freshSubscriptionEvent = await deps.EventModel.findById(subscriptionLedger._id)
+          .session(session)
+          .lean();
+        if (
+          !freshRecord ||
+          !freshOperation ||
+          !freshUsage ||
+          freshOperation.status !== 'pending' ||
+          freshOperation.lifecycleLock !== true ||
+          !equalId(freshRecord.planId, previousPlanObjectId) ||
+          freshRecord.stripeSubscriptionId !== KNOWN_UPGRADE.subscriptionId ||
+          !['failed'].includes(freshInvoiceEvent?.status) ||
+          !['failed'].includes(freshSubscriptionEvent?.status)
+        ) {
+          throw fail(
+            409,
+            'RECOVERY_STATE_CHANGED',
+            'The recovery records changed before the transaction began.'
+          );
+        }
 
-      const subscriptionWrite = await deps.SubscriptionModel.updateOne(
-        {
-          _id: freshRecord._id,
-          userId: userObjectId,
-          stripeMode: 'test',
-          stripeCustomerId: KNOWN_UPGRADE.customerId,
-          stripeSubscriptionId: KNOWN_UPGRADE.subscriptionId,
-          planId: previousPlanObjectId,
-          status: 'active',
-          pendingPlanChange: null,
-        },
-        {
-          $set: {
-            planId: targetPlan._id,
-            planType: targetPlan.type,
-            stripePriceId: KNOWN_UPGRADE.priceId,
-            currentPeriodStart: period.start,
-            currentPeriodEnd: period.end,
-            nextRenewalAt: period.end,
-            autoRenew: true,
-            cancellationEffectiveAt: null,
+        const subscriptionWrite = await deps.SubscriptionModel.updateOne(
+          {
+            _id: freshRecord._id,
+            userId: userObjectId,
+            stripeMode: 'test',
+            stripeCustomerId: KNOWN_UPGRADE.customerId,
+            stripeSubscriptionId: KNOWN_UPGRADE.subscriptionId,
+            planId: previousPlanObjectId,
+            status: 'active',
+            pendingPlanChange: null,
           },
-          $push: {
-            planHistory: {
+          {
+            $set: {
               planId: targetPlan._id,
-              planName: targetPlan.name,
-              planPrice: targetPlan.price,
               planType: targetPlan.type,
-              stripeMode: 'test',
-              stripeSubscriptionId: KNOWN_UPGRADE.subscriptionId,
               stripePriceId: KNOWN_UPGRADE.priceId,
-              periodStart: period.start,
-              periodEnd: period.end,
-              changeType: 'upgrade',
-              operationId: KNOWN_UPGRADE.operationId,
-              effectiveAt: period.start,
+              currentPeriodStart: period.start,
+              currentPeriodEnd: period.end,
+              nextRenewalAt: period.end,
+              autoRenew: true,
+              cancellationEffectiveAt: null,
+            },
+            $push: {
+              planHistory: {
+                planId: targetPlan._id,
+                planName: targetPlan.name,
+                planPrice: targetPlan.price,
+                planType: targetPlan.type,
+                stripeMode: 'test',
+                stripeSubscriptionId: KNOWN_UPGRADE.subscriptionId,
+                stripePriceId: KNOWN_UPGRADE.priceId,
+                periodStart: period.start,
+                periodEnd: period.end,
+                changeType: 'upgrade',
+                operationId: KNOWN_UPGRADE.operationId,
+                effectiveAt: period.start,
+              },
             },
           },
-        },
-        { session, runValidators: true }
-      );
-      if (subscriptionWrite.modifiedCount !== 1) {
-        throw fail(409, 'RECOVERY_SUBSCRIPTION_CONFLICT', 'The V2 subscription changed during reconciliation.');
-      }
+          { session, runValidators: true }
+        );
+        if (subscriptionWrite.modifiedCount !== 1) {
+          throw fail(
+            409,
+            'RECOVERY_SUBSCRIPTION_CONFLICT',
+            'The V2 subscription changed during reconciliation.'
+          );
+        }
 
-      const usageWrite = await deps.UsageModel.updateOne(
-        {
-          _id: freshUsage._id,
-          userId: userObjectId,
-          subscriptionId: freshRecord._id,
-          billingPeriodStart: period.start,
-          billingPeriodEnd: period.end,
-          periodType: 'paid',
-          includedContacts: previousPlan.entitlements.freeContact,
-          consumedIncludedContacts: freshUsage.consumedIncludedContacts,
-        },
-        { $set: { planId: targetPlan._id, includedContacts: targetPlan.entitlements.freeContact } },
-        { session }
-      );
-      if (usageWrite.modifiedCount !== 1) {
-        throw fail(409, 'RECOVERY_USAGE_CONFLICT', 'The usage record changed during reconciliation.');
-      }
-
-      const operationWrite = await deps.OperationModel.updateOne(
-        {
-          _id: freshOperation._id,
-          userId: userObjectId,
-          subscriptionId: freshRecord._id,
-          stripeMode: 'test',
-          operationId: KNOWN_UPGRADE.operationId,
-          operationType: 'upgrade',
-          targetPlanId: targetPlan._id,
-          stripeSubscriptionId: KNOWN_UPGRADE.subscriptionId,
-          stripeCustomerId: KNOWN_UPGRADE.customerId,
-          stripePriceId: KNOWN_UPGRADE.priceId,
-          status: 'pending',
-          lifecycleLock: true,
-        },
-        {
-          $set: {
-            status: 'succeeded',
-            stripeInvoiceId: KNOWN_UPGRADE.invoiceId,
-            completedAt: new Date(),
+        const usageWrite = await deps.UsageModel.updateOne(
+          {
+            _id: freshUsage._id,
+            userId: userObjectId,
+            subscriptionId: freshRecord._id,
+            billingPeriodStart: period.start,
+            billingPeriodEnd: period.end,
+            periodType: 'paid',
+            includedContacts: previousPlan.entitlements.freeContact,
+            consumedIncludedContacts: freshUsage.consumedIncludedContacts,
           },
-          $unset: { lifecycleLock: 1 },
-        },
-        { session }
-      );
-      if (operationWrite.modifiedCount !== 1) {
-        throw fail(409, 'RECOVERY_OPERATION_CONFLICT', 'The billing operation changed during reconciliation.');
-      }
-
-      const ledgerWrite = await deps.EventModel.updateMany(
-        {
-          stripeMode: 'test',
-          stripeEventId: { $in: [KNOWN_UPGRADE.invoiceEventId, KNOWN_UPGRADE.subscriptionEventId] },
-          status: 'failed',
-        },
-        {
-          $set: {
-            status: 'reconciled',
-            reconciledAt: new Date(),
-            reconciliationOperationId: KNOWN_UPGRADE.operationId,
+          {
+            $set: { planId: targetPlan._id, includedContacts: targetPlan.entitlements.freeContact },
           },
-        },
-        { session }
-      );
-      if (ledgerWrite.modifiedCount !== 2) {
-        throw fail(409, 'RECOVERY_LEDGER_CONFLICT', 'The failed webhook records changed during reconciliation.');
-      }
+          { session }
+        );
+        if (usageWrite.modifiedCount !== 1) {
+          throw fail(
+            409,
+            'RECOVERY_USAGE_CONFLICT',
+            'The usage record changed during reconciliation.'
+          );
+        }
 
-      await deps.AuditModel.create([{
-        type: 'audit',
-        severity: 'warning',
-        adminId,
-        action: 'other',
-        targetModel: 'other',
-        targetId: freshRecord._id,
-        description: 'Reconciled the one verified, already-paid TEST subscription upgrade.',
-        metadata: {
-          mode: 'test',
-          subscriptionId: KNOWN_UPGRADE.subscriptionId,
-          invoiceId: KNOWN_UPGRADE.invoiceId,
-          operationId: KNOWN_UPGRADE.operationId,
-          invoiceEventId: KNOWN_UPGRADE.invoiceEventId,
-          subscriptionEventId: KNOWN_UPGRADE.subscriptionEventId,
-        },
-      }], { session });
-      result = { reconciled: true, plan: targetPlan.name, invoiceId: KNOWN_UPGRADE.invoiceId };
-    }, { readConcern: { level: 'snapshot' }, writeConcern: { w: 'majority' } });
+        const operationWrite = await deps.OperationModel.updateOne(
+          {
+            _id: freshOperation._id,
+            userId: userObjectId,
+            subscriptionId: freshRecord._id,
+            stripeMode: 'test',
+            operationId: KNOWN_UPGRADE.operationId,
+            operationType: 'upgrade',
+            targetPlanId: targetPlan._id,
+            stripeSubscriptionId: KNOWN_UPGRADE.subscriptionId,
+            stripeCustomerId: KNOWN_UPGRADE.customerId,
+            stripePriceId: KNOWN_UPGRADE.priceId,
+            status: 'pending',
+            lifecycleLock: true,
+          },
+          {
+            $set: {
+              status: 'succeeded',
+              stripeInvoiceId: KNOWN_UPGRADE.invoiceId,
+              completedAt: new Date(),
+            },
+            $unset: { lifecycleLock: 1 },
+          },
+          { session }
+        );
+        if (operationWrite.modifiedCount !== 1) {
+          throw fail(
+            409,
+            'RECOVERY_OPERATION_CONFLICT',
+            'The billing operation changed during reconciliation.'
+          );
+        }
+
+        const ledgerWrite = await deps.EventModel.updateMany(
+          {
+            stripeMode: 'test',
+            stripeEventId: {
+              $in: [KNOWN_UPGRADE.invoiceEventId, KNOWN_UPGRADE.subscriptionEventId],
+            },
+            status: 'failed',
+          },
+          {
+            $set: {
+              status: 'reconciled',
+              reconciledAt: new Date(),
+              reconciliationOperationId: KNOWN_UPGRADE.operationId,
+            },
+          },
+          { session }
+        );
+        if (ledgerWrite.modifiedCount !== 2) {
+          throw fail(
+            409,
+            'RECOVERY_LEDGER_CONFLICT',
+            'The failed webhook records changed during reconciliation.'
+          );
+        }
+
+        await deps.AuditModel.create(
+          [
+            {
+              type: 'audit',
+              severity: 'warning',
+              adminId,
+              action: 'other',
+              targetModel: 'other',
+              targetId: freshRecord._id,
+              description: 'Reconciled the one verified, already-paid TEST subscription upgrade.',
+              metadata: {
+                mode: 'test',
+                subscriptionId: KNOWN_UPGRADE.subscriptionId,
+                invoiceId: KNOWN_UPGRADE.invoiceId,
+                operationId: KNOWN_UPGRADE.operationId,
+                invoiceEventId: KNOWN_UPGRADE.invoiceEventId,
+                subscriptionEventId: KNOWN_UPGRADE.subscriptionEventId,
+              },
+            },
+          ],
+          { session }
+        );
+        result = { reconciled: true, plan: targetPlan.name, invoiceId: KNOWN_UPGRADE.invoiceId };
+      },
+      { readConcern: { level: 'snapshot' }, writeConcern: { w: 'majority' } }
+    );
     return result;
   } catch (err) {
     if (err instanceof PaidUpgradeRecoveryError) throw err;
-    throw fail(503, 'RECOVERY_TRANSACTION_FAILED', 'The database could not atomically reconcile the paid upgrade.');
+    throw fail(
+      503,
+      'RECOVERY_TRANSACTION_FAILED',
+      'The database could not atomically reconcile the paid upgrade.'
+    );
   } finally {
     await session.endSession();
   }

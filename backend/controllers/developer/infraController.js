@@ -9,7 +9,13 @@ const scheduler = require('../../services/scheduler');
 const AdminActivity = require('../../models/AdminActivity');
 const StripeEvent = require('../../models/StripeEvent');
 const SchedulerRun = require('../../models/SchedulerRun');
-const { parseRange, bucketExpr, escapeRegex, pageParams, pagination } = require('../../utils/devQuery');
+const {
+  parseRange,
+  bucketExpr,
+  escapeRegex,
+  pageParams,
+  pagination,
+} = require('../../utils/devQuery');
 const { mongoPing, cpuPercent, diskUsage } = require('../../services/monitoring/system');
 const { schedulerSummary } = require('../../services/monitoring/summaries');
 
@@ -42,10 +48,19 @@ const getServer = asyncHandler(async (req, res) => {
       heapUsed: mem.heapUsed,
       heapTotal: mem.heapTotal,
       external: mem.external,
-      pm2: process.env.pm_id !== undefined ? { id: process.env.pm_id, name: process.env.name || null, restarts: Number(process.env.restart_time) || 0 } : null,
+      pm2:
+        process.env.pm_id !== undefined
+          ? {
+              id: process.env.pm_id,
+              name: process.env.name || null,
+              restarts: Number(process.env.restart_time) || 0,
+            }
+          : null,
     },
     network: Object.entries(os.networkInterfaces())
-      .flatMap(([name, addrs]) => (addrs || []).filter((a) => !a.internal).map((a) => ({ name, family: a.family })))
+      .flatMap(([name, addrs]) =>
+        (addrs || []).filter((a) => !a.internal).map((a) => ({ name, family: a.family }))
+      )
       .slice(0, 10),
     sockets: io ? io.engine.clientsCount : null,
     live: liveSnapshot(),
@@ -75,9 +90,22 @@ const getMongo = asyncHandler(async (req, res) => {
           .aggregate([{ $collStats: { storageStats: {} } }])
           .toArray();
         const st = s?.storageStats || {};
-        return { name, count: st.count ?? null, size: st.size ?? null, storageSize: st.storageSize ?? null, indexSize: st.totalIndexSize ?? null, indexes: st.nindexes ?? null };
+        return {
+          name,
+          count: st.count ?? null,
+          size: st.size ?? null,
+          storageSize: st.storageSize ?? null,
+          indexSize: st.totalIndexSize ?? null,
+          indexes: st.nindexes ?? null,
+        };
       } catch {
-        return { name, count: await db.collection(name).estimatedDocumentCount().catch(() => null) };
+        return {
+          name,
+          count: await db
+            .collection(name)
+            .estimatedDocumentCount()
+            .catch(() => null),
+        };
       }
     })
   );
@@ -97,7 +125,14 @@ const getMongo = asyncHandler(async (req, res) => {
     connections: serverStatus?.connections || null,
     opcounters: serverStatus?.opcounters || null,
     replicaSet: replSet
-      ? { set: replSet.set, members: replSet.members.map((m) => ({ name: m.name, state: m.stateStr, health: m.health })) }
+      ? {
+          set: replSet.set,
+          members: replSet.members.map((m) => ({
+            name: m.name,
+            state: m.stateStr,
+            health: m.health,
+          })),
+        }
       : null,
     collections: collStats.sort((a, b) => (b.size || 0) - (a.size || 0)),
   });
@@ -114,7 +149,12 @@ const getMongoIndexes = asyncHandler(async (req, res) => {
     .toArray()
     .catch(() => []);
   return sendSuccess(res, {
-    indexes: indexes.map((i) => ({ name: i.name, key: i.key, ops: Number(i.accesses?.ops || 0), since: i.accesses?.since || null })),
+    indexes: indexes.map((i) => ({
+      name: i.name,
+      key: i.key,
+      ops: Number(i.accesses?.ops || 0),
+      since: i.accesses?.since || null,
+    })),
   });
 });
 
@@ -132,7 +172,12 @@ const getScheduler = asyncHandler(async (req, res) => {
   ]);
   return sendSuccess(
     res,
-    { enabled: scheduler.state.enabled, startedAt: scheduler.state.startedAt, jobs, runs: runs.map((r) => ({ ...r, result: redactSensitive(r.result) })) },
+    {
+      enabled: scheduler.state.enabled,
+      startedAt: scheduler.state.startedAt,
+      jobs,
+      runs: runs.map((r) => ({ ...r, result: redactSensitive(r.result) })),
+    },
     'Scheduler retrieved.',
     pagination(page, limit, total)
   );
@@ -161,9 +206,19 @@ const getWebhooks = asyncHandler(async (req, res) => {
           total: { $sum: 1 },
           processed: { $sum: { $cond: [{ $eq: ['$status', 'processed'] }, 1, 0] } },
           processing: { $sum: { $cond: [{ $eq: ['$status', 'processing'] }, 1, 0] } },
-          failed: { $sum: { $cond: [{ $and: [{ $eq: ['$status', 'processing'] }, { $ne: ['$lastError', null] }] }, 1, 0] } },
+          failed: {
+            $sum: {
+              $cond: [
+                { $and: [{ $eq: ['$status', 'processing'] }, { $ne: ['$lastError', null] }] },
+                1,
+                0,
+              ],
+            },
+          },
           retried: { $sum: { $cond: [{ $gt: ['$attempts', 1] }, 1, 0] } },
-          avgMs: { $avg: { $cond: ['$processedAt', { $subtract: ['$processedAt', '$createdAt'] }, null] } },
+          avgMs: {
+            $avg: { $cond: ['$processedAt', { $subtract: ['$processedAt', '$createdAt'] }, null] },
+          },
         },
       },
     ]),
@@ -192,7 +247,13 @@ const getWebhooks = asyncHandler(async (req, res) => {
     {
       range: { from, to, bucketMs },
       readiness,
-      summary: summary[0] ? { ...summary[0], _id: undefined, avgMs: summary[0].avgMs ? Math.round(summary[0].avgMs) : null } : { total: 0, processed: 0, processing: 0, failed: 0, retried: 0, avgMs: null },
+      summary: summary[0]
+        ? {
+            ...summary[0],
+            _id: undefined,
+            avgMs: summary[0].avgMs ? Math.round(summary[0].avgMs) : null,
+          }
+        : { total: 0, processed: 0, processing: 0, failed: 0, retried: 0, avgMs: null },
       types: types.map((t) => ({ type: t._id, count: t.n })),
       series: series.map((s) => ({ t: s._id, received: s.received, failed: s.failed })),
       events: events.map((e) => ({

@@ -1738,13 +1738,17 @@ describe('Chat Report System', () => {
         ])
       );
       Dispute.find.mockReturnValue(mockQuery([]));
-      SafePayHistory.find.mockReturnValue(mockQuery([{
-        orderId,
-        providerConnectStatus: 'ready',
-        refundStatus: 'succeeded',
-        refundAmountMinor: 10000,
-        refundedAmountMinor: 10000,
-      }]));
+      SafePayHistory.find.mockReturnValue(
+        mockQuery([
+          {
+            orderId,
+            providerConnectStatus: 'ready',
+            refundStatus: 'succeeded',
+            refundAmountMinor: 10000,
+            refundedAmountMinor: 10000,
+          },
+        ])
+      );
       Chat.find.mockReturnValue(mockQuery([{ _id: chatId, status: 'in_progress' }]));
       await safePayAdmin.getSafePayList(req, res);
       expect(res.json).toHaveBeenCalledWith(

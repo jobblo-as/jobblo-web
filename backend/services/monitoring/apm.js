@@ -1,4 +1,8 @@
-const { monitorEventLoopDelay, PerformanceObserver, constants: perfConstants } = require('perf_hooks');
+const {
+  monitorEventLoopDelay,
+  PerformanceObserver,
+  constants: perfConstants,
+} = require('perf_hooks');
 const v8 = require('v8');
 const { percentile, liveSnapshot } = require('../../middleware/requestMetrics');
 
@@ -46,7 +50,13 @@ function summarize(map) {
   return [...map.entries()]
     .map(([key, s]) => {
       const sorted = [...s.samples].sort((a, b) => a - b);
-      return { key, count: s.count, avgMs: Math.round(s.sum / s.count), p95: Math.round(percentile(sorted, 95)), maxMs: Math.round(s.max) };
+      return {
+        key,
+        count: s.count,
+        avgMs: Math.round(s.sum / s.count),
+        p95: Math.round(percentile(sorted, 95)),
+        maxMs: Math.round(s.max),
+      };
     })
     .sort((a, b) => b.p95 - a.p95);
 }
@@ -55,7 +65,19 @@ function summarize(map) {
 function shape(obj, depth = 0) {
   if (!obj || typeof obj !== 'object' || depth > 3) return '?';
   if (Array.isArray(obj)) return obj.length ? [shape(obj[0], depth + 1)] : [];
-  return Object.fromEntries(Object.keys(obj).slice(0, 15).map((k) => [k, typeof obj[k] === 'object' && obj[k] !== null && !(obj[k] instanceof Date) && !obj[k]._bsontype ? shape(obj[k], depth + 1) : '?']));
+  return Object.fromEntries(
+    Object.keys(obj)
+      .slice(0, 15)
+      .map((k) => [
+        k,
+        typeof obj[k] === 'object' &&
+        obj[k] !== null &&
+        !(obj[k] instanceof Date) &&
+        !obj[k]._bsontype
+          ? shape(obj[k], depth + 1)
+          : '?',
+      ])
+  );
 }
 
 function attachMongo(mongoose) {
@@ -63,8 +85,23 @@ function attachMongo(mongoose) {
   const client = mongoose.connection.getClient();
   client.on('commandStarted', (e) => {
     const coll = e.command?.[e.commandName];
-    if (typeof coll !== 'string' || ['ping', 'hello', 'isMaster', 'endSessions', 'saslContinue', 'saslStart', 'buildInfo'].includes(e.commandName)) return;
-    pending.set(e.requestId, { coll, filter: e.command.filter || e.command.q || e.command.pipeline?.[0]?.$match || null });
+    if (
+      typeof coll !== 'string' ||
+      [
+        'ping',
+        'hello',
+        'isMaster',
+        'endSessions',
+        'saslContinue',
+        'saslStart',
+        'buildInfo',
+      ].includes(e.commandName)
+    )
+      return;
+    pending.set(e.requestId, {
+      coll,
+      filter: e.command.filter || e.command.q || e.command.pipeline?.[0]?.$match || null,
+    });
   });
   const done = (failed) => (e) => {
     const p = pending.get(e.requestId);
@@ -73,7 +110,14 @@ function attachMongo(mongoose) {
     const msTaken = e.duration;
     bump(db, `${e.commandName} ${p.coll}`, msTaken);
     if (msTaken >= SLOW_QUERY_MS || failed) {
-      slowQueries.unshift({ at: new Date(), command: e.commandName, collection: p.coll, ms: Math.round(msTaken), failed, shape: shape(p.filter) });
+      slowQueries.unshift({
+        at: new Date(),
+        command: e.commandName,
+        collection: p.coll,
+        ms: Math.round(msTaken),
+        failed,
+        shape: shape(p.filter),
+      });
       slowQueries.length = Math.min(slowQueries.length, 100);
     }
   };
@@ -100,7 +144,9 @@ async function tick() {
   const ns = (v) => Math.round((v / 1e6) * 10) / 10;
   try {
     const Session = require('../../models/Session');
-    sessionsOnline = await Session.countDocuments({ lastUsed: { $gte: new Date(now - 5 * 60 * 1000) } });
+    sessionsOnline = await Session.countDocuments({
+      lastUsed: { $gte: new Date(now - 5 * 60 * 1000) },
+    });
   } catch {
     /* db down — keep last value */
   }
@@ -150,11 +196,25 @@ function snapshot() {
   const ns = (v) => (loop ? Math.round((v / 1e6) * 10) / 10 : null);
   return {
     enabled: started,
-    eventLoop: loop ? { p50: ns(loop.percentile(50)), p99: ns(loop.percentile(99)), max: ns(loop.max), mean: ns(loop.mean) } : null,
-    heap: { used: heap.used_heap_size, total: heap.total_heap_size, limit: heap.heap_size_limit, external: process.memoryUsage().external },
+    eventLoop: loop
+      ? {
+          p50: ns(loop.percentile(50)),
+          p99: ns(loop.percentile(99)),
+          max: ns(loop.max),
+          mean: ns(loop.mean),
+        }
+      : null,
+    heap: {
+      used: heap.used_heap_size,
+      total: heap.total_heap_size,
+      limit: heap.heap_size_limit,
+      external: process.memoryUsage().external,
+    },
     gc: { lastMinuteCount: gc.count, lastMinuteMs: Math.round(gc.ms), byKindSinceStart: gc.byKind },
     db: summarize(db).slice(0, 25),
-    stripe: summarize(stripe).filter((s) => s.key !== '__errors__').slice(0, 25),
+    stripe: summarize(stripe)
+      .filter((s) => s.key !== '__errors__')
+      .slice(0, 25),
     stripeErrors: stripe.get('__errors__')?.count || 0,
     slowQueries: slowQueries.slice(0, 50),
     slowQueryMs: SLOW_QUERY_MS,

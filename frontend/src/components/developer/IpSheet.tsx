@@ -11,7 +11,15 @@ import { Button } from './ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from './ui/sheet';
 
 /** Everything one IP did in a range, with a block action. Shared by API Monitoring, Security and IP Management. */
-export function IpSheet({ ip, range, onClose }: { ip: string | null; range: RangeKey; onClose: () => void }) {
+export function IpSheet({
+  ip,
+  range,
+  onClose,
+}: {
+  ip: string | null;
+  range: RangeKey;
+  onClose: () => void;
+}) {
   const { data, isLoading } = useDevIpActivity({ ip: ip || undefined, range });
   const { data: me } = useDevMe();
   const { data: blockData } = useDevBlocks();
@@ -30,12 +38,18 @@ export function IpSheet({ ip, range, onClose }: { ip: string | null; range: Rang
             {ip}
           </SheetTitle>
           <SheetDescription className="flex flex-wrap items-center gap-2">
-            {num(total)} requests · {num(failed)} failed · {data?.endpoints.length ?? 0} endpoints in range
+            {num(total)} requests · {num(failed)} failed · {data?.endpoints.length ?? 0} endpoints
+            in range
             {isBlocked && <StatusBadge status="blocked" tone="danger" />}
             {isMe && <StatusBadge status="you" tone="info" label="your IP" />}
           </SheetDescription>
           {(me?.can.execute || me?.can.request) && !isBlocked && !isMe && (
-            <Button variant="destructive" size="sm" className="w-fit" onClick={() => setBlocking(true)}>
+            <Button
+              variant="destructive"
+              size="sm"
+              className="w-fit"
+              onClick={() => setBlocking(true)}
+            >
               <Ban /> Block this IP
             </Button>
           )}
@@ -45,7 +59,8 @@ export function IpSheet({ ip, range, onClose }: { ip: string | null; range: Rang
             <div className="flex items-start gap-2 rounded-md border border-amber-200/70 bg-amber-50 p-3 text-sm text-amber-800">
               <ShieldAlert className="mt-0.5 size-4 shrink-0" />
               <div>
-                Security events from this IP: {security.map(([k, n]) => `${k.replace(/_/g, ' ')} ×${n}`).join(', ')}.{' '}
+                Security events from this IP:{' '}
+                {security.map(([k, n]) => `${k.replace(/_/g, ' ')} ×${n}`).join(', ')}.{' '}
                 <Link to="/developer/security" className="underline">
                   Security Center
                 </Link>
@@ -53,11 +68,24 @@ export function IpSheet({ ip, range, onClose }: { ip: string | null; range: Rang
             </div>
           )}
           <div>
-            <h4 className="mb-2 text-xs font-medium text-muted-foreground uppercase">Requests over time</h4>
-            <TimeSeriesChart data={data?.series} bucketMs={data?.range.bucketMs} height={150} variant="bar" series={[{ key: 'requests', label: 'Requests', color: 'var(--chart-1)' }, { key: 'failed', label: 'Failed', color: 'var(--chart-5)' }]} />
+            <h4 className="mb-2 text-xs font-medium text-muted-foreground uppercase">
+              Requests over time
+            </h4>
+            <TimeSeriesChart
+              data={data?.series}
+              bucketMs={data?.range.bucketMs}
+              height={150}
+              variant="bar"
+              series={[
+                { key: 'requests', label: 'Requests', color: 'var(--chart-1)' },
+                { key: 'failed', label: 'Failed', color: 'var(--chart-5)' },
+              ]}
+            />
           </div>
           <div>
-            <h4 className="mb-2 text-xs font-medium text-muted-foreground uppercase">Endpoints called</h4>
+            <h4 className="mb-2 text-xs font-medium text-muted-foreground uppercase">
+              Endpoints called
+            </h4>
             {isLoading ? (
               <p className="text-sm text-muted-foreground">Loading…</p>
             ) : data?.endpoints.length ? (
@@ -68,9 +96,13 @@ export function IpSheet({ ip, range, onClose }: { ip: string | null; range: Rang
                     <span className="min-w-0 flex-1 truncate font-mono text-xs">{e.route}</span>
                     <span className="text-xs tabular-nums">
                       {num(e.requests)}
-                      {e.failed > 0 && <span className="ml-1 text-amber-600">({num(e.failed)} failed)</span>}
+                      {e.failed > 0 && (
+                        <span className="ml-1 text-amber-600">({num(e.failed)} failed)</span>
+                      )}
                     </span>
-                    <span className="w-24 text-right text-xs text-muted-foreground">{ago(e.lastSeen)}</span>
+                    <span className="w-24 text-right text-xs text-muted-foreground">
+                      {ago(e.lastSeen)}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -78,7 +110,10 @@ export function IpSheet({ ip, range, onClose }: { ip: string | null; range: Rang
               <EmptyState title="No requests from this IP in range" />
             )}
           </div>
-          <Link to={`/developer/logs?q=${encodeURIComponent(ip || '')}`} className="inline-block text-xs text-primary hover:underline">
+          <Link
+            to={`/developer/logs?q=${encodeURIComponent(ip || '')}`}
+            className="inline-block text-xs text-primary hover:underline"
+          >
             Search logs for this IP →
           </Link>
         </div>

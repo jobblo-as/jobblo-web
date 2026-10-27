@@ -26,7 +26,9 @@ async function sample() {
   if (mongoose.connection.readyState !== 1) return null;
   const disk = require('./system').diskUsage();
   const db = await mongoose.connection.db.stats().catch(() => null);
-  const blob = await require('./costs').blobUsage().catch(() => null);
+  const blob = await require('./costs')
+    .blobUsage()
+    .catch(() => null);
   return model('CapacitySnapshot').create({
     at: new Date(),
     host: os.hostname(),
@@ -74,7 +76,16 @@ function linearFit(points) {
 function forecast(points, limit, now = Date.now()) {
   const fit = linearFit(points);
   const last = points.length ? points[points.length - 1].y : null;
-  if (!fit || points.length < 3) return { current: last, perDay: null, in30: null, in90: null, daysToLimit: null, confidence: 'insufficient', points: points.length };
+  if (!fit || points.length < 3)
+    return {
+      current: last,
+      perDay: null,
+      in30: null,
+      in90: null,
+      daysToLimit: null,
+      confidence: 'insufficient',
+      points: points.length,
+    };
   const at = (t) => fit.slope * t + fit.intercept;
   const perDay = fit.slope * DAY;
   let daysToLimit = null;
@@ -88,7 +99,8 @@ function forecast(points, limit, now = Date.now()) {
     in30: at(now + 30 * DAY),
     in90: at(now + 90 * DAY),
     daysToLimit,
-    confidence: points.length < 7 ? 'low' : fit.r2 >= 0.7 ? 'high' : fit.r2 >= 0.4 ? 'medium' : 'low',
+    confidence:
+      points.length < 7 ? 'low' : fit.r2 >= 0.7 ? 'high' : fit.r2 >= 0.4 ? 'medium' : 'low',
     points: points.length,
   };
 }
@@ -122,7 +134,14 @@ async function dailyTraffic() {
   return model('ApiMetricMinute').aggregate([
     { $match: { minute: { $gte: new Date(Date.now() - 30 * DAY) } } },
     { $group: { _id: '$minute', n: { $sum: '$count' } } },
-    { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$_id' } }, at: { $max: '$_id' }, requests: { $sum: '$n' }, peakPerMin: { $max: '$n' } } },
+    {
+      $group: {
+        _id: { $dateToString: { format: '%Y-%m-%d', date: '$_id' } },
+        at: { $max: '$_id' },
+        requests: { $sum: '$n' },
+        peakPerMin: { $max: '$n' },
+      },
+    },
     { $sort: { at: 1 } },
   ]);
 }
@@ -130,11 +149,23 @@ async function dailyTraffic() {
 /** Per-collection growth from ObjectId creation time (last 90 days), biggest collections first. */
 async function collectionGrowth(limit = 12) {
   const db = mongoose.connection.db;
-  const names = (await db.listCollections({ type: 'collection' }, { nameOnly: true }).toArray()).map((c) => c.name).filter((n) => !n.startsWith('system.'));
+  const names = (await db.listCollections({ type: 'collection' }, { nameOnly: true }).toArray())
+    .map((c) => c.name)
+    .filter((n) => !n.startsWith('system.'));
   const stats = await Promise.all(
     names.map(async (name) => {
-      const [s] = await db.collection(name).aggregate([{ $collStats: { storageStats: {} } }]).toArray().catch(() => []);
-      return { name, count: s?.storageStats?.count ?? 0, size: s?.storageStats?.size ?? 0, avgObjSize: s?.storageStats?.avgObjSize ?? 0, storage: (s?.storageStats?.storageSize ?? 0) + (s?.storageStats?.totalIndexSize ?? 0) };
+      const [s] = await db
+        .collection(name)
+        .aggregate([{ $collStats: { storageStats: {} } }])
+        .toArray()
+        .catch(() => []);
+      return {
+        name,
+        count: s?.storageStats?.count ?? 0,
+        size: s?.storageStats?.size ?? 0,
+        avgObjSize: s?.storageStats?.avgObjSize ?? 0,
+        storage: (s?.storageStats?.storageSize ?? 0) + (s?.storageStats?.totalIndexSize ?? 0),
+      };
     })
   );
   const since = mongoose.Types.ObjectId.createFromTime(Math.floor((Date.now() - 90 * DAY) / 1000));
@@ -146,7 +177,12 @@ async function collectionGrowth(limit = 12) {
         .collection(c.name)
         .aggregate([
           { $match: { _id: { $gte: since, $type: 'objectId' } } },
-          { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: { $toDate: '$_id' } } }, n: { $sum: 1 } } },
+          {
+            $group: {
+              _id: { $dateToString: { format: '%Y-%m-%d', date: { $toDate: '$_id' } } },
+              n: { $sum: 1 },
+            },
+          },
           { $sort: { _id: 1 } },
         ])
         .toArray()
@@ -154,7 +190,10 @@ async function collectionGrowth(limit = 12) {
       // Cumulative document count per day, ending at today's count.
       const added = perDay.reduce((a, d) => a + d.n, 0);
       let running = Math.max(0, c.count - added);
-      const points = perDay.map((d) => ({ x: Date.parse(`${d._id}T23:59:59Z`), y: (running += d.n) }));
+      const points = perDay.map((d) => ({
+        x: Date.parse(`${d._id}T23:59:59Z`),
+        y: (running += d.n),
+      }));
       const f = forecast(points.length >= 3 ? points : [], null);
       return {
         name: c.name,
@@ -172,7 +211,10 @@ async function collectionGrowth(limit = 12) {
   );
 }
 
-const pts = (rows, key) => rows.filter((r) => r[key] !== null && r[key] !== undefined).map((r) => ({ x: new Date(r.at).getTime(), y: r[key] }));
+const pts = (rows, key) =>
+  rows
+    .filter((r) => r[key] !== null && r[key] !== undefined)
+    .map((r) => ({ x: new Date(r.at).getTime(), y: r[key] }));
 
 let cache = { at: 0, value: null };
 async function getCapacity({ force = false } = {}) {
@@ -200,7 +242,9 @@ async function getCapacity({ force = false } = {}) {
       unit: 'bytes',
       current: disk?.used ?? null,
       limit: disk ? disk.total * DISK_ALARM : null,
-      limitLabel: disk ? `${Math.round(DISK_ALARM * 100)}% of ${(disk.total / 1024 ** 3).toFixed(0)} GB` : null,
+      limitLabel: disk
+        ? `${Math.round(DISK_ALARM * 100)}% of ${(disk.total / 1024 ** 3).toFixed(0)} GB`
+        : null,
       ...forecast(pts(snaps, 'diskUsed'), disk ? disk.total * DISK_ALARM : null),
       series: snaps.map((r) => ({ t: r.at, value: r.diskUsed })),
     },
@@ -220,7 +264,9 @@ async function getCapacity({ force = false } = {}) {
       unit: 'bytes',
       current: mongoNow,
       limit: mongoLimitGb ? mongoLimitGb * 1024 ** 3 : null,
-      limitLabel: mongoLimitGb ? `${mongoLimitGb} GB (CAPACITY_MONGO_LIMIT_GB)` : 'shares the disk on a VPS — set CAPACITY_MONGO_LIMIT_GB for Atlas',
+      limitLabel: mongoLimitGb
+        ? `${mongoLimitGb} GB (CAPACITY_MONGO_LIMIT_GB)`
+        : 'shares the disk on a VPS — set CAPACITY_MONGO_LIMIT_GB for Atlas',
       ...forecast(mongoPoints, mongoLimitGb ? mongoLimitGb * 1024 ** 3 : null),
       series: snaps.map((r) => ({ t: r.at, value: r.mongoStorage })),
     },
@@ -266,12 +312,29 @@ async function getCapacity({ force = false } = {}) {
     traffic: {
       maxRps,
       ...trafficForecast,
-      requestsPerDay: forecast(traffic.map((d) => ({ x: new Date(d.at).getTime(), y: d.requests })), null),
-      series: traffic.map((d) => ({ t: d.at, requests: d.requests, peakRps: Math.round((d.peakPerMin / 60) * 100) / 100 })),
-      headroom: maxRps && trafficForecast.current ? Math.round((1 - trafficForecast.current / maxRps) * 100) : null,
+      requestsPerDay: forecast(
+        traffic.map((d) => ({ x: new Date(d.at).getTime(), y: d.requests })),
+        null
+      ),
+      series: traffic.map((d) => ({
+        t: d.at,
+        requests: d.requests,
+        peakRps: Math.round((d.peakPerMin / 60) * 100) / 100,
+      })),
+      headroom:
+        maxRps && trafficForecast.current
+          ? Math.round((1 - trafficForecast.current / maxRps) * 100)
+          : null,
     },
     // Windows has no load average (always 0).
-    host: { cpus: os.cpus().length, loadPerCpu: process.platform === 'win32' ? null : Math.round((os.loadavg()[0] / os.cpus().length) * 100) / 100, totalMem: os.totalmem() },
+    host: {
+      cpus: os.cpus().length,
+      loadPerCpu:
+        process.platform === 'win32'
+          ? null
+          : Math.round((os.loadavg()[0] / os.cpus().length) * 100) / 100,
+      totalMem: os.totalmem(),
+    },
     collections,
   };
   cache = { at: Date.now(), value };

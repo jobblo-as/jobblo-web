@@ -72,26 +72,37 @@ const sessionSchema = new mongoose.Schema(
 // caller can forget. Query hooks only; ids are read before the delete, since it does not
 // return them.
 const DELETE_OPS = ['deleteOne', 'deleteMany', 'findOneAndDelete'];
-sessionSchema.pre(DELETE_OPS, { document: false, query: true }, async function collectEndedSessions() {
-  try {
-    const q = this.model.find(this.getFilter()).select('_id').lean();
-    if (this.op !== 'deleteMany') q.limit(1);
-    this._endedSessionIds = (await q).map((s) => s._id);
-  } catch (err) {
-    console.error('Session delete hook: lookup failed', err.message);
+sessionSchema.pre(
+  DELETE_OPS,
+  { document: false, query: true },
+  async function collectEndedSessions() {
+    try {
+      const q = this.model.find(this.getFilter()).select('_id').lean();
+      if (this.op !== 'deleteMany') q.limit(1);
+      this._endedSessionIds = (await q).map((s) => s._id);
+    } catch (err) {
+      console.error('Session delete hook: lookup failed', err.message);
+    }
   }
-});
-sessionSchema.post(DELETE_OPS, { document: false, query: true }, async function disconnectEndedSessions() {
-  const ids = this._endedSessionIds;
-  require('../sockets/rooms').disconnectSessions(ids);
-  // Push tokens were only switched off by /auth/logout, so a revoked or stolen phone
-  // (revoke others, password change/reset, deactivation, refresh theft) kept getting notifications.
-  if (!ids?.length) return;
-  try {
-    await require('./PushToken').updateMany({ sessionId: { $in: ids } }, { $set: { active: false } });
-  } catch (err) {
-    console.error('Session delete hook: push token deactivation failed', err.message);
+);
+sessionSchema.post(
+  DELETE_OPS,
+  { document: false, query: true },
+  async function disconnectEndedSessions() {
+    const ids = this._endedSessionIds;
+    require('../sockets/rooms').disconnectSessions(ids);
+    // Push tokens were only switched off by /auth/logout, so a revoked or stolen phone
+    // (revoke others, password change/reset, deactivation, refresh theft) kept getting notifications.
+    if (!ids?.length) return;
+    try {
+      await require('./PushToken').updateMany(
+        { sessionId: { $in: ids } },
+        { $set: { active: false } }
+      );
+    } catch (err) {
+      console.error('Session delete hook: push token deactivation failed', err.message);
+    }
   }
-});
+);
 
 module.exports = mongoose.model('Session', sessionSchema);

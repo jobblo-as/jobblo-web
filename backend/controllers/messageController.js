@@ -139,7 +139,8 @@ exports.markAsRead = async (req, res) => {
     if (!message) return res.status(404).json({ error: 'Message not found' });
 
     // Any user could mark any order message as read. Only a party to its order may.
-    const order = message.orderId && (await Order.findById(message.orderId).select('customerId providerId'));
+    const order =
+      message.orderId && (await Order.findById(message.orderId).select('customerId providerId'));
     if (!order || !isUserRelatedToOrder({ userId: req.userId, order })) {
       return res.status(403).json({ error: 'Not authorized' });
     }

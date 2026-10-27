@@ -17,7 +17,9 @@ const session = require('express-session');
 function buildSessionStore(env = process.env) {
   if (!env.MONGO_URI) {
     if (env.NODE_ENV === 'production') {
-      console.error('CRITICAL: MONGO_URI is not set, so sessions are using the in-memory store. BankID logins will fail on restart and across instances.');
+      console.error(
+        'CRITICAL: MONGO_URI is not set, so sessions are using the in-memory store. BankID logins will fail on restart and across instances.'
+      );
     }
     return undefined; // express-session falls back to MemoryStore
   }

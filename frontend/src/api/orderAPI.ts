@@ -77,7 +77,11 @@ export const getAllOrders = async (): Promise<Order[]> => {
 /**
  * Create a new job request (Application)
  */
-export const createJobRequest = async (payload: { serviceId: string; message?: string; sessionId?: string }): Promise<JobRequest> => {
+export const createJobRequest = async (payload: {
+  serviceId: string;
+  message?: string;
+  sessionId?: string;
+}): Promise<JobRequest> => {
   const response = await mainLink.post('/api/orders/request', payload);
   return response.data;
 };

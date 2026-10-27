@@ -4,7 +4,14 @@ const { redactSensitive } = require('../../utils/sanitizer');
 const { logActivity } = require('../../services/admin/activityService');
 const User = require('../../models/User');
 const ErrorLog = require('../../models/ErrorLog');
-const { DAY, parseRange, bucketExpr, escapeRegex, pageParams, pagination } = require('../../utils/devQuery');
+const {
+  DAY,
+  parseRange,
+  bucketExpr,
+  escapeRegex,
+  pageParams,
+  pagination,
+} = require('../../utils/devQuery');
 
 /** Developer console — grouped backend errors with triage. Read-only unless noted; no exec, no arbitrary queries, no secrets. */
 
@@ -19,7 +26,13 @@ const getErrors = asyncHandler(async (req, res) => {
   if (req.query.source) match.source = req.query.source;
   if (req.query.q) {
     const rx = { $regex: escapeRegex(req.query.q), $options: 'i' };
-    match.$or = [{ message: rx }, { route: rx }, { errorCode: rx }, { referenceId: rx }, { requestId: rx }];
+    match.$or = [
+      { message: rx },
+      { route: rx },
+      { errorCode: rx },
+      { referenceId: rx },
+      { requestId: rx },
+    ];
   }
 
   const pipeline = [
@@ -53,7 +66,13 @@ const getErrors = asyncHandler(async (req, res) => {
     ErrorLog.aggregate([
       { $match: match },
       { $sort: { createdAt: -1 } },
-      { $group: { _id: ERROR_GROUP_KEY, status: { $first: '$status' }, severity: { $first: '$severity' } } },
+      {
+        $group: {
+          _id: ERROR_GROUP_KEY,
+          status: { $first: '$status' },
+          severity: { $first: '$severity' },
+        },
+      },
       { $group: { _id: { status: '$status', severity: '$severity' }, n: { $sum: 1 } } },
     ]),
   ]);
@@ -127,7 +146,9 @@ const getErrorDetail = asyncHandler(async (req, res) => {
   const m = frame && frame.match(/at\s+(?:(.+?)\s+\()?(.+?):(\d+):(\d+)\)?$/);
   return sendSuccess(res, {
     error: { ...latest, metadata: redactSensitive(latest.metadata || {}) },
-    location: m ? { fn: m[1] || '(anonymous)', file: m[2], line: Number(m[3]), column: Number(m[4]) } : null,
+    location: m
+      ? { fn: m[1] || '(anonymous)', file: m[2], line: Number(m[3]), column: Number(m[4]) }
+      : null,
     occurrences,
     timeline: timeline.map((t) => ({ t: t._id, count: t.count })),
     notes: notesDoc?.notes || [],
@@ -151,7 +172,9 @@ const updateError = asyncHandler(async (req, res) => {
   if (assignee !== undefined) {
     if (assignee !== null) {
       const dev = mongoose.isValidObjectId(assignee)
-        ? await User.findOne({ _id: assignee, role: { $in: ['developer', 'superAdmin'] } }).select('_id').lean()
+        ? await User.findOne({ _id: assignee, role: { $in: ['developer', 'superAdmin'] } })
+            .select('_id')
+            .lean()
         : null;
       if (!dev) return sendError(res, 'Assignee must be a developer.', 400);
     }
@@ -175,7 +198,13 @@ const updateError = asyncHandler(async (req, res) => {
     adminId: req.user._id,
     action: 'other',
     description: `Developer triaged error ${group.doc.errorCode} ${group.doc.route || ''}`.trim(),
-    metadata: { area: 'developer.errors', errorId: String(group.doc._id), status, assignee, noted: Boolean(text) },
+    metadata: {
+      area: 'developer.errors',
+      errorId: String(group.doc._id),
+      status,
+      assignee,
+      noted: Boolean(text),
+    },
     ip: req.ip,
     userAgent: req.get('user-agent') || 'unknown',
   });

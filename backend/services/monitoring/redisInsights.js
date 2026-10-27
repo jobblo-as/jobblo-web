@@ -30,9 +30,15 @@ function parseInfo(text) {
     const key = line.slice(0, i);
     const value = line.slice(i + 1);
     out[section] = out[section] || {};
-    out[section][key] = /^[\w.]+=/.test(value) && value.includes('=') && !/^\d/.test(value)
-      ? Object.fromEntries(value.split(',').map((kv) => kv.split('=')).map(([k, v]) => [k, toNum(v)]))
-      : toNum(value);
+    out[section][key] =
+      /^[\w.]+=/.test(value) && value.includes('=') && !/^\d/.test(value)
+        ? Object.fromEntries(
+            value
+              .split(',')
+              .map((kv) => kv.split('='))
+              .map(([k, v]) => [k, toNum(v)])
+          )
+        : toNum(value);
   }
   return out;
 }
@@ -66,19 +72,68 @@ function redactSlowlog(entry) {
 }
 
 /** The settings the console reads (CONFIG GET). Passwords are never in this list. */
-const SAFE_CONFIG = ['maxmemory', 'maxmemory-policy', 'appendonly', 'appendfsync', 'save', 'maxclients', 'timeout', 'tcp-keepalive', 'protected-mode', 'slowlog-log-slower-than', 'slowlog-max-len', 'latency-monitor-threshold', 'notify-keyspace-events', 'databases'];
+const SAFE_CONFIG = [
+  'maxmemory',
+  'maxmemory-policy',
+  'appendonly',
+  'appendfsync',
+  'save',
+  'maxclients',
+  'timeout',
+  'tcp-keepalive',
+  'protected-mode',
+  'slowlog-log-slower-than',
+  'slowlog-max-len',
+  'latency-monitor-threshold',
+  'notify-keyspace-events',
+  'databases',
+];
 
 /** Pure: running settings → checks against what Jobblo needs. */
 function reviewConfig(cfg, { production = process.env.NODE_ENV === 'production' } = {}) {
   const c = cfg || {};
   const checks = [];
-  const add = (key, ok, expected, why, severity = 'warning') => checks.push({ key, value: c[key] ?? null, expected, ok, severity: ok ? 'ok' : severity, why });
-  add('maxmemory-policy', c['maxmemory-policy'] === 'noeviction', 'noeviction', 'BullMQ requires noeviction: any other policy can silently delete queued jobs under memory pressure.', 'critical');
-  add('maxmemory', Number(c.maxmemory) > 0 || !production, '> 0 in production', 'Without a limit Redis grows until the host runs out of memory; with one (and noeviction) writes fail loudly instead.');
-  add('appendonly', c.appendonly === 'yes' || Boolean(c.save) || !production, "'yes', or RDB 'save' rules", 'Queued jobs survive a Redis restart only with persistence.');
-  add('protected-mode', c['protected-mode'] !== 'no' || production, "'yes' unless a password/ACL is set", 'Protected mode refuses outside connections to an unauthenticated server.');
-  add('slowlog-log-slower-than', Number(c['slowlog-log-slower-than']) > 0 && Number(c['slowlog-log-slower-than']) <= 20000, '1–20000 µs', 'So slow commands show up on the Performance page.', 'info');
-  add('notify-keyspace-events', !c['notify-keyspace-events'] || !/[KE].*[Ax]/.test(c['notify-keyspace-events']), "'' (off) or narrow", 'Broad keyspace events add a publish to every write.', 'info');
+  const add = (key, ok, expected, why, severity = 'warning') =>
+    checks.push({ key, value: c[key] ?? null, expected, ok, severity: ok ? 'ok' : severity, why });
+  add(
+    'maxmemory-policy',
+    c['maxmemory-policy'] === 'noeviction',
+    'noeviction',
+    'BullMQ requires noeviction: any other policy can silently delete queued jobs under memory pressure.',
+    'critical'
+  );
+  add(
+    'maxmemory',
+    Number(c.maxmemory) > 0 || !production,
+    '> 0 in production',
+    'Without a limit Redis grows until the host runs out of memory; with one (and noeviction) writes fail loudly instead.'
+  );
+  add(
+    'appendonly',
+    c.appendonly === 'yes' || Boolean(c.save) || !production,
+    "'yes', or RDB 'save' rules",
+    'Queued jobs survive a Redis restart only with persistence.'
+  );
+  add(
+    'protected-mode',
+    c['protected-mode'] !== 'no' || production,
+    "'yes' unless a password/ACL is set",
+    'Protected mode refuses outside connections to an unauthenticated server.'
+  );
+  add(
+    'slowlog-log-slower-than',
+    Number(c['slowlog-log-slower-than']) > 0 && Number(c['slowlog-log-slower-than']) <= 20000,
+    '1–20000 µs',
+    'So slow commands show up on the Performance page.',
+    'info'
+  );
+  add(
+    'notify-keyspace-events',
+    !c['notify-keyspace-events'] || !/[KE].*[Ax]/.test(c['notify-keyspace-events']),
+    "'' (off) or narrow",
+    'Broad keyspace events add a publish to every write.',
+    'info'
+  );
   return checks;
 }
 
@@ -87,7 +142,15 @@ function describeUrl(url = process.env.REDIS_URL) {
   if (!url) return null;
   try {
     const u = new URL(url);
-    return { scheme: u.protocol.replace(':', ''), tls: u.protocol === 'rediss:', host: u.hostname, port: Number(u.port) || 6379, db: Number(u.pathname.replace('/', '')) || 0, user: u.username || null, password: u.password ? 'set' : 'not set' };
+    return {
+      scheme: u.protocol.replace(':', ''),
+      tls: u.protocol === 'rediss:',
+      host: u.hostname,
+      port: Number(u.port) || 6379,
+      db: Number(u.pathname.replace('/', '')) || 0,
+      user: u.username || null,
+      password: u.password ? 'set' : 'not set',
+    };
   } catch {
     return { invalid: true };
   }
@@ -97,14 +160,39 @@ function describeUrl(url = process.env.REDIS_URL) {
 function evaluateRedisAlerts(m, t) {
   const out = [];
   if (!m?.enabled) return out;
-  const fire = (fingerprint, severity, title, detail) => out.push({ fingerprint, severity, service: 'redis', title, detail });
+  const fire = (fingerprint, severity, title, detail) =>
+    out.push({ fingerprint, severity, service: 'redis', title, detail });
   if (!m.ok) {
-    fire('redis_down', 'critical', 'Redis unreachable', `${m.error || 'No answer'} — jobs run in-process and rate limits fail open until it returns`);
+    fire(
+      'redis_down',
+      'critical',
+      'Redis unreachable',
+      `${m.error || 'No answer'} — jobs run in-process and rate limits fail open until it returns`
+    );
     return out;
   }
-  if (m.memoryPct !== null && m.memoryPct >= t.redisMemoryPct) fire('redis_memory', 'high', 'Redis memory near its limit', `${m.memoryPct}% of maxmemory used`);
-  if (m.evictedKeys > 0 && m.policy !== 'noeviction') fire('redis_evictions', 'high', 'Redis is evicting keys', `${m.evictedKeys} keys evicted since start (policy ${m.policy}) — queued jobs can be lost`);
-  for (const q of m.backlog || []) if (q.waiting >= t.queueBacklog) fire(`queue_backlog:${q.name}`, 'medium', `Queue backlog growing: ${q.name}`, `${q.waiting} jobs waiting (threshold ${t.queueBacklog})`);
+  if (m.memoryPct !== null && m.memoryPct >= t.redisMemoryPct)
+    fire(
+      'redis_memory',
+      'high',
+      'Redis memory near its limit',
+      `${m.memoryPct}% of maxmemory used`
+    );
+  if (m.evictedKeys > 0 && m.policy !== 'noeviction')
+    fire(
+      'redis_evictions',
+      'high',
+      'Redis is evicting keys',
+      `${m.evictedKeys} keys evicted since start (policy ${m.policy}) — queued jobs can be lost`
+    );
+  for (const q of m.backlog || [])
+    if (q.waiting >= t.queueBacklog)
+      fire(
+        `queue_backlog:${q.name}`,
+        'medium',
+        `Queue backlog growing: ${q.name}`,
+        `${q.waiting} jobs waiting (threshold ${t.queueBacklog})`
+      );
   return out;
 }
 
@@ -131,7 +219,11 @@ async function pingStats(n = 5) {
     await client().ping();
     times.push(Number(process.hrtime.bigint() - t) / 1e6);
   }
-  return { min: round(Math.min(...times)), avg: round(times.reduce((a, b) => a + b, 0) / n), max: round(Math.max(...times)) };
+  return {
+    min: round(Math.min(...times)),
+    avg: round(times.reduce((a, b) => a + b, 0) / n),
+    max: round(Math.max(...times)),
+  };
 }
 const round = (v, d = 2) => Math.round(v * 10 ** d) / 10 ** d;
 
@@ -143,7 +235,11 @@ async function status() {
     ok: Boolean(ping.ok),
     error: ping.error || null,
     ms: ping.ms ?? null,
-    state: { status: redis.state.status, lastError: redis.state.lastError, lastErrorAt: redis.state.lastErrorAt },
+    state: {
+      status: redis.state.status,
+      lastError: redis.state.lastError,
+      lastErrorAt: redis.state.lastErrorAt,
+    },
     prefix: redis.PREFIX,
   };
 }
@@ -159,21 +255,42 @@ async function overview() {
   const misses = st.keyspace_misses || 0;
   const checks = [
     { key: 'ping', ok: latency.avg < 20, label: `Ping ${latency.avg} ms` },
-    { key: 'memory', ok: mem.pct === null || mem.pct < 85, label: mem.pct === null ? 'No maxmemory limit' : `${mem.pct}% of maxmemory` },
+    {
+      key: 'memory',
+      ok: mem.pct === null || mem.pct < 85,
+      label: mem.pct === null ? 'No maxmemory limit' : `${mem.pct}% of maxmemory`,
+    },
     { key: 'evictions', ok: !st.evicted_keys, label: `${st.evicted_keys || 0} evicted keys` },
-    { key: 'rejected', ok: !st.rejected_connections, label: `${st.rejected_connections || 0} rejected connections` },
+    {
+      key: 'rejected',
+      ok: !st.rejected_connections,
+      label: `${st.rejected_connections || 0} rejected connections`,
+    },
     { key: 'policy', ok: mem.policy === 'noeviction', label: `maxmemory-policy ${mem.policy}` },
   ];
   return {
     ...s,
-    server: { version: sv.redis_version, mode: sv.redis_mode, os: sv.os, uptimeSec: sv.uptime_in_seconds, port: sv.tcp_port },
-    clients: { connected: i.clients?.connected_clients ?? null, blocked: i.clients?.blocked_clients ?? null, maxclients: i.clients?.maxclients ?? null },
+    server: {
+      version: sv.redis_version,
+      mode: sv.redis_mode,
+      os: sv.os,
+      uptimeSec: sv.uptime_in_seconds,
+      port: sv.tcp_port,
+    },
+    clients: {
+      connected: i.clients?.connected_clients ?? null,
+      blocked: i.clients?.blocked_clients ?? null,
+      maxclients: i.clients?.maxclients ?? null,
+    },
     latency,
     opsPerSec: st.instantaneous_ops_per_sec ?? null,
     hitRate: hits + misses ? round((hits / (hits + misses)) * 100, 1) : null,
     memory: mem,
     keyspace: i.keyspace || {},
-    health: { score: Math.round((checks.filter((c) => c.ok).length / checks.length) * 100), checks },
+    health: {
+      score: Math.round((checks.filter((c) => c.ok).length / checks.length) * 100),
+      checks,
+    },
     connections: redis.connectionStates(),
   };
 }
@@ -186,7 +303,8 @@ function memoryOf(i) {
     peak: m.used_memory_peak ?? null,
     rss: m.used_memory_rss ?? null,
     dataset: m.used_memory_dataset ?? null,
-    luaAndScripts: (m.used_memory_vm_eval || 0) + (m.used_memory_scripts_eval || 0) || m.used_memory_lua || null,
+    luaAndScripts:
+      (m.used_memory_vm_eval || 0) + (m.used_memory_scripts_eval || 0) || m.used_memory_lua || null,
     max: max || null,
     system: m.total_system_memory || null,
     pct: max ? round((m.used_memory / max) * 100, 1) : null,
@@ -218,7 +336,12 @@ async function describeKeys(keys) {
   const p = client().pipeline();
   for (const k of keys) p.type(k).pttl(k).call('MEMORY', 'USAGE', k);
   const r = await p.exec();
-  return keys.map((key, i) => ({ key, type: r[i * 3][1], ttlMs: r[i * 3 + 1][1] >= 0 ? r[i * 3 + 1][1] : null, bytes: r[i * 3 + 2][1] ?? null }));
+  return keys.map((key, i) => ({
+    key,
+    type: r[i * 3][1],
+    ttlMs: r[i * 3 + 1][1] >= 0 ? r[i * 3 + 1][1] : null,
+    bytes: r[i * 3 + 2][1] ?? null,
+  }));
 }
 
 async function memory() {
@@ -228,9 +351,18 @@ async function memory() {
   // Memory by prefix group from a bounded sample, so the page stays cheap on a big database.
   const groups = await Promise.all(
     Object.entries(keyGroups()).map(async ([id, g]) => {
-      const { keys, complete } = await scanKeys(`${escapeGlob(g.match)}*`, { limit: 300, rounds: 10 });
+      const { keys, complete } = await scanKeys(`${escapeGlob(g.match)}*`, {
+        limit: 300,
+        rounds: 10,
+      });
       const described = await describeKeys(keys);
-      return { id, label: g.label, sampledKeys: keys.length, complete, bytes: described.reduce((a, k) => a + (k.bytes || 0), 0) };
+      return {
+        id,
+        label: g.label,
+        sampledKeys: keys.length,
+        complete,
+        bytes: described.reduce((a, k) => a + (k.bytes || 0), 0),
+      };
     })
   );
   return { ...s, memory: memoryOf(i), groups, dbsize: await client().dbsize() };
@@ -244,13 +376,34 @@ async function cacheInfo() {
     [...cache.namespaces.entries()].map(async ([name, st]) => {
       let keys;
       if (s.ok) {
-        const { keys: found } = await scanKeys(`${escapeGlob(cache.fullKey(name))}:*`, { limit: 50, rounds: 10 });
-        keys = (await describeKeys(found)).map((k) => ({ ...k, key: k.key.slice(cache.fullKey('').length) }));
+        const { keys: found } = await scanKeys(`${escapeGlob(cache.fullKey(name))}:*`, {
+          limit: 50,
+          rounds: 10,
+        });
+        keys = (await describeKeys(found)).map((k) => ({
+          ...k,
+          key: k.key.slice(cache.fullKey('').length),
+        }));
       } else {
-        keys = [...cache._local.entries()].filter(([k]) => k.startsWith(`${name}:`)).slice(0, 50).map(([key, v]) => ({ key, type: 'memory', ttlMs: Math.max(0, v.expires - now), bytes: null }));
+        keys = [...cache._local.entries()]
+          .filter(([k]) => k.startsWith(`${name}:`))
+          .slice(0, 50)
+          .map(([key, v]) => ({
+            key,
+            type: 'memory',
+            ttlMs: Math.max(0, v.expires - now),
+            bytes: null,
+          }));
       }
       const total = st.hits + st.misses;
-      return { name, ttlSec: st.ttlSec, hits: st.hits, misses: st.misses, hitRate: total ? round((st.hits / total) * 100, 1) : null, keys };
+      return {
+        name,
+        ttlSec: st.ttlSec,
+        hits: st.hits,
+        misses: st.misses,
+        hitRate: total ? round((st.hits / total) * 100, 1) : null,
+        keys,
+      };
     })
   );
   return { ...s, store: s.ok ? 'redis' : 'memory', localEntries: cache._local.size, namespaces };
@@ -258,14 +411,27 @@ async function cacheInfo() {
 
 async function keys({ group, q, cursor = '0' }) {
   const groups = keyGroups();
-  if (!groups[group]) throw Object.assign(new Error(`group must be one of ${Object.keys(groups).join(', ')}.`), { status: 400 });
-  if (!/^\d{1,20}$/.test(String(cursor))) throw Object.assign(new Error('Invalid cursor.'), { status: 400 });
+  if (!groups[group])
+    throw Object.assign(new Error(`group must be one of ${Object.keys(groups).join(', ')}.`), {
+      status: 400,
+    });
+  if (!/^\d{1,20}$/.test(String(cursor)))
+    throw Object.assign(new Error('Invalid cursor.'), { status: 400 });
   const s = await status();
-  if (!s.ok) return { ...s, groups: Object.entries(groups).map(([id, g]) => ({ id, ...g })), keys: [] };
+  if (!s.ok)
+    return { ...s, groups: Object.entries(groups).map(([id, g]) => ({ id, ...g })), keys: [] };
   const search = typeof q === 'string' ? q.slice(0, 100) : '';
   const match = `${escapeGlob(groups[group].match)}*${search ? `${escapeGlob(search)}*` : ''}`;
   const found = await scanKeys(match, { limit: 100, rounds: 20, cursor });
-  return { ...s, group, groups: Object.entries(groups).map(([id, g]) => ({ id, ...g })), keys: await describeKeys(found.keys), cursor: found.cursor, complete: found.complete, dbsize: await client().dbsize() };
+  return {
+    ...s,
+    group,
+    groups: Object.entries(groups).map(([id, g]) => ({ id, ...g })),
+    keys: await describeKeys(found.keys),
+    cursor: found.cursor,
+    complete: found.complete,
+    dbsize: await client().dbsize(),
+  };
 }
 
 async function performance() {
@@ -273,13 +439,23 @@ async function performance() {
   if (!s.ok) return s;
   const [i, slow, latency, latest] = await Promise.all([
     info(),
-    client().call('SLOWLOG', 'GET', 25).catch(() => []),
+    client()
+      .call('SLOWLOG', 'GET', 25)
+      .catch(() => []),
     pingStats(10),
-    client().call('LATENCY', 'LATEST').catch(() => []),
+    client()
+      .call('LATENCY', 'LATEST')
+      .catch(() => []),
   ]);
   const st = i.stats || {};
   const commands = Object.entries(i.commandstats || {})
-    .map(([k, v]) => ({ command: k.replace(/^cmdstat_/, '').toUpperCase(), calls: v.calls, usec: v.usec, usecPerCall: v.usec_per_call, failed: (v.failed_calls || 0) + (v.rejected_calls || 0) }))
+    .map(([k, v]) => ({
+      command: k.replace(/^cmdstat_/, '').toUpperCase(),
+      calls: v.calls,
+      usec: v.usec,
+      usecPerCall: v.usec_per_call,
+      failed: (v.failed_calls || 0) + (v.rejected_calls || 0),
+    }))
     .sort((a, b) => b.usec - a.usec)
     .slice(0, 20);
   return {
@@ -288,10 +464,20 @@ async function performance() {
     totalCommands: st.total_commands_processed ?? null,
     inputKbps: st.instantaneous_input_kbps ?? null,
     outputKbps: st.instantaneous_output_kbps ?? null,
-    connections: { connected: i.clients?.connected_clients ?? null, blocked: i.clients?.blocked_clients ?? null, received: st.total_connections_received ?? null, rejected: st.rejected_connections ?? 0 },
+    connections: {
+      connected: i.clients?.connected_clients ?? null,
+      blocked: i.clients?.blocked_clients ?? null,
+      received: st.total_connections_received ?? null,
+      rejected: st.rejected_connections ?? 0,
+    },
     keyspace: { hits: st.keyspace_hits ?? 0, misses: st.keyspace_misses ?? 0 },
     latency,
-    latencyEvents: (latest || []).map(([event, at, last, max]) => ({ event, at: new Date(at * 1000), lastMs: last, maxMs: max })),
+    latencyEvents: (latest || []).map(([event, at, last, max]) => ({
+      event,
+      at: new Date(at * 1000),
+      lastMs: last,
+      maxMs: max,
+    })),
     commands,
     slowlog: (slow || []).map(redactSlowlog),
   };
@@ -299,13 +485,20 @@ async function performance() {
 
 async function config() {
   const s = await status();
-  const base = { ...s, url: describeUrl(), prefix: redis.PREFIX, environment: process.env.NODE_ENV || 'development', workersEnabled: String(process.env.ENABLE_WORKERS || 'true').toLowerCase() !== 'false' };
+  const base = {
+    ...s,
+    url: describeUrl(),
+    prefix: redis.PREFIX,
+    environment: process.env.NODE_ENV || 'development',
+    workersEnabled: String(process.env.ENABLE_WORKERS || 'true').toLowerCase() !== 'false',
+  };
   if (!s.ok) return { ...base, settings: null, checks: [] };
   let settings = {};
   let configError = null;
   try {
     const flat = await client().call('CONFIG', 'GET', ...SAFE_CONFIG); // [k1, v1, k2, v2…]; managed Redis may refuse
-    for (let i = 0; i < flat.length; i += 2) if (SAFE_CONFIG.includes(flat[i])) settings[flat[i]] = flat[i + 1];
+    for (let i = 0; i < flat.length; i += 2)
+      if (SAFE_CONFIG.includes(flat[i])) settings[flat[i]] = flat[i + 1];
   } catch (err) {
     configError = `CONFIG GET is not permitted on this server (${err.message}) — common on managed Redis; check the provider's settings instead.`;
     const mem = memoryOf(await info());
@@ -320,11 +513,26 @@ async function rateLimits() {
   const s = await status();
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const [byRoute, byIp, total] = await Promise.all([
-    SecurityEvent.aggregate([{ $match: { type: 'rate_limited', at: { $gte: since } } }, { $group: { _id: '$route', n: { $sum: 1 }, last: { $max: '$at' } } }, { $sort: { n: -1 } }, { $limit: 20 }]),
-    SecurityEvent.aggregate([{ $match: { type: 'rate_limited', at: { $gte: since } } }, { $group: { _id: '$ip', n: { $sum: 1 }, last: { $max: '$at' } } }, { $sort: { n: -1 } }, { $limit: 20 }]),
+    SecurityEvent.aggregate([
+      { $match: { type: 'rate_limited', at: { $gte: since } } },
+      { $group: { _id: '$route', n: { $sum: 1 }, last: { $max: '$at' } } },
+      { $sort: { n: -1 } },
+      { $limit: 20 },
+    ]),
+    SecurityEvent.aggregate([
+      { $match: { type: 'rate_limited', at: { $gte: since } } },
+      { $group: { _id: '$ip', n: { $sum: 1 }, last: { $max: '$at' } } },
+      { $sort: { n: -1 } },
+      { $limit: 20 },
+    ]),
     SecurityEvent.countDocuments({ type: 'rate_limited', at: { $gte: since } }),
   ]);
-  const limiters = [...LIMITERS.values()].map(({ name, windowMs, max, failedOnly }) => ({ name, windowMs, max, failedOnly }));
+  const limiters = [...LIMITERS.values()].map(({ name, windowMs, max, failedOnly }) => ({
+    name,
+    windowMs,
+    max,
+    failedOnly,
+  }));
   let counters = [];
   let complete = true;
   if (s.ok) {
@@ -342,20 +550,47 @@ async function rateLimits() {
           const name = names.find((n) => rest.startsWith(`${n}:`)) || rest.split(':')[0];
           const lim = LIMITERS.get(name);
           const hits = Number(r[i * 2][1]) || 0;
-          return { limiter: name, client: rest.slice(name.length + 1), hits, max: lim?.max ?? null, resetInMs: r[i * 2 + 1][1] >= 0 ? r[i * 2 + 1][1] : null, blocked: lim?.max != null && hits > lim.max };
+          return {
+            limiter: name,
+            client: rest.slice(name.length + 1),
+            hits,
+            max: lim?.max ?? null,
+            resetInMs: r[i * 2 + 1][1] >= 0 ? r[i * 2 + 1][1] : null,
+            blocked: lim?.max != null && hits > lim.max,
+          };
         })
         .sort((a, b) => (b.max ? b.hits / b.max : 0) - (a.max ? a.hits / a.max : 0))
         .slice(0, 200);
     }
   }
-  return { ...s, store: s.ok ? 'redis' : 'memory', limiters, counters, complete, blocked: { total, byRoute: byRoute.map((x) => ({ route: x._id, n: x.n, last: x.last })), byIp: byIp.map((x) => ({ ip: x._id, n: x.n, last: x.last })) } };
+  return {
+    ...s,
+    store: s.ok ? 'redis' : 'memory',
+    limiters,
+    counters,
+    complete,
+    blocked: {
+      total,
+      byRoute: byRoute.map((x) => ({ route: x._id, n: x.n, last: x.last })),
+      byIp: byIp.map((x) => ({ ip: x._id, n: x.n, last: x.last })),
+    },
+  };
 }
 
 async function workers() {
   const queue = require('../queue');
   const s = await status();
   const base = { ...s, mode: queue.usingRedis() ? 'redis' : 'inline', inline: queue.inlineStats };
-  if (!s.ok || !queue.usingRedis()) return { ...base, queues: Object.entries(queue.QUEUES).map(([name, cfg]) => ({ name, concurrency: cfg.concurrency, workers: [], here: false })) };
+  if (!s.ok || !queue.usingRedis())
+    return {
+      ...base,
+      queues: Object.entries(queue.QUEUES).map(([name, cfg]) => ({
+        name,
+        concurrency: cfg.concurrency,
+        workers: [],
+        here: false,
+      })),
+    };
   const queues = await Promise.all(
     Object.entries(queue.QUEUES).map(async ([name, cfg]) => {
       const q = queue.getQueue(name);
@@ -367,9 +602,14 @@ async function workers() {
         q.getCompleted(0, 49).catch(() => []),
         q.isPaused(),
       ]);
-      const durations = recent.filter((j) => j?.processedOn && j.finishedOn).map((j) => j.finishedOn - j.processedOn);
+      const durations = recent
+        .filter((j) => j?.processedOn && j.finishedOn)
+        .map((j) => j.finishedOn - j.processedOn);
       // data = closed minutes, newest first; the running minute is meta.count − meta.prevCount.
-      const perMinute = (m) => (m ? [...m.data.slice(0, 59)].reverse().concat(Math.max(0, m.meta.count - m.meta.prevCount)) : []);
+      const perMinute = (m) =>
+        m
+          ? [...m.data.slice(0, 59)].reverse().concat(Math.max(0, m.meta.count - m.meta.prevCount))
+          : [];
       const sum = (m) => perMinute(m).reduce((a, b) => a + b, 0);
       return {
         name,
@@ -378,10 +618,22 @@ async function workers() {
         paused,
         here: queue.workers.has(name),
         counts,
-        workers: list.map((w) => ({ id: w.id, name: w.name, addr: w.addr ? String(w.addr).replace(/:\d+$/, '') : null, ageSec: Number(w.age) || 0, idleSec: Number(w.idle) || 0 })),
-        lastHour: { completed: sum(completed), failed: sum(failed), perMinute: perMinute(completed) },
+        workers: list.map((w) => ({
+          id: w.id,
+          name: w.name,
+          addr: w.addr ? String(w.addr).replace(/:\d+$/, '') : null,
+          ageSec: Number(w.age) || 0,
+          idleSec: Number(w.idle) || 0,
+        })),
+        lastHour: {
+          completed: sum(completed),
+          failed: sum(failed),
+          perMinute: perMinute(completed),
+        },
         total: { completed: completed?.meta.count ?? null, failed: failed?.meta.count ?? null },
-        avgMs: durations.length ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) : null,
+        avgMs: durations.length
+          ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length)
+          : null,
         maxMs: durations.length ? Math.max(...durations) : null,
       };
     })
@@ -396,24 +648,42 @@ async function realtime() {
   const nsp = io.of('/');
   const adapter = nsp.adapter;
   const usingRedis = adapter.constructor.name !== 'Adapter';
-  const local = { sockets: io.engine.clientsCount, rooms: adapter.rooms.size, onlineUsers: require('../../sockets/chat.socket').onlineCount() };
+  const local = {
+    sockets: io.engine.clientsCount,
+    rooms: adapter.rooms.size,
+    onlineUsers: require('../../sockets/chat.socket').onlineCount(),
+  };
   const out = { ...s, running: true, adapter: usingRedis ? 'redis' : 'memory', local };
   if (!usingRedis || !s.ok) return { ...out, cluster: null, pubsub: null };
-  const timeout = (p) => Promise.race([p, new Promise((_, reject) => setTimeout(() => reject(new Error('timed out')), 3000).unref())]);
+  const timeout = (p) =>
+    Promise.race([
+      p,
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timed out')), 3000).unref()),
+    ]);
   const started = Date.now();
   const [servers, all, channels] = await Promise.all([
     timeout(adapter.serverCount()).catch(() => null),
     timeout(io.fetchSockets()).catch(() => null),
-    client().call('PUBSUB', 'CHANNELS', `${escapeGlob(`${redis.PREFIX}:socket.io`)}*`).catch(() => []),
+    client()
+      .call('PUBSUB', 'CHANNELS', `${escapeGlob(`${redis.PREFIX}:socket.io`)}*`)
+      .catch(() => []),
   ]);
   const roundTripMs = Date.now() - started;
-  const numsub = channels.length ? await client().call('PUBSUB', 'NUMSUB', ...channels).catch(() => []) : [];
+  const numsub = channels.length
+    ? await client()
+        .call('PUBSUB', 'NUMSUB', ...channels)
+        .catch(() => [])
+    : [];
   const subs = [];
-  for (let i = 0; i < numsub.length; i += 2) subs.push({ channel: numsub[i], subscribers: numsub[i + 1] });
+  for (let i = 0; i < numsub.length; i += 2)
+    subs.push({ channel: numsub[i], subscribers: numsub[i + 1] });
   return {
     ...out,
     cluster: { servers, sockets: all ? all.length : null, roundTripMs },
-    pubsub: { channels: subs, connections: redis.connectionStates().filter((c) => c.label.startsWith('socket:')) },
+    pubsub: {
+      channels: subs,
+      connections: redis.connectionStates().filter((c) => c.label.startsWith('socket:')),
+    },
   };
 }
 
@@ -425,9 +695,21 @@ async function alertMetrics() {
   const mem = memoryOf(await info());
   const queue = require('../queue');
   const backlog = queue.usingRedis()
-    ? await Promise.all(Object.keys(queue.QUEUES).map(async (name) => ({ name, waiting: (await queue.getQueue(name).getJobCounts('waiting')).waiting || 0 })))
+    ? await Promise.all(
+        Object.keys(queue.QUEUES).map(async (name) => ({
+          name,
+          waiting: (await queue.getQueue(name).getJobCounts('waiting')).waiting || 0,
+        }))
+      )
     : [];
-  return { enabled: true, ok: true, memoryPct: mem.pct, evictedKeys: mem.evictedKeys, policy: mem.policy, backlog };
+  return {
+    enabled: true,
+    ok: true,
+    memoryPct: mem.pct,
+    evictedKeys: mem.evictedKeys,
+    policy: mem.policy,
+    backlog,
+  };
 }
 
 async function alerts() {
@@ -436,21 +718,62 @@ async function alerts() {
   const [t, m, incidents] = await Promise.all([
     getThresholds(),
     alertMetrics(),
-    Incident.find({ $or: [{ service: 'redis' }, { fingerprint: /^queue_/ }], createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }).sort({ createdAt: -1 }).limit(50).select('title severity status detail fingerprint startedAt lastSeenAt recoveredAt occurrences').lean(),
+    Incident.find({
+      $or: [{ service: 'redis' }, { fingerprint: /^queue_/ }],
+      createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+    })
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .select(
+        'title severity status detail fingerprint startedAt lastSeenAt recoveredAt occurrences'
+      )
+      .lean(),
   ]);
   const firing = evaluateRedisAlerts(m, t);
   const rules = [
-    { key: 'redis_down', label: 'Redis unreachable', severity: 'critical', threshold: 'any failed ping' },
-    { key: 'redis_memory', label: 'Memory near maxmemory', severity: 'high', threshold: `≥ ${t.redisMemoryPct}%`, thresholdKey: 'redisMemoryPct' },
-    { key: 'redis_evictions', label: 'Keys being evicted', severity: 'high', threshold: 'any eviction with a policy other than noeviction' },
-    { key: 'queue_backlog', label: 'Queue backlog growing', severity: 'medium', threshold: `≥ ${t.queueBacklog} waiting jobs`, thresholdKey: 'queueBacklog' },
-  ].map((r) => ({ ...r, firing: firing.filter((f) => f.fingerprint === r.key || f.fingerprint.startsWith(`${r.key}:`)).map((f) => f.detail) }));
+    {
+      key: 'redis_down',
+      label: 'Redis unreachable',
+      severity: 'critical',
+      threshold: 'any failed ping',
+    },
+    {
+      key: 'redis_memory',
+      label: 'Memory near maxmemory',
+      severity: 'high',
+      threshold: `≥ ${t.redisMemoryPct}%`,
+      thresholdKey: 'redisMemoryPct',
+    },
+    {
+      key: 'redis_evictions',
+      label: 'Keys being evicted',
+      severity: 'high',
+      threshold: 'any eviction with a policy other than noeviction',
+    },
+    {
+      key: 'queue_backlog',
+      label: 'Queue backlog growing',
+      severity: 'medium',
+      threshold: `≥ ${t.queueBacklog} waiting jobs`,
+      thresholdKey: 'queueBacklog',
+    },
+  ].map((r) => ({
+    ...r,
+    firing: firing
+      .filter((f) => f.fingerprint === r.key || f.fingerprint.startsWith(`${r.key}:`))
+      .map((f) => f.detail),
+  }));
   return { enabled: m.enabled, metrics: m, rules, incidents };
 }
 
 async function audit({ limit = 50 } = {}) {
   const AdminActivity = require('../../models/AdminActivity');
-  return AdminActivity.find({ $or: [{ 'metadata.area': { $in: ['developer.redis', 'developer.queues'] } }, { 'metadata.type': 'rate_limit_reset' }] })
+  return AdminActivity.find({
+    $or: [
+      { 'metadata.area': { $in: ['developer.redis', 'developer.queues'] } },
+      { 'metadata.type': 'rate_limit_reset' },
+    ],
+  })
     .sort({ createdAt: -1 })
     .limit(Math.min(Math.max(Number(limit) || 50, 1), 200))
     .populate('adminId', 'name email role')
@@ -462,7 +785,8 @@ async function audit({ limit = 50 } = {}) {
 
 async function invalidateNamespace(name) {
   const cache = require('../../utils/cache');
-  if (!cache.namespaces.has(name)) throw Object.assign(new Error('Unknown cache namespace.'), { status: 404 });
+  if (!cache.namespaces.has(name))
+    throw Object.assign(new Error('Unknown cache namespace.'), { status: 404 });
   await cache.invalidate(name);
   return { namespace: name };
 }
@@ -471,7 +795,10 @@ async function deleteCacheKey(key) {
   const cache = require('../../utils/cache');
   const k = typeof key === 'string' ? key : '';
   const ns = k.split(':')[0];
-  if (!cache.namespaces.has(ns) || k.length > 500 || !k.startsWith(`${ns}:`)) throw Object.assign(new Error('Only keys of a known cache namespace can be deleted.'), { status: 400 });
+  if (!cache.namespaces.has(ns) || k.length > 500 || !k.startsWith(`${ns}:`))
+    throw Object.assign(new Error('Only keys of a known cache namespace can be deleted.'), {
+      status: 400,
+    });
   await cache.deleteKey(k);
   return { key: k };
 }

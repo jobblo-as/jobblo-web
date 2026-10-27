@@ -8,12 +8,19 @@ jest.mock('../models/Order', () => ({ findById: jest.fn(), findOneAndUpdate: jes
 jest.mock('../models/Service', () => ({ findByIdAndUpdate: jest.fn() }));
 jest.mock('../models/User', () => ({ findById: jest.fn(), findOneAndUpdate: jest.fn() }));
 jest.mock('../models/Payment', () => ({ findOne: jest.fn() }));
-jest.mock('../models/SafePayHistory', () => ({ findOne: jest.fn(), updateOne: jest.fn(), create: jest.fn(), OPEN_STATUSES: [] }));
+jest.mock('../models/SafePayHistory', () => ({
+  findOne: jest.fn(),
+  updateOne: jest.fn(),
+  create: jest.fn(),
+  OPEN_STATUSES: [],
+}));
 jest.mock('../models/Review', () => ({ findOne: jest.fn(), create: jest.fn(), find: jest.fn() }));
 jest.mock('../models/ChatMessage', () => ({ findById: jest.fn() }));
 jest.mock('../models/Dispute', () => ({ findOne: jest.fn() }));
 jest.mock('../services/notifications', () => ({ notify: jest.fn(), emitToUser: jest.fn() }));
-jest.mock('../utils/errorLogger', () => ({ logApplicationError: jest.fn().mockResolvedValue(undefined) }));
+jest.mock('../utils/errorLogger', () => ({
+  logApplicationError: jest.fn().mockResolvedValue(undefined),
+}));
 jest.mock('../services/payout/releasePayoutToProvider', () => jest.fn());
 
 const Order = require('../models/Order');
@@ -30,14 +37,34 @@ const { approveAndPayout } = require('../controllers/SafePayCheckoutController')
 
 const ORDER_ID = '64b000000000000000000001';
 const order = () => ({
-  _id: ORDER_ID, customerId: 'cust', providerId: 'prov', chatId: 'chat1', agreedPrice: 1000,
-  status: 'ready_for_review', paymentStatus: 'paid', serviceId: { _id: 'svc', title: 'Maling' },
+  _id: ORDER_ID,
+  customerId: 'cust',
+  providerId: 'prov',
+  chatId: 'chat1',
+  agreedPrice: 1000,
+  status: 'ready_for_review',
+  paymentStatus: 'paid',
+  serviceId: { _id: 'svc', title: 'Maling' },
 });
 const populated = (v) => ({ populate: async () => v });
 
 async function approve() {
-  const res = { code: 200, body: null, status(c) { this.code = c; return this; }, json(b) { this.body = b; return this; } };
-  await approveAndPayout({ userId: 'cust', body: { orderId: ORDER_ID, ratings: { overall: 5 } } }, res);
+  const res = {
+    code: 200,
+    body: null,
+    status(c) {
+      this.code = c;
+      return this;
+    },
+    json(b) {
+      this.body = b;
+      return this;
+    },
+  };
+  await approveAndPayout(
+    { userId: 'cust', body: { orderId: ORDER_ID, ratings: { overall: 5 } } },
+    res
+  );
   return res;
 }
 
@@ -60,14 +87,26 @@ beforeEach(() => {
 
 it.each([
   ['the chat update', () => Chat.findById.mockRejectedValue(new Error('chat db down'))],
-  ['the listing update', () => Service.findByIdAndUpdate.mockRejectedValue(new Error('service db down'))],
+  [
+    'the listing update',
+    () => Service.findByIdAndUpdate.mockRejectedValue(new Error('service db down')),
+  ],
   ['the review', () => Review.create.mockRejectedValue(new Error('validation failed'))],
 ])('when %s fails, the provider is still paid and the error is logged', async (_name, breakIt) => {
   breakIt();
   const res = await approve();
-  expect(releasePayoutToProvider).toHaveBeenCalledWith(expect.objectContaining({ orderId: ORDER_ID, releaseSource: 'customer_approve', grossAmount: 1000, platformFee: 30 }));
+  expect(releasePayoutToProvider).toHaveBeenCalledWith(
+    expect.objectContaining({
+      orderId: ORDER_ID,
+      releaseSource: 'customer_approve',
+      grossAmount: 1000,
+      platformFee: 30,
+    })
+  );
   expect(res.code).toBe(200);
-  expect(logApplicationError).toHaveBeenCalledWith(expect.objectContaining({ errorCode: 'APPROVAL_SIDE_EFFECT_FAILED' }));
+  expect(logApplicationError).toHaveBeenCalledWith(
+    expect.objectContaining({ errorCode: 'APPROVAL_SIDE_EFFECT_FAILED' })
+  );
 });
 
 it('the normal path pays and logs nothing', async () => {

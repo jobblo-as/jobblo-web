@@ -58,7 +58,8 @@ function limited(fn) {
     new Promise((resolve, reject) => {
       const run = () => {
         active += 1;
-        Promise.resolve().then(() => fn(...args))
+        Promise.resolve()
+          .then(() => fn(...args))
           .then(resolve, reject)
           .finally(() => {
             active -= 1;
@@ -70,7 +71,9 @@ function limited(fn) {
       if (active < MAX_ACTIVE) return run();
       if (waiting.length >= MAX_WAITING) {
         counts.busy += 1;
-        return reject(Object.assign(new Error('Password hashing is busy'), { code: 'PASSWORD_HASH_BUSY' }));
+        return reject(
+          Object.assign(new Error('Password hashing is busy'), { code: 'PASSWORD_HASH_BUSY' })
+        );
       }
       waiting.push(run);
       counts.maxWaiting = Math.max(counts.maxWaiting, waiting.length);
@@ -106,6 +109,21 @@ function isBcryptHash(value) {
 }
 
 /** Queue state of this process (developer console → Workers). */
-const passwordQueueStats = () => ({ active, waiting: waiting.length, ...counts, maxActive: MAX_ACTIVE, maxQueue: MAX_WAITING });
+const passwordQueueStats = () => ({
+  active,
+  waiting: waiting.length,
+  ...counts,
+  maxActive: MAX_ACTIVE,
+  maxQueue: MAX_WAITING,
+});
 
-module.exports = { passwordQueueStats, createUnusablePassword, isBcryptHash, comparePassword, hashPassword, BCRYPT_ROUNDS, MAX_ACTIVE, MAX_WAITING };
+module.exports = {
+  passwordQueueStats,
+  createUnusablePassword,
+  isBcryptHash,
+  comparePassword,
+  hashPassword,
+  BCRYPT_ROUNDS,
+  MAX_ACTIVE,
+  MAX_WAITING,
+};

@@ -90,8 +90,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
           const hasUnread = isUnread(chat);
           const isActive = conversationId === chat._id;
           const isOnline = !!otherPerson?._id && onlineUsers.includes(otherPerson._id);
-          const photo =
-            chat.serviceId?.images?.[0] || chat.serviceId?.image || undefined;
+          const photo = chat.serviceId?.images?.[0] || chat.serviceId?.image || undefined;
 
           return (
             <li key={chat._id}>
@@ -107,12 +106,7 @@ const ConversationList: React.FC<ConversationListProps> = ({
                 <span className="relative shrink-0">
                   <span className="flex size-12 items-center justify-center overflow-hidden rounded-xl bg-[#EAF1E9]">
                     {photo ? (
-                      <img
-                        src={photo}
-                        alt=""
-                        loading="lazy"
-                        className="size-full object-cover"
-                      />
+                      <img src={photo} alt="" loading="lazy" className="size-full object-cover" />
                     ) : (
                       <MessagesSquare size={17} strokeWidth={2} className="text-[#2E6641]" />
                     )}

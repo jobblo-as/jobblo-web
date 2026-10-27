@@ -45,8 +45,14 @@ function response() {
   return {
     statusCode: 200,
     body: null,
-    status(code) { this.statusCode = code; return this; },
-    json(body) { this.body = body; return this; },
+    status(code) {
+      this.statusCode = code;
+      return this;
+    },
+    json(body) {
+      this.body = body;
+      return this;
+    },
   };
 }
 
@@ -58,7 +64,10 @@ describe('SafePay finance API request validation', () => {
 
   it('does not allow providers to filter financial history by Stripe mode', async () => {
     const res = response();
-    await controller.getTransfers({ userId: '507f1f77bcf86cd799439011', query: { mode: 'live' } }, res);
+    await controller.getTransfers(
+      { userId: '507f1f77bcf86cd799439011', query: { mode: 'live' } },
+      res
+    );
 
     expect(res.statusCode).toBe(400);
     expect(res.body.error).toMatch(/administratorer/);
@@ -66,15 +75,18 @@ describe('SafePay finance API request validation', () => {
 
   it('rejects a single-provider request combined with a batch cursor', async () => {
     const res = response();
-    await controller.reconcile({
-      userId: '507f1f77bcf86cd799439011',
-      body: {
-        mode: 'test',
-        providerId: '507f1f77bcf86cd799439012',
-        cursorProviderId: '507f1f77bcf86cd799439013',
+    await controller.reconcile(
+      {
+        userId: '507f1f77bcf86cd799439011',
+        body: {
+          mode: 'test',
+          providerId: '507f1f77bcf86cd799439012',
+          cursorProviderId: '507f1f77bcf86cd799439013',
+        },
+        headers: {},
       },
-      headers: {},
-    }, res);
+      res
+    );
 
     expect(res.statusCode).toBe(400);
     expect(res.body.error).toMatch(/Velg enten én provider/);
@@ -83,11 +95,14 @@ describe('SafePay finance API request validation', () => {
 
   it('rejects an invalid reconciliation cursor before contacting Stripe', async () => {
     const res = response();
-    await controller.reconcile({
-      userId: '507f1f77bcf86cd799439011',
-      body: { mode: 'live', cursorProviderId: 'invalid' },
-      headers: {},
-    }, res);
+    await controller.reconcile(
+      {
+        userId: '507f1f77bcf86cd799439011',
+        body: { mode: 'live', cursorProviderId: 'invalid' },
+        headers: {},
+      },
+      res
+    );
 
     expect(res.statusCode).toBe(400);
     expect(getStripeForMode).not.toHaveBeenCalled();
@@ -140,20 +155,24 @@ describe('SafePay finance API request validation', () => {
 
     const pipeline = StripeTransferRecord.aggregate.mock.calls[0][0];
     expect(pipeline.some((stage) => stage.$unionWith?.coll === 'payouts')).toBe(true);
-    expect(pipeline.some((stage) => stage.$sort?.sortAt === -1 && stage.$sort?.tieId === -1)).toBe(true);
+    expect(pipeline.some((stage) => stage.$sort?.sortAt === -1 && stage.$sort?.tieId === -1)).toBe(
+      true
+    );
     expect(pipeline.find((stage) => stage.$facet)?.$facet.data).toEqual([
       { $skip: 0 },
       { $limit: 10 },
     ]);
     expect(res.body.pagination).toMatchObject({ total: 2, totalPages: 1 });
     expect(res.body.items.map((item) => item.id)).toEqual(['stripe_1', 'payout_1']);
-    expect(res.body.items[0]).toEqual(expect.objectContaining({
-      orderId: '507f1f77bcf86cd799439012',
-      orderTitle: 'Maling',
-      agreedPrice: 300,
-      jobbloFee: 4500,
-      netProviderAmount: 25500,
-    }));
+    expect(res.body.items[0]).toEqual(
+      expect.objectContaining({
+        orderId: '507f1f77bcf86cd799439012',
+        orderTitle: 'Maling',
+        agreedPrice: 300,
+        jobbloFee: 4500,
+        netProviderAmount: 25500,
+      })
+    );
     expect(res.body.snapshotAt).toEqual(expect.any(String));
     expect(res.body.testDataNotice).toBeNull();
   });
@@ -212,30 +231,37 @@ describe('SafePay finance API request validation', () => {
 
   it('returns mode-scoped verified net transfer, fee and pending payout totals', async () => {
     StripeTransferRecord.aggregate.mockResolvedValue([
-      { _id: { currency: 'NOK', status: 'partially_reversed' }, count: 1, amount: 27100, jobbloFee: 4500 },
+      {
+        _id: { currency: 'NOK', status: 'partially_reversed' },
+        count: 1,
+        amount: 27100,
+        jobbloFee: 4500,
+      },
     ]);
     StripeBankPayoutRecord.aggregate.mockResolvedValue([
       { _id: { currency: 'NOK', status: 'in_transit' }, count: 1, amount: 27100 },
     ]);
-    Payout.aggregate.mockResolvedValue([
-      { _id: { currency: 'NOK' }, count: 2, amount: 50000 },
-    ]);
+    Payout.aggregate.mockResolvedValue([{ _id: { currency: 'NOK' }, count: 2, amount: 50000 }]);
     const res = response();
 
     await controller.getSummary({ userId: '507f1f77bcf86cd799439011' }, res);
 
-    expect(res.body).toEqual(expect.objectContaining({
-      mode: 'test',
-      transfers: [expect.objectContaining({ amount: 27100, jobbloFee: 4500 })],
-      bankPayouts: [expect.objectContaining({ amount: 27100 })],
-      pendingTransfers: [expect.objectContaining({ count: 2, amount: 50000 })],
-    }));
+    expect(res.body).toEqual(
+      expect.objectContaining({
+        mode: 'test',
+        transfers: [expect.objectContaining({ amount: 27100, jobbloFee: 4500 })],
+        bankPayouts: [expect.objectContaining({ amount: 27100 })],
+        pendingTransfers: [expect.objectContaining({ count: 2, amount: 50000 })],
+      })
+    );
     const transferPipeline = StripeTransferRecord.aggregate.mock.calls[0][0];
     expect(transferPipeline.find((stage) => stage.$set).$set.netTransferredAmount).toEqual({
       $max: [0, { $subtract: ['$amount', { $ifNull: ['$amountReversed', 0] }] }],
     });
-    expect(Payout.aggregate.mock.calls[0][0].some((stage) =>
-      stage.$lookup?.from === 'stripetransferrecords'
-    )).toBe(true);
+    expect(
+      Payout.aggregate.mock.calls[0][0].some(
+        (stage) => stage.$lookup?.from === 'stripetransferrecords'
+      )
+    ).toBe(true);
   });
 });

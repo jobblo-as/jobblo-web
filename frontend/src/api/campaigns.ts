@@ -61,7 +61,8 @@ export const fetchPublicCampaign = async (): Promise<PublicCampaignData> => {
 };
 
 export const fetchCampaignTerms = async (): Promise<{ name: string; disclaimer: string }> => {
-  const response = await mainLink.get<ApiResponse<{ name: string; disclaimer: string }>>('/api/campaigns/terms');
+  const response =
+    await mainLink.get<ApiResponse<{ name: string; disclaimer: string }>>('/api/campaigns/terms');
   return response.data.data;
 };
 
@@ -69,9 +70,10 @@ export const trackCampaignEvent = async (
   assignmentToken: string,
   eventType: 'impression' | 'click' | 'close',
   closeMethod?: 'button' | 'backdrop' | 'escape'
-) => mainLink.post('/api/campaigns/events', {
-  eventId: newId(),
-  assignmentToken,
-  eventType,
-  ...(closeMethod ? { closeMethod } : {}),
-});
+) =>
+  mainLink.post('/api/campaigns/events', {
+    eventId: newId(),
+    assignmentToken,
+    eventType,
+    ...(closeMethod ? { closeMethod } : {}),
+  });

@@ -22,12 +22,20 @@ const message = { title: 'Ny melding', body: 'Hei', data: { type: 'chat', chatId
 let sendEachForMulticast;
 beforeEach(() => {
   jest.clearAllMocks();
-  sendEachForMulticast = jest.fn(async ({ tokens: t }) => ({ successCount: t.length, failureCount: 0, responses: t.map(() => ({})) }));
+  sendEachForMulticast = jest.fn(async ({ tokens: t }) => ({
+    successCount: t.length,
+    failureCount: 0,
+    responses: t.map(() => ({})),
+  }));
   getFirebaseMessaging.mockReturnValue({ sendEachForMulticast });
   global.fetch = jest.fn(async (_url, { body }) => ({
     ok: true,
     json: async () => ({
-      data: JSON.parse(body).map(({ to }) => (to === IOS_DEAD ? { status: 'error', details: { error: 'DeviceNotRegistered' } } : { status: 'ok', id: 't' })),
+      data: JSON.parse(body).map(({ to }) =>
+        to === IOS_DEAD
+          ? { status: 'error', details: { error: 'DeviceNotRegistered' } }
+          : { status: 'ok', id: 't' }
+      ),
     }),
   }));
 });
@@ -36,27 +44,45 @@ test('the token decides the provider; anything else is refused', () => {
   expect(providerOf(IOS)).toBe('expo');
   expect(providerOf('ExpoPushToken[abcdefghij123456]')).toBe('expo');
   expect(providerOf(ANDROID)).toBe('fcm');
-  for (const bad of ['ExponentPushToken[]', 'ExponentPushToken[a b]', 'short', 42, null]) expect(providerOf(bad)).toBeNull();
+  for (const bad of ['ExponentPushToken[]', 'ExponentPushToken[a b]', 'short', 42, null])
+    expect(providerOf(bad)).toBeNull();
 });
 
 test('Android goes to FCM and iOS to Expo, with the same title, body and data', async () => {
-  PushToken.find.mockReturnValue(tokens({ token: ANDROID, provider: 'fcm' }, { token: IOS, provider: 'expo' }));
+  PushToken.find.mockReturnValue(
+    tokens({ token: ANDROID, provider: 'fcm' }, { token: IOS, provider: 'expo' })
+  );
   await deliverPush('u1', message);
 
   expect(sendEachForMulticast.mock.calls[0][0].tokens).toEqual([ANDROID]);
   const [url, init] = global.fetch.mock.calls[0];
   expect(url).toBe('https://exp.host/--/api/v2/push/send');
   expect(JSON.parse(init.body)).toEqual([
-    expect.objectContaining({ to: IOS, title: 'Ny melding', body: 'Hei', data: { type: 'chat', chatId: 'c1' }, sound: 'default' }),
+    expect.objectContaining({
+      to: IOS,
+      title: 'Ny melding',
+      body: 'Hei',
+      data: { type: 'chat', chatId: 'c1' },
+      sound: 'default',
+    }),
   ]);
-  expect(logDelivery).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'sent', accepted: 2, rejected: 0 }));
+  expect(logDelivery).toHaveBeenLastCalledWith(
+    expect.objectContaining({ status: 'sent', accepted: 2, rejected: 0 })
+  );
 });
 
 test('an iOS device Apple no longer knows is switched off', async () => {
-  PushToken.find.mockReturnValue(tokens({ token: IOS, provider: 'expo' }, { token: IOS_DEAD, provider: 'expo' }));
+  PushToken.find.mockReturnValue(
+    tokens({ token: IOS, provider: 'expo' }, { token: IOS_DEAD, provider: 'expo' })
+  );
   await deliverPush('u1', message);
-  expect(PushToken.updateMany).toHaveBeenCalledWith({ token: { $in: [IOS_DEAD] } }, { $set: { active: false } });
-  expect(logDelivery).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'partial', accepted: 1, rejected: 1 }));
+  expect(PushToken.updateMany).toHaveBeenCalledWith(
+    { token: { $in: [IOS_DEAD] } },
+    { $set: { active: false } }
+  );
+  expect(logDelivery).toHaveBeenLastCalledWith(
+    expect.objectContaining({ status: 'partial', accepted: 1, rejected: 1 })
+  );
 });
 
 test('Expo down with only iOS devices: throws, so the queue retries', async () => {
@@ -66,8 +92,12 @@ test('Expo down with only iOS devices: throws, so the queue retries', async () =
 });
 
 test('Expo down but Android delivered: no retry (it would push Android twice)', async () => {
-  PushToken.find.mockReturnValue(tokens({ token: ANDROID, provider: 'fcm' }, { token: IOS, provider: 'expo' }));
+  PushToken.find.mockReturnValue(
+    tokens({ token: ANDROID, provider: 'fcm' }, { token: IOS, provider: 'expo' })
+  );
   global.fetch.mockResolvedValueOnce({ ok: false, status: 503 });
   await expect(deliverPush('u1', message)).resolves.toBeUndefined();
-  expect(logDelivery).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'partial', accepted: 1 }));
+  expect(logDelivery).toHaveBeenLastCalledWith(
+    expect.objectContaining({ status: 'partial', accepted: 1 })
+  );
 });

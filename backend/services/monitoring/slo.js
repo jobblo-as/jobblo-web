@@ -18,7 +18,9 @@ const SLOW_BURN = 6;
 const LATENCY_MS = Number(process.env.SLO_LATENCY_MS) || 1000;
 
 const model = (name) => require(`../../models/${name}`);
-const bucket = (field, ms) => ({ $toDate: { $subtract: [{ $toLong: `$${field}` }, { $mod: [{ $toLong: `$${field}` }, ms] }] } });
+const bucket = (field, ms) => ({
+  $toDate: { $subtract: [{ $toLong: `$${field}` }, { $mod: [{ $toLong: `$${field}` }, ms] }] },
+});
 const USER_ROUTES = { route: { $not: /^\/api\/(developer|mobile\/telemetry)/ } };
 
 /** Each `buckets(from, to, ms)` resolves to [{ t, good, bad }]. */
@@ -31,7 +33,9 @@ const SLOS = [
     buckets: (from, to, ms) =>
       model('ApiMetricMinute').aggregate([
         { $match: { minute: { $gte: from, $lt: to }, ...USER_ROUTES } },
-        { $group: { _id: bucket('minute', ms), total: { $sum: '$count' }, bad: { $sum: '$c5xx' } } },
+        {
+          $group: { _id: bucket('minute', ms), total: { $sum: '$count' }, bad: { $sum: '$c5xx' } },
+        },
         { $project: { _id: 0, t: '$_id', bad: 1, good: { $subtract: ['$total', '$bad'] } } },
       ]),
   },
@@ -43,7 +47,9 @@ const SLOS = [
     buckets: (from, to, ms) =>
       model('ApiMetricMinute').aggregate([
         { $match: { minute: { $gte: from, $lt: to }, slow: { $exists: true }, ...USER_ROUTES } },
-        { $group: { _id: bucket('minute', ms), total: { $sum: '$count' }, bad: { $sum: '$slow' } } },
+        {
+          $group: { _id: bucket('minute', ms), total: { $sum: '$count' }, bad: { $sum: '$slow' } },
+        },
         { $project: { _id: 0, t: '$_id', bad: 1, good: { $subtract: ['$total', '$bad'] } } },
       ]),
   },
@@ -55,14 +61,21 @@ const SLOS = [
     buckets: (from, to, ms) =>
       model('SyntheticRun').aggregate([
         { $match: { at: { $gte: from, $lt: to } } },
-        { $group: { _id: bucket('at', ms), good: { $sum: { $cond: ['$ok', 1, 0] } }, bad: { $sum: { $cond: ['$ok', 0, 1] } } } },
+        {
+          $group: {
+            _id: bucket('at', ms),
+            good: { $sum: { $cond: ['$ok', 1, 0] } },
+            bad: { $sum: { $cond: ['$ok', 0, 1] } },
+          },
+        },
         { $project: { _id: 0, t: '$_id', good: 1, bad: 1 } },
       ]),
   },
   {
     key: 'webhooks',
     name: 'Stripe webhook processing',
-    description: 'Share of Stripe events processed; events still failing after 15 min count as bad.',
+    description:
+      'Share of Stripe events processed; events still failing after 15 min count as bad.',
     target: 99.9,
     buckets: (from, to, ms) =>
       model('StripeEvent').aggregate([
@@ -71,7 +84,20 @@ const SLOS = [
           $group: {
             _id: bucket('createdAt', ms),
             good: { $sum: { $cond: [{ $eq: ['$status', 'processed'] }, 1, 0] } },
-            bad: { $sum: { $cond: [{ $and: [{ $ne: ['$status', 'processed'] }, { $lt: ['$createdAt', new Date(Date.now() - 15 * 60 * 1000)] }] }, 1, 0] } },
+            bad: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      { $ne: ['$status', 'processed'] },
+                      { $lt: ['$createdAt', new Date(Date.now() - 15 * 60 * 1000)] },
+                    ],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
           },
         },
         { $project: { _id: 0, t: '$_id', good: 1, bad: 1 } },
@@ -85,19 +111,32 @@ const SLOS = [
     buckets: (from, to, ms) =>
       model('DeliveryLog').aggregate([
         { $match: { channel, at: { $gte: from, $lt: to }, status: { $ne: 'skipped' } } },
-        { $group: { _id: bucket('at', ms), good: { $sum: { $cond: [{ $eq: ['$status', 'sent'] }, 1, 0] } }, bad: { $sum: { $cond: [{ $eq: ['$status', 'sent'] }, 0, 1] } } } },
+        {
+          $group: {
+            _id: bucket('at', ms),
+            good: { $sum: { $cond: [{ $eq: ['$status', 'sent'] }, 1, 0] } },
+            bad: { $sum: { $cond: [{ $eq: ['$status', 'sent'] }, 0, 1] } },
+          },
+        },
         { $project: { _id: 0, t: '$_id', good: 1, bad: 1 } },
       ]),
   })),
   {
     key: 'scheduler',
     name: 'Background jobs',
-    description: 'Share of scheduler runs (escrow release, payout retries, reconciliation…) that succeeded.',
+    description:
+      'Share of scheduler runs (escrow release, payout retries, reconciliation…) that succeeded.',
     target: 99,
     buckets: (from, to, ms) =>
       model('SchedulerRun').aggregate([
         { $match: { startedAt: { $gte: from, $lt: to } } },
-        { $group: { _id: bucket('startedAt', ms), good: { $sum: { $cond: ['$ok', 1, 0] } }, bad: { $sum: { $cond: ['$ok', 0, 1] } } } },
+        {
+          $group: {
+            _id: bucket('startedAt', ms),
+            good: { $sum: { $cond: ['$ok', 1, 0] } },
+            bad: { $sum: { $cond: ['$ok', 0, 1] } },
+          },
+        },
         { $project: { _id: 0, t: '$_id', good: 1, bad: 1 } },
       ]),
   },
@@ -108,9 +147,27 @@ const SLOS = [
     target: 99.5,
     buckets: (from, to, ms) =>
       model('MobileEvent').aggregate([
-        { $match: { at: { $gte: from, $lt: to }, $or: [{ type: 'session' }, { type: 'error', fatal: true }] } },
-        { $group: { _id: bucket('at', ms), sessions: { $sum: { $cond: [{ $eq: ['$type', 'session'] }, 1, 0] } }, crashed: { $addToSet: { $cond: ['$fatal', '$sessionId', '$$REMOVE'] } } } },
-        { $project: { _id: 0, t: '$_id', bad: { $size: '$crashed' }, good: { $max: [0, { $subtract: ['$sessions', { $size: '$crashed' }] }] } } },
+        {
+          $match: {
+            at: { $gte: from, $lt: to },
+            $or: [{ type: 'session' }, { type: 'error', fatal: true }],
+          },
+        },
+        {
+          $group: {
+            _id: bucket('at', ms),
+            sessions: { $sum: { $cond: [{ $eq: ['$type', 'session'] }, 1, 0] } },
+            crashed: { $addToSet: { $cond: ['$fatal', '$sessionId', '$$REMOVE'] } },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            t: '$_id',
+            bad: { $size: '$crashed' },
+            good: { $max: [0, { $subtract: ['$sessions', { $size: '$crashed' }] }] },
+          },
+        },
       ]),
   },
 ];
@@ -118,13 +175,20 @@ const SLOS = [
 async function getTargets() {
   try {
     const doc = await model('GlobalConfig').findOne({ key: CONFIG_KEY }).lean();
-    return { ...Object.fromEntries(SLOS.map((s) => [s.key, s.target])), ...(doc?.value && typeof doc.value === 'object' ? doc.value : {}) };
+    return {
+      ...Object.fromEntries(SLOS.map((s) => [s.key, s.target])),
+      ...(doc?.value && typeof doc.value === 'object' ? doc.value : {}),
+    };
   } catch {
     return Object.fromEntries(SLOS.map((s) => [s.key, s.target]));
   }
 }
 
-const sum = (rows) => rows.reduce((a, r) => ({ good: a.good + (r.good || 0), bad: a.bad + (r.bad || 0) }), { good: 0, bad: 0 });
+const sum = (rows) =>
+  rows.reduce((a, r) => ({ good: a.good + (r.good || 0), bad: a.bad + (r.bad || 0) }), {
+    good: 0,
+    bad: 0,
+  });
 
 /** Pure: SLI, budget and burn for one SLO. Unit-tested. */
 function evaluate(target, window, last1h, last6h) {
@@ -136,11 +200,25 @@ function evaluate(target, window, last1h, last6h) {
   };
   const sli = total ? (window.good / total) * 100 : null;
   const budget = total * allowed; // bad events the window may contain
-  const remaining = total ? (budget > 0 ? Math.max(-999, ((budget - window.bad) / budget) * 100) : window.bad ? -999 : 100) : null;
+  const remaining = total
+    ? budget > 0
+      ? Math.max(-999, ((budget - window.bad) / budget) * 100)
+      : window.bad
+        ? -999
+        : 100
+    : null;
   const b1 = burn(last1h);
   const b6 = burn(last6h);
   const status =
-    total === 0 ? 'no_data' : sli < target ? 'breached' : b1 !== null && b1 >= FAST_BURN ? 'fast_burn' : (b6 !== null && b6 >= SLOW_BURN) || remaining <= 25 ? 'at_risk' : 'ok';
+    total === 0
+      ? 'no_data'
+      : sli < target
+        ? 'breached'
+        : b1 !== null && b1 >= FAST_BURN
+          ? 'fast_burn'
+          : (b6 !== null && b6 >= SLOW_BURN) || remaining <= 25
+            ? 'at_risk'
+            : 'ok';
   return { sli, total, bad: window.bad, budget, remaining, burn1h: b1, burn6h: b6, status };
 }
 
@@ -167,10 +245,24 @@ async function computeSlos({ windowDays = 30, withSeries = true } = {}) {
               good += d.good;
               bad += d.bad;
               const n = d.good + d.bad;
-              return { t: d.t, sli: n ? (d.good / n) * 100 : null, remaining: evaluate(target, { good, bad }, { good: 0, bad: 0 }, { good: 0, bad: 0 }).remaining };
+              return {
+                t: d.t,
+                sli: n ? (d.good / n) * 100 : null,
+                remaining: evaluate(target, { good, bad }, { good: 0, bad: 0 }, { good: 0, bad: 0 })
+                  .remaining,
+              };
             })
         : undefined;
-      return { key: s.key, name: s.name, description: s.description, target, defaultTarget: s.target, windowDays, ...result, series };
+      return {
+        key: s.key,
+        name: s.name,
+        description: s.description,
+        target,
+        defaultTarget: s.target,
+        windowDays,
+        ...result,
+        series,
+      };
     })
   );
 }
@@ -181,7 +273,10 @@ async function burningSlos() {
   const targets = await getTargets();
   const out = [];
   for (const s of SLOS) {
-    const [h1, h6] = await Promise.all([s.buckets(new Date(to - HOUR), to, HOUR + 1), s.buckets(new Date(to - 6 * HOUR), to, 6 * HOUR + 1)]);
+    const [h1, h6] = await Promise.all([
+      s.buckets(new Date(to - HOUR), to, HOUR + 1),
+      s.buckets(new Date(to - 6 * HOUR), to, 6 * HOUR + 1),
+    ]);
     const w1 = sum(h1);
     // ponytail: needs ≥ 20 events in the hour, so one failure at night does not page anyone.
     if (w1.good + w1.bad < 20) continue;
@@ -191,4 +286,13 @@ async function burningSlos() {
   return out;
 }
 
-module.exports = { SLOS, CONFIG_KEY, FAST_BURN, SLOW_BURN, evaluate, computeSlos, burningSlos, getTargets };
+module.exports = {
+  SLOS,
+  CONFIG_KEY,
+  FAST_BURN,
+  SLOW_BURN,
+  evaluate,
+  computeSlos,
+  burningSlos,
+  getTargets,
+};

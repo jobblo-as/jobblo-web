@@ -58,11 +58,7 @@ export const StepIndicator: React.FC<StepIndicatorProps> = ({ currentStep, setCu
                   fit across a phone. The sentence above carries it there instead. */}
               <span
                 className={`hidden items-center gap-1 text-[0.75rem] font-medium transition-colors sm:flex ${
-                  isCurrent
-                    ? 'text-[#0B0B0B]'
-                    : isDone
-                      ? 'text-[#2E6641]'
-                      : 'text-[#9B9E96]'
+                  isCurrent ? 'text-[#0B0B0B]' : isDone ? 'text-[#2E6641]' : 'text-[#9B9E96]'
                 }`}
               >
                 {isDone && <Check size={11} strokeWidth={3} />}

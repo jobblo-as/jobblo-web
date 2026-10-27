@@ -9,7 +9,13 @@ const crypto = require('crypto');
 
 const MAX_BATCH = 30;
 const METRICS = ['LCP', 'INP', 'CLS', 'FCP', 'TTFB'];
-const THRESHOLDS = { LCP: [2500, 4000], INP: [200, 500], CLS: [0.1, 0.25], FCP: [1800, 3000], TTFB: [800, 1800] };
+const THRESHOLDS = {
+  LCP: [2500, 4000],
+  INP: [200, 500],
+  CLS: [0.1, 0.25],
+  FCP: [1800, 3000],
+  TTFB: [800, 1800],
+};
 const DEVICES = ['mobile', 'tablet', 'desktop'];
 const RATINGS = ['good', 'needs-improvement', 'poor'];
 const str = (v, max) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, max) : null);
@@ -17,8 +23,15 @@ const num = (v, max) => (Number.isFinite(v) && v >= 0 ? Math.min(v, max) : null)
 
 /** Pure: "/jobs/6ad90a9e94221dfd9681ff17?x=1" → "/jobs/:id". Unit-tested. */
 function templatePage(raw) {
-  const p = String(raw || '/').split(/[?#]/)[0].slice(0, 200);
-  return p.replace(/\/[0-9a-f]{24}(?=\/|$)/gi, '/:id').replace(/\/[0-9a-f-]{36}(?=\/|$)/gi, '/:id').replace(/\/\d+(?=\/|$)/g, '/:id') || '/';
+  const p = String(raw || '/')
+    .split(/[?#]/)[0]
+    .slice(0, 200);
+  return (
+    p
+      .replace(/\/[0-9a-f]{24}(?=\/|$)/gi, '/:id')
+      .replace(/\/[0-9a-f-]{36}(?=\/|$)/gi, '/:id')
+      .replace(/\/\d+(?=\/|$)/g, '/:id') || '/'
+  );
 }
 
 const PROBLEM_KINDS = ['render', 'not_found', 'chunk', 'api', 'console'];
@@ -65,7 +78,10 @@ function rate(metric, value) {
 /** Pure: whitelist one batch. Unit-tested. */
 function normalize(body, now = Date.now()) {
   const b = body && typeof body === 'object' ? body : {};
-  const sessionId = typeof b.sessionId === 'string' && /^[A-Za-z0-9_-]{8,64}$/.test(b.sessionId) ? b.sessionId : null;
+  const sessionId =
+    typeof b.sessionId === 'string' && /^[A-Za-z0-9_-]{8,64}$/.test(b.sessionId)
+      ? b.sessionId
+      : null;
   if (!sessionId) return { error: 'sessionId is required.' };
   const base = {
     sessionId,
@@ -81,7 +97,12 @@ function normalize(body, now = Date.now()) {
     // Never store the developer console or admin pages as "user" experience.
     if (/^\/(developer|dashboard)(\/|$)/.test(page)) continue;
     const t = Number(new Date(e.at));
-    const doc = { ...base, type: e.type, page, at: new Date(Number.isFinite(t) && t <= now + 300_000 && t >= now - 86_400_000 ? t : now) };
+    const doc = {
+      ...base,
+      type: e.type,
+      page,
+      at: new Date(Number.isFinite(t) && t <= now + 300_000 && t >= now - 86_400_000 ? t : now),
+    };
     if (e.type === 'vital') {
       if (!METRICS.includes(e.metric)) continue;
       doc.metric = e.metric;
@@ -95,12 +116,19 @@ function normalize(body, now = Date.now()) {
       if (e.type === 'problem') {
         if (!PROBLEM_KINDS.includes(e.kind)) continue;
         doc.kind = e.kind;
-        doc.status = Number.isInteger(e.status) && e.status >= 0 && e.status < 600 ? e.status : null;
+        doc.status =
+          Number.isInteger(e.status) && e.status >= 0 && e.status < 600 ? e.status : null;
       }
       doc.message = maskLabel(e.message, 300) || '(no message)';
       doc.source = str(e.source, 200);
       doc.trail = normalizeTrail(e.trail, now);
-      doc.fingerprint = crypto.createHash('sha1').update(`${doc.message.replace(/\d+/g, '#')}|${(doc.source || '').replace(/[?#].*$|:\d+:\d+$/g, '')}`).digest('hex').slice(0, 16);
+      doc.fingerprint = crypto
+        .createHash('sha1')
+        .update(
+          `${doc.message.replace(/\d+/g, '#')}|${(doc.source || '').replace(/[?#].*$|:\d+:\d+$/g, '')}`
+        )
+        .digest('hex')
+        .slice(0, 16);
     }
     docs.push(doc);
   }
@@ -123,7 +151,8 @@ async function ingest(req, res) {
   return res.status(204).end();
 }
 
-const p75 = (sorted) => (sorted.length ? sorted[Math.min(sorted.length - 1, Math.floor(0.75 * sorted.length))] : null);
+const p75 = (sorted) =>
+  sorted.length ? sorted[Math.min(sorted.length - 1, Math.floor(0.75 * sorted.length))] : null;
 
 async function summary({ days = 7 } = {}) {
   const RumEvent = require('../../models/RumEvent');
@@ -134,24 +163,70 @@ async function summary({ days = 7 } = {}) {
     RumEvent.aggregate([
       { $match: { ...match, type: 'vital' } },
       { $sort: { value: 1 } },
-      { $group: { _id: { m: '$metric', p: '$page' }, values: { $push: '$value' }, good: { $sum: { $cond: [{ $eq: ['$rating', 'good'] }, 1, 0] } }, poor: { $sum: { $cond: [{ $eq: ['$rating', 'poor'] }, 1, 0] } } } },
+      {
+        $group: {
+          _id: { m: '$metric', p: '$page' },
+          values: { $push: '$value' },
+          good: { $sum: { $cond: [{ $eq: ['$rating', 'good'] }, 1, 0] } },
+          poor: { $sum: { $cond: [{ $eq: ['$rating', 'poor'] }, 1, 0] } },
+        },
+      },
     ]),
     RumEvent.aggregate([
       { $match: { ...match, type: 'view' } },
-      { $group: { _id: { p: '$page', d: '$device', b: '$browser' }, n: { $sum: 1 }, loads: { $push: '$loadMs' } } },
+      {
+        $group: {
+          _id: { p: '$page', d: '$device', b: '$browser' },
+          n: { $sum: 1 },
+          loads: { $push: '$loadMs' },
+        },
+      },
     ]),
     RumEvent.aggregate([
       { $match: { ...match, type: 'error' } },
       { $sort: { at: -1 } },
-      { $group: { _id: '$fingerprint', n: { $sum: 1 }, sessions: { $addToSet: '$sessionId' }, message: { $first: '$message' }, source: { $first: '$source' }, pages: { $addToSet: '$page' }, browsers: { $addToSet: '$browser' }, last: { $first: '$at' }, first: { $last: '$at' } } },
-      { $project: { _id: 0, fingerprint: '$_id', n: 1, sessions: { $size: '$sessions' }, message: 1, source: 1, pages: { $slice: ['$pages', 5] }, browsers: 1, last: 1, first: 1 } },
+      {
+        $group: {
+          _id: '$fingerprint',
+          n: { $sum: 1 },
+          sessions: { $addToSet: '$sessionId' },
+          message: { $first: '$message' },
+          source: { $first: '$source' },
+          pages: { $addToSet: '$page' },
+          browsers: { $addToSet: '$browser' },
+          last: { $first: '$at' },
+          first: { $last: '$at' },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          fingerprint: '$_id',
+          n: 1,
+          sessions: { $size: '$sessions' },
+          message: 1,
+          source: 1,
+          pages: { $slice: ['$pages', 5] },
+          browsers: 1,
+          last: 1,
+          first: 1,
+        },
+      },
       { $sort: { sessions: -1, n: -1 } },
       { $limit: 50 },
     ]),
     RumEvent.distinct('sessionId', match),
     RumEvent.aggregate([
       { $match: { ...match, type: { $in: ['view', 'error'] } } },
-      { $group: { _id: { $toDate: { $subtract: [{ $toLong: '$at' }, { $mod: [{ $toLong: '$at' }, bucket] }] } }, views: { $sum: { $cond: [{ $eq: ['$type', 'view'] }, 1, 0] } }, errors: { $sum: { $cond: [{ $eq: ['$type', 'error'] }, 1, 0] } } } },
+      {
+        $group: {
+          _id: {
+            $toDate: { $subtract: [{ $toLong: '$at' }, { $mod: [{ $toLong: '$at' }, bucket] }] },
+          },
+          views: { $sum: { $cond: [{ $eq: ['$type', 'view'] }, 1, 0] } },
+          errors: { $sum: { $cond: [{ $eq: ['$type', 'error'] }, 1, 0] } },
+        },
+      },
       { $sort: { _id: 1 } },
       { $project: { _id: 0, t: '$_id', views: 1, errors: 1 } },
     ]),
@@ -184,7 +259,15 @@ async function summary({ days = 7 } = {}) {
     const o = overall[m];
     const sorted = o.values.sort((a, b) => a - b);
     const value = p75(sorted);
-    return { metric: m, p75: value, rating: rate(m, value), samples: sorted.length, goodShare: sorted.length ? Math.round((o.good / sorted.length) * 1000) / 10 : null, poorShare: sorted.length ? Math.round((o.poor / sorted.length) * 1000) / 10 : null, thresholds: THRESHOLDS[m] };
+    return {
+      metric: m,
+      p75: value,
+      rating: rate(m, value),
+      samples: sorted.length,
+      goodShare: sorted.length ? Math.round((o.good / sorted.length) * 1000) / 10 : null,
+      poorShare: sorted.length ? Math.round((o.poor / sorted.length) * 1000) / 10 : null,
+      thresholds: THRESHOLDS[m],
+    };
   });
   const totalViews = views.reduce((a, v) => a + v.n, 0);
   return {
@@ -193,9 +276,23 @@ async function summary({ days = 7 } = {}) {
     sessions: sessions.length,
     views: totalViews,
     errorCount: errors.reduce((a, e) => a + e.n, 0),
-    crashFreeSessions: sessions.length ? Math.round((1 - errorSessions.length / sessions.length) * 1000) / 10 : null,
+    crashFreeSessions: sessions.length
+      ? Math.round((1 - errorSessions.length / sessions.length) * 1000) / 10
+      : null,
     metrics,
-    pages: [...pages.values()].map((p) => ({ ...p, worst: METRICS.map((m) => rate(m, p.vitals[m]?.p75 ?? null)).includes('poor') ? 'poor' : METRICS.map((m) => rate(m, p.vitals[m]?.p75 ?? null)).includes('needs-improvement') ? 'needs-improvement' : Object.keys(p.vitals).length ? 'good' : null })).sort((a, b) => b.views - a.views).slice(0, 50),
+    pages: [...pages.values()]
+      .map((p) => ({
+        ...p,
+        worst: METRICS.map((m) => rate(m, p.vitals[m]?.p75 ?? null)).includes('poor')
+          ? 'poor'
+          : METRICS.map((m) => rate(m, p.vitals[m]?.p75 ?? null)).includes('needs-improvement')
+            ? 'needs-improvement'
+            : Object.keys(p.vitals).length
+              ? 'good'
+              : null,
+      }))
+      .sort((a, b) => b.views - a.views)
+      .slice(0, 50),
     errors,
     devices: deviceViews,
     browsers: browserViews,
@@ -203,4 +300,14 @@ async function summary({ days = 7 } = {}) {
   };
 }
 
-module.exports = { templatePage, rate, normalize, ingest, summary, THRESHOLDS, maskLabel, normalizeTrail, PROBLEM_KINDS };
+module.exports = {
+  templatePage,
+  rate,
+  normalize,
+  ingest,
+  summary,
+  THRESHOLDS,
+  maskLabel,
+  normalizeTrail,
+  PROBLEM_KINDS,
+};

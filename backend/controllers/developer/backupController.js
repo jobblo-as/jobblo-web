@@ -14,14 +14,23 @@ const getBackups = asyncHandler(async (req, res) => {
   const [runs, lastSuccess, lastDrill, retained, tools, disk, cloud] = await Promise.all([
     BackupRun.find().sort({ startedAt: -1 }).limit(60).populate('by', 'name').lean(),
     BackupRun.findOne({ kind: 'backup', status: 'succeeded' }).sort({ startedAt: -1 }).lean(),
-    BackupRun.findOne({ kind: 'drill', status: { $ne: 'running' } }).sort({ startedAt: -1 }).lean(),
-    BackupRun.aggregate([{ $match: { kind: 'backup', status: 'succeeded', deletedAt: null } }, { $group: { _id: null, n: { $sum: 1 }, bytes: { $sum: '$sizeBytes' } } }]),
+    BackupRun.findOne({ kind: 'drill', status: { $ne: 'running' } })
+      .sort({ startedAt: -1 })
+      .lean(),
+    BackupRun.aggregate([
+      { $match: { kind: 'backup', status: 'succeeded', deletedAt: null } },
+      { $group: { _id: null, n: { $sum: 1 }, bytes: { $sum: '$sizeBytes' } } },
+    ]),
     backup.toolsVersion(),
     c.dir ? backup.diskFree(c.dir) : null,
     atlas.listSnapshots(),
   ]);
   const newestCloud = cloud.snapshots.find((s) => s.status === 'completed');
-  const lastAt = [lastSuccess?.startedAt, newestCloud?.createdAt].filter(Boolean).map((d) => new Date(d)).sort((a, b) => b - a)[0] || null;
+  const lastAt =
+    [lastSuccess?.startedAt, newestCloud?.createdAt]
+      .filter(Boolean)
+      .map((d) => new Date(d))
+      .sort((a, b) => b - a)[0] || null;
   const ageHours = lastAt ? (Date.now() - lastAt) / HOUR : null;
 
   return sendSuccess(res, {
@@ -45,7 +54,14 @@ const getBackups = asyncHandler(async (req, res) => {
 
 const fail = (res, e) => (e.status ? sendError(res, e.message, e.status) : serverError(res, e));
 const audit = (req, description, metadata) =>
-  logActivity({ adminId: req.user._id, action: 'other', description, metadata: { area: 'developer.backup', ...metadata }, ip: req.ip, userAgent: req.get('user-agent') || 'unknown' });
+  logActivity({
+    adminId: req.user._id,
+    action: 'other',
+    description,
+    metadata: { area: 'developer.backup', ...metadata },
+    ip: req.ip,
+    userAgent: req.get('user-agent') || 'unknown',
+  });
 
 const runBackup = asyncHandler(async (req, res) => {
   try {
@@ -59,10 +75,18 @@ const runBackup = asyncHandler(async (req, res) => {
 
 const runDrill = asyncHandler(async (req, res) => {
   const backupId = req.body?.backupId;
-  if (backupId && !mongoose.isValidObjectId(backupId)) return sendError(res, 'Invalid backupId.', 400);
+  if (backupId && !mongoose.isValidObjectId(backupId))
+    return sendError(res, 'Invalid backupId.', 400);
   try {
-    const { run } = await backup.startDrill({ backupId: backupId || null, trigger: 'dashboard', by: req.user._id });
-    await audit(req, 'Developer started a restore drill', { runId: String(run._id), backupId: String(run.backupId) });
+    const { run } = await backup.startDrill({
+      backupId: backupId || null,
+      trigger: 'dashboard',
+      by: req.user._id,
+    });
+    await audit(req, 'Developer started a restore drill', {
+      runId: String(run._id),
+      backupId: String(run.backupId),
+    });
     return sendSuccess(res, { run }, 'Restore drill started.', null, 202);
   } catch (e) {
     return fail(res, e);

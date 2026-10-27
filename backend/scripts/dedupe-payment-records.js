@@ -49,7 +49,9 @@ async function dedupe({ model, groupBy, matchStage, label }) {
 
   console.log(`  ${label}: ${groups.length} duplicated key(s), ${doomed.length} row(s) to remove`);
   for (const g of groups.slice(0, 10)) {
-    console.log(`      key=${JSON.stringify(g._id)}  keeping=${g.ids[0]}  removing=${g.ids.slice(1).join(', ')}`);
+    console.log(
+      `      key=${JSON.stringify(g._id)}  keeping=${g.ids[0]}  removing=${g.ids.slice(1).join(', ')}`
+    );
   }
   if (groups.length > 10) console.log(`      … and ${groups.length - 10} more`);
 
@@ -68,7 +70,9 @@ async function dedupe({ model, groupBy, matchStage, label }) {
   }
 
   await mongoose.connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 15000 });
-  console.log(`\nDeduplicating payment records${APPLY ? '' : '  (DRY RUN — pass --apply to delete)'}\n`);
+  console.log(
+    `\nDeduplicating payment records${APPLY ? '' : '  (DRY RUN — pass --apply to delete)'}\n`
+  );
 
   const Payment = require('../models/Payment');
   const JobRequest = require('../models/JobRequest');

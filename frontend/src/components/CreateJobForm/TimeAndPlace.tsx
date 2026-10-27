@@ -1,12 +1,5 @@
 import React, { useRef, useState } from 'react';
-import {
-  MapPin,
-  Calendar,
-  Clock,
-  Info,
-  AlertCircle,
-  Loader2,
-} from 'lucide-react';
+import { MapPin, Calendar, Clock, Info, AlertCircle, Loader2 } from 'lucide-react';
 import { APIProvider } from '@vis.gl/react-google-maps';
 import { useLocationTree } from '../../features/locations/hooks';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../Ui/select';
@@ -77,7 +70,9 @@ export const TimeAndPlace: React.FC<TimeAndPlaceProps> = ({
     const county =
       locationTree.find((c) => c.children?.some((m) => m.code === hit.municipalityCode)) ??
       locationTree.find((c) => c.children?.some((m) => sameName(m.name)));
-    const municipality = county?.children?.find((m) => m.code === hit.municipalityCode || sameName(m.name));
+    const municipality = county?.children?.find(
+      (m) => m.code === hit.municipalityCode || sameName(m.name)
+    );
     setAddress(hit.address);
     setPostalCode?.(hit.postalCode);
     setCity(hit.city || hit.municipalityName);
@@ -133,8 +128,10 @@ export const TimeAndPlace: React.FC<TimeAndPlaceProps> = ({
         ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/5'
         : 'border-gray-200 focus:border-[#2D7A4D] focus:ring-4 focus:ring-[#2D7A4D]/5'
     }`;
-  const labelClass = 'text-[11px] md:text-[13px] font-bold text-gray-400 uppercase tracking-wider ml-1';
-  const postalCodeError = postalCode && !/^\d{4}$/.test(postalCode) ? 'Postnummeret har 4 sifre.' : '';
+  const labelClass =
+    'text-[11px] md:text-[13px] font-bold text-gray-400 uppercase tracking-wider ml-1';
+  const postalCodeError =
+    postalCode && !/^\d{4}$/.test(postalCode) ? 'Postnummeret har 4 sifre.' : '';
 
   /*
     One Kartverket address search, as in the app: it fills address, postnummer, sted, fylke and
@@ -162,14 +159,22 @@ export const TimeAndPlace: React.FC<TimeAndPlaceProps> = ({
         />
       </div>
 
-      <div className="mt-5 md:mt-6 space-y-2" data-invalid={errors?.coordinates ? 'true' : undefined}>
-        <LocationPickerMap coordinates={coordinates} onCoordinatesChange={(point) => void pickPoint(point)} />
+      <div
+        className="mt-5 md:mt-6 space-y-2"
+        data-invalid={errors?.coordinates ? 'true' : undefined}
+      >
+        <LocationPickerMap
+          coordinates={coordinates}
+          onCoordinatesChange={(point) => void pickPoint(point)}
+        />
         {lookingUp ? (
           <p className="ml-1 flex items-center gap-1.5 text-xs text-gray-500">
             <Loader2 size={12} className="animate-spin" /> Finner adressen …
           </p>
         ) : null}
-        {lookupError ? <p className="ml-1 text-xs font-medium text-red-500">{lookupError}</p> : null}
+        {lookupError ? (
+          <p className="ml-1 text-xs font-medium text-red-500">{lookupError}</p>
+        ) : null}
         {errors?.coordinates ? (
           <p className="ml-1 flex items-center gap-1.5 text-[10px] font-bold text-red-500 md:text-xs">
             <AlertCircle size={12} /> {errors.coordinates}
@@ -182,7 +187,9 @@ export const TimeAndPlace: React.FC<TimeAndPlaceProps> = ({
       <p className="mt-6 text-sm font-semibold text-gray-800">Full adresse</p>
       <div className="mt-3 grid grid-cols-1 gap-4 md:grid-cols-[1fr_8rem_1fr]">
         <div className="space-y-2">
-          <label htmlFor="job-street" className={labelClass}>Gateadresse</label>
+          <label htmlFor="job-street" className={labelClass}>
+            Gateadresse
+          </label>
           <input
             id="job-street"
             type="text"
@@ -195,7 +202,9 @@ export const TimeAndPlace: React.FC<TimeAndPlaceProps> = ({
           />
         </div>
         <div className="space-y-2">
-          <label htmlFor="job-postal-code" className={labelClass}>Postnr.</label>
+          <label htmlFor="job-postal-code" className={labelClass}>
+            Postnr.
+          </label>
           <input
             id="job-postal-code"
             type="text"
@@ -207,10 +216,14 @@ export const TimeAndPlace: React.FC<TimeAndPlaceProps> = ({
             aria-invalid={postalCodeError ? true : undefined}
             className={inputClass(!!postalCodeError)}
           />
-          {postalCodeError ? <p className="ml-1 text-[10px] font-bold text-red-500 md:text-xs">{postalCodeError}</p> : null}
+          {postalCodeError ? (
+            <p className="ml-1 text-[10px] font-bold text-red-500 md:text-xs">{postalCodeError}</p>
+          ) : null}
         </div>
         <div className="space-y-2">
-          <label htmlFor="job-city" className={labelClass}>Sted</label>
+          <label htmlFor="job-city" className={labelClass}>
+            Sted
+          </label>
           <input
             id="job-city"
             type="text"
@@ -228,7 +241,9 @@ export const TimeAndPlace: React.FC<TimeAndPlaceProps> = ({
           )}
         </div>
       </div>
-      <p className="mt-2 ml-1 text-xs text-gray-500">Stedet vises med en nål på kartet i annonsen.</p>
+      <p className="mt-2 ml-1 text-xs text-gray-500">
+        Stedet vises med en nål på kartet i annonsen.
+      </p>
     </>
   );
 
@@ -273,7 +288,10 @@ export const TimeAndPlace: React.FC<TimeAndPlaceProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           <div className="space-y-2">
-            <label htmlFor="job-from-date" className="text-[11px] md:text-[13px] font-bold text-gray-400 uppercase tracking-wider ml-1">
+            <label
+              htmlFor="job-from-date"
+              className="text-[11px] md:text-[13px] font-bold text-gray-400 uppercase tracking-wider ml-1"
+            >
               Fra dato
             </label>
             <input
@@ -292,7 +310,10 @@ export const TimeAndPlace: React.FC<TimeAndPlaceProps> = ({
             )}
           </div>
           <div className="space-y-2">
-            <label htmlFor="job-to-date" className="text-[11px] md:text-[13px] font-bold text-gray-400 uppercase tracking-wider ml-1">
+            <label
+              htmlFor="job-to-date"
+              className="text-[11px] md:text-[13px] font-bold text-gray-400 uppercase tracking-wider ml-1"
+            >
               Til dato
             </label>
             <input
@@ -370,10 +391,7 @@ export const TimeAndPlace: React.FC<TimeAndPlaceProps> = ({
 
         <div className="mt-4 md:mt-6 flex items-start gap-3 p-3 md:p-4 bg-blue-50 rounded-xl border border-blue-100 text-blue-700 text-xs md:text-sm">
           <Info size={16} className="shrink-0 mt-0.5" />
-          <p>
-            Et grovt anslag er nok — du kan alltid justere dette senere i samtalen
-            med søkere.
-          </p>
+          <p>Et grovt anslag er nok — du kan alltid justere dette senere i samtalen med søkere.</p>
         </div>
       </div>
     </div>

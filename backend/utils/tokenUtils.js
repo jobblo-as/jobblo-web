@@ -86,7 +86,8 @@ function verifyToken(token, purpose) {
   }
   if (!decoded) throw lastError;
 
-  const isLegacy = decoded.typ === undefined && decoded.aud === undefined && decoded.iss === undefined;
+  const isLegacy =
+    decoded.typ === undefined && decoded.aud === undefined && decoded.iss === undefined;
   const ok = isLegacy
     ? decoded.exp - decoded.iat === expected.ttl
     : decoded.typ === purpose && decoded.aud === expected.audience && decoded.iss === ISSUER;
@@ -104,7 +105,9 @@ const getGeoLocation = async (ip) => {
     }
     // Bounded: this runs inside every login, and axios has no timeout by default, so a slow
     // or blackholed ip-api.com held every sign-in open until the socket gave up.
-    const response = await axios.get(`http://ip-api.com/json/${encodeURIComponent(ip)}`, { timeout: GEO_TIMEOUT_MS });
+    const response = await axios.get(`http://ip-api.com/json/${encodeURIComponent(ip)}`, {
+      timeout: GEO_TIMEOUT_MS,
+    });
     if (response.data && response.data.status === 'success') {
       return `${response.data.city}, ${response.data.country}`;
     }
@@ -122,7 +125,11 @@ const getGeoLocation = async (ip) => {
 const deviceNameFrom = (req) => {
   const raw = req.headers?.['x-device-name'];
   if (typeof raw !== 'string') return null;
-  const name = raw.replace(/[^A-Za-z0-9 ._()+,/-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 60);
+  const name = raw
+    .replace(/[^A-Za-z0-9 ._()+,/-]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 60);
   return name || null;
 };
 
@@ -134,7 +141,11 @@ const createSession = async (req, userId) => {
     const clientIp = String(req.ip || '').replace(/^::ffff:/, '') || 'unknown';
     // Parsed here, the one place that needs it: parsing every request's user agent in a
     // global middleware cost ~7 % of the API's CPU under load.
-    const agent = req.useragent || new (require('express-useragent').UserAgent)().parse(String(req.headers?.['user-agent'] || ''));
+    const agent =
+      req.useragent ||
+      new (require('express-useragent').UserAgent)().parse(
+        String(req.headers?.['user-agent'] || '')
+      );
     const location = await getGeoLocation(clientIp);
 
     const device = agent.isMobile ? 'Mobile' : agent.isTablet ? 'Tablet' : 'Desktop';
@@ -173,4 +184,13 @@ const createSession = async (req, userId) => {
   }
 };
 
-module.exports = { generateTokens, verifyToken, createSession, deviceNameFrom, getGeoLocation, GEO_TIMEOUT_MS, ACCESS_TTL_S, REFRESH_TTL_S };
+module.exports = {
+  generateTokens,
+  verifyToken,
+  createSession,
+  deviceNameFrom,
+  getGeoLocation,
+  GEO_TIMEOUT_MS,
+  ACCESS_TTL_S,
+  REFRESH_TTL_S,
+};

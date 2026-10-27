@@ -4,20 +4,12 @@ const SubscriptionPlan = require('../../models/SubscriptionPlan');
 const SubscriptionBillingOperationV2 = require('../../models/SubscriptionBillingOperationV2');
 const SubscriptionWebhookEventV2 = require('../../models/SubscriptionWebhookEventV2');
 const SubscriptionUsagePeriod = require('../../models/SubscriptionUsagePeriod');
-const {
-  ensurePaidUsagePeriod,
-  setPaidPeriodAllowance,
-} = require('./v2Entitlements');
+const { ensurePaidUsagePeriod, setPaidPeriodAllowance } = require('./v2Entitlements');
 const recoveryPolicy = require('./v2RecoveryPolicy');
 
 const V2_MARKER = 'true';
 const STALE_CLAIM_MS = 5 * 60 * 1000;
-const BILLABLE_STATUSES = new Set([
-  'active',
-  'past_due',
-  'canceling',
-  'pending',
-]);
+const BILLABLE_STATUSES = new Set(['active', 'past_due', 'canceling', 'pending']);
 const SCHEDULE_EVENT_TYPES = new Set([
   'subscription_schedule.created',
   'subscription_schedule.updated',
@@ -285,10 +277,7 @@ async function recordActivation({
   ) {
     throw new Error('subscription_price_mismatch');
   }
-  if (
-    operation.stripeCustomerId &&
-    idOf(subscription.customer) !== operation.stripeCustomerId
-  ) {
+  if (operation.stripeCustomerId && idOf(subscription.customer) !== operation.stripeCustomerId) {
     throw new Error('subscription_customer_mismatch');
   }
 
@@ -359,13 +348,16 @@ async function recordActivation({
     { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true }
   );
   if (!subscriptionRecord?._id) throw new Error('subscription_activation_record_missing');
-  await ensurePaidUsagePeriod({
-    userId: identity.userId,
-    subscriptionId: subscriptionRecord._id,
-    plan,
-    start: period.start,
-    end: period.end,
-  }, UsageModel);
+  await ensurePaidUsagePeriod(
+    {
+      userId: identity.userId,
+      subscriptionId: subscriptionRecord._id,
+      plan,
+      start: period.start,
+      end: period.end,
+    },
+    UsageModel
+  );
 
   await OperationModel.updateOne(
     { _id: operation._id },
@@ -439,9 +431,10 @@ async function updateSubscriptionState({
   if (!period || !status) throw new Error('subscription_state_unsupported');
 
   const updates = {
-    status: failedPayment && ['active', 'past_due', 'unpaid'].includes(subscription.status)
-      ? 'past_due'
-      : status,
+    status:
+      failedPayment && ['active', 'past_due', 'unpaid'].includes(subscription.status)
+        ? 'past_due'
+        : status,
     currentPeriodStart: period.start,
     currentPeriodEnd: period.end,
     nextRenewalAt: period.end,
@@ -463,13 +456,16 @@ async function updateSubscriptionState({
   if (invoice?.status === 'paid') {
     const plan = await PlanModel.findById(record.planId).lean();
     if (!plan) throw new Error('subscription_usage_plan_missing');
-    await ensurePaidUsagePeriod({
-      userId: record.userId,
-      subscriptionId: record._id,
-      plan,
-      start: period.start,
-      end: period.end,
-    }, UsageModel);
+    await ensurePaidUsagePeriod(
+      {
+        userId: record.userId,
+        subscriptionId: record._id,
+        plan,
+        start: period.start,
+        end: period.end,
+      },
+      UsageModel
+    );
   }
 
   if (invoiceOperation) {
@@ -616,9 +612,8 @@ async function applyVerifiedPlanChange({
     }
     const schedule = await stripe.subscriptionSchedules.retrieve(scheduleId);
     const currentPhase = schedule.current_phase;
-    const currentPhaseItems = schedule.phases?.find(
-      (phase) => phase.start_date === currentPhase?.start_date
-    )?.items || [];
+    const currentPhaseItems =
+      schedule.phases?.find((phase) => phase.start_date === currentPhase?.start_date)?.items || [];
     const effectiveAtSeconds = Math.floor(effectiveAt.getTime() / 1000);
     const targetPhase = schedule.phases?.find(
       (phase) =>
@@ -697,17 +692,19 @@ async function applyVerifiedPlanChange({
   // meant a renewal that then failed still had a paid period, so entitlements stayed
   // paid and grace anchored to an unpaid period. Grant it only once that period's
   // invoice is paid; otherwise invoice.paid creates it (the record now holds the new plan).
-  const allowanceInvoice = operation.operationType === 'upgrade'
-    ? invoice
-    : await paidLatestInvoice(stripe, subscription);
+  const allowanceInvoice =
+    operation.operationType === 'upgrade' ? invoice : await paidLatestInvoice(stripe, subscription);
   if (allowanceInvoice && invoiceCoversPeriod(allowanceInvoice, snapshot)) {
-    await setPaidPeriodAllowance({
-      userId: existing.userId,
-      subscriptionId: existing._id,
-      plan,
-      start: snapshot.start,
-      end: snapshot.end,
-    }, UsageModel);
+    await setPaidPeriodAllowance(
+      {
+        userId: existing.userId,
+        subscriptionId: existing._id,
+        plan,
+        start: snapshot.start,
+        end: snapshot.end,
+      },
+      UsageModel
+    );
   }
   await completeLifecycleOperation(operation, OperationModel, {
     stripeSubscriptionId: subscription.id,
@@ -731,11 +728,7 @@ async function processSubscriptionScheduleEvent(event, mode, stripe, deps) {
   if (event.livemode !== (mode === 'live')) throw new Error('subscription_schedule_mode_mismatch');
   if (!object.id) throw new Error('subscription_schedule_metadata_invalid');
   const schedule = await stripe.subscriptionSchedules.retrieve(object.id);
-  if (
-    !schedule ||
-    schedule.id !== object.id ||
-    schedule.livemode !== (mode === 'live')
-  ) {
+  if (!schedule || schedule.id !== object.id || schedule.livemode !== (mode === 'live')) {
     throw new Error('subscription_schedule_reference_mismatch');
   }
 
@@ -750,10 +743,7 @@ async function processSubscriptionScheduleEvent(event, mode, stripe, deps) {
         throw new Error('subscription_schedule_reference_mismatch');
       }
       const subscription = await loadCanonicalSubscription(stripe, stripeSubscriptionId);
-      if (
-        subscription.livemode !== (mode === 'live') ||
-        !idOf(subscription.customer)
-      ) {
+      if (subscription.livemode !== (mode === 'live') || !idOf(subscription.customer)) {
         throw new Error('subscription_schedule_owner_mismatch');
       }
       if (!isV2Metadata(subscription.metadata)) {
@@ -767,10 +757,7 @@ async function processSubscriptionScheduleEvent(event, mode, stripe, deps) {
         stripeSubscriptionId,
         stripeCustomerId: idOf(subscription.customer),
       }).lean();
-      if (
-        !record ||
-        String(record.planId) !== subscriptionIdentity.planId.toString()
-      ) {
+      if (!record || String(record.planId) !== subscriptionIdentity.planId.toString()) {
         throw new Error('subscription_schedule_owner_mismatch');
       }
       if (Object.keys(schedule.metadata || {}).length) {
@@ -787,12 +774,13 @@ async function processSubscriptionScheduleEvent(event, mode, stripe, deps) {
 
   const identity = scheduleIdentity(schedule.metadata, mode);
   if (!identity) throw new Error('subscription_schedule_metadata_invalid');
-  if (event.type !== 'subscription_schedule.created' && (
-    identity.operationId !== eventIdentity.operationId ||
-    !identity.userId.equals(eventIdentity.userId) ||
-    !identity.planId.equals(eventIdentity.planId) ||
-    !identity.subscriptionId.equals(eventIdentity.subscriptionId)
-  )) {
+  if (
+    event.type !== 'subscription_schedule.created' &&
+    (identity.operationId !== eventIdentity.operationId ||
+      !identity.userId.equals(eventIdentity.userId) ||
+      !identity.planId.equals(eventIdentity.planId) ||
+      !identity.subscriptionId.equals(eventIdentity.subscriptionId))
+  ) {
     return { handled: 'subscription_schedule_stale_event' };
   }
 
@@ -800,7 +788,8 @@ async function processSubscriptionScheduleEvent(event, mode, stripe, deps) {
   // `subscription` to `released_subscription`. Reading only `subscription` rejected every
   // release (e.g. a downgrade cancelled in the billing portal) as an owner mismatch, so
   // the pending plan change was never cleared.
-  const stripeSubscriptionId = idOf(schedule.subscription) ||
+  const stripeSubscriptionId =
+    idOf(schedule.subscription) ||
     (schedule.status === 'released' ? idOf(schedule.released_subscription) : null);
   const record = await deps.SubscriptionModel.findOne({
     _id: identity.subscriptionId,
@@ -828,7 +817,8 @@ async function processSubscriptionScheduleEvent(event, mode, stripe, deps) {
   if (
     !operation ||
     operation.stripeCustomerId !== record.stripeCustomerId ||
-    operation.stripePriceId !== (mode === 'live' ? targetPlan?.stripePriceId : targetPlan?.stripePriceIdTest)
+    operation.stripePriceId !==
+      (mode === 'live' ? targetPlan?.stripePriceId : targetPlan?.stripePriceIdTest)
   ) {
     throw new Error('subscription_schedule_operation_mismatch');
   }
@@ -837,7 +827,8 @@ async function processSubscriptionScheduleEvent(event, mode, stripe, deps) {
   }
   const scheduleIsTerminal = ['canceled', 'released', 'aborted'].includes(schedule.status);
   if (
-    (subscription.status !== 'active' && !(scheduleIsTerminal && subscription.status === 'canceled')) ||
+    (subscription.status !== 'active' &&
+      !(scheduleIsTerminal && subscription.status === 'canceled')) ||
     subscription.livemode !== (mode === 'live') ||
     idOf(subscription.customer) !== record.stripeCustomerId ||
     !currentPlan ||
@@ -854,14 +845,17 @@ async function processSubscriptionScheduleEvent(event, mode, stripe, deps) {
 
   const [currentSnapshot, targetPrice] = await Promise.all([
     verifyPlanPrice(stripe, subscription, currentPlan, mode),
-    stripe.prices.retrieve(mode === 'live' ? targetPlan.stripePriceId : targetPlan.stripePriceIdTest),
+    stripe.prices.retrieve(
+      mode === 'live' ? targetPlan.stripePriceId : targetPlan.stripePriceIdTest
+    ),
   ]);
   if (
     !currentSnapshot ||
     currentSnapshot.start.getTime() !== new Date(record.currentPeriodStart).getTime() ||
     currentSnapshot.end.getTime() !== new Date(record.currentPeriodEnd).getTime() ||
     !targetPrice ||
-    targetPrice.id !== (mode === 'live' ? targetPlan.stripePriceId : targetPlan.stripePriceIdTest) ||
+    targetPrice.id !==
+      (mode === 'live' ? targetPlan.stripePriceId : targetPlan.stripePriceIdTest) ||
     targetPrice.active !== true ||
     targetPrice.livemode !== (mode === 'live') ||
     targetPrice.currency?.toLowerCase() !== 'nok' ||
@@ -903,7 +897,8 @@ async function processSubscriptionScheduleEvent(event, mode, stripe, deps) {
   const currentPriceId = idOf(currentSnapshot.item.price);
   // Records activated before stripePriceId was stored lack it; verifyPlanPrice above has
   // already proven the live price belongs to currentPlan, so that price is the fallback.
-  const recordPriceId = record.stripePriceId ||
+  const recordPriceId =
+    record.stripePriceId ||
     (mode === 'live' ? currentPlan.stripePriceId : currentPlan.stripePriceIdTest);
   const currentPlanStillActive =
     String(record.planId) !== String(targetPlan._id) &&
@@ -927,8 +922,7 @@ async function processSubscriptionScheduleEvent(event, mode, stripe, deps) {
     const pending = record.pendingPlanChange;
     if (
       pending &&
-      (pending.operationId !== operation.operationId ||
-        pending.stripeScheduleId !== schedule.id)
+      (pending.operationId !== operation.operationId || pending.stripeScheduleId !== schedule.id)
     ) {
       throw new Error('subscription_schedule_state_conflict');
     }
@@ -987,8 +981,12 @@ async function processSubscriptionScheduleEvent(event, mode, stripe, deps) {
       // Stripe sends `released` and `updated` for the same release together; whichever
       // lands second finds the change already cleared. That is the desired end state,
       // not a failure — answering 500 made Stripe retry it and marked the webhook unhealthy.
-      const latest = await deps.SubscriptionModel.findOne({ _id: record._id, userId: record.userId }).lean();
-      if (latest && !latest.pendingPlanChange) return { handled: 'subscription_schedule_already_cleared' };
+      const latest = await deps.SubscriptionModel.findOne({
+        _id: record._id,
+        userId: record.userId,
+      }).lean();
+      if (latest && !latest.pendingPlanChange)
+        return { handled: 'subscription_schedule_already_cleared' };
       throw new Error('subscription_schedule_state_changed');
     }
     return { handled: 'subscription_schedule_cleared' };
@@ -1050,9 +1048,10 @@ async function processVerifiedEvent(event, mode, stripe, overrides = {}) {
                 status: 'failed',
                 failedAt: new Date(),
                 stripeCheckoutSessionId: object.id,
-                lastErrorCode: event.type === 'checkout.session.expired'
-                  ? 'checkout_expired'
-                  : 'initial_payment_failed',
+                lastErrorCode:
+                  event.type === 'checkout.session.expired'
+                    ? 'checkout_expired'
+                    : 'initial_payment_failed',
               },
             }
           );
@@ -1136,15 +1135,14 @@ async function processVerifiedEvent(event, mode, stripe, overrides = {}) {
           );
           if (
             String(existing.planId) !== identity.planId.toString() ||
-            (
-              ['upgrade', 'downgrade'].includes(operation?.operationType) &&
-              ['pending', 'reconciliation_required'].includes(operation.status)
-            )
+            (['upgrade', 'downgrade'].includes(operation?.operationType) &&
+              ['pending', 'reconciliation_required'].includes(operation.status))
           ) {
             const plan = await deps.PlanModel.findById(identity.planId).lean();
-            const invoice = operation?.operationType === 'upgrade'
-              ? await paidLatestInvoice(stripe, subscription)
-              : null;
+            const invoice =
+              operation?.operationType === 'upgrade'
+                ? await paidLatestInvoice(stripe, subscription)
+                : null;
             if (!plan) throw new Error('subscription_plan_change_plan_missing');
             outcome = await applyVerifiedPlanChange({
               identity,
@@ -1236,7 +1234,8 @@ async function processVerifiedEvent(event, mode, stripe, overrides = {}) {
       } else {
         const eventInvoice = object;
         const invoice = await stripe.invoices.retrieve(eventInvoice.id);
-        if (!invoice || invoice.id !== eventInvoice.id) throw new Error('invoice_reference_mismatch');
+        if (!invoice || invoice.id !== eventInvoice.id)
+          throw new Error('invoice_reference_mismatch');
         const canonicalMetadata = metadataFromInvoice(invoice);
         const canonicalInvoiceIdentity = operationIdentity(canonicalMetadata, mode);
         if (
@@ -1324,7 +1323,11 @@ async function processVerifiedEvent(event, mode, stripe, overrides = {}) {
                 UsageModel: deps.UsageModel,
               });
             } else {
-              await setOperationReconciliation(operation, 'subscription_plan_missing', deps.OperationModel);
+              await setOperationReconciliation(
+                operation,
+                'subscription_plan_missing',
+                deps.OperationModel
+              );
               outcome = { handled: 'subscription_reconciliation_required' };
             }
           }
@@ -1361,10 +1364,8 @@ async function processVerifiedEvent(event, mode, stripe, overrides = {}) {
         } else if (
           existing &&
           (String(existing.planId) !== identity.planId.toString() ||
-            (
-              ['upgrade', 'downgrade'].includes(managementOperation?.operationType) &&
-              ['pending', 'reconciliation_required'].includes(managementOperation.status)
-            ))
+            (['upgrade', 'downgrade'].includes(managementOperation?.operationType) &&
+              ['pending', 'reconciliation_required'].includes(managementOperation.status)))
         ) {
           const operation = managementOperation;
           const plan = await deps.PlanModel.findById(identity.planId).lean();
@@ -1422,20 +1423,26 @@ async function processVerifiedEvent(event, mode, stripe, overrides = {}) {
         } else if (existing) {
           let recoveredBeforeStateUpdate = false;
           if (paymentSucceeded && existing.paymentRecoveryStatus === 'retrying') {
-            recoveredBeforeStateUpdate = await recoveryPolicy.markRecovered({
-              record: existing,
-              invoice,
-              subscription,
-              now: new Date(),
-            }, {
-              SubscriptionModel: deps.SubscriptionModel,
-              EmailModel: deps.RecoveryEmailModel,
-              env: deps.env,
-            });
+            recoveredBeforeStateUpdate = await recoveryPolicy.markRecovered(
+              {
+                record: existing,
+                invoice,
+                subscription,
+                now: new Date(),
+              },
+              {
+                SubscriptionModel: deps.SubscriptionModel,
+                EmailModel: deps.RecoveryEmailModel,
+                env: deps.env,
+              }
+            );
             if (!recoveredBeforeStateUpdate) {
               const paidAt = asDate(invoice.status_transitions?.paid_at);
-              if (paidAt && existing.gracePeriodEndsAt instanceof Date &&
-                paidAt >= existing.gracePeriodEndsAt) {
+              if (
+                paidAt &&
+                existing.gracePeriodEndsAt instanceof Date &&
+                paidAt >= existing.gracePeriodEndsAt
+              ) {
                 await recoveryPolicy.recordLatePayment(existing, invoice, {
                   SubscriptionModel: deps.SubscriptionModel,
                   OperationModel: deps.OperationModel,
@@ -1446,7 +1453,11 @@ async function processVerifiedEvent(event, mode, stripe, overrides = {}) {
               }
             }
           }
-          if (!paymentSucceeded || existing.paymentRecoveryStatus !== 'retrying' || recoveredBeforeStateUpdate) {
+          if (
+            !paymentSucceeded ||
+            existing.paymentRecoveryStatus !== 'retrying' ||
+            recoveredBeforeStateUpdate
+          ) {
             outcome = await updateSubscriptionState({
               mode,
               subscription,
@@ -1460,29 +1471,35 @@ async function processVerifiedEvent(event, mode, stripe, overrides = {}) {
             });
           }
           if (paymentFailed && invoice.billing_reason === 'subscription_cycle') {
-            await recoveryPolicy.startRecovery({
-              record: existing,
-              invoice,
-              subscription,
-              mode,
-              now: asDate(event.created) || new Date(),
-            }, {
-              SubscriptionModel: deps.SubscriptionModel,
-              UsageModel: deps.UsageModel,
-              EmailModel: deps.RecoveryEmailModel,
-              env: deps.env,
-            });
+            await recoveryPolicy.startRecovery(
+              {
+                record: existing,
+                invoice,
+                subscription,
+                mode,
+                now: asDate(event.created) || new Date(),
+              },
+              {
+                SubscriptionModel: deps.SubscriptionModel,
+                UsageModel: deps.UsageModel,
+                EmailModel: deps.RecoveryEmailModel,
+                env: deps.env,
+              }
+            );
           } else if (paymentSucceeded && existing.paymentRecoveryStatus !== 'retrying') {
-            await recoveryPolicy.markRecovered({
-              record: existing,
-              invoice,
-              subscription,
-              now: new Date(),
-            }, {
-              SubscriptionModel: deps.SubscriptionModel,
-              EmailModel: deps.RecoveryEmailModel,
-              env: deps.env,
-            });
+            await recoveryPolicy.markRecovered(
+              {
+                record: existing,
+                invoice,
+                subscription,
+                now: new Date(),
+              },
+              {
+                SubscriptionModel: deps.SubscriptionModel,
+                EmailModel: deps.RecoveryEmailModel,
+                env: deps.env,
+              }
+            );
           }
           const operation = managementOperation;
           if (operation && ['cancel', 'resume'].includes(operation.operationType)) {

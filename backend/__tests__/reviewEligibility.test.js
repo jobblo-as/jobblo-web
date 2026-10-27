@@ -112,10 +112,7 @@ describe('createReview eligibility (F-34)', () => {
 
   it('rejects a review with no order attached', async () => {
     const res = mockRes();
-    await reviewController.createReview(
-      req({ ...validBody, orderId: undefined }, PROVIDER),
-      res
-    );
+    await reviewController.createReview(req({ ...validBody, orderId: undefined }, PROVIDER), res);
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(Review.create).not.toHaveBeenCalled();
@@ -148,9 +145,7 @@ describe('createReview eligibility (F-34)', () => {
       res
     );
 
-    expect(Review.create).toHaveBeenCalledWith(
-      expect.objectContaining({ serviceId: SERVICE })
-    );
+    expect(Review.create).toHaveBeenCalledWith(expect.objectContaining({ serviceId: SERVICE }));
   });
 });
 
@@ -203,7 +198,15 @@ describe('createReview derives revieweeRole from the order (H4)', () => {
     for (const claimed of ['seeker', 'poster', undefined]) {
       Review.create.mockClear();
       await reviewController.createReview(
-        req({ orderId: String(ORDER), revieweeId: String(reviewee), revieweeRole: claimed, rating: 5 }, reviewer),
+        req(
+          {
+            orderId: String(ORDER),
+            revieweeId: String(reviewee),
+            revieweeRole: claimed,
+            rating: 5,
+          },
+          reviewer
+        ),
         mockRes()
       );
       expect(Review.create).toHaveBeenCalledTimes(1);

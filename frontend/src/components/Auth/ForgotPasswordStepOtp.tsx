@@ -43,26 +43,24 @@ export default function ForgotPasswordStepOtp({
         <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
           <ShieldCheck size={22} className="text-black" />
         </div>
-        <h1 className="text-[28px] font-bold text-black leading-tight mb-2">
-          Sjekk e-posten din
-        </h1>
+        <h1 className="text-[28px] font-bold text-black leading-tight mb-2">Sjekk e-posten din</h1>
         <p className="text-base text-[#6B7280]">
-          Hvis det finnes en konto for{' '}
-          <span className="font-semibold text-black">{email}</span>, har vi sendt en 6-sifret kode dit.
+          Hvis det finnes en konto for <span className="font-semibold text-black">{email}</span>,
+          har vi sendt en 6-sifret kode dit.
         </p>
       </div>
 
       <div className="flex flex-col gap-6">
         <OtpInput
           value={otp}
-          onChange={(val) => { onOtpChange(val); }}
+          onChange={(val) => {
+            onOtpChange(val);
+          }}
           onComplete={onSubmit}
           disabled={isVerifying}
         />
 
-        {otpError && (
-          <p className="text-sm text-red-500 text-center -mt-2">{otpError}</p>
-        )}
+        {otpError && <p className="text-sm text-red-500 text-center -mt-2">{otpError}</p>}
 
         <Button
           onClick={onSubmit}
@@ -72,12 +70,7 @@ export default function ForgotPasswordStepOtp({
           label="Bekreft kode"
         />
 
-        <OtpCountdown
-          key={countdownKey}
-          seconds={60}
-          onResend={onResend}
-          isSending={isResending}
-        />
+        <OtpCountdown key={countdownKey} seconds={60} onResend={onResend} isSending={isResending} />
       </div>
     </>
   );

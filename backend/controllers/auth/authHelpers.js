@@ -1,6 +1,10 @@
 const User = require('../../models/User');
 const crypto = require('crypto');
-const { SENSITIVE_STRIP, EMAIL_PROOF_CUTOFF, emailUnverified } = require('../../utils/userProjections');
+const {
+  SENSITIVE_STRIP,
+  EMAIL_PROOF_CUTOFF,
+  emailUnverified,
+} = require('../../utils/userProjections');
 const { comparePassword, isBcryptHash } = require('../../utils/passwordUtils');
 
 /** Shared auth helpers: password rules, emailed codes, cookies, sanitizers, register validation. */
@@ -105,7 +109,11 @@ async function issueOtp(userId, purpose) {
         passwordResetAttempts: 0,
         ...(purpose && { otpPurpose: purpose }),
       },
-      $unset: { passwordResetSessionToken: 1, passwordResetSessionExpires: 1, ...(!purpose && { otpPurpose: 1 }) },
+      $unset: {
+        passwordResetSessionToken: 1,
+        passwordResetSessionExpires: 1,
+        ...(!purpose && { otpPurpose: 1 }),
+      },
     }
   );
   return otp;
@@ -119,8 +127,15 @@ async function issueOtp(userId, purpose) {
 async function checkOtp(userFilter, otp, ip = '', purpose = null) {
   const account = String(userFilter._id ?? userFilter.email);
   const client = `${account}|${ip}`;
-  const [byClient, byAccount] = await Promise.all([otpGuesses.get(client), otpGuessesAccount.get(account)]);
-  if (byClient >= MAX_OTP_GUESSES_PER_HOUR || (byClient > 0 && byAccount >= MAX_OTP_GUESSES_PER_ACCOUNT)) return null;
+  const [byClient, byAccount] = await Promise.all([
+    otpGuesses.get(client),
+    otpGuessesAccount.get(account),
+  ]);
+  if (
+    byClient >= MAX_OTP_GUESSES_PER_HOUR ||
+    (byClient > 0 && byAccount >= MAX_OTP_GUESSES_PER_ACCOUNT)
+  )
+    return null;
 
   const counted = await User.findOneAndUpdate(
     {
@@ -141,7 +156,10 @@ async function checkOtp(userFilter, otp, ip = '', purpose = null) {
 
   await Promise.all([otpGuesses.incr(client), otpGuessesAccount.incr(account)]);
   if (counted.passwordResetAttempts >= MAX_OTP_ATTEMPTS) {
-    await User.updateOne({ _id: counted._id, passwordResetToken: counted.passwordResetToken }, CLEAR_RESET_STATE);
+    await User.updateOne(
+      { _id: counted._id, passwordResetToken: counted.passwordResetToken },
+      CLEAR_RESET_STATE
+    );
   }
   return null;
 }
@@ -229,7 +247,12 @@ const sendServerError = (res, error, context = 'Server error') => {
     return res.status(503).json({ error: 'Server busy, try again shortly', code: 'SERVER_BUSY' });
   }
   if (error?.code === 'PASSWORD_ATTEMPTS') {
-    return res.status(429).json({ error: 'For mange feil passord. Prøv igjen om 15 minutter.', code: 'PASSWORD_ATTEMPTS' });
+    return res
+      .status(429)
+      .json({
+        error: 'For mange feil passord. Prøv igjen om 15 minutter.',
+        code: 'PASSWORD_ATTEMPTS',
+      });
   }
   console.error(context, error);
 
@@ -296,4 +319,28 @@ const clearAuthCookies = (res) => {
   res.clearCookie('refreshToken', clearCookieOptions);
 };
 
-Object.assign(exports, { EMAIL_PROOF_CUTOFF, emailUnverified, windowCounter, validatePasswordStrength, MAX_OTP_ATTEMPTS, sha256, newOtp, CLEAR_RESET_STATE, issueOtp, checkOtp, verifyCurrentPassword, isProduction, accessCookieOptions, refreshCookieOptions, clearCookieOptions, allowedRoles, CURRENT_TERMS_VERSION, sanitizeUser, sanitizeSession, sendServerError, validateRegisterInput, setAuthCookies, clearAuthCookies });
+Object.assign(exports, {
+  EMAIL_PROOF_CUTOFF,
+  emailUnverified,
+  windowCounter,
+  validatePasswordStrength,
+  MAX_OTP_ATTEMPTS,
+  sha256,
+  newOtp,
+  CLEAR_RESET_STATE,
+  issueOtp,
+  checkOtp,
+  verifyCurrentPassword,
+  isProduction,
+  accessCookieOptions,
+  refreshCookieOptions,
+  clearCookieOptions,
+  allowedRoles,
+  CURRENT_TERMS_VERSION,
+  sanitizeUser,
+  sanitizeSession,
+  sendServerError,
+  validateRegisterInput,
+  setAuthCookies,
+  clearAuthCookies,
+});

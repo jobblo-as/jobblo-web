@@ -49,11 +49,7 @@ const ORDER_EVENTS = Object.freeze([
 ]);
 
 /** Dispute stage. */
-const DISPUTE_EVENTS = Object.freeze([
-  'dispute_opened',
-  'dispute_updated',
-  'dispute_resolved',
-]);
+const DISPUTE_EVENTS = Object.freeze(['dispute_opened', 'dispute_updated', 'dispute_resolved']);
 
 /**
  * Names that are still emitted somewhere, or were emitted recently enough that a

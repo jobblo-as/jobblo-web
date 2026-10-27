@@ -8,12 +8,29 @@ const mongoose = require('mongoose');
 const fraudCaseSchema = new mongoose.Schema(
   {
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
-    status: { type: String, enum: ['open', 'investigating', 'confirmed', 'dismissed'], default: 'open', index: true },
+    status: {
+      type: String,
+      enum: ['open', 'investigating', 'confirmed', 'dismissed'],
+      default: 'open',
+      index: true,
+    },
     note: { type: String, default: null, maxlength: 1000 },
     scoreAtReview: { type: Number, default: null },
     reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     reviewedAt: { type: Date, default: null },
-    history: { type: [{ _id: false, at: Date, by: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, status: String, note: String, score: Number }], default: [] },
+    history: {
+      type: [
+        {
+          _id: false,
+          at: Date,
+          by: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+          status: String,
+          note: String,
+          score: Number,
+        },
+      ],
+      default: [],
+    },
   },
   { timestamps: true, versionKey: false }
 );

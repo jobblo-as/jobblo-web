@@ -26,7 +26,16 @@ const categorySchema = new mongoose.Schema(
 // Any write — from the public or the admin category routes — clears the cached category list
 // (utils/cache). One hook here instead of one call per writer.
 const clearCategoryCache = () => require('../utils/cache').invalidate('categories');
-for (const op of ['save', 'findOneAndUpdate', 'findOneAndDelete', 'deleteOne', 'deleteMany', 'updateOne', 'updateMany', 'insertMany']) {
+for (const op of [
+  'save',
+  'findOneAndUpdate',
+  'findOneAndDelete',
+  'deleteOne',
+  'deleteMany',
+  'updateOne',
+  'updateMany',
+  'insertMany',
+]) {
   categorySchema.post(op, () => void clearCategoryCache());
 }
 
