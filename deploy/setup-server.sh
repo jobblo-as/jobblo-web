@@ -23,9 +23,11 @@ echo "→ 1/5 Env file"
 [ -f "$ENV_FILE" ] || die "$ENV_FILE missing. The API no longer reads backend/.env: mv backend/.env $ENV_FILE"
 REDIS_URL="$(grep -E '^REDIS_URL=' "$ENV_FILE" | tail -1 | cut -d= -f2- | tr -d '\r' | sed -E 's/^["'\'']|["'\'']$//g')"
 if [ -n "$REDIS_URL" ]; then
-  # redis://[:password@]host:port[/db] — a password without the @ makes the whole thing a password.
-  [[ "$REDIS_URL" =~ ^rediss?://(:[^@]+@)?[A-Za-z0-9.-]+:[0-9]+(/[0-9]+)?$ ]] \
-    || die "REDIS_URL looks wrong. Expected redis://:PASSWORD@127.0.0.1:6379 (note the @ after the password)"
+  # redis://[user:password@]host:port[/db] — a password without the @ makes the whole thing a
+  # password. Use the user `default` (Redis 6+): with an empty user (redis://:pw@) redis-cli
+  # sends AUTH "" pw and gets WRONGPASS, though the backend's ioredis would accept it.
+  [[ "$REDIS_URL" =~ ^rediss?://([A-Za-z0-9_-]*:[^@]+@)?[A-Za-z0-9.-]+:[0-9]+(/[0-9]+)?$ ]] \
+    || die "REDIS_URL looks wrong. Expected redis://default:PASSWORD@127.0.0.1:6379 (note the @ after the password)"
   ok "REDIS_URL format"
 else
   echo "  ! REDIS_URL not set: queues, cache and cluster mode stay off (the API still runs)"
