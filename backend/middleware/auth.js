@@ -201,14 +201,4 @@ const requireRole = (...roles) => (req, res, next) => {
 const requireAdmin = requireRole('superAdmin');
 const requireDeveloper = requireRole('developer', 'superAdmin');
 
-/**
- * After authenticate: refuse (403 EMAIL_NOT_VERIFIED) an account whose e-mail was never
- * proven. On payout onboarding and BankID, so a stranger who registered someone else's
- * address cannot attach their own payout account or identity to it (A5).
- */
-const requireVerifiedEmail = (req, res, next) => {
-  const { emailUnverified, EMAIL_NOT_VERIFIED } = require('../controllers/auth/authHelpers');
-  return emailUnverified(req.user) ? res.status(403).json(EMAIL_NOT_VERIFIED) : next();
-};
-
-module.exports = { authenticate, optionalAuthenticate, requireAdmin, requireDeveloper, requireRole, isInactiveAccount, requireVerifiedEmail };
+module.exports = { authenticate, optionalAuthenticate, requireAdmin, requireDeveloper, requireRole, isInactiveAccount };

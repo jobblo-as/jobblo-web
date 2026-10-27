@@ -16,7 +16,7 @@
     "merge:chats": "node scripts/merge-duplicate-chats.js"
   },
   "dependencies": {
-    "@azure/storage-blob": "^12.29.1",
+    "@azure/storage-blob": "^12.34.0",
     "@socket.io/redis-adapter": "^8.3.0",
     "axios": "^1.13.2",
     "bcryptjs": "^2.4.3",

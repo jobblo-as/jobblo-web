@@ -1,6 +1,6 @@
 const User = require('../../models/User');
 const crypto = require('crypto');
-const { SENSITIVE_STRIP } = require('../../utils/userProjections');
+const { SENSITIVE_STRIP, EMAIL_PROOF_CUTOFF, emailUnverified } = require('../../utils/userProjections');
 const { comparePassword, isBcryptHash } = require('../../utils/passwordUtils');
 
 /** Shared auth helpers: password rules, emailed codes, cookies, sanitizers, register validation. */
@@ -165,29 +165,8 @@ async function verifyCurrentPassword(user, password) {
   return ok;
 }
 
-// ── E-mail verification ───────────────────────────────────────────────────────
-// Accounts created before this date predate verification at sign-up and count as
-// verified, so no existing account is locked out. Must not be later than the deploy
-// that turned verification on (accounts created before it would skip verification).
-const EMAIL_PROOF_CUTOFF = new Date(process.env.EMAIL_PROOF_CUTOFF || '2026-10-26T00:00:00Z');
-
-/**
- * True when nothing has proven that whoever created this account controls its e-mail
- * (no emailed code, password reset or provider-verified sign-in yet). Reads
- * emailVerifiedAt and createdAt, falling back to the ObjectId's creation time; an account
- * with neither counts as unverified.
- */
-const emailUnverified = (user) => {
-  if (!user || user.emailVerifiedAt) return false;
-  const created = user.createdAt || user._id?.getTimestamp?.();
-  return !created || new Date(created) >= EMAIL_PROOF_CUTOFF;
-};
-
-const EMAIL_NOT_VERIFIED = {
-  error: 'Email not verified',
-  message: 'Du må bekrefte e-postadressen din først.',
-  code: 'EMAIL_NOT_VERIFIED',
-};
+// E-mail verification: EMAIL_PROOF_CUTOFF and emailUnverified live in utils/userProjections.js
+// (the owner profile reports `emailVerified`), re-exported here for the auth code.
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -225,6 +204,8 @@ const sanitizeUser = (user) => {
   delete userObject.iban;
   delete userObject.bicSwift;
   delete userObject.vippsHandle;
+  // E-mail proof only; BankID is `verified` / identityVerification, which this never touches.
+  userObject.emailVerified = !emailUnverified(user);
   return userObject;
 };
 
@@ -315,4 +296,4 @@ const clearAuthCookies = (res) => {
   res.clearCookie('refreshToken', clearCookieOptions);
 };
 
-Object.assign(exports, { EMAIL_PROOF_CUTOFF, emailUnverified, EMAIL_NOT_VERIFIED, windowCounter, validatePasswordStrength, MAX_OTP_ATTEMPTS, sha256, newOtp, CLEAR_RESET_STATE, issueOtp, checkOtp, verifyCurrentPassword, isProduction, accessCookieOptions, refreshCookieOptions, clearCookieOptions, allowedRoles, CURRENT_TERMS_VERSION, sanitizeUser, sanitizeSession, sendServerError, validateRegisterInput, setAuthCookies, clearAuthCookies });
+Object.assign(exports, { EMAIL_PROOF_CUTOFF, emailUnverified, windowCounter, validatePasswordStrength, MAX_OTP_ATTEMPTS, sha256, newOtp, CLEAR_RESET_STATE, issueOtp, checkOtp, verifyCurrentPassword, isProduction, accessCookieOptions, refreshCookieOptions, clearCookieOptions, allowedRoles, CURRENT_TERMS_VERSION, sanitizeUser, sanitizeSession, sendServerError, validateRegisterInput, setAuthCookies, clearAuthCookies });

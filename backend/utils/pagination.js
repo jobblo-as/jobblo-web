@@ -16,6 +16,33 @@ const parsePagination = (query = {}, { defaultLimit = DEFAULT_LIMIT, maxLimit = 
   return { page, limit, skip };
 };
 
+// The largest page any list endpoint serves (developer log explorer); each endpoint still
+// caps lower through parsePagination / its own clamp.
+// ponytail: one global ceiling, so 150 on a max-100 endpoint is clamped to 100, not refused;
+// per-route maxima in this check would turn that into a 400 too.
+const MAX_REQUEST_LIMIT = 300;
+const WHOLE_NUMBER = /^\d{1,6}$/;
+
+/**
+ * Before every /api route: `page` / `limit`, when sent, must be whole numbers in range.
+ * Text, decimals, negatives, 0, repeated params and absurd values are a 400, not silently
+ * replaced by a default.
+ */
+const rejectBadPagination = (req, res, next) => {
+  for (const [key, max] of [['page', MAX_PAGE], ['limit', MAX_REQUEST_LIMIT]]) {
+    const raw = req.query?.[key];
+    if (raw === undefined || raw === '') continue;
+    const n = typeof raw === 'string' && WHOLE_NUMBER.test(raw) ? Number(raw) : NaN;
+    if (!(n >= 1 && n <= max)) {
+      return res.status(400).json({
+        error: `Ugyldig «${key}»: må være et heltall fra 1 til ${max}.`,
+        code: 'INVALID_PAGINATION',
+      });
+    }
+  }
+  next();
+};
+
 /**
  * Validate that a string is a valid MongoDB ObjectId.
  * Returns the ObjectId if valid, null otherwise.
@@ -48,4 +75,4 @@ const parseDate = (value) => {
   return isNaN(d.getTime()) ? null : d;
 };
 
-module.exports = { parsePagination, parseObjectId, parseSort, parseDate, MAX_LIMIT, DEFAULT_LIMIT, MAX_PAGE };
+module.exports = { parsePagination, rejectBadPagination, parseObjectId, parseSort, parseDate, MAX_LIMIT, DEFAULT_LIMIT, MAX_PAGE, MAX_REQUEST_LIMIT };

@@ -153,7 +153,25 @@ const PUBLIC_USER_SELECT = PUBLIC_FIELDS.join(' ');
  * stored with select:false and the UI should use Stripe Connect instead of
  * raw credentials; but if needed for admin audit, fetch explicitly.
  */
-const OWN_USER_SELECT = [...SAFE_BASE, 'phone', 'email', 'stripeCustomerId'].join(' ');
+const OWN_USER_SELECT = [...SAFE_BASE, 'phone', 'email', 'stripeCustomerId', 'emailVerifiedAt'].join(' ');
+
+// ── E-mail verification ───────────────────────────────────────────────────────
+// Accounts created before this date predate verification at sign-up and count as
+// verified, so no existing account is locked out. Must not be later than the deploy
+// that turned verification on (accounts created before it would skip verification).
+const EMAIL_PROOF_CUTOFF = new Date(process.env.EMAIL_PROOF_CUTOFF || '2026-10-26T00:00:00Z');
+
+/**
+ * True when nothing has proven that whoever created this account controls its e-mail
+ * (no emailed code, password reset or provider-verified sign-in yet). Reads
+ * emailVerifiedAt and createdAt, falling back to the ObjectId's creation time; an account
+ * with neither counts as unverified.
+ */
+const emailUnverified = (user) => {
+  if (!user || user.emailVerifiedAt) return false;
+  const created = user.createdAt || user._id?.getTimestamp?.();
+  return !created || new Date(created) >= EMAIL_PROOF_CUTOFF;
+};
 
 /**
  * BankID verification, reduced to what a badge needs.
@@ -215,6 +233,9 @@ function sanitizeUserOwner(user) {
   delete o.iban;
   delete o.bicSwift;
   delete o.vippsHandle;
+  // E-mail proof for the profile's "E-post" row (legacy pre-cutoff accounts count as confirmed).
+  // Separate from BankID (`verified` / identityVerification), which this never touches.
+  o.emailVerified = !emailUnverified(user);
   return applyIdentitySummary(o);
 }
 
@@ -224,6 +245,8 @@ module.exports = {
   PUBLIC_USER_SELECT,
   OWN_USER_SELECT,
   SENSITIVE_STRIP,
+  EMAIL_PROOF_CUTOFF,
+  emailUnverified,
   sanitizeUserPublic,
   sanitizeUserOwner,
 };

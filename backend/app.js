@@ -48,6 +48,15 @@ app.use((req, res, next) => {
   Object.defineProperty(req, 'ip', { value: req.ip, writable: true, configurable: true, enumerable: true });
   next();
 });
+// Sign in with Apple web flow (Android app + website): Apple answers with a cross-site form POST
+// (response_mode=form_post) that the CSRF origin guard below would refuse, and that carries no
+// SameSite=Lax cookie. Its proof is the signed state and Apple's signature on the id_token
+// (controllers/appleAuthController.js), so like the webhooks it is mounted here, with its own
+// small urlencoded parser, cookie parser (the web flow's SameSite=None binding cookie) and limiter.
+{
+  const apple = require('./controllers/appleAuthController');
+  app.post('/api/auth/apple/callback', apple.appleCallbackLimiter, express.urlencoded({ extended: false, limit: '16kb' }), cookieParser(), apple.appleWebCallback);
+}
 app.use(cors(corsOptions(origins)));
 // CSRF: refuse state-changing requests from other sites' browsers, before body parsing.
 app.use(require('./middleware/csrfOrigin').createCsrfOriginGuard(origins));
@@ -90,6 +99,7 @@ if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_API_DOCS === 'tr
   app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(require('./swagger')));
 }
 
+app.use('/api', require('./utils/pagination').rejectBadPagination);
 mountRoutes(app);
 
 app.use(notFound);

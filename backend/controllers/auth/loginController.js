@@ -3,46 +3,32 @@ const Session = require('../../models/Session');
 const PushToken = require('../../models/PushToken');
 const { isBcryptHash, comparePassword, hashPassword } = require('../../utils/passwordUtils');
 const { generateTokens, verifyToken, createSession } = require('../../utils/tokenUtils');
-const { sendOtpEmail, queueSecurityAlertEmail } = require('../../utils/emailService');
-const { windowCounter, CURRENT_TERMS_VERSION, sanitizeUser, sendServerError, validateRegisterInput, setAuthCookies, clearAuthCookies, emailUnverified, EMAIL_NOT_VERIFIED, issueOtp, checkOtp, validatePasswordStrength, CLEAR_RESET_STATE } = require('./authHelpers');
+const { sendOtpEmail } = require('../../utils/emailService');
+const { windowCounter, CURRENT_TERMS_VERSION, sanitizeUser, sendServerError, validateRegisterInput, setAuthCookies, clearAuthCookies, emailUnverified, issueOtp, checkOtp, validatePasswordStrength, CLEAR_RESET_STATE } = require('./authHelpers');
 
 /** Register (+ e-mail verification), login, logout and refresh-token rotation. */
 
 /**
- * E-mail verification at sign-up. A new account is inert until its address is proven:
- * no password login, no payout onboarding, no BankID. Without this anyone could register
- * someone else's address and attach their own payout account / BankID before the owner
- * turned up (pre-hijack, A5).
+ * E-mail verification. Sign-up signs in straight away; the address is proven later from the
+ * profile page (POST /email/send-code + /email/verify). Nothing is locked meanwhile: a proven
+ * address is what account recovery relies on (first password reset of an unproven account
+ * clears its sessions and providers, see passwordController).
  */
 const VERIFY_EMAIL = 'verify-email';
 const MAX_VERIFY_MAILS_PER_HOUR = 5;
 const verifyMails = windowCounter('verifymail', 60 * 60 * 1000);
-const VERIFICATION_SENT = {
-  verificationRequired: true,
-  message: 'Sjekk e-posten din. Skriv inn den 6-sifrede koden vi har sendt for å fullføre registreringen.',
-};
 const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
+const EMAIL_TAKEN = { error: 'E-post er allerede registrert' };
 
 /**
- * Mail the address's owner: a fresh code while the account is unverified, or with
- * `notice` a heads-up that someone tried to register their address. At most
- * MAX_VERIFY_MAILS_PER_HOUR per address; queued, so it returns without waiting for SMTP.
+ * Mail a fresh 'verify-email' code. At most MAX_VERIFY_MAILS_PER_HOUR per address; queued,
+ * so it returns without waiting for SMTP. False when the hourly cap stopped it.
  */
-async function mailVerification(user, { notice = false } = {}) {
-  if ((await verifyMails.incr(user.email)) > MAX_VERIFY_MAILS_PER_HOUR) return;
-  if (notice) {
-    await queueSecurityAlertEmail(
-      user.email,
-      'Noen prøvde å registrere seg med e-postadressen din – Jobblo',
-      `Hei ${user.name || ''}!\n\nNoen prøvde nettopp å opprette en ny Jobblo-konto med denne e-postadressen. ` +
-        'Du har allerede en konto, så ingenting er endret.\n\n' +
-        'Var det deg? Logg inn som vanlig, eller bruk «Glemt passord» hvis du ikke husker passordet.\n' +
-        'Var det ikke deg, kan du se bort fra denne e-posten.'
-    );
-    return;
-  }
+async function mailVerification(user) {
+  if ((await verifyMails.incr(user.email)) > MAX_VERIFY_MAILS_PER_HOUR) return false;
   const otp = await issueOtp(user._id, VERIFY_EMAIL);
   await sendOtpEmail(user.email, otp, user.name, VERIFY_EMAIL);
+  return true;
 }
 
 /**
@@ -100,19 +86,12 @@ exports.register = async (req, res) => {
       return res.status(400).json({ error: validationError });
     }
 
-    // Hashed before the lookup: bcrypt dominates the response time, so a taken address
-    // answers as slowly as a free one.
+    // ponytail: a taken address says so (accepted trade-off of signing in at sign-up:
+    // account enumeration through this endpoint, limited by authLimiter). A neutral answer
+    // would need the old "verify before sign-in" step back.
+    if (await User.findOne({ email: normalizedEmail }).select('_id')) return res.status(400).json(EMAIL_TAKEN);
+
     const hashedPassword = await hashPassword(password);
-
-    const existingUser = await User.findOne({ email: normalizedEmail }).select('_id name email emailVerifiedAt createdAt');
-
-    // A taken address gets the same 202 as a free one, so sign-up no longer tells anyone who
-    // has an account. Its owner gets the mail instead: a fresh code while it is unverified,
-    // otherwise a notice. Nothing about the existing account changes.
-    if (existingUser) {
-      await mailVerification(existingUser, { notice: !emailUnverified(existingUser) });
-      return res.status(202).json(VERIFICATION_SENT);
-    }
 
     const user = await User.create({
       name: role === 'company' ? String(companyName).trim() : String(name || '').trim(),
@@ -130,10 +109,14 @@ exports.register = async (req, res) => {
 
     createdUserId = user._id;
 
-    // Not signed in yet: POST /verify-email with the mailed code does that.
-    await mailVerification(user);
+    const { accessToken, refreshToken } = await createSession(req, user._id);
+    setAuthCookies(res, accessToken, refreshToken);
 
-    return res.status(202).json(VERIFICATION_SENT);
+    // In the background: a mail failure must not undo a finished sign-up. "Send kode" on the
+    // profile page sends a new one.
+    mailVerification(user).catch((err) => console.error('Sign-up verification mail failed: %s', err.message));
+
+    return res.status(201).json({ user: sanitizeUser(user), accessToken });
   } catch (error) {
     if (createdUserId) {
       await Promise.allSettled([
@@ -147,7 +130,7 @@ exports.register = async (req, res) => {
     }
 
     if (error.code === 11000) {
-      return res.status(202).json(VERIFICATION_SENT); // lost a race for the address: same answer as above
+      return res.status(400).json(EMAIL_TAKEN); // lost a race on the unique index: same answer as above
     }
 
     return sendServerError(res, error, 'Register failed');
@@ -213,12 +196,6 @@ exports.login = async (req, res) => {
       });
     }
 
-    // An unverified sign-up cannot sign in with its password; it gets a fresh code instead.
-    if (emailUnverified(user)) {
-      await mailVerification(user);
-      return res.status(403).json(EMAIL_NOT_VERIFIED);
-    }
-
     const { accessToken, refreshToken } = await createSession(req, user._id);
 
     setAuthCookies(res, accessToken, refreshToken);
@@ -233,6 +210,46 @@ exports.login = async (req, res) => {
 };
 
 /**
+ * POST /api/auth/email/send-code (signed in) — mail a code to the account's own address.
+ * 409 when it is already confirmed, 429 when the hourly mail cap is reached.
+ */
+exports.sendEmailCode = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId).select('_id name email emailVerifiedAt createdAt');
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    if (!emailUnverified(user)) return res.status(409).json({ error: 'E-posten er allerede bekreftet', code: 'EMAIL_ALREADY_VERIFIED' });
+    if (!(await mailVerification(user))) {
+      return res.status(429).json({ error: 'For mange koder sendt. Prøv igjen om en time.', code: 'rate_limited' });
+    }
+    return res.json({ message: 'Vi har sendt en kode til ' + user.email + '.' });
+  } catch (error) {
+    return sendServerError(res, error, 'Send e-mail code failed');
+  }
+};
+
+/** POST /api/auth/email/verify { code } (signed in) — confirm the address; touches nothing else. */
+exports.confirmEmailCode = async (req, res) => {
+  try {
+    const code = typeof req.body?.code === 'string' ? req.body.code.trim() : '';
+    if (!/^\d{6}$/.test(code)) return res.status(400).json({ error: 'Skriv inn den 6-sifrede koden' });
+    const user = await User.findById(req.userId).select('_id emailVerifiedAt createdAt');
+    if (!user) return res.status(401).json({ error: 'Unauthorized' });
+    if (!emailUnverified(user)) return res.json({ emailVerified: true });
+
+    if (!(await checkOtp({ _id: user._id }, code, req.ip, VERIFY_EMAIL))) {
+      return res.status(400).json({ error: 'Ugyldig eller utløpt kode' });
+    }
+    await User.updateOne({ _id: user._id }, { $set: { emailVerifiedAt: new Date() }, ...CLEAR_RESET_STATE });
+    return res.json({ emailVerified: true });
+  } catch (error) {
+    return sendServerError(res, error, 'Verify e-mail code failed');
+  }
+};
+
+/**
+ * ponytail: legacy, for app/web builds from the "verify before sign-in" period; the current
+ * clients use /email/send-code + /email/verify. Remove once no such build is in use.
+ *
  * POST /api/auth/verify-email { email, code, password } — finish sign-up and sign in
  * (same tokens and cookies login gives; the 2FA gate in middleware/auth.js still applies).
  *
@@ -278,7 +295,7 @@ exports.verifyEmail = async (req, res) => {
   }
 };
 
-/** POST /api/auth/resend-verification { email } — same answer whether or not a code went out. */
+/** ponytail: legacy (see verifyEmail). POST /api/auth/resend-verification { email } — same answer whether or not a code went out. */
 exports.resendVerification = async (req, res) => {
   try {
     const email = normalizeEmail(req.body?.email);

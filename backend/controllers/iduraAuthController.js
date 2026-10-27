@@ -47,7 +47,6 @@ const ERRORS = {
   VERIFICATION_FAILED: 'bankid_verification_failed',
   IDENTITY: 'bankid_identity',
   ALREADY_LINKED: 'bankid_already_linked',
-  EMAIL_NOT_VERIFIED: 'bankid_email_not_verified',
 };
 
 function frontendUrl(pathAndQuery) {
@@ -99,12 +98,6 @@ exports.startIduraAuth = async (req, res) => {
 
   if (!req.userId) {
     return res.redirect(frontendUrl(`login?error=${ERRORS.AUTH_REQUIRED}`));
-  }
-
-  // A BankID identity goes only onto an account whose e-mail is proven: otherwise a stranger
-  // who registered someone else's address could pin their own identity to it (A5).
-  if (require('./auth/authHelpers').emailUnverified(req.user)) {
-    return res.redirect(frontendUrl(`${failureTarget}?error=${ERRORS.EMAIL_NOT_VERIFIED}`));
   }
 
   try {

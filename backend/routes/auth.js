@@ -69,13 +69,16 @@ const jwt = require('jsonwebtoken');
  *           schema:
  *             $ref: '#/components/schemas/RegisterRequest'
  *     responses:
- *       202:
- *         description: "{ verificationRequired: true } - kode sendt; samme svar om e-posten finnes fra før. Logg inn med POST /api/auth/verify-email."
+ *       201:
+ *         description: "{ user, accessToken } + auth-cookies: innlogget med en gang. En kode for å bekrefte e-posten sendes i bakgrunnen (bekreftes fra profilsiden)."
  *       400:
  *         description: Ugyldig input
  */
 router.post('/register', authLimiter, authController.register);
-// Finish sign-up: { email, code, password } -> same tokens/cookies as login.
+// Confirm the signed-in account's e-mail from the profile page: mail a code, then enter it.
+router.post('/email/send-code', authenticate, otpSendLimiter, authController.sendEmailCode);
+router.post('/email/verify', authenticate, otpVerifyLimiter, authController.confirmEmailCode);
+// ponytail: legacy "verify before sign-in" endpoints for older app/web builds (see loginController).
 router.post('/verify-email', otpVerifyLimiter, authController.verifyEmail);
 router.post('/resend-verification', otpSendLimiter, authController.resendVerification);
 router.post('/accept-terms', authenticate, authController.acceptTerms);

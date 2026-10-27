@@ -10,6 +10,8 @@ const {
   exchangeMobileCode,
 } = require('../utils/oauthReturn');
 const vippsController = require('../controllers/vippsController');
+const appleAuth = require('../controllers/appleAuthController');
+const { appleStartLimiter } = appleAuth;
 
 const router = express.Router();
 
@@ -77,6 +79,10 @@ router.get('/vipps', optionalAuthenticate, (req, res) =>
 router.get('/vipps/callback', optionalAuthenticate, (req, res) =>
   vippsController.vippsCallback(req, res, { platform: 'mobile' })
 );
+
+// Sign in with Apple for Android (Apple's web flow; iOS uses POST /api/auth/apple/native).
+// 503 until APPLE_SERVICES_ID and APPLE_REDIRECT_URI are set. The callback is in app.js.
+router.get('/apple', appleStartLimiter, (req, res) => appleAuth.appleWebStart(req, res, 'mobile'));
 
 // The app redeems the one-time code from the deep link with its PKCE verifier.
 // Counts failures only; codes are 256-bit and single use, so this is defence in depth.

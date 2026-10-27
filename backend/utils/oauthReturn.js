@@ -566,6 +566,7 @@ module.exports = {
   rememberOAuthPlatform,
   takeOAuthPlatform,
   mintPlatformState,
+  platformStateSecret,
   withPlatformState,
   noStore,
   resolveAppLinkPrefix,
