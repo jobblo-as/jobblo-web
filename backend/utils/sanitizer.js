@@ -62,6 +62,11 @@ function redactText(text) {
   return text
     .slice(0, 20000)
     .replace(/dup key: \{[^}]*\}/g, 'dup key: { [REDACTED] }')
+    // An ioredis error carries its command: HELLO 3 AUTH <user> <password> printed the Redis
+    // password into the PM2 error log on every failed reconnect.
+    .replace(/(['"]?AUTH['"]?)((?:,?\s*['"][^'"\n]*['"]){1,2})/g, "$1, '[REDACTED]'")
+    // Credentials in a connection string (redis://default:pw@, mongodb+srv://user:pw@).
+    .replace(/(\b[a-z][a-z0-9+.-]*:\/\/[^\s:/@]*:)[^\s@/]+@/gi, '$1[REDACTED]@')
     .replace(/(?<![A-Z0-9._%+-])[A-Z0-9._%+-]+(?:@|%40)[A-Z0-9.-]+\.[A-Z]{2,}/gi, '[EMAIL]')
     .replace(/(?<![\d+])\+?\d[\d .-]{6,}\d/g, (m) =>
       // ISO dates (2026-10-26, timestamps in messages) are not personal data.

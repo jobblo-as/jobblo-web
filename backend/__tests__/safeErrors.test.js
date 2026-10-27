@@ -106,6 +106,28 @@ it('final review I1: redactText is linear (no ReDoS) and catches dashed/dotted n
   expect(redactText('at 2026-10-26 for ordre 42')).toBe('at 2026-10-26 for ordre 42');
 });
 
+it('Redis and connection-string passwords never reach the logs', () => {
+  const util = require('util');
+  const PW = '3fa03943c659b5df05bdf8d291cb6272f03d0fc9c30627f24aa316f48a8879ea';
+  // What PM2's error log showed: an ioredis ReplyError printed whole, with its command.
+  const err = Object.assign(new Error('WRONGPASS invalid username-password pair or user is disabled.'), {
+    command: { name: 'hello', args: ['3', 'AUTH', 'default', PW] },
+  });
+  const line = redactText(util.format(err));
+  expect(line).not.toContain(PW);
+  expect(line).toMatch(/WRONGPASS/); // the reason stays readable
+  expect(redactText(util.format({ args: ['AUTH', PW] }))).not.toContain(PW); // no username form
+  for (const url of [`redis://default:${PW}@127.0.0.1:6379`, `redis://:${PW}@127.0.0.1:6379`, `mongodb+srv://jobblo:${PW}@cluster0.x.mongodb.net/db`]) {
+    expect(redactText(`connect ${url} failed`)).not.toContain(PW);
+  }
+  expect(redactText('redis://127.0.0.1:6379')).toBe('redis://127.0.0.1:6379'); // nothing secret, unchanged
+  expect(redactText('AUTH failed: WRONGPASS')).toBe('AUTH failed: WRONGPASS');
+  const t = Date.now();
+  redactText(`'AUTH', '${'x'.repeat(19000)}`);
+  redactText(`a://${'b'.repeat(19000)}:`);
+  expect(Date.now() - t).toBeLessThan(500);
+});
+
 it('a full password-hash queue is a 503 with Retry-After, not a 500 (serverError and asyncHandler)', async () => {
   const busy = Object.assign(new Error('busy'), { code: 'PASSWORD_HASH_BUSY' });
   const a = await request(app((q, r) => serverError(r, busy))).get('/x');
