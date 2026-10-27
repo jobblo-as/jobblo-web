@@ -1,10 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { setStatusBarStyle } from 'expo-status-bar';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { AppState, Image, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { AppState, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import {
-  ArrowLeft,
   Award,
   BadgeCheck,
   Bookmark,
@@ -19,10 +18,7 @@ import {
   Plus,
   Settings,
   ShieldCheck,
-  Sparkles,
-  Star,
   Users,
-  type LucideIcon,
 } from 'lucide-react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useProfile } from '../../../src/hooks/useProfile';
@@ -34,9 +30,23 @@ import { apiBaseUrl } from '../../../src/api/client';
 import { ErrorState } from '../../../src/components/ui/ErrorState';
 import { ConfirmDialog } from '../../../src/components/ui/ConfirmDialog';
 import { DropdownMenu } from '../../../src/components/ui/DropdownMenu';
-import { ProfileCover } from '../../../src/components/profile/ProfileCover';
+import {
+  AddButton,
+  Empty,
+  Panel,
+  ProfileIdentity,
+  ProfileTabs,
+  ProfileViewSwitch,
+  RatingCard,
+  ReliabilityCard,
+  ReviewCard,
+  dayDate,
+  profileChips,
+  type ProfileView,
+} from '../../../src/components/profile/ProfileParts';
+import { EmailVerificationRow } from '../../../src/components/profile/EmailVerificationRow';
 import { TC, tc } from '../../../src/theme/colors';
-import type { PublicUser, Review } from '../../../src/types/UserProfile';
+import type { PublicUser } from '../../../src/types/UserProfile';
 import { JobProfileSkeleton } from '../../../src/components/skeletons/ScreenSkeletons';
 
 /**
@@ -46,107 +56,12 @@ import { JobProfileSkeleton } from '../../../src/components/skeletons/ScreenSkel
  * the SafePay card. Stats come from GET /users/:id (same as the web); /auth/profile has none.
  */
 
-type ProfileType = 'seeker' | 'poster';
 const TABS: Record<'seeker' | 'poster' | 'company', string[]> = {
   seeker: ['Om meg', 'Fullførte', 'Vurderinger'],
   poster: ['Aktive', 'Tidligere', 'Vurderinger'],
   company: ['Om oss', 'Aktive', 'Tidligere', 'Vurderinger'],
 };
 const WEB_BASE = apiBaseUrl.replace(/\/api\/?$/, '');
-
-const initials = (name: string) =>
-  name.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || '?';
-const placeOf = (user: { postSted?: string | { city?: string }; address?: string }) =>
-  typeof user.postSted === 'string' ? user.postSted : user.postSted?.city || user.address || '';
-const monthYear = (value?: string | null) => {
-  if (!value) return '';
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('nb-NO', { month: 'long', year: 'numeric' });
-};
-const dayDate = (value?: string | null) => {
-  if (!value) return '';
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric' });
-};
-/** Same as the web: under 1 t, {h} t, {d} d. */
-const responseTime = (minutes: number) =>
-  minutes < 60 ? 'under 1 t' : minutes < 1440 ? `${Math.round(minutes / 60)} t` : `${Math.round(minutes / 1440)} d`;
-
-function StatChip({ icon: Icon, children, accent }: { icon?: LucideIcon; children: React.ReactNode; accent?: boolean }) {
-  return (
-    <View className={`flex-row items-center gap-1.5 rounded-full px-3 py-1.5 ${accent ? 'bg-tint' : 'bg-surface-2'}`}>
-      {Icon ? <Icon size={14} color={accent ? TC.brandText : TC.ink2} /> : null}
-      <Text className={`text-[0.875rem] ${accent ? 'font-semibold text-brand-text' : 'text-ink-2'}`}>{children}</Text>
-    </View>
-  );
-}
-
-/** White panel with an icon title and an inline "Rediger" on the right (web `Panel`). */
-function Panel({ icon: Icon, title, onEdit, children }: { icon: LucideIcon; title: string; onEdit?: () => void; children: React.ReactNode }) {
-  return (
-    <View className="rounded-3xl border border-line bg-surface p-5">
-      <View className="mb-3 flex-row items-center gap-2">
-        <Icon size={17} color={TC.brandText} />
-        <Text className="flex-1 text-[1.0625rem] font-semibold text-ink">{title}</Text>
-        {onEdit ? (
-          <Pressable onPress={onEdit} hitSlop={8} className="flex-row items-center gap-1" accessibilityLabel={`Rediger ${title.toLowerCase()}`}>
-            <Pencil size={13} color={TC.brandText} />
-            <Text className="text-[0.875rem] font-semibold text-brand-text">Rediger</Text>
-          </Pressable>
-        ) : null}
-      </View>
-      {children}
-    </View>
-  );
-}
-
-function AddButton({ label, onPress }: { label: string; onPress: () => void }) {
-  return (
-    <Pressable onPress={onPress} className="mt-3 flex-row items-center justify-center gap-1.5 rounded-xl border border-dashed border-line-strong py-3 active:bg-surface-2">
-      <Plus size={15} color={TC.brandText} />
-      <Text className="text-[0.875rem] font-semibold text-brand-text">{label}</Text>
-    </Pressable>
-  );
-}
-
-function ReviewCard({ review }: { review: Review }) {
-  const name = [review.reviewerId?.name, review.reviewerId?.lastName].filter(Boolean).join(' ') || 'Bruker';
-  return (
-    <View className="rounded-3xl border border-line bg-surface p-5">
-      <View className="flex-row items-center gap-3">
-        <View className="h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-tint">
-          {review.reviewerId?.avatarUrl ? (
-            <Image source={{ uri: review.reviewerId.avatarUrl }} className="h-full w-full" />
-          ) : (
-            <Text className="font-semibold text-brand-text">{initials(name)}</Text>
-          )}
-        </View>
-        <View className="min-w-0 flex-1">
-          <Text className="text-[0.9375rem] font-semibold text-ink" numberOfLines={1}>{name}</Text>
-          <Text className="text-[0.8125rem] text-subtle">{dayDate(review.createdAt)}</Text>
-        </View>
-        <View className="flex-row items-center gap-1 rounded-full bg-tint px-2.5 py-1">
-          <Star size={12} color={TC.brandText} fill={TC.brandText} />
-          <Text className="text-[0.8125rem] font-semibold text-brand-text">{Number(review.rating || 0).toFixed(1)}</Text>
-        </View>
-      </View>
-      {review.comment ? <Text className="mt-3 text-[0.9375rem] leading-6 text-ink-2">{review.comment}</Text> : null}
-      {review.serviceId?.title ? (
-        <Text className="mt-3 border-t border-line-soft pt-3 text-[0.8125rem] text-muted" numberOfLines={1}>{review.serviceId.title}</Text>
-      ) : null}
-    </View>
-  );
-}
-
-function Empty({ title, text, action }: { title: string; text: string; action?: React.ReactNode }) {
-  return (
-    <View className="items-center rounded-3xl border border-line bg-surface px-6 py-10">
-      <Text className="text-center text-[1.0625rem] font-semibold text-ink">{title}</Text>
-      <Text className="mt-1.5 text-center text-[0.9375rem] leading-6 text-muted">{text}</Text>
-      {action ? <View className="mt-5">{action}</View> : null}
-    </View>
-  );
-}
 
 function ListItem({ title, meta, right, onPress }: { title: string; meta: string; right?: string; onPress: () => void }) {
   return (
@@ -171,7 +86,7 @@ export default function JobProfileScreen() {
   const ownId = profile?._id ?? null;
   const statsQuery = usePublicProfile(ownId);
   const isCompany = profile?.role === 'company';
-  const [profileType, setProfileType] = useState<ProfileType>('seeker');
+  const [profileType, setProfileType] = useState<ProfileView>('seeker');
   const tabs = isCompany ? TABS.company : TABS[profileType];
   const [tab, setTab] = useState(params.tab && tabs.includes(params.tab) ? params.tab : tabs[0]);
   const jobsQuery = useMyJobs();
@@ -257,32 +172,11 @@ export default function JobProfileScreen() {
   const fullName = isCompany
     ? user.companyName || user.name || 'Bedrift'
     : [user.name, user.lastName].filter(Boolean).join(' ') || 'Bruker';
-  const place = placeOf(user);
-  const since = monthYear(user.createdAt);
   const verified = user.identityVerified === true;
   const reviews = user.reviews ?? [];
   const reviewCount = reviews.length || user.reviewCount || 0;
-  const rating = Number(user.averageRating || 0);
-  const distribution = [5, 4, 3, 2, 1].map((stars) => ({
-    stars,
-    count: reviews.filter((review) => Math.round(Number(review.rating)) === stars).length,
-  }));
-  const reliability = [
-    user.hireRate ? ['Blir hyret', `${user.hireRate} %`] : null,
-    user.completionRate ? ['Fullfører', `${user.completionRate} %`] : null,
-    user.repeatCustomersCount ? ['Gjengangere', String(user.repeatCustomersCount)] : null,
-    user.jobsThisMonth ? ['Denne måneden', String(user.jobsThisMonth)] : null,
-  ].filter(Boolean) as [string, string][];
   const edit = () => router.push('/profile/edit');
 
-  const chips: React.ReactNode[] = [];
-  if (reviewCount > 0) chips.push(<StatChip key="r" icon={Star} accent>{`${rating.toFixed(1)} · ${reviewCount} ${reviewCount === 1 ? 'vurdering' : 'vurderinger'}`}</StatChip>);
-  if (profileType === 'seeker' && user.completedJobs) chips.push(<StatChip key="c">{`${user.completedJobs} fullførte`}</StatChip>);
-  if (profileType === 'poster' && user.postedJobsCount) chips.push(<StatChip key="p">{`${user.postedJobsCount} lagt ut`}</StatChip>);
-  if (user.totalJobRequests && typeof user.responseRate === 'number') chips.push(<StatChip key="s">{`${user.responseRate} % svarer`}</StatChip>);
-  if (user.averageResponseTimeMinutes && user.averageResponseTimeMinutes > 0) chips.push(<StatChip key="t">{`${responseTime(user.averageResponseTimeMinutes)} svartid`}</StatChip>);
-  if (verified) chips.push(<StatChip key="v" icon={BadgeCheck} accent>Verifisert</StatChip>);
-  if (!chips.length) chips.push(<StatChip key="n" icon={Sparkles}>{`Ny på Jobblo${since ? ` · siden ${since}` : ''}`}</StatChip>);
 
   const openMenu = () => {
     menuButton.current?.measureInWindow((_x, y, _w, h) => {
@@ -345,48 +239,14 @@ export default function JobProfileScreen() {
         contentContainerStyle={{ paddingBottom: 40 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void handleRefresh()} tintColor="#FFFFFF" colors={[TC.brandText]} />}
       >
-        <View>
-          <ProfileCover seed={user._id} height={190} />
-          <Pressable
-            onPress={() => router.back()}
-            accessibilityRole="button"
-            accessibilityLabel="Tilbake"
-            className="absolute left-4 h-10 w-10 items-center justify-center rounded-full bg-white/95 active:opacity-80"
-            style={{ top: insets.top + 8 }}
-          >
-            <ArrowLeft size={19} color="#0B0B0B" />
-          </Pressable>
-        </View>
-
-        <View className="px-4">
-          {/* Identity card, overlapping the foot of the cover. */}
-          <View className="-mt-16 items-center rounded-3xl border border-line bg-surface px-5 pb-5 pt-0">
-            <View className="-mt-12 h-[104px] w-[104px] items-center justify-center overflow-hidden rounded-full border-4 border-surface bg-tint">
-              {user.avatarUrl ? (
-                <Image source={{ uri: user.avatarUrl }} className="h-full w-full" />
-              ) : (
-                <Text className="text-[2rem] font-semibold text-brand-text">{initials(fullName)}</Text>
-              )}
-            </View>
-            {verified ? (
-              <View className="-mt-7 ml-20 h-7 w-7 items-center justify-center rounded-full border-2 border-surface bg-brand">
-                <ShieldCheck size={14} color="#FFFFFF" />
-              </View>
-            ) : null}
-
-            <Text className="mt-3 text-center text-[1.5rem] font-bold tracking-[-0.02em] text-ink">{fullName}</Text>
-            <View className="mt-1 flex-row flex-wrap items-center justify-center gap-x-2">
-              {place ? (
-                <View className="flex-row items-center gap-1">
-                  <MapPin size={13} color={tc('#63665F', 'muted')} />
-                  <Text className="text-[0.875rem] text-muted">{place}</Text>
-                </View>
-              ) : null}
-              {since ? <Text className="text-[0.875rem] text-muted">{place ? '· ' : ''}Medlem siden {since}</Text> : null}
-            </View>
-            {isCompany && user.orgNumber ? <Text className="mt-0.5 text-[0.8125rem] text-subtle">Org.nr {user.orgNumber}</Text> : null}
-
-            <View className="mt-4 w-full flex-row gap-2.5">
+        <ProfileIdentity
+          user={user}
+          fullName={fullName}
+          topInset={insets.top}
+          onBack={() => router.back()}
+          chips={profileChips(user, profileType)}
+          actions={
+            <>
               <Pressable onPress={edit} className="h-11 flex-1 flex-row items-center justify-center gap-1.5 rounded-full bg-brand active:opacity-90">
                 <Pencil size={15} color="#FFFFFF" />
                 <Text className="text-[0.9375rem] font-semibold text-white">Rediger profil</Text>
@@ -396,69 +256,46 @@ export default function JobProfileScreen() {
                   <MoreHorizontal size={20} color={TC.ink} />
                 </Pressable>
               </View>
-            </View>
+            </>
+          }
+        />
 
-            <View className="mt-4 flex-row flex-wrap justify-center gap-2">{chips}</View>
-          </View>
+        <View className="px-4">
 
           {/* Jobbsøker / Oppdragsgiver (view only; companies are always Oppdragsgiver). */}
-          {!isCompany ? (
-            <View className="mt-4 flex-row rounded-full border border-line bg-surface p-1">
-              {([['seeker', 'Jobbsøker'], ['poster', 'Oppdragsgiver']] as const).map(([value, label]) => (
-                <Pressable
-                  key={value}
-                  onPress={() => setProfileType(value)}
-                  accessibilityRole="tab"
-                  accessibilityState={{ selected: profileType === value }}
-                  className={`h-10 flex-1 items-center justify-center rounded-full ${profileType === value ? 'bg-brand' : ''}`}
-                >
-                  <Text className={`text-[0.9375rem] font-semibold ${profileType === value ? 'text-white' : 'text-muted'}`}>{label}</Text>
-                </Pressable>
-              ))}
-            </View>
-          ) : null}
+          {!isCompany ? <ProfileViewSwitch value={profileType} onChange={setProfileType} /> : null}
+
+          {/* E-post: its own row, separate from BankID (no "Verifisert" wording or badge). */}
+          <EmailVerificationRow email={profile?.email} emailVerified={profile?.emailVerified} onVerified={refetch} />
 
           {/* BankID */}
           {verified ? (
             <View className="mt-4 flex-row items-center gap-3 rounded-3xl border border-[#C6E2CE] bg-tint p-4 dark:border-brand-text/30">
               <BadgeCheck size={24} color={TC.brandText} />
               <View className="flex-1">
-                <Text className="text-[1rem] font-semibold text-ink">Identitet bekreftet</Text>
+                <Text className="text-[1.0625rem] font-semibold text-ink">Identitet bekreftet</Text>
                 <Text className="mt-0.5 text-[0.875rem] text-muted">
                   Bekreftet med BankID{user.identityVerifiedAt ? ` · ${dayDate(user.identityVerifiedAt)}` : ''}
                 </Text>
               </View>
             </View>
           ) : (
-            <View className="mt-4 rounded-3xl border border-line bg-surface p-5">
+            <View className="mt-4 rounded-3xl bg-surface p-5">
               <View className="flex-row items-center gap-2">
                 <ShieldCheck size={18} color={TC.brandText} />
-                <Text className="text-[1.0625rem] font-semibold text-ink">Identitetsbekreftelse</Text>
+                <Text className="text-[1.0625rem] font-semibold text-ink">BankID</Text>
               </View>
               <Text className="mt-1.5 text-[0.9375rem] leading-6 text-muted">
                 Bekreft identiteten din med BankID for å skape mer trygghet på Jobblo.
               </Text>
               <Pressable onPress={() => void verifyWithBankId()} className="mt-4 h-12 flex-row items-center justify-center gap-2 rounded-full bg-brand active:opacity-90">
                 <ShieldCheck size={17} color="#FFFFFF" />
-                <Text className="text-[1rem] font-semibold text-white">{openingBankId ? 'Åpner BankID …' : 'Verifiser med BankID'}</Text>
+                <Text className="text-[1.0625rem] font-semibold text-white">{openingBankId ? 'Åpner BankID …' : 'Verifiser med BankID'}</Text>
               </Pressable>
             </View>
           )}
 
-          {/* Tabs */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-4 mt-5" contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
-            {tabs.map((name) => (
-              <Pressable
-                key={name}
-                onPress={() => setTab(name)}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: tab === name }}
-                className={`h-10 justify-center rounded-full border px-4 ${tab === name ? 'border-ink bg-ink' : 'border-line bg-surface'}`}
-              >
-                <Text className={`text-[0.9375rem] font-semibold ${tab === name ? 'text-page' : 'text-ink-2'}`}>{name}</Text>
-              </Pressable>
-            ))}
-          </ScrollView>
+          <ProfileTabs tabs={tabs} value={tab} onChange={setTab} />
 
           <View className="mt-4 gap-4">
             {tab === 'Om meg' || tab === 'Om oss' ? (
@@ -514,47 +351,13 @@ export default function JobProfileScreen() {
                   )}
                 </Panel>
 
-                {/* Vurdering: average + a bar per star level (counted from the reviews). */}
-                <View className="rounded-3xl border border-line bg-surface p-5">
-                  <Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-subtle">Vurdering</Text>
-                  {reviewCount ? (
-                    <View className="mt-3 flex-row items-center gap-5">
-                      <View className="items-center">
-                        <Text className="text-[2.5rem] font-bold leading-none text-ink">{rating.toFixed(1)}</Text>
-                        <Text className="mt-1 text-[0.8125rem] text-muted">{reviewCount} {reviewCount === 1 ? 'vurdering' : 'vurderinger'}</Text>
-                      </View>
-                      <View className="flex-1 gap-1.5">
-                        {distribution.map(({ stars, count }) => (
-                          <View key={stars} className="flex-row items-center gap-2">
-                            <Text className="w-3 text-[0.8125rem] text-muted">{stars}</Text>
-                            <View className="h-2 flex-1 overflow-hidden rounded-full bg-surface-2">
-                              <View className="h-full rounded-full bg-brand" style={{ width: `${reviewCount ? (count / reviewCount) * 100 : 0}%` }} />
-                            </View>
-                          </View>
-                        ))}
-                      </View>
-                    </View>
-                  ) : (
-                    <Text className="mt-2 text-[0.9375rem] text-muted">Ingen vurderinger ennå.</Text>
-                  )}
-                </View>
-
-                {reliability.length ? (
-                  <View className="rounded-3xl border border-line bg-surface p-5">
-                    <Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-subtle">Pålitelighet</Text>
-                    {reliability.map(([label, value], index) => (
-                      <View key={label} className={`flex-row items-center justify-between py-2.5 ${index ? 'border-t border-line-soft' : ''}`}>
-                        <Text className="text-[0.9375rem] text-ink-2">{label}</Text>
-                        <Text className="text-[0.9375rem] font-semibold text-ink">{value}</Text>
-                      </View>
-                    ))}
-                  </View>
-                ) : null}
+                <RatingCard reviews={reviews} average={Number(user.averageRating || 0)} count={reviewCount} />
+                <ReliabilityCard user={user} />
 
                 <Pressable onPress={() => router.push('/profile/settings/safepay')} className="rounded-3xl border border-line bg-surface p-5 active:bg-surface-2">
                   <View className="flex-row items-center gap-2">
                     <ShieldCheck size={17} color={TC.brandText} />
-                    <Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-subtle">SafePay</Text>
+                    <Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-muted">SafePay</Text>
                   </View>
                   <Text className="mt-2 text-[1.75rem] font-bold tabular-nums text-ink">
                     {Number(user.totalEarned || 0).toLocaleString('nb-NO')} kr

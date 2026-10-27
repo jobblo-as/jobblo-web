@@ -33,6 +33,7 @@ import { ErrorState } from '../../../src/components/ui/ErrorState';
 import { ConfirmDialog } from '../../../src/components/ui/ConfirmDialog';
 import { TC, tc } from '../../../src/theme/colors';
 import { MinJobbloSkeleton } from '../../../src/components/skeletons/ScreenSkeletons';
+import { GlassFill, useGlass } from '../../../src/components/ui/GlassButton';
 
 /**
  * "Min Jobblo", in the FINN app's "Min FINN" layout: a centred title, one card with the
@@ -86,6 +87,7 @@ function MenuRow({ icon: Icon, label, onPress, divider, destructive, value }: { 
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const glass = useGlass(16);
   const logout = useAuthStore((state) => state.logout);
   const { data: profile, isLoading, isError, refetch } = useProfile();
   const [refreshing, setRefreshing] = useState(false);
@@ -188,8 +190,10 @@ export default function ProfileScreen() {
           onPress={openCardMenu}
           accessibilityRole="button"
           accessibilityLabel={`Profil: ${name}`}
-          className="flex-row items-center gap-4 rounded-2xl bg-surface p-4 active:opacity-90"
+          className="flex-row items-center gap-4 p-4 active:opacity-90"
+          style={glass}
         >
+          <GlassFill radius={16} />
           <View className="h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-line bg-surface-2">
             {profile.avatarUrl ? (
               <Image source={{ uri: profile.avatarUrl }} className="h-full w-full" />
@@ -231,7 +235,7 @@ export default function ProfileScreen() {
           <MenuRow icon={LogOut} label="Logg ut" divider destructive onPress={() => setLogoutVisible(true)} />
         </View>
 
-        <Text className="mt-8 text-center text-[0.8125rem] text-subtle">Jobblo{version ? ` · versjon ${version}` : ''}</Text>
+        <Text className="mt-8 text-center text-[0.8125rem] text-muted">Jobblo{version ? ` · versjon ${version}` : ''}</Text>
       </ScrollView>
 
       <BottomSheet visible={themeSheet} onClose={() => setThemeSheet(false)} title="Utseende" hideClose>
@@ -247,12 +251,12 @@ export default function ProfileScreen() {
                 className={`flex-row items-center gap-3 rounded-xl px-3 py-3.5 ${active ? 'bg-tint' : 'active:bg-surface-2'}`}
               >
                 <Icon size={20} color={active ? TC.brandText : TC.ink2} />
-                <Text className={`flex-1 text-[1rem] ${active ? 'font-semibold text-brand-text' : 'text-ink'}`}>{label}</Text>
+                <Text className={`flex-1 text-[1.0625rem] ${active ? 'font-semibold text-brand-text' : 'text-ink'}`}>{label}</Text>
                 {active ? <Check size={18} color={TC.brandText} /> : null}
               </Pressable>
             );
           })}
-          <Text className="px-3 pt-2 text-[0.875rem] text-subtle">Automatisk følger innstillingen på telefonen.</Text>
+          <Text className="px-3 pt-2 text-[0.875rem] text-muted">Automatisk følger innstillingen på telefonen.</Text>
         </View>
       </BottomSheet>
       <Popover
