@@ -1,0 +1,73 @@
+name: Deploy
+
+# Auto-deploy: when CI finishes green for a push to the branch in the repository variable
+# DEPLOY_BRANCH, run deploy.sh on the server over SSH for exactly that commit.
+#
+# Setup (once):
+#   Settings → Secrets and variables → Actions
+#     Variables: DEPLOY_BRANCH (e.g. main or fixed/j0ob-create; the server must be on it)
+#     Secrets:   DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS
+#   On the server the key may only deploy: its ~/.ssh/authorized_keys line starts with
+#     command="cd /var/www/jobblo && EXPECT_SHA=\"$SSH_ORIGINAL_COMMAND\" ./deploy.sh --skip-ci-check",no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty
+#   (deploy.sh refuses anything that is not a full commit sha). deploy.sh's sudo calls
+#   (chown, nginx -t, reload, rm of old builds) must work without a password for that user.
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  contents: write # the release tag + GitHub release after a deploy
+
+# One deploy at a time; a queued one waits instead of cancelling a running deploy.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to server
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      vars.DEPLOY_BRANCH != '' &&
+      github.event.workflow_run.head_branch == vars.DEPLOY_BRANCH
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Deploy over SSH
+        env:
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key && chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          # The server's authorized_keys forces the deploy command; the sha is the only input.
+          ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes "$USER@$HOST" "$SHA" | tee deploy.log
+          rm -f ~/.ssh/deploy_key
+          # deploy.sh prints RELEASE_VERSION only when it deployed (not when it skipped a newer head).
+          VERSION="$(sed -n 's/^RELEASE_VERSION=//p' deploy.log | tail -1)"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "### ${VERSION:+Deployed v$VERSION}${VERSION:-Skipped (a newer commit deploys after its CI)}" >> "$GITHUB_STEP_SUMMARY"
+        id: deploy
+
+      - name: GitHub release
+        if: steps.deploy.outputs.version != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          VERSION: ${{ steps.deploy.outputs.version }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+        run: |
+          # A re-run of the same commit on the same day: the release is already there.
+          if gh release view "v$VERSION" >/dev/null 2>&1; then echo "v$VERSION exists"; exit 0; fi
+          # Notes: the commits since the previous release (GitHub generates them).
+          gh release create "v$VERSION" --target "$SHA" --title "v$VERSION" \
+            --notes "Deployed from \`$BRANCH\` at ${SHA:0:8}." --generate-notes --latest

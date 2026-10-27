@@ -173,6 +173,43 @@ jobs:
           echo "Scanning $range"
           ./gitleaks detect --source . --redact --no-banner -v --log-opts="$range"
 
+  # ── Format (Prettier) ──────────────────────────────────────────────────────
+  # Only the files this push/PR changed: ~1000 older files predate the check, and
+  # failing on them would block every deploy. Each file is formatted when it is touched.
+  # Fix locally:  npx prettier --write <file>   (or: npm run format)
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prettier on the changed files
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          # Same ranges as the secret scan; three dots = changes on this side only.
+          if [ -n "$PR_BASE" ]; then
+            range="$PR_BASE...$PR_HEAD"
+          elif [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ]; then
+            range="$BEFORE...$GITHUB_SHA"
+          else
+            range="origin/main...$GITHUB_SHA"
+          fi
+          git diff --name-only -z --diff-filter=d "$range" > changed.txt
+          count="$(tr -cd '\0' < changed.txt | wc -c)"
+          echo "Checking $count changed file(s) in $range"
+          [ "$count" -gt 0 ] || exit 0
+          # Same version as the root package.json; files Prettier has no parser for are skipped.
+          xargs -0 npx --yes prettier@3.9.4 --check --ignore-unknown < changed.txt
+          echo '### Format: passed' >> "$GITHUB_STEP_SUMMARY"
+
   # ── Mobile ─────────────────────────────────────────────────────────────────
   mobile:
     name: Mobile
