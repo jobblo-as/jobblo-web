@@ -39,7 +39,11 @@ export const ACTIVE_DISPUTE_STATUSES: readonly DisputeStatus[] = [
 ];
 
 /** Statuses where the backend rejects new messages with "Tvisten er avsluttet." */
-export const TERMINAL_DISPUTE_STATUSES: readonly DisputeStatus[] = ['resolved', 'closed', 'cancelled'];
+export const TERMINAL_DISPUTE_STATUSES: readonly DisputeStatus[] = [
+  'resolved',
+  'closed',
+  'cancelled',
+];
 
 export function isDisputeActive(status?: DisputeStatus | string | null): boolean {
   return !!status && (ACTIVE_DISPUTE_STATUSES as readonly string[]).includes(status);
@@ -139,17 +143,29 @@ export const DISPUTE_REASON_LABELS: Record<DisputeReasonCategory, string> = {
 };
 
 /** Picker order. Derived from the label map so it can never drift from the enum. */
-export const DISPUTE_REASON_CATEGORIES = Object.keys(DISPUTE_REASON_LABELS) as DisputeReasonCategory[];
+export const DISPUTE_REASON_CATEGORIES = Object.keys(
+  DISPUTE_REASON_LABELS
+) as DisputeReasonCategory[];
 
 /**
  * Reasons offered to each side, as on the web. A shared list let a party file a dispute
  * accusing themselves (a customer picking "Oppdragsgiver samarbeider ikke").
  */
 const CUSTOMER_REASONS: DisputeReasonCategory[] = [
-  'work_not_started', 'work_not_completed', 'poor_quality', 'provider_not_cooperating', 'damaged_property', 'unauthorized_payment',
+  'work_not_started',
+  'work_not_completed',
+  'poor_quality',
+  'provider_not_cooperating',
+  'damaged_property',
+  'unauthorized_payment',
 ];
 const PROVIDER_REASONS: DisputeReasonCategory[] = ['customer_not_cooperating', 'missing_evidence'];
-const SHARED_REASONS: DisputeReasonCategory[] = ['different_from_agreement', 'payment_issue', 'fraud_or_scam', 'other'];
+const SHARED_REASONS: DisputeReasonCategory[] = [
+  'different_from_agreement',
+  'payment_issue',
+  'fraud_or_scam',
+  'other',
+];
 
 export function disputeReasonsFor(role: 'customer' | 'provider'): DisputeReasonCategory[] {
   return [...(role === 'customer' ? CUSTOMER_REASONS : PROVIDER_REASONS), ...SHARED_REASONS];

@@ -8,7 +8,12 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { useMutation } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
-import { createContract, createPaymentSession, type Chat, type ChatMessage } from '../../api/chatAPI';
+import {
+  createContract,
+  createPaymentSession,
+  type Chat,
+  type ChatMessage,
+} from '../../api/chatAPI';
 import { customerOrderPath } from '../../constants/statuses';
 
 interface ChatWindowProps {
@@ -141,7 +146,10 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
     // paid ⇒ approval screen — which showed "utfører melder jobben som ferdig" to a
     // customer whose provider had not even started. Approval is only a destination
     // once the order actually reaches `ready_for_review`.
-    const orderObj = typeof order === 'object' ? (order as { paymentStatus?: string; status?: string }) : undefined;
+    const orderObj =
+      typeof order === 'object'
+        ? (order as { paymentStatus?: string; status?: string })
+        : undefined;
     const approvalPath = opts.preferApprovalWhenPaid
       ? customerOrderPath(id, orderObj?.status)
       : null;

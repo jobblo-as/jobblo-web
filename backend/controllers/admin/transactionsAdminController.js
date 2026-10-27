@@ -1,5 +1,10 @@
 const Transaction = require('../../models/Transaction');
-const { asyncHandler, sendSuccess, sendError, buildPagination } = require('../../utils/apiResponse');
+const {
+  asyncHandler,
+  sendSuccess,
+  sendError,
+  buildPagination,
+} = require('../../utils/apiResponse');
 const { parsePagination, parseObjectId, parseSort, parseDate } = require('../../utils/pagination');
 const { queryString } = require('../../utils/devQuery');
 
@@ -49,7 +54,12 @@ const getTransactions = asyncHandler(async (req, res) => {
       .lean(),
   ]);
 
-  return sendSuccess(res, { transactions }, 'Transaksjoner hentet.', buildPagination(total, page, limit));
+  return sendSuccess(
+    res,
+    { transactions },
+    'Transaksjoner hentet.',
+    buildPagination(total, page, limit)
+  );
 });
 
 /**

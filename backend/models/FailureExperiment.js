@@ -3,7 +3,19 @@ const mongoose = require('mongoose');
 /** One fault-injection experiment (staging only) — see services/monitoring/faults.js. */
 const failureExperimentSchema = new mongoose.Schema(
   {
-    type: { type: String, enum: ['http_latency', 'http_error', 'stripe', 'email', 'push', 'stripe_webhook', 'scheduler'], required: true },
+    type: {
+      type: String,
+      enum: [
+        'http_latency',
+        'http_error',
+        'stripe',
+        'email',
+        'push',
+        'stripe_webhook',
+        'scheduler',
+      ],
+      required: true,
+    },
     target: { type: String, default: null }, // route prefix for http_*, job name for scheduler
     latencyMs: { type: Number, default: null },
     errorRate: { type: Number, default: null }, // percent of matching requests

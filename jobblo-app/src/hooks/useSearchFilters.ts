@@ -3,28 +3,28 @@ import { useState, useCallback } from 'react';
 export interface SearchFiltersState {
   // Text search
   searchText: string;
-  
+
   // Categories
   selectedCategories: string[];
-  
+
   // Price
   minPrice: number;
   maxPrice: number;
-  
+
   // Urgent
   isUrgent: boolean;
-  
+
   // Location - counties, municipalities, areas
   selectedCountyCodes: string[];
   selectedMunicipalityCodes: string[];
   selectedAreaCodes: string[];
   expandedCounties: string[];
   expandedMunicipalities: string[];
-  
+
   // Current location
   userLocation: { lat: number; lng: number } | null;
   isLocating: boolean;
-  
+
   // Sort
   sortValue: string;
 }
@@ -48,7 +48,7 @@ const DEFAULT_FILTERS: SearchFiltersState = {
 /**
  * Hook to manage all search filter state in one place.
  * Provides typed state and convenient mutation functions.
- * 
+ *
  * Usage:
  *   const filters = useSearchFilters();
  *   filters.setMinPrice(5000);
@@ -178,12 +178,9 @@ export function useSearchFilters(initialSearch = '') {
   }, []);
 
   // Current location
-  const setUserLocation = useCallback(
-    (location: { lat: number; lng: number } | null) => {
-      setFilters((prev) => ({ ...prev, userLocation: location }));
-    },
-    []
-  );
+  const setUserLocation = useCallback((location: { lat: number; lng: number } | null) => {
+    setFilters((prev) => ({ ...prev, userLocation: location }));
+  }, []);
 
   const setIsLocating = useCallback((locating: boolean) => {
     setFilters((prev) => ({ ...prev, isLocating: locating }));

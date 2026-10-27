@@ -8,15 +8,28 @@ let leaned;
 beforeEach(async () => {
   await require('../utils/cache').invalidate('users');
   leaned = false;
-  const rows = [{ _id: { toString: () => OID }, name: 'Kari', reviewCount: 3, email: 'secret@x.no' }];
-  const chain = { select: () => chain, sort: () => chain, skip: () => chain, limit: () => chain, lean: async () => ((leaned = true), rows) };
+  const rows = [
+    { _id: { toString: () => OID }, name: 'Kari', reviewCount: 3, email: 'secret@x.no' },
+  ];
+  const chain = {
+    select: () => chain,
+    sort: () => chain,
+    skip: () => chain,
+    limit: () => chain,
+    lean: async () => ((leaned = true), rows),
+  };
   jest.spyOn(User, 'find').mockReturnValue(chain);
   jest.spyOn(User, 'countDocuments').mockResolvedValue(11);
 });
 afterEach(() => jest.restoreAllMocks());
 
 const top = async (userId) => {
-  const res = { status() { return this; }, json: jest.fn() };
+  const res = {
+    status() {
+      return this;
+    },
+    json: jest.fn(),
+  };
   await getTopUsers({ query: {}, userId }, res);
   return res.json.mock.calls[0][0];
 };

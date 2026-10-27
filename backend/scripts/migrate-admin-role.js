@@ -32,7 +32,9 @@ async function run() {
   console.log('[Migration] Connected to MongoDB.');
 
   // Find users with "admin" role (unsupported value)
-  const affected = await User.find({ role: 'admin' }).select('_id name email role createdAt').lean();
+  const affected = await User.find({ role: 'admin' })
+    .select('_id name email role createdAt')
+    .lean();
 
   console.log(`\n[Migration] Users with role "admin": ${affected.length}`);
 

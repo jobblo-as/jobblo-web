@@ -33,7 +33,10 @@ export function serviceStatusLabel(status?: string | null): string {
 }
 
 export function ServiceStatusBadge({ status }: { status: ServiceStatus }) {
-  const mapped = SERVICE_STATUS[status] ?? { label: serviceStatusLabel(status), tone: 'quiet' as Tone };
+  const mapped = SERVICE_STATUS[status] ?? {
+    label: serviceStatusLabel(status),
+    tone: 'quiet' as Tone,
+  };
 
   return (
     <View className={['self-start rounded-full px-2.5 py-1', TONE_CLASS[mapped.tone]].join(' ')}>

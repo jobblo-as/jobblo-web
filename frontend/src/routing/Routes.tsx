@@ -9,8 +9,6 @@ import { DeveloperProtectedRoute } from '../components/shared/DeveloperProtected
 import { RouteErrorElement } from '../components/ErrorBoundary.tsx';
 import { PageLoader } from '../components/Loading/PageLoader.tsx';
 
-
-
 // =======================
 // Helpers
 // =======================
@@ -19,7 +17,9 @@ import { PageLoader } from '../components/Loading/PageLoader.tsx';
 // also exports the `routes` table, and a component declared alongside a non-component
 // export breaks fast refresh for the whole module.
 const SettingsLayout = lazy(() =>
-  import('../components/layout/SettingsLayout/SettingsLayout.tsx').then((m) => ({ default: m.SettingsLayout }))
+  import('../components/layout/SettingsLayout/SettingsLayout.tsx').then((m) => ({
+    default: m.SettingsLayout,
+  }))
 );
 const OAuthSuccess = lazy(() => import('../pages/OAuthSuccess.tsx'));
 const SettingsPage = lazy(() => import('../pages/SettingsPage.tsx'));
@@ -33,7 +33,11 @@ const withSuspense = (Component: React.ComponentType) => (
 // Settings screens load with the settings area, not with every page: they pull in Google
 // Maps (addresses), the date picker (SafePay history) and the profile/SafePay components.
 const settingsView = (name: keyof typeof import('../components/profile/SettingsViews')) =>
-  lazy(() => import('../components/profile/SettingsViews').then((m) => ({ default: m[name] as React.ComponentType })));
+  lazy(() =>
+    import('../components/profile/SettingsViews').then((m) => ({
+      default: m[name] as React.ComponentType,
+    }))
+  );
 const UsernameView = settingsView('UsernameView');
 const NameView = settingsView('NameView');
 const BioView = settingsView('BioView');
@@ -134,7 +138,9 @@ const DashboardLayout = lazy(() => import('../pages/SuperAdminDashboard/Dashboar
 
 const DeveloperLayout = lazy(() => import('../pages/DeveloperDashboard/DeveloperLayout.tsx'));
 const DevOverviewPage = lazy(() => import('../pages/DeveloperDashboard/OverviewPage.tsx'));
-const DevApiMonitoringPage = lazy(() => import('../pages/DeveloperDashboard/ApiMonitoringPage.tsx'));
+const DevApiMonitoringPage = lazy(
+  () => import('../pages/DeveloperDashboard/ApiMonitoringPage.tsx')
+);
 const DevErrorsPage = lazy(() => import('../pages/DeveloperDashboard/ErrorsPage.tsx'));
 const DevServerPage = lazy(() => import('../pages/DeveloperDashboard/ServerPage.tsx'));
 const DevWorkersPage = lazy(() => import('../pages/DeveloperDashboard/WorkersPage.tsx'));
@@ -149,16 +155,26 @@ const DevToolsPage = lazy(() => import('../pages/DeveloperDashboard/ToolsPage.ts
 const DevPlannedPage = lazy(() => import('../pages/DeveloperDashboard/PlannedPage.tsx'));
 const DevPaymentsPage = lazy(() => import('../pages/DeveloperDashboard/PaymentsPage.tsx'));
 const DevSafePayPage = lazy(() => import('../pages/DeveloperDashboard/SafePayPage.tsx'));
-const DevSubscriptionsPage = lazy(() => import('../pages/DeveloperDashboard/SubscriptionsPage.tsx'));
-const DevReconciliationPage = lazy(() => import('../pages/DeveloperDashboard/ReconciliationPage.tsx'));
-const DevUserDiagnosticsPage = lazy(() => import('../pages/DeveloperDashboard/UserDiagnosticsPage.tsx'));
-const DevJobDiagnosticsPage = lazy(() => import('../pages/DeveloperDashboard/JobDiagnosticsPage.tsx'));
+const DevSubscriptionsPage = lazy(
+  () => import('../pages/DeveloperDashboard/SubscriptionsPage.tsx')
+);
+const DevReconciliationPage = lazy(
+  () => import('../pages/DeveloperDashboard/ReconciliationPage.tsx')
+);
+const DevUserDiagnosticsPage = lazy(
+  () => import('../pages/DeveloperDashboard/UserDiagnosticsPage.tsx')
+);
+const DevJobDiagnosticsPage = lazy(
+  () => import('../pages/DeveloperDashboard/JobDiagnosticsPage.tsx')
+);
 const DevLogsExplorerPage = lazy(() => import('../pages/DeveloperDashboard/LogsExplorerPage.tsx'));
 const DevLiveActivityPage = lazy(() => import('../pages/DeveloperDashboard/LiveActivityPage.tsx'));
 const DevSecurityPage = lazy(() => import('../pages/DeveloperDashboard/SecurityPage.tsx'));
 const DevFeatureFlagsPage = lazy(() => import('../pages/DeveloperDashboard/FeatureFlagsPage.tsx'));
 const DevPerformancePage = lazy(() => import('../pages/DeveloperDashboard/PerformancePage.tsx'));
-const DevNotificationsPage = lazy(() => import('../pages/DeveloperDashboard/NotificationsPage.tsx'));
+const DevNotificationsPage = lazy(
+  () => import('../pages/DeveloperDashboard/NotificationsPage.tsx')
+);
 const DevQueuesPage = lazy(() => import('../pages/DeveloperDashboard/QueuesPage.tsx'));
 const DevRedisPage = lazy(() => import('../pages/DeveloperDashboard/redis/RedisPage.tsx'));
 const DevTicketsPage = lazy(() => import('../pages/DeveloperDashboard/TicketsPage.tsx'));
@@ -171,24 +187,36 @@ const DevApprovalsPage = lazy(() => import('../pages/DeveloperDashboard/Approval
 const DevInvestigatePage = lazy(() => import('../pages/DeveloperDashboard/InvestigatePage.tsx'));
 const DevIntegrityPage = lazy(() => import('../pages/DeveloperDashboard/IntegrityPage.tsx'));
 const DevBackupsPage = lazy(() => import('../pages/DeveloperDashboard/BackupsPage.tsx'));
-const DevSafePayInspectorPage = lazy(() => import('../pages/DeveloperDashboard/SafePayInspectorPage.tsx'));
+const DevSafePayInspectorPage = lazy(
+  () => import('../pages/DeveloperDashboard/SafePayInspectorPage.tsx')
+);
 const DevSyntheticPage = lazy(() => import('../pages/DeveloperDashboard/SyntheticPage.tsx'));
 const DevMobilePage = lazy(() => import('../pages/DeveloperDashboard/MobilePage.tsx'));
-const DevDependencyMapPage = lazy(() => import('../pages/DeveloperDashboard/DependencyMapPage.tsx'));
+const DevDependencyMapPage = lazy(
+  () => import('../pages/DeveloperDashboard/DependencyMapPage.tsx')
+);
 const DevSloPage = lazy(() => import('../pages/DeveloperDashboard/SloPage.tsx'));
-const DevDeploymentImpactPage = lazy(() => import('../pages/DeveloperDashboard/DeploymentImpactPage.tsx'));
+const DevDeploymentImpactPage = lazy(
+  () => import('../pages/DeveloperDashboard/DeploymentImpactPage.tsx')
+);
 const DevCostsPage = lazy(() => import('../pages/DeveloperDashboard/CostsPage.tsx'));
 const DevCapacityPage = lazy(() => import('../pages/DeveloperDashboard/CapacityPage.tsx'));
 const DevConfigDriftPage = lazy(() => import('../pages/DeveloperDashboard/ConfigDriftPage.tsx'));
-const DevFailureSimulatorPage = lazy(() => import('../pages/DeveloperDashboard/FailureSimulatorPage.tsx'));
+const DevFailureSimulatorPage = lazy(
+  () => import('../pages/DeveloperDashboard/FailureSimulatorPage.tsx')
+);
 const DevFraudPage = lazy(() => import('../pages/DeveloperDashboard/FraudPage.tsx'));
 const DevContractsPage = lazy(() => import('../pages/DeveloperDashboard/ContractsPage.tsx'));
-const DevConnectHealthPage = lazy(() => import('../pages/DeveloperDashboard/ConnectHealthPage.tsx'));
+const DevConnectHealthPage = lazy(
+  () => import('../pages/DeveloperDashboard/ConnectHealthPage.tsx')
+);
 const DevLedgerPage = lazy(() => import('../pages/DeveloperDashboard/LedgerPage.tsx'));
 const DevTransactionsPage = lazy(() => import('../pages/DeveloperDashboard/TransactionsPage.tsx'));
 const DevImpactPage = lazy(() => import('../pages/DeveloperDashboard/ImpactPage.tsx'));
 const DevMarketplacePage = lazy(() => import('../pages/DeveloperDashboard/MarketplacePage.tsx'));
-const DevEventConsistencyPage = lazy(() => import('../pages/DeveloperDashboard/EventConsistencyPage.tsx'));
+const DevEventConsistencyPage = lazy(
+  () => import('../pages/DeveloperDashboard/EventConsistencyPage.tsx')
+);
 const DevMigrationsPage = lazy(() => import('../pages/DeveloperDashboard/MigrationsPage.tsx'));
 const DevRunbooksPage = lazy(() => import('../pages/DeveloperDashboard/RunbooksPage.tsx'));
 const DevPrivacyPage = lazy(() => import('../pages/DeveloperDashboard/PrivacyPage.tsx'));
@@ -241,7 +269,9 @@ const JobReportDetailPage = lazy(
 
 // ── New System & Content Pages ────────────────────────────────────────────────
 const HomepageCMSPage = lazy(() => import('../pages/SuperAdminDashboard/HomepageCMSPage.tsx'));
-const CampaignManagementPage = lazy(() => import('../pages/SuperAdminDashboard/CampaignManagementPage.tsx'));
+const CampaignManagementPage = lazy(
+  () => import('../pages/SuperAdminDashboard/CampaignManagementPage.tsx')
+);
 const GlobalSettingsPage = lazy(
   () => import('../pages/SuperAdminDashboard/GlobalSettingsPage.tsx')
 );
@@ -323,9 +353,7 @@ export const routes: RouteObject[] = [
 
       {
         path: 'settings',
-        element: (
-          <ProtectedRoute>{withSuspense(SettingsLayout)}</ProtectedRoute>
-        ),
+        element: <ProtectedRoute>{withSuspense(SettingsLayout)}</ProtectedRoute>,
         children: [
           {
             path: '',
@@ -375,7 +403,10 @@ export const routes: RouteObject[] = [
       },
       // Behind the guard like safepay/success: the page calls an authenticated API, and run
       // before the session bootstrap it got a 401 after a long Stripe visit.
-      { path: 'subscription/success', element: <ProtectedRoute>{withSuspense(SuccessPage)}</ProtectedRoute> },
+      {
+        path: 'subscription/success',
+        element: <ProtectedRoute>{withSuspense(SuccessPage)}</ProtectedRoute>,
+      },
       { path: 'coins', element: <ProtectedRoute>{withSuspense(CoinsPage)}</ProtectedRoute> },
       { path: 'team', element: withSuspense(TeamPage) },
       { path: 'support', element: withSuspense(SupportPage) },

@@ -1,7 +1,10 @@
 import { create } from 'zustand';
 import { queryClient } from '../providers/queryClient';
 import { destroyChatSocket } from '../services/chatSocket.service';
-import { deactivateRegisteredPushToken, dismissDeliveredNotifications } from '../services/pushNotifications.service';
+import {
+  deactivateRegisteredPushToken,
+  dismissDeliveredNotifications,
+} from '../services/pushNotifications.service';
 import { authStorage as storage } from '../utils/authStorage';
 import { clearUserDrafts } from '../utils/draftStorage';
 
@@ -99,7 +102,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     // authStore → auth.service → api/client → authStore cycle at module load time.
     try {
       // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { logoutUser } = require('../services/auth.service') as typeof import('../services/auth.service');
+      const { logoutUser } =
+        require('../services/auth.service') as typeof import('../services/auth.service');
       await logoutUser();
     } catch {
       // Offline, or the session was already gone server-side. Sign out locally regardless.

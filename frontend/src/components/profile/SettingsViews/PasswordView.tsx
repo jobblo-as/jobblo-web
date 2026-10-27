@@ -118,7 +118,10 @@ export const PasswordView = () => {
   };
 
   const handleVerifyOtp = () => {
-    if (otp.length < 6) { setOtpError('Skriv inn alle 6 siffer'); return; }
+    if (otp.length < 6) {
+      setOtpError('Skriv inn alle 6 siffer');
+      return;
+    }
     setOtpError('');
     verifyOtpMutation.mutate();
   };
@@ -146,7 +149,6 @@ export const PasswordView = () => {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <section className="flex flex-col gap-6 max-w-2xl">
-
       {/* ── STEP 1: Password form ─────────────────────────────────────── */}
       {step === 'form' && (
         <>
@@ -166,7 +168,10 @@ export const PasswordView = () => {
             id="currentPassword"
             label="Nåværende passord"
             value={currentPassword}
-            onChange={(v) => { setCurrentPassword(v); setFormErrors((p) => ({ ...p, currentPassword: '' })); }}
+            onChange={(v) => {
+              setCurrentPassword(v);
+              setFormErrors((p) => ({ ...p, currentPassword: '' }));
+            }}
             error={formErrors.currentPassword}
           />
 
@@ -174,7 +179,10 @@ export const PasswordView = () => {
             id="newPassword"
             label="Nytt passord"
             value={newPassword}
-            onChange={(v) => { setNewPassword(v); setFormErrors((p) => ({ ...p, newPassword: '' })); }}
+            onChange={(v) => {
+              setNewPassword(v);
+              setFormErrors((p) => ({ ...p, newPassword: '' }));
+            }}
             error={formErrors.newPassword}
             placeholder="Minst 8 tegn"
           />
@@ -183,7 +191,10 @@ export const PasswordView = () => {
             id="confirmPassword"
             label="Bekreft nytt passord"
             value={confirmPassword}
-            onChange={(v) => { setConfirmPassword(v); setFormErrors((p) => ({ ...p, confirmPassword: '' })); }}
+            onChange={(v) => {
+              setConfirmPassword(v);
+              setFormErrors((p) => ({ ...p, confirmPassword: '' }));
+            }}
             error={formErrors.confirmPassword}
           />
 
@@ -207,22 +218,21 @@ export const PasswordView = () => {
             </div>
             <div>
               <h2 className="font-bold text-gray-900 text-base">Bekreft med kode</h2>
-              <p className="text-xs text-gray-500">
-                Vi sendte en 6-sifret kode til e-posten din.
-              </p>
+              <p className="text-xs text-gray-500">Vi sendte en 6-sifret kode til e-posten din.</p>
             </div>
           </div>
 
           <OtpInput
             value={otp}
-            onChange={(val) => { setOtp(val); setOtpError(''); }}
+            onChange={(val) => {
+              setOtp(val);
+              setOtpError('');
+            }}
             onComplete={handleVerifyOtp}
             disabled={verifyOtpMutation.isPending}
           />
 
-          {otpError && (
-            <p className="text-sm text-red-500 text-center -mt-2">{otpError}</p>
-          )}
+          {otpError && <p className="text-sm text-red-500 text-center -mt-2">{otpError}</p>}
 
           <button
             type="button"
@@ -271,7 +281,6 @@ export const PasswordView = () => {
           </button>
         </div>
       )}
-
     </section>
   );
 };

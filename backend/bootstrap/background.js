@@ -31,7 +31,8 @@ function startBackground(starters = STARTERS) {
     try {
       const r = start();
       if (r && typeof r.stop === 'function') stops.push([name, () => r.stop()]);
-      if (r && typeof r.catch === 'function') r.catch((err) => console.error(`[bootstrap] ${name} failed:`, err.message));
+      if (r && typeof r.catch === 'function')
+        r.catch((err) => console.error(`[bootstrap] ${name} failed:`, err.message));
     } catch (err) {
       failed.push(name);
       console.error(`[bootstrap] ${name} failed to start:`, err.message);

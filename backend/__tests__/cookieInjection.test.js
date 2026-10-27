@@ -8,7 +8,11 @@ process.env.NODE_ENV = 'test';
 process.env.MONGO_URI = '';
 const request = require('supertest');
 
-jest.mock('../models/Session', () => ({ deleteOne: jest.fn(async () => ({})), findOneAndDelete: jest.fn(async () => null), findOne: jest.fn(async () => null) }));
+jest.mock('../models/Session', () => ({
+  deleteOne: jest.fn(async () => ({})),
+  findOneAndDelete: jest.fn(async () => null),
+  findOne: jest.fn(async () => null),
+}));
 jest.mock('../models/PushToken', () => ({ updateMany: jest.fn() }));
 jest.mock('../routes/api', () => {
   const actual = jest.requireActual('../routes/api');
@@ -18,7 +22,9 @@ jest.mock('../routes/api', () => {
       const login = require('../controllers/auth/loginController');
       app.post('/api/auth/logout', login.logout);
       app.post('/api/auth/refresh-token', login.refreshToken);
-      app.get('/api/probe', (req, res) => res.json({ type: typeof req.cookies.refreshToken, kept: req.cookies.keep }));
+      app.get('/api/probe', (req, res) =>
+        res.json({ type: typeof req.cookies.refreshToken, kept: req.cookies.keep })
+      );
     },
   };
 });
@@ -34,12 +40,15 @@ it('drops JSON-object cookies but keeps plain ones', async () => {
   expect(r.body).toEqual({ type: 'undefined', kept: 'plain' });
 });
 
-it.each(['/api/auth/logout', '/api/auth/refresh-token'])('%s never queries Session with an operator object', async (path) => {
-  await request(app).post(path).set('Cookie', EVIL);
-  for (const m of [Session.deleteOne, Session.findOneAndDelete, Session.findOne]) {
-    for (const [filter] of m.mock.calls) expect(JSON.stringify(filter)).not.toContain('$ne');
+it.each(['/api/auth/logout', '/api/auth/refresh-token'])(
+  '%s never queries Session with an operator object',
+  async (path) => {
+    await request(app).post(path).set('Cookie', EVIL);
+    for (const m of [Session.deleteOne, Session.findOneAndDelete, Session.findOne]) {
+      for (const [filter] of m.mock.calls) expect(JSON.stringify(filter)).not.toContain('$ne');
+    }
   }
-});
+);
 
 it('the controller guard holds on its own (no app middleware)', async () => {
   const { logout } = require('../controllers/auth/loginController');

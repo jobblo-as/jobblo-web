@@ -43,7 +43,13 @@ exports.buyItem = async (req, res) => {
       {
         $inc: { pointsBalance: -cost },
         $push: {
-          pointsHistory: { points: -cost, type: 'spend', reason: item.title, shopItemId: item._id, createdAt: new Date() },
+          pointsHistory: {
+            points: -cost,
+            type: 'spend',
+            reason: item.title,
+            shopItemId: item._id,
+            createdAt: new Date(),
+          },
         },
       },
       { new: true, projection: { pointsBalance: 1 } }

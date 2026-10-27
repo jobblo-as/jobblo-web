@@ -10,10 +10,13 @@
 import { defineConfig, mergeConfig } from 'vite';
 import base from '../vite.config.ts';
 
-export default mergeConfig(base, defineConfig({
-  cacheDir: 'node_modules/.vite-e2e',
-  optimizeDeps: { include: ['lucide-react/dynamic'] },
-  // Transform every source file at start-up, so the first visit to each lazy route in a
-  // test is not also its compile (that alone blew 30 s test timeouts under parallel load).
-  server: { warmup: { clientFiles: ['./src/**/*.tsx'] } },
-}));
+export default mergeConfig(
+  base,
+  defineConfig({
+    cacheDir: 'node_modules/.vite-e2e',
+    optimizeDeps: { include: ['lucide-react/dynamic'] },
+    // Transform every source file at start-up, so the first visit to each lazy route in a
+    // test is not also its compile (that alone blew 30 s test timeouts under parallel load).
+    server: { warmup: { clientFiles: ['./src/**/*.tsx'] } },
+  })
+);

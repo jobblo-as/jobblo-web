@@ -9,7 +9,7 @@ export async function getMyApplicantsOverview(): Promise<MyApplicantsOverviewRes
 export async function getApplicants(
   serviceId: string,
   sort = 'createdAt',
-  filter = 'notArchived',
+  filter = 'notArchived'
 ): Promise<ApplicantsDetailResponse> {
   const response = await apiClient.get(`/applicants/${serviceId}`, {
     params: { sort, filter },
@@ -29,7 +29,7 @@ export async function toggleApplicantArchive(requestId: string): Promise<{ archi
 
 export async function declineApplicant(
   requestId: string,
-  archive = true,
+  archive = true
 ): Promise<{ message?: string }> {
   const response = await apiClient.patch(`/applicants/${requestId}/decline`, { archive });
   return response.data;

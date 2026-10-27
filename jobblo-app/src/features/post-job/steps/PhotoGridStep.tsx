@@ -38,11 +38,19 @@ export function PhotoGridStep() {
     <View className="flex-1">
       {/* Bottom room for the floating glass button. */}
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 96 }}>
-        <Text className="text-[1.625rem] font-bold leading-tight tracking-[-0.02em] text-ink">{t('Legg til bilder', 'Add photos')}</Text>
+        <Text className="text-[1.625rem] font-bold leading-tight tracking-[-0.02em] text-ink">
+          {t('Legg til bilder', 'Add photos')}
+        </Text>
         <Text className="mt-1 text-[0.9375rem] leading-6 text-muted">
           {photos.length < MAX_PHOTOS
-            ? t('Flott! Flere bilder gjør det lettere for fagfolk å gi et godt tilbud.', 'Great! More photos make it easier for pros to give a good offer.')
-            : t('Du har lagt til maks antall bilder.', 'You have added the maximum number of photos.')}
+            ? t(
+                'Flott! Flere bilder gjør det lettere for fagfolk å gi et godt tilbud.',
+                'Great! More photos make it easier for pros to give a good offer.'
+              )
+            : t(
+                'Du har lagt til maks antall bilder.',
+                'You have added the maximum number of photos.'
+              )}
         </Text>
 
         <View className="mt-5 flex-row flex-wrap" style={{ gap: GAP }}>
@@ -55,19 +63,27 @@ export function PhotoGridStep() {
               style={{ width: tile, height: tile }}
               className="overflow-hidden rounded-xl bg-surface-2"
             >
-              <Image source={{ uri: photo.uri }} style={{ width: tile, height: tile }} resizeMode="cover" />
+              <Image
+                source={{ uri: photo.uri }}
+                style={{ width: tile, height: tile }}
+                resizeMode="cover"
+              />
               <View className="absolute bottom-1.5 left-1.5 h-6 min-w-6 items-center justify-center rounded-full bg-black/60 px-1.5">
                 <Text className="text-[0.8125rem] font-semibold text-white">{index + 1}</Text>
               </View>
               {/* The camera AI helper asked for a retake: this photo is left out of the title/description. */}
               {photoQuality[photo.uri] === 'blurry' || photoQuality[photo.uri] === 'dark' ? (
                 <View className="absolute bottom-1.5 right-1.5 rounded-full bg-[#FCD34D] px-2 py-0.5">
-                  <Text className="text-[0.8125rem] font-semibold text-black">{t('Nytt bilde?', 'Retake?')}</Text>
+                  <Text className="text-[0.8125rem] font-semibold text-black">
+                    {t('Nytt bilde?', 'Retake?')}
+                  </Text>
                 </View>
               ) : null}
               {index === 0 ? (
                 <View className="absolute left-1.5 top-1.5 rounded-full bg-brand px-2 py-0.5">
-                  <Text className="text-[0.8125rem] font-semibold text-white">{t('Forside', 'Cover')}</Text>
+                  <Text className="text-[0.8125rem] font-semibold text-white">
+                    {t('Forside', 'Cover')}
+                  </Text>
                 </View>
               ) : null}
               <Pressable
@@ -92,7 +108,9 @@ export function PhotoGridStep() {
                 className="items-center justify-center rounded-xl border border-dashed border-line bg-surface active:bg-surface-2"
               >
                 <ImagePlus size={24} color={TC.brandText} />
-                <Text className="mt-1 text-[0.8125rem] font-medium text-muted">{t('Bibliotek', 'Library')}</Text>
+                <Text className="mt-1 text-[0.8125rem] font-medium text-muted">
+                  {t('Bibliotek', 'Library')}
+                </Text>
               </Pressable>
               <Pressable
                 onPress={() => goTo('photos')}
@@ -102,30 +120,57 @@ export function PhotoGridStep() {
                 className="items-center justify-center rounded-xl border border-dashed border-line bg-surface active:bg-surface-2"
               >
                 <Camera size={24} color={TC.brandText} />
-                <Text className="mt-1 text-[0.8125rem] font-medium text-muted">{t('Kamera', 'Camera')}</Text>
+                <Text className="mt-1 text-[0.8125rem] font-medium text-muted">
+                  {t('Kamera', 'Camera')}
+                </Text>
               </Pressable>
             </>
           ) : null}
         </View>
 
         <Text className="mt-4 text-[0.8125rem] leading-5 text-muted">
-          {photos.length} {t('av', 'of')} {MAX_PHOTOS} {t('bilder', 'photos')} · {t('Trykk på et bilde for å gjøre det til forsidebilde eller flytte det.', 'Tap a photo to make it the cover or move it.')}
+          {photos.length} {t('av', 'of')} {MAX_PHOTOS} {t('bilder', 'photos')} ·{' '}
+          {t(
+            'Trykk på et bilde for å gjøre det til forsidebilde eller flytte det.',
+            'Tap a photo to make it the cover or move it.'
+          )}
         </Text>
       </ScrollView>
 
-      <StepFooter glass label={t('Fortsett', 'Continue')} onPress={next} disabled={photos.length === 0} />
+      <StepFooter
+        glass
+        label={t('Fortsett', 'Continue')}
+        onPress={next}
+        disabled={photos.length === 0}
+      />
 
-      <BottomSheet visible={selected !== null} onClose={close} title={selected !== null ? `${t('Bilde', 'Photo')} ${selected + 1}` : ''}>
+      <BottomSheet
+        visible={selected !== null}
+        onClose={close}
+        title={selected !== null ? `${t('Bilde', 'Photo')} ${selected + 1}` : ''}
+      >
         {selected !== null ? (
           <View className="gap-1">
             {selected > 0 ? (
-              <SheetAction icon={<Star size={20} color={TC.ink} />} label={t('Bruk som forsidebilde', 'Use as cover photo')} onPress={() => act(() => movePhoto(selected, 0))} />
+              <SheetAction
+                icon={<Star size={20} color={TC.ink} />}
+                label={t('Bruk som forsidebilde', 'Use as cover photo')}
+                onPress={() => act(() => movePhoto(selected, 0))}
+              />
             ) : null}
             {selected > 0 ? (
-              <SheetAction icon={<ArrowLeft size={20} color={TC.ink} />} label={t('Flytt frem', 'Move earlier')} onPress={() => act(() => movePhoto(selected, selected - 1))} />
+              <SheetAction
+                icon={<ArrowLeft size={20} color={TC.ink} />}
+                label={t('Flytt frem', 'Move earlier')}
+                onPress={() => act(() => movePhoto(selected, selected - 1))}
+              />
             ) : null}
             {selected < photos.length - 1 ? (
-              <SheetAction icon={<ArrowRight size={20} color={TC.ink} />} label={t('Flytt bak', 'Move later')} onPress={() => act(() => movePhoto(selected, selected + 1))} />
+              <SheetAction
+                icon={<ArrowRight size={20} color={TC.ink} />}
+                label={t('Flytt bak', 'Move later')}
+                onPress={() => act(() => movePhoto(selected, selected + 1))}
+              />
             ) : null}
             <SheetAction
               icon={<Trash2 size={20} color={tc('#B42318', 'danger')} />}
@@ -140,11 +185,27 @@ export function PhotoGridStep() {
   );
 }
 
-function SheetAction({ icon, label, onPress, danger }: { icon: React.ReactNode; label: string; onPress: () => void; danger?: boolean }) {
+function SheetAction({
+  icon,
+  label,
+  onPress,
+  danger,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  onPress: () => void;
+  danger?: boolean;
+}) {
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" className="h-14 flex-row items-center gap-3 rounded-xl px-2 active:bg-surface-2">
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      className="h-14 flex-row items-center gap-3 rounded-xl px-2 active:bg-surface-2"
+    >
       {icon}
-      <Text className={`text-[1.0625rem] font-medium ${danger ? 'text-danger' : 'text-ink'}`}>{label}</Text>
+      <Text className={`text-[1.0625rem] font-medium ${danger ? 'text-danger' : 'text-ink'}`}>
+        {label}
+      </Text>
     </Pressable>
   );
 }

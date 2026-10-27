@@ -34,9 +34,7 @@ export default function AdminEditJobPage() {
   }
 
   if (!job) {
-    return (
-      <div className="p-10 text-center text-muted-foreground">Oppdrag ikke funnet.</div>
-    );
+    return <div className="p-10 text-center text-muted-foreground">Oppdrag ikke funnet.</div>;
   }
 
   const handleFormSubmit = async (formData: FormData) => {

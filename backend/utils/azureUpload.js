@@ -53,7 +53,12 @@ function getContainerClient(name = containerName) {
 // The only types we store, decided by the file's first bytes. The client's Content-Type and
 // file name are never trusted: a renamed .html or an SVG (script on the storage domain) has
 // none of these signatures and is refused.
-const EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'application/pdf': 'pdf' };
+const EXT = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'application/pdf': 'pdf',
+};
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const DOCUMENT_TYPES = [...IMAGE_TYPES, 'application/pdf'];
 const PNG_SIG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
@@ -63,7 +68,8 @@ function sniffFileType(buf) {
   if (!Buffer.isBuffer(buf) || buf.length < 12) return null;
   if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'image/jpeg';
   if (buf.subarray(0, 8).equals(PNG_SIG)) return 'image/png';
-  if (buf.toString('latin1', 0, 4) === 'RIFF' && buf.toString('latin1', 8, 12) === 'WEBP') return 'image/webp';
+  if (buf.toString('latin1', 0, 4) === 'RIFF' && buf.toString('latin1', 8, 12) === 'WEBP')
+    return 'image/webp';
   if (buf.toString('latin1', 0, 5) === '%PDF-') return 'application/pdf';
   return null;
 }
@@ -132,7 +138,10 @@ function signPrivateUrls(req, res, next) {
     if (!text || !text.includes(`/${privateContainerName}/`)) return json(body);
     const client = getContainerClient(privateContainerName);
     if (!(client.credential instanceof StorageSharedKeyCredential)) {
-      if (!warnedNoKey) console.warn('AZURE_PRIVATE_CONTAINER set but connection string has no AccountKey; links unsigned');
+      if (!warnedNoKey)
+        console.warn(
+          'AZURE_PRIVATE_CONTAINER set but connection string has no AccountKey; links unsigned'
+        );
       warnedNoKey = true;
       return json(body);
     }
@@ -140,11 +149,17 @@ function signPrivateUrls(req, res, next) {
     const expiresOn = new Date(Date.now() + SAS_TTL_MS);
     return json(
       JSON.parse(text, (key, value) => {
-        if (typeof value !== 'string' || !value.startsWith(prefix) || value.includes('?')) return value;
+        if (typeof value !== 'string' || !value.startsWith(prefix) || value.includes('?'))
+          return value;
         const blobName = privateBlobNameFromUrl(value);
         if (!blobName) return value;
         const sas = generateBlobSASQueryParameters(
-          { containerName: privateContainerName, blobName, permissions: BlobSASPermissions.parse('r'), expiresOn },
+          {
+            containerName: privateContainerName,
+            blobName,
+            permissions: BlobSASPermissions.parse('r'),
+            expiresOn,
+          },
           client.credential
         ).toString();
         return `${value}?${sas}`;
@@ -197,7 +212,9 @@ function isPrivateBlobUrl(url) {
 function isOurPublicBlobUrl(url) {
   try {
     const base = new URL(getContainerClient(containerName).url);
-    return new URL(url).origin === base.origin && blobNameFromUrl(url) !== null && !isPrivateBlobUrl(url);
+    return (
+      new URL(url).origin === base.origin && blobNameFromUrl(url) !== null && !isPrivateBlobUrl(url)
+    );
   } catch {
     return false; // not a URL, malformed escape, or no storage configured
   }
@@ -216,7 +233,10 @@ async function deleteFromAzure(blobNameOrUrl) {
   const isUrl = /^https?:\/\//i.test(blobNameOrUrl);
   const targets = [
     [containerName, isUrl ? blobNameFromUrl(blobNameOrUrl) : blobNameOrUrl],
-    [privateContainerName, isUrl ? privateBlobNameFromUrl(blobNameOrUrl) : privateContainerName && blobNameOrUrl],
+    [
+      privateContainerName,
+      isUrl ? privateBlobNameFromUrl(blobNameOrUrl) : privateContainerName && blobNameOrUrl,
+    ],
   ].filter(([, name]) => name);
   const blobName = targets[0]?.[1];
   if (!blobName) return;

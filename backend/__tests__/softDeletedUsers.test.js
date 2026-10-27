@@ -65,9 +65,7 @@ describe('soft-deleted users stay out of active discovery', () => {
 
     await userController.searchUsers({ query: { query: 'ann' }, userId: 'current-user' }, res);
 
-    expect(User.find).toHaveBeenCalledWith(
-      expect.objectContaining({ isDeleted: { $ne: true } })
-    );
+    expect(User.find).toHaveBeenCalledWith(expect.objectContaining({ isDeleted: { $ne: true } }));
     expect(User.find.mock.calls[0][0]).toEqual(
       expect.objectContaining({ _id: { $ne: 'current-user' } })
     );
@@ -81,9 +79,7 @@ describe('soft-deleted users stay out of active discovery', () => {
     expect(User.countDocuments).toHaveBeenCalledWith(
       expect.objectContaining({ isDeleted: { $ne: true } })
     );
-    expect(User.find).toHaveBeenCalledWith(
-      expect.objectContaining({ isDeleted: { $ne: true } })
-    );
+    expect(User.find).toHaveBeenCalledWith(expect.objectContaining({ isDeleted: { $ne: true } }));
 
     jest.clearAllMocks();
     User.find.mockReturnValue(resolvedQuery([]));
@@ -93,25 +89,19 @@ describe('soft-deleted users stay out of active discovery', () => {
     expect(User.countDocuments).toHaveBeenCalledWith(
       expect.objectContaining({ isDeleted: { $ne: true } })
     );
-    expect(User.find).toHaveBeenCalledWith(
-      expect.objectContaining({ isDeleted: { $ne: true } })
-    );
+    expect(User.find).toHaveBeenCalledWith(expect.objectContaining({ isDeleted: { $ne: true } }));
   });
 
   it('excludes deleted users from top and recommended users', async () => {
     const res = response();
 
     await userController.getTopUsers({ query: {}, userId: 'current-user' }, res);
-    expect(User.find).toHaveBeenCalledWith(
-      expect.objectContaining({ isDeleted: { $ne: true } })
-    );
+    expect(User.find).toHaveBeenCalledWith(expect.objectContaining({ isDeleted: { $ne: true } }));
 
     jest.clearAllMocks();
     User.find.mockReturnValue(resolvedQuery([]));
     await exploreController.getFeaturedFavourites({ query: {} }, res);
-    expect(User.find).toHaveBeenCalledWith(
-      expect.objectContaining({ isDeleted: { $ne: true } })
-    );
+    expect(User.find).toHaveBeenCalledWith(expect.objectContaining({ isDeleted: { $ne: true } }));
   });
 
   it('returns 404 for a deleted public profile without changing historical records', async () => {

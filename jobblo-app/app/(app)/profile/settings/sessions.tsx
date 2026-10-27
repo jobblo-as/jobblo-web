@@ -52,7 +52,8 @@ type DeviceKind = 'phone' | 'tablet' | 'desktop';
  * 'tablet', and we want the more specific match to win.
  */
 function deviceKind(session: ActiveSession): DeviceKind {
-  const haystack = `${session.device ?? ''} ${session.os ?? ''} ${session.browser ?? ''}`.toLowerCase();
+  const haystack =
+    `${session.device ?? ''} ${session.os ?? ''} ${session.browser ?? ''}`.toLowerCase();
   if (haystack.includes('tablet') || haystack.includes('ipad')) return 'tablet';
   if (
     haystack.includes('mobile') ||
@@ -77,7 +78,11 @@ function deviceTitle(session: ActiveSession): string {
   const parts = [clean(session.browser), clean(session.os)].filter(Boolean);
   if (parts.length) return parts.join(' · ');
   const kind = deviceKind(session);
-  return kind === 'phone' ? 'Ukjent mobil' : kind === 'tablet' ? 'Ukjent nettbrett' : 'Ukjent enhet';
+  return kind === 'phone'
+    ? 'Ukjent mobil'
+    : kind === 'tablet'
+      ? 'Ukjent nettbrett'
+      : 'Ukjent enhet';
 }
 
 const LOOPBACK = new Set(['::1', '127.0.0.1', '::ffff:127.0.0.1', 'localhost']);
@@ -160,10 +165,7 @@ function revokeErrorMessage(error: unknown): { tone: 'info' | 'error'; text: str
   return { tone: 'error', text: 'Kunne ikke logge ut økten. Prøv igjen.' };
 }
 
-type Confirmation =
-  | { kind: 'one'; session: ActiveSession }
-  | { kind: 'all'; count: number }
-  | null;
+type Confirmation = { kind: 'one'; session: ActiveSession } | { kind: 'all'; count: number } | null;
 
 type Feedback = { tone: 'info' | 'error'; text: string } | null;
 
@@ -173,7 +175,11 @@ export default function ActiveSessionsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const handleRefresh = async () => {
     setRefreshing(true);
-    try { await sessionsQuery.refetch(); } finally { setRefreshing(false); }
+    try {
+      await sessionsQuery.refetch();
+    } finally {
+      setRefreshing(false);
+    }
   };
   const revokeOne = useRevokeSessionMutation();
   const revokeOthers = useRevokeOtherSessionsMutation();
@@ -293,7 +299,9 @@ export default function ActiveSessionsScreen() {
             </Text>
             {session.isCurrent ? (
               <View className="rounded-full bg-tint px-2 py-0.5">
-                <Text className="text-[0.8125rem] font-bold uppercase tracking-[0.08em] text-brand-text">Nåværende</Text>
+                <Text className="text-[0.8125rem] font-bold uppercase tracking-[0.08em] text-brand-text">
+                  Nåværende
+                </Text>
               </View>
             ) : null}
           </View>
@@ -327,7 +335,9 @@ export default function ActiveSessionsScreen() {
             {isRevokingThis ? (
               <ActivityIndicator size="small" color={tc('#B4544A', 'danger')} />
             ) : (
-              <Text className="text-[0.8125rem] font-semibold text-[#B4544A] dark:text-danger">Logg ut</Text>
+              <Text className="text-[0.8125rem] font-semibold text-[#B4544A] dark:text-danger">
+                Logg ut
+              </Text>
             )}
           </Pressable>
         ) : null}
@@ -340,18 +350,37 @@ export default function ActiveSessionsScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ padding: 16, paddingBottom: 36 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void handleRefresh()} tintColor={TC.brandText} colors={[TC.brandText]} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => void handleRefresh()}
+            tintColor={TC.brandText}
+            colors={[TC.brandText]}
+          />
+        }
       >
-        <ScreenHeader title="Aktive økter" subtitle="Enheter som er logget inn på kontoen din." icon={MonitorSmartphone} />
+        <ScreenHeader
+          title="Aktive økter"
+          subtitle="Enheter som er logget inn på kontoen din."
+          icon={MonitorSmartphone}
+        />
 
         {feedback ? (
           <View
             className={`mb-4 flex-row items-center gap-2.5 rounded-2xl border px-4 py-3 ${
-              feedback.tone === 'error' ? 'border-[#EED8D4] bg-danger-tint' : 'border-[#D1E7D9] bg-[#F2F9F4]'
+              feedback.tone === 'error'
+                ? 'border-[#EED8D4] bg-danger-tint'
+                : 'border-[#D1E7D9] bg-[#F2F9F4]'
             }`}
           >
-            {feedback.tone === 'error' ? <ShieldAlert size={16} color="#8A3B33" /> : <CheckCircle2 size={16} color={TC.brandText} />}
-            <Text className={`flex-1 text-[0.8125rem] leading-5 ${feedback.tone === 'error' ? 'text-[#8A3B33]' : 'text-[#173A24] dark:text-brand-text'}`}>
+            {feedback.tone === 'error' ? (
+              <ShieldAlert size={16} color="#8A3B33" />
+            ) : (
+              <CheckCircle2 size={16} color={TC.brandText} />
+            )}
+            <Text
+              className={`flex-1 text-[0.8125rem] leading-5 ${feedback.tone === 'error' ? 'text-[#8A3B33]' : 'text-[#173A24] dark:text-brand-text'}`}
+            >
               {feedback.text}
             </Text>
           </View>
@@ -432,14 +461,16 @@ export default function ActiveSessionsScreen() {
           />
         </Card>
         <Text className="mt-4 px-1 text-[0.8125rem] leading-5 text-muted">
-          Sted og IP er omtrentlige og utledet fra nettverket. En utlogget enhet mister tilgangen ved
-          sitt neste kall mot Jobblo.
+          Sted og IP er omtrentlige og utledet fra nettverket. En utlogget enhet mister tilgangen
+          ved sitt neste kall mot Jobblo.
         </Text>
       </ScrollView>
 
       <ConfirmDialog
         visible={confirmation !== null}
-        title={confirmation?.kind === 'all' ? 'Logg ut alle andre enheter?' : 'Logg ut denne enheten?'}
+        title={
+          confirmation?.kind === 'all' ? 'Logg ut alle andre enheter?' : 'Logg ut denne enheten?'
+        }
         message={
           confirmation?.kind === 'all'
             ? `${confirmation.count === 1 ? '1 annen økt' : `${confirmation.count} andre økter`} blir avsluttet. Denne enheten forblir innlogget.`

@@ -34,7 +34,10 @@ type CouponValidateResponse = {
  * The owning user is taken from the auth token server-side (`req.user._id`);
  * we must never send a userId. Errors come back as `{ error: <message> }`.
  */
-export async function validateCoupon(params: { code: string; planId: string }): Promise<CouponValidation> {
+export async function validateCoupon(params: {
+  code: string;
+  planId: string;
+}): Promise<CouponValidation> {
   const response = await apiClient.post<CouponValidateResponse>('/coupons/validate', {
     code: params.code,
     planId: params.planId,

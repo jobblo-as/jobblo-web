@@ -139,6 +139,10 @@ async function computeDashboardStats() {
       { $group: { _id: null, avg: { $avg: '$averageRating' } } },
     ]),
   ]);
-  return { activeJobs, totalUsers, averageRating: rating?.avg ? Math.round(rating.avg * 10) / 10 : 0 };
+  return {
+    activeJobs,
+    totalUsers,
+    averageRating: rating?.avg ? Math.round(rating.avg * 10) / 10 : 0,
+  };
 }
 exports.computeDashboardStats = computeDashboardStats;

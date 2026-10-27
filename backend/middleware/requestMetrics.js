@@ -50,10 +50,23 @@ function record(method, route, status, ms, ip = null) {
   let key = `${method} ${route}`;
   // Hard ceiling on rows per minute whatever the path shape (/api/<random>/... is still one per
   // random mount name): past MAX_BUCKETS, new keys share one overflow bucket.
-  if (!buckets.has(key) && buckets.size >= MAX_BUCKETS) [key, method, route] = ['* (other)', '*', '(other)'];
+  if (!buckets.has(key) && buckets.size >= MAX_BUCKETS)
+    [key, method, route] = ['* (other)', '*', '(other)'];
   let b = buckets.get(key);
   if (!b) {
-    b = { method, route, count: 0, failed: 0, slow: 0, durSum: 0, durMax: 0, codes: {}, samples: [], ips: new Map(), ipsOther: 0 };
+    b = {
+      method,
+      route,
+      count: 0,
+      failed: 0,
+      slow: 0,
+      durSum: 0,
+      durMax: 0,
+      codes: {},
+      samples: [],
+      ips: new Map(),
+      ipsOther: 0,
+    };
     buckets.set(key, b);
   }
   b.count += 1;
@@ -129,7 +142,8 @@ function requestMetrics(req, res, next) {
   // Remember the machine-readable error code (TOKEN_EXPIRED, …) for security classification.
   const json = res.json.bind(res);
   res.json = (body) => {
-    if (res.statusCode >= 400 && body && typeof body === 'object') res.locals.errorCode = body.code || body.error?.code || null;
+    if (res.statusCode >= 400 && body && typeof body === 'object')
+      res.locals.errorCode = body.code || body.error?.code || null;
     return json(body);
   };
   let done = false;
@@ -138,7 +152,13 @@ function requestMetrics(req, res, next) {
     done = true;
     activeRequests -= 1;
     const ms = Number(process.hrtime.bigint() - start) / 1e6;
-    record(req.method, routeOf(req), res.statusCode, Math.round(ms * 10) / 10, securityEvents.clientIp(req));
+    record(
+      req.method,
+      routeOf(req),
+      res.statusCode,
+      Math.round(ms * 10) / 10,
+      securityEvents.clientIp(req)
+    );
     securityEvents.record(req, res);
   };
   res.on('finish', finish);
@@ -152,7 +172,10 @@ async function flush() {
   buckets = new Map();
   const minute = new Date(Math.floor(Date.now() / FLUSH_MS) * FLUSH_MS);
   try {
-    await ApiMetricMinute.insertMany([...current.values()].map((b) => toRow(b, minute)), { ordered: false });
+    await ApiMetricMinute.insertMany(
+      [...current.values()].map((b) => toRow(b, minute)),
+      { ordered: false }
+    );
   } catch (err) {
     console.error('[requestMetrics] flush failed:', err.message);
   }
@@ -180,4 +203,12 @@ function liveSnapshot() {
   };
 }
 
-module.exports = { requestMetrics, startMetricsFlush, flush, liveSnapshot, percentile, toRow, routeOf };
+module.exports = {
+  requestMetrics,
+  startMetricsFlush,
+  flush,
+  liveSnapshot,
+  percentile,
+  toRow,
+  routeOf,
+};

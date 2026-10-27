@@ -15,7 +15,12 @@ it('starts every read before any of them has answered', async () => {
   jest.spyOn(Category, 'find').mockReturnValue({ lean: held('categories', []) });
   jest.spyOn(Service, 'distinct').mockResolvedValue([]);
 
-  const res = { json: jest.fn(), status() { return this; } };
+  const res = {
+    json: jest.fn(),
+    status() {
+      return this;
+    },
+  };
   const done = getFilterOptions({ query: {} }, res);
   await new Promise((r) => setImmediate(r));
   expect(started.sort()).toEqual(['aggregate', 'aggregate', 'categories', 'count']);

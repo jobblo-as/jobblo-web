@@ -30,11 +30,7 @@ export function Button({
         : 'bg-transparent';
 
   const labelClass =
-    variant === 'primary'
-      ? 'text-white'
-      : variant === 'secondary'
-        ? 'text-ink'
-        : 'text-muted';
+    variant === 'primary' ? 'text-white' : variant === 'secondary' ? 'text-ink' : 'text-muted';
 
   return (
     <TouchableOpacity

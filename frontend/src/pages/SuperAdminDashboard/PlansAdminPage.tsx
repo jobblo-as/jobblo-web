@@ -3,524 +3,712 @@ import { Edit, ShieldCheck, Settings, Info, Plus, Trash2, CreditCard } from 'luc
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import {
-    getPlans,
-    updatePlan,
-    getConfigs,
-    updateConfig,
-    initializeConfigs,
+  getPlans,
+  updatePlan,
+  getConfigs,
+  updateConfig,
+  initializeConfigs,
 } from '../../features/plans/api';
-import {
-    AdminDataTable,
-    AdminPageHeader,
-    AdminStatusBadge,
-} from '../../components/admin';
+import { AdminDataTable, AdminPageHeader, AdminStatusBadge } from '../../components/admin';
 import type { ColumnDef } from '../../components/admin/AdminDataTable';
 
 interface PlanEntitlements {
-    freeContact: number;
-    perContactPrice: number;
-    ContactUnlock: number;
-    maxJobsValue?: number;
-    maxContact: number;
-    radius: number;
-    visibilityLevel: number;
-    locationPrecision: string;
-    hasBadge: boolean;
-    hasAnalytics: boolean;
+  freeContact: number;
+  perContactPrice: number;
+  ContactUnlock: number;
+  maxJobsValue?: number;
+  maxContact: number;
+  radius: number;
+  visibilityLevel: number;
+  locationPrecision: string;
+  hasBadge: boolean;
+  hasAnalytics: boolean;
 }
 
 interface Plan {
-    _id: string;
-    name: string;
-    price: number;
-    type: 'private' | 'business';
-    isActive: boolean;
-    featuresText: string[];
-    entitlements: PlanEntitlements;
+  _id: string;
+  name: string;
+  price: number;
+  type: 'private' | 'business';
+  isActive: boolean;
+  featuresText: string[];
+  entitlements: PlanEntitlements;
 }
 
 interface GlobalConfig {
-    _id: string;
-    key: string;
-    value: boolean;
-    description?: string;
+  _id: string;
+  key: string;
+  value: boolean;
+  description?: string;
 }
 
 interface PlanForm {
-    name: string;
-    price: string;
-    type: 'private' | 'business';
-    isActive: boolean;
-    freeContact: string;
-    perContactPrice: string;
-    ContactUnlock: string;
-    maxJobsValue: string;
-    maxContact: string;
-    radius: string;
-    visibilityLevel: string;
-    locationPrecision: string;
-    hasBadge: boolean;
-    hasAnalytics: boolean;
-    featuresText: string[];
+  name: string;
+  price: string;
+  type: 'private' | 'business';
+  isActive: boolean;
+  freeContact: string;
+  perContactPrice: string;
+  ContactUnlock: string;
+  maxJobsValue: string;
+  maxContact: string;
+  radius: string;
+  visibilityLevel: string;
+  locationPrecision: string;
+  hasBadge: boolean;
+  hasAnalytics: boolean;
+  featuresText: string[];
 }
 
-function ConfigToggle({ config, onToggle }: { config: GlobalConfig; onToggle: (key: string, value: boolean) => void }) {
-    return (
-        <div className="flex items-center justify-between p-4 bg-muted/50 rounded-md border border-border">
-            <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-foreground">{config.key.replace(/_/g, ' ')}</p>
-                {config.description && (
-                    <p className="text-xs text-muted-foreground mt-0.5">{config.description}</p>
-                )}
-            </div>
-            <button
-                onClick={() => onToggle(config.key, !config.value)}
-                className={`relative w-10 h-5 rounded-full transition-colors shrink-0 ml-3 ${config.value ? 'bg-primary' : 'bg-muted-foreground/30'}`}
-                aria-label={`${config.key.replace(/_/g, ' ')}: ${config.value ? 'På' : 'Av'}`}
-                role="switch"
-                aria-checked={config.value}
-            >
-                <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-card rounded-full shadow-sm transition-transform ${config.value ? 'translate-x-5' : ''}`} />
-            </button>
-        </div>
-    );
+function ConfigToggle({
+  config,
+  onToggle,
+}: {
+  config: GlobalConfig;
+  onToggle: (key: string, value: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between p-4 bg-muted/50 rounded-md border border-border">
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium text-foreground">{config.key.replace(/_/g, ' ')}</p>
+        {config.description && (
+          <p className="text-xs text-muted-foreground mt-0.5">{config.description}</p>
+        )}
+      </div>
+      <button
+        onClick={() => onToggle(config.key, !config.value)}
+        className={`relative w-10 h-5 rounded-full transition-colors shrink-0 ml-3 ${config.value ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+        aria-label={`${config.key.replace(/_/g, ' ')}: ${config.value ? 'På' : 'Av'}`}
+        role="switch"
+        aria-checked={config.value}
+      >
+        <span
+          className={`absolute top-0.5 left-0.5 w-4 h-4 bg-card rounded-full shadow-sm transition-transform ${config.value ? 'translate-x-5' : ''}`}
+        />
+      </button>
+    </div>
+  );
 }
 
 const NO_PLANS: Plan[] = [];
 const NO_CONFIGS: GlobalConfig[] = [];
 
 export default function PlansAdminPage() {
-    const qc = useQueryClient();
-    const [editTarget, setEditTarget] = useState<Plan | null>(null);
-    const [showEdit, setShowEdit] = useState(false);
-    const [form, setForm] = useState<PlanForm>({
-        name: '', price: '', type: 'private', isActive: true,
-        freeContact: '', perContactPrice: '', ContactUnlock: '', maxJobsValue: '', maxContact: '',
-        radius: '', visibilityLevel: '', locationPrecision: 'approximate',
-        hasBadge: false, hasAnalytics: false, featuresText: [],
+  const qc = useQueryClient();
+  const [editTarget, setEditTarget] = useState<Plan | null>(null);
+  const [showEdit, setShowEdit] = useState(false);
+  const [form, setForm] = useState<PlanForm>({
+    name: '',
+    price: '',
+    type: 'private',
+    isActive: true,
+    freeContact: '',
+    perContactPrice: '',
+    ContactUnlock: '',
+    maxJobsValue: '',
+    maxContact: '',
+    radius: '',
+    visibilityLevel: '',
+    locationPrecision: 'approximate',
+    hasBadge: false,
+    hasAnalytics: false,
+    featuresText: [],
+  });
+  const [newFeature, setNewFeature] = useState('');
+
+  const adminDataQuery = useQuery({
+    queryKey: ['admin', 'plans-config'],
+    queryFn: async () => {
+      const [plansData, configsData] = await Promise.all([getPlans(), getConfigs()]);
+      const plans: Plan[] = Array.isArray(plansData) ? plansData : (plansData?.plans ?? []);
+      const configArr = Array.isArray(configsData) ? configsData : (configsData?.configs ?? []);
+      if (
+        configArr.length === 0 ||
+        !configArr.some((c: GlobalConfig) => c.key === 'STRIPE_TEST_MODE')
+      ) {
+        await initializeConfigs();
+        const newConfigs = await getConfigs();
+        return {
+          plans,
+          configs: (Array.isArray(newConfigs)
+            ? newConfigs
+            : (newConfigs?.configs ?? [])) as GlobalConfig[],
+        };
+      }
+      return { plans, configs: configArr as GlobalConfig[] };
+    },
+    retry: false,
+  });
+  const plans = adminDataQuery.data?.plans ?? NO_PLANS;
+  const configs = adminDataQuery.data?.configs ?? NO_CONFIGS;
+  const loading = adminDataQuery.isFetching;
+  const fetchData = adminDataQuery.refetch;
+
+  useEffect(() => {
+    if (adminDataQuery.isError) toast.error('Kunne ikke hente data');
+  }, [adminDataQuery.isError]);
+
+  const updatePlanMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof updatePlan>[1] }) =>
+      updatePlan(id, data),
+  });
+  const updateConfigMutation = useMutation({
+    mutationFn: ({ key, value }: { key: string; value: unknown }) => updateConfig(key, value),
+    // useConfigByKey readers (job detail, explore ads) cache under ['config', key].
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['config'] }),
+  });
+
+  const openEdit = (plan: Plan) => {
+    setEditTarget(plan);
+    setForm({
+      name: plan.name,
+      price: String(plan.price),
+      type: plan.type,
+      isActive: plan.isActive,
+      freeContact: String(plan.entitlements?.freeContact ?? 0),
+      perContactPrice: String(plan.entitlements?.perContactPrice ?? 0),
+      ContactUnlock: String(plan.entitlements?.ContactUnlock ?? 0),
+      maxJobsValue: String(plan.entitlements?.maxJobsValue ?? ''),
+      maxContact: String(plan.entitlements?.maxContact ?? 0),
+      radius: String(plan.entitlements?.radius ?? 0),
+      visibilityLevel: String(plan.entitlements?.visibilityLevel ?? 0),
+      locationPrecision: plan.entitlements?.locationPrecision ?? 'approximate',
+      hasBadge: plan.entitlements?.hasBadge ?? false,
+      hasAnalytics: plan.entitlements?.hasAnalytics ?? false,
+      featuresText: plan.featuresText ?? [],
     });
-    const [newFeature, setNewFeature] = useState('');
+    setShowEdit(true);
+  };
 
-    const adminDataQuery = useQuery({
-        queryKey: ['admin', 'plans-config'],
-        queryFn: async () => {
-            const [plansData, configsData] = await Promise.all([getPlans(), getConfigs()]);
-            const plans: Plan[] = Array.isArray(plansData) ? plansData : plansData?.plans ?? [];
-            const configArr = Array.isArray(configsData) ? configsData : configsData?.configs ?? [];
-            if (configArr.length === 0 || !configArr.some((c: GlobalConfig) => c.key === 'STRIPE_TEST_MODE')) {
-                await initializeConfigs();
-                const newConfigs = await getConfigs();
-                return { plans, configs: (Array.isArray(newConfigs) ? newConfigs : newConfigs?.configs ?? []) as GlobalConfig[] };
-            }
-            return { plans, configs: configArr as GlobalConfig[] };
+  const handleSavePlan = async () => {
+    if (!editTarget || !form.name.trim()) {
+      toast.error('Navn er påkrevd.');
+      return;
+    }
+    try {
+      const updatedPlan = {
+        name: form.name.trim(),
+        price: parseFloat(form.price) || 0,
+        type: form.type,
+        isActive: form.isActive,
+        featuresText: form.featuresText.filter((f) => f.trim()),
+        entitlements: {
+          ...editTarget.entitlements,
+          freeContact: parseInt(form.freeContact, 10) || 0,
+          perContactPrice: parseFloat(form.perContactPrice) || 0,
+          ContactUnlock: parseInt(form.ContactUnlock, 10) || 0,
+          maxJobsValue: form.maxJobsValue.trim() === '' ? null : parseFloat(form.maxJobsValue),
+          maxContact: parseInt(form.maxContact, 10) || 0,
+          radius: parseInt(form.radius, 10) || 0,
+          visibilityLevel: parseInt(form.visibilityLevel, 10) || 0,
+          locationPrecision: form.locationPrecision,
+          hasBadge: form.hasBadge,
+          hasAnalytics: form.hasAnalytics,
         },
-        retry: false,
-    });
-    const plans = adminDataQuery.data?.plans ?? NO_PLANS;
-    const configs = adminDataQuery.data?.configs ?? NO_CONFIGS;
-    const loading = adminDataQuery.isFetching;
-    const fetchData = adminDataQuery.refetch;
+      };
+      await updatePlanMutation.mutateAsync({ id: editTarget._id, data: updatedPlan });
+      qc.invalidateQueries({ queryKey: ['plans'] });
+      toast.success('Plan oppdatert.');
+      setShowEdit(false);
+      fetchData();
+    } catch (err) {
+      // e.g. PLAN_FIELD_LOCKED: price/name/type/active are tied to Stripe and not editable here.
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      toast.error(msg || 'Kunne ikke oppdatere plan.');
+    }
+  };
 
-    useEffect(() => {
-        if (adminDataQuery.isError) toast.error('Kunne ikke hente data');
-    }, [adminDataQuery.isError]);
+  const handleToggleConfig = async (key: string, value: boolean) => {
+    try {
+      await updateConfigMutation.mutateAsync({ key, value });
+      toast.success('Innstilling oppdatert.');
+      fetchData();
+    } catch {
+      toast.error('Kunne ikke oppdatere innstilling.');
+    }
+  };
 
-    const updatePlanMutation = useMutation({
-        mutationFn: ({ id, data }: { id: string; data: Parameters<typeof updatePlan>[1] }) => updatePlan(id, data),
-    });
-    const updateConfigMutation = useMutation({
-        mutationFn: ({ key, value }: { key: string; value: unknown }) => updateConfig(key, value),
-        // useConfigByKey readers (job detail, explore ads) cache under ['config', key].
-        onSuccess: () => qc.invalidateQueries({ queryKey: ['config'] }),
-    });
+  const stripeTestMode = configs.find((c) => c.key === 'STRIPE_TEST_MODE');
 
-    const openEdit = (plan: Plan) => {
-        setEditTarget(plan);
-        setForm({
-            name: plan.name,
-            price: String(plan.price),
-            type: plan.type,
-            isActive: plan.isActive,
-            freeContact: String(plan.entitlements?.freeContact ?? 0),
-            perContactPrice: String(plan.entitlements?.perContactPrice ?? 0),
-            ContactUnlock: String(plan.entitlements?.ContactUnlock ?? 0),
-            maxJobsValue: String(plan.entitlements?.maxJobsValue ?? ''),
-            maxContact: String(plan.entitlements?.maxContact ?? 0),
-            radius: String(plan.entitlements?.radius ?? 0),
-            visibilityLevel: String(plan.entitlements?.visibilityLevel ?? 0),
-            locationPrecision: plan.entitlements?.locationPrecision ?? 'approximate',
-            hasBadge: plan.entitlements?.hasBadge ?? false,
-            hasAnalytics: plan.entitlements?.hasAnalytics ?? false,
-            featuresText: plan.featuresText ?? [],
-        });
-        setShowEdit(true);
-    };
+  const handleToggleStripeTestMode = async (value: boolean) => {
+    try {
+      await updateConfigMutation.mutateAsync({ key: 'STRIPE_TEST_MODE', value });
+      toast.success(
+        value
+          ? 'Stripe testmodus aktivert. Test-nøkler er nå i bruk.'
+          : 'Stripe testmodus deaktivert. Produksjons-nøkler er nå i bruk.'
+      );
+      fetchData();
+    } catch {
+      toast.error('Kunne ikke oppdatere Stripe-innstilling.');
+    }
+  };
 
-    const handleSavePlan = async () => {
-        if (!editTarget || !form.name.trim()) { toast.error('Navn er påkrevd.'); return; }
-        try {
-            const updatedPlan = {
-                name: form.name.trim(),
-                price: parseFloat(form.price) || 0,
-                type: form.type,
-                isActive: form.isActive,
-                featuresText: form.featuresText.filter((f) => f.trim()),
-                entitlements: {
-                    ...editTarget.entitlements,
-                    freeContact: parseInt(form.freeContact, 10) || 0,
-                    perContactPrice: parseFloat(form.perContactPrice) || 0,
-                    ContactUnlock: parseInt(form.ContactUnlock, 10) || 0,
-                    maxJobsValue: form.maxJobsValue.trim() === '' ? null : parseFloat(form.maxJobsValue),
-                    maxContact: parseInt(form.maxContact, 10) || 0,
-                    radius: parseInt(form.radius, 10) || 0,
-                    visibilityLevel: parseInt(form.visibilityLevel, 10) || 0,
-                    locationPrecision: form.locationPrecision,
-                    hasBadge: form.hasBadge,
-                    hasAnalytics: form.hasAnalytics,
-                },
-            };
-            await updatePlanMutation.mutateAsync({ id: editTarget._id, data: updatedPlan });
-            qc.invalidateQueries({ queryKey: ['plans'] });
-            toast.success('Plan oppdatert.');
-            setShowEdit(false);
-            fetchData();
-        } catch (err) {
-            // e.g. PLAN_FIELD_LOCKED: price/name/type/active are tied to Stripe and not editable here.
-            const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-            toast.error(msg || 'Kunne ikke oppdatere plan.');
-        }
-    };
+  const addFeature = () => {
+    if (newFeature.trim()) {
+      setForm((f) => ({ ...f, featuresText: [...f.featuresText, newFeature.trim()] }));
+      setNewFeature('');
+    }
+  };
 
-    const handleToggleConfig = async (key: string, value: boolean) => {
-        try {
-            await updateConfigMutation.mutateAsync({ key, value });
-            toast.success('Innstilling oppdatert.');
-            fetchData();
-        } catch {
-            toast.error('Kunne ikke oppdatere innstilling.');
-        }
-    };
+  const removeFeature = (idx: number) => {
+    setForm((f) => ({ ...f, featuresText: f.featuresText.filter((_, i) => i !== idx) }));
+  };
 
-    const stripeTestMode = configs.find((c) => c.key === 'STRIPE_TEST_MODE');
-
-    const handleToggleStripeTestMode = async (value: boolean) => {
-        try {
-            await updateConfigMutation.mutateAsync({ key: 'STRIPE_TEST_MODE', value });
-            toast.success(value ? 'Stripe testmodus aktivert. Test-nøkler er nå i bruk.' : 'Stripe testmodus deaktivert. Produksjons-nøkler er nå i bruk.');
-            fetchData();
-        } catch {
-            toast.error('Kunne ikke oppdatere Stripe-innstilling.');
-        }
-    };
-
-    const addFeature = () => {
-        if (newFeature.trim()) {
-            setForm((f) => ({ ...f, featuresText: [...f.featuresText, newFeature.trim()] }));
-            setNewFeature('');
-        }
-    };
-
-    const removeFeature = (idx: number) => {
-        setForm((f) => ({ ...f, featuresText: f.featuresText.filter((_, i) => i !== idx) }));
-    };
-
-    const columns: ColumnDef<Plan>[] = [
-        {
-            key: 'name',
-            header: 'Plan',
-            render: (p) => (
-                <div className="flex items-center gap-3">
-                    <div className="p-2 bg-muted rounded-md">
-                        <ShieldCheck size={18} className="text-muted-foreground" />
-                    </div>
-                    <div>
-                        <p className="text-sm font-semibold text-foreground">{p.name}</p>
-                        <AdminStatusBadge status={p.type} />
-                    </div>
-                </div>
-            ),
-        },
-        {
-            key: 'price',
-            header: 'Pris',
-            render: (p) => <span className="font-semibold text-foreground">{p.price} NOK</span>,
-        },
-        {
-            key: 'contacts',
-            header: 'Kontakter/mnd',
-            render: (p) => <span className="text-sm text-muted-foreground">{p.entitlements?.freeContact ?? 0}</span>,
-        },
-        {
-            key: 'visibility',
-            header: 'Synlighet',
-            render: (p) => (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700">
-                    Nivå {p.entitlements?.visibilityLevel ?? 0}
-                </span>
-            ),
-        },
-        {
-            key: 'badge',
-            header: 'Merke',
-            render: (p) => (
-                <span className={`text-xs font-medium ${p.entitlements?.hasBadge ? 'text-green-600' : 'text-muted-foreground'}`}>
-                    {p.entitlements?.hasBadge ? 'Ja' : 'Nei'}
-                </span>
-            ),
-        },
-        {
-            key: 'analytics',
-            header: 'Analyse',
-            render: (p) => (
-                <span className={`text-xs font-medium ${p.entitlements?.hasAnalytics ? 'text-green-600' : 'text-muted-foreground'}`}>
-                    {p.entitlements?.hasAnalytics ? 'Ja' : 'Nei'}
-                </span>
-            ),
-        },
-        {
-            key: 'status',
-            header: 'Status',
-            render: (p) => <AdminStatusBadge status={p.isActive ? 'active' : 'inactive'} />,
-        },
-        {
-            key: 'actions',
-            header: 'Handlinger',
-            className: 'whitespace-nowrap',
-            render: (p) => (
-                <button onClick={() => openEdit(p)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
-                    <Edit size={13} /> Rediger
-                </button>
-            ),
-        },
-    ];
-
-    return (
-        <div className="space-y-6">
-            <AdminPageHeader
-                title="Abonnementer"
-                description="Administrer prisplaner og globale funksjonsbrytere"
-            />
-
-            {/* Stripe Test Mode Toggle */}
-            <div className={`rounded-lg border p-5 ${stripeTestMode?.value ? 'bg-amber-50 border-amber-200' : 'bg-card border-border'}`}>
-                <div className="flex items-center justify-between gap-4">
-                    <div className="min-w-0 flex-1">
-                        <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                            <CreditCard size={16} /> Stripe Testmodus
-                        </h3>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            {stripeTestMode?.value
-                                ? 'Aktiv: Betalinger bruker Stripe test-nøkler. Ingen ekte belastninger skjer.'
-                                : 'Inaktiv: Betalinger bruker produksjons-nøkler (ekte belastninger).'}
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${stripeTestMode?.value ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}>
-                            {stripeTestMode?.value ? 'TEST' : 'LIVE'}
-                        </span>
-                        <button
-                            onClick={() => handleToggleStripeTestMode(!stripeTestMode?.value)}
-                            disabled={stripeTestMode === undefined}
-                            className={`relative w-12 h-6 rounded-full transition-colors shrink-0 ${stripeTestMode?.value ? 'bg-amber-500' : 'bg-muted-foreground/30'}`}
-                            aria-label={`Stripe testmodus: ${stripeTestMode?.value ? 'På' : 'Av'}`}
-                            role="switch"
-                            aria-checked={!!stripeTestMode?.value}
-                        >
-                            <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-card rounded-full shadow-sm transition-transform ${stripeTestMode?.value ? 'translate-x-6' : ''}`} />
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            {/* Global Feature Toggles */}
-            <div className="bg-card rounded-lg border border-border p-5">
-                <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-                    <Settings size={16} /> Globale funksjonsbrytere
-                </h3>
-                {loading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {Array.from({ length: 4 }).map((_, i) => (
-                            <div key={i} className="h-16 bg-muted rounded-md animate-pulse" />
-                        ))}
-                    </div>
-                ) : configs.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Ingen konfigurasjoner funnet.</p>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {configs.filter((config) => config.key !== 'STRIPE_TEST_MODE').map((config) => (
-                            <ConfigToggle key={config.key} config={config} onToggle={handleToggleConfig} />
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            {/* Plans table */}
-            <AdminDataTable
-                columns={columns}
-                data={plans}
-                keyExtractor={(p) => p._id}
-                loading={loading}
-                emptyTitle="Ingen planer"
-                emptyDescription="Det finnes ingen abonnementsplaner ennå."
-            />
-
-            {/* Edit plan modal */}
-            {showEdit && editTarget && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true" aria-labelledby="edit-plan-title">
-                    <div className="bg-card rounded-lg shadow-xl w-full max-w-lg p-6 space-y-4 overflow-y-auto max-h-[90vh]">
-                        <h2 id="edit-plan-title" className="text-lg font-bold text-foreground">Rediger: {editTarget.name}</h2>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label htmlFor="ep-name" className="block text-sm font-medium text-foreground mb-1">Navn *</label>
-                                <input id="ep-name" type="text" value={form.name}
-                                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                                    className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50" />
-                            </div>
-                            <div>
-                                <label htmlFor="ep-price" className="block text-sm font-medium text-foreground mb-1">Pris (NOK) *</label>
-                                <input id="ep-price" type="number" min="0" value={form.price}
-                                    onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
-                                    className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50" />
-                            </div>
-                            <div>
-                                <label htmlFor="ep-type" className="block text-sm font-medium text-foreground mb-1">Type *</label>
-                                <select id="ep-type" value={form.type}
-                                    onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as 'private' | 'business' }))}
-                                    className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50">
-                                    <option value="private">Privat</option>
-                                    <option value="business">Bedrift</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-1 pt-5">
-                                    <input type="checkbox" checked={form.isActive}
-                                        onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
-                                        className="w-4 h-4 rounded border-border text-primary focus:ring-ring/50" />
-                                    Aktiv
-                                </label>
-                            </div>
-                        </div>
-
-                        <div className="border-t border-border pt-4">
-                            <h4 className="text-sm font-semibold text-foreground mb-3">Rettigheter og funksjoner</h4>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label htmlFor="ep-contacts" className="block text-sm font-medium text-foreground mb-1">Gratis kontakter/mnd</label>
-                                    <input id="ep-contacts" type="number" min="0" value={form.freeContact}
-                                        onChange={(e) => setForm((f) => ({ ...f, freeContact: e.target.value }))}
-                                        className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50" />
-                                </div>
-                                <div>
-                                    <label htmlFor="ep-radius" className="block text-sm font-medium text-foreground mb-1">Søkeradius (km)</label>
-                                    <input id="ep-radius" type="number" min="0" value={form.radius}
-                                        onChange={(e) => setForm((f) => ({ ...f, radius: e.target.value }))}
-                                        className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50" />
-                                </div>
-                                <div>
-                                    <label htmlFor="ep-extra-price" className="block text-sm font-medium text-foreground mb-1">Ekstra kontakt (NOK)</label>
-                                    <input id="ep-extra-price" type="number" min="0" step="0.01" value={form.perContactPrice}
-                                        onChange={(e) => setForm((f) => ({ ...f, perContactPrice: e.target.value }))}
-                                        className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50" />
-                                </div>
-                                <div>
-                                    <label htmlFor="ep-unlock" className="block text-sm font-medium text-foreground mb-1">Tilgangsforsinkelse (min)</label>
-                                    <input id="ep-unlock" type="number" min="0" value={form.ContactUnlock}
-                                        onChange={(e) => setForm((f) => ({ ...f, ContactUnlock: e.target.value }))}
-                                        className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50" />
-                                </div>
-                                <div>
-                                    <label htmlFor="ep-max-jobs" className="block text-sm font-medium text-foreground mb-1">Maks jobbverdi (NOK)</label>
-                                    <input id="ep-max-jobs" type="number" min="0" step="0.01" value={form.maxJobsValue}
-                                        onChange={(e) => setForm((f) => ({ ...f, maxJobsValue: e.target.value }))}
-                                        className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50" />
-                                </div>
-                                <div>
-                                    <label htmlFor="ep-max-contact" className="block text-sm font-medium text-foreground mb-1">Maks kontakter</label>
-                                    <input id="ep-max-contact" type="number" min="0" value={form.maxContact}
-                                        onChange={(e) => setForm((f) => ({ ...f, maxContact: e.target.value }))}
-                                        className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50" />
-                                </div>
-                                <div>
-                                    <label htmlFor="ep-visibility" className="block text-sm font-medium text-foreground mb-1">Synlighet (0-5)</label>
-                                    <input id="ep-visibility" type="number" min="0" max="5" value={form.visibilityLevel}
-                                        onChange={(e) => setForm((f) => ({ ...f, visibilityLevel: e.target.value }))}
-                                        className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50" />
-                                </div>
-                                <div>
-                                    <label htmlFor="ep-location" className="block text-sm font-medium text-foreground mb-1">Plasseringspresisjon</label>
-                                    <select id="ep-location" value={form.locationPrecision}
-                                        onChange={(e) => setForm((f) => ({ ...f, locationPrecision: e.target.value }))}
-                                        className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50">
-                                        <option value="approximate">Omtrentlig</option>
-                                        <option value="exact">Nøyaktig</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-6 mt-3">
-                                <label className="flex items-center gap-2 text-sm text-foreground">
-                                    <input type="checkbox" checked={form.hasBadge}
-                                        onChange={(e) => setForm((f) => ({ ...f, hasBadge: e.target.checked }))}
-                                        className="w-4 h-4 rounded border-border text-primary focus:ring-ring/50" />
-                                    Verifisert merke
-                                </label>
-                                <label className="flex items-center gap-2 text-sm text-foreground">
-                                    <input type="checkbox" checked={form.hasAnalytics}
-                                        onChange={(e) => setForm((f) => ({ ...f, hasAnalytics: e.target.checked }))}
-                                        className="w-4 h-4 rounded border-border text-primary focus:ring-ring/50" />
-                                    Analyse
-                                </label>
-                            </div>
-                        </div>
-
-                        <div className="border-t border-border pt-4">
-                            <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-1">
-                                <Info size={14} /> Funksjoner (vises for brukere)
-                            </h4>
-                            <div className="space-y-2 mb-2">
-                                {form.featuresText.map((feat, idx) => (
-                                    <div key={idx} className="flex items-center gap-2">
-                                        <input type="text" value={feat}
-                                            onChange={(e) => {
-                                                const updated = [...form.featuresText];
-                                                updated[idx] = e.target.value;
-                                                setForm((f) => ({ ...f, featuresText: updated }));
-                                            }}
-                                            className="flex-1 px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50" />
-                                        <button onClick={() => removeFeature(idx)}
-                                            className="p-1.5 text-red-400 hover:text-red-600 transition-colors">
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <input type="text" value={newFeature}
-                                    onChange={(e) => setNewFeature(e.target.value)}
-                                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addFeature(); } }}
-                                    placeholder="Legg til funksjon…"
-                                    className="flex-1 px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50" />
-                                <button onClick={addFeature}
-                                    className="flex items-center gap-1 px-3 py-2 text-xs font-medium text-primary bg-green-50 hover:bg-green-100 rounded-md transition-colors">
-                                    <Plus size={14} /> Legg til
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="flex justify-end gap-2 pt-2 border-t border-border">
-                            <button onClick={() => setShowEdit(false)}
-                                className="px-4 py-2.5 text-sm font-medium text-muted-foreground bg-muted hover:bg-accent rounded-md transition-colors">
-                                Avbryt
-                            </button>
-                            <button onClick={handleSavePlan}
-                                className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-md transition-colors">
-                                <Settings size={14} /> Lagre endringer
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+  const columns: ColumnDef<Plan>[] = [
+    {
+      key: 'name',
+      header: 'Plan',
+      render: (p) => (
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-muted rounded-md">
+            <ShieldCheck size={18} className="text-muted-foreground" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">{p.name}</p>
+            <AdminStatusBadge status={p.type} />
+          </div>
         </div>
-    );
+      ),
+    },
+    {
+      key: 'price',
+      header: 'Pris',
+      render: (p) => <span className="font-semibold text-foreground">{p.price} NOK</span>,
+    },
+    {
+      key: 'contacts',
+      header: 'Kontakter/mnd',
+      render: (p) => (
+        <span className="text-sm text-muted-foreground">{p.entitlements?.freeContact ?? 0}</span>
+      ),
+    },
+    {
+      key: 'visibility',
+      header: 'Synlighet',
+      render: (p) => (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700">
+          Nivå {p.entitlements?.visibilityLevel ?? 0}
+        </span>
+      ),
+    },
+    {
+      key: 'badge',
+      header: 'Merke',
+      render: (p) => (
+        <span
+          className={`text-xs font-medium ${p.entitlements?.hasBadge ? 'text-green-600' : 'text-muted-foreground'}`}
+        >
+          {p.entitlements?.hasBadge ? 'Ja' : 'Nei'}
+        </span>
+      ),
+    },
+    {
+      key: 'analytics',
+      header: 'Analyse',
+      render: (p) => (
+        <span
+          className={`text-xs font-medium ${p.entitlements?.hasAnalytics ? 'text-green-600' : 'text-muted-foreground'}`}
+        >
+          {p.entitlements?.hasAnalytics ? 'Ja' : 'Nei'}
+        </span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (p) => <AdminStatusBadge status={p.isActive ? 'active' : 'inactive'} />,
+    },
+    {
+      key: 'actions',
+      header: 'Handlinger',
+      className: 'whitespace-nowrap',
+      render: (p) => (
+        <button
+          onClick={() => openEdit(p)}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+        >
+          <Edit size={13} /> Rediger
+        </button>
+      ),
+    },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <AdminPageHeader
+        title="Abonnementer"
+        description="Administrer prisplaner og globale funksjonsbrytere"
+      />
+
+      {/* Stripe Test Mode Toggle */}
+      <div
+        className={`rounded-lg border p-5 ${stripeTestMode?.value ? 'bg-amber-50 border-amber-200' : 'bg-card border-border'}`}
+      >
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <CreditCard size={16} /> Stripe Testmodus
+            </h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              {stripeTestMode?.value
+                ? 'Aktiv: Betalinger bruker Stripe test-nøkler. Ingen ekte belastninger skjer.'
+                : 'Inaktiv: Betalinger bruker produksjons-nøkler (ekte belastninger).'}
+            </p>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <span
+              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${stripeTestMode?.value ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}
+            >
+              {stripeTestMode?.value ? 'TEST' : 'LIVE'}
+            </span>
+            <button
+              onClick={() => handleToggleStripeTestMode(!stripeTestMode?.value)}
+              disabled={stripeTestMode === undefined}
+              className={`relative w-12 h-6 rounded-full transition-colors shrink-0 ${stripeTestMode?.value ? 'bg-amber-500' : 'bg-muted-foreground/30'}`}
+              aria-label={`Stripe testmodus: ${stripeTestMode?.value ? 'På' : 'Av'}`}
+              role="switch"
+              aria-checked={!!stripeTestMode?.value}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-card rounded-full shadow-sm transition-transform ${stripeTestMode?.value ? 'translate-x-6' : ''}`}
+              />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Global Feature Toggles */}
+      <div className="bg-card rounded-lg border border-border p-5">
+        <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
+          <Settings size={16} /> Globale funksjonsbrytere
+        </h3>
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-16 bg-muted rounded-md animate-pulse" />
+            ))}
+          </div>
+        ) : configs.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Ingen konfigurasjoner funnet.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {configs
+              .filter((config) => config.key !== 'STRIPE_TEST_MODE')
+              .map((config) => (
+                <ConfigToggle key={config.key} config={config} onToggle={handleToggleConfig} />
+              ))}
+          </div>
+        )}
+      </div>
+
+      {/* Plans table */}
+      <AdminDataTable
+        columns={columns}
+        data={plans}
+        keyExtractor={(p) => p._id}
+        loading={loading}
+        emptyTitle="Ingen planer"
+        emptyDescription="Det finnes ingen abonnementsplaner ennå."
+      />
+
+      {/* Edit plan modal */}
+      {showEdit && editTarget && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-plan-title"
+        >
+          <div className="bg-card rounded-lg shadow-xl w-full max-w-lg p-6 space-y-4 overflow-y-auto max-h-[90vh]">
+            <h2 id="edit-plan-title" className="text-lg font-bold text-foreground">
+              Rediger: {editTarget.name}
+            </h2>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="ep-name" className="block text-sm font-medium text-foreground mb-1">
+                  Navn *
+                </label>
+                <input
+                  id="ep-name"
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="ep-price"
+                  className="block text-sm font-medium text-foreground mb-1"
+                >
+                  Pris (NOK) *
+                </label>
+                <input
+                  id="ep-price"
+                  type="number"
+                  min="0"
+                  value={form.price}
+                  onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+                  className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
+                />
+              </div>
+              <div>
+                <label htmlFor="ep-type" className="block text-sm font-medium text-foreground mb-1">
+                  Type *
+                </label>
+                <select
+                  id="ep-type"
+                  value={form.type}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, type: e.target.value as 'private' | 'business' }))
+                  }
+                  className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
+                >
+                  <option value="private">Privat</option>
+                  <option value="business">Bedrift</option>
+                </select>
+              </div>
+              <div>
+                <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-1 pt-5">
+                  <input
+                    type="checkbox"
+                    checked={form.isActive}
+                    onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-ring/50"
+                  />
+                  Aktiv
+                </label>
+              </div>
+            </div>
+
+            <div className="border-t border-border pt-4">
+              <h4 className="text-sm font-semibold text-foreground mb-3">
+                Rettigheter og funksjoner
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label
+                    htmlFor="ep-contacts"
+                    className="block text-sm font-medium text-foreground mb-1"
+                  >
+                    Gratis kontakter/mnd
+                  </label>
+                  <input
+                    id="ep-contacts"
+                    type="number"
+                    min="0"
+                    value={form.freeContact}
+                    onChange={(e) => setForm((f) => ({ ...f, freeContact: e.target.value }))}
+                    className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="ep-radius"
+                    className="block text-sm font-medium text-foreground mb-1"
+                  >
+                    Søkeradius (km)
+                  </label>
+                  <input
+                    id="ep-radius"
+                    type="number"
+                    min="0"
+                    value={form.radius}
+                    onChange={(e) => setForm((f) => ({ ...f, radius: e.target.value }))}
+                    className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="ep-extra-price"
+                    className="block text-sm font-medium text-foreground mb-1"
+                  >
+                    Ekstra kontakt (NOK)
+                  </label>
+                  <input
+                    id="ep-extra-price"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.perContactPrice}
+                    onChange={(e) => setForm((f) => ({ ...f, perContactPrice: e.target.value }))}
+                    className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="ep-unlock"
+                    className="block text-sm font-medium text-foreground mb-1"
+                  >
+                    Tilgangsforsinkelse (min)
+                  </label>
+                  <input
+                    id="ep-unlock"
+                    type="number"
+                    min="0"
+                    value={form.ContactUnlock}
+                    onChange={(e) => setForm((f) => ({ ...f, ContactUnlock: e.target.value }))}
+                    className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="ep-max-jobs"
+                    className="block text-sm font-medium text-foreground mb-1"
+                  >
+                    Maks jobbverdi (NOK)
+                  </label>
+                  <input
+                    id="ep-max-jobs"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={form.maxJobsValue}
+                    onChange={(e) => setForm((f) => ({ ...f, maxJobsValue: e.target.value }))}
+                    className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="ep-max-contact"
+                    className="block text-sm font-medium text-foreground mb-1"
+                  >
+                    Maks kontakter
+                  </label>
+                  <input
+                    id="ep-max-contact"
+                    type="number"
+                    min="0"
+                    value={form.maxContact}
+                    onChange={(e) => setForm((f) => ({ ...f, maxContact: e.target.value }))}
+                    className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="ep-visibility"
+                    className="block text-sm font-medium text-foreground mb-1"
+                  >
+                    Synlighet (0-5)
+                  </label>
+                  <input
+                    id="ep-visibility"
+                    type="number"
+                    min="0"
+                    max="5"
+                    value={form.visibilityLevel}
+                    onChange={(e) => setForm((f) => ({ ...f, visibilityLevel: e.target.value }))}
+                    className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="ep-location"
+                    className="block text-sm font-medium text-foreground mb-1"
+                  >
+                    Plasseringspresisjon
+                  </label>
+                  <select
+                    id="ep-location"
+                    value={form.locationPrecision}
+                    onChange={(e) => setForm((f) => ({ ...f, locationPrecision: e.target.value }))}
+                    className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
+                  >
+                    <option value="approximate">Omtrentlig</option>
+                    <option value="exact">Nøyaktig</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex items-center gap-6 mt-3">
+                <label className="flex items-center gap-2 text-sm text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={form.hasBadge}
+                    onChange={(e) => setForm((f) => ({ ...f, hasBadge: e.target.checked }))}
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-ring/50"
+                  />
+                  Verifisert merke
+                </label>
+                <label className="flex items-center gap-2 text-sm text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={form.hasAnalytics}
+                    onChange={(e) => setForm((f) => ({ ...f, hasAnalytics: e.target.checked }))}
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-ring/50"
+                  />
+                  Analyse
+                </label>
+              </div>
+            </div>
+
+            <div className="border-t border-border pt-4">
+              <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-1">
+                <Info size={14} /> Funksjoner (vises for brukere)
+              </h4>
+              <div className="space-y-2 mb-2">
+                {form.featuresText.map((feat, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={feat}
+                      onChange={(e) => {
+                        const updated = [...form.featuresText];
+                        updated[idx] = e.target.value;
+                        setForm((f) => ({ ...f, featuresText: updated }));
+                      }}
+                      className="flex-1 px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
+                    />
+                    <button
+                      onClick={() => removeFeature(idx)}
+                      className="p-1.5 text-red-400 hover:text-red-600 transition-colors"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={newFeature}
+                  onChange={(e) => setNewFeature(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addFeature();
+                    }
+                  }}
+                  placeholder="Legg til funksjon…"
+                  className="flex-1 px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
+                />
+                <button
+                  onClick={addFeature}
+                  className="flex items-center gap-1 px-3 py-2 text-xs font-medium text-primary bg-green-50 hover:bg-green-100 rounded-md transition-colors"
+                >
+                  <Plus size={14} /> Legg til
+                </button>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-border">
+              <button
+                onClick={() => setShowEdit(false)}
+                className="px-4 py-2.5 text-sm font-medium text-muted-foreground bg-muted hover:bg-accent rounded-md transition-colors"
+              >
+                Avbryt
+              </button>
+              <button
+                onClick={handleSavePlan}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-md transition-colors"
+              >
+                <Settings size={14} /> Lagre endringer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

@@ -16,6 +16,7 @@ MONGO_URI=<production URI> node scripts/archive-orphan-duplicate-payments.js \
 ```
 
 Record the output. A group is only listed as a **candidate** when all of these hold:
+
 - its order no longer exists
 - no row has any Stripe reference (`stripePaymentIntentId`, `stripeSessionId`, `stripeEventId`, `stripeRefundId`, `paymentProviderId`, `transactionId`, `capturedAmountMinor`)
 - there are no related SafePayHistory, Payout, StripeFinancialOperation or StripePaymentIncident records
@@ -55,6 +56,7 @@ MONGO_URI=<production URI> node scripts/archive-orphan-duplicate-payments.js \
 - Keep the printed `archiveBatch` ID.
 
 Verify afterwards:
+
 - `db.payments.getIndexes()` shows `orderId_1` with `unique: true`.
 - The count of `payments_archive` rows for the batch equals the reviewed count.
 - The developer dashboard → Performance shows no failing `createIndexes payments`.
@@ -70,6 +72,7 @@ MONGO_URI=<production URI> node scripts/archive-orphan-duplicate-payments.js --r
 - Last resort: `mongorestore` from the backup taken in step 2.
 
 **Tested 2026-10-23** in a throwaway database (`jobblo_dup_drill`) with a copy of the 12 local rows:
+
 - the archive step built the unique index
 - a restore without the flag changed nothing
 - a restore with the flag brought back all 12 rows

@@ -193,7 +193,10 @@ export const SafePayHistoryView = () => {
 
   const historyStatus = (transaction: HistoryTransaction) => {
     if (transaction.refundStatus === 'succeeded') return 'refunded';
-    if (transaction.refundStatus === 'pending' || transaction.refundStatus === 'reconciliation_required') {
+    if (
+      transaction.refundStatus === 'pending' ||
+      transaction.refundStatus === 'reconciliation_required'
+    ) {
       return 'refund_pending';
     }
     if (transaction.refundStatus === 'failed') return 'refund_failed';
@@ -207,19 +210,22 @@ export const SafePayHistoryView = () => {
     if (transaction.refundStatus === 'failed') {
       return { key: 'refund_failed', label: 'Refusjon mislyktes', tone: 'text-red-600' };
     }
-    if (transaction.refundStatus === 'pending' ||
-        transaction.refundStatus === 'reconciliation_required') {
+    if (
+      transaction.refundStatus === 'pending' ||
+      transaction.refundStatus === 'reconciliation_required'
+    ) {
       return { key: 'refund_pending', label: 'Refusjon pågår', tone: 'text-amber-600' };
     }
-    if (transaction.cancellationReason === 'provider_stripe_connect_timeout' ||
-        transaction.status === 'automatically_cancelled') {
+    if (
+      transaction.cancellationReason === 'provider_stripe_connect_timeout' ||
+      transaction.status === 'automatically_cancelled'
+    ) {
       return { key: 'cancelled', label: 'Automatisk kansellert', tone: 'text-gray-600' };
     }
     if (transaction.providerTransferReversed) {
       return { key: 'reversed', label: 'Overføring reversert', tone: 'text-gray-600' };
     }
-    if (transaction.hasVerifiedProviderTransfer &&
-        transaction.providerTransferAmountMinor > 0) {
+    if (transaction.hasVerifiedProviderTransfer && transaction.providerTransferAmountMinor > 0) {
       return { key: 'transferred', label: 'Overført til Stripe Connect', tone: 'text-green-600' };
     }
     if (transaction.payoutStatus === 'failed') {
@@ -229,14 +235,16 @@ export const SafePayHistoryView = () => {
       return { key: 'action', label: 'Handling kreves', tone: 'text-amber-700' };
     }
     if (transaction.providerConnectStatus === 'verification_retry') {
-      return { key: 'connect_check', label: 'Stripe Connect-status kontrolleres', tone: 'text-amber-600' };
+      return {
+        key: 'connect_check',
+        label: 'Stripe Connect-status kontrolleres',
+        tone: 'text-amber-600',
+      };
     }
-    if (transaction.providerConnectStatus &&
-        transaction.providerConnectStatus !== 'ready') {
+    if (transaction.providerConnectStatus && transaction.providerConnectStatus !== 'ready') {
       return { key: 'connect', label: 'Avventer utbetaling', tone: 'text-gray-600' };
     }
-    if (transaction.payoutStatus ||
-        ['completed', 'refunded'].includes(transaction.status)) {
+    if (transaction.payoutStatus || ['completed', 'refunded'].includes(transaction.status)) {
       return { key: 'processing', label: 'Utbetaling behandles', tone: 'text-amber-600' };
     }
     return { key: 'approval', label: 'Venter på godkjenning', tone: 'text-gray-600' };
@@ -252,24 +260,43 @@ export const SafePayHistoryView = () => {
       { label: 'Betaling mottatt', state: 'done', date: transaction.paymentDate },
       { label: 'Refusjon startet', state: 'done', date: null },
       {
-        label: done ? 'Refundert til kortet ditt' : failed ? 'Refusjon mislyktes' : 'Venter på bekreftelse fra Stripe',
+        label: done
+          ? 'Refundert til kortet ditt'
+          : failed
+            ? 'Refusjon mislyktes'
+            : 'Venter på bekreftelse fra Stripe',
         state: done ? 'done' : failed ? 'failed' : 'current',
         date: done ? transaction.refundCompletedAt : failed ? transaction.refundFailedAt : null,
       },
     ];
     return (
-      <div data-testid="refund-steps" className="mb-4 rounded-xl border border-gray-200 bg-white p-4">
-        <h5 className="mb-3 text-xs font-bold uppercase tracking-wide text-gray-600">Refusjonsstatus</h5>
+      <div
+        data-testid="refund-steps"
+        className="mb-4 rounded-xl border border-gray-200 bg-white p-4"
+      >
+        <h5 className="mb-3 text-xs font-bold uppercase tracking-wide text-gray-600">
+          Refusjonsstatus
+        </h5>
         <ol className="space-y-3">
           {steps.map((step, i) => (
             <li key={step.label} className="flex items-start gap-3">
               <span
                 className={`mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full text-white ${
-                  step.state === 'done' ? 'bg-[#2E6641]' : step.state === 'failed' ? 'bg-red-600' : 'bg-amber-500'
+                  step.state === 'done'
+                    ? 'bg-[#2E6641]'
+                    : step.state === 'failed'
+                      ? 'bg-red-600'
+                      : 'bg-amber-500'
                 }`}
                 aria-hidden="true"
               >
-                {step.state === 'done' ? <CheckCircle2 size={14} /> : step.state === 'failed' ? <XCircle size={14} /> : <Clock size={14} />}
+                {step.state === 'done' ? (
+                  <CheckCircle2 size={14} />
+                ) : step.state === 'failed' ? (
+                  <XCircle size={14} />
+                ) : (
+                  <Clock size={14} />
+                )}
               </span>
               <div>
                 <p className="text-[14px] font-medium text-gray-900">
@@ -281,10 +308,14 @@ export const SafePayHistoryView = () => {
                   <p className="text-[12px] text-amber-700">Dette tar vanligvis noen minutter.</p>
                 )}
                 {step.state === 'done' && i === 2 && (
-                  <p className="text-[12px] text-gray-500">Det kan ta noen virkedager før beløpet vises på kontoen din.</p>
+                  <p className="text-[12px] text-gray-500">
+                    Det kan ta noen virkedager før beløpet vises på kontoen din.
+                  </p>
                 )}
                 {step.state === 'failed' && (
-                  <p className="text-[12px] text-red-700">Saken er sendt til manuell behandling. Kontakt kundesenteret ved spørsmål.</p>
+                  <p className="text-[12px] text-red-700">
+                    Saken er sendt til manuell behandling. Kontakt kundesenteret ved spørsmål.
+                  </p>
                 )}
               </div>
             </li>
@@ -401,7 +432,9 @@ export const SafePayHistoryView = () => {
             <TrendingUp size={18} className="text-[#16a34a]" />
             <span className="text-xs font-medium text-gray-500">Bekreftet overført</span>
           </div>
-          <p className="whitespace-nowrap text-lg font-semibold tabular-nums tracking-tight text-gray-900">{formatMoney(summary.totalEarned)}</p>
+          <p className="whitespace-nowrap text-lg font-semibold tabular-nums tracking-tight text-gray-900">
+            {formatMoney(summary.totalEarned)}
+          </p>
           <p className="mt-1 text-[11px] text-gray-500">Til Stripe Connect, ikke bankkonto</p>
         </div>
 
@@ -410,7 +443,9 @@ export const SafePayHistoryView = () => {
             <TrendingDown size={18} className="text-[#dc2626]" />
             <span className="text-xs font-medium text-gray-500">Netto betalt</span>
           </div>
-          <p className="whitespace-nowrap text-lg font-semibold tabular-nums tracking-tight text-gray-900">{formatMoney(summary.totalSpent)}</p>
+          <p className="whitespace-nowrap text-lg font-semibold tabular-nums tracking-tight text-gray-900">
+            {formatMoney(summary.totalSpent)}
+          </p>
           <p className="mt-1 text-[11px] text-gray-500">Etter bekreftede refusjoner</p>
         </div>
 
@@ -419,7 +454,9 @@ export const SafePayHistoryView = () => {
             <Receipt size={18} className="text-[#6b7280]" />
             <span className="text-xs font-medium text-gray-500">Netto SafePay-avgifter</span>
           </div>
-          <p className="whitespace-nowrap text-lg font-semibold tabular-nums tracking-tight text-gray-900">{formatMoney(summary.totalFees)}</p>
+          <p className="whitespace-nowrap text-lg font-semibold tabular-nums tracking-tight text-gray-900">
+            {formatMoney(summary.totalFees)}
+          </p>
           <p className="mt-1 text-[11px] text-gray-500">Etter bekreftede refusjoner</p>
         </div>
 
@@ -428,7 +465,9 @@ export const SafePayHistoryView = () => {
             <Wallet size={18} className="text-custom-green" />
             <span className="text-xs font-medium text-gray-500">SafePay-oppføringer</span>
           </div>
-          <p className="whitespace-nowrap text-lg font-semibold tabular-nums tracking-tight text-gray-900">{summary.transactionCount}</p>
+          <p className="whitespace-nowrap text-lg font-semibold tabular-nums tracking-tight text-gray-900">
+            {summary.transactionCount}
+          </p>
           <p className="mt-1 text-[11px] text-gray-500">Betalinger og oppdrag i historikken</p>
         </div>
       </div>
@@ -473,7 +512,12 @@ export const SafePayHistoryView = () => {
                         (() => {
                           const stage = providerPayoutStage(transaction);
                           const actualTransfer = stage.key === 'transferred';
-                          const refunded = ['refunded', 'refund_pending', 'refund_failed', 'cancelled'].includes(stage.key);
+                          const refunded = [
+                            'refunded',
+                            'refund_pending',
+                            'refund_failed',
+                            'cancelled',
+                          ].includes(stage.key);
                           const displayedAmount = actualTransfer
                             ? transaction.providerTransferAmountMinor / 100
                             : refunded
@@ -481,21 +525,33 @@ export const SafePayHistoryView = () => {
                               : transaction.payoutAmountMinor / 100;
                           return (
                             <>
-                              <p className={`text-[18px] font-bold ${
-                                actualTransfer ? 'text-[#2E6641]' : 'text-gray-800'
-                              }`}>
-                                {actualTransfer ? '+' : ''}{formatMoney(displayedAmount)}
+                              <p
+                                className={`text-[18px] font-bold ${
+                                  actualTransfer ? 'text-[#2E6641]' : 'text-gray-800'
+                                }`}
+                              >
+                                {actualTransfer ? '+' : ''}
+                                {formatMoney(displayedAmount)}
                               </p>
-                              <div className={`flex items-center justify-end gap-1 text-[12px] font-medium ${stage.tone}`}>
-                                {actualTransfer
-                                  ? <CheckCircle2 size={14} />
-                                  : stage.key === 'failed' || stage.key === 'refund_failed'
-                                    ? <XCircle size={14} />
-                                    : <Clock size={14} />}
+                              <div
+                                className={`flex items-center justify-end gap-1 text-[12px] font-medium ${stage.tone}`}
+                              >
+                                {actualTransfer ? (
+                                  <CheckCircle2 size={14} />
+                                ) : stage.key === 'failed' || stage.key === 'refund_failed' ? (
+                                  <XCircle size={14} />
+                                ) : (
+                                  <Clock size={14} />
+                                )}
                                 <span>{stage.label}</span>
                               </div>
                               {transaction.originalPaymentAmountMinor > 0 &&
-                                !['refunded', 'refund_pending', 'refund_failed', 'cancelled'].includes(stage.key) && (
+                                ![
+                                  'refunded',
+                                  'refund_pending',
+                                  'refund_failed',
+                                  'cancelled',
+                                ].includes(stage.key) && (
                                   <p className="mt-1 text-[11px] text-blue-700">
                                     Kundens betaling er mottatt
                                   </p>
@@ -505,40 +561,51 @@ export const SafePayHistoryView = () => {
                         })()
                       ) : (
                         <>
-                      <p
-                        className={`text-[18px] font-bold ${
-                          transaction.isProvider || (
-                            transaction.refundStatus === 'succeeded' &&
-                            transaction.amounts.totalCustomer -
-                              Math.min(transaction.amounts.totalCustomer, transaction.refundedAmountMinor / 100) === 0
-                          )
-                            ? 'text-[#16a34a]'
-                            : 'text-[#dc2626]'
-                        }`}
-                      >
-                        {transaction.isProvider
-                          ? formatMoney(transaction.providerTransferAmountMinor / 100)
-                          : transaction.refundStatus === 'succeeded'
-                            ? formatMoney(Math.max(
-                                0,
+                          <p
+                            className={`text-[18px] font-bold ${
+                              transaction.isProvider ||
+                              (transaction.refundStatus === 'succeeded' &&
                                 transaction.amounts.totalCustomer -
-                                  Math.min(transaction.amounts.totalCustomer, transaction.refundedAmountMinor / 100),
-                              ))
-                            : `−${formatMoney(transaction.amounts.totalCustomer)}`}
-                      </p>
-                      {renderStatusBadge(historyStatus(transaction))}
-                      {transaction.cancellationReason === 'provider_stripe_connect_timeout' &&
-                        <div className="mt-1 text-[11px] text-gray-600">Automatisk kansellert</div>}
-                      {transaction.status === 'payment_received' &&
-                        transaction.providerConnectStatus !== 'ready' &&
-                        transaction.providerConnectDeadlineAt && (
-                          <p className="mt-1 text-[11px] text-amber-600">
-                            {transaction.providerConnectStatus === 'verification_retry'
-                              ? 'Stripe Connect-status kontrolleres på nytt'
-                              : 'Venter på Stripe Connect'}
+                                  Math.min(
+                                    transaction.amounts.totalCustomer,
+                                    transaction.refundedAmountMinor / 100
+                                  ) ===
+                                  0)
+                                ? 'text-[#16a34a]'
+                                : 'text-[#dc2626]'
+                            }`}
+                          >
+                            {transaction.isProvider
+                              ? formatMoney(transaction.providerTransferAmountMinor / 100)
+                              : transaction.refundStatus === 'succeeded'
+                                ? formatMoney(
+                                    Math.max(
+                                      0,
+                                      transaction.amounts.totalCustomer -
+                                        Math.min(
+                                          transaction.amounts.totalCustomer,
+                                          transaction.refundedAmountMinor / 100
+                                        )
+                                    )
+                                  )
+                                : `−${formatMoney(transaction.amounts.totalCustomer)}`}
                           </p>
-                        )}
-                            </>
+                          {renderStatusBadge(historyStatus(transaction))}
+                          {transaction.cancellationReason === 'provider_stripe_connect_timeout' && (
+                            <div className="mt-1 text-[11px] text-gray-600">
+                              Automatisk kansellert
+                            </div>
+                          )}
+                          {transaction.status === 'payment_received' &&
+                            transaction.providerConnectStatus !== 'ready' &&
+                            transaction.providerConnectDeadlineAt && (
+                              <p className="mt-1 text-[11px] text-amber-600">
+                                {transaction.providerConnectStatus === 'verification_retry'
+                                  ? 'Stripe Connect-status kontrolleres på nytt'
+                                  : 'Venter på Stripe Connect'}
+                              </p>
+                            )}
+                        </>
                       )}
                     </div>
                     <ArrowRight
@@ -554,7 +621,9 @@ export const SafePayHistoryView = () => {
                 <div className="border-t border-gray-100 p-5 bg-gray-50">
                   {renderRefundSteps(transaction)}
                   <div className="space-y-3">
-                    <h5 className="text-xs font-bold uppercase tracking-wide text-gray-600">Betalingsdetaljer</h5>
+                    <h5 className="text-xs font-bold uppercase tracking-wide text-gray-600">
+                      Betalingsdetaljer
+                    </h5>
                     <div className="flex justify-between text-[14px]">
                       <span className="text-gray-500">Avtalt pris</span>
                       <span className="text-gray-900 font-medium">
@@ -564,7 +633,8 @@ export const SafePayHistoryView = () => {
                     <div className="flex justify-between text-[14px]">
                       <span className="text-gray-500">SafePay avgift (3 %)</span>
                       <span className="text-gray-900 font-medium">
-                        {transaction.isProvider ? '−' : ''}{formatMoney(transaction.amounts.fee)}
+                        {transaction.isProvider ? '−' : ''}
+                        {formatMoney(transaction.amounts.fee)}
                       </span>
                     </div>
                     <div className="flex justify-between text-[14px]">
@@ -572,10 +642,11 @@ export const SafePayHistoryView = () => {
                         {transaction.isProvider ? 'Oppdragsgiver betalte' : 'Opprinnelig betaling'}
                       </span>
                       <span className="text-gray-900 font-medium">
-                        {transaction.isProvider ? '' : '−'}{formatMoney(
+                        {transaction.isProvider ? '' : '−'}
+                        {formatMoney(
                           Number.isSafeInteger(transaction.originalPaymentAmountMinor)
                             ? transaction.originalPaymentAmountMinor / 100
-                            : transaction.amounts.totalCustomer,
+                            : transaction.amounts.totalCustomer
                         )}
                       </span>
                     </div>
@@ -591,13 +662,15 @@ export const SafePayHistoryView = () => {
                               ? 'Overført til Stripe Connect'
                               : 'Forventet utbetaling'}
                           </span>
-                          <span className={`font-semibold ${
-                            transaction.hasVerifiedProviderTransfer &&
-                            transaction.providerTransferAmountMinor > 0 &&
-                            transaction.refundStatus !== 'succeeded'
-                              ? 'text-[#2E6641]'
-                              : 'text-gray-900'
-                          }`}>
+                          <span
+                            className={`font-semibold ${
+                              transaction.hasVerifiedProviderTransfer &&
+                              transaction.providerTransferAmountMinor > 0 &&
+                              transaction.refundStatus !== 'succeeded'
+                                ? 'text-[#2E6641]'
+                                : 'text-gray-900'
+                            }`}
+                          >
                             {transaction.hasVerifiedProviderTransfer &&
                             transaction.providerTransferAmountMinor > 0 &&
                             transaction.refundStatus !== 'succeeded'
@@ -606,23 +679,25 @@ export const SafePayHistoryView = () => {
                             {formatMoney(
                               transaction.hasVerifiedProviderTransfer
                                 ? transaction.providerTransferAmountMinor / 100
-                                : ['refunded', 'refund_pending', 'refund_failed', 'cancelled', 'reversed'].includes(
-                                    providerPayoutStage(transaction).key,
-                                  )
+                                : [
+                                      'refunded',
+                                      'refund_pending',
+                                      'refund_failed',
+                                      'cancelled',
+                                      'reversed',
+                                    ].includes(providerPayoutStage(transaction).key)
                                   ? 0
-                                  : transaction.payoutAmountMinor / 100,
+                                  : transaction.payoutAmountMinor / 100
                             )}
                           </span>
                         </div>
                         {transaction.originalPaymentAmountMinor > 0 && (
-                          <p className="text-[13px] text-blue-700">
-                            Kundens betaling er mottatt
-                          </p>
+                          <p className="text-[13px] text-blue-700">Kundens betaling er mottatt</p>
                         )}
                         {providerPayoutStage(transaction).key === 'connect' && (
                           <div className="rounded-xl bg-amber-50 p-3 text-[13px] text-amber-900">
-                            Fullfør Stripe Connect-oppsettet for å kunne motta utbetaling når oppdraget er godkjent.
-                            {' '}
+                            Fullfør Stripe Connect-oppsettet for å kunne motta utbetaling når
+                            oppdraget er godkjent.{' '}
                             <Link
                               to="/settings/payout"
                               className="font-semibold underline underline-offset-2"
@@ -634,7 +709,8 @@ export const SafePayHistoryView = () => {
                         )}
                         {providerPayoutStage(transaction).key === 'connect_check' && (
                           <p className="text-[13px] text-amber-700">
-                            Stripe Connect-status kunne ikke bekreftes. Vi prøver igjen; utbetalingsstatus er ikke fastslått ennå.
+                            Stripe Connect-status kunne ikke bekreftes. Vi prøver igjen;
+                            utbetalingsstatus er ikke fastslått ennå.
                           </p>
                         )}
                         {providerPayoutStage(transaction).key === 'approval' && (
@@ -652,7 +728,9 @@ export const SafePayHistoryView = () => {
                           <div className="rounded-xl bg-red-50 p-3 text-[13px] text-red-800">
                             {transaction.payoutFailureMessage ||
                               'Utbetalingen er ikke bekreftet. Saken krever oppfølging.'}
-                            {['PAYOUT_SETUP_REQUIRED', 'PAYOUT_NOT_ENABLED'].includes(transaction.payoutFailureCode) && (
+                            {['PAYOUT_SETUP_REQUIRED', 'PAYOUT_NOT_ENABLED'].includes(
+                              transaction.payoutFailureCode
+                            ) && (
                               <Link
                                 to="/settings/payout"
                                 className="ml-1 font-semibold underline underline-offset-2"
@@ -663,56 +741,65 @@ export const SafePayHistoryView = () => {
                             )}
                           </div>
                         ) : null}
-                        {transaction.hasVerifiedProviderTransfer && transaction.providerTransferAmountMinor > 0 && (
-                          <>
-                            <p className="text-[12px] text-gray-600">
-                              Overført til Stripe Connect. Dette bekrefter ikke at beløpet er kommet til bankkontoen.
-                            </p>
-                            {transaction.stripeTransferId && (
-                              <div className="flex items-center justify-between gap-4 text-[12px]">
-                                <span className="text-gray-500">Stripe-overføring</span>
-                                <span className="flex items-center gap-2 font-mono text-gray-700">
-                                  {`${transaction.stripeTransferId.slice(0, 6)}...${transaction.stripeTransferId.slice(-3)}`}
-                                  <button
-                                    type="button"
-                                    aria-label="Kopier full Stripe-overføringsreferanse"
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      void copyReference(transaction.stripeTransferId!);
-                                    }}
-                                    className="rounded p-1 hover:bg-gray-200"
-                                  >
-                                    {copiedReference === transaction.stripeTransferId
-                                      ? <Check size={14} />
-                                      : <Copy size={14} />}
-                                  </button>
-                                </span>
-                              </div>
-                            )}
-                            {transaction.transferDate && (
-                              <div className="flex justify-between text-[13px]">
-                                <span className="text-gray-500">Overføringsdato</span>
-                                <span className="text-gray-800">{formatDate(transaction.transferDate)}</span>
-                              </div>
-                            )}
-                          </>
-                        )}
+                        {transaction.hasVerifiedProviderTransfer &&
+                          transaction.providerTransferAmountMinor > 0 && (
+                            <>
+                              <p className="text-[12px] text-gray-600">
+                                Overført til Stripe Connect. Dette bekrefter ikke at beløpet er
+                                kommet til bankkontoen.
+                              </p>
+                              {transaction.stripeTransferId && (
+                                <div className="flex items-center justify-between gap-4 text-[12px]">
+                                  <span className="text-gray-500">Stripe-overføring</span>
+                                  <span className="flex items-center gap-2 font-mono text-gray-700">
+                                    {`${transaction.stripeTransferId.slice(0, 6)}...${transaction.stripeTransferId.slice(-3)}`}
+                                    <button
+                                      type="button"
+                                      aria-label="Kopier full Stripe-overføringsreferanse"
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        void copyReference(transaction.stripeTransferId!);
+                                      }}
+                                      className="rounded p-1 hover:bg-gray-200"
+                                    >
+                                      {copiedReference === transaction.stripeTransferId ? (
+                                        <Check size={14} />
+                                      ) : (
+                                        <Copy size={14} />
+                                      )}
+                                    </button>
+                                  </span>
+                                </div>
+                              )}
+                              {transaction.transferDate && (
+                                <div className="flex justify-between text-[13px]">
+                                  <span className="text-gray-500">Overføringsdato</span>
+                                  <span className="text-gray-800">
+                                    {formatDate(transaction.transferDate)}
+                                  </span>
+                                </div>
+                              )}
+                            </>
+                          )}
                         <p className="text-[12px] text-gray-500">
                           Eventuelle bankutbetalinger vises i Stripe Connect-utbetalingshistorikken.
                         </p>
                       </>
                     )}
-                    {(Number(transaction.refundAmountMinor || transaction.refundedAmountMinor) > 0 ||
+                    {(Number(transaction.refundAmountMinor || transaction.refundedAmountMinor) >
+                      0 ||
                       transaction.refundStatus !== 'none') && (
                       <>
-                        <h5 className="pt-3 text-xs font-bold uppercase tracking-wide text-gray-600">Refusjonsdetaljer</h5>
+                        <h5 className="pt-3 text-xs font-bold uppercase tracking-wide text-gray-600">
+                          Refusjonsdetaljer
+                        </h5>
                         <div className="flex justify-between text-[14px]">
                           <span className="text-gray-500">Refusjonsbeløp</span>
                           <span className="text-gray-900 font-medium">
                             {formatMoney(
                               (transaction.refundStatus === 'succeeded'
                                 ? transaction.refundedAmountMinor || 0
-                                : transaction.refundAmountMinor || 0) / 100,
+                                : transaction.refundAmountMinor || 0) / 100
                             )}
                           </span>
                         </div>
@@ -725,42 +812,51 @@ export const SafePayHistoryView = () => {
                         <div className="flex justify-between text-[14px]">
                           <span className="text-gray-500">Netto betalt</span>
                           <span className="text-gray-900 font-medium">
-                            {formatMoney(Math.max(
-                              0,
-                              (Number.isSafeInteger(transaction.originalPaymentAmountMinor)
-                                ? transaction.originalPaymentAmountMinor / 100
-                                : transaction.amounts.totalCustomer) -
-                                (transaction.refundStatus === 'succeeded'
-                                  ? transaction.refundedAmountMinor / 100
-                                  : 0),
-                            ))}
+                            {formatMoney(
+                              Math.max(
+                                0,
+                                (Number.isSafeInteger(transaction.originalPaymentAmountMinor)
+                                  ? transaction.originalPaymentAmountMinor / 100
+                                  : transaction.amounts.totalCustomer) -
+                                  (transaction.refundStatus === 'succeeded'
+                                    ? transaction.refundedAmountMinor / 100
+                                    : 0)
+                              )
+                            )}
                           </span>
                         </div>
                         <div className="flex justify-between text-[14px]">
                           <span className="text-gray-500">Refusjonsstatus</span>
                           <span className="text-gray-900 font-medium">
-                            {transaction.refundStatus === 'succeeded' ? 'Refundert' :
-                              transaction.refundStatus === 'failed' ? 'Refusjon mislyktes' :
-                                transaction.refundStatus === 'pending' ||
-                                transaction.refundStatus === 'reconciliation_required' ? 'Refusjon pågår' : 'Ingen refusjon'}
+                            {transaction.refundStatus === 'succeeded'
+                              ? 'Refundert'
+                              : transaction.refundStatus === 'failed'
+                                ? 'Refusjon mislyktes'
+                                : transaction.refundStatus === 'pending' ||
+                                    transaction.refundStatus === 'reconciliation_required'
+                                  ? 'Refusjon pågår'
+                                  : 'Ingen refusjon'}
                           </span>
                         </div>
                         {!transaction.isProvider &&
                           transaction.refundStatus === 'succeeded' &&
                           transaction.paymentMethodBrand &&
                           transaction.paymentMethodLast4 && (
-                          <div className="flex justify-between text-[14px]">
-                            <span className="text-gray-500">Refundert til</span>
-                            <span className="text-gray-900 font-medium capitalize">
-                              {transaction.paymentMethodBrand} •••• {transaction.paymentMethodLast4}
-                            </span>
-                          </div>
-                        )}
+                            <div className="flex justify-between text-[14px]">
+                              <span className="text-gray-500">Refundert til</span>
+                              <span className="text-gray-900 font-medium capitalize">
+                                {transaction.paymentMethodBrand} ••••{' '}
+                                {transaction.paymentMethodLast4}
+                              </span>
+                            </div>
+                          )}
                         {(transaction.refundCompletedAt || transaction.refundFailedAt) && (
                           <div className="flex justify-between text-[14px]">
                             <span className="text-gray-500">Refusjonsdato</span>
                             <span className="text-gray-900 font-medium">
-                              {formatDate(transaction.refundCompletedAt || transaction.refundFailedAt)}
+                              {formatDate(
+                                transaction.refundCompletedAt || transaction.refundFailedAt
+                              )}
                             </span>
                           </div>
                         )}
@@ -779,9 +875,11 @@ export const SafePayHistoryView = () => {
                                 }}
                                 className="rounded p-1 hover:bg-gray-200"
                               >
-                                {copiedReference === transaction.stripeRefundId
-                                  ? <Check size={14} />
-                                  : <Copy size={14} />}
+                                {copiedReference === transaction.stripeRefundId ? (
+                                  <Check size={14} />
+                                ) : (
+                                  <Copy size={14} />
+                                )}
                               </button>
                             </span>
                           </div>
@@ -790,11 +888,14 @@ export const SafePayHistoryView = () => {
                     )}
                     {(transaction.cancellationReason || transaction.refundReason) && (
                       <>
-                        <h5 className="pt-3 text-xs font-bold uppercase tracking-wide text-gray-600">Kanselleringsårsak</h5>
+                        <h5 className="pt-3 text-xs font-bold uppercase tracking-wide text-gray-600">
+                          Kanselleringsårsak
+                        </h5>
                         <div className="flex justify-between text-[14px]">
                           <span className="text-gray-500">Årsak</span>
                           <span className="text-gray-900 font-medium">
-                            {(transaction.cancellationReason || transaction.refundReason) === 'provider_stripe_connect_timeout'
+                            {(transaction.cancellationReason || transaction.refundReason) ===
+                            'provider_stripe_connect_timeout'
                               ? 'Utføreren startet ikke oppdraget innen fristen'
                               : transaction.cancellationReason || transaction.refundReason}
                           </span>
@@ -827,8 +928,9 @@ export const SafePayHistoryView = () => {
                               transaction.amounts.totalCustomer -
                                 Math.min(
                                   transaction.amounts.totalCustomer,
-                                  transaction.refundedAmountMinor / 100,
-                                ) === 0)
+                                  transaction.refundedAmountMinor / 100
+                                ) ===
+                                0)
                               ? 'text-[#16a34a]'
                               : 'text-[#dc2626]'
                           }`}
@@ -837,19 +939,25 @@ export const SafePayHistoryView = () => {
                             ? `${providerPayoutStage(transaction).key === 'transferred' ? '+' : ''}${formatMoney(
                                 providerPayoutStage(transaction).key === 'transferred'
                                   ? transaction.providerTransferAmountMinor / 100
-                                  : ['refunded', 'refund_pending', 'refund_failed', 'cancelled', 'reversed'].includes(
-                                      providerPayoutStage(transaction).key,
-                                    )
+                                  : [
+                                        'refunded',
+                                        'refund_pending',
+                                        'refund_failed',
+                                        'cancelled',
+                                        'reversed',
+                                      ].includes(providerPayoutStage(transaction).key)
                                     ? 0
-                                    : transaction.payoutAmountMinor / 100,
+                                    : transaction.payoutAmountMinor / 100
                               )}`
-                            : formatMoney(Math.max(
-                                0,
-                                transaction.amounts.totalCustomer -
-                                  (transaction.refundStatus === 'succeeded'
-                                    ? transaction.refundedAmountMinor / 100
-                                    : 0),
-                              ))}
+                            : formatMoney(
+                                Math.max(
+                                  0,
+                                  transaction.amounts.totalCustomer -
+                                    (transaction.refundStatus === 'succeeded'
+                                      ? transaction.refundedAmountMinor / 100
+                                      : 0)
+                                )
+                              )}
                         </span>
                       </div>
                     </div>

@@ -16,7 +16,9 @@ test('a loopback proxy (nginx on the host) is trusted for the client IP', async 
 });
 
 test('only the hop added by the trusted proxy is used, not client-forged entries', async () => {
-  const res = await request(appWith('loopback')).get('/ip').set('X-Forwarded-For', '6.6.6.6, 203.0.113.9');
+  const res = await request(appWith('loopback'))
+    .get('/ip')
+    .set('X-Forwarded-For', '6.6.6.6, 203.0.113.9');
   expect(res.body.ip).toBe('203.0.113.9');
 });
 

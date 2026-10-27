@@ -3,7 +3,13 @@ const Service = require('../../models/Service');
 const JobRequest = require('../../models/JobRequest');
 const Chat = require('../../models/ChatMessage');
 
-const LIVE_ORDER_STATUSES = ['awaiting_payment', 'paid', 'in_progress', 'ready_for_review', 'disputed'];
+const LIVE_ORDER_STATUSES = [
+  'awaiting_payment',
+  'paid',
+  'in_progress',
+  'ready_for_review',
+  'disputed',
+];
 
 /**
  * After an unpaid award is cancelled (abandoned checkout, admin cancel): mark its chat

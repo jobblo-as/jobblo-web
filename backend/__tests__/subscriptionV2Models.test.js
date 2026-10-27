@@ -23,11 +23,11 @@ const seedCompatiblePlan = {
 };
 
 function hasUniqueIndex(schema, keys) {
-  return schema.indexes().some(
-    ([indexKeys, options]) =>
-      options.unique &&
-      JSON.stringify(indexKeys) === JSON.stringify(keys)
-  );
+  return schema
+    .indexes()
+    .some(
+      ([indexKeys, options]) => options.unique && JSON.stringify(indexKeys) === JSON.stringify(keys)
+    );
 }
 
 describe('Subscription V2 model schemas', () => {
@@ -72,16 +72,18 @@ describe('Subscription V2 model schemas', () => {
       stripeCustomerId: 'cus_live',
       stripeSubscriptionId: 'sub_live',
       stripeMode: 'live',
-      planHistory: [{
-        planId: objectId(),
-        planName: 'Start',
-        planPrice: 199,
-        planType: 'business',
-        stripeMode: 'live',
-        stripeSubscriptionId: 'sub_live',
-        changeType: 'initial',
-        effectiveAt: new Date('2026-01-01T00:00:00Z'),
-      }],
+      planHistory: [
+        {
+          planId: objectId(),
+          planName: 'Start',
+          planPrice: 199,
+          planType: 'business',
+          stripeMode: 'live',
+          stripeSubscriptionId: 'sub_live',
+          changeType: 'initial',
+          effectiveAt: new Date('2026-01-01T00:00:00Z'),
+        },
+      ],
       withdrawalEvidence: {
         informationVersion: 'withdrawal-terms-1',
         informationPresentedAt: new Date('2026-01-01T00:00:00Z'),
@@ -93,9 +95,9 @@ describe('Subscription V2 model schemas', () => {
   test('subscription ownership and Stripe identity are unique in the V2 collection', () => {
     expect(SubscriptionV2.collection.collectionName).toBe('subscription_v2');
     expect(hasUniqueIndex(SubscriptionV2.schema, { userId: 1 })).toBe(true);
-    expect(
-      hasUniqueIndex(SubscriptionV2.schema, { stripeMode: 1, stripeSubscriptionId: 1 })
-    ).toBe(true);
+    expect(hasUniqueIndex(SubscriptionV2.schema, { stripeMode: 1, stripeSubscriptionId: 1 })).toBe(
+      true
+    );
     expect(SubscriptionV2.collection.collectionName).not.toBe('subscriptions');
   });
 
@@ -142,33 +144,46 @@ describe('Subscription V2 model schemas', () => {
     usage.billingPeriodEnd = new Date('2025-12-31T00:00:00Z');
     expect(usage.validateSync().errors.billingPeriodEnd).toBeDefined();
     const periodEndValidator = SubscriptionUsagePeriod.schema
-      .path('billingPeriodEnd').validators.find(
+      .path('billingPeriodEnd')
+      .validators.find(
         (validator) => validator.message === 'Billing period end must be after its start.'
       ).validator;
-    expect(periodEndValidator.call({
-      getUpdate: () => ({
-        $setOnInsert: { billingPeriodStart: new Date('2026-01-01T00:00:00Z') },
-      }),
-    }, new Date('2026-02-01T00:00:00Z'))).toBe(true);
-    expect(periodEndValidator.call({
-      getUpdate: () => ({
-        $setOnInsert: { billingPeriodStart: new Date('2026-03-01T00:00:00Z') },
-      }),
-    }, new Date('2026-02-01T00:00:00Z'))).toBe(false);
+    expect(
+      periodEndValidator.call(
+        {
+          getUpdate: () => ({
+            $setOnInsert: { billingPeriodStart: new Date('2026-01-01T00:00:00Z') },
+          }),
+        },
+        new Date('2026-02-01T00:00:00Z')
+      )
+    ).toBe(true);
+    expect(
+      periodEndValidator.call(
+        {
+          getUpdate: () => ({
+            $setOnInsert: { billingPeriodStart: new Date('2026-03-01T00:00:00Z') },
+          }),
+        },
+        new Date('2026-02-01T00:00:00Z')
+      )
+    ).toBe(false);
     expect(
       hasUniqueIndex(SubscriptionUsagePeriod.schema, {
         userId: 1,
         billingPeriodStart: 1,
       })
     ).toBe(true);
-    expect(new SubscriptionUsagePeriod({
-      userId: objectId(),
-      planId: objectId(),
-      periodType: 'free',
-      billingPeriodStart: new Date('2026-01-01T00:00:00Z'),
-      billingPeriodEnd: new Date('2026-02-01T00:00:00Z'),
-      includedContacts: 5,
-    }).validateSync()).toBeUndefined();
+    expect(
+      new SubscriptionUsagePeriod({
+        userId: objectId(),
+        planId: objectId(),
+        periodType: 'free',
+        billingPeriodStart: new Date('2026-01-01T00:00:00Z'),
+        billingPeriodEnd: new Date('2026-02-01T00:00:00Z'),
+        includedContacts: 5,
+      }).validateSync()
+    ).toBeUndefined();
   });
 
   test('webhook event IDs are unique per Stripe mode and use a separate ledger', () => {

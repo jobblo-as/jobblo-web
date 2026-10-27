@@ -171,7 +171,10 @@ describe('findBlockingOrder', () => {
 describe('the endpoints enforce it, not just the interface', () => {
   const source = stripComments(
     // The controller is split into controllers/services/*; read them as one source.
-    fs.readdirSync(path.join(__dirname, '..', 'controllers', 'services')).map((f) => fs.readFileSync(path.join(__dirname, '..', 'controllers', 'services', f), 'utf8')).join('\n')
+    fs
+      .readdirSync(path.join(__dirname, '..', 'controllers', 'services'))
+      .map((f) => fs.readFileSync(path.join(__dirname, '..', 'controllers', 'services', f), 'utf8'))
+      .join('\n')
   );
 
   const sliceOf = (name) => {

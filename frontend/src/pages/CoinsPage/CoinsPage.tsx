@@ -79,7 +79,10 @@ function getLevelInfo(points: number): Level {
 export default function CoinsPage() {
   const { fetchProfile } = useUserStore((state) => state);
   const user = useUserStore((state) => state.user);
-  const { data: rewards = [] } = useQuery<Reward[]>({ queryKey: ['jobblo-shop'], queryFn: getJobbloShop });
+  const { data: rewards = [] } = useQuery<Reward[]>({
+    queryKey: ['jobblo-shop'],
+    queryFn: getJobbloShop,
+  });
   // Update user pointsBalance after a purchase
   const buyMutation = useMutation({
     mutationFn: buyItem,
@@ -87,7 +90,8 @@ export default function CoinsPage() {
       toast.success('Belønningen er løst inn!');
       fetchProfile().catch(() => {});
     },
-    onError: (err) => toast.error(getErrorMessage(err, 'Kunne ikke løse inn belønningen. Prøv igjen.')),
+    onError: (err) =>
+      toast.error(getErrorMessage(err, 'Kunne ikke løse inn belønningen. Prøv igjen.')),
   });
   const userCoins = user?.pointsBalance || 0;
   const levelInfo = getLevelInfo(userCoins);

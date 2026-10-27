@@ -62,7 +62,11 @@ const base64ToFile = (base64: string, filename: string): File => {
 };
 
 // Save form data and images
-export const saveFormData = async (data: unknown, images: File[] = [], ownerId?: string): Promise<void> => {
+export const saveFormData = async (
+  data: unknown,
+  images: File[] = [],
+  ownerId?: string
+): Promise<void> => {
   console.log('[IndexedDB] Saving form data...', data);
   const db = await openDB();
 
@@ -99,7 +103,9 @@ export const saveFormData = async (data: unknown, images: File[] = [], ownerId?:
 
 // Load form data and images
 // T is the caller's draft shape: this module stores whatever it is handed.
-export const loadFormData = async <T>(ownerId?: string): Promise<{
+export const loadFormData = async <T>(
+  ownerId?: string
+): Promise<{
   data?: T;
   images?: File[];
 }> => {

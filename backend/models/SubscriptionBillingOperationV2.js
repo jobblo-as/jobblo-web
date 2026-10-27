@@ -50,14 +50,8 @@ const subscriptionBillingOperationV2Schema = new mongoose.Schema(
   { timestamps: true, collection: 'subscription_billing_operations_v2' }
 );
 
-subscriptionBillingOperationV2Schema.index(
-  { stripeMode: 1, operationId: 1 },
-  { unique: true }
-);
-subscriptionBillingOperationV2Schema.index(
-  { stripeMode: 1, idempotencyKey: 1 },
-  { unique: true }
-);
+subscriptionBillingOperationV2Schema.index({ stripeMode: 1, operationId: 1 }, { unique: true });
+subscriptionBillingOperationV2Schema.index({ stripeMode: 1, idempotencyKey: 1 }, { unique: true });
 subscriptionBillingOperationV2Schema.index({ userId: 1, createdAt: -1 });
 subscriptionBillingOperationV2Schema.index(
   { userId: 1, operationType: 1 },

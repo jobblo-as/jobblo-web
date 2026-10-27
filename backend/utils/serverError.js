@@ -10,7 +10,11 @@ function serverError(res, err, message = 'Noe gikk galt. Prøv igjen senere.') {
   // Overload, not a fault: the bounded password-hash queue is full (utils/passwordUtils.js).
   if (err?.code === 'PASSWORD_HASH_BUSY') {
     res.set?.('Retry-After', '5');
-    return res.status(503).json({ success: false, error: 'Serveren er opptatt. Prøv igjen om litt.', code: 'SERVER_BUSY' });
+    return res.status(503).json({
+      success: false,
+      error: 'Serveren er opptatt. Prøv igjen om litt.',
+      code: 'SERVER_BUSY',
+    });
   }
   const req = res.req || {};
   const referenceId = req.requestId || res.getHeader?.('X-Request-ID') || undefined;

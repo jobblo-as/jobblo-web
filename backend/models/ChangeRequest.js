@@ -6,11 +6,28 @@ const mongoose = require('mongoose');
  */
 const changeRequestSchema = new mongoose.Schema(
   {
-    type: { type: String, required: true, enum: ['ip_block', 'ip_unblock', 'flag_set', 'thresholds_set', 'slo_targets_set', 'developer_access', 'rate_limit_reset'] },
+    type: {
+      type: String,
+      required: true,
+      enum: [
+        'ip_block',
+        'ip_unblock',
+        'flag_set',
+        'thresholds_set',
+        'slo_targets_set',
+        'developer_access',
+        'rate_limit_reset',
+      ],
+    },
     summary: { type: String, required: true, maxlength: 300 },
     payload: { type: mongoose.Schema.Types.Mixed, required: true },
     reason: { type: String, required: true, maxlength: 500 },
-    status: { type: String, enum: ['pending', 'executed', 'rejected', 'failed', 'expired', 'cancelled'], default: 'pending', index: true },
+    status: {
+      type: String,
+      enum: ['pending', 'executed', 'rejected', 'failed', 'expired', 'cancelled'],
+      default: 'pending',
+      index: true,
+    },
     requestedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     reviewNote: { type: String, default: null, maxlength: 500 },

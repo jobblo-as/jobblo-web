@@ -15,24 +15,25 @@ function renderParagraphs(text: string, keyBase: string) {
     if (hasBullets) {
       return (
         <View key={`${keyBase}-${index}`} className="mt-3">
-          {lines.filter((l) => l.trim().startsWith('•')).map((line, lineIdx) => {
-            const content = line.replace(/^•\s*/, '').trim();
-            if (!content) return null;
-            return (
-              <View key={`${keyBase}-${index}-bullet-${lineIdx}`} className="mt-2 flex-row">
-                <Text className="mt-[2px] w-4 shrink-0 text-[0.9375rem] leading-6 text-brand-text">•</Text>
-                <Text className="flex-1 text-[0.9375rem] leading-6 text-ink">{content}</Text>
-              </View>
-            );
-          })}
+          {lines
+            .filter((l) => l.trim().startsWith('•'))
+            .map((line, lineIdx) => {
+              const content = line.replace(/^•\s*/, '').trim();
+              if (!content) return null;
+              return (
+                <View key={`${keyBase}-${index}-bullet-${lineIdx}`} className="mt-2 flex-row">
+                  <Text className="mt-[2px] w-4 shrink-0 text-[0.9375rem] leading-6 text-brand-text">
+                    •
+                  </Text>
+                  <Text className="flex-1 text-[0.9375rem] leading-6 text-ink">{content}</Text>
+                </View>
+              );
+            })}
         </View>
       );
     }
     return (
-      <Text
-        key={`${keyBase}-${index}`}
-        className="mt-3 text-[0.9375rem] leading-6 text-ink"
-      >
+      <Text key={`${keyBase}-${index}`} className="mt-3 text-[0.9375rem] leading-6 text-ink">
         {trimmed}
       </Text>
     );
@@ -69,10 +70,7 @@ export default function TermsScreen() {
         </View>
 
         {userTerms.sections.map((section) => (
-          <View
-            key={section.id}
-            className="mt-4 rounded-3xl border border-line bg-surface p-5"
-          >
+          <View key={section.id} className="mt-4 rounded-3xl border border-line bg-surface p-5">
             <Text className="text-[1.0625rem] font-bold text-ink">
               {section.id}. {section.title}
             </Text>
@@ -81,9 +79,7 @@ export default function TermsScreen() {
         ))}
 
         <View className="mt-5 rounded-3xl bg-surface p-5">
-          <Text className="text-[0.8125rem] italic leading-5 text-muted">
-            {userTerms.footer}
-          </Text>
+          <Text className="text-[0.8125rem] italic leading-5 text-muted">{userTerms.footer}</Text>
         </View>
       </ScrollView>
     </SafeAreaView>

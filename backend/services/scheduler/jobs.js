@@ -127,7 +127,10 @@ async function autoReleaseStaleReviews() {
       // no_action ruling returns the order with its OLD readyForReviewAt) restarts it.
       const dispute = await Dispute.findOne({
         orderId: order._id,
-        $or: [{ status: { $nin: ['resolved', 'closed', 'cancelled'] } }, { closedAt: { $gt: cutoff } }],
+        $or: [
+          { status: { $nin: ['resolved', 'closed', 'cancelled'] } },
+          { closedAt: { $gt: cutoff } },
+        ],
       }).select('_id');
       if (dispute) continue;
 
@@ -225,7 +228,9 @@ async function retryFailedPayouts() {
     $or: [{ releaseSource: { $ne: 'dispute_release' } }, { status: 'reconciliation_required' }],
   })
     .sort({ lastAttemptedAt: 1, _id: 1 })
-    .select('orderId providerId customerId serviceId grossAmount platformFee releaseSource releasedBy disputeId')
+    .select(
+      'orderId providerId customerId serviceId grossAmount platformFee releaseSource releasedBy disputeId'
+    )
     .limit(25)
     .lean();
 
@@ -251,7 +256,11 @@ async function retryFailedPayouts() {
       });
       // Only auto-release pays out of `ready_for_review` (approval and disputes move the
       // order first), so finish that order now instead of leaving it open to a dispute.
-      await completeAutoReleasedOrder({ _id: payout.orderId, customerId: payout.customerId, providerId: payout.providerId });
+      await completeAutoReleasedOrder({
+        _id: payout.orderId,
+        customerId: payout.customerId,
+        providerId: payout.providerId,
+      });
       retried += 1;
     } catch (err) {
       // Expected for a provider who still has not finished Connect onboarding —
@@ -443,10 +452,16 @@ async function reconcileMoneyState() {
       continue;
     }
 
-    problems.push({ orderId: String(order._id), orderStatus: order.status, paymentStatus: payment.status });
+    problems.push({
+      orderId: String(order._id),
+      orderStatus: order.status,
+      paymentStatus: payment.status,
+    });
   }
 
-  const stuckDisputes = await Dispute.find({ 'resolution.moneyState': { $in: ['pending', 'failed'] } })
+  const stuckDisputes = await Dispute.find({
+    'resolution.moneyState': { $in: ['pending', 'failed'] },
+  })
     .select('_id orderId resolution.outcome resolution.moneyState')
     .limit(50)
     .lean();

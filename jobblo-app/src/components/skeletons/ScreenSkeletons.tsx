@@ -21,7 +21,15 @@ function Grow({ className }: { className: string }) {
 }
 
 /** ScreenHeader: back pill, icon tile, 24px title, 14px subtitle lines. */
-export function SkScreenHeader({ back = true, icon = true, subLines = 1 }: { back?: boolean; icon?: boolean; subLines?: number }) {
+export function SkScreenHeader({
+  back = true,
+  icon = true,
+  subLines = 1,
+}: {
+  back?: boolean;
+  icon?: boolean;
+  subLines?: number;
+}) {
   return (
     <View className="mb-5">
       {back ? <Skeleton className="mb-4 h-[30px] w-[108px] rounded-full" /> : null}
@@ -53,14 +61,24 @@ function SkSectionLabel({ w = 'w-24' }: { w?: string }) {
   return <Skeleton className={`mb-2 ml-1 h-3 ${w}`} />;
 }
 
-function SkCard({ className = 'rounded-3xl', children }: { className?: string; children: React.ReactNode }) {
-  return <View className={`overflow-hidden border border-line bg-surface ${className}`}>{children}</View>;
+function SkCard({
+  className = 'rounded-3xl',
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <View className={`overflow-hidden border border-line bg-surface ${className}`}>{children}</View>
+  );
 }
 
 /** ListRow: 36px tile, label + description, chevron. */
 function SkListRow({ divider }: { divider?: boolean }) {
   return (
-    <View className={`flex-row items-center gap-3 px-4 py-3.5 ${divider ? 'border-t border-line' : ''}`}>
+    <View
+      className={`flex-row items-center gap-3 px-4 py-3.5 ${divider ? 'border-t border-line' : ''}`}
+    >
       <Skeleton className="h-9 w-9 rounded-xl" />
       <View style={{ flex: 1 }} className="gap-2">
         <Skeleton className="h-4 w-2/5" />
@@ -81,7 +99,17 @@ function SkFormRow({ divider, tall }: { divider?: boolean; tall?: boolean }) {
   );
 }
 
-function SkLines({ widths, h = 'h-3.5', gap = 'gap-2', className = '' }: { widths: string[]; h?: string; gap?: string; className?: string }) {
+function SkLines({
+  widths,
+  h = 'h-3.5',
+  gap = 'gap-2',
+  className = '',
+}: {
+  widths: string[];
+  h?: string;
+  gap?: string;
+  className?: string;
+}) {
   return (
     <View className={`${gap} ${className}`}>
       {widths.map((w, i) => (
@@ -268,7 +296,10 @@ function SkMenuRow({ divider }: { divider?: boolean }) {
       <View style={{ width: 28, alignItems: 'center' }}>
         <Skeleton className="h-6 w-6 rounded-md" />
       </View>
-      <View style={{ marginLeft: 20, flex: 1 }} className={`flex-row items-center justify-between py-4 pr-4 ${divider ? 'border-t border-line' : ''}`}>
+      <View
+        style={{ marginLeft: 20, flex: 1 }}
+        className={`flex-row items-center justify-between py-4 pr-4 ${divider ? 'border-t border-line' : ''}`}
+      >
         <Skeleton className="h-4 w-36" />
         <Skeleton className="h-4 w-2.5" />
       </View>
@@ -595,7 +626,11 @@ export function SafePayHistorySkeleton() {
           {[0, 1].map((row) => (
             <View key={row} className={`flex-row ${row ? 'border-t border-line-soft' : ''}`}>
               {[0, 1].map((col) => (
-                <View key={col} style={{ flex: 1 }} className={`gap-2 px-4 py-3.5 ${col ? 'border-l border-line-soft' : ''}`}>
+                <View
+                  key={col}
+                  style={{ flex: 1 }}
+                  className={`gap-2 px-4 py-3.5 ${col ? 'border-l border-line-soft' : ''}`}
+                >
                   <Skeleton className="h-3 w-20" />
                   <Skeleton className="h-4 w-16" />
                 </View>
@@ -674,7 +709,9 @@ export function SeekerSkeleton() {
 
 function SkSessionRow({ divider }: { divider?: boolean }) {
   return (
-    <View className={`flex-row items-center gap-3 px-4 py-3.5 ${divider ? 'border-t border-line-soft' : ''}`}>
+    <View
+      className={`flex-row items-center gap-3 px-4 py-3.5 ${divider ? 'border-t border-line-soft' : ''}`}
+    >
       <Skeleton className="h-11 w-11 rounded-2xl" />
       <SkLines widths={['w-2/5', 'w-1/2', 'w-1/3']} h="h-3" gap="gap-1.5" className="flex-1" />
     </View>
@@ -833,7 +870,10 @@ export function CheckoutSkeleton() {
         <Skeleton className="mb-4 h-4 w-32" />
         <View className="rounded-2xl bg-surface-2 px-4">
           {[0, 1, 2, 3, 4].map((i) => (
-            <View key={i} className={`flex-row justify-between py-3 ${i < 4 ? 'border-b border-line' : ''}`}>
+            <View
+              key={i}
+              className={`flex-row justify-between py-3 ${i < 4 ? 'border-b border-line' : ''}`}
+            >
               <Skeleton className="h-3 w-20" />
               <Skeleton className="h-3.5 w-24" />
             </View>
@@ -904,7 +944,10 @@ export function DisputeOrderSkeleton() {
         </View>
         <Skeleton className="mb-2 ml-1 h-3 w-28" />
         {(['self-start', 'self-end', 'self-start'] as const).map((align, i) => (
-          <View key={i} className={`mb-3 w-3/4 ${align} rounded-2xl border border-line bg-surface p-3`}>
+          <View
+            key={i}
+            className={`mb-3 w-3/4 ${align} rounded-2xl border border-line bg-surface p-3`}
+          >
             <SkLines widths={['w-1/3', 'w-full', 'w-1/4']} h="h-3" gap="gap-1.5" />
           </View>
         ))}
@@ -1009,7 +1052,10 @@ export function JobDetailSkeleton() {
     <View style={{ flex: 1 }}>
       <View>
         <Skeleton className="w-full rounded-none" style={{ aspectRatio: 4 / 3 }} />
-        <View className="absolute left-0 right-0 flex-row justify-between px-4" style={{ top: insets.top + 8 }}>
+        <View
+          className="absolute left-0 right-0 flex-row justify-between px-4"
+          style={{ top: insets.top + 8 }}
+        >
           <View className="h-10 w-10 rounded-full bg-surface" />
           <View className="flex-row gap-2.5">
             <View className="h-10 w-10 rounded-full bg-surface" />

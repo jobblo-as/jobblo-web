@@ -90,17 +90,13 @@ describe('field bounds', () => {
   });
 
   it('rejects an end date before the start date', async () => {
-    const res = await callCreate(
-      validBody({ fromDate: '2026-09-01', toDate: '2026-08-01' })
-    );
+    const res = await callCreate(validBody({ fromDate: '2026-09-01', toDate: '2026-08-01' }));
     expect(res.statusCode).toBe(400);
     expect(res.body.error).toMatch(/startdato/i);
   });
 
   it('accepts a date range the right way round', async () => {
-    const res = await callCreate(
-      validBody({ fromDate: '2026-08-01', toDate: '2026-09-01' })
-    );
+    const res = await callCreate(validBody({ fromDate: '2026-08-01', toDate: '2026-09-01' }));
     expect(res.statusCode).toBe(201);
   });
 
@@ -135,9 +131,7 @@ describe('checklist handling', () => {
 
 describe('mass assignment', () => {
   it('ignores client-supplied promoted, views and status', async () => {
-    const res = await callCreate(
-      validBody({ promoted: true, views: 999999, status: 'completed' })
-    );
+    const res = await callCreate(validBody({ promoted: true, views: 999999, status: 'completed' }));
 
     expect(res.statusCode).toBe(201);
     const created = Service.create.mock.calls[0][0];

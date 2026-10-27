@@ -26,7 +26,12 @@ export function JobAreaMap({ coordinates, area, onPress }: JobAreaMapProps) {
   const region = { ...point, latitudeDelta: 0.012, longitudeDelta: 0.024 };
 
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`Kart over ${area}. Åpne i kart-appen`} className="h-48 overflow-hidden rounded-xl border border-line bg-surface-2">
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Kart over ${area}. Åpne i kart-appen`}
+      className="h-48 overflow-hidden rounded-xl border border-line bg-surface-2"
+    >
       {MAPS_AVAILABLE ? (
         <View pointerEvents="none" style={{ flex: 1 }}>
           <MapView
@@ -47,7 +52,10 @@ export function JobAreaMap({ coordinates, area, onPress }: JobAreaMapProps) {
       ) : (
         <MapUnavailable />
       )}
-      <View pointerEvents="none" className="absolute bottom-2 left-2 rounded-full bg-white/95 px-2.5 py-1">
+      <View
+        pointerEvents="none"
+        className="absolute bottom-2 left-2 rounded-full bg-white/95 px-2.5 py-1"
+      >
         <Text className="text-[0.8125rem] font-semibold text-[#2E6641]">{area}</Text>
       </View>
     </Pressable>

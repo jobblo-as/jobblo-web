@@ -3,7 +3,11 @@
 import assert from 'node:assert/strict';
 
 const data = new Map();
-globalThis.require = () => ({ getItem: async (k) => data.get(k) ?? null, setItem: async (k, v) => void data.set(k, v), removeItem: async (k) => void data.delete(k) });
+globalThis.require = () => ({
+  getItem: async (k) => data.get(k) ?? null,
+  setItem: async (k, v) => void data.set(k, v),
+  removeItem: async (k) => void data.delete(k),
+});
 const { createJobDraftKey, clearUserDrafts } = await import('./draftStorage.ts');
 delete globalThis.require;
 

@@ -15,9 +15,14 @@ function redactJobData(data) {
   const out = {};
   for (const [k, v] of Object.entries(data)) {
     if (SECRET_KEY.test(k)) out[k] = '[hidden]';
-    else if (k === 'message' && v && typeof v === 'object') out[k] = { title: v.title ? String(v.title).slice(0, 80) : undefined, fields: Object.keys(v) };
+    else if (k === 'message' && v && typeof v === 'object')
+      out[k] = {
+        title: v.title ? String(v.title).slice(0, 80) : undefined,
+        fields: Object.keys(v),
+      };
     else if (typeof v === 'string' && /@/.test(v)) out[k] = maskEmail(v);
-    else if (v && typeof v === 'object') out[k] = Array.isArray(v) ? `[${v.length} items]` : redactJobData(v);
+    else if (v && typeof v === 'object')
+      out[k] = Array.isArray(v) ? `[${v.length} items]` : redactJobData(v);
     else out[k] = v;
   }
   return out;
@@ -30,20 +35,49 @@ const jobView = (j) => ({
   attemptsMade: j.attemptsMade,
   maxAttempts: j.opts?.attempts || 1,
   failedReason: j.failedReason ? String(j.failedReason).slice(0, 500) : null,
-  stack: j.stacktrace?.at(-1) ? String(j.stacktrace.at(-1)).split('\n').slice(0, 4).join('\n') : null,
+  stack: j.stacktrace?.at(-1)
+    ? String(j.stacktrace.at(-1)).split('\n').slice(0, 4).join('\n')
+    : null,
   createdAt: j.timestamp ? new Date(j.timestamp) : null,
   finishedAt: j.finishedOn ? new Date(j.finishedOn) : null,
 });
 
 async function overview() {
   const ping = await redis.pingRedis();
-  const base = { mode: queue.usingRedis() ? 'redis' : 'inline', redis: ping, redisState: { status: redis.state.status, lastError: redis.state.lastError, lastErrorAt: redis.state.lastErrorAt }, inline: queue.inlineStats };
-  if (!queue.usingRedis() || !ping.ok) return { ...base, queues: Object.keys(queue.QUEUES).map((name) => ({ name, ...queue.QUEUES[name], counts: null, failed: [], workerHere: false })) };
+  const base = {
+    mode: queue.usingRedis() ? 'redis' : 'inline',
+    redis: ping,
+    redisState: {
+      status: redis.state.status,
+      lastError: redis.state.lastError,
+      lastErrorAt: redis.state.lastErrorAt,
+    },
+    inline: queue.inlineStats,
+  };
+  if (!queue.usingRedis() || !ping.ok)
+    return {
+      ...base,
+      queues: Object.keys(queue.QUEUES).map((name) => ({
+        name,
+        ...queue.QUEUES[name],
+        counts: null,
+        failed: [],
+        workerHere: false,
+      })),
+    };
   const queues = await Promise.all(
     Object.entries(queue.QUEUES).map(async ([name, cfg]) => {
       const q = queue.getQueue(name);
       const [counts, failed, isPaused, schedulers] = await Promise.all([
-        q.getJobCounts('waiting', 'active', 'delayed', 'completed', 'failed', 'paused', 'prioritized'),
+        q.getJobCounts(
+          'waiting',
+          'active',
+          'delayed',
+          'completed',
+          'failed',
+          'paused',
+          'prioritized'
+        ),
         q.getFailed(0, 49),
         q.isPaused(),
         name === 'scheduler' ? q.getJobSchedulers(0, -1) : [],
@@ -56,7 +90,11 @@ async function overview() {
         isPaused,
         workerHere: queue.workers.has(name),
         failed: failed.filter(Boolean).map(jobView),
-        schedulers: schedulers.map((s) => ({ id: s.key || s.id, every: s.every ? Number(s.every) : null, next: s.next ? new Date(Number(s.next)) : null })),
+        schedulers: schedulers.map((s) => ({
+          id: s.key || s.id,
+          every: s.every ? Number(s.every) : null,
+          next: s.next ? new Date(Number(s.next)) : null,
+        })),
       };
     })
   );
@@ -65,14 +103,19 @@ async function overview() {
 
 function assertQueue(name) {
   if (!queue.QUEUES[name]) throw Object.assign(new Error('Unknown queue.'), { status: 404 });
-  if (!queue.usingRedis()) throw Object.assign(new Error('Queues run in-process (no REDIS_URL); there is nothing to retry.'), { status: 409 });
+  if (!queue.usingRedis())
+    throw Object.assign(
+      new Error('Queues run in-process (no REDIS_URL); there is nothing to retry.'),
+      { status: 409 }
+    );
   return queue.getQueue(name);
 }
 
 async function retryJob(name, id) {
   const job = await assertQueue(name).getJob(String(id));
   if (!job) throw Object.assign(new Error('Job not found.'), { status: 404 });
-  if ((await job.getState()) !== 'failed') throw Object.assign(new Error('Only failed jobs can be retried.'), { status: 409 });
+  if ((await job.getState()) !== 'failed')
+    throw Object.assign(new Error('Only failed jobs can be retried.'), { status: 409 });
   await job.retry();
   return { id: job.id, name: job.name };
 }
@@ -80,7 +123,8 @@ async function retryJob(name, id) {
 async function removeJob(name, id) {
   const job = await assertQueue(name).getJob(String(id));
   if (!job) throw Object.assign(new Error('Job not found.'), { status: 404 });
-  if ((await job.getState()) === 'active') throw Object.assign(new Error('The job is running; wait for it to finish.'), { status: 409 });
+  if ((await job.getState()) === 'active')
+    throw Object.assign(new Error('The job is running; wait for it to finish.'), { status: 409 });
   await job.remove();
   return { id: job.id, name: job.name };
 }

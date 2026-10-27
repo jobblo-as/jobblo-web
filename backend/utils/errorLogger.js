@@ -54,13 +54,7 @@ async function logApplicationError({
     }
 
     // Extract safe stack trace (first 10 lines for admin debugging)
-    const safeStack =
-      redactText(
-        error?.stack
-          ?.split('\n')
-          .slice(0, 10)
-          .join('\n')
-      ) || null;
+    const safeStack = redactText(error?.stack?.split('\n').slice(0, 10).join('\n')) || null;
 
     // Build safe metadata — sanitize request context
     const safeMeta = { correlationId, userId, ...metadata };
@@ -101,7 +95,9 @@ async function logApplicationError({
         technicalMessage: errorMessage,
         stack: safeStack,
         source,
-        httpMethod: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'].includes(httpMethod) ? httpMethod : 'other',
+        httpMethod: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'].includes(httpMethod)
+          ? httpMethod
+          : 'other',
         route: requestPath,
         statusCode: httpStatus,
         userId: userId || null,

@@ -48,7 +48,8 @@ function snapshot() {
     ppid: process.ppid, // the cluster primary when slot is set
     slot: Number(process.env.WORKER_SLOT) || null,
     restarts: Number(process.env.WORKER_RESTARTS) || 0,
-    schedPolicy: process.env.NODE_CLUSTER_SCHED_POLICY || (process.platform === 'win32' ? 'none' : 'rr'),
+    schedPolicy:
+      process.env.NODE_CLUSTER_SCHED_POLICY || (process.platform === 'win32' ? 'none' : 'rr'),
     lastExit: process.env.WORKER_LAST_EXIT || null,
     node: process.version,
     startedAt,
@@ -112,7 +113,8 @@ function summarize(workers) {
       c.misses += s.misses || 0;
     }
   }
-  for (const c of Object.values(cache)) c.hitRate = c.hits + c.misses ? round1((c.hits / (c.hits + c.misses)) * 100) : null;
+  for (const c of Object.values(cache))
+    c.hitRate = c.hits + c.misses ? round1((c.hits / (c.hits + c.misses)) * 100) : null;
   return {
     workers: workers.length,
     rps: round1(sum('rps')),
@@ -136,7 +138,10 @@ async function listWorkers() {
   if (client && redis.isReady()) {
     try {
       const ids = await client.zrangebyscore(indexKey(), Date.now() - TTL_SEC * 1000, '+inf');
-      if (ids.length) workers = (await client.mget(...ids.map((id) => keyPrefix() + id))).filter(Boolean).map((raw) => JSON.parse(raw));
+      if (ids.length)
+        workers = (await client.mget(...ids.map((id) => keyPrefix() + id)))
+          .filter(Boolean)
+          .map((raw) => JSON.parse(raw));
     } catch {
       workers = [];
     }
@@ -146,7 +151,21 @@ async function listWorkers() {
   return {
     configured: process.env.WEB_CONCURRENCY || '1',
     // One primary per host that runs cluster workers (pm2 runs the primary in fork mode).
-    primaries: [...new Map(workers.filter((w) => w.slot).map((w) => [`${w.host}:${w.ppid}`, { host: w.host, pid: w.ppid, workers: workers.filter((x) => x.host === w.host && x.ppid === w.ppid).length, schedPolicy: w.schedPolicy }])).values()],
+    primaries: [
+      ...new Map(
+        workers
+          .filter((w) => w.slot)
+          .map((w) => [
+            `${w.host}:${w.ppid}`,
+            {
+              host: w.host,
+              pid: w.ppid,
+              workers: workers.filter((x) => x.host === w.host && x.ppid === w.ppid).length,
+              schedPolicy: w.schedPolicy,
+            },
+          ])
+      ).values(),
+    ],
     redis: redis.isReady(),
     heartbeatSec: HEARTBEAT_MS / 1000,
     workers,

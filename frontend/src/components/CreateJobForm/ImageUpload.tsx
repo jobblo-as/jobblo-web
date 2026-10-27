@@ -121,7 +121,9 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
           onClick={() => !isProcessing && fileInputRef.current?.click()}
           aria-busy={isProcessing}
           className={`flex-1 flex flex-col items-center justify-center border-2 gap-2 text-[#99A1AF] border-[#D1D5DC] rounded-[14px] py-10 px-5 text-center transition-all duration-300 ease-in-out group ${
-            isProcessing ? 'cursor-wait opacity-60' : 'cursor-pointer hover:border-[#4CAF50] hover:bg-[#f0f9f0]'
+            isProcessing
+              ? 'cursor-wait opacity-60'
+              : 'cursor-pointer hover:border-[#4CAF50] hover:bg-[#f0f9f0]'
           }`}
         >
           <p className="">
@@ -137,7 +139,9 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
           onClick={() => !isProcessing && cameraInputRef.current?.click()}
           aria-busy={isProcessing}
           className={`flex-1 flex flex-col items-center justify-center border-2 gap-2 text-[#99A1AF] border-[#D1D5DC] rounded-[14px] py-10 px-5 text-center transition-all duration-300 ease-in-out group ${
-            isProcessing ? 'cursor-wait opacity-60' : 'cursor-pointer hover:border-[#4CAF50] hover:bg-[#f0f9f0]'
+            isProcessing
+              ? 'cursor-wait opacity-60'
+              : 'cursor-pointer hover:border-[#4CAF50] hover:bg-[#f0f9f0]'
           }`}
         >
           <p className="">

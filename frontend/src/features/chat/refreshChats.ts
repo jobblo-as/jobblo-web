@@ -15,7 +15,11 @@ const idOf = (ref: IdRef) => (!ref ? '' : typeof ref === 'string' ? ref : String
  * Put a message (socket payload or our own send's response) into the cached list and thread.
  * Returns false when the list has no such chat yet (a new conversation): refetch then.
  */
-export function applyIncomingMessage(queryClient: QueryClient, chatId: string, message?: ChatMessage): boolean {
+export function applyIncomingMessage(
+  queryClient: QueryClient,
+  chatId: string,
+  message?: ChatMessage
+): boolean {
   if (!message?._id) return false;
   let listed = false;
   queryClient.setQueryData<Chat[]>(['chats'], (chats) => {
@@ -24,14 +28,27 @@ export function applyIncomingMessage(queryClient: QueryClient, chatId: string, m
     if (i < 0) return chats;
     listed = true;
     // The list carries only the last message; newest conversation first, as the server sorts.
-    const chat = { ...chats[i], messages: [message], lastMessage: message.text, updatedAt: message.createdAt };
+    const chat = {
+      ...chats[i],
+      messages: [message],
+      lastMessage: message.text,
+      updatedAt: message.createdAt,
+    };
     return [chat, ...chats.slice(0, i), ...chats.slice(i + 1)];
   });
   queryClient.setQueryData<Chat>(['chat', chatId], (chat) => {
     if (!chat?.messages || chat.messages.some((m) => m._id === message._id)) return chat;
     // The thread shows the sender's name and avatar: take them from the populated participants.
-    const sender = [chat.clientId, chat.providerId].find((p) => p && typeof p === 'object' && idOf(p) === idOf(message.senderId as IdRef));
-    return { ...chat, messages: [...chat.messages, { ...message, senderId: (sender ?? message.senderId) as ChatMessage['senderId'] }] };
+    const sender = [chat.clientId, chat.providerId].find(
+      (p) => p && typeof p === 'object' && idOf(p) === idOf(message.senderId as IdRef)
+    );
+    return {
+      ...chat,
+      messages: [
+        ...chat.messages,
+        { ...message, senderId: (sender ?? message.senderId) as ChatMessage['senderId'] },
+      ],
+    };
   });
   return listed;
 }
@@ -39,11 +56,17 @@ export function applyIncomingMessage(queryClient: QueryClient, chatId: string, m
 /** messages-read: `userId` has now seen every message in the chat. */
 export function applyMessagesRead(queryClient: QueryClient, chatId: string, userId: string) {
   const mark = (m: ChatMessage): ChatMessage =>
-    (m.seenBy as IdRef[] | undefined)?.some((id) => idOf(id) === userId) ? m : { ...m, seenBy: [...(m.seenBy || []), userId] };
+    (m.seenBy as IdRef[] | undefined)?.some((id) => idOf(id) === userId)
+      ? m
+      : { ...m, seenBy: [...(m.seenBy || []), userId] };
   queryClient.setQueryData<Chat[]>(['chats'], (chats) =>
-    Array.isArray(chats) ? chats.map((c) => (c._id === chatId ? { ...c, messages: c.messages?.map(mark) } : c)) : chats
+    Array.isArray(chats)
+      ? chats.map((c) => (c._id === chatId ? { ...c, messages: c.messages?.map(mark) } : c))
+      : chats
   );
-  queryClient.setQueryData<Chat>(['chat', chatId], (chat) => (chat?.messages ? { ...chat, messages: chat.messages.map(mark) } : chat));
+  queryClient.setQueryData<Chat>(['chat', chatId], (chat) =>
+    chat?.messages ? { ...chat, messages: chat.messages.map(mark) } : chat
+  );
 }
 
 /**

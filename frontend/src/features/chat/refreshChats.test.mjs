@@ -16,16 +16,36 @@ const fakeClient = (data) => ({
 test('a socket message goes into the list and the thread once, newest chat first, sender populated', () => {
   const alice = { _id: 'a', name: 'Alice', avatarUrl: 'x.png' };
   const qc = fakeClient({
-    chats: [{ _id: 'c2', messages: [] }, { _id: 'c1', messages: [{ _id: 'm0', text: 'old' }] }],
-    'chat:c1': { _id: 'c1', clientId: alice, providerId: { _id: 'b', name: 'Bob' }, messages: [{ _id: 'm0', text: 'old' }] },
+    chats: [
+      { _id: 'c2', messages: [] },
+      { _id: 'c1', messages: [{ _id: 'm0', text: 'old' }] },
+    ],
+    'chat:c1': {
+      _id: 'c1',
+      clientId: alice,
+      providerId: { _id: 'b', name: 'Bob' },
+      messages: [{ _id: 'm0', text: 'old' }],
+    },
   });
-  const msg = { _id: 'm1', senderId: 'a', text: 'hei', createdAt: '2026-10-27T10:00:00Z', seenBy: ['a'] };
+  const msg = {
+    _id: 'm1',
+    senderId: 'a',
+    text: 'hei',
+    createdAt: '2026-10-27T10:00:00Z',
+    seenBy: ['a'],
+  };
   assert.equal(applyIncomingMessage(qc, 'c1', msg), true);
   assert.equal(applyIncomingMessage(qc, 'c1', msg), true); // the echo of our own send
-  assert.deepEqual(qc.get(['chats']).map((c) => c._id), ['c1', 'c2']);
+  assert.deepEqual(
+    qc.get(['chats']).map((c) => c._id),
+    ['c1', 'c2']
+  );
   assert.equal(qc.get(['chats'])[0].messages[0].text, 'hei');
   const thread = qc.get(['chat', 'c1']).messages;
-  assert.deepEqual(thread.map((m) => m._id), ['m0', 'm1']);
+  assert.deepEqual(
+    thread.map((m) => m._id),
+    ['m0', 'm1']
+  );
   assert.equal(thread[1].senderId.name, 'Alice');
 });
 

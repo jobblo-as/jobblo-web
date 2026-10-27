@@ -9,7 +9,10 @@ const MAX_PAGE = 1000;
  * Parse and validate pagination params from query string.
  * Enforces a maximum page size to prevent full-collection fetches.
  */
-const parsePagination = (query = {}, { defaultLimit = DEFAULT_LIMIT, maxLimit = MAX_LIMIT } = {}) => {
+const parsePagination = (
+  query = {},
+  { defaultLimit = DEFAULT_LIMIT, maxLimit = MAX_LIMIT } = {}
+) => {
   const page = Math.min(MAX_PAGE, Math.max(1, parseInt(query.page, 10) || 1));
   const limit = Math.min(maxLimit, Math.max(1, parseInt(query.limit, 10) || defaultLimit));
   const skip = (page - 1) * limit;
@@ -29,7 +32,10 @@ const WHOLE_NUMBER = /^\d{1,6}$/;
  * replaced by a default.
  */
 const rejectBadPagination = (req, res, next) => {
-  for (const [key, max] of [['page', MAX_PAGE], ['limit', MAX_REQUEST_LIMIT]]) {
+  for (const [key, max] of [
+    ['page', MAX_PAGE],
+    ['limit', MAX_REQUEST_LIMIT],
+  ]) {
     const raw = req.query?.[key];
     if (raw === undefined || raw === '') continue;
     const n = typeof raw === 'string' && WHOLE_NUMBER.test(raw) ? Number(raw) : NaN;
@@ -75,4 +81,14 @@ const parseDate = (value) => {
   return isNaN(d.getTime()) ? null : d;
 };
 
-module.exports = { parsePagination, rejectBadPagination, parseObjectId, parseSort, parseDate, MAX_LIMIT, DEFAULT_LIMIT, MAX_PAGE, MAX_REQUEST_LIMIT };
+module.exports = {
+  parsePagination,
+  rejectBadPagination,
+  parseObjectId,
+  parseSort,
+  parseDate,
+  MAX_LIMIT,
+  DEFAULT_LIMIT,
+  MAX_PAGE,
+  MAX_REQUEST_LIMIT,
+};

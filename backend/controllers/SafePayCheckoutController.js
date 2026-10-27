@@ -81,13 +81,15 @@ async function verifyPaidCheckoutSession(session, order, allowAlternateAttempt =
     ) {
       return { ok: false, reason: 'checkout_attempt_mismatch' };
     }
-    if (!allowAlternateAttempt && (
-      session.metadata?.checkoutAttemptId !== order.checkoutAttemptId ||
-      session.metadata?.stripeMode !== sessionMode
-    )) {
+    if (
+      !allowAlternateAttempt &&
+      (session.metadata?.checkoutAttemptId !== order.checkoutAttemptId ||
+        session.metadata?.stripeMode !== sessionMode)
+    ) {
       return { ok: false, reason: 'checkout_attempt_mismatch' };
     }
-    if (!allowAlternateAttempt &&
+    if (
+      !allowAlternateAttempt &&
       order.checkoutSessionId !== session.id &&
       order.checkoutSessionId !== `PENDING_${order.checkoutAttemptId}`
     ) {
@@ -150,7 +152,10 @@ async function confirmPaidSession(session, io) {
   const existingPayment = await Payment.findOne({ orderId });
   let updatedOrder;
   let alreadyConfirmed = false;
-  if (!verification.ok && ['checkout_attempt_mismatch', 'checkout_session_mismatch'].includes(verification.reason)) {
+  if (
+    !verification.ok &&
+    ['checkout_attempt_mismatch', 'checkout_session_mismatch'].includes(verification.reason)
+  ) {
     verification = await verifyPaidCheckoutSession(session, order, true);
     if (verification.ok) {
       if (existingPayment?.stripePaymentIntentId === verification.paymentIntentId) {
@@ -170,10 +175,7 @@ async function confirmPaidSession(session, io) {
 
       // A delayed event for a replaced checkout can be the first actual payment.
       // Claim it only if the reservation has not changed since the order read.
-      const deadline = deadlineSnapshot(
-        await getProviderConnectDeadlineDays(),
-        new Date()
-      );
+      const deadline = deadlineSnapshot(await getProviderConnectDeadlineDays(), new Date());
       updatedOrder = await Order.findOneAndUpdate(
         {
           _id: orderId,
@@ -250,11 +252,8 @@ async function confirmPaidSession(session, io) {
     updatedOrder = order;
     alreadyConfirmed = true;
   } else {
-  const deadline = deadlineSnapshot(
-    await getProviderConnectDeadlineDays(),
-    new Date()
-  );
-  updatedOrder = await Order.findOneAndUpdate(
+    const deadline = deadlineSnapshot(await getProviderConnectDeadlineDays(), new Date());
+    updatedOrder = await Order.findOneAndUpdate(
       {
         _id: orderId,
         status: { $in: ['awaiting_payment', 'pending', 'accepted'] },
@@ -689,7 +688,11 @@ async function resolveStaleReservation(stripe, order) {
       if (++seen >= 1000) return false;
     }
   } catch (err) {
-    console.error('SafePay stale reservation lookup failed [order=%s] %s', order._id, err?.code || err?.message);
+    console.error(
+      'SafePay stale reservation lookup failed [order=%s] %s',
+      order._id,
+      err?.code || err?.message
+    );
     return false;
   }
 
@@ -819,7 +822,10 @@ exports.createSafePaySession = async (req, res) => {
         },
       }).select('_id');
     } catch (err) {
-      console.error('createSafePaySession: could not verify payment review state for order %s', orderId);
+      console.error(
+        'createSafePaySession: could not verify payment review state for order %s',
+        orderId
+      );
       return res.status(503).json({
         error: 'Betalingsstatus må kontrolleres før en ny betaling kan startes.',
         code: 'payment_review_unavailable',
@@ -893,7 +899,8 @@ exports.createSafePaySession = async (req, res) => {
       }
       if (!existingSession) {
         return res.status(503).json({
-          error: 'Betalingsforsøket kan ikke verifiseres hos Stripe. Kontakt support før du prøver igjen.',
+          error:
+            'Betalingsforsøket kan ikke verifiseres hos Stripe. Kontakt support før du prøver igjen.',
           code: 'checkout_status_unknown',
         });
       }
@@ -960,7 +967,10 @@ exports.createSafePaySession = async (req, res) => {
         // used to be a permanent dead end: nothing ever cleared the PENDING_ reservation,
         // so the customer could never pay. Ask Stripe what really happened to this
         // attempt and continue from that, once; fail closed if Stripe cannot tell us.
-        if (!req._safepayStaleReservationResolved && await resolveStaleReservation(stripe, order)) {
+        if (
+          !req._safepayStaleReservationResolved &&
+          (await resolveStaleReservation(stripe, order))
+        ) {
           req._safepayStaleReservationResolved = true;
           return exports.createSafePaySession(req, res);
         }
@@ -1046,36 +1056,25 @@ exports.createSafePaySession = async (req, res) => {
     let session;
     try {
       session = await stripe.checkout.sessions.create(
-      {
-        customer: attemptCustomerId,
-        payment_method_types: ['card'],
-        line_items: [
-          {
-            price_data: {
-              currency: 'nok',
-              product_data: {
-                name: productName,
-                description: paymentDescription,
+        {
+          customer: attemptCustomerId,
+          payment_method_types: ['card'],
+          line_items: [
+            {
+              price_data: {
+                currency: 'nok',
+                product_data: {
+                  name: productName,
+                  description: paymentDescription,
+                },
+                unit_amount: amountSnapshot,
               },
-              unit_amount: amountSnapshot,
+              quantity: 1,
             },
-            quantity: 1,
-          },
-        ],
-        mode: 'payment',
-        success_url: successUrl,
-        cancel_url: cancelUrl,
-        metadata: {
-          userId: String(user._id),
-          orderId: orderId.toString(),
-          type: 'safepay_payment',
-          jobId,
-          jobTitle,
-          checkoutAttemptId: attemptId,
-          stripeMode: stripeConfig.mode,
-        },
-        payment_intent_data: {
-          description: paymentDescription,
+          ],
+          mode: 'payment',
+          success_url: successUrl,
+          cancel_url: cancelUrl,
           metadata: {
             userId: String(user._id),
             orderId: orderId.toString(),
@@ -1085,9 +1084,20 @@ exports.createSafePaySession = async (req, res) => {
             checkoutAttemptId: attemptId,
             stripeMode: stripeConfig.mode,
           },
+          payment_intent_data: {
+            description: paymentDescription,
+            metadata: {
+              userId: String(user._id),
+              orderId: orderId.toString(),
+              type: 'safepay_payment',
+              jobId,
+              jobTitle,
+              checkoutAttemptId: attemptId,
+              stripeMode: stripeConfig.mode,
+            },
+          },
         },
-      },
-      { idempotencyKey }
+        { idempotencyKey }
       );
     } catch (_err) {
       return res.status(503).json({
@@ -1162,9 +1172,9 @@ function mobileReturnPage({ nonce, target, cancelled, connect }) {
     ? 'Vi klarte ikke å lage lenken tilbake til appen. Bytt til Jobblo-appen og åpne oppdraget — betalingsstatusen vises der.'
     : connect
       ? 'Vi tar deg tilbake til appen. Utbetalingsstatusen oppdateres der.'
-    : cancelled
-      ? 'Vi tar deg tilbake til appen, der du kan fortsette betalingen.'
-      : 'Vi tar deg tilbake til appen. Betalingen bekreftes der.';
+      : cancelled
+        ? 'Vi tar deg tilbake til appen, der du kan fortsette betalingen.'
+        : 'Vi tar deg tilbake til appen. Betalingen bekreftes der.';
   const hint = target
     ? 'Skjer ingenting? Trykk på knappen over, eller bytt til Jobblo-appen manuelt.'
     : 'Du kan lukke dette vinduet.';
@@ -1306,7 +1316,8 @@ exports.mobileReturn = (req, res) => {
 exports.checkoutSessionStatus = async (req, res) => {
   try {
     const { sessionId } = req.params;
-    if (!SESSION_ID_RE.test(sessionId)) return res.status(400).json({ error: 'Invalid session id' });
+    if (!SESSION_ID_RE.test(sessionId))
+      return res.status(400).json({ error: 'Invalid session id' });
 
     const order = await Order.findOne({ checkoutSessionId: sessionId });
     if (!order) {
@@ -1636,15 +1647,17 @@ exports.approveAndPayout = async (req, res) => {
         { $set: { isSafePayUser: true, safePayActivatedAt: new Date() } }
       );
     } catch (sideEffectErr) {
-      await require('../utils/errorLogger').logApplicationError({
-        error: sideEffectErr,
-        requestPath: 'safepay/approveAndPayout',
-        httpMethod: 'POST',
-        httpStatus: 500,
-        errorCode: 'APPROVAL_SIDE_EFFECT_FAILED',
-        source: 'safepay',
-        metadata: { orderId: String(order._id) },
-      }).catch(() => undefined);
+      await require('../utils/errorLogger')
+        .logApplicationError({
+          error: sideEffectErr,
+          requestPath: 'safepay/approveAndPayout',
+          httpMethod: 'POST',
+          httpStatus: 500,
+          errorCode: 'APPROVAL_SIDE_EFFECT_FAILED',
+          source: 'safepay',
+          metadata: { orderId: String(order._id) },
+        })
+        .catch(() => undefined);
     }
 
     // ── Actual Stripe Connect transfer to provider ─────────────────────────────

@@ -14,7 +14,15 @@ const DURATIONS = [
 ];
 
 /** Block an IP or a narrow CIDR range (step-up; Super Admin runs it, operations requests it). */
-export function BlockIpDialog({ ip, open, onOpenChange }: { ip?: string; open: boolean; onOpenChange: (o: boolean) => void }) {
+export function BlockIpDialog({
+  ip,
+  open,
+  onOpenChange,
+}: {
+  ip?: string;
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+}) {
   const [target, setTarget] = useState(ip || '');
   const [duration, setDuration] = useState('24');
   const submit = useSensitiveAction(['blocks', 'security', 'ips']);
@@ -35,11 +43,23 @@ export function BlockIpDialog({ ip, open, onOpenChange }: { ip?: string; open: b
       destructive
       selfService
       canSubmit={Boolean(target.trim())}
-      onConfirm={(reason) => submit('ip_block', { ip: target.trim(), expiresInHours: duration === 'permanent' ? null : Number(duration) }, reason)}
+      onConfirm={(reason) =>
+        submit(
+          'ip_block',
+          { ip: target.trim(), expiresInHours: duration === 'permanent' ? null : Number(duration) },
+          reason
+        )
+      }
     >
       <div className="space-y-1.5">
         <Label htmlFor="blk-ip">IP or CIDR range</Label>
-        <Input id="blk-ip" value={target} onChange={(e) => setTarget(e.target.value)} placeholder="203.0.113.7 or 203.0.113.0/24" className="font-mono" />
+        <Input
+          id="blk-ip"
+          value={target}
+          onChange={(e) => setTarget(e.target.value)}
+          placeholder="203.0.113.7 or 203.0.113.0/24"
+          className="font-mono"
+        />
       </div>
       <div className="space-y-1.5">
         <Label>Duration</Label>

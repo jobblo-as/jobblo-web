@@ -42,7 +42,14 @@ test('the public API refuses what the UI must never send', async ({ request }) =
   // Break-it checks from the browser's side of the trust boundary.
   expect((await request.get(`${API}/api/services/not-an-id`)).status()).toBe(400);
   expect((await request.get(`${API}/api/developer/queues`)).status()).toBe(401);
-  expect((await request.post(`${API}/api/services`, { data: { title: 'x' }, headers: { Origin: 'http://127.0.0.1:5176' } })).status()).toBe(401);
+  expect(
+    (
+      await request.post(`${API}/api/services`, {
+        data: { title: 'x' },
+        headers: { Origin: 'http://127.0.0.1:5176' },
+      })
+    ).status()
+  ).toBe(401);
   const big = await request.get(`${API}/api/services?limit=100000`);
   expect(big.ok()).toBe(true);
   expect((await big.json()).data.length).toBeLessThanOrEqual(100);

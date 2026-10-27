@@ -21,25 +21,44 @@ const createTransporter = () => {
 async function sendLogged(transporter, options) {
   const started = Date.now();
   const log = (fields) =>
-    logDelivery({ channel: 'email', template: String(options.subject || '').slice(0, 200), to: maskEmail(options.to), latencyMs: Date.now() - started, ...fields });
+    logDelivery({
+      channel: 'email',
+      template: String(options.subject || '').slice(0, 200),
+      to: maskEmail(options.to),
+      latencyMs: Date.now() - started,
+      ...fields,
+    });
   try {
     require('../services/monitoring/faults').assertNoFault('email'); // staging failure simulator only
     const info = await transporter.sendMail(options);
-    log({ status: info?.rejected?.length ? 'partial' : 'sent', accepted: info?.accepted?.length ?? null, rejected: info?.rejected?.length ?? null });
+    log({
+      status: info?.rejected?.length ? 'partial' : 'sent',
+      accepted: info?.accepted?.length ?? null,
+      rejected: info?.rejected?.length ?? null,
+    });
     return info;
   } catch (err) {
-    log({ status: 'failed', error: String(err.message || err).slice(0, 300), errorCode: err.code || err.responseCode?.toString() || null });
+    log({
+      status: 'failed',
+      error: String(err.message || err).slice(0, 300),
+      errorCode: err.code || err.responseCode?.toString() || null,
+    });
     throw err;
   }
 }
 
-const escapeHtml = (value) => String(value || '').replace(/[&<>"']/g, (character) => ({
-  '&': '&amp;',
-  '<': '&lt;',
-  '>': '&gt;',
-  '"': '&quot;',
-  "'": '&#39;',
-})[character]);
+const escapeHtml = (value) =>
+  String(value || '').replace(
+    /[&<>"']/g,
+    (character) =>
+      ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+      })[character]
+  );
 
 const RECOVERY_COPY = {
   payment_failed: {
@@ -69,18 +88,16 @@ const RECOVERY_COPY = {
   },
 };
 
-async function sendSubscriptionRecoveryEmail({
-  to,
-  name,
-  kind,
-  gracePeriodEndsAt,
-  frontendUrl,
-}) {
-  const copy = RECOVERY_COPY[kind] || (/^reminder_day_[1-6]$/.test(kind) ? {
-    subject: 'Påminnelse: oppdater betalingsmåten din',
-    heading: 'Betalingen venter fortsatt',
-    body: 'Abonnementet ditt er fortsatt i betalingsperioden for gjenoppretting. Oppdater betalingsmåten før fristen for å beholde de betalte fordelene.',
-  } : null);
+async function sendSubscriptionRecoveryEmail({ to, name, kind, gracePeriodEndsAt, frontendUrl }) {
+  const copy =
+    RECOVERY_COPY[kind] ||
+    (/^reminder_day_[1-6]$/.test(kind)
+      ? {
+          subject: 'Påminnelse: oppdater betalingsmåten din',
+          heading: 'Betalingen venter fortsatt',
+          body: 'Abonnementet ditt er fortsatt i betalingsperioden for gjenoppretting. Oppdater betalingsmåten før fristen for å beholde de betalte fordelene.',
+        }
+      : null);
   if (!copy) throw new Error('Unknown subscription recovery email type');
   let origin;
   try {
@@ -90,13 +107,14 @@ async function sendSubscriptionRecoveryEmail({
     throw new Error('FRONTEND_URL must be a valid http(s) URL for recovery emails');
   }
   const billingUrl = new URL('/settings/subscriptions', origin).toString();
-  const deadline = gracePeriodEndsAt instanceof Date && Number.isFinite(gracePeriodEndsAt.getTime())
-    ? new Intl.DateTimeFormat('nb-NO', {
-        dateStyle: 'long',
-        timeStyle: 'short',
-        timeZone: 'UTC',
-      }).format(gracePeriodEndsAt) + ' UTC'
-    : null;
+  const deadline =
+    gracePeriodEndsAt instanceof Date && Number.isFinite(gracePeriodEndsAt.getTime())
+      ? new Intl.DateTimeFormat('nb-NO', {
+          dateStyle: 'long',
+          timeStyle: 'short',
+          timeZone: 'UTC',
+        }).format(gracePeriodEndsAt) + ' UTC'
+      : null;
   const paragraph = deadline
     ? `<p>Betalingsfristen er <strong>${escapeHtml(deadline)}</strong>.</p>`
     : '';
@@ -112,7 +130,9 @@ async function sendSubscriptionRecoveryEmail({
       copy.body,
       deadline ? `Betalingsfrist: ${deadline}.` : '',
       `Betalingsinnstillinger: ${billingUrl}`,
-    ].filter(Boolean).join('\n'),
+    ]
+      .filter(Boolean)
+      .join('\n'),
     html: `<!doctype html><html lang="no"><meta charset="utf-8"><body>
       <h1>${escapeHtml(copy.heading)}</h1>
       <p>Hei ${escapeHtml(name || 'der')},</p>
@@ -182,9 +202,11 @@ const deliverOtpEmail = async (toEmail, otp, userName, purpose) => {
                     <h2 style="color:#111827;font-size:20px;font-weight:700;
                                margin:0 0 8px;">Hei, ${escapeHtml(userName || 'der')}!</h2>
                     <p style="color:#6B7280;font-size:15px;line-height:1.6;margin:0 0 32px;">
-                      ${verify
-                        ? 'Takk for at du opprettet en konto hos Jobblo. Bekreft e-postadressen din med koden nedenfor.'
-                        : 'Vi mottok en forespørsel om å tilbakestille passordet ditt. Bruk koden nedenfor.'}
+                      ${
+                        verify
+                          ? 'Takk for at du opprettet en konto hos Jobblo. Bekreft e-postadressen din med koden nedenfor.'
+                          : 'Vi mottok en forespørsel om å tilbakestille passordet ditt. Bruk koden nedenfor.'
+                      }
                       Den er gyldig i <strong>10 minutter</strong>.
                     </p>
 
@@ -229,13 +251,26 @@ async function sendDevAlertEmail(to, incident) {
     from: `"Jobblo Alerts" <${process.env.SMTP_USER}>`,
     to,
     subject: `[${String(incident.severity).toUpperCase()}] ${incident.title}`,
-    text: [incident.title, '', incident.detail || '', '', `Service: ${incident.service || '-'}`, `Started: ${new Date(incident.startedAt).toISOString()}`, `Incident: ${incident._id}`].join('\n'),
+    text: [
+      incident.title,
+      '',
+      incident.detail || '',
+      '',
+      `Service: ${incident.service || '-'}`,
+      `Started: ${new Date(incident.startedAt).toISOString()}`,
+      `Incident: ${incident._id}`,
+    ].join('\n'),
   });
 }
 
 /** Plain-text security notice to an account owner (e.g. repeated wrong two-factor codes). */
 async function sendSecurityAlertEmail(to, subject, text) {
-  await sendLogged(createTransporter(), { from: `"Jobblo" <${process.env.SMTP_USER}>`, to, subject, text });
+  await sendLogged(createTransporter(), {
+    from: `"Jobblo" <${process.env.SMTP_USER}>`,
+    to,
+    subject,
+    text,
+  });
 }
 
 /**
@@ -247,12 +282,29 @@ async function sendSecurityAlertEmail(to, subject, text) {
 async function sendOtpEmail(toEmail, otp, userName, purpose) {
   const { enqueue } = require('../services/queue');
   const { sealOtp } = require('../services/queue/handlers');
-  return enqueue('email', 'otp', { to: toEmail, name: userName || null, otpSealed: sealOtp(otp), ...(purpose && { purpose }) }, { attempts: 3 });
+  return enqueue(
+    'email',
+    'otp',
+    { to: toEmail, name: userName || null, otpSealed: sealOtp(otp), ...(purpose && { purpose }) },
+    { attempts: 3 }
+  );
 }
 
 /** sendSecurityAlertEmail through the email queue: returns as soon as the job is queued. */
 async function queueSecurityAlertEmail(to, subject, text) {
-  return require('../services/queue').enqueue('email', 'securityAlert', { to, subject, text }, { attempts: 3 });
+  return require('../services/queue').enqueue(
+    'email',
+    'securityAlert',
+    { to, subject, text },
+    { attempts: 3 }
+  );
 }
 
-module.exports = { sendOtpEmail, deliverOtpEmail, sendSubscriptionRecoveryEmail, sendDevAlertEmail, sendSecurityAlertEmail, queueSecurityAlertEmail };
+module.exports = {
+  sendOtpEmail,
+  deliverOtpEmail,
+  sendSubscriptionRecoveryEmail,
+  sendDevAlertEmail,
+  sendSecurityAlertEmail,
+  queueSecurityAlertEmail,
+};

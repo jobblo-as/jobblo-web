@@ -5,7 +5,13 @@ import { cn } from '@/lib/utils';
 import type { Slo, SloStatus } from '../../api/developer';
 import { useDevMe, useDevSlo, useUrlFilters } from '../../features/developer/hooks';
 import { useSensitiveAction } from '../../features/developer/stepUp';
-import { ErrorState, PageHeader, Section, StatCard, StatusBadge } from '../../components/developer/kit';
+import {
+  ErrorState,
+  PageHeader,
+  Section,
+  StatCard,
+  StatusBadge,
+} from '../../components/developer/kit';
 import { TimeSeriesChart } from '../../components/developer/TimeSeriesChart';
 import { ReasonDialog } from '../../components/developer/ReasonDialog';
 import { Button } from '../../components/developer/ui/button';
@@ -15,7 +21,10 @@ import { Label } from '../../components/developer/ui/label';
 import { Skeleton } from '../../components/developer/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '../../components/developer/ui/tabs';
 
-const STATUS: Record<SloStatus, { label: string; tone: 'success' | 'warning' | 'danger' | 'neutral' }> = {
+const STATUS: Record<
+  SloStatus,
+  { label: string; tone: 'success' | 'warning' | 'danger' | 'neutral' }
+> = {
   ok: { label: 'Healthy', tone: 'success' },
   at_risk: { label: 'At risk', tone: 'warning' },
   fast_burn: { label: 'Fast burn', tone: 'danger' },
@@ -28,16 +37,45 @@ const burn = (v: number | null) => (v === null ? '—' : `${v.toFixed(v >= 10 ? 
 function BudgetBar({ remaining }: { remaining: number | null }) {
   const v = remaining === null ? 0 : Math.max(0, Math.min(100, remaining));
   return (
-    <div className="h-2 w-full overflow-hidden rounded-full bg-muted" aria-label={`Error budget remaining ${pct(remaining, 0)}`}>
-      <div className={cn('h-full rounded-full transition-all', v > 50 ? 'bg-emerald-500' : v > 25 ? 'bg-amber-500' : 'bg-red-500')} style={{ width: `${v}%` }} />
+    <div
+      className="h-2 w-full overflow-hidden rounded-full bg-muted"
+      aria-label={`Error budget remaining ${pct(remaining, 0)}`}
+    >
+      <div
+        className={cn(
+          'h-full rounded-full transition-all',
+          v > 50 ? 'bg-emerald-500' : v > 25 ? 'bg-amber-500' : 'bg-red-500'
+        )}
+        style={{ width: `${v}%` }}
+      />
     </div>
   );
 }
 
-function SloCard({ s, active, onClick, fastBurn, slowBurn }: { s: Slo; active: boolean; onClick: () => void; fastBurn: number; slowBurn: number }) {
+function SloCard({
+  s,
+  active,
+  onClick,
+  fastBurn,
+  slowBurn,
+}: {
+  s: Slo;
+  active: boolean;
+  onClick: () => void;
+  fastBurn: number;
+  slowBurn: number;
+}) {
   const st = STATUS[s.status];
   return (
-    <Card size="sm" className={cn('cursor-pointer gap-3 transition-colors hover:border-primary/40', active && 'border-primary ring-1 ring-primary/30', (s.status === 'breached' || s.status === 'fast_burn') && !active && 'border-red-300')} onClick={onClick}>
+    <Card
+      size="sm"
+      className={cn(
+        'cursor-pointer gap-3 transition-colors hover:border-primary/40',
+        active && 'border-primary ring-1 ring-primary/30',
+        (s.status === 'breached' || s.status === 'fast_burn') && !active && 'border-red-300'
+      )}
+      onClick={onClick}
+    >
       <CardContent className="space-y-3">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
@@ -47,13 +85,22 @@ function SloCard({ s, active, onClick, fastBurn, slowBurn }: { s: Slo; active: b
           <StatusBadge status={st.label} tone={st.tone} />
         </div>
         <div className="flex items-baseline gap-2">
-          <span className={cn('text-2xl font-semibold tabular-nums', s.sli !== null && s.sli < s.target && 'text-red-600')}>{pct(s.sli, s.target >= 99.9 ? 3 : 2)}</span>
+          <span
+            className={cn(
+              'text-2xl font-semibold tabular-nums',
+              s.sli !== null && s.sli < s.target && 'text-red-600'
+            )}
+          >
+            {pct(s.sli, s.target >= 99.9 ? 3 : 2)}
+          </span>
           <span className="text-xs text-muted-foreground">target {s.target}%</span>
         </div>
         <div className="space-y-1">
           <div className="flex justify-between text-xs">
             <span className="text-muted-foreground">Error budget left</span>
-            <span className="font-medium tabular-nums">{s.remaining === null ? '—' : s.remaining < 0 ? 'exhausted' : pct(s.remaining, 0)}</span>
+            <span className="font-medium tabular-nums">
+              {s.remaining === null ? '—' : s.remaining < 0 ? 'exhausted' : pct(s.remaining, 0)}
+            </span>
           </div>
           <BudgetBar remaining={s.remaining} />
         </div>
@@ -66,35 +113,70 @@ function SloCard({ s, active, onClick, fastBurn, slowBurn }: { s: Slo; active: b
           </div>
           <div>
             <div className="text-muted-foreground">Burn 1 h</div>
-            <div className={cn('tabular-nums', (s.burn1h ?? 0) >= fastBurn && 'font-semibold text-red-600')}>{burn(s.burn1h)}</div>
+            <div
+              className={cn(
+                'tabular-nums',
+                (s.burn1h ?? 0) >= fastBurn && 'font-semibold text-red-600'
+              )}
+            >
+              {burn(s.burn1h)}
+            </div>
           </div>
           <div>
             <div className="text-muted-foreground">Burn 6 h</div>
-            <div className={cn('tabular-nums', (s.burn6h ?? 0) >= slowBurn && 'font-semibold text-amber-600')}>{burn(s.burn6h)}</div>
+            <div
+              className={cn(
+                'tabular-nums',
+                (s.burn6h ?? 0) >= slowBurn && 'font-semibold text-amber-600'
+              )}
+            >
+              {burn(s.burn6h)}
+            </div>
           </div>
         </div>
-        <div className="text-xs text-muted-foreground">{num(s.total)} events in {s.windowDays} days</div>
+        <div className="text-xs text-muted-foreground">
+          {num(s.total)} events in {s.windowDays} days
+        </div>
       </CardContent>
     </Card>
   );
 }
 
-function TargetsDialog({ slos, open, onOpenChange }: { slos: Slo[]; open: boolean; onOpenChange: (o: boolean) => void }) {
+function TargetsDialog({
+  slos,
+  open,
+  onOpenChange,
+}: {
+  slos: Slo[];
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+}) {
   const submit = useSensitiveAction(['slo']);
   const [values, setValues] = useState<Record<string, string>>({});
   useEffect(() => {
     if (open) setValues(Object.fromEntries(slos.map((s) => [s.key, String(s.target)])));
   }, [open, slos]);
-  const changed = slos.filter((s) => values[s.key] !== undefined && Number(values[s.key]) !== s.target);
+  const changed = slos.filter(
+    (s) => values[s.key] !== undefined && Number(values[s.key]) !== s.target
+  );
   return (
     <ReasonDialog
       open={open}
       onOpenChange={onOpenChange}
       title="Change SLO targets"
       description="Targets between 90 and 99.999 %. A higher target means a smaller error budget and earlier alerts."
-      confirmLabel={`Save ${changed.length || ''} target${changed.length === 1 ? '' : 's'}`.replace('  ', ' ')}
+      confirmLabel={`Save ${changed.length || ''} target${changed.length === 1 ? '' : 's'}`.replace(
+        '  ',
+        ' '
+      )}
       canSubmit={changed.length > 0}
-      onConfirm={(reason) => submit('slo_targets_set', { targets: Object.fromEntries(changed.map((s) => [s.key, Number(values[s.key])])) }, reason)}
+      onConfirm={(reason) =>
+        submit(
+          'slo_targets_set',
+          { targets: Object.fromEntries(changed.map((s) => [s.key, Number(values[s.key])])) },
+          reason
+        )
+      }
     >
       <div className="grid gap-2 sm:grid-cols-2">
         {slos.map((s) => (
@@ -102,7 +184,15 @@ function TargetsDialog({ slos, open, onOpenChange }: { slos: Slo[]; open: boolea
             <Label htmlFor={`slo-${s.key}`} className="text-xs">
               {s.name} <span className="text-muted-foreground">(default {s.defaultTarget})</span>
             </Label>
-            <Input id={`slo-${s.key}`} type="number" step="0.1" min={90} max={99.999} value={values[s.key] ?? ''} onChange={(e) => setValues({ ...values, [s.key]: e.target.value })} />
+            <Input
+              id={`slo-${s.key}`}
+              type="number"
+              step="0.1"
+              min={90}
+              max={99.999}
+              value={values[s.key] ?? ''}
+              onChange={(e) => setValues({ ...values, [s.key]: e.target.value })}
+            />
           </div>
         ))}
       </div>
@@ -116,7 +206,10 @@ export default function SloPage() {
   const { data, isLoading, error, refetch } = useDevSlo(Number(f.window));
   const [editing, setEditing] = useState(false);
   const slos = data?.slos || [];
-  const selected = slos.find((s) => s.key === f.slo) || slos.find((s) => s.status === 'breached' || s.status === 'fast_burn') || slos[0];
+  const selected =
+    slos.find((s) => s.key === f.slo) ||
+    slos.find((s) => s.status === 'breached' || s.status === 'fast_burn') ||
+    slos[0];
   const count = (...st: SloStatus[]) => slos.filter((s) => st.includes(s.status)).length;
 
   return (
@@ -134,7 +227,13 @@ export default function SloPage() {
               </TabsList>
             </Tabs>
             {(me?.can.request || me?.can.execute) && (
-              <Button size="sm" variant="outline" className="bg-card" disabled={!slos.length} onClick={() => setEditing(true)}>
+              <Button
+                size="sm"
+                variant="outline"
+                className="bg-card"
+                disabled={!slos.length}
+                onClick={() => setEditing(true)}
+              >
                 <Pencil /> Targets
               </Button>
             )}
@@ -144,36 +243,93 @@ export default function SloPage() {
       {error && <ErrorState error={error} onRetry={() => refetch()} />}
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label="Meeting objective" icon={<ShieldCheck />} tone={count('breached') ? 'warning' : 'success'} loading={isLoading} value={`${count('ok', 'at_risk', 'fast_burn')} / ${slos.length - count('no_data')}`} hint={count('no_data') ? `${count('no_data')} without data` : 'with data'} />
-        <StatCard label="Breached" icon={<TriangleAlert />} tone={count('breached') ? 'danger' : 'success'} loading={isLoading} value={count('breached')} hint={slos.filter((s) => s.status === 'breached').map((s) => s.name).join(', ') || 'none'} />
-        <StatCard label="Burning fast" icon={<Flame />} tone={count('fast_burn') ? 'danger' : 'success'} loading={isLoading} value={count('fast_burn')} hint={`1 h burn ≥ ${data?.fastBurn ?? 14.4}×`} />
-        <StatCard label="At risk" icon={<Gauge />} tone={count('at_risk') ? 'warning' : 'success'} loading={isLoading} value={count('at_risk')} hint={`≤ 25 % budget left or 6 h burn ≥ ${data?.slowBurn ?? 6}×`} />
+        <StatCard
+          label="Meeting objective"
+          icon={<ShieldCheck />}
+          tone={count('breached') ? 'warning' : 'success'}
+          loading={isLoading}
+          value={`${count('ok', 'at_risk', 'fast_burn')} / ${slos.length - count('no_data')}`}
+          hint={count('no_data') ? `${count('no_data')} without data` : 'with data'}
+        />
+        <StatCard
+          label="Breached"
+          icon={<TriangleAlert />}
+          tone={count('breached') ? 'danger' : 'success'}
+          loading={isLoading}
+          value={count('breached')}
+          hint={
+            slos
+              .filter((s) => s.status === 'breached')
+              .map((s) => s.name)
+              .join(', ') || 'none'
+          }
+        />
+        <StatCard
+          label="Burning fast"
+          icon={<Flame />}
+          tone={count('fast_burn') ? 'danger' : 'success'}
+          loading={isLoading}
+          value={count('fast_burn')}
+          hint={`1 h burn ≥ ${data?.fastBurn ?? 14.4}×`}
+        />
+        <StatCard
+          label="At risk"
+          icon={<Gauge />}
+          tone={count('at_risk') ? 'warning' : 'success'}
+          loading={isLoading}
+          value={count('at_risk')}
+          hint={`≤ 25 % budget left or 6 h burn ≥ ${data?.slowBurn ?? 6}×`}
+        />
       </div>
 
       {isLoading ? (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-56" />)}</div>
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          {[0, 1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-56" />
+          ))}
+        </div>
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {slos.map((s) => (
-            <SloCard key={s.key} s={s} active={selected?.key === s.key} onClick={() => setF({ slo: s.key })} fastBurn={data!.fastBurn} slowBurn={data!.slowBurn} />
+            <SloCard
+              key={s.key}
+              s={s}
+              active={selected?.key === s.key}
+              onClick={() => setF({ slo: s.key })}
+              fastBurn={data!.fastBurn}
+              slowBurn={data!.slowBurn}
+            />
           ))}
         </div>
       )}
 
       {selected && (
         <div className="grid gap-4 lg:grid-cols-2">
-          <Section title={`${selected.name}: budget burn-down`} description={`Error budget left over the ${selected.windowDays}-day window, day by day. Crossing 0 % means the objective is missed.`}>
+          <Section
+            title={`${selected.name}: budget burn-down`}
+            description={`Error budget left over the ${selected.windowDays}-day window, day by day. Crossing 0 % means the objective is missed.`}
+          >
             <TimeSeriesChart
-              data={selected.series.map((p) => ({ t: p.t, remaining: p.remaining === null ? null : Math.max(-100, p.remaining) }))}
+              data={selected.series.map((p) => ({
+                t: p.t,
+                remaining: p.remaining === null ? null : Math.max(-100, p.remaining),
+              }))}
               bucketMs={86_400_000}
               height={220}
               series={[{ key: 'remaining', label: 'Budget left %', color: 'var(--chart-1)' }]}
               valueFormatter={(v) => `${v}%`}
             />
           </Section>
-          <Section title={`${selected.name}: daily SLI`} description={`Share of good events per day against the ${selected.target}% target.`}>
+          <Section
+            title={`${selected.name}: daily SLI`}
+            description={`Share of good events per day against the ${selected.target}% target.`}
+          >
             <TimeSeriesChart
-              data={selected.series.map((p) => ({ t: p.t, sli: p.sli === null ? null : Number(p.sli.toFixed(3)), target: selected.target }))}
+              data={selected.series.map((p) => ({
+                t: p.t,
+                sli: p.sli === null ? null : Number(p.sli.toFixed(3)),
+                target: selected.target,
+              }))}
               bucketMs={86_400_000}
               height={220}
               series={[

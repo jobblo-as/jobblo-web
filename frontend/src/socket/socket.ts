@@ -95,7 +95,8 @@ export const initSocket = (): AppSocket => {
           retryAfterAuth();
         });
         for (const [event, fn] of listeners.splice(0)) real.on(event, fn);
-        for (const args of pendingEmits.splice(0)) (real.emit as (...a: unknown[]) => void)(...args);
+        for (const args of pendingEmits.splice(0))
+          (real.emit as (...a: unknown[]) => void)(...args);
       })
       .catch((err) => {
         loading = false;

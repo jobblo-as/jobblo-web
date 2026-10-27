@@ -477,7 +477,8 @@ const SafePayApproval: React.FC = () => {
       setChecklist((prev) => prev.map((i) => (i.id === itemId ? { ...i, checked } : i)));
       refetch();
     },
-    onError: (err: unknown) => toast.error(getErrorMessage(err, 'Kunne ikke lagre sjekklistepunktet. Prøv igjen.')),
+    onError: (err: unknown) =>
+      toast.error(getErrorMessage(err, 'Kunne ikke lagre sjekklistepunktet. Prøv igjen.')),
   });
 
   /**

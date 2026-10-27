@@ -25,9 +25,22 @@ RELEASES=.releases/frontend
 BRANCH="$(git branch --show-current)"
 # Detached HEAD: an empty branch would make `git fetch origin ""` fetch the default branch.
 [ -n "$BRANCH" ] || { echo "Detached HEAD: check out the branch to deploy first." >&2; exit 1; }
-echo "→ Fetching $BRANCH"
-git fetch origin "$BRANCH"
+# The remote this branch tracks: the server's may be named anything, not only "origin".
+REMOTE="$(git config "branch.$BRANCH.remote" || git remote | head -1)"
+[ -n "$REMOTE" ] || { echo "No git remote configured." >&2; exit 1; }
+echo "→ Fetching $BRANCH from $REMOTE"
+git fetch "$REMOTE" "$BRANCH"
 TARGET="$(git rev-parse FETCH_HEAD)"
+
+# Auto-deploy (.github/workflows/deploy.yml) passes the commit whose CI just passed. Deploy only
+# that one: a newer push on the branch has not been tested yet and gets its own deploy after CI.
+if [ -n "${EXPECT_SHA:-}" ]; then
+  [[ "$EXPECT_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "EXPECT_SHA must be a full commit sha." >&2; exit 2; }
+  if [ "$TARGET" != "$EXPECT_SHA" ]; then
+    echo "→ $BRANCH is at ${TARGET:0:8}, not the tested ${EXPECT_SHA:0:8}: skipping (the newer commit deploys after its own CI)."
+    exit 0
+  fi
+fi
 
 if [ "$SKIP_CI" = 0 ]; then
   command -v gh >/dev/null || { echo "gh CLI not found: cannot verify CI. Install gh or pass --skip-ci-check." >&2; exit 1; }
@@ -55,11 +68,19 @@ restart_api() {
     else pm2 restart jobblo-api --update-env; fi)
 }
 
+# The release the API reports (developer console → Deployments; dotenv never overrides these):
+# deploy date + commit, e.g. 2026.10.28-579de950. --update-env hands them to pm2.
+release_env() {
+  VERSION="$(date -u +%Y.%m.%d)-$(git rev-parse --short=8 HEAD)"
+  export APP_VERSION="$VERSION" GIT_COMMIT_SHA="$(git rev-parse HEAD)" GIT_BRANCH="$BRANCH" DEPLOYED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+
 # Any failure from here on puts the previous commit, API and frontend back.
 rollback() {
   trap - ERR
   echo "✖ Deploy failed, rolling back to ${PREV:0:8}" >&2
   git reset --keep "$PREV"
+  release_env   # the API reports the commit it runs again, not the failed one
   [ "$BACKEND_RESTARTED" = 1 ] && restart_api
   [ -n "$PREV_RELEASE" ] && ln -sfn "$PREV_RELEASE" frontend/dist.new && mv -Tf frontend/dist.new frontend/dist
   exit 1
@@ -75,6 +96,7 @@ mkdir -p "$RELEASE"
 (cd frontend && npm ci && npm run build -- --outDir "../$RELEASE" --emptyOutDir)
 
 echo "→ Backend"
+release_env
 BACKEND_RESTARTED=1
 restart_api
 
@@ -103,3 +125,5 @@ trap - ERR
 # Keep the five newest builds (the live one is the newest). sudo: builds belong to www-data.
 ls -1dt "$RELEASES"/*/ | tail -n +6 | xargs -r sudo rm -rf
 echo "✅ Deployed $BRANCH @ $(git log -1 --format='%h %s')"
+# Read by .github/workflows/deploy.yml to name the GitHub release.
+echo "RELEASE_VERSION=$VERSION"

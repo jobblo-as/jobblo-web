@@ -159,7 +159,8 @@ const unreadQuery = (userId) => ({
 /** The caller's view of a lean notification: per-user `read`, and no list of who read it. */
 function forViewer(n, userId) {
   const { readBy, ...rest } = n;
-  if (!n.userId) rest.read = Boolean(n.read) || (readBy || []).some((id) => String(id) === String(userId));
+  if (!n.userId)
+    rest.read = Boolean(n.read) || (readBy || []).some((id) => String(id) === String(userId));
   return rest;
 }
 

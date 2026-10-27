@@ -49,7 +49,10 @@ const getOverview = asyncHandler(async (req, res) => {
     Order.aggregate([{ $group: { _id: '$status', n: { $sum: 1 } } }]),
     Session.countDocuments({ lastUsed: { $gte: new Date(Date.now() - 15 * 60 * 1000) } }),
     apiTotals(from, to),
-    ErrorLog.countDocuments({ severity: 'critical', status: { $in: ['open', 'investigating', 'reopened'] } }),
+    ErrorLog.countDocuments({
+      severity: 'critical',
+      status: { $in: ['open', 'investigating', 'reopened'] },
+    }),
     ErrorLog.countDocuments({ createdAt: { $gte: from, $lte: to } }),
     StripeEvent.countDocuments({ lastError: { $ne: null }, status: 'processing' }),
     StripeEvent.countDocuments({ status: 'processing' }),
@@ -65,7 +68,13 @@ const getOverview = asyncHandler(async (req, res) => {
     getStripeWebhookReadiness().catch(() => ({ status: 'configuration_unavailable' })),
     ApiMetricMinute.aggregate([
       { $match: { minute: { $gte: from, $lte: to } } },
-      { $group: { _id: bucketExpr('$minute', bucketMs), requests: { $sum: '$count' }, errors: { $sum: '$failed' } } },
+      {
+        $group: {
+          _id: bucketExpr('$minute', bucketMs),
+          requests: { $sum: '$count' },
+          errors: { $sum: '$failed' },
+        },
+      },
       { $sort: { _id: 1 } },
     ]),
   ]);
@@ -78,11 +87,25 @@ const getOverview = asyncHandler(async (req, res) => {
   // Simple, explainable health score: start at 100 and subtract per problem.
   const deductions = [];
   if (!ping.ok) deductions.push({ reason: 'MongoDB unreachable', points: 40 });
-  if (webhook.status !== 'healthy') deductions.push({ reason: `Stripe webhook: ${webhook.status}`, points: 15 });
-  if (openCritical) deductions.push({ reason: `${openCritical} open critical errors`, points: Math.min(20, openCritical * 5) });
-  if (api.successRate !== null && api.successRate < 99) deductions.push({ reason: `API success ${api.successRate}%`, points: Math.min(20, Math.round((99 - api.successRate) * 4)) });
-  if (failedJobs) deductions.push({ reason: `${failedJobs} scheduler jobs failing/missed`, points: Math.min(10, failedJobs * 3) });
-  if (api.p95 && api.p95 > 1500) deductions.push({ reason: `P95 latency ${api.p95}ms`, points: 10 });
+  if (webhook.status !== 'healthy')
+    deductions.push({ reason: `Stripe webhook: ${webhook.status}`, points: 15 });
+  if (openCritical)
+    deductions.push({
+      reason: `${openCritical} open critical errors`,
+      points: Math.min(20, openCritical * 5),
+    });
+  if (api.successRate !== null && api.successRate < 99)
+    deductions.push({
+      reason: `API success ${api.successRate}%`,
+      points: Math.min(20, Math.round((99 - api.successRate) * 4)),
+    });
+  if (failedJobs)
+    deductions.push({
+      reason: `${failedJobs} scheduler jobs failing/missed`,
+      points: Math.min(10, failedJobs * 3),
+    });
+  if (api.p95 && api.p95 > 1500)
+    deductions.push({ reason: `P95 latency ${api.p95}ms`, points: 10 });
   const healthScore = Math.max(0, 100 - deductions.reduce((s, d) => s + d.points, 0));
 
   return sendSuccess(res, {
@@ -109,7 +132,11 @@ const getOverview = asyncHandler(async (req, res) => {
     },
     integrations: {
       mongo: ping,
-      stripeWebhook: { status: webhook.status, mode: webhook.mode, lastDeliveryAt: webhook.lastDeliveryAt || null },
+      stripeWebhook: {
+        status: webhook.status,
+        mode: webhook.mode,
+        lastDeliveryAt: webhook.lastDeliveryAt || null,
+      },
       webhookEvents: { pending: webhookPending, failed: webhookFailed },
       safePay: { total: safePayTotal },
     },

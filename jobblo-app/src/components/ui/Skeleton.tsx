@@ -34,7 +34,13 @@ function usePulse() {
 }
 
 /** shadcn-style Skeleton: a softly pulsing block. Size and shape come from `className`. */
-export function Skeleton({ className, style }: { className?: string; style?: StyleProp<ViewStyle> }) {
+export function Skeleton({
+  className,
+  style,
+}: {
+  className?: string;
+  style?: StyleProp<ViewStyle>;
+}) {
   usePulse();
   return (
     // The pulse lives on the wrapper; size/shape (className + style) on the inner block.

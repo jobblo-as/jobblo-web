@@ -6,7 +6,16 @@
 
 import { t } from './i18n';
 
-export const STEPS = ['photos', 'photoGrid', 'category', 'details', 'text', 'price', 'place', 'review'] as const;
+export const STEPS = [
+  'photos',
+  'photoGrid',
+  'category',
+  'details',
+  'text',
+  'price',
+  'place',
+  'review',
+] as const;
 export type PostJobStep = (typeof STEPS)[number];
 
 export const MAX_PHOTOS = 6;
@@ -29,11 +38,27 @@ export const STEP_TITLES: Record<PostJobStep, string> = {
  * the photos are analysed by AI in the category step.
  */
 export function cameraHint(photoCount: number): string {
-  if (photoCount >= MAX_PHOTOS) return t('Maks antall bilder. Trykk «Ferdig» for å gå videre.', 'Maximum number of photos. Tap “Done” to continue.');
-  if (photoCount === 0) return t('Ta et bilde av hele området som skal fikses – forfra!', 'Take a photo of the whole area that needs work – from the front!');
-  if (photoCount === 1) return t('Bra! Ta et nærbilde av det som må gjøres.', 'Great! Now take a close-up of what needs to be done.');
-  if (photoCount === MAX_PHOTOS - 1) return t('Ett bilde til, så har du fått med alt.', 'One more photo and you have it all.');
-  return t('Ta flere bilder fra ulike vinkler – få med alt som er viktig for jobben.', 'Take more photos from different angles – include everything important for the job.');
+  if (photoCount >= MAX_PHOTOS)
+    return t(
+      'Maks antall bilder. Trykk «Ferdig» for å gå videre.',
+      'Maximum number of photos. Tap “Done” to continue.'
+    );
+  if (photoCount === 0)
+    return t(
+      'Ta et bilde av hele området som skal fikses – forfra!',
+      'Take a photo of the whole area that needs work – from the front!'
+    );
+  if (photoCount === 1)
+    return t(
+      'Bra! Ta et nærbilde av det som må gjøres.',
+      'Great! Now take a close-up of what needs to be done.'
+    );
+  if (photoCount === MAX_PHOTOS - 1)
+    return t('Ett bilde til, så har du fått med alt.', 'One more photo and you have it all.');
+  return t(
+    'Ta flere bilder fra ulike vinkler – få med alt som er viktig for jobben.',
+    'Take more photos from different angles – include everything important for the job.'
+  );
 }
 
 /** What the camera AI helper said about a photo ('blurry' / 'dark' = it asked for a retake). */
@@ -46,7 +71,10 @@ export type PhotoQuality = 'ok' | 'blurry' | 'dark' | 'unclear';
 /** A photo taken or picked now; an edited job's saved photos are https URLs on the server. */
 export const isLocalPhoto = (photo: { uri: string }) => !/^https?:\/\//i.test(photo.uri);
 
-export function photosForText<T extends { uri: string }>(photos: T[], quality: Record<string, PhotoQuality | undefined>) {
+export function photosForText<T extends { uri: string }>(
+  photos: T[],
+  quality: Record<string, PhotoQuality | undefined>
+) {
   // Saved photos can't be sent as files (the AI already wrote the text for them once).
   const local = photos.filter(isLocalPhoto);
   const use = local.filter((p) => quality[p.uri] !== 'blurry' && quality[p.uri] !== 'dark');
@@ -60,7 +88,10 @@ export function photosForText<T extends { uri: string }>(photos: T[], quality: R
  */
 export function editChanges<T extends { uri: string }>(photos: T[], existing: string[]) {
   const kept = new Set(photos.map((p) => p.uri));
-  return { upload: photos.filter(isLocalPhoto), imagesToDelete: existing.filter((url) => !kept.has(url)) };
+  return {
+    upload: photos.filter(isLocalPhoto),
+    imagesToDelete: existing.filter((url) => !kept.has(url)),
+  };
 }
 
 /** With no photos the arrange screen has nothing to show, so it is skipped both ways. */

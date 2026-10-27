@@ -15,7 +15,10 @@ const DEVICE_NAME = (() => {
     maker && maker.toLowerCase() !== 'apple' && !model.toLowerCase().startsWith(maker.toLowerCase())
       ? `${maker.charAt(0).toUpperCase()}${maker.slice(1)} ${model}`
       : model;
-  return withMaker.replace(/[^\x20-\x7E]/g, '').trim().slice(0, 60);
+  return withMaker
+    .replace(/[^\x20-\x7E]/g, '')
+    .trim()
+    .slice(0, 60);
 })();
 
 /**
@@ -111,7 +114,9 @@ function tokenUserId(token: string | null): string | null {
   try {
     const payload = token?.split('.')[1];
     if (!payload) return null;
-    const { id } = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/'))) as { id?: unknown };
+    const { id } = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/'))) as {
+      id?: unknown;
+    };
     return typeof id === 'string' && id ? id : null;
   } catch {
     return null;
@@ -138,7 +143,8 @@ async function requestNewAccessToken(): Promise<string | null> {
     try {
       // Lazy require avoids a circular import at module load time.
       // eslint-disable-next-line @typescript-eslint/no-var-requires
-      authStore = (require('../store/authStore') as typeof import('../store/authStore')).useAuthStore;
+      authStore = (require('../store/authStore') as typeof import('../store/authStore'))
+        .useAuthStore;
     } catch {
       // Storage is what the request interceptor actually reads, so a missing store
       // costs consistency, not the session.

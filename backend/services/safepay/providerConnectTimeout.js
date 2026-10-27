@@ -68,7 +68,8 @@ async function verifyCapturedPayment(stripe, order, payment) {
     String(session.metadata?.orderId) !== String(order._id) ||
     String(session.metadata?.userId) !== String(order.customerId) ||
     session.amount_total !== order.checkoutAmountMinor ||
-    String(session.currency || '').toLowerCase() !== String(order.checkoutCurrency || 'nok').toLowerCase() ||
+    String(session.currency || '').toLowerCase() !==
+      String(order.checkoutCurrency || 'nok').toLowerCase() ||
     intent.id !== order.paymentIntentId ||
     intent.livemode !== expectedLivemode ||
     intent.status !== 'succeeded' ||
@@ -87,7 +88,9 @@ async function verifyCapturedPayment(stripe, order, payment) {
     // `disputed` stays true after a chargeback is WON; only an open or lost one blocks.
     (charge.disputed === true && !['won', 'warning_closed'].includes(charge.dispute?.status))
   ) {
-    throw reviewRequired('Stripe payment could not be verified against the captured SafePay order.');
+    throw reviewRequired(
+      'Stripe payment could not be verified against the captured SafePay order.'
+    );
   }
   return { session, intent, charge, chargeId, stripeMode: testMode ? 'test' : 'live' };
 }
@@ -105,8 +108,7 @@ async function providerIsPayoutReady(stripe, providerId, testMode) {
   const account = await stripe.accounts.retrieve(accountId);
   if (
     account.id !== accountId ||
-    (account.metadata?.jobbloUserId &&
-      account.metadata.jobbloUserId !== String(providerId))
+    (account.metadata?.jobbloUserId && account.metadata.jobbloUserId !== String(providerId))
   ) {
     throw reviewRequired('Connected Stripe account does not match the assigned provider.');
   }
@@ -242,10 +244,7 @@ async function completeTimeoutRefund(order, payment, operation, refund) {
       status: { $in: ['paid', 'cancelled'] },
       $and: [
         {
-          $or: [
-            { status: 'paid' },
-            { status: 'cancelled', cancellationReason: CANCEL_REASON },
-          ],
+          $or: [{ status: 'paid' }, { status: 'cancelled', cancellationReason: CANCEL_REASON }],
         },
       ],
       paymentStatus: 'paid',
@@ -265,9 +264,7 @@ async function completeTimeoutRefund(order, payment, operation, refund) {
         'providerConnectTimeout.refundAmountMinor': operation.amount,
         'providerConnectTimeout.refundedAmountMinor': operation.amount,
         'providerConnectTimeout.refundCompletedAt': now,
-        ...(order.status === 'paid'
-          ? { 'providerConnectTimeout.autoCancelledAt': now }
-          : {}),
+        ...(order.status === 'paid' ? { 'providerConnectTimeout.autoCancelledAt': now } : {}),
         'providerConnectTimeout.lockUntil': null,
       },
       $push: {
@@ -296,7 +293,8 @@ async function completeTimeoutRefund(order, payment, operation, refund) {
     ) {
       return false;
     }
-    const reason = 'Stripe confirmed the refund, but the order changed state before the refund could be finalized.';
+    const reason =
+      'Stripe confirmed the refund, but the order changed state before the refund could be finalized.';
     await setTimeoutState(order._id, operation.operationKey, 'manual_review', {
       'providerConnectTimeout.manualReviewReason': reason,
       'providerConnectTimeout.stripeRefundId': refund.id,
@@ -340,7 +338,8 @@ async function completeTimeoutRefund(order, payment, operation, refund) {
     notify({
       userId: order.customerId,
       type: 'payment',
-      content: 'Oppdraget ble kansellert fordi utføreren ikke startet oppdraget innen fristen. Full refusjon er bekreftet hos Stripe. Det kan ta noen virkedager før pengene vises på kontoen din.',
+      content:
+        'Oppdraget ble kansellert fordi utføreren ikke startet oppdraget innen fristen. Full refusjon er bekreftet hos Stripe. Det kan ta noen virkedager før pengene vises på kontoen din.',
       orderId: order._id,
       event: 'provider_connect_timeout_refunded',
       payload: { orderId: String(order._id), refundId: refund.id },
@@ -348,7 +347,8 @@ async function completeTimeoutRefund(order, payment, operation, refund) {
     notify({
       userId: order.providerId,
       type: 'order',
-      content: 'Oppdraget ble automatisk kansellert fordi det ikke ble startet innen fristen. Kundens full refusjon er bekreftet hos Stripe.',
+      content:
+        'Oppdraget ble automatisk kansellert fordi det ikke ble startet innen fristen. Kundens full refusjon er bekreftet hos Stripe.',
       orderId: order._id,
       event: 'provider_connect_timeout_refunded',
       payload: { orderId: String(order._id), refundId: refund.id },
@@ -387,10 +387,7 @@ async function processOrder(candidate, now) {
       providerConnectDeadlineAt: { $lte: now },
       $and: [
         {
-          $or: [
-            { status: 'paid' },
-            { status: 'cancelled', cancellationReason: CANCEL_REASON },
-          ],
+          $or: [{ status: 'paid' }, { status: 'cancelled', cancellationReason: CANCEL_REASON }],
         },
       ],
       $or: [
@@ -449,7 +446,9 @@ async function processOrder(candidate, now) {
       throw reviewRequired('A payout, transfer, or other financial operation already exists.');
     }
     if (!service || ['in_progress', 'completed'].includes(service.status)) {
-      throw reviewRequired('Work may have started or the service is no longer eligible for automatic cancellation.');
+      throw reviewRequired(
+        'Work may have started or the service is no longer eligible for automatic cancellation.'
+      );
     }
 
     // The refund depends only on whether the job was started by the deadline, not on the
@@ -485,7 +484,8 @@ async function processOrder(candidate, now) {
           notify({
             userId: candidate.customerId,
             type: 'payment',
-            content: 'Oppdraget er kansellert, men refusjonen kunne ikke fullføres automatisk. Saken er sendt til manuell behandling; betalingen er ikke markert som refundert.',
+            content:
+              'Oppdraget er kansellert, men refusjonen kunne ikke fullføres automatisk. Saken er sendt til manuell behandling; betalingen er ikke markert som refundert.',
             orderId: candidate._id,
             event: 'provider_connect_refund_failed',
             payload: { orderId: String(candidate._id) },
@@ -493,7 +493,8 @@ async function processOrder(candidate, now) {
           notify({
             userId: candidate.providerId,
             type: 'order',
-            content: 'Oppdraget er automatisk kansellert fordi det ikke ble startet innen fristen. Refusjonen krever manuell behandling.',
+            content:
+              'Oppdraget er automatisk kansellert fordi det ikke ble startet innen fristen. Refusjonen krever manuell behandling.',
             orderId: candidate._id,
             event: 'provider_connect_refund_failed',
             payload: { orderId: String(candidate._id) },
@@ -516,7 +517,8 @@ async function processOrder(candidate, now) {
         notify({
           userId: candidate.customerId,
           type: 'payment',
-          content: 'Oppdraget er kansellert, og refusjonen behandles av Stripe. Det kan ta noen virkedager før pengene vises på kontoen din.',
+          content:
+            'Oppdraget er kansellert, og refusjonen behandles av Stripe. Det kan ta noen virkedager før pengene vises på kontoen din.',
           orderId: candidate._id,
           event: 'provider_connect_refund_pending',
           payload: { orderId: String(candidate._id) },
@@ -524,7 +526,8 @@ async function processOrder(candidate, now) {
         notify({
           userId: candidate.providerId,
           type: 'order',
-          content: 'Oppdraget er kansellert fordi det ikke ble startet innen fristen, og venter på at Stripe bekrefter refusjonen.',
+          content:
+            'Oppdraget er kansellert fordi det ikke ble startet innen fristen, og venter på at Stripe bekrefter refusjonen.',
           orderId: candidate._id,
           event: 'provider_connect_refund_pending',
           payload: { orderId: String(candidate._id) },
@@ -536,7 +539,9 @@ async function processOrder(candidate, now) {
     if (
       error.code === 'SAFE_PAY_TIMEOUT_MANUAL_REVIEW' ||
       error.code?.includes('MISMATCH') ||
-      ['STRIPE_REFUND_EXCEEDS_REMAINING', 'STRIPE_FINANCIAL_OPERATION_CONFLICT'].includes(error.code)
+      ['STRIPE_REFUND_EXCEEDS_REMAINING', 'STRIPE_FINANCIAL_OPERATION_CONFLICT'].includes(
+        error.code
+      )
     ) {
       await markManualReview(candidate, operationKey, error.message);
       return 'manual_review';
@@ -544,7 +549,8 @@ async function processOrder(candidate, now) {
 
     const operation = await StripeFinancialOperation.findOne({ operationKey });
     const failed = error.code === 'STRIPE_REFUND_FAILED';
-    const uncertain = error.code === 'STRIPE_REFUND_RECONCILIATION_REQUIRED' ||
+    const uncertain =
+      error.code === 'STRIPE_REFUND_RECONCILIATION_REQUIRED' ||
       operation?.status === 'reconciliation_required';
     const nextStatus = failed ? 'failed' : uncertain ? 'reconciliation_required' : 'pending';
     const updated = await setTimeoutState(candidate._id, operationKey, nextStatus, {
@@ -581,7 +587,8 @@ async function processOrder(candidate, now) {
         notify({
           userId: candidate.customerId,
           type: 'payment',
-          content: 'Oppdraget er kansellert, men refusjonen kunne ikke fullføres automatisk. Saken er sendt til manuell behandling; betalingen er ikke markert som refundert.',
+          content:
+            'Oppdraget er kansellert, men refusjonen kunne ikke fullføres automatisk. Saken er sendt til manuell behandling; betalingen er ikke markert som refundert.',
           orderId: candidate._id,
           event: 'provider_connect_refund_failed',
           payload: { orderId: String(candidate._id) },
@@ -589,7 +596,8 @@ async function processOrder(candidate, now) {
         notify({
           userId: candidate.providerId,
           type: 'order',
-          content: 'Oppdraget er automatisk kansellert fordi det ikke ble startet innen fristen. Refusjonen krever manuell behandling.',
+          content:
+            'Oppdraget er automatisk kansellert fordi det ikke ble startet innen fristen. Refusjonen krever manuell behandling.',
           orderId: candidate._id,
           event: 'provider_connect_refund_failed',
           payload: { orderId: String(candidate._id) },
@@ -601,7 +609,8 @@ async function processOrder(candidate, now) {
         notify({
           userId: candidate.customerId,
           type: 'payment',
-          content: 'Oppdraget er kansellert, men Stripe-svaret er uklart. Refusjonen må avstemmes før den kan bekreftes; betalingen vises ikke som refundert ennå.',
+          content:
+            'Oppdraget er kansellert, men Stripe-svaret er uklart. Refusjonen må avstemmes før den kan bekreftes; betalingen vises ikke som refundert ennå.',
           orderId: candidate._id,
           event: 'provider_connect_refund_reconciliation',
           payload: { orderId: String(candidate._id) },
@@ -626,19 +635,18 @@ async function cancelUnconnectedPaidOrders(now = new Date()) {
     startedAt: null,
     providerConnectDeadlineAt: { $lte: now },
     $and: [
-      { $or: [
-        { status: 'paid' },
-        { status: 'cancelled', cancellationReason: CANCEL_REASON },
-      ] },
-      { $or: [
-        { 'providerConnectTimeout.status': { $in: [null, 'provider_ready'] } },
-        {
-          'providerConnectTimeout.status': {
-            $in: ['processing', 'pending', 'reconciliation_required'],
+      { $or: [{ status: 'paid' }, { status: 'cancelled', cancellationReason: CANCEL_REASON }] },
+      {
+        $or: [
+          { 'providerConnectTimeout.status': { $in: [null, 'provider_ready'] } },
+          {
+            'providerConnectTimeout.status': {
+              $in: ['processing', 'pending', 'reconciliation_required'],
+            },
+            'providerConnectTimeout.lockUntil': { $lte: now },
           },
-          'providerConnectTimeout.lockUntil': { $lte: now },
-        },
-      ] },
+        ],
+      },
     ],
   })
     .select(
@@ -683,11 +691,7 @@ async function recordReadyProvidersBeforeDeadline(now = new Date()) {
 
   for (const candidate of candidates) {
     const payment = await Payment.findOne({ orderId: candidate._id });
-    if (
-      !payment ||
-      payment.status !== 'completed' ||
-      typeof payment.stripeLivemode !== 'boolean'
-    ) {
+    if (!payment || payment.status !== 'completed' || typeof payment.stripeLivemode !== 'boolean') {
       continue;
     }
 
@@ -803,7 +807,8 @@ async function applyTimeoutRefundResult(order, payment, operation, refund, statu
       notify({
         userId: order.customerId,
         type: 'payment',
-        content: 'Oppdraget er kansellert, og refusjonen behandles av Stripe. Det kan ta noen virkedager før pengene vises på kontoen din.',
+        content:
+          'Oppdraget er kansellert, og refusjonen behandles av Stripe. Det kan ta noen virkedager før pengene vises på kontoen din.',
         orderId: order._id,
         event: 'provider_connect_refund_pending',
         payload: { orderId: String(order._id) },
@@ -811,7 +816,8 @@ async function applyTimeoutRefundResult(order, payment, operation, refund, statu
       notify({
         userId: order.providerId,
         type: 'order',
-        content: 'Oppdraget er kansellert fordi det ikke ble startet innen fristen, og venter på at Stripe bekrefter refusjonen.',
+        content:
+          'Oppdraget er kansellert fordi det ikke ble startet innen fristen, og venter på at Stripe bekrefter refusjonen.',
         orderId: order._id,
         event: 'provider_connect_refund_pending',
         payload: { orderId: String(order._id) },
@@ -823,7 +829,8 @@ async function applyTimeoutRefundResult(order, payment, operation, refund, statu
       notify({
         userId: order.customerId,
         type: 'payment',
-        content: 'Oppdraget er kansellert, men refusjonen kunne ikke fullføres automatisk. Saken er sendt til manuell behandling; betalingen er ikke markert som refundert.',
+        content:
+          'Oppdraget er kansellert, men refusjonen kunne ikke fullføres automatisk. Saken er sendt til manuell behandling; betalingen er ikke markert som refundert.',
         orderId: order._id,
         event: 'provider_connect_refund_failed',
         payload: { orderId: String(order._id) },
@@ -831,7 +838,8 @@ async function applyTimeoutRefundResult(order, payment, operation, refund, statu
       notify({
         userId: order.providerId,
         type: 'order',
-        content: 'Oppdraget er automatisk kansellert fordi det ikke ble startet innen fristen. Refusjonen krever manuell behandling.',
+        content:
+          'Oppdraget er automatisk kansellert fordi det ikke ble startet innen fristen. Refusjonen krever manuell behandling.',
         orderId: order._id,
         event: 'provider_connect_refund_failed',
         payload: { orderId: String(order._id) },

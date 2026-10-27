@@ -24,7 +24,11 @@ const { cacheJson } = require('../utils/cache');
  *       500:
  *         description: Serverfeil ved henting av lokasjonstre
  */
-router.get('/tree', cacheJson('location-tree', 3600, { ignoreQuery: true }), locationFilterController.getLocationTree); // static reference data
+router.get(
+  '/tree',
+  cacheJson('location-tree', 3600, { ignoreQuery: true }),
+  locationFilterController.getLocationTree
+); // static reference data
 
 /**
  * @swagger

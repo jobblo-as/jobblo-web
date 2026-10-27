@@ -10,7 +10,10 @@ const syntheticRunSchema = new mongoose.Schema(
     latencyMs: { type: Number, default: null },
     status: { type: Number, default: null }, // HTTP status of the failing (or last) step
     error: { type: String, default: null },
-    steps: { type: [{ _id: false, name: String, ok: Boolean, status: Number, ms: Number, error: String }], default: undefined },
+    steps: {
+      type: [{ _id: false, name: String, ok: Boolean, status: Number, ms: Number, error: String }],
+      default: undefined,
+    },
     trigger: { type: String, enum: ['schedule', 'manual'], default: 'schedule' },
   },
   { versionKey: false }

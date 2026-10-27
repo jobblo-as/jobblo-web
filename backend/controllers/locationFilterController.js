@@ -14,7 +14,8 @@ const { memo } = require('../utils/memo');
  * by parent code (the old version re-filtered every list for every parent: O(n·m)).
  */
 function buildLocationTree(counties, municipalities, areas) {
-  const group = (rows, key) => rows.reduce((m, r) => m.set(r[key], [...(m.get(r[key]) || []), r]), new Map());
+  const group = (rows, key) =>
+    rows.reduce((m, r) => m.set(r[key], [...(m.get(r[key]) || []), r]), new Map());
   const areasBy = group(areas, 'municipalityCode');
   const municipalitiesBy = group(municipalities, 'countyCode');
   return counties.map((county) => ({
@@ -25,7 +26,11 @@ function buildLocationTree(counties, municipalities, areas) {
       type: 'municipality',
       code: m.code,
       name: m.name,
-      children: (areasBy.get(m.code) || []).map((a) => ({ type: 'area', code: a.code, name: a.name })),
+      children: (areasBy.get(m.code) || []).map((a) => ({
+        type: 'area',
+        code: a.code,
+        name: a.name,
+      })),
     })),
   }));
 }
@@ -74,7 +79,12 @@ exports.getLocationStats = async (req, res) => {
       foldLocationStats(
         await Service.aggregate([
           { $match: { status: { $in: PUBLIC_SERVICE_STATUSES } } },
-          { $group: { _id: { c: '$countyCode', m: '$municipalityCode', a: '$areaCode' }, count: { $sum: 1 } } },
+          {
+            $group: {
+              _id: { c: '$countyCode', m: '$municipalityCode', a: '$areaCode' },
+              count: { $sum: 1 },
+            },
+          },
         ])
       )
     );

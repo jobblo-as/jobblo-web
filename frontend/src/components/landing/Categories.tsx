@@ -61,7 +61,12 @@ export function Categories() {
                       <span className={`w-9 shrink-0 tabular-nums ${MICRO_LABEL}`}>
                         {String(i + 1).padStart(2, '0')}
                       </span>
-                      <CategoryIcon name={cat.icon} size={22} strokeWidth={1.7} className="shrink-0 text-[#2E6641]" />
+                      <CategoryIcon
+                        name={cat.icon}
+                        size={22}
+                        strokeWidth={1.7}
+                        className="shrink-0 text-[#2E6641]"
+                      />
                       <span className="flex-1 text-[clamp(1.25rem,2.6vw,1.875rem)] font-semibold leading-tight tracking-[-0.035em] text-[#0B0B0B]">
                         {cat.name}
                       </span>

@@ -93,8 +93,9 @@ export const useChatLogic = () => {
       typeof lastMsg.senderId === 'string' ? lastMsg.senderId : lastMsg.senderId?._id;
     if (senderId === userId) return false;
     // seenBy is typed as ids, but tolerate a populated user too.
-    return !lastMsg.seenBy?.some((id: string | { _id?: string }) =>
-      (typeof id === 'object' && id ? id._id || id : id) === userId
+    return !lastMsg.seenBy?.some(
+      (id: string | { _id?: string }) =>
+        (typeof id === 'object' && id ? id._id || id : id) === userId
     );
   };
 

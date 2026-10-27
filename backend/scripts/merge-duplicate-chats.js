@@ -111,9 +111,11 @@ function pickSurvivor(chats) {
             messages: combined,
             ...(last?.text ? { lastMessage: last.text } : {}),
             // Keep an order link if only the losing row had one.
-            ...(survivor.orderId ? {} : losers.find((l) => l.orderId)
-              ? { orderId: losers.find((l) => l.orderId).orderId }
-              : {}),
+            ...(survivor.orderId
+              ? {}
+              : losers.find((l) => l.orderId)
+                ? { orderId: losers.find((l) => l.orderId).orderId }
+                : {}),
           },
         }
       );

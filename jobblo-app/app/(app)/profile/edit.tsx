@@ -1,7 +1,18 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
-import { ActivityIndicator, Alert, Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { Camera, Plus, X } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useProfile, useUpdateProfile } from '../../../src/hooks/useProfile';
@@ -14,23 +25,45 @@ import type { CurrentProfile, ProfileUpdate } from '../../../src/services/profil
 import { TC } from '../../../src/theme/colors';
 
 const BIO_LIMIT = 600;
-type Draft = { name: string; lastName: string; bio: string; skills: string[]; availabilityText: string; address: string; postNumber: string; postSted: string; companyName: string; orgNumber: string; website: string };
+type Draft = {
+  name: string;
+  lastName: string;
+  bio: string;
+  skills: string[];
+  availabilityText: string;
+  address: string;
+  postNumber: string;
+  postSted: string;
+  companyName: string;
+  orgNumber: string;
+  website: string;
+};
 type ImageAsset = { uri: string; name: string; type: string };
 
 const text = (value: unknown) => {
   if (typeof value === 'string') return value;
-  if (value && typeof value === 'object' && typeof (value as { city?: unknown }).city === 'string') return (value as { city: string }).city;
+  if (value && typeof value === 'object' && typeof (value as { city?: unknown }).city === 'string')
+    return (value as { city: string }).city;
   return '';
 };
 const draftFrom = (profile: CurrentProfile): Draft => ({
-  name: text(profile.name), lastName: text(profile.lastName), bio: text(profile.bio), skills: Array.isArray(profile.skills) ? [...profile.skills] : [],
-  availabilityText: text(profile.availabilityText), address: text(profile.address), postNumber: text(profile.postNumber), postSted: text(profile.postSted),
-  companyName: text(profile.companyName), orgNumber: text(profile.orgNumber), website: text(profile.website),
+  name: text(profile.name),
+  lastName: text(profile.lastName),
+  bio: text(profile.bio),
+  skills: Array.isArray(profile.skills) ? [...profile.skills] : [],
+  availabilityText: text(profile.availabilityText),
+  address: text(profile.address),
+  postNumber: text(profile.postNumber),
+  postSted: text(profile.postSted),
+  companyName: text(profile.companyName),
+  orgNumber: text(profile.orgNumber),
+  website: text(profile.website),
 });
 const sameDraft = (first: Draft, second: Draft) => JSON.stringify(first) === JSON.stringify(second);
 
 function errorMessage(error: unknown) {
-  const response = (error as { response?: { status?: number; data?: { error?: string } } })?.response;
+  const response = (error as { response?: { status?: number; data?: { error?: string } } })
+    ?.response;
   if (response?.status === 413) return 'Bildet er for stort. Velg et bilde under 8 MB.';
   if (response?.status === 403) return 'Du har ikke tilgang til å endre denne profilen.';
   if (response?.status === 400) return response.data?.error || 'Kontroller feltene og prøv igjen.';
@@ -41,14 +74,20 @@ export default function EditProfileScreen() {
   const router = useRouter();
   const { data: profile, isLoading, isError, refetch } = useProfile();
   const update = useUpdateProfile();
-  const userId = useAuthStore((state) => typeof state.user?._id === 'string' ? state.user._id : undefined);
+  const userId = useAuthStore((state) =>
+    typeof state.user?._id === 'string' ? state.user._id : undefined
+  );
   const [draft, setDraft] = useState<Draft | null>(null);
   const [original, setOriginal] = useState<Draft | null>(null);
   const [skillInput, setSkillInput] = useState('');
   const [image, setImage] = useState<ImageAsset | null>(null);
 
   useEffect(() => {
-    if (profile && !draft) { const next = draftFrom(profile); setDraft(next); setOriginal(next); }
+    if (profile && !draft) {
+      const next = draftFrom(profile);
+      setDraft(next);
+      setOriginal(next);
+    }
   }, [profile, draft]);
 
   const dirty = !!draft && !!original && (!sameDraft(draft, original) || !!image);
@@ -59,27 +98,82 @@ export default function EditProfileScreen() {
     return '';
   }, [draft]);
 
-  if (isLoading || !draft) return <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page"><EditProfileSkeleton /></SafeAreaView>;
-  if (isError || !profile) return <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page"><ErrorState title="Kunne ikke laste profilen" onAction={() => void refetch()} /></SafeAreaView>;
+  if (isLoading || !draft)
+    return (
+      <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
+        <EditProfileSkeleton />
+      </SafeAreaView>
+    );
+  if (isError || !profile)
+    return (
+      <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
+        <ErrorState title="Kunne ikke laste profilen" onAction={() => void refetch()} />
+      </SafeAreaView>
+    );
 
-  const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setDraft((current) => current ? { ...current, [key]: value } : current);
-  const addSkill = () => { const skill = skillInput.trim(); if (!skill || draft.skills.some((item) => item.toLowerCase() === skill.toLowerCase())) return setSkillInput(''); set('skills', [...draft.skills, skill]); setSkillInput(''); };
-  const removeSkill = (skill: string) => set('skills', draft.skills.filter((item) => item !== skill));
+  const set = <K extends keyof Draft>(key: K, value: Draft[K]) =>
+    setDraft((current) => (current ? { ...current, [key]: value } : current));
+  const addSkill = () => {
+    const skill = skillInput.trim();
+    if (!skill || draft.skills.some((item) => item.toLowerCase() === skill.toLowerCase()))
+      return setSkillInput('');
+    set('skills', [...draft.skills, skill]);
+    setSkillInput('');
+  };
+  const removeSkill = (skill: string) =>
+    set(
+      'skills',
+      draft.skills.filter((item) => item !== skill)
+    );
   const chooseImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [1, 1], quality: 0.85 });
-    if (!result.canceled) { const asset = result.assets[0]; setImage({ uri: asset.uri, name: asset.fileName ?? `profil-${Date.now()}.jpg`, type: asset.mimeType ?? 'image/jpeg' }); }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.85,
+    });
+    if (!result.canceled) {
+      const asset = result.assets[0];
+      setImage({
+        uri: asset.uri,
+        name: asset.fileName ?? `profil-${Date.now()}.jpg`,
+        type: asset.mimeType ?? 'image/jpeg',
+      });
+    }
   };
   const leave = () => {
     if (!dirty) return router.back();
-    Alert.alert('Forkast endringer?', 'Endringene dine blir ikke lagret.', [{ text: 'Fortsett å redigere', style: 'cancel' }, { text: 'Forkast', style: 'destructive', onPress: () => router.back() }]);
+    Alert.alert('Forkast endringer?', 'Endringene dine blir ikke lagret.', [
+      { text: 'Fortsett å redigere', style: 'cancel' },
+      { text: 'Forkast', style: 'destructive', onPress: () => router.back() },
+    ]);
   };
   const save = () => {
     if (!userId || !original || !dirty || validation) return;
     const changed: ProfileUpdate = {};
-    (Object.keys(draft) as (keyof Draft)[]).forEach((key) => { if (JSON.stringify(draft[key]) !== JSON.stringify(original[key])) Object.assign(changed, { [key]: draft[key] }); });
+    (Object.keys(draft) as (keyof Draft)[]).forEach((key) => {
+      if (JSON.stringify(draft[key]) !== JSON.stringify(original[key]))
+        Object.assign(changed, { [key]: draft[key] });
+    });
     let payload: ProfileUpdate | FormData = changed;
-    if (image) { const form = new FormData(); Object.entries(changed).forEach(([key, value]) => form.append(key, Array.isArray(value) ? JSON.stringify(value) : String(value))); form.append('avatar', image as unknown as Blob); payload = form; }
-    update.mutate({ userId, data: payload }, { onSuccess: () => { Alert.alert('Profilen er lagret', 'Endringene dine er oppdatert.'); router.back(); }, onError: (error) => Alert.alert('Kunne ikke lagre', errorMessage(error)) });
+    if (image) {
+      const form = new FormData();
+      Object.entries(changed).forEach(([key, value]) =>
+        form.append(key, Array.isArray(value) ? JSON.stringify(value) : String(value))
+      );
+      form.append('avatar', image as unknown as Blob);
+      payload = form;
+    }
+    update.mutate(
+      { userId, data: payload },
+      {
+        onSuccess: () => {
+          Alert.alert('Profilen er lagret', 'Endringene dine er oppdatert.');
+          router.back();
+        },
+        onError: (error) => Alert.alert('Kunne ikke lagre', errorMessage(error)),
+      }
+    );
   };
 
   const isCompany = profile.role === 'company';
@@ -90,7 +184,12 @@ export default function EditProfileScreen() {
     <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
       {/* Top bar: Avbryt · title · Lagre (keeps Save reachable above the keyboard). */}
       <View className="h-14 flex-row items-center justify-between border-b border-line bg-page px-2">
-        <Pressable onPress={leave} hitSlop={8} accessibilityRole="button" className="min-w-[72px] px-2 py-2">
+        <Pressable
+          onPress={leave}
+          hitSlop={8}
+          accessibilityRole="button"
+          className="min-w-[72px] px-2 py-2"
+        >
           <Text className="text-[1.0625rem] text-ink-2">Avbryt</Text>
         </Pressable>
         <Text className="text-[1.0625rem] font-semibold text-ink">Rediger profil</Text>
@@ -105,21 +204,38 @@ export default function EditProfileScreen() {
           {update.isPending ? (
             <ActivityIndicator size="small" color={TC.brandText} />
           ) : (
-            <Text className={`text-[1.0625rem] font-semibold ${canSave ? 'text-brand-text' : 'text-[#B5B8B0]'}`}>Lagre</Text>
+            <Text
+              className={`text-[1.0625rem] font-semibold ${canSave ? 'text-brand-text' : 'text-[#B5B8B0]'}`}
+            >
+              Lagre
+            </Text>
           )}
         </Pressable>
       </View>
 
-      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+        >
           {/* Photo */}
           <View className="mb-6 mt-2 items-center">
-            <Pressable onPress={() => void chooseImage()} disabled={update.isPending} accessibilityRole="button" accessibilityLabel="Endre profilbilde">
+            <Pressable
+              onPress={() => void chooseImage()}
+              disabled={update.isPending}
+              accessibilityRole="button"
+              accessibilityLabel="Endre profilbilde"
+            >
               <View className="h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-[#DCEBDD] dark:bg-tint">
                 {avatarUri ? (
                   <Image source={{ uri: avatarUri }} style={{ width: 96, height: 96 }} />
                 ) : (
-                  <Text className="text-[2rem] font-semibold text-brand-text">{text(profile.name).slice(0, 1).toUpperCase() || '?'}</Text>
+                  <Text className="text-[2rem] font-semibold text-brand-text">
+                    {text(profile.name).slice(0, 1).toUpperCase() || '?'}
+                  </Text>
                 )}
               </View>
               <View className="absolute bottom-0 right-0 h-8 w-8 items-center justify-center rounded-full border-2 border-line-soft bg-brand">
@@ -153,7 +269,12 @@ export default function EditProfileScreen() {
             />
             {isCompany ? (
               <>
-                <FormRow divider label="Firmanavn" value={draft.companyName} onChangeText={(value) => set('companyName', value)} />
+                <FormRow
+                  divider
+                  label="Firmanavn"
+                  value={draft.companyName}
+                  onChangeText={(value) => set('companyName', value)}
+                />
                 <FormRow
                   divider
                   label="Organisasjonsnummer"
@@ -195,9 +316,17 @@ export default function EditProfileScreen() {
             {draft.skills.length ? (
               <View className="flex-row flex-wrap gap-2 px-4 pt-4">
                 {draft.skills.map((skill) => (
-                  <View key={skill} className="flex-row items-center rounded-full bg-tint py-1 pl-3 pr-1">
+                  <View
+                    key={skill}
+                    className="flex-row items-center rounded-full bg-tint py-1 pl-3 pr-1"
+                  >
                     <Text className="text-[0.8125rem] font-medium text-brand-text">{skill}</Text>
-                    <Pressable onPress={() => removeSkill(skill)} accessibilityLabel={`Fjern ${skill}`} hitSlop={6} className="ml-1 rounded-full p-1">
+                    <Pressable
+                      onPress={() => removeSkill(skill)}
+                      accessibilityLabel={`Fjern ${skill}`}
+                      hitSlop={6}
+                      className="ml-1 rounded-full p-1"
+                    >
                       <X size={13} color={TC.brandText} />
                     </Pressable>
                   </View>
@@ -209,7 +338,11 @@ export default function EditProfileScreen() {
                 value={skillInput}
                 onChangeText={setSkillInput}
                 onSubmitEditing={addSkill}
-                placeholder={draft.skills.length ? 'Legg til en ferdighet til' : 'F.eks. Maling, Flytting, Rengjøring'}
+                placeholder={
+                  draft.skills.length
+                    ? 'Legg til en ferdighet til'
+                    : 'F.eks. Maling, Flytting, Rengjøring'
+                }
                 placeholderTextColor="#B5B8B0"
                 returnKeyType="done"
                 accessibilityLabel="Ny ferdighet"
@@ -230,7 +363,13 @@ export default function EditProfileScreen() {
 
           <SectionLabel>Sted og tilgjengelighet</SectionLabel>
           <Card className="overflow-hidden">
-            <FormRow label="Adresse" value={draft.address} onChangeText={(value) => set('address', value)} placeholder="Gateadresse" autoComplete="street-address" />
+            <FormRow
+              label="Adresse"
+              value={draft.address}
+              onChangeText={(value) => set('address', value)}
+              placeholder="Gateadresse"
+              autoComplete="street-address"
+            />
             <FormRow
               divider
               label="Postnummer"
@@ -240,7 +379,13 @@ export default function EditProfileScreen() {
               maxLength={4}
               placeholder="0000"
             />
-            <FormRow divider label="Poststed" value={draft.postSted} onChangeText={(value) => set('postSted', value)} placeholder="F.eks. Oslo" />
+            <FormRow
+              divider
+              label="Poststed"
+              value={draft.postSted}
+              onChangeText={(value) => set('postSted', value)}
+              placeholder="F.eks. Oslo"
+            />
             <FormRow
               divider
               label="Tilgjengelighet"

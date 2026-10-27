@@ -3,7 +3,9 @@ const { logActivity } = require('../../services/admin/activityService');
 const drift = require('../../services/monitoring/configDrift');
 
 /** Developer dashboard — configuration drift. Values never leave the server. */
-const getConfigDrift = asyncHandler(async (req, res) => sendSuccess(res, await drift.getDrift({ force: req.query.refresh === 'true' })));
+const getConfigDrift = asyncHandler(async (req, res) =>
+  sendSuccess(res, await drift.getDrift({ force: req.query.refresh === 'true' }))
+);
 
 /** Accept the running configuration as the new baseline (operations access, audited). */
 const acceptBaseline = asyncHandler(async (req, res) => {

@@ -32,8 +32,12 @@ export default function CompletedJobPage() {
   const navigate = useNavigate();
   const user = useUserStore((state) => state.user);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- was useState<any>; response shape is untyped
-  const { data, isPending: isLoading, isError } = useQuery<any>({
+  const {
+    data,
+    isPending: isLoading,
+    isError,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- was useState<any>; response shape is untyped
+  } = useQuery<any>({
     queryKey: ['completed-job', orderId, serviceIdParam],
     enabled: !!orderId || !!serviceIdParam,
     retry: false,
@@ -113,7 +117,12 @@ export default function CompletedJobPage() {
       {/* Header */}
       <div className="bg-white shadow-sm border-b sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 py-4 flex items-center gap-4">
-          <button type="button" onClick={goBack} aria-label="Tilbake" className="p-2 rounded-full hover:bg-gray-100">
+          <button
+            type="button"
+            onClick={goBack}
+            aria-label="Tilbake"
+            className="p-2 rounded-full hover:bg-gray-100"
+          >
             <ChevronLeft size={20} />
           </button>
           <div>
@@ -202,7 +211,9 @@ export default function CompletedJobPage() {
             {reviews.map((rev: any) => (
               <div key={rev._id} className="bg-white rounded-xl shadow-sm p-6">
                 <div className="flex items-center gap-2 mb-3">
-                  <span className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${rev.revieweeRole === 'poster' ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'}`}>
+                  <span
+                    className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${rev.revieweeRole === 'poster' ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'}`}
+                  >
                     {rev.revieweeRole === 'poster' ? 'Utfører vurdert' : 'Oppdragsgiver vurdert'}
                   </span>
                 </div>
@@ -229,7 +240,10 @@ export default function CompletedJobPage() {
                 {rev.photos && rev.photos.length > 0 && (
                   <div className="grid grid-cols-3 gap-3 mb-4">
                     {rev.photos.map((photo: string, index: number) => (
-                      <div key={index} className="relative aspect-square rounded-lg overflow-hidden">
+                      <div
+                        key={index}
+                        className="relative aspect-square rounded-lg overflow-hidden"
+                      >
                         <img
                           src={photo}
                           alt={`Vurderingsbilde ${index + 1}`}
@@ -252,7 +266,9 @@ export default function CompletedJobPage() {
                       className="w-8 h-8 rounded-full object-cover"
                     />
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{rev.reviewerId.name} {rev.reviewerId.lastName || ''}</p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {rev.reviewerId.name} {rev.reviewerId.lastName || ''}
+                      </p>
                       <p className="text-xs text-gray-500">{formatDate(rev.createdAt)}</p>
                     </div>
                   </div>
@@ -425,8 +441,8 @@ export default function CompletedJobPage() {
                         browser alert on the invoice for a completed, paid job.
                         Removed until there is a document to download. */}
                     <p className="text-[13px] text-gray-500 mt-6">
-                      Trenger du faktura eller kvittering? Ta kontakt med kundeservice, så sender
-                      vi den til deg.
+                      Trenger du faktura eller kvittering? Ta kontakt med kundeservice, så sender vi
+                      den til deg.
                     </p>
                   </div>
                 ) : (

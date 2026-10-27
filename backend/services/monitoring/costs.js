@@ -19,7 +19,14 @@ const DEFAULTS = {
   prices: {
     usdToNok: 10.8,
     // USD per 1M tokens: [input, output]
-    aiModels: { 'gpt-4o-mini': [0.15, 0.6], 'gpt-4o': [2.5, 10], 'gpt-4.1-mini': [0.4, 1.6], 'gpt-4.1': [2, 8], 'gpt-4.1-nano': [0.1, 0.4], default: [2.5, 10] },
+    aiModels: {
+      'gpt-4o-mini': [0.15, 0.6],
+      'gpt-4o': [2.5, 10],
+      'gpt-4.1-mini': [0.4, 1.6],
+      'gpt-4.1': [2, 8],
+      'gpt-4.1-nano': [0.1, 0.4],
+      default: [2.5, 10],
+    },
     bankIdPerAuthNok: 0, // set from the Idura contract
     emailPerSendNok: 0, // 0 for Gmail/Workspace SMTP; set when moving to a paid provider
     blobPerGbMonthNok: 0.2, // Azure Blob hot LRS ≈ $0.018/GB
@@ -32,33 +39,61 @@ const model = (name) => require(`../../models/${name}`);
 function recordAiUsage(modelName, usage, feature) {
   if (!usage || mongoose.connection.readyState !== 1) return;
   model('UsageRecord')
-    .create({ at: new Date(), kind: 'ai', model: modelName || null, feature: feature || null, inputTokens: usage.prompt_tokens || 0, outputTokens: usage.completion_tokens || 0 })
+    .create({
+      at: new Date(),
+      kind: 'ai',
+      model: modelName || null,
+      feature: feature || null,
+      inputTokens: usage.prompt_tokens || 0,
+      outputTokens: usage.completion_tokens || 0,
+    })
     .catch(() => {});
 }
 
 async function getConfig() {
-  const doc = await model('GlobalConfig').findOne({ key: CONFIG_KEY }).lean().catch(() => null);
+  const doc = await model('GlobalConfig')
+    .findOne({ key: CONFIG_KEY })
+    .lean()
+    .catch(() => null);
   const v = doc?.value || {};
-  return { ...DEFAULTS, ...v, prices: { ...DEFAULTS.prices, ...(v.prices || {}), aiModels: { ...DEFAULTS.prices.aiModels, ...(v.prices?.aiModels || {}) } } };
+  return {
+    ...DEFAULTS,
+    ...v,
+    prices: {
+      ...DEFAULTS.prices,
+      ...(v.prices || {}),
+      aiModels: { ...DEFAULTS.prices.aiModels, ...(v.prices?.aiModels || {}) },
+    },
+  };
 }
 
 /** Pure: validate a config update from the dashboard. Unit-tested. */
 function validateConfig(input) {
   const out = {};
   if (input.monthlyBudgetNok !== undefined) {
-    const b = input.monthlyBudgetNok === null || input.monthlyBudgetNok === '' ? null : Number(input.monthlyBudgetNok);
-    if (b !== null && (!Number.isFinite(b) || b < 0 || b > 10_000_000)) return { error: 'Budget must be between 0 and 10 000 000 NOK.' };
+    const b =
+      input.monthlyBudgetNok === null || input.monthlyBudgetNok === ''
+        ? null
+        : Number(input.monthlyBudgetNok);
+    if (b !== null && (!Number.isFinite(b) || b < 0 || b > 10_000_000))
+      return { error: 'Budget must be between 0 and 10 000 000 NOK.' };
     out.monthlyBudgetNok = b;
   }
   if (input.fixed !== undefined) {
-    if (!Array.isArray(input.fixed) || input.fixed.length > 50) return { error: 'At most 50 fixed items.' };
+    if (!Array.isArray(input.fixed) || input.fixed.length > 50)
+      return { error: 'At most 50 fixed items.' };
     out.fixed = [];
     for (const f of input.fixed) {
-      const name = String(f?.name || '').trim().slice(0, 80);
-      const category = String(f?.category || 'Other').trim().slice(0, 40);
+      const name = String(f?.name || '')
+        .trim()
+        .slice(0, 80);
+      const category = String(f?.category || 'Other')
+        .trim()
+        .slice(0, 40);
       const monthlyNok = Number(f?.monthlyNok);
       if (!name) return { error: 'Every fixed item needs a name.' };
-      if (!Number.isFinite(monthlyNok) || monthlyNok < 0 || monthlyNok > 1_000_000) return { error: `Invalid amount for ${name}.` };
+      if (!Number.isFinite(monthlyNok) || monthlyNok < 0 || monthlyNok > 1_000_000)
+        return { error: `Invalid amount for ${name}.` };
       out.fixed.push({ name, category, monthlyNok: Math.round(monthlyNok * 100) / 100 });
     }
   }
@@ -104,7 +139,10 @@ async function stripeFees(from, to) {
     let fee = 0;
     let count = 0;
     // ponytail: walks at most 5 000 balance transactions per month; move to Stripe's reports API beyond that.
-    for await (const t of stripe.balanceTransactions.list({ created: { gte: Math.floor(from / 1000), lt: Math.floor(to / 1000) }, limit: 100 })) {
+    for await (const t of stripe.balanceTransactions.list({
+      created: { gte: Math.floor(from / 1000), lt: Math.floor(to / 1000) },
+      limit: 100,
+    })) {
       if (t.currency === 'nok') fee += t.fee;
       count += 1;
       if (count >= 5000) break;
@@ -123,7 +161,9 @@ async function blobUsage() {
   if (blobCache.value && Date.now() - blobCache.at < 6 * 60 * 60 * 1000) return blobCache.value;
   try {
     const { BlobServiceClient } = require('@azure/storage-blob');
-    const container = BlobServiceClient.fromConnectionString(process.env.AZURE_STORAGE_CONNECTION_STRING).getContainerClient(process.env.AZURE_CONTAINER_NAME || 'images');
+    const container = BlobServiceClient.fromConnectionString(
+      process.env.AZURE_STORAGE_CONNECTION_STRING
+    ).getContainerClient(process.env.AZURE_CONTAINER_NAME || 'images');
     let bytes = 0;
     let blobs = 0;
     // ponytail: full listing, cached 6 h, capped at 200 000 blobs; use Azure Monitor capacity metrics past that.
@@ -144,32 +184,125 @@ async function computeCosts(month) {
   const cfg = await getConfig();
   const p = cfg.prices;
   const inMonth = { $gte: from, $lt: to };
-  const [stripe, ai, bankId, emails, blob, db, platformFees, orders, activeUsers] = await Promise.all([
-    stripeFees(from, to),
-    model('UsageRecord').aggregate([{ $match: { kind: 'ai', at: inMonth } }, { $group: { _id: '$model', calls: { $sum: 1 }, input: { $sum: '$inputTokens' }, output: { $sum: '$outputTokens' } } }]),
-    model('IdentityClaim').countDocuments({ createdAt: inMonth }),
-    model('DeliveryLog').countDocuments({ channel: 'email', status: 'sent', at: inMonth }),
-    blobUsage(),
-    mongoose.connection.db.stats().catch(() => null),
-    model('Payout').aggregate([{ $match: { createdAt: inMonth, status: { $in: ['released_internal', 'processing', 'transferred'] } } }, { $group: { _id: null, nok: { $sum: '$platformFee' }, n: { $sum: 1 } } }]),
-    model('Order').countDocuments({ completedAt: inMonth }),
-    model('Session').distinct('userId', { lastUsed: inMonth }).then((x) => x.length),
-  ]);
+  const [stripe, ai, bankId, emails, blob, db, platformFees, orders, activeUsers] =
+    await Promise.all([
+      stripeFees(from, to),
+      model('UsageRecord').aggregate([
+        { $match: { kind: 'ai', at: inMonth } },
+        {
+          $group: {
+            _id: '$model',
+            calls: { $sum: 1 },
+            input: { $sum: '$inputTokens' },
+            output: { $sum: '$outputTokens' },
+          },
+        },
+      ]),
+      model('IdentityClaim').countDocuments({ createdAt: inMonth }),
+      model('DeliveryLog').countDocuments({ channel: 'email', status: 'sent', at: inMonth }),
+      blobUsage(),
+      mongoose.connection.db.stats().catch(() => null),
+      model('Payout').aggregate([
+        {
+          $match: {
+            createdAt: inMonth,
+            status: { $in: ['released_internal', 'processing', 'transferred'] },
+          },
+        },
+        { $group: { _id: null, nok: { $sum: '$platformFee' }, n: { $sum: 1 } } },
+      ]),
+      model('Order').countDocuments({ completedAt: inMonth }),
+      model('Session')
+        .distinct('userId', { lastUsed: inMonth })
+        .then((x) => x.length),
+    ]);
 
   const usd = p.usdToNok;
   const aiRows = ai.map((r) => {
     const [pin, pout] = p.aiModels[r._id] || p.aiModels.default;
-    return { model: r._id || 'unknown', calls: r.calls, inputTokens: r.input, outputTokens: r.output, nok: ((r.input * pin + r.output * pout) / 1e6) * usd };
+    return {
+      model: r._id || 'unknown',
+      calls: r.calls,
+      inputTokens: r.input,
+      outputTokens: r.output,
+      nok: ((r.input * pin + r.output * pout) / 1e6) * usd,
+    };
   });
   const gb = blob?.bytes ? blob.bytes / 1024 ** 3 : 0;
   const lines = [
-    { key: 'stripe', category: 'Payments', name: 'Stripe processing fees', kind: 'measured', nok: stripe.nok, metered: true, excluded: Boolean(stripe.testMode), detail: stripe.ok ? `${stripe.transactions} balance transactions${stripe.testMode ? ' · TEST mode — not real charges' : ''}` : `Stripe unavailable: ${stripe.error}` },
-    { key: 'ai', category: 'AI', name: 'OpenAI', kind: 'metered', nok: aiRows.reduce((a, r) => a + r.nok, 0), metered: true, detail: aiRows.length ? aiRows.map((r) => `${r.model}: ${r.calls} calls, ${(r.inputTokens + r.outputTokens).toLocaleString('en')} tokens`).join(' · ') : 'No AI calls recorded this month' },
-    { key: 'bankid', category: 'Identity', name: 'BankID (Idura)', kind: 'metered', nok: bankId * p.bankIdPerAuthNok, metered: true, detail: `${bankId} verifications × ${p.bankIdPerAuthNok} NOK${p.bankIdPerAuthNok ? '' : ' (set the contract price)'}` },
-    { key: 'email', category: 'Messaging', name: 'Email', kind: 'metered', nok: emails * p.emailPerSendNok, metered: true, detail: `${emails} emails sent × ${p.emailPerSendNok} NOK` },
-    { key: 'blob', category: 'Storage', name: 'Azure Blob Storage', kind: 'metered', nok: gb * p.blobPerGbMonthNok, metered: false, detail: blob?.error ? `Could not list blobs: ${blob.error}` : blob ? `${gb.toFixed(2)} GB in ${blob.blobs.toLocaleString('en')} blobs × ${p.blobPerGbMonthNok} NOK/GB` : 'Not configured' },
-    ...cfg.fixed.map((f, i) => ({ key: `fixed-${i}`, category: f.category, name: f.name, kind: 'fixed', nok: f.monthlyNok, metered: false, detail: 'Fixed monthly amount' })),
-  ].map((l) => ({ ...l, nok: Math.round(l.nok * 100) / 100, projectedNok: Math.round((l.metered ? project(l.nok, from, to) : l.nok) * 100) / 100 }));
+    {
+      key: 'stripe',
+      category: 'Payments',
+      name: 'Stripe processing fees',
+      kind: 'measured',
+      nok: stripe.nok,
+      metered: true,
+      excluded: Boolean(stripe.testMode),
+      detail: stripe.ok
+        ? `${stripe.transactions} balance transactions${stripe.testMode ? ' · TEST mode — not real charges' : ''}`
+        : `Stripe unavailable: ${stripe.error}`,
+    },
+    {
+      key: 'ai',
+      category: 'AI',
+      name: 'OpenAI',
+      kind: 'metered',
+      nok: aiRows.reduce((a, r) => a + r.nok, 0),
+      metered: true,
+      detail: aiRows.length
+        ? aiRows
+            .map(
+              (r) =>
+                `${r.model}: ${r.calls} calls, ${(r.inputTokens + r.outputTokens).toLocaleString('en')} tokens`
+            )
+            .join(' · ')
+        : 'No AI calls recorded this month',
+    },
+    {
+      key: 'bankid',
+      category: 'Identity',
+      name: 'BankID (Idura)',
+      kind: 'metered',
+      nok: bankId * p.bankIdPerAuthNok,
+      metered: true,
+      detail: `${bankId} verifications × ${p.bankIdPerAuthNok} NOK${p.bankIdPerAuthNok ? '' : ' (set the contract price)'}`,
+    },
+    {
+      key: 'email',
+      category: 'Messaging',
+      name: 'Email',
+      kind: 'metered',
+      nok: emails * p.emailPerSendNok,
+      metered: true,
+      detail: `${emails} emails sent × ${p.emailPerSendNok} NOK`,
+    },
+    {
+      key: 'blob',
+      category: 'Storage',
+      name: 'Azure Blob Storage',
+      kind: 'metered',
+      nok: gb * p.blobPerGbMonthNok,
+      metered: false,
+      detail: blob?.error
+        ? `Could not list blobs: ${blob.error}`
+        : blob
+          ? `${gb.toFixed(2)} GB in ${blob.blobs.toLocaleString('en')} blobs × ${p.blobPerGbMonthNok} NOK/GB`
+          : 'Not configured',
+    },
+    ...cfg.fixed.map((f, i) => ({
+      key: `fixed-${i}`,
+      category: f.category,
+      name: f.name,
+      kind: 'fixed',
+      nok: f.monthlyNok,
+      metered: false,
+      detail: 'Fixed monthly amount',
+    })),
+  ].map((l) => ({
+    ...l,
+    nok: Math.round(l.nok * 100) / 100,
+    projectedNok: Math.round((l.metered ? project(l.nok, from, to) : l.nok) * 100) / 100,
+  }));
 
   // Test-mode Stripe fees are shown but are not money anyone pays.
   const counted = lines.filter((l) => !l.excluded);
@@ -177,7 +310,9 @@ async function computeCosts(month) {
   const projected = counted.reduce((a, l) => a + l.projectedNok, 0);
   const fees = platformFees[0]?.nok || 0;
   const byCategory = {};
-  for (const l of counted) byCategory[l.category] = Math.round(((byCategory[l.category] || 0) + l.projectedNok) * 100) / 100;
+  for (const l of counted)
+    byCategory[l.category] =
+      Math.round(((byCategory[l.category] || 0) + l.projectedNok) * 100) / 100;
 
   return {
     month: from.toISOString().slice(0, 7),
@@ -196,9 +331,21 @@ async function computeCosts(month) {
       costPerOrder: orders ? Math.round((total / orders) * 100) / 100 : null,
       costPerActiveUser: activeUsers ? Math.round((total / activeUsers) * 100) / 100 : null,
     },
-    database: db ? { dataBytes: db.dataSize, storageBytes: db.storageSize, indexBytes: db.indexSize } : null,
+    database: db
+      ? { dataBytes: db.dataSize, storageBytes: db.storageSize, indexBytes: db.indexSize }
+      : null,
     config: cfg,
   };
 }
 
-module.exports = { blobUsage, CONFIG_KEY, DEFAULTS, recordAiUsage, getConfig, validateConfig, monthRange, project, computeCosts };
+module.exports = {
+  blobUsage,
+  CONFIG_KEY,
+  DEFAULTS,
+  recordAiUsage,
+  getConfig,
+  validateConfig,
+  monthRange,
+  project,
+  computeCosts,
+};

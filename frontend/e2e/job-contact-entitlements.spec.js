@@ -22,22 +22,31 @@ const service = {
   userId: { _id: 'service-owner', name: 'TEST Oppdragsgiver', role: 'user' },
 };
 
-const plans = [{
-  _id: 'legacy-standard',
-  name: 'Standard',
-  type: 'private',
-  isActive: true,
-  entitlements: { freeContact: 5, ContactUnlock: 30 },
-}];
+const plans = [
+  {
+    _id: 'legacy-standard',
+    name: 'Standard',
+    type: 'private',
+    isActive: true,
+    entitlements: { freeContact: 5, ContactUnlock: 30 },
+  },
+];
 
-async function openJobDetail(page, {
-  entitlements = { includedContacts: 35, consumedIncludedContacts: 1, remainingIncludedContacts: 34 },
-  entitlementStatus = 200,
-  requestsForCooldown = [],
-  rejectApplication = false,
-  extraContact,
-  extraContactCalls = [],
-} = {}) {
+async function openJobDetail(
+  page,
+  {
+    entitlements = {
+      includedContacts: 35,
+      consumedIncludedContacts: 1,
+      remainingIncludedContacts: 34,
+    },
+    entitlementStatus = 200,
+    requestsForCooldown = [],
+    rejectApplication = false,
+    extraContact,
+    extraContactCalls = [],
+  } = {}
+) {
   const apiRequests = [];
   await page.route('http://127.0.0.1:5017/api/**', async (route) => {
     const request = route.request();
@@ -57,9 +66,10 @@ async function openJobDetail(page, {
     if (method === 'GET' && pathname === '/api/stripe/v2/entitlements') {
       return route.fulfill({
         status: entitlementStatus,
-        json: entitlementStatus === 200
-          ? entitlements
-          : { code: 'SUBSCRIPTION_V2_ENTITLEMENTS_DISABLED' },
+        json:
+          entitlementStatus === 200
+            ? entitlements
+            : { code: 'SUBSCRIPTION_V2_ENTITLEMENTS_DISABLED' },
       });
     }
     if (method === 'GET' && pathname === '/api/services/job-v2-contact') {
@@ -74,13 +84,23 @@ async function openJobDetail(page, {
     if (method === 'POST' && pathname === '/api/orders/request' && rejectApplication) {
       return route.fulfill({
         status: 403,
-        json: { code: 'CONTACT_LIMIT_REACHED', message: 'Contact limit reached', ...(extraContact && { extraContact }) },
+        json: {
+          code: 'CONTACT_LIMIT_REACHED',
+          message: 'Contact limit reached',
+          ...(extraContact && { extraContact }),
+        },
       });
     }
-    if (method === 'POST' && pathname === '/api/stripe/create-extra-contact-payment' && extraContact) {
+    if (
+      method === 'POST' &&
+      pathname === '/api/stripe/create-extra-contact-payment' &&
+      extraContact
+    ) {
       extraContactCalls.push(request.postDataJSON());
       // A local stand-in for Stripe's hosted Checkout page.
-      return route.fulfill({ json: { url: 'http://127.0.0.1:5176/mock-stripe-checkout', sessionId: 'cs_test_mock' } });
+      return route.fulfill({
+        json: { url: 'http://127.0.0.1:5176/mock-stripe-checkout', sessionId: 'cs_test_mock' },
+      });
     }
     if (pathname === '/api/orders/request' || pathname.includes('extra-contact')) {
       return route.fulfill({ status: 501, json: { code: 'UNEXPECTED_PAYMENT_OR_ORDER_REQUEST' } });
@@ -91,18 +111,21 @@ async function openJobDetail(page, {
     return route.fulfill({ json: [] });
   });
 
-  await page.addInitScript((state) => {
-    localStorage.setItem('user-storage', JSON.stringify({ state, version: 0 }));
-    localStorage.setItem('cookie-consent', 'rejected');
-  }, {
-    user,
-    tokens: { accessToken: 'mock-access-token' },
-    isAuthenticated: true,
-    notificationsEnabled: true,
-    browserNotificationsEnabled: true,
-    emailNotificationsEnabled: true,
-    smsNotificationsEnabled: false,
-  });
+  await page.addInitScript(
+    (state) => {
+      localStorage.setItem('user-storage', JSON.stringify({ state, version: 0 }));
+      localStorage.setItem('cookie-consent', 'rejected');
+    },
+    {
+      user,
+      tokens: { accessToken: 'mock-access-token' },
+      isAuthenticated: true,
+      notificationsEnabled: true,
+      browserNotificationsEnabled: true,
+      emailNotificationsEnabled: true,
+      smsNotificationsEnabled: false,
+    }
+  );
   await page.goto('/jobs/job-v2-contact');
   // The job page is a lazy route. On a cold Vite dev server (two workers compiling at
   // once) its chunk can take longer than the 5s assertion timeout, and the failure
@@ -121,36 +144,48 @@ test('displays V2 quota values instead of stale V1 usage and cooldown', async ({
   };
   const requests = await openJobDetail(page, { requestsForCooldown: [recentLegacyRequest] });
 
-  await expect(page.getByTestId('contact-usage-summary'))
-    .toHaveText('Kontakter denne perioden: 1 brukt av 35 · 34 igjen');
+  await expect(page.getByTestId('contact-usage-summary')).toHaveText(
+    'Kontakter denne perioden: 1 brukt av 35 · 34 igjen'
+  );
   await expect(page.getByText(/Åpner for deg om/)).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Kjøp ekstra kontakter' })).toHaveCount(0);
   expect(requests.some(({ pathname }) => pathname.includes('extra-contact'))).toBe(false);
 });
 
-test('shows upgrade guidance when an application is rejected at the V2 quota limit', async ({ page }) => {
+test('shows upgrade guidance when an application is rejected at the V2 quota limit', async ({
+  page,
+}) => {
   const requests = await openJobDetail(page, {
-    entitlements: { includedContacts: 35, consumedIncludedContacts: 35, remainingIncludedContacts: 0 },
+    entitlements: {
+      includedContacts: 35,
+      consumedIncludedContacts: 35,
+      remainingIncludedContacts: 0,
+    },
     rejectApplication: true,
   });
 
-  await expect(page.getByTestId('contact-usage-summary'))
-    .toHaveText('Kontakter denne perioden: 35 brukt av 35 · 0 igjen');
+  await expect(page.getByTestId('contact-usage-summary')).toHaveText(
+    'Kontakter denne perioden: 35 brukt av 35 · 0 igjen'
+  );
   await page.getByRole('button', { name: 'Send forespørsel', exact: true }).first().click();
   await page.getByRole('button', { name: 'Send forespørsel', exact: true }).last().click();
   await expect(page.getByText('Oppgrader for mer tilgang')).toBeVisible();
   expect(requests.some(({ pathname }) => pathname.includes('extra-contact'))).toBe(false);
 });
 
-test('retains the legacy cooldown only when V2 entitlements are explicitly disabled', async ({ page }) => {
+test('retains the legacy cooldown only when V2 entitlements are explicitly disabled', async ({
+  page,
+}) => {
   const requests = await openJobDetail(page, {
     entitlementStatus: 503,
-    requestsForCooldown: [{
-      serviceId: { _id: 'different-job' },
-      customerId: { _id: user._id },
-      status: 'declined',
-      createdAt: new Date().toISOString(),
-    }],
+    requestsForCooldown: [
+      {
+        serviceId: { _id: 'different-job' },
+        customerId: { _id: user._id },
+        status: 'declined',
+        createdAt: new Date().toISOString(),
+      },
+    ],
   });
 
   await expect(page.getByText(/Åpner for deg om/)).toBeVisible();
@@ -158,20 +193,34 @@ test('retains the legacy cooldown only when V2 entitlements are explicitly disab
 });
 
 const offer = (over = {}) => ({
-  available: true, reason: null, priceNok: 29, maxPerPeriod: 3, usedThisPeriod: 0, unlockAt: null, ...over,
+  available: true,
+  reason: null,
+  priceNok: 29,
+  maxPerPeriod: 3,
+  usedThisPeriod: 0,
+  unlockAt: null,
+  ...over,
 });
 
-test('offers a paid extra contact for this job at the plan price and starts Stripe Checkout', async ({ page }) => {
+test('offers a paid extra contact for this job at the plan price and starts Stripe Checkout', async ({
+  page,
+}) => {
   const calls = [];
   await openJobDetail(page, {
-    entitlements: { includedContacts: 15, consumedIncludedContacts: 15, remainingIncludedContacts: 0 },
+    entitlements: {
+      includedContacts: 15,
+      consumedIncludedContacts: 15,
+      remainingIncludedContacts: 0,
+    },
     rejectApplication: true,
     extraContact: offer(),
     extraContactCalls: calls,
   });
   await page.getByRole('button', { name: 'Send forespørsel', exact: true }).first().click();
   await page.getByRole('button', { name: 'Send forespørsel', exact: true }).last().click();
-  await expect(page.getByText('Du har brukt alle inkluderte kontakter denne perioden.')).toBeVisible();
+  await expect(
+    page.getByText('Du har brukt alle inkluderte kontakter denne perioden.')
+  ).toBeVisible();
   const buy = page.getByRole('button', { name: 'Kjøp 1 ekstra kontakt – 29 kr' });
   await expect(buy).toBeVisible();
   await buy.click();
@@ -179,11 +228,21 @@ test('offers a paid extra contact for this job at the plan price and starts Stri
   expect(calls).toEqual([{ serviceId: 'job-v2-contact' }]);
 });
 
-test('during the ContactUnlock cooldown it says when the next extra contact opens, without a buy button', async ({ page }) => {
+test('during the ContactUnlock cooldown it says when the next extra contact opens, without a buy button', async ({
+  page,
+}) => {
   await openJobDetail(page, {
-    entitlements: { includedContacts: 15, consumedIncludedContacts: 15, remainingIncludedContacts: 0 },
+    entitlements: {
+      includedContacts: 15,
+      consumedIncludedContacts: 15,
+      remainingIncludedContacts: 0,
+    },
     rejectApplication: true,
-    extraContact: offer({ available: false, reason: 'cooldown', unlockAt: new Date(Date.now() + 45 * 60_000).toISOString() }),
+    extraContact: offer({
+      available: false,
+      reason: 'cooldown',
+      unlockAt: new Date(Date.now() + 45 * 60_000).toISOString(),
+    }),
   });
   await page.getByRole('button', { name: 'Send forespørsel', exact: true }).first().click();
   await page.getByRole('button', { name: 'Send forespørsel', exact: true }).last().click();

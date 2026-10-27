@@ -50,7 +50,10 @@ const isDate = (value: string) => {
  * `target` is the step being moved TO: 2 checks step 1 (Grunnleggende), 3 checks step 2
  * (Tid & sted), 5 checks step 4 (Kontakt). Step 3 (Sjekkliste) is optional.
  */
-export function validateCreateJobStep(target: number, input: CreateJobValidationInput): CreateJobErrors {
+export function validateCreateJobStep(
+  target: number,
+  input: CreateJobValidationInput
+): CreateJobErrors {
   const { values, imageCount, phone, displayedPrice, today = localToday() } = input;
   const next: CreateJobErrors = {};
 
@@ -71,7 +74,8 @@ export function validateCreateJobStep(target: number, input: CreateJobValidation
   if (target === 3) {
     // One address search fills address, sted, fylke/kommune and the map point together, so
     // only the address and the point are checked; fylke/kommune follow from the address.
-    if (!values.address.trim()) next.address = 'Søk etter adressen og velg et forslag, eller trykk i kartet.';
+    if (!values.address.trim())
+      next.address = 'Søk etter adressen og velg et forslag, eller trykk i kartet.';
     else if (values.coordinates[0] === 0 && values.coordinates[1] === 0)
       next.coordinates = 'Velg adressen fra forslagslisten, eller trykk i kartet.';
     if (!values.fromDate) next.fromDate = 'Vennligst velg startdato.';
@@ -81,14 +85,18 @@ export function validateCreateJobStep(target: number, input: CreateJobValidation
     if (!values.toDate) {
       /* optional */
     } else if (!isDate(values.toDate)) next.toDate = 'Ugyldig sluttdato.';
-    else if (values.fromDate && values.toDate < values.fromDate) next.toDate = 'Sluttdato kan ikke være før startdato.';
+    else if (values.fromDate && values.toDate < values.fromDate)
+      next.toDate = 'Sluttdato kan ikke være før startdato.';
     const duration = Number(values.durationValue) || 0;
-    if (!values.durationValue.trim() || duration <= 0) next.durationValue = 'Vennligst oppgi forventet varighet.';
+    if (!values.durationValue.trim() || duration <= 0)
+      next.durationValue = 'Vennligst oppgi forventet varighet.';
     else if (duration > 1000) next.durationValue = 'Varigheten kan ikke overstige 1000.';
     const timepris = values.paymentType === 'Timepris';
     const amount = Number(timepris ? values.hourlyRate : values.price) || 0;
     if (amount > 1_000_000)
-      next.price = timepris ? 'Timepris kan ikke overstige 1000000 kr.' : 'Beløpet kan ikke overstige 1000000 kr.';
+      next.price = timepris
+        ? 'Timepris kan ikke overstige 1000000 kr.'
+        : 'Beløpet kan ikke overstige 1000000 kr.';
     else if (amount <= 0 || !displayedPrice)
       next.price = timepris
         ? 'Vennligst oppgi en timepris større enn 0 kr.'
@@ -100,7 +108,8 @@ export function validateCreateJobStep(target: number, input: CreateJobValidation
   if (target === 5) {
     if (phone && phone.length !== 8) next.phone = 'Et norsk nummer har åtte siffer.';
     const email = values.contactEmail.trim();
-    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) next.email = 'Vennligst skriv inn en gyldig e-post.';
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      next.email = 'Vennligst skriv inn en gyldig e-post.';
   }
 
   return next;

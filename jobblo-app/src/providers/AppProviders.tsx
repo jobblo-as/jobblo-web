@@ -1,18 +1,23 @@
-import { QueryClientProvider } from "@tanstack/react-query";
-import { SafeAreaProvider } from "react-native-safe-area-context";
-import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { StatusBar } from "expo-status-bar";
-import Toast from "react-native-toast-message";
-import { StyleSheet, View } from "react-native";
+import { QueryClientProvider } from '@tanstack/react-query';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { StatusBar } from 'expo-status-bar';
+import Toast from 'react-native-toast-message';
+import { StyleSheet, View } from 'react-native';
 import { useEffect } from 'react';
 import { useAuthStore } from '../store/authStore';
-import { configurePushNotifications, registerPushNotifications } from '../services/pushNotifications.service';
+import {
+  configurePushNotifications,
+  registerPushNotifications,
+} from '../services/pushNotifications.service';
 import { queryClient } from './queryClient';
 
 function PushRegistration() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   useEffect(() => {
-    void configurePushNotifications().catch((error) => console.error('[push] bootstrap failed:', error));
+    void configurePushNotifications().catch((error) =>
+      console.error('[push] bootstrap failed:', error)
+    );
     if (isAuthenticated) void registerPushNotifications({ automatic: true }).catch(() => undefined);
   }, [isAuthenticated]);
   return null;
@@ -54,5 +59,5 @@ export default function AppProviders({ children }: { children: React.ReactNode }
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#F8FAFC" },
+  root: { flex: 1, backgroundColor: '#F8FAFC' },
 });

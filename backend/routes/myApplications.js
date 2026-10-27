@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
-const { getMyApplications, withdrawApplication } = require('../controllers/myApplicationsController');
+const {
+  getMyApplications,
+  withdrawApplication,
+} = require('../controllers/myApplicationsController');
 
 // GET  /api/my-applications        — list all my applications (as provider/applicant)
 router.get('/', authenticate, getMyApplications);

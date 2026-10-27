@@ -94,6 +94,11 @@ safePayHistorySchema.index({ providerId: 1, createdAt: -1 });
 safePayHistorySchema.index({ orderId: 1, createdAt: -1 });
 
 /** Escrow states a completed order moves out of (approval or auto-release → completed). */
-safePayHistorySchema.statics.OPEN_STATUSES = ['pending', 'payment_received', 'waiting_connect', 'in_progress'];
+safePayHistorySchema.statics.OPEN_STATUSES = [
+  'pending',
+  'payment_received',
+  'waiting_connect',
+  'in_progress',
+];
 
 module.exports = mongoose.model('SafePayHistory', safePayHistorySchema);

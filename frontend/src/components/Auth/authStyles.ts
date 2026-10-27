@@ -5,11 +5,7 @@
  *
  * @see src/theme/brand.ts
  */
-export {
-  MICRO_LABEL,
-  TEXT_LINK,
-  FIELD_ICON_BUTTON,
-} from '../../theme/brand';
+export { MICRO_LABEL, TEXT_LINK, FIELD_ICON_BUTTON } from '../../theme/brand';
 
 /**
  * Auth buttons are full width — the marketing ones size to their label — so the shared

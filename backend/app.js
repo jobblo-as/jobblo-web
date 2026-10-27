@@ -20,7 +20,9 @@ const faults = require('./services/monitoring/faults');
 
 const origins = allowedOrigins();
 if (process.env.NODE_ENV === 'production' && origins.length === 0) {
-  console.error('[jobblo] No ALLOWED_ORIGINS or FRONTEND_URL set. Browser requests with credentials will be refused.');
+  console.error(
+    '[jobblo] No ALLOWED_ORIGINS or FRONTEND_URL set. Browser requests with credentials will be refused.'
+  );
 }
 
 const app = express();
@@ -30,7 +32,14 @@ app.disable('x-powered-by');
 // host, so loopback by default. Trusting any hop let a client reaching the port forge its IP
 // (dodging IP blocks and rate limits). Other topologies name their proxy: TRUST_PROXY=10.0.4.12
 // or a hop count.
-app.set('trust proxy', process.env.TRUST_PROXY ? (/^\d+$/.test(process.env.TRUST_PROXY) ? Number(process.env.TRUST_PROXY) : process.env.TRUST_PROXY) : 'loopback');
+app.set(
+  'trust proxy',
+  process.env.TRUST_PROXY
+    ? /^\d+$/.test(process.env.TRUST_PROXY)
+      ? Number(process.env.TRUST_PROXY)
+      : process.env.TRUST_PROXY
+    : 'loopback'
+);
 
 // ── Stripe webhooks ── before express.json() (signature verification needs the raw body) and
 // before apiLimiter (Stripe retry storms must never be rate-limited away). One dispatcher, two
@@ -45,7 +54,12 @@ app.post('/api/safepay-checkout/webhook', rawJson, faults.webhookGuard, stripeWe
 // req.ip is a getter that re-runs proxy-addr on every read (rate limiter, metrics, security
 // events, ip blocks read it several times per request): resolve it once per request.
 app.use((req, res, next) => {
-  Object.defineProperty(req, 'ip', { value: req.ip, writable: true, configurable: true, enumerable: true });
+  Object.defineProperty(req, 'ip', {
+    value: req.ip,
+    writable: true,
+    configurable: true,
+    enumerable: true,
+  });
   next();
 });
 // Sign in with Apple web flow (Android app + website): Apple answers with a cross-site form POST
@@ -55,7 +69,13 @@ app.use((req, res, next) => {
 // small urlencoded parser, cookie parser (the web flow's SameSite=None binding cookie) and limiter.
 {
   const apple = require('./controllers/appleAuthController');
-  app.post('/api/auth/apple/callback', apple.appleCallbackLimiter, express.urlencoded({ extended: false, limit: '16kb' }), cookieParser(), apple.appleWebCallback);
+  app.post(
+    '/api/auth/apple/callback',
+    apple.appleCallbackLimiter,
+    express.urlencoded({ extended: false, limit: '16kb' }),
+    cookieParser(),
+    apple.appleWebCallback
+  );
 }
 app.use(cors(corsOptions(origins)));
 // CSRF: refuse state-changing requests from other sites' browsers, before body parsing.

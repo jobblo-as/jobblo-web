@@ -4,7 +4,16 @@ const IdentityClaim = require('../../models/IdentityClaim');
 const { hashPassword } = require('../../utils/passwordUtils');
 const crypto = require('crypto');
 const { sendOtpEmail } = require('../../utils/emailService');
-const { validatePasswordStrength, sha256, CLEAR_RESET_STATE, issueOtp, checkOtp, verifyCurrentPassword, sendServerError, emailUnverified } = require('./authHelpers');
+const {
+  validatePasswordStrength,
+  sha256,
+  CLEAR_RESET_STATE,
+  issueOtp,
+  checkOtp,
+  verifyCurrentPassword,
+  sendServerError,
+  emailUnverified,
+} = require('./authHelpers');
 
 /** Password change and reset with emailed one-time codes. */
 
@@ -92,7 +101,10 @@ exports.changePasswordVerifyOtp = async (req, res) => {
 
     const hashedPassword = await hashPassword(newPassword, 12);
 
-    await User.updateOne({ _id: userId }, { $set: { password: hashedPassword, emailVerifiedAt: new Date() }, ...CLEAR_RESET_STATE });
+    await User.updateOne(
+      { _id: userId },
+      { $set: { password: hashedPassword, emailVerifiedAt: new Date() }, ...CLEAR_RESET_STATE }
+    );
     // Sign out every other device: a password change is how people lock out an intruder.
     await Session.deleteMany({ userId, _id: { $ne: req.sessionId } });
 
@@ -126,7 +138,10 @@ exports.forgotPassword = async (req, res) => {
     } else {
       // Same database round trip as issueOtp, matching nothing, so the response time does not
       // reveal whether an account exists (the email itself is already sent from a queue).
-      await User.updateOne({ _id: new (require('mongoose').Types.ObjectId)() }, { $set: { passwordResetAttempts: 0 } });
+      await User.updateOne(
+        { _id: new (require('mongoose').Types.ObjectId)() },
+        { $set: { passwordResetAttempts: 0 } }
+      );
     }
 
     return res.json({
@@ -194,14 +209,24 @@ const emailUnproven = (user) => {
   return {
     cleared: true,
     $set: {
-      payoutEnabled: false, chargesEnabled: false, detailsSubmitted: false, payoutOnboardingStatus: 'none',
-      payoutMethod: null, payoutVerified: false,
+      payoutEnabled: false,
+      chargesEnabled: false,
+      detailsSubmitted: false,
+      payoutOnboardingStatus: 'none',
+      payoutMethod: null,
+      payoutVerified: false,
       ...(user.identityVerification?.subject ? { verified: false } : {}),
       ...(user.accountStatus === 'verified' ? { accountStatus: 'active' } : {}),
     },
     $unset: {
-      stripeConnectAccountId: 1, stripeConnectAccountIdTest: 1, connectAccountCreatedAt: 1,
-      bankAccountNumber: 1, iban: 1, bicSwift: 1, vippsHandle: 1, identityVerification: 1,
+      stripeConnectAccountId: 1,
+      stripeConnectAccountIdTest: 1,
+      connectAccountCreatedAt: 1,
+      bankAccountNumber: 1,
+      iban: 1,
+      bicSwift: 1,
+      vippsHandle: 1,
+      identityVerification: 1,
     },
   };
 };
@@ -229,7 +254,9 @@ exports.resetPassword = async (req, res) => {
       passwordResetSessionToken: sha256(resetToken),
       passwordResetSessionExpires: { $gt: new Date() },
     };
-    const user = await User.findOne(tokenFilter).select('_id emailVerifiedAt createdAt accountStatus identityVerification');
+    const user = await User.findOne(tokenFilter).select(
+      '_id emailVerifiedAt createdAt accountStatus identityVerification'
+    );
     if (!user) {
       return res.status(400).json({ error: 'Ugyldig eller utløpt sesjonstoken. Start på nytt.' });
     }
@@ -244,7 +271,12 @@ exports.resetPassword = async (req, res) => {
       // signing in through it. Unlink them all; the owner re-links from the profile. (New
       // sign-ups can no longer link before verifying; this covers older accounts.)
       {
-        $set: { password: hashedPassword, oauthProviders: [], emailVerifiedAt: new Date(), ...firstProof.$set },
+        $set: {
+          password: hashedPassword,
+          oauthProviders: [],
+          emailVerifiedAt: new Date(),
+          ...firstProof.$set,
+        },
         $unset: { ...CLEAR_RESET_STATE.$unset, ...firstProof.$unset },
       }
     );

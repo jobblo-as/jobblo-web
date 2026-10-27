@@ -16,7 +16,8 @@ export function useSafePayCheckout(orderId: string) {
 
   useEffect(() => {
     const order = query.data?.order;
-    if (!order || !['paid', 'in_progress', 'ready_for_review', 'completed'].includes(order.status)) return;
+    if (!order || !['paid', 'in_progress', 'ready_for_review', 'completed'].includes(order.status))
+      return;
     void queryClient.invalidateQueries({ queryKey: queryKeys.applicants.detailRoot });
     void queryClient.invalidateQueries({ queryKey: queryKeys.applicants.overview });
     void queryClient.invalidateQueries({ queryKey: queryKeys.applications.all });

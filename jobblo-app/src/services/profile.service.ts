@@ -89,14 +89,20 @@ export type ProfileUpdate = Partial<{
   website: string;
 }>;
 
-export async function updateCurrentProfile(userId: string, data: ProfileUpdate | FormData): Promise<CurrentProfile> {
+export async function updateCurrentProfile(
+  userId: string,
+  data: ProfileUpdate | FormData
+): Promise<CurrentProfile> {
   const response = await apiClient.put<CurrentProfile>(`/users/${userId}`, data);
   return response.data;
 }
 
 // The backend requires the current password to delete your own account (accounts without a
 // password - Google/Apple/Vipps - need a login from the last 10 minutes instead).
-export async function deleteCurrentUser(userId: string, currentPassword?: string): Promise<{ message: string }> {
+export async function deleteCurrentUser(
+  userId: string,
+  currentPassword?: string
+): Promise<{ message: string }> {
   const response = await apiClient.delete<{ message: string }>(`/users/${userId}`, {
     data: currentPassword ? { currentPassword } : {},
   });

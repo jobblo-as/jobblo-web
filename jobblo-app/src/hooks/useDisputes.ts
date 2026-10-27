@@ -37,11 +37,13 @@ export function useOpenDisputeMutation(orderId: string) {
 export function useAddDisputeMessageMutation(orderId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ disputeId, message }: { disputeId: string; message: string }) => addDisputeMessage(disputeId, message),
+    mutationFn: ({ disputeId, message }: { disputeId: string; message: string }) =>
+      addDisputeMessage(disputeId, message),
     retry: 0,
     // No optimistic insert: message _ids are server-generated, so the thread waits
     // for the refetch rather than reconciling a fake id.
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.disputes.byOrder(orderId) }),
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.disputes.byOrder(orderId) }),
   });
 }
 
@@ -59,6 +61,6 @@ export function useFetchDisputeByOrder() {
         staleTime: 0,
         retry: false,
       }),
-    [queryClient],
+    [queryClient]
   );
 }

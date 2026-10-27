@@ -324,14 +324,25 @@ describe('a duplicate-payment refund that settles after the admin request (202 p
   };
   const send = (refund) => {
     stripe.refunds.retrieve.mockResolvedValue(refund);
-    stripe.charges.retrieve.mockResolvedValue({ ...charge, id: 'ch_dup_1', payment_intent: 'pi_dup_1' });
+    stripe.charges.retrieve.mockResolvedValue({
+      ...charge,
+      id: 'ch_dup_1',
+      payment_intent: 'pi_dup_1',
+    });
     Payment.findOne.mockResolvedValue(null); // no Payment row for the duplicate
-    return recordStripePaymentLifecycle({ id: `evt_${refund.status}`, type: 'refund.updated', livemode: false, data: { object: refund } });
+    return recordStripePaymentLifecycle({
+      id: `evt_${refund.status}`,
+      type: 'refund.updated',
+      livemode: false,
+      data: { object: refund },
+    });
   };
 
   it('reconciles the operation and the duplicate-payment incident when Stripe confirms it', async () => {
     StripeFinancialOperation.findOne.mockResolvedValue({ ...operation });
-    await expect(send(duplicateRefund('succeeded'))).resolves.toEqual({ handled: 'duplicate_payment_refund_reconciled' });
+    await expect(send(duplicateRefund('succeeded'))).resolves.toEqual({
+      handled: 'duplicate_payment_refund_reconciled',
+    });
     expect(StripeFinancialOperation.updateOne).toHaveBeenCalledWith(
       { _id: 'op_dup_1' },
       { $set: expect.objectContaining({ status: 'succeeded', stripeObjectId: 're_dup_1' }) }
@@ -358,7 +369,9 @@ describe('a duplicate-payment refund that settles after the admin request (202 p
 
   it('still treats a refund whose operation does not match as unmatched', async () => {
     StripeFinancialOperation.findOne.mockResolvedValue({ ...operation, amount: 999 });
-    await expect(send(duplicateRefund('succeeded'))).resolves.toEqual({ handled: 'unmatched_payment_event' });
+    await expect(send(duplicateRefund('succeeded'))).resolves.toEqual({
+      handled: 'unmatched_payment_event',
+    });
     expect(StripeFinancialOperation.updateOne).not.toHaveBeenCalled();
     expect(StripePaymentIncident.findOneAndUpdate).toHaveBeenCalledWith(
       { eventId: 'evt_succeeded' },

@@ -27,7 +27,7 @@ painting, gardening, assembly, handyman work).
 Jobblo's cut is taken on completion. Free to post, free to receive offers.
 
 **Two roles, one account.** There is no "provider account" — the same user can post one job
-and apply to another. Role is *per order*, decided by whether your id sits in `customerId`
+and apply to another. Role is _per order_, decided by whether your id sits in `customerId`
 or `providerId`. Never cache "I am a provider" globally.
 
 **Language: Norwegian (nb-NO) only.** All UI copy, all error messages, all empty states.
@@ -39,18 +39,18 @@ There is no i18n layer and none is planned. Do not ship English strings.
 
 `mobile/` is already scaffolded. **Do not restart it** — extend it.
 
-| Concern | Choice | Notes |
-|---|---|---|
-| Framework | Expo SDK 54, React Native 0.81.5, React 19.1 | |
-| Routing | `expo-router` v6 (file-based) | `app/(tabs)/` already has index, explore, create, messages, profile, job-search |
-| Styling | **NativeWind v4** + Tailwind v3.4 | `tailwind.config.js` `theme.extend` is currently **empty** — §2 fills it |
-| Server state | TanStack Query v5 | |
-| Forms | TanStack Form | |
-| HTTP | `axios` — `mobile/features/auth/api/client.ts` | Interceptors already wired |
-| Token storage | `expo-secure-store` under key `token` | |
-| Icons | `lucide-react-native` | Same icon set as web — keep parity |
-| Images | `expo-image`, `expo-image-picker` | |
-| Auth session | `mobile/context/AuthContext.tsx` | |
+| Concern       | Choice                                         | Notes                                                                           |
+| ------------- | ---------------------------------------------- | ------------------------------------------------------------------------------- |
+| Framework     | Expo SDK 54, React Native 0.81.5, React 19.1   |                                                                                 |
+| Routing       | `expo-router` v6 (file-based)                  | `app/(tabs)/` already has index, explore, create, messages, profile, job-search |
+| Styling       | **NativeWind v4** + Tailwind v3.4              | `tailwind.config.js` `theme.extend` is currently **empty** — §2 fills it        |
+| Server state  | TanStack Query v5                              |                                                                                 |
+| Forms         | TanStack Form                                  |                                                                                 |
+| HTTP          | `axios` — `mobile/features/auth/api/client.ts` | Interceptors already wired                                                      |
+| Token storage | `expo-secure-store` under key `token`          |                                                                                 |
+| Icons         | `lucide-react-native`                          | Same icon set as web — keep parity                                              |
+| Images        | `expo-image`, `expo-image-picker`              |                                                                                 |
+| Auth session  | `mobile/context/AuthContext.tsx`               |                                                                                 |
 
 Feature folders follow `features/<domain>/{api,hooks,types}` — already established for
 `auth`, `category`, `hero`, `job`, `list`, `user`. **Keep that shape** for the new domains
@@ -73,30 +73,30 @@ Source of truth on web: [`frontend/src/theme/brand.ts`](./frontend/src/theme/bra
 
 **Brand**
 
-| Token | Hex | Use |
-|---|---|---|
-| `ink` | `#0B0B0B` | Headings, body text, the wordmark |
-| `green` | `#2E6641` | **The** accent — primary buttons, links, active tab, one highlighted block per section |
-| `green-dark` | `#255335` | Pressed state for primary green only |
-| `leaf` | `#347028` | Link pressed; use sparingly |
-| `green-deep` | `#122A1C` | Darkest surface — SafePay panels, solid dark controls. Same hue as `green` at 11% lightness |
-| `green-on-ink` | `#8FBF9A` | The only green legible **on** `green-deep` |
-| `green-mist` | `#EAF1E9` | Icon plates, small green-on-light chips |
+| Token          | Hex       | Use                                                                                         |
+| -------------- | --------- | ------------------------------------------------------------------------------------------- |
+| `ink`          | `#0B0B0B` | Headings, body text, the wordmark                                                           |
+| `green`        | `#2E6641` | **The** accent — primary buttons, links, active tab, one highlighted block per section      |
+| `green-dark`   | `#255335` | Pressed state for primary green only                                                        |
+| `leaf`         | `#347028` | Link pressed; use sparingly                                                                 |
+| `green-deep`   | `#122A1C` | Darkest surface — SafePay panels, solid dark controls. Same hue as `green` at 11% lightness |
+| `green-on-ink` | `#8FBF9A` | The only green legible **on** `green-deep`                                                  |
+| `green-mist`   | `#EAF1E9` | Icon plates, small green-on-light chips                                                     |
 
 **Neutrals**
 
-| Token | Hex | Use |
-|---|---|---|
-| `ink-muted` | `#63665F` | Body copy, secondary text |
-| `ink-faint` | `#9B9E96` | Placeholders, micro-labels, metadata |
-| `line` | `#E6E7E1` | Every border and divider. **One value, no alpha borders** |
-| `field` | `#F5F6F1` | Input resting surface |
-| `panel` | `#F4F6F0` | Tinted block inside a white section |
-| `page` | `#EFF0EA` | Screen background |
+| Token       | Hex       | Use                                                       |
+| ----------- | --------- | --------------------------------------------------------- |
+| `ink-muted` | `#63665F` | Body copy, secondary text                                 |
+| `ink-faint` | `#9B9E96` | Placeholders, micro-labels, metadata                      |
+| `line`      | `#E6E7E1` | Every border and divider. **One value, no alpha borders** |
+| `field`     | `#F5F6F1` | Input resting surface                                     |
+| `panel`     | `#F4F6F0` | Tinted block inside a white section                       |
+| `page`      | `#EFF0EA` | Screen background                                         |
 
 **The one exception**
 
-`#FF5B24` — **Vipps orange**, mandated by Vipps' brand guidelines, permitted *only* on the
+`#FF5B24` — **Vipps orange**, mandated by Vipps' brand guidelines, permitted _only_ on the
 Vipps sign-in button. It is the only saturated colour outside the logo palette, and staying
 rare is what makes it read as "the fast way in".
 
@@ -117,7 +117,11 @@ rare is what makes it read as "the fast way in".
 ```js
 // tailwind.config.js
 module.exports = {
-  content: ['./app/**/*.{js,jsx,ts,tsx}', './components/**/*.{js,jsx,ts,tsx}', './features/**/*.{js,jsx,ts,tsx}'],
+  content: [
+    './app/**/*.{js,jsx,ts,tsx}',
+    './components/**/*.{js,jsx,ts,tsx}',
+    './features/**/*.{js,jsx,ts,tsx}',
+  ],
   presets: [require('nativewind/preset')],
   theme: {
     extend: {
@@ -185,30 +189,30 @@ Web uses `clamp()` viewport scaling, which has no mobile equivalent. This is the
 fixed scale — **this table is an adaptation, not a copy**, so treat it as the starting point
 and check it on a 360px device.
 
-| Role | Size | Weight | Tracking | Colour |
-|---|---|---|---|---|
-| Screen title | 28 | 700 | −1.2 | `ink` |
-| Section heading | 20 | 700 | −0.6 | `ink` |
-| Card title | 15–17 | 600 | −0.2 | `ink` |
-| Body | 14–15 | 400 | 0 | `ink-muted` |
-| Micro-label | 11 | 600 | +1.8, UPPERCASE | `ink-faint` |
-| Caption / meta | 12 | 400 | 0 | `ink-faint` |
+| Role            | Size  | Weight | Tracking        | Colour      |
+| --------------- | ----- | ------ | --------------- | ----------- |
+| Screen title    | 28    | 700    | −1.2            | `ink`       |
+| Section heading | 20    | 700    | −0.6            | `ink`       |
+| Card title      | 15–17 | 600    | −0.2            | `ink`       |
+| Body            | 14–15 | 400    | 0               | `ink-muted` |
+| Micro-label     | 11    | 600    | +1.8, UPPERCASE | `ink-faint` |
+| Caption / meta  | 12    | 400    | 0               | `ink-faint` |
 
 The uppercase micro-label above a block is a recurring Jobblo device — keep using it.
 
 ### 2.5 Shape, size, rhythm
 
-| Thing | Value |
-|---|---|
-| Corner radius — cards, inputs, buttons | 12 (`rounded-control`) |
-| Corner radius — feature panels | 16 (`rounded-panel`) |
-| Corner radius — large containers, CTA bands | 24 (`rounded-container`) |
-| Pills (`rounded-full`) | **status chips only** |
-| Control height | 46 — every button, input, select |
-| Prominent control height | 52 — primary search and its button only |
-| Screen gutter | 20 (`px-5`) |
-| Card | white bg, radius 12, `border border-line` |
-| Shadows | rare — one elevated element per screen at most |
+| Thing                                       | Value                                          |
+| ------------------------------------------- | ---------------------------------------------- |
+| Corner radius — cards, inputs, buttons      | 12 (`rounded-control`)                         |
+| Corner radius — feature panels              | 16 (`rounded-panel`)                           |
+| Corner radius — large containers, CTA bands | 24 (`rounded-container`)                       |
+| Pills (`rounded-full`)                      | **status chips only**                          |
+| Control height                              | 46 — every button, input, select               |
+| Prominent control height                    | 52 — primary search and its button only        |
+| Screen gutter                               | 20 (`px-5`)                                    |
+| Card                                        | white bg, radius 12, `border border-line`      |
+| Shadows                                     | rare — one elevated element per screen at most |
 
 **Focus rings translate to pressed states on mobile.** Web uses
 `focus-visible:ring-4 ring-green/20`. On native, use `Pressable` with a pressed background
@@ -277,7 +281,8 @@ pad them out on mobile rather than shrinking the target.
 
 ```ts
 const DEV_IP = '192.168.79.26';
-const BASE_URL = Platform.OS === 'android' ? `http://${DEV_IP}:5001/api` : 'http://localhost:5001/api';
+const BASE_URL =
+  Platform.OS === 'android' ? `http://${DEV_IP}:5001/api` : 'http://localhost:5001/api';
 ```
 
 **Fix this before doing anything else.** Move it to `app.json` → `expo.extra.apiUrl` and
@@ -306,7 +311,7 @@ Swagger is served at `/api/docs`.
 - Password rules are enforced server-side (`authController.validatePasswordStrength`):
   min 8 chars, at least one lowercase, one uppercase, one digit — Norwegian letters
   (`æøå` / `ÆØÅ`) count. Mirror these client-side so the user is not round-tripped.
-- The response body carries `accessToken`. The server *also* sets httpOnly cookies
+- The response body carries `accessToken`. The server _also_ sets httpOnly cookies
   (`accessToken`, 1h; `refreshToken`, 7d).
 
 `backend/middleware/auth.js` accepts **either** a cookie **or**
@@ -315,10 +320,10 @@ for normal REST calls. Two things do not — see §3.4.
 
 **Auth error codes** (401 with a `code` field):
 
-| `code` | Meaning | App should |
-|---|---|---|
-| `TOKEN_MISSING` | No token sent | Route to login |
-| `TOKEN_EXPIRED` | Access token past 1h | Refresh, then retry once |
+| `code`            | Meaning                     | App should                        |
+| ----------------- | --------------------------- | --------------------------------- |
+| `TOKEN_MISSING`   | No token sent               | Route to login                    |
+| `TOKEN_EXPIRED`   | Access token past 1h        | Refresh, then retry once          |
 | `SESSION_REVOKED` | Session deleted server-side | Clear SecureStore, route to login |
 
 Other auth endpoints: `POST /logout`, `POST /refresh-token`, `GET /profile`,
@@ -366,7 +371,7 @@ be worked around cleanly on the client.**
 refresh token is never returned in a response body. So after the 1-hour access token
 expires, the app has no way to refresh — the user gets logged out every hour.
 
-*Asked-for fix:* accept `refreshToken` from the request body (or an `X-Refresh-Token`
+_Asked-for fix:_ accept `refreshToken` from the request body (or an `X-Refresh-Token`
 header) and return it in the `login` / `register` / `refresh-token` response bodies
 alongside `accessToken`. Then store it in SecureStore and add a 401-retry interceptor.
 
@@ -375,7 +380,7 @@ alongside `accessToken`. Then store it in SecureStore and add a 401-retry interc
 `socket.handshake.headers.cookie` and rejects the connection when there is none. So chat,
 online presence and every realtime order event are unreachable from the app.
 
-*Asked-for fix:* also read `socket.handshake.auth.token`, so the client can do
+_Asked-for fix:_ also read `socket.handshake.auth.token`, so the client can do
 `io(url, { auth: { token } })`. It is a three-line change in the `io.use()` handler.
 
 Until (b) ships, chat must fall back to polling `GET /api/chats/:chatId` and notifications
@@ -390,10 +395,10 @@ swapping to sockets later is one file.
 
 `customerId` and `providerId` mean **opposite things** in the two main collections.
 
-| Collection | `customerId` is… | `providerId` is… |
-|---|---|---|
-| **`Order`** | the job **poster** (pays) | the **worker** (gets paid) |
-| **`JobRequest`** (an application) | the **applicant / worker** | the job **poster** |
+| Collection                        | `customerId` is…           | `providerId` is…           |
+| --------------------------------- | -------------------------- | -------------------------- |
+| **`Order`**                       | the job **poster** (pays)  | the **worker** (gets paid) |
+| **`JobRequest`** (an application) | the **applicant / worker** | the job **poster**         |
 
 Confirmed in `orderController.js:89` — `const providerId = service.userId` (the job owner)
 while `customerId` is `req.userId` (whoever is applying).
@@ -406,9 +411,11 @@ while `customerId` is `req.userId` (whoever is applying).
 
 ```ts
 export const roleInOrder = (order: Order, userId: string) =>
-  String(order.customerId?._id ?? order.customerId) === userId ? 'customer'
-  : String(order.providerId?._id ?? order.providerId) === userId ? 'provider'
-  : null;
+  String(order.customerId?._id ?? order.customerId) === userId
+    ? 'customer'
+    : String(order.providerId?._id ?? order.providerId) === userId
+      ? 'provider'
+      : null;
 ```
 
 ### 4.2 Populated vs. raw ids
@@ -494,12 +501,22 @@ products say the same thing:
 
 ```ts
 export const STATUS_LABELS: Record<string, string> = {
-  open: 'Åpent',           active: 'Aktivt',        pending: 'Venter',
-  draft: 'Utkast',         awaiting_payment: 'Venter på betaling',
-  paid: 'Betalt',          in_progress: 'Pågår',    ready_for_review: 'Klar til godkjenning',
-  waiting_for_approval: 'Venter på godkjenning',    completed: 'Fullført',
-  cancelled: 'Kansellert', closed: 'Lukket',        expired: 'Utløpt',
-  disputed: 'Tvist',       accepted: 'Godkjent',    declined: 'Avslått',
+  open: 'Åpent',
+  active: 'Aktivt',
+  pending: 'Venter',
+  draft: 'Utkast',
+  awaiting_payment: 'Venter på betaling',
+  paid: 'Betalt',
+  in_progress: 'Pågår',
+  ready_for_review: 'Klar til godkjenning',
+  waiting_for_approval: 'Venter på godkjenning',
+  completed: 'Fullført',
+  cancelled: 'Kansellert',
+  closed: 'Lukket',
+  expired: 'Utløpt',
+  disputed: 'Tvist',
+  accepted: 'Godkjent',
+  declined: 'Avslått',
 };
 export const statusLabel = (s?: string | null) => (s && STATUS_LABELS[s]) || 'Ukjent status';
 ```
@@ -547,15 +564,15 @@ At any point after payment, either side can branch to **`disputed`**.
 
 ### 6.1 Transition guards — copy these into the client
 
-| Action | Who | Requires | Result | Endpoint |
-|---|---|---|---|---|
-| Start job | **provider only** | `status === 'paid'` **and** `paymentStatus === 'paid'` **and** no active dispute | `in_progress` | `POST /api/safepay/orders/:orderId/start` |
-| Upload / delete evidence | **provider only** | `status ∈ {paid, in_progress}` | — | `POST` / `DELETE .../evidence` |
-| Provider checklist tick | **provider only** | `status ∈ {paid, in_progress, ready_for_review}` | — | `PATCH .../provider-checklist/:itemId` |
-| Customer checklist tick | **customer only** | `status ∈ {paid, in_progress, ready_for_review}`, no active dispute | — | `PUT /api/safepay-checkout/contract/:orderId/checklist/:itemId` |
-| Mark ready for review | **provider only** | `status === 'in_progress'` **and** `paymentStatus === 'paid'` **and** no active dispute | `ready_for_review` | `POST .../ready-for-review` |
-| Approve + pay out | **customer only** | `status === 'ready_for_review'` **and** `paymentStatus === 'paid'` **and** no active dispute **and** `ratings.overall ≥ 1` | `completed` | `POST /api/safepay-checkout/approve` |
-| Open dispute | either party | order exists, no active dispute | `disputed` | `POST /api/safepay/contract/:orderId/dispute` |
+| Action                   | Who               | Requires                                                                                                                   | Result             | Endpoint                                                        |
+| ------------------------ | ----------------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------ | --------------------------------------------------------------- |
+| Start job                | **provider only** | `status === 'paid'` **and** `paymentStatus === 'paid'` **and** no active dispute                                           | `in_progress`      | `POST /api/safepay/orders/:orderId/start`                       |
+| Upload / delete evidence | **provider only** | `status ∈ {paid, in_progress}`                                                                                             | —                  | `POST` / `DELETE .../evidence`                                  |
+| Provider checklist tick  | **provider only** | `status ∈ {paid, in_progress, ready_for_review}`                                                                           | —                  | `PATCH .../provider-checklist/:itemId`                          |
+| Customer checklist tick  | **customer only** | `status ∈ {paid, in_progress, ready_for_review}`, no active dispute                                                        | —                  | `PUT /api/safepay-checkout/contract/:orderId/checklist/:itemId` |
+| Mark ready for review    | **provider only** | `status === 'in_progress'` **and** `paymentStatus === 'paid'` **and** no active dispute                                    | `ready_for_review` | `POST .../ready-for-review`                                     |
+| Approve + pay out        | **customer only** | `status === 'ready_for_review'` **and** `paymentStatus === 'paid'` **and** no active dispute **and** `ratings.overall ≥ 1` | `completed`        | `POST /api/safepay-checkout/approve`                            |
+| Open dispute             | either party      | order exists, no active dispute                                                                                            | `disputed`         | `POST /api/safepay/contract/:orderId/dispute`                   |
 
 Sources: `providerWorkController.startJob` / `.markReadyForReview` / `.uploadEvidence`,
 `SafePayCheckoutController.approveAndPayout` (state check at line 475),
@@ -579,22 +596,22 @@ This exact bug shipped on web (a hardcoded banner plus four routes that tested
 
 Drive navigation from `Order.status`, never from `paymentStatus`.
 
-| Order status | Customer sees | Provider sees |
-|---|---|---|
-| `awaiting_payment` | Checkout — "Bekreft og betal" | "Venter på betaling fra oppdragsgiver" |
-| `paid` | Status screen — "Utfører har ikke startet ennå" | **"Start jobben"** |
-| `in_progress` | Status screen — "Utfører jobber med oppdraget nå" | Upload evidence + **"Meld jobb som ferdig"** |
-| `ready_for_review` | **Approval screen — checklist, rating, "Godkjenn og utbetal"** | "Meldt ferdig — venter på godkjenning" |
-| `completed` | Receipt / summary | "Oppdrag fullført" + payout |
-| `disputed` | Dispute panel | Dispute panel |
+| Order status       | Customer sees                                                  | Provider sees                                |
+| ------------------ | -------------------------------------------------------------- | -------------------------------------------- |
+| `awaiting_payment` | Checkout — "Bekreft og betal"                                  | "Venter på betaling fra oppdragsgiver"       |
+| `paid`             | Status screen — "Utfører har ikke startet ennå"                | **"Start jobben"**                           |
+| `in_progress`      | Status screen — "Utfører jobber med oppdraget nå"              | Upload evidence + **"Meld jobb som ferdig"** |
+| `ready_for_review` | **Approval screen — checklist, rating, "Godkjenn og utbetal"** | "Meldt ferdig — venter på godkjenning"       |
+| `completed`        | Receipt / summary                                              | "Oppdrag fullført" + payout                  |
+| `disputed`         | Dispute panel                                                  | Dispute panel                                |
 
 Cross-check against `ProviderOrderDetailPage.tsx:406-409`, which is the web app's
 already-correct provider gating:
 
 ```ts
-canStart      = isProvider && status === 'paid'             && paymentStatus === 'paid' && !activeDispute;
-canMarkReady  = isProvider && status === 'in_progress'      && !activeDispute;
-canApprove    = isCustomer && status === 'ready_for_review' && !activeDispute;
+canStart = isProvider && status === 'paid' && paymentStatus === 'paid' && !activeDispute;
+canMarkReady = isProvider && status === 'in_progress' && !activeDispute;
+canApprove = isCustomer && status === 'ready_for_review' && !activeDispute;
 ```
 
 ### 6.4 Evidence
@@ -625,7 +642,7 @@ Display both sides explicitly — the customer's total and the provider's net ar
 numbers and users notice.
 
 > ⚠️ **Flag for the product owner, not a bug for you to fix.** The design brief says Jobblo
-> takes "3% of the agreed price", but the code adds 3% to the customer *and* subtracts 3%
+> takes "3% of the agreed price", but the code adds 3% to the customer _and_ subtracts 3%
 > from the provider — an effective take of ~6%. Confirm which is intended before building
 > the fee copy, and use whatever the backend actually returns
 > (`GET /api/safepay/orders/:orderId` → `calculation`) rather than recomputing it on device.
@@ -660,10 +677,10 @@ Applying to a job spends one "contact" from the applicant's monthly allowance
 
 Two failure responses to handle explicitly:
 
-| Status | Body | UI |
-|---|---|---|
-| `403` | `{ message, isDelayed: true, unlockAt }` | Cooldown — show a countdown to `unlockAt`, keep the button disabled |
-| `402` | `{ message, paymentRequired: true, upgradeRequired: true, limit, usage, perContactPrice }` | Quota exhausted — offer upgrade or single-contact purchase, showing `usage`/`limit` |
+| Status | Body                                                                                       | UI                                                                                  |
+| ------ | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| `403`  | `{ message, isDelayed: true, unlockAt }`                                                   | Cooldown — show a countdown to `unlockAt`, keep the button disabled                 |
+| `402`  | `{ message, paymentRequired: true, upgradeRequired: true, limit, usage, perContactPrice }` | Quota exhausted — offer upgrade or single-contact purchase, showing `usage`/`limit` |
 
 Both messages are already Norwegian; surface them.
 
@@ -684,26 +701,26 @@ Emitting `setup` is harmless but unnecessary.
 
 **Client → server**
 
-| Event | Payload |
-|---|---|
-| `join-chat` | `chatId` — membership is verified server-side; failure returns `chat-error` |
-| `send-message` | `{ chatId, text }` |
-| `mark-as-read` | `{ chatId }` |
-| `join_service` | `serviceId` — live updates for a listing |
+| Event          | Payload                                                                     |
+| -------------- | --------------------------------------------------------------------------- |
+| `join-chat`    | `chatId` — membership is verified server-side; failure returns `chat-error` |
+| `send-message` | `{ chatId, text }`                                                          |
+| `mark-as-read` | `{ chatId }`                                                                |
+| `join_service` | `serviceId` — live updates for a listing                                    |
 
 **Server → client**
 
-| Event | Payload | Use |
-|---|---|---|
-| `receive-message` | `{ chatId, message }` | Append to thread |
-| `messages-read` | `{ chatId, userId }` | Read receipts |
-| `chat-error` | `{ chatId, error }` | Toast; leave the room |
-| `get-online-users` | `string[]` of userIds | Presence dots |
-| `new_notification` | Notification doc | Badge + toast |
-| `order_status_changed` | `{ orderId, status }` | **Invalidate order queries** |
-| `order_ready_for_review` | `{ orderId }` | Customer: the approve action just became available |
-| `payment_confirmed` | `{ orderId }` | Both parties |
-| `order_completed` | `{ orderId }` | Both parties |
+| Event                    | Payload               | Use                                                |
+| ------------------------ | --------------------- | -------------------------------------------------- |
+| `receive-message`        | `{ chatId, message }` | Append to thread                                   |
+| `messages-read`          | `{ chatId, userId }`  | Read receipts                                      |
+| `chat-error`             | `{ chatId, error }`   | Toast; leave the room                              |
+| `get-online-users`       | `string[]` of userIds | Presence dots                                      |
+| `new_notification`       | Notification doc      | Badge + toast                                      |
+| `order_status_changed`   | `{ orderId, status }` | **Invalidate order queries**                       |
+| `order_ready_for_review` | `{ orderId }`         | Customer: the approve action just became available |
+| `payment_confirmed`      | `{ orderId }`         | Both parties                                       |
+| `order_completed`        | `{ orderId }`         | Both parties                                       |
 
 Treat every order event as a cache-invalidation trigger for TanStack Query, not as a source
 of truth — refetch the order rather than patching status locally.
@@ -780,18 +797,18 @@ each call site and each copy drifted.
 
 ## 13. File map — where to look in this repo
 
-| Need | Read |
-|---|---|
-| Palette, type, control tokens | `frontend/src/theme/brand.ts` |
-| Product + design rules | `JOBBLO-DESIGN-BRIEF.md` |
-| Status labels and helpers | `frontend/src/constants/statuses.ts` |
-| Role-correct order routing | `frontend/src/utils/orderRoute.ts` |
-| Provider screen (correct gating reference) | `frontend/src/pages/ProviderWorkPage/ProviderOrderDetailPage.tsx` |
-| Customer approval screen | `frontend/src/pages/SafePayPage/SafePayApproval.tsx` |
-| Lifecycle transitions + guards | `backend/controllers/providerWorkController.js` |
-| Approval + payout + fee math | `backend/controllers/SafePayCheckoutController.js` |
-| Application + quota | `backend/controllers/orderController.js`, `backend/middleware/checkSubscription.js` |
-| Auth, cookies, sessions | `backend/controllers/authController.js`, `backend/middleware/auth.js` |
-| Socket events + rooms | `backend/sockets/chat.socket.js`, `backend/sockets/rooms.js` |
-| Schemas | `backend/models/{Order,Service,JobRequest,ChatMessage,Dispute,Notification}.js` |
-| Live API docs | `GET /api/docs` (Swagger) |
+| Need                                       | Read                                                                                |
+| ------------------------------------------ | ----------------------------------------------------------------------------------- |
+| Palette, type, control tokens              | `frontend/src/theme/brand.ts`                                                       |
+| Product + design rules                     | `JOBBLO-DESIGN-BRIEF.md`                                                            |
+| Status labels and helpers                  | `frontend/src/constants/statuses.ts`                                                |
+| Role-correct order routing                 | `frontend/src/utils/orderRoute.ts`                                                  |
+| Provider screen (correct gating reference) | `frontend/src/pages/ProviderWorkPage/ProviderOrderDetailPage.tsx`                   |
+| Customer approval screen                   | `frontend/src/pages/SafePayPage/SafePayApproval.tsx`                                |
+| Lifecycle transitions + guards             | `backend/controllers/providerWorkController.js`                                     |
+| Approval + payout + fee math               | `backend/controllers/SafePayCheckoutController.js`                                  |
+| Application + quota                        | `backend/controllers/orderController.js`, `backend/middleware/checkSubscription.js` |
+| Auth, cookies, sessions                    | `backend/controllers/authController.js`, `backend/middleware/auth.js`               |
+| Socket events + rooms                      | `backend/sockets/chat.socket.js`, `backend/sockets/rooms.js`                        |
+| Schemas                                    | `backend/models/{Order,Service,JobRequest,ChatMessage,Dispute,Notification}.js`     |
+| Live API docs                              | `GET /api/docs` (Swagger)                                                           |

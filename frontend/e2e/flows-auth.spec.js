@@ -5,14 +5,24 @@ import { expect, mockApi, watchErrors, USERS } from './helpers/app.js';
 
 test.describe.configure({ timeout: 120_000 });
 
-const store = (page) => page.evaluate(() => {
-  const { user, isAuthenticated } = window.__jobbloUserStore.getState();
-  return { id: user?._id ?? null, isAuthenticated };
-});
+const store = (page) =>
+  page.evaluate(() => {
+    const { user, isAuthenticated } = window.__jobbloUserStore.getState();
+    return { id: user?._id ?? null, isAuthenticated };
+  });
 
-test('sign-up: two steps, validation, then signed in on /home straight away (no e-mail step)', async ({ page }) => {
+test('sign-up: two steps, validation, then signed in on /home straight away (no e-mail step)', async ({
+  page,
+}) => {
   const errors = watchErrors(page);
-  const newUser = { _id: '64a0000000000000000000aa', name: 'Kari', lastName: 'Nordmann', email: 'kari@example.test', role: 'user', emailVerified: false };
+  const newUser = {
+    _id: '64a0000000000000000000aa',
+    name: 'Kari',
+    lastName: 'Nordmann',
+    email: 'kari@example.test',
+    role: 'user',
+    emailVerified: false,
+  };
   const { calls, state } = await mockApi(page, {
     routes: {
       // Like the backend: registering signs in at once; the e-mail is confirmed on the profile.
@@ -46,7 +56,12 @@ test('sign-up: two steps, validation, then signed in on /home straight away (no 
   await expect.poll(async () => (await store(page)).id).toBe(newUser._id);
   await expect(page.getByRole('heading', { name: 'Bekreft e-post' })).toHaveCount(0);
   expect(calls.find((c) => c.pathname === '/api/auth/register').body).toMatchObject({
-    name: 'Kari', lastName: 'Nordmann', email: 'kari@example.test', password: 'Passord123', role: 'user', acceptedTerms: true,
+    name: 'Kari',
+    lastName: 'Nordmann',
+    email: 'kari@example.test',
+    password: 'Passord123',
+    role: 'user',
+    acceptedTerms: true,
   });
   expect(calls.some((c) => c.pathname === '/api/auth/verify-email')).toBe(false);
   expect(state.session).toBe(newUser);
@@ -54,21 +69,42 @@ test('sign-up: two steps, validation, then signed in on /home straight away (no 
 });
 
 test('login on an unconfirmed account signs in normally (no e-mail step)', async ({ page }) => {
-  const newUser = { _id: '64a0000000000000000000ab', name: 'Ola', email: 'ola@example.test', role: 'user', emailVerified: false };
+  const newUser = {
+    _id: '64a0000000000000000000ab',
+    name: 'Ola',
+    email: 'ola@example.test',
+    role: 'user',
+    emailVerified: false,
+  };
   const { calls } = await mockApi(page, {
     routes: {
-      'POST /api/auth/login': ({ state: s }) => { s.session = newUser; return { user: newUser, accessToken: `at-${newUser._id}` }; },
+      'POST /api/auth/login': ({ state: s }) => {
+        s.session = newUser;
+        return { user: newUser, accessToken: `at-${newUser._id}` };
+      },
     },
   });
   await page.goto('/login');
   await login(page, newUser.email);
   await expect(page).toHaveURL(/\/home$/);
   await expect.poll(async () => (await store(page)).id).toBe(newUser._id);
-  expect(calls.some((c) => c.pathname === '/api/auth/verify-email' || c.pathname === '/api/auth/resend-verification')).toBe(false);
+  expect(
+    calls.some(
+      (c) =>
+        c.pathname === '/api/auth/verify-email' || c.pathname === '/api/auth/resend-verification'
+    )
+  ).toBe(false);
 });
 
 test('sign-up shows the server error and stays on the form', async ({ page }) => {
-  await mockApi(page, { routes: { 'POST /api/auth/register': () => ({ status: 400, json: { error: 'E-post er allerede registrert' } }) } });
+  await mockApi(page, {
+    routes: {
+      'POST /api/auth/register': () => ({
+        status: 400,
+        json: { error: 'E-post er allerede registrert' },
+      }),
+    },
+  });
   await page.goto('/register');
   await page.getByPlaceholder('Ola').fill('Kari');
   await page.getByPlaceholder('Nordmann', { exact: true }).fill('Nordmann');
@@ -78,7 +114,9 @@ test('sign-up shows the server error and stays on the form', async ({ page }) =>
   await page.getByPlaceholder('Skriv passordet på nytt').fill('Passord123');
   await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Opprett konto' }).click();
-  await expect(page.getByRole('alert').filter({ hasText: 'E-post er allerede registrert' })).toBeVisible();
+  await expect(
+    page.getByRole('alert').filter({ hasText: 'E-post er allerede registrert' })
+  ).toBeVisible();
   await expect(page).toHaveURL(/\/register$/);
 });
 
@@ -88,14 +126,19 @@ async function login(page, email, password = 'Passord123') {
   await page.locator('form button[type="submit"]').click();
 }
 
-const loginRoute = { 'POST /api/auth/login': ({ body, state }) => {
-  const u = Object.values(USERS).find((x) => x.email === body?.email);
-  if (!u || body.password !== 'Passord123') return { status: 401, json: { error: 'Feil e-post eller passord' } };
-  state.session = u;
-  return { user: u, accessToken: `at-${u._id}` };
-} };
+const loginRoute = {
+  'POST /api/auth/login': ({ body, state }) => {
+    const u = Object.values(USERS).find((x) => x.email === body?.email);
+    if (!u || body.password !== 'Passord123')
+      return { status: 401, json: { error: 'Feil e-post eller passord' } };
+    state.session = u;
+    return { user: u, accessToken: `at-${u._id}` };
+  },
+};
 
-test('login: wrong password shows an error, right one returns to the page the user wanted', async ({ page }) => {
+test('login: wrong password shows an error, right one returns to the page the user wanted', async ({
+  page,
+}) => {
   const errors = watchErrors(page);
   await mockApi(page, { routes: loginRoute });
   await page.goto('/favorites');
@@ -118,12 +161,16 @@ test('admin login is held at the authenticator gate until the code is right', as
       ...loginRoute,
       'POST /api/auth/mfa/verify': ({ body, state }) => {
         verify.push(body);
-        if (body?.code !== '123456') return { status: 400, json: { message: 'That code is not right — try again.' } };
+        if (body?.code !== '123456')
+          return { status: 400, json: { message: 'That code is not right — try again.' } };
         state.mfa.verified = true;
         return { ok: true };
       },
       // Like the backend: admin data only after the code.
-      '~* ^/api/admin/': ({ state }) => (state.mfa.verified ? { success: true, data: [] } : { status: 403, json: { code: 'MFA_REQUIRED' } }),
+      '~* ^/api/admin/': ({ state }) =>
+        state.mfa.verified
+          ? { success: true, data: [] }
+          : { status: 403, json: { code: 'MFA_REQUIRED' } },
     },
   });
   await page.goto('/login');
@@ -141,7 +188,9 @@ test('admin login is held at the authenticator gate until the code is right', as
   expect(verify).toEqual([{ code: '000000' }, { code: '123456' }]);
 });
 
-test('logout from the profile menu; the next account sees none of the previous data', async ({ page }) => {
+test('logout from the profile menu; the next account sees none of the previous data', async ({
+  page,
+}) => {
   const errors = watchErrors(page);
   const { calls, state } = await mockApi(page, { as: 'user', routes: loginRoute });
   await page.goto('/profile');
@@ -167,10 +216,14 @@ test('logout from the profile menu; the next account sees none of the previous d
 });
 
 test('forgot password: the email step asks the server for a code', async ({ page }) => {
-  const { calls } = await mockApi(page, { routes: { 'POST /api/auth/forgot-password': () => ({ message: 'sent' }) } });
+  const { calls } = await mockApi(page, {
+    routes: { 'POST /api/auth/forgot-password': () => ({ message: 'sent' }) },
+  });
   await page.goto('/forgot-password');
   await page.getByPlaceholder('deg@eksempel.no').fill(USERS.user.email);
   await page.getByRole('button', { name: 'Send kode' }).click();
   await expect.poll(() => calls.some((c) => c.pathname === '/api/auth/forgot-password')).toBe(true);
-  expect(calls.find((c) => c.pathname === '/api/auth/forgot-password').body).toEqual({ email: USERS.user.email });
+  expect(calls.find((c) => c.pathname === '/api/auth/forgot-password').body).toEqual({
+    email: USERS.user.email,
+  });
 });

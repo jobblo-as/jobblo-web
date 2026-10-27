@@ -27,8 +27,17 @@ const logActivity = async ({
   try {
     // Sanitize metadata — strip any sensitive keys before saving
     const FORBIDDEN_KEYS = [
-      'password', 'passwordHash', 'token', 'accessToken', 'refreshToken',
-      'authorization', 'secret', 'apiKey', 'cardNumber', 'cvv', 'privateKey',
+      'password',
+      'passwordHash',
+      'token',
+      'accessToken',
+      'refreshToken',
+      'authorization',
+      'secret',
+      'apiKey',
+      'cardNumber',
+      'cvv',
+      'privateKey',
     ];
 
     const safeMetadata = Object.fromEntries(

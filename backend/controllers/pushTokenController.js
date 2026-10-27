@@ -9,7 +9,9 @@ function providerOf(token) {
   const value = token.trim();
   if (EXPO_TOKEN.test(value)) return 'expo';
   // FCM registration tokens are opaque strings: a bounded, printable format check.
-  return value.length >= 20 && value.length <= 4096 && /^[A-Za-z0-9:_-]+$/.test(value) ? 'fcm' : null;
+  return value.length >= 20 && value.length <= 4096 && /^[A-Za-z0-9:_-]+$/.test(value)
+    ? 'fcm'
+    : null;
 }
 const validToken = (token) => providerOf(token) !== null;
 

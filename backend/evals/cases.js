@@ -131,11 +131,7 @@ const cases = [
       existingPaymentType: 'Timepris',
       existingEquipment: 'Skrutrekker, drill',
     },
-    mustPreserve: [
-      ['pax'],
-      ['2 skap', 'to skap', 'begge skap'],
-      ['verktøy'],
-    ],
+    mustPreserve: [['pax'], ['2 skap', 'to skap', 'begge skap'], ['verktøy']],
     mustNotInvent: ALL_INVENT,
     allowNumbers: ['2'],
     notes: 'Equipment context is supplied separately and should be used, not ignored.',
@@ -166,7 +162,10 @@ const cases = [
       existingCategory: 'Rørlegger',
       existingPaymentType: 'Timepris',
     },
-    mustPreserve: [['vannlås', 'vannlåsen'], ['kjøkkenvask', 'kjøkkenvasken', 'kjøkken']],
+    mustPreserve: [
+      ['vannlås', 'vannlåsen'],
+      ['kjøkkenvask', 'kjøkkenvasken', 'kjøkken'],
+    ],
     mustNotInvent: [INVENT.DATE, INVENT.PRICE, INVENT.ADDRESS, INVENT.CONTACT, INVENT.QUANTITY],
     allowNumbers: [],
     domainCues: ['stoppekran', 'godkjent', 'rørlegger'],
@@ -467,7 +466,8 @@ const cases = [
     mustNotInvent: ALL_INVENT,
     allowNumbers: [],
     expectMissingInfoPrompt: true,
-    notes: 'The brief\'s explicit BAD example. Must not become "professional and reliable painter".',
+    notes:
+      'The brief\'s explicit BAD example. Must not become "professional and reliable painter".',
   },
   {
     id: 'EN-05-ambiguous-moving',
@@ -508,7 +508,10 @@ const cases = [
       category: 'Maling',
       paymentType: 'Fastpris',
     },
-    mustPreserve: [['stue', 'stua'], ['gang', 'gangen']],
+    mustPreserve: [
+      ['stue', 'stua'],
+      ['gang', 'gangen'],
+    ],
     mustNotInvent: ALL_INVENT,
     allowNumbers: ['35'],
     titleOnly: true,
@@ -546,7 +549,10 @@ const cases = [
       city: 'Stavanger',
       duration: { value: 4, unit: 'hours' },
     },
-    mustPreserve: [['flyttevask', 'vask'], ['3-roms', '3 roms', 'treroms', 'tre roms']],
+    mustPreserve: [
+      ['flyttevask', 'vask'],
+      ['3-roms', '3 roms', 'treroms', 'tre roms'],
+    ],
     mustNotInvent: ALL_INVENT,
     allowNumbers: ['3', '4'],
     notes: 'Only a title exists. Description must expand it without inventing floor area or date.',

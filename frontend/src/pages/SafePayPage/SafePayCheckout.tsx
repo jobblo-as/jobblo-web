@@ -99,7 +99,11 @@ const Party = ({
       /* Was `averageRating || '4.9'` — an invented rating for every provider who had
          none, on the screen where the customer commits money. */
       <p className="mt-0.5 text-[0.75rem] text-[#63665F]">
-        {rating > 0 ? `★ ${rating}` : <span className="text-[#9B9E96]">Ingen vurderinger ennå</span>}
+        {rating > 0 ? (
+          `★ ${rating}`
+        ) : (
+          <span className="text-[#9B9E96]">Ingen vurderinger ennå</span>
+        )}
       </p>
     )}
   </div>
@@ -240,8 +244,7 @@ const SafePayCheckout: React.FC = () => {
     return <Centered title="Ikke tilgang" body="Denne kontrakten tilhører andre parter." />;
   }
 
-  const isPaid =
-    order.paymentStatus === 'paid' || SETTLED_STATUSES.includes(order.status);
+  const isPaid = order.paymentStatus === 'paid' || SETTLED_STATUSES.includes(order.status);
 
   const { fromDate, toDate, duration } = service;
   const contractDate = fromDate
@@ -326,8 +329,8 @@ const SafePayCheckout: React.FC = () => {
           </div>
 
           <p className="mt-4 text-[0.75rem] leading-relaxed text-[#63665F]">
-            Kontrakten sendes til begge parter på e-post og lagres under «Kontrakt» i menyen. Den
-            er juridisk bindende og beskytter deg ved en eventuell tvist.
+            Kontrakten sendes til begge parter på e-post og lagres under «Kontrakt» i menyen. Den er
+            juridisk bindende og beskytter deg ved en eventuell tvist.
           </p>
         </section>
 
@@ -376,9 +379,8 @@ const SafePayCheckout: React.FC = () => {
                 <p className="text-[0.8125rem] leading-relaxed text-[#2E6641]">
                   <strong className="mb-0.5 block font-semibold">Pengene holdes av Jobblo</strong>
                   {kr(calculation.total)} trekkes nå, men{' '}
-                  {order.providerId?.name || 'oppdragstakeren'} mottar{' '}
-                  {kr(calculation.providerNet)} først når du har godkjent jobben. Er du ikke
-                  fornøyd, kan du opprette en tvist.
+                  {order.providerId?.name || 'oppdragstakeren'} mottar {kr(calculation.providerNet)}{' '}
+                  først når du har godkjent jobben. Er du ikke fornøyd, kan du opprette en tvist.
                   {startDeadlineText && (
                     <span data-testid="safepay-refund-promise" className="mt-2 block">
                       Starter ikke {order.providerId?.name || 'oppdragstakeren'} oppdraget innen{' '}

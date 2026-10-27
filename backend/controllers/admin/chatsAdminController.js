@@ -5,7 +5,12 @@ const Order = require('../../models/Order');
 const Payment = require('../../models/Payment');
 const Dispute = require('../../models/Dispute');
 const Notification = require('../../models/Notification');
-const { asyncHandler, sendSuccess, sendError, buildPagination } = require('../../utils/apiResponse');
+const {
+  asyncHandler,
+  sendSuccess,
+  sendError,
+  buildPagination,
+} = require('../../utils/apiResponse');
 const { parsePagination, parseObjectId, parseSort, parseDate } = require('../../utils/pagination');
 const { logActivity } = require('../../services/admin/activityService');
 const { queryString } = require('../../utils/devQuery');
@@ -60,7 +65,17 @@ const getChats = asyncHandler(async (req, res) => {
   }
 
   if (req.query.status) {
-    const validStatuses = ['requested','agreed','paid','contracted','in_progress','completed','disputed','cancelled','restricted'];
+    const validStatuses = [
+      'requested',
+      'agreed',
+      'paid',
+      'contracted',
+      'in_progress',
+      'completed',
+      'disputed',
+      'cancelled',
+      'restricted',
+    ];
     if (validStatuses.includes(req.query.status)) query.status = req.query.status;
   }
 
@@ -102,7 +117,9 @@ const getChats = asyncHandler(async (req, res) => {
     const User = require('../../models/User');
     const [matchedServices, matchedUsers] = await Promise.all([
       Service.find({ title: regex }, { _id: 1 }).limit(50).lean(),
-      User.find({ $or: [{ name: regex }, { email: regex }] }, { _id: 1 }).limit(50).lean(),
+      User.find({ $or: [{ name: regex }, { email: regex }] }, { _id: 1 })
+        .limit(50)
+        .lean(),
     ]);
     const serviceIds = matchedServices.map((s) => s._id);
     const userIds = matchedUsers.map((u) => u._id);
@@ -117,7 +134,12 @@ const getChats = asyncHandler(async (req, res) => {
       query.$or = searchClauses;
     } else {
       // No matches for this search term
-      return sendSuccess(res, { chats: [] }, 'Ingen chatter funnet.', buildPagination(0, page, limit));
+      return sendSuccess(
+        res,
+        { chats: [] },
+        'Ingen chatter funnet.',
+        buildPagination(0, page, limit)
+      );
     }
   }
 
@@ -144,28 +166,44 @@ const getChats = asyncHandler(async (req, res) => {
     ]),
     Chat.aggregate([
       { $match: { _id: { $in: chatIds } } },
-      { $project: {
+      {
+        $project: {
           messageCount: { $size: { $ifNull: ['$messages', []] } },
           attachmentCount: {
             $size: {
-              $filter: { input: { $ifNull: ['$messages', []] }, as: 'm', cond: { $gt: [{ $size: { $ifNull: ['$$m.attachments', []] } }, 0] } },
+              $filter: {
+                input: { $ifNull: ['$messages', []] },
+                as: 'm',
+                cond: { $gt: [{ $size: { $ifNull: ['$$m.attachments', []] } }, 0] },
+              },
             },
           },
-          lastMessageAt: { $let: {
-            vars: { last: { $last: { $ifNull: ['$messages', []] } } },
-            in: '$$last.createdAt',
-          }},
-      }},
+          lastMessageAt: {
+            $let: {
+              vars: { last: { $last: { $ifNull: ['$messages', []] } } },
+              in: '$$last.createdAt',
+            },
+          },
+        },
+      },
     ]),
   ]);
 
   const reportCountMap = {};
-  reportCounts.forEach((r) => { reportCountMap[String(r._id)] = r.count; });
+  reportCounts.forEach((r) => {
+    reportCountMap[String(r._id)] = r.count;
+  });
   const statsMap = {};
-  messageStats.forEach((s) => { statsMap[String(s._id)] = s; });
+  messageStats.forEach((s) => {
+    statsMap[String(s._id)] = s;
+  });
 
   const enriched = chats.map((c) => {
-    const stats = statsMap[String(c._id)] ?? { messageCount: 0, attachmentCount: 0, lastMessageAt: null };
+    const stats = statsMap[String(c._id)] ?? {
+      messageCount: 0,
+      attachmentCount: 0,
+      lastMessageAt: null,
+    };
     return {
       ...c,
       messages: undefined, // ensure messages array is not sent
@@ -176,7 +214,12 @@ const getChats = asyncHandler(async (req, res) => {
     };
   });
 
-  return sendSuccess(res, { chats: enriched }, 'Chatter hentet.', buildPagination(total, page, limit));
+  return sendSuccess(
+    res,
+    { chats: enriched },
+    'Chatter hentet.',
+    buildPagination(total, page, limit)
+  );
 });
 
 // ── Chat detail ────────────────────────────────────────────────────────────────
@@ -196,19 +239,30 @@ const getChatById = asyncHandler(async (req, res) => {
 
   const [reportCount, payment, dispute] = await Promise.all([
     ChatReport.countDocuments({ chatId: id }),
-    chat.orderId ? Payment.findOne({ orderId: chat.orderId._id ?? chat.orderId }).select('status amount stripePaymentIntentId').lean() : null,
-    chat.orderId ? Dispute.findOne({ orderId: chat.orderId._id ?? chat.orderId }).select('status priority _id').lean() : null,
+    chat.orderId
+      ? Payment.findOne({ orderId: chat.orderId._id ?? chat.orderId })
+          .select('status amount stripePaymentIntentId')
+          .lean()
+      : null,
+    chat.orderId
+      ? Dispute.findOne({ orderId: chat.orderId._id ?? chat.orderId })
+          .select('status priority _id')
+          .lean()
+      : null,
   ]);
 
   // Count attachments across messages
   const attachmentCount = (chat.messages || []).reduce(
-    (s, m) => s + (m.attachments?.length ?? 0), 0
+    (s, m) => s + (m.attachments?.length ?? 0),
+    0
   );
 
   return sendSuccess(res, {
     chat: { ...chat, reportCount, attachmentCount },
     payment: payment ? { status: payment.status, amount: payment.amount } : null,
-    dispute: dispute ? { _id: dispute._id, status: dispute.status, priority: dispute.priority } : null,
+    dispute: dispute
+      ? { _id: dispute._id, status: dispute.status, priority: dispute.priority }
+      : null,
   });
 });
 

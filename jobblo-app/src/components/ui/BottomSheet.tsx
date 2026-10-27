@@ -1,5 +1,13 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, Modal, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
+import {
+  Animated,
+  Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X } from 'lucide-react-native';
@@ -44,7 +52,13 @@ export function BottomSheet({
   useEffect(() => {
     if (!visible) return;
     translateY.setValue(height);
-    Animated.spring(translateY, { toValue: 0, useNativeDriver: true, damping: 22, stiffness: 220, mass: 0.9 }).start();
+    Animated.spring(translateY, {
+      toValue: 0,
+      useNativeDriver: true,
+      damping: 22,
+      stiffness: 220,
+      mass: 0.9,
+    }).start();
   }, [visible, height, translateY]);
 
   const handleClose = () => {
@@ -59,14 +73,29 @@ export function BottomSheet({
     .onUpdate((event) => translateY.setValue(Math.max(0, event.translationY)))
     .onEnd((event) => {
       if (event.translationY > 110 || event.velocityY > 900) {
-        Animated.timing(translateY, { toValue: height, duration: 180, useNativeDriver: true }).start(() => onClose());
+        Animated.timing(translateY, {
+          toValue: height,
+          duration: 180,
+          useNativeDriver: true,
+        }).start(() => onClose());
       } else {
-        Animated.spring(translateY, { toValue: 0, useNativeDriver: true, damping: 22, stiffness: 220 }).start();
+        Animated.spring(translateY, {
+          toValue: 0,
+          useNativeDriver: true,
+          damping: 22,
+          stiffness: 220,
+        }).start();
       }
     });
 
   return (
-    <Modal visible={visible} transparent animationType="fade" statusBarTranslucent onRequestClose={handleClose}>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      onRequestClose={handleClose}
+    >
       <GestureHandlerRootView style={{ flex: 1 }}>
         <View className="flex-1 justify-end">
           <Pressable
@@ -77,45 +106,51 @@ export function BottomSheet({
           />
 
           <Animated.View style={{ maxHeight: '68%', transform: [{ translateY }] }}>
-            <View className="rounded-t-[24px] border-t border-line bg-surface" style={{ paddingBottom: insets.bottom, flexShrink: 1 }}>
-            <GestureDetector gesture={drag}>
-              <View>
-                <View className="items-center pt-2">
-                  <View className="h-1.5 w-10 rounded-full bg-line-strong" />
-                </View>
-                <View className="flex-row items-center justify-between border-b border-line px-5 pb-3 pt-2">
-                  <View className="min-w-[64px] items-start">{headerLeft}</View>
+            <View
+              className="rounded-t-[24px] border-t border-line bg-surface"
+              style={{ paddingBottom: insets.bottom, flexShrink: 1 }}
+            >
+              <GestureDetector gesture={drag}>
+                <View>
+                  <View className="items-center pt-2">
+                    <View className="h-1.5 w-10 rounded-full bg-line-strong" />
+                  </View>
+                  <View className="flex-row items-center justify-between border-b border-line px-5 pb-3 pt-2">
+                    <View className="min-w-[64px] items-start">{headerLeft}</View>
 
-                  <Text className="flex-1 text-center text-[1.0625rem] font-semibold text-ink" numberOfLines={1}>
-                    {title}
-                  </Text>
+                    <Text
+                      className="flex-1 text-center text-[1.0625rem] font-semibold text-ink"
+                      numberOfLines={1}
+                    >
+                      {title}
+                    </Text>
 
-                  <View className="min-w-[64px] items-end">
-                    {hideClose ? null : (
-                      <Pressable
-                        onPress={handleClose}
-                        disabled={!dismissable}
-                        className="h-9 w-9 items-center justify-center rounded-full"
-                        accessibilityRole="button"
-                        accessibilityLabel="Lukk"
-                      >
-                        <X size={19} color={dismissable ? tc('#63665F', 'muted') : '#C7C9C2'} />
-                      </Pressable>
-                    )}
+                    <View className="min-w-[64px] items-end">
+                      {hideClose ? null : (
+                        <Pressable
+                          onPress={handleClose}
+                          disabled={!dismissable}
+                          className="h-9 w-9 items-center justify-center rounded-full"
+                          accessibilityRole="button"
+                          accessibilityLabel="Lukk"
+                        >
+                          <X size={19} color={dismissable ? tc('#63665F', 'muted') : '#C7C9C2'} />
+                        </Pressable>
+                      )}
+                    </View>
                   </View>
                 </View>
-              </View>
-            </GestureDetector>
+              </GestureDetector>
 
-            <ScrollView
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 18 }}
-            >
-              {children}
-            </ScrollView>
+              <ScrollView
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={{ paddingHorizontal: 20, paddingVertical: 18 }}
+              >
+                {children}
+              </ScrollView>
 
-            {footer ? <View className="border-t border-line px-5 py-4">{footer}</View> : null}
+              {footer ? <View className="border-t border-line px-5 py-4">{footer}</View> : null}
             </View>
           </Animated.View>
         </View>

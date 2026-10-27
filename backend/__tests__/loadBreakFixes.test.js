@@ -16,11 +16,18 @@ describe('bounded password hashing (login storm starved the event loop)', () => 
     bcrypt.compare.mockImplementation(() => {
       running += 1;
       peak = Math.max(peak, running);
-      return new Promise((resolve) => pending.push(() => { running -= 1; resolve(true); }));
+      return new Promise((resolve) =>
+        pending.push(() => {
+          running -= 1;
+          resolve(true);
+        })
+      );
     });
 
     const order = [];
-    const calls = Array.from({ length: MAX_ACTIVE + MAX_WAITING }, (_, i) => comparePassword('pw', 'h').then(() => order.push(i)));
+    const calls = Array.from({ length: MAX_ACTIVE + MAX_WAITING }, (_, i) =>
+      comparePassword('pw', 'h').then(() => order.push(i))
+    );
     const overflow = comparePassword('pw', 'h');
     await expect(overflow).rejects.toMatchObject({ code: 'PASSWORD_HASH_BUSY' });
 
@@ -53,7 +60,10 @@ describe('DELETE /api/auth/sessions/:sessionId', () => {
   it('answers 400, not 500, for a malformed id', async () => {
     const { revokeSession } = require('../controllers/auth/accountController');
     const res = { status: jest.fn(() => res), json: jest.fn(() => res) };
-    await revokeSession({ params: { sessionId: 'not-an-id' }, userId: '507f1f77bcf86cd799439011' }, res);
+    await revokeSession(
+      { params: { sessionId: 'not-an-id' }, userId: '507f1f77bcf86cd799439011' },
+      res
+    );
     expect(res.status).toHaveBeenCalledWith(400);
   });
 });

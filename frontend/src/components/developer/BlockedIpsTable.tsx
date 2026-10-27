@@ -18,11 +18,52 @@ export function BlockedIpsTable({ onPick }: { onPick?: (target: string) => void 
   const canAct = Boolean(me?.can.execute || me?.can.request);
 
   const columns: Column<IpBlockRow>[] = [
-    { key: 'target', header: 'IP / range', cell: (x) => <span className="font-mono text-xs">{x.target}</span> },
-    { key: 'reason', header: 'Reason', className: 'max-w-[320px]', cell: (x) => <span className="block truncate text-xs" title={x.reason}>{x.reason}</span> },
-    { key: 'by', header: 'Blocked by', cell: (x) => <span className="text-xs">{x.createdBy?.name || '—'} · {ago(x.createdAt)}</span> },
-    { key: 'expires', header: 'Expires', cell: (x) => <span className="text-xs text-muted-foreground">{x.expiresAt ? dateTime(x.expiresAt) : 'never'}</span> },
-    { key: 'hits', header: 'Refused requests', align: 'right', cell: (x) => <span className="tabular-nums">{num(x.blockedRequests)}{x.lastBlockedAt ? <span className="ml-1 text-xs text-muted-foreground">· {ago(x.lastBlockedAt)}</span> : null}</span> },
+    {
+      key: 'target',
+      header: 'IP / range',
+      cell: (x) => <span className="font-mono text-xs">{x.target}</span>,
+    },
+    {
+      key: 'reason',
+      header: 'Reason',
+      className: 'max-w-[320px]',
+      cell: (x) => (
+        <span className="block truncate text-xs" title={x.reason}>
+          {x.reason}
+        </span>
+      ),
+    },
+    {
+      key: 'by',
+      header: 'Blocked by',
+      cell: (x) => (
+        <span className="text-xs">
+          {x.createdBy?.name || '—'} · {ago(x.createdAt)}
+        </span>
+      ),
+    },
+    {
+      key: 'expires',
+      header: 'Expires',
+      cell: (x) => (
+        <span className="text-xs text-muted-foreground">
+          {x.expiresAt ? dateTime(x.expiresAt) : 'never'}
+        </span>
+      ),
+    },
+    {
+      key: 'hits',
+      header: 'Refused requests',
+      align: 'right',
+      cell: (x) => (
+        <span className="tabular-nums">
+          {num(x.blockedRequests)}
+          {x.lastBlockedAt ? (
+            <span className="ml-1 text-xs text-muted-foreground">· {ago(x.lastBlockedAt)}</span>
+          ) : null}
+        </span>
+      ),
+    },
     {
       key: 'act',
       header: '',
@@ -44,11 +85,22 @@ export function BlockedIpsTable({ onPick }: { onPick?: (target: string) => void 
   ];
 
   if (!isLoading && !data?.blocks.length) {
-    return <EmptyState title="No blocked IPs" description="Block an IP from IP Management, Security Center or API Monitoring." />;
+    return (
+      <EmptyState
+        title="No blocked IPs"
+        description="Block an IP from IP Management, Security Center or API Monitoring."
+      />
+    );
   }
   return (
     <>
-      <DataTable columns={columns} rows={data?.blocks} loading={isLoading} rowKey={(x) => x._id} onRowClick={onPick && ((x) => onPick(x.target))} />
+      <DataTable
+        columns={columns}
+        rows={data?.blocks}
+        loading={isLoading}
+        rowKey={(x) => x._id}
+        onRowClick={onPick && ((x) => onPick(x.target))}
+      />
       <ReasonDialog
         open={Boolean(unblocking)}
         onOpenChange={(o) => !o && setUnblocking(null)}

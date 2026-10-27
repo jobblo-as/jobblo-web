@@ -38,7 +38,12 @@ jest.mock('../models/Order', () => {
   return Order;
 });
 jest.mock('../models/User', () => ({ findById: jest.fn(), exists: jest.fn(async () => null) }));
-jest.mock('../models/Service', () => ({ findById: jest.fn(), findByIdAndUpdate: jest.fn(), findOneAndUpdate: jest.fn(async () => ({})), updateOne: jest.fn(async () => ({})) }));
+jest.mock('../models/Service', () => ({
+  findById: jest.fn(),
+  findByIdAndUpdate: jest.fn(),
+  findOneAndUpdate: jest.fn(async () => ({})),
+  updateOne: jest.fn(async () => ({})),
+}));
 jest.mock('../models/Dispute', () => ({ findOne: jest.fn() }));
 jest.mock('../models/JobRequest', () => ({ findOne: jest.fn() }));
 jest.mock('../config/stripe', () => ({ getStripe: jest.fn() }));
@@ -94,7 +99,9 @@ beforeEach(() => {
   jest.clearAllMocks();
   // safepayController.createContract reads the pair conversation for its agreed price.
   Chat.findOne.mockReturnValue({ select: () => ({ lean: async () => null }) });
-  User.findById.mockReturnValue({ select: jest.fn().mockResolvedValue({ _id: APPLICANT, name: 'Applicant' }) });
+  User.findById.mockReturnValue({
+    select: jest.fn().mockResolvedValue({ _id: APPLICANT, name: 'Applicant' }),
+  });
   // Default: a legitimate pair — OWNER owns the job, APPLICANT applied to it.
   Service.findById.mockReturnValue(selectChain({ _id: SERVICE, userId: OWNER }));
   JobRequest.findOne.mockReturnValue(selectChain({ _id: 'application_1' }));
@@ -245,7 +252,10 @@ describe('createOrGetChat finds an existing conversation in either orientation',
   it('rejects a malformed id with 400 rather than a CastError 500', async () => {
     const res = makeRes();
     await chatController.createOrGetChat(
-      { user: { id: String(OWNER) }, body: { providerId: 'not-an-id', serviceId: String(SERVICE) } },
+      {
+        user: { id: String(OWNER) },
+        body: { providerId: 'not-an-id', serviceId: String(SERVICE) },
+      },
       res
     );
 
@@ -253,7 +263,10 @@ describe('createOrGetChat finds an existing conversation in either orientation',
   });
 
   it('refuses a chat with yourself', async () => {
-    const req = { user: { id: String(OWNER) }, body: { providerId: String(OWNER), serviceId: String(SERVICE) } };
+    const req = {
+      user: { id: String(OWNER) },
+      body: { providerId: String(OWNER), serviceId: String(SERVICE) },
+    };
     const res = makeRes();
 
     await chatController.createOrGetChat(req, res);
@@ -284,7 +297,9 @@ describe('createContract points the money by service ownership, not by chat slot
 
   it('charges the OWNER even when the chat has the owner in the providerId slot', async () => {
     // This is the apply-created orientation — the one that used to invert the money.
-    Chat.findById.mockReturnValue(populateChain(chatInOrientation({ clientId: APPLICANT, providerId: OWNER })));
+    Chat.findById.mockReturnValue(
+      populateChain(chatInOrientation({ clientId: APPLICANT, providerId: OWNER }))
+    );
 
     const req = { user: { id: String(OWNER) }, params: { chatId: String(CHAT) }, body: {} };
     await chatController.createContract(req, makeRes());
@@ -296,7 +311,9 @@ describe('createContract points the money by service ownership, not by chat slot
   });
 
   it('produces the same order from the other orientation', async () => {
-    Chat.findById.mockReturnValue(populateChain(chatInOrientation({ clientId: OWNER, providerId: APPLICANT })));
+    Chat.findById.mockReturnValue(
+      populateChain(chatInOrientation({ clientId: OWNER, providerId: APPLICANT }))
+    );
 
     const req = { user: { id: String(OWNER) }, params: { chatId: String(CHAT) }, body: {} };
     await chatController.createContract(req, makeRes());
@@ -307,7 +324,9 @@ describe('createContract points the money by service ownership, not by chat slot
   });
 
   it('still refuses a caller who does not own the service', async () => {
-    Chat.findById.mockReturnValue(populateChain(chatInOrientation({ clientId: APPLICANT, providerId: OWNER })));
+    Chat.findById.mockReturnValue(
+      populateChain(chatInOrientation({ clientId: APPLICANT, providerId: OWNER }))
+    );
 
     const req = { user: { id: String(APPLICANT) }, params: { chatId: String(CHAT) }, body: {} };
     const res = makeRes();
@@ -323,7 +342,11 @@ describe('createContract points the money by service ownership, not by chat slot
     chat.agreedPrice = 1500;
     Chat.findById.mockReturnValue(populateChain(chat));
 
-    const req = { user: { id: String(OWNER) }, params: { chatId: String(CHAT) }, body: { agreedPrice: 999999 } };
+    const req = {
+      user: { id: String(OWNER) },
+      params: { chatId: String(CHAT) },
+      body: { agreedPrice: 999999 },
+    };
     await chatController.createContract(req, makeRes());
 
     const created = Order.mock.calls[0][0];

@@ -1,6 +1,8 @@
 jest.mock('axios', () => ({ post: jest.fn(), get: jest.fn() }));
 jest.mock('../models/User', () => ({ findOne: jest.fn(), findById: jest.fn(), create: jest.fn() }));
-jest.mock('../utils/tokenUtils', () => ({ createSession: jest.fn(async () => ({ accessToken: 'at', refreshToken: 'rt' })) }));
+jest.mock('../utils/tokenUtils', () => ({
+  createSession: jest.fn(async () => ({ accessToken: 'at', refreshToken: 'rt' })),
+}));
 
 let passport;
 let vippsController;
@@ -94,7 +96,9 @@ describe('explicit web/mobile OAuth routes', () => {
 
   it('mobile Google callback redirects to the app hand-off', () => {
     const url = oauthDestination({ platform: 'mobile', accessToken: 'token123' });
-    expect(url).toContain('https://api.example/api/auth/mobile-return?state=success&token=token123');
+    expect(url).toContain(
+      'https://api.example/api/auth/mobile-return?state=success&token=token123'
+    );
   });
 
   it('web Vipps authorize uses the web redirect URI', async () => {
@@ -103,7 +107,9 @@ describe('explicit web/mobile OAuth routes', () => {
 
     await vippsController.redirectToVipps(req, res, { platform: 'web' });
 
-    expect(res.redirectedTo).toContain('redirect_uri=https%3A%2F%2Fjobblo.no%2Fapi%2Fauth%2Fweb%2Fvipps%2Fcallback');
+    expect(res.redirectedTo).toContain(
+      'redirect_uri=https%3A%2F%2Fjobblo.no%2Fapi%2Fauth%2Fweb%2Fvipps%2Fcallback'
+    );
   });
 
   it('mobile Vipps authorize uses the mobile redirect URI', async () => {
@@ -112,7 +118,9 @@ describe('explicit web/mobile OAuth routes', () => {
 
     await vippsController.redirectToVipps(req, res, { platform: 'mobile' });
 
-    expect(res.redirectedTo).toContain('redirect_uri=https%3A%2F%2Fjobblo.no%2Fapi%2Fauth%2Fmobile%2Fvipps%2Fcallback');
+    expect(res.redirectedTo).toContain(
+      'redirect_uri=https%3A%2F%2Fjobblo.no%2Fapi%2Fauth%2Fmobile%2Fvipps%2Fcallback'
+    );
   });
 
   it('Vipps token exchange uses the same route-specific redirect URI', async () => {
@@ -133,10 +141,15 @@ describe('explicit web/mobile OAuth routes', () => {
     axios.get.mockResolvedValue({ data: { sub: 'vipps-123', email: 'user@example.com' } });
     User.findOne.mockResolvedValue({ _id: 'u1', email: 'user@example.com' });
 
-    await vippsController.vippsCallback(req, res, { platform: 'mobile', redirectUri: 'https://jobblo.no/api/auth/mobile/vipps/callback' });
+    await vippsController.vippsCallback(req, res, {
+      platform: 'mobile',
+      redirectUri: 'https://jobblo.no/api/auth/mobile/vipps/callback',
+    });
 
     const payload = axios.post.mock.calls[0][1];
-    expect(payload).toContain('redirect_uri=https%3A%2F%2Fjobblo.no%2Fapi%2Fauth%2Fmobile%2Fvipps%2Fcallback');
+    expect(payload).toContain(
+      'redirect_uri=https%3A%2F%2Fjobblo.no%2Fapi%2Fauth%2Fmobile%2Fvipps%2Fcallback'
+    );
   });
 
   it('rejects invalid Vipps state for web and mobile', async () => {
@@ -147,15 +160,22 @@ describe('explicit web/mobile OAuth routes', () => {
           vippsAuth: {
             state: 'real',
             createdAt: Date.now(),
-            redirectUri: platform === 'web'
-              ? 'https://jobblo.no/api/auth/web/vipps/callback'
-              : 'https://jobblo.no/api/auth/mobile/vipps/callback',
+            redirectUri:
+              platform === 'web'
+                ? 'https://jobblo.no/api/auth/web/vipps/callback'
+                : 'https://jobblo.no/api/auth/mobile/vipps/callback',
           },
         },
       });
       const res = makeRes();
 
-      await vippsController.vippsCallback(req, res, { platform, redirectUri: platform === 'web' ? 'https://jobblo.no/api/auth/web/vipps/callback' : 'https://jobblo.no/api/auth/mobile/vipps/callback' });
+      await vippsController.vippsCallback(req, res, {
+        platform,
+        redirectUri:
+          platform === 'web'
+            ? 'https://jobblo.no/api/auth/web/vipps/callback'
+            : 'https://jobblo.no/api/auth/mobile/vipps/callback',
+      });
 
       expect(res.redirectedTo).toContain('vipps_invalid_state');
     }
@@ -163,7 +183,9 @@ describe('explicit web/mobile OAuth routes', () => {
 
   it('mobile errors return to the app', () => {
     const url = oauthDestination({ platform: 'mobile', error: 'vipps_failed' });
-    expect(url).toContain('https://api.example/api/auth/mobile-return?state=error&code=vipps_failed');
+    expect(url).toContain(
+      'https://api.example/api/auth/mobile-return?state=error&code=vipps_failed'
+    );
   });
 
   it('web errors return to the web page', () => {

@@ -20,9 +20,23 @@ const detailKey = (id) => `services:detail:${id}`;
 const LIST_EXCLUDE = '-imageMetadata -checklist';
 const LIST_SELLER = 'name avatarUrl verified role orgNumber companyName';
 // Public seller-card fields only (rating count, completed jobs, member since).
-const DETAIL_SELLER = 'name lastName avatarUrl averageRating reviewCount completedJobs createdAt verified role orgNumber companyName';
+const DETAIL_SELLER =
+  'name lastName avatarUrl averageRating reviewCount completedJobs createdAt verified role orgNumber companyName';
 /** Lean rows with the populated seller's selected defaults back, as hydrated docs had them. */
-const withSeller = (rows, select) => withDefaults(Service, (Array.isArray(rows) ? rows : [rows]).map((r) => r && { ...r, userId: r.userId && typeof r.userId === 'object' && r.userId._id ? selectedDefaults(User, r.userId, select) : r.userId }));
+const withSeller = (rows, select) =>
+  withDefaults(
+    Service,
+    (Array.isArray(rows) ? rows : [rows]).map(
+      (r) =>
+        r && {
+          ...r,
+          userId:
+            r.userId && typeof r.userId === 'object' && r.userId._id
+              ? selectedDefaults(User, r.userId, select)
+              : r.userId,
+        }
+    )
+  );
 
 /** Reading listings: public list with filters and sort, detail, and the owner's own listings. */
 
@@ -105,10 +119,18 @@ exports.getAllServices = async (req, res) => {
         // Match jobs stored directly with countyCode OR jobs stored with a municipality
         // that belongs to the selected county (for backwards compatibility)
         // Static reference data: memoized for an hour instead of a query per filtered request.
-        const munCodes = await memo(`geo:muni-codes:${[...codes].sort().join(',')}`, 3600, async () => {
-          const NorwayMunicipality = require('../../models/NorwayMunicipality');
-          return (await NorwayMunicipality.find({ countyCode: { $in: codes } }).select('code').lean()).map((m) => m.code);
-        });
+        const munCodes = await memo(
+          `geo:muni-codes:${[...codes].sort().join(',')}`,
+          3600,
+          async () => {
+            const NorwayMunicipality = require('../../models/NorwayMunicipality');
+            return (
+              await NorwayMunicipality.find({ countyCode: { $in: codes } })
+                .select('code')
+                .lean()
+            ).map((m) => m.code);
+          }
+        );
 
         const countyOrConditions = [{ countyCode: { $in: codes } }];
         if (munCodes.length > 0) {
@@ -181,7 +203,11 @@ exports.getAllServices = async (req, res) => {
     // collection in one response. MAX_LIMIT matches utils/pagination.js, which the
     // admin routes already use.
     // parsePagination also caps the page (an anonymous ?page=1e9 was a full-collection skip).
-    const { page: safePage, limit: safeLimit, skip } = parsePagination({ page, limit }, { defaultLimit: 25 });
+    const {
+      page: safePage,
+      limit: safeLimit,
+      skip,
+    } = parsePagination({ page, limit }, { defaultLimit: 25 });
 
     // find() and countDocuments() ran sequentially for no reason.
     const [services, total] = await Promise.all([
@@ -211,7 +237,9 @@ exports.getAllServices = async (req, res) => {
         kind: 'list',
         text: typeof search === 'string' ? search : null,
         categories: query.categories?.$in,
-        regions: [countyCodes, municipalityCodes, areaCodes].filter((c) => typeof c === 'string').reduce((a, c) => a + c.split(',').filter(Boolean).length, 0),
+        regions: [countyCodes, municipalityCodes, areaCodes]
+          .filter((c) => typeof c === 'string')
+          .reduce((a, c) => a + c.split(',').filter(Boolean).length, 0),
         radiusKm: query['location.coordinates'] ? Math.round(radiusNum / 1000) : null,
         results: total,
         ms: Date.now() - startedAt,
@@ -246,7 +274,7 @@ exports.getServiceById = async (req, res) => {
     const cached = await cache.get(detailKey(id));
     if (cached) {
       const viewerId = req.userId ? String(req.userId) : null;
-      if (viewerId !== String(cached.userId?._id || cached.userId) && await firstView(req, id)) {
+      if (viewerId !== String(cached.userId?._id || cached.userId) && (await firstView(req, id))) {
         void viewCounter.count(id);
         cached.views = (cached.views || 0) + 1;
       }
@@ -295,13 +323,18 @@ exports.getServiceById = async (req, res) => {
     // of a popular job queued on that one document). A failed increment is a lost view, not
     // a failed page.
     // One view per viewer per listing per 24 h (utils/firstView), so a refresh loop can't buy "Trending".
-    if (!isOwner && PUBLIC_SERVICE_STATUSES.includes(service.status) && await firstView(req, String(service._id))) {
+    if (
+      !isOwner &&
+      PUBLIC_SERVICE_STATUSES.includes(service.status) &&
+      (await firstView(req, String(service._id)))
+    ) {
       void viewCounter.count(service._id); // buffered: one bulkWrite per 15 s (utils/viewCounter)
       service.views = (service.views || 0) + 1;
     }
 
     const serviceData = service;
-    if (PUBLIC_SERVICE_STATUSES.includes(service.status)) void cache.set(detailKey(id), serviceData, 30);
+    if (PUBLIC_SERVICE_STATUSES.includes(service.status))
+      void cache.set(detailKey(id), serviceData, 30);
 
     res.json(serviceData);
   } catch (err) {
@@ -309,7 +342,6 @@ exports.getServiceById = async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
-
 
 // GET /api/users/:id/services — a user's listings. Others see only public ones; this
 // used to hand anyone their drafts, cancelled and completed jobs. Served from here, not

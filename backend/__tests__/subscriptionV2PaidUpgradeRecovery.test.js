@@ -110,22 +110,26 @@ function recoveryFixture(patch = {}) {
     cancel_at_period_end: false,
     latest_invoice: KNOWN_UPGRADE.invoiceId,
     metadata,
-    items: { data: [{
-      id: 'si_upgrade',
-      quantity: 1,
-      current_period_start: periodStart,
-      current_period_end: periodEnd,
-      price: {
-        id: KNOWN_UPGRADE.priceId,
-        product: targetPlan.stripeProductIdTest,
-        active: true,
-        livemode: false,
-        currency: 'nok',
-        type: 'recurring',
-        unit_amount: 14900,
-        recurring: { interval: 'month', interval_count: 1 },
-      },
-    }] },
+    items: {
+      data: [
+        {
+          id: 'si_upgrade',
+          quantity: 1,
+          current_period_start: periodStart,
+          current_period_end: periodEnd,
+          price: {
+            id: KNOWN_UPGRADE.priceId,
+            product: targetPlan.stripeProductIdTest,
+            active: true,
+            livemode: false,
+            currency: 'nok',
+            type: 'recurring',
+            unit_amount: 14900,
+            recurring: { interval: 'month', interval_count: 1 },
+          },
+        },
+      ],
+    },
   };
   const linePeriod = { start: prorationAt, end: periodEnd };
   const invoice = {
@@ -138,32 +142,48 @@ function recoveryFixture(patch = {}) {
     amount_paid: 4998,
     amount_remaining: 0,
     currency: 'nok',
-    payments: { data: [{
-      status: 'paid',
-      amount_paid: 4998,
-      payment: { payment_intent: { status: 'succeeded' } },
-    }] },
+    payments: {
+      data: [
+        {
+          status: 'paid',
+          amount_paid: 4998,
+          payment: { payment_intent: { status: 'succeeded' } },
+        },
+      ],
+    },
     parent: { subscription_details: { subscription: KNOWN_UPGRADE.subscriptionId, metadata } },
-    lines: { data: [
-      {
-        id: 'il_plus_credit',
-        amount: -9896,
-        currency: 'nok',
-        proration: true,
-        period: linePeriod,
-        pricing: { price_details: { price: KNOWN_UPGRADE.previousPriceId } },
-        parent: { subscription_item_details: { subscription: KNOWN_UPGRADE.subscriptionId, proration: true } },
-      },
-      {
-        id: 'il_pro_proration',
-        amount: 14894,
-        currency: 'nok',
-        proration: true,
-        period: linePeriod,
-        pricing: { price_details: { price: KNOWN_UPGRADE.priceId } },
-        parent: { subscription_item_details: { subscription: KNOWN_UPGRADE.subscriptionId, proration: true } },
-      },
-    ] },
+    lines: {
+      data: [
+        {
+          id: 'il_plus_credit',
+          amount: -9896,
+          currency: 'nok',
+          proration: true,
+          period: linePeriod,
+          pricing: { price_details: { price: KNOWN_UPGRADE.previousPriceId } },
+          parent: {
+            subscription_item_details: {
+              subscription: KNOWN_UPGRADE.subscriptionId,
+              proration: true,
+            },
+          },
+        },
+        {
+          id: 'il_pro_proration',
+          amount: 14894,
+          currency: 'nok',
+          proration: true,
+          period: linePeriod,
+          pricing: { price_details: { price: KNOWN_UPGRADE.priceId } },
+          parent: {
+            subscription_item_details: {
+              subscription: KNOWN_UPGRADE.subscriptionId,
+              proration: true,
+            },
+          },
+        },
+      ],
+    },
   };
   const request = {
     id: 'req_upgrade',
@@ -215,17 +235,21 @@ function recoveryFixture(patch = {}) {
     updateOne: jest.fn(async () => ({ modifiedCount: 1 })),
   };
   const operationModel = {
-    findOne: jest.fn((filter) => query(
-      filter.operationId === KNOWN_UPGRADE.previousOperationId ? previousOperation : operation
-    )),
+    findOne: jest.fn((filter) =>
+      query(
+        filter.operationId === KNOWN_UPGRADE.previousOperationId ? previousOperation : operation
+      )
+    ),
     find: jest.fn(() => query([operation])),
     findById: jest.fn(() => query(operation)),
     updateOne: jest.fn(async () => ({ modifiedCount: 1 })),
   };
   const eventModel = {
-    find: jest.fn((filter) => query([
-      filter.stripeEventId === KNOWN_UPGRADE.invoiceEventId ? invoiceLedger : subscriptionLedger,
-    ])),
+    find: jest.fn((filter) =>
+      query([
+        filter.stripeEventId === KNOWN_UPGRADE.invoiceEventId ? invoiceLedger : subscriptionLedger,
+      ])
+    ),
     findById: jest.fn((id) => query(docsById.get(String(id)))),
     updateMany: jest.fn(async () => ({ modifiedCount: 2 })),
   };
@@ -269,9 +293,11 @@ function recoveryFixture(patch = {}) {
   const overrides = {
     connection,
     SubscriptionModel: subscriptionModel,
-    PlanModel: { findById: jest.fn((id) => query(
-      String(id) === String(targetPlan._id) ? targetPlan : previousPlan
-    )) },
+    PlanModel: {
+      findById: jest.fn((id) =>
+        query(String(id) === String(targetPlan._id) ? targetPlan : previousPlan)
+      ),
+    },
     OperationModel: operationModel,
     EventModel: eventModel,
     UsageModel: usageModel,
@@ -301,17 +327,23 @@ function recoveryFixture(patch = {}) {
     usageModel,
     auditModel,
     overrides,
-    request: () => recoverPaidUpgrade({
-      adminId: new mongoose.Types.ObjectId(),
-      confirmation: 'RECONCILE_ALREADY_PAID_TEST_UPGRADE',
-    }, overrides),
+    request: () =>
+      recoverPaidUpgrade(
+        {
+          adminId: new mongoose.Types.ObjectId(),
+          confirmation: 'RECONCILE_ALREADY_PAID_TEST_UPGRADE',
+        },
+        overrides
+      ),
     ...patch,
   };
 }
 
 describe('one-time paid TEST upgrade reconciliation', () => {
   const originalNodeEnv = process.env.NODE_ENV;
-  beforeEach(() => { process.env.NODE_ENV = 'development'; });
+  beforeEach(() => {
+    process.env.NODE_ENV = 'development';
+  });
   afterAll(() => {
     if (originalNodeEnv === undefined) delete process.env.NODE_ENV;
     else process.env.NODE_ENV = originalNodeEnv;
@@ -378,24 +410,122 @@ describe('one-time paid TEST upgrade reconciliation', () => {
   });
 
   test.each([
-    ['wrong Stripe account', (f) => { f.stripe.accounts.retrieve.mockResolvedValue({ id: 'acct_other' }); }],
-    ['live mode', (f) => { f.overrides.stripeConfiguration.mockResolvedValue({ mode: 'live', keyModeValid: true }); }],
-    ['wrong Stripe customer owner', (f) => { f.stripe.customers.retrieve.mockResolvedValue({ id: 'cus_other', livemode: false, metadata: { userId: 'another-user' } }); }],
-    ['wrong subscription customer', (f) => { f.subscription.customer = 'cus_other'; }],
-    ['wrong invoice customer', (f) => { f.invoice.customer = 'cus_other'; }],
-    ['wrong invoice subscription', (f) => { f.invoice.parent.subscription_details.subscription = 'sub_other'; }],
-    ['wrong invoice mode', (f) => { f.invoice.livemode = true; }],
-    ['wrong target price', (f) => { f.subscription.items.data[0].price.id = 'price_other'; }],
-    ['wrong target plan type', (f) => { f.targetPlan.type = 'business'; }],
-    ['wrong subscription event ID', (f) => { f.subscriptionEvent.data.object.id = 'sub_other'; }],
-    ['wrong payment intent status', (f) => { f.invoice.payments.data[0].payment.payment_intent.status = 'requires_action'; }],
-    ['unpaid invoice', (f) => { f.invoice.status = 'open'; }],
-    ['wrong request operation key', (f) => { f.invoiceEvent.request.idempotency_key = 'another-operation'; }],
-    ['ambiguous plan operation', (f) => { f.operationModel.find.mockReturnValue(query([f.operation, { ...f.operation, _id: new mongoose.Types.ObjectId() }])); }],
-    ['wrong operation customer', (f) => { f.operation.stripeCustomerId = 'cus_other'; }],
-    ['missing exact previous operation', (f) => { f.operationModel.findOne.mockImplementation(() => query(null)); }],
-    ['duplicate paid upgrade invoice', (f) => { f.stripe.invoices.list.mockResolvedValue({ data: [f.invoice, { ...f.invoice, id: 'in_duplicate' }] }); }],
-    ['unavailable transaction support', (f) => { f.connection.db.admin = () => ({ command: async () => ({}) }); }],
+    [
+      'wrong Stripe account',
+      (f) => {
+        f.stripe.accounts.retrieve.mockResolvedValue({ id: 'acct_other' });
+      },
+    ],
+    [
+      'live mode',
+      (f) => {
+        f.overrides.stripeConfiguration.mockResolvedValue({ mode: 'live', keyModeValid: true });
+      },
+    ],
+    [
+      'wrong Stripe customer owner',
+      (f) => {
+        f.stripe.customers.retrieve.mockResolvedValue({
+          id: 'cus_other',
+          livemode: false,
+          metadata: { userId: 'another-user' },
+        });
+      },
+    ],
+    [
+      'wrong subscription customer',
+      (f) => {
+        f.subscription.customer = 'cus_other';
+      },
+    ],
+    [
+      'wrong invoice customer',
+      (f) => {
+        f.invoice.customer = 'cus_other';
+      },
+    ],
+    [
+      'wrong invoice subscription',
+      (f) => {
+        f.invoice.parent.subscription_details.subscription = 'sub_other';
+      },
+    ],
+    [
+      'wrong invoice mode',
+      (f) => {
+        f.invoice.livemode = true;
+      },
+    ],
+    [
+      'wrong target price',
+      (f) => {
+        f.subscription.items.data[0].price.id = 'price_other';
+      },
+    ],
+    [
+      'wrong target plan type',
+      (f) => {
+        f.targetPlan.type = 'business';
+      },
+    ],
+    [
+      'wrong subscription event ID',
+      (f) => {
+        f.subscriptionEvent.data.object.id = 'sub_other';
+      },
+    ],
+    [
+      'wrong payment intent status',
+      (f) => {
+        f.invoice.payments.data[0].payment.payment_intent.status = 'requires_action';
+      },
+    ],
+    [
+      'unpaid invoice',
+      (f) => {
+        f.invoice.status = 'open';
+      },
+    ],
+    [
+      'wrong request operation key',
+      (f) => {
+        f.invoiceEvent.request.idempotency_key = 'another-operation';
+      },
+    ],
+    [
+      'ambiguous plan operation',
+      (f) => {
+        f.operationModel.find.mockReturnValue(
+          query([f.operation, { ...f.operation, _id: new mongoose.Types.ObjectId() }])
+        );
+      },
+    ],
+    [
+      'wrong operation customer',
+      (f) => {
+        f.operation.stripeCustomerId = 'cus_other';
+      },
+    ],
+    [
+      'missing exact previous operation',
+      (f) => {
+        f.operationModel.findOne.mockImplementation(() => query(null));
+      },
+    ],
+    [
+      'duplicate paid upgrade invoice',
+      (f) => {
+        f.stripe.invoices.list.mockResolvedValue({
+          data: [f.invoice, { ...f.invoice, id: 'in_duplicate' }],
+        });
+      },
+    ],
+    [
+      'unavailable transaction support',
+      (f) => {
+        f.connection.db.admin = () => ({ command: async () => ({}) });
+      },
+    ],
   ])('fails closed for %s without applying database writes', async (_name, alter) => {
     const f = recoveryFixture();
     alter(f);
@@ -409,8 +539,9 @@ describe('one-time paid TEST upgrade reconciliation', () => {
 
   test('refuses the wrong confirmation, non-development environment, and non-loopback database', async () => {
     const f = recoveryFixture();
-    await expect(recoverPaidUpgrade({ confirmation: 'wrong' }, f.overrides))
-      .rejects.toMatchObject({ code: 'RECOVERY_SCOPE_REJECTED' });
+    await expect(recoverPaidUpgrade({ confirmation: 'wrong' }, f.overrides)).rejects.toMatchObject({
+      code: 'RECOVERY_SCOPE_REJECTED',
+    });
     process.env.NODE_ENV = 'production';
     await expect(f.request()).rejects.toMatchObject({ code: 'RECOVERY_SCOPE_REJECTED' });
     process.env.NODE_ENV = 'development';

@@ -18,7 +18,10 @@ async function getOperation(details) {
     details.amount <= 0 ||
     !/^[A-Za-z]{3}$/.test(String(details.currency || ''))
   ) {
-    throw operationError('STRIPE_FINANCIAL_OPERATION_INVALID', 'Financial operation details are invalid.');
+    throw operationError(
+      'STRIPE_FINANCIAL_OPERATION_INVALID',
+      'Financial operation details are invalid.'
+    );
   }
   let operation = await StripeFinancialOperation.findOne({ operationKey: details.operationKey });
   if (operation) {
@@ -57,12 +60,18 @@ function assertSameOperation(operation, details) {
     'transferId',
     'amount',
   ];
-  if (fields.some((field) => {
-    const existing = operation[field] == null ? null : String(operation[field]);
-    const incoming = details[field] == null ? null : String(details[field]);
-    return existing !== incoming;
-  }) || String(operation.currency).toUpperCase() !== String(details.currency).toUpperCase()) {
-    throw operationError('STRIPE_FINANCIAL_OPERATION_CONFLICT', 'A financial operation key was reused with different payment details.');
+  if (
+    fields.some((field) => {
+      const existing = operation[field] == null ? null : String(operation[field]);
+      const incoming = details[field] == null ? null : String(details[field]);
+      return existing !== incoming;
+    }) ||
+    String(operation.currency).toUpperCase() !== String(details.currency).toUpperCase()
+  ) {
+    throw operationError(
+      'STRIPE_FINANCIAL_OPERATION_CONFLICT',
+      'A financial operation key was reused with different payment details.'
+    );
   }
 }
 
@@ -94,7 +103,10 @@ function validateFinancialObject(object, operation, { expectedTransferId } = {})
     (operation.chargeId && linkedCharge && linkedCharge !== operation.chargeId) ||
     (expectedTransferId && linkedTransfer && linkedTransfer !== expectedTransferId)
   ) {
-    throw operationError('STRIPE_FINANCIAL_OBJECT_MISMATCH', 'Stripe financial operation did not match its authorized amount or source.');
+    throw operationError(
+      'STRIPE_FINANCIAL_OBJECT_MISMATCH',
+      'Stripe financial operation did not match its authorized amount or source.'
+    );
   }
 }
 
@@ -115,7 +127,10 @@ async function findExistingRefund(stripe, operation) {
     if (match) return match;
     startingAfter = page.has_more ? page.data?.[page.data.length - 1]?.id : null;
     if (page.has_more && !startingAfter) {
-      throw operationError('STRIPE_REFUND_RECONCILIATION_REQUIRED', 'Stripe refund history pagination was incomplete.');
+      throw operationError(
+        'STRIPE_REFUND_RECONCILIATION_REQUIRED',
+        'Stripe refund history pagination was incomplete.'
+      );
     }
   } while (startingAfter);
   return null;
@@ -133,17 +148,26 @@ async function getCommittedRefundAmount(stripe, chargeId) {
     for (const refund of page.data || []) {
       if (['succeeded', 'pending'].includes(refund.status)) {
         if (!Number.isSafeInteger(refund.amount) || refund.amount < 0) {
-          throw operationError('STRIPE_REFUND_RECONCILIATION_REQUIRED', 'Stripe refund history contained an invalid amount.');
+          throw operationError(
+            'STRIPE_REFUND_RECONCILIATION_REQUIRED',
+            'Stripe refund history contained an invalid amount.'
+          );
         }
         total += refund.amount;
         if (!Number.isSafeInteger(total)) {
-          throw operationError('STRIPE_REFUND_RECONCILIATION_REQUIRED', 'Stripe refund history amount exceeded safe accounting bounds.');
+          throw operationError(
+            'STRIPE_REFUND_RECONCILIATION_REQUIRED',
+            'Stripe refund history amount exceeded safe accounting bounds.'
+          );
         }
       }
     }
     startingAfter = page.has_more ? page.data?.[page.data.length - 1]?.id : null;
     if (page.has_more && !startingAfter) {
-      throw operationError('STRIPE_REFUND_RECONCILIATION_REQUIRED', 'Stripe refund history pagination was incomplete.');
+      throw operationError(
+        'STRIPE_REFUND_RECONCILIATION_REQUIRED',
+        'Stripe refund history pagination was incomplete.'
+      );
     }
   } while (startingAfter);
   return total;
@@ -159,13 +183,19 @@ function refundStatus(status) {
 async function executeRefund(stripe, details) {
   const operation = await getOperation({ ...details, type: 'refund' });
   if (operation.status === 'failed') {
-    throw operationError('STRIPE_REFUND_FAILED', 'The recorded refund failed; an administrator must authorize a new refund attempt.');
+    throw operationError(
+      'STRIPE_REFUND_FAILED',
+      'The recorded refund failed; an administrator must authorize a new refund attempt.'
+    );
   }
   if (operation.status === 'succeeded') {
     const refund = await findExistingRefund(stripe, operation);
     if (!refund || refund.status !== 'succeeded') {
       await updateOperation(operation, 'reconciliation_required');
-      throw operationError('STRIPE_REFUND_RECONCILIATION_REQUIRED', 'The recorded refund could not be verified in Stripe.');
+      throw operationError(
+        'STRIPE_REFUND_RECONCILIATION_REQUIRED',
+        'The recorded refund could not be verified in Stripe.'
+      );
     }
     validateFinancialObject(refund, operation);
     return { operation, refund, status: 'succeeded' };
@@ -178,7 +208,10 @@ async function executeRefund(stripe, details) {
       Date.now() - new Date(operation.attemptedAt).getTime() >= STRIPE_IDEMPOTENCY_SAFE_MS
     ) {
       await updateOperation(operation, 'reconciliation_required');
-      throw operationError('STRIPE_REFUND_RECONCILIATION_REQUIRED', 'Refund outcome is too old for a safe automatic retry.');
+      throw operationError(
+        'STRIPE_REFUND_RECONCILIATION_REQUIRED',
+        'Refund outcome is too old for a safe automatic retry.'
+      );
     }
     const attemptedAt = new Date();
     if (details.chargeId) {
@@ -193,7 +226,10 @@ async function executeRefund(stripe, details) {
         charge.amount_refunded < 0 ||
         charge.amount_refunded > charge.amount
       ) {
-        throw operationError('STRIPE_REFUND_SOURCE_MISMATCH', 'Original Stripe charge could not be verified for refund.');
+        throw operationError(
+          'STRIPE_REFUND_SOURCE_MISMATCH',
+          'Original Stripe charge could not be verified for refund.'
+        );
       }
       const alreadyCommitted = Math.max(
         charge.amount_refunded,
@@ -203,10 +239,16 @@ async function executeRefund(stripe, details) {
         await updateOperation(operation, 'failed', {
           lastErrorCode: 'refund_exceeds_unrefunded_charge',
         });
-        throw operationError('STRIPE_REFUND_EXCEEDS_REMAINING', 'Refund exceeds the remaining captured amount.');
+        throw operationError(
+          'STRIPE_REFUND_EXCEEDS_REMAINING',
+          'Refund exceeds the remaining captured amount.'
+        );
       }
     }
-    await updateOperation(operation, 'reconciliation_required', { attemptedAt, lastErrorCode: null });
+    await updateOperation(operation, 'reconciliation_required', {
+      attemptedAt,
+      lastErrorCode: null,
+    });
     try {
       refund = await stripe.refunds.create(
         {
@@ -224,7 +266,10 @@ async function executeRefund(stripe, details) {
       await updateOperation(operation, 'reconciliation_required', {
         lastErrorCode: error?.code || error?.type || 'stripe_refund_outcome_unknown',
       });
-      throw operationError('STRIPE_REFUND_RECONCILIATION_REQUIRED', 'Refund outcome is unknown; reconcile it in Stripe before retrying.');
+      throw operationError(
+        'STRIPE_REFUND_RECONCILIATION_REQUIRED',
+        'Refund outcome is unknown; reconcile it in Stripe before retrying.'
+      );
     }
   }
   validateFinancialObject(refund, operation);
@@ -250,7 +295,10 @@ async function findExistingReversal(stripe, operation) {
     if (match) return match;
     startingAfter = page.has_more ? page.data?.[page.data.length - 1]?.id : null;
     if (page.has_more && !startingAfter) {
-      throw operationError('STRIPE_REVERSAL_RECONCILIATION_REQUIRED', 'Stripe transfer reversal history pagination was incomplete.');
+      throw operationError(
+        'STRIPE_REVERSAL_RECONCILIATION_REQUIRED',
+        'Stripe transfer reversal history pagination was incomplete.'
+      );
     }
   } while (startingAfter);
   return null;
@@ -259,7 +307,10 @@ async function findExistingReversal(stripe, operation) {
 async function executeTransferReversal(stripe, details) {
   const operation = await getOperation({ ...details, type: 'transfer_reversal' });
   if (operation.status === 'failed') {
-    throw operationError('STRIPE_REVERSAL_FAILED', 'The recorded transfer reversal failed and requires administrator review.');
+    throw operationError(
+      'STRIPE_REVERSAL_FAILED',
+      'The recorded transfer reversal failed and requires administrator review.'
+    );
   }
   const transfer = await stripe.transfers.retrieve(operation.transferId);
   if (
@@ -267,27 +318,39 @@ async function executeTransferReversal(stripe, details) {
     transfer.livemode !== (operation.stripeMode === 'live') ||
     String(transfer.currency || '').toUpperCase() !== operation.currency
   ) {
-    throw operationError('STRIPE_TRANSFER_MISMATCH', 'The Stripe transfer does not match the approved recovery operation.');
+    throw operationError(
+      'STRIPE_TRANSFER_MISMATCH',
+      'The Stripe transfer does not match the approved recovery operation.'
+    );
   }
 
   let reversal = operation.stripeObjectId
-    ? (await findExistingReversal(stripe, operation))
+    ? await findExistingReversal(stripe, operation)
     : await findExistingReversal(stripe, operation);
   if (reversal) {
     validateFinancialObject(reversal, operation, { expectedTransferId: operation.transferId });
-    await updateOperation(operation, 'succeeded', { stripeObjectId: reversal.id, lastErrorCode: null });
+    await updateOperation(operation, 'succeeded', {
+      stripeObjectId: reversal.id,
+      lastErrorCode: null,
+    });
     return { operation, reversal, status: 'succeeded' };
   }
   if (operation.status === 'succeeded') {
     await updateOperation(operation, 'reconciliation_required');
-    throw operationError('STRIPE_REVERSAL_RECONCILIATION_REQUIRED', 'The transfer reversal could not be verified in Stripe.');
+    throw operationError(
+      'STRIPE_REVERSAL_RECONCILIATION_REQUIRED',
+      'The transfer reversal could not be verified in Stripe.'
+    );
   }
   if (
     operation.attemptedAt &&
     Date.now() - new Date(operation.attemptedAt).getTime() >= STRIPE_IDEMPOTENCY_SAFE_MS
   ) {
     await updateOperation(operation, 'reconciliation_required');
-    throw operationError('STRIPE_REVERSAL_RECONCILIATION_REQUIRED', 'Reversal outcome is too old for a safe automatic retry.');
+    throw operationError(
+      'STRIPE_REVERSAL_RECONCILIATION_REQUIRED',
+      'Reversal outcome is too old for a safe automatic retry.'
+    );
   }
 
   const reversedAmount = transfer.amount_reversed === undefined ? 0 : transfer.amount_reversed;
@@ -301,15 +364,28 @@ async function executeTransferReversal(stripe, details) {
     !Number.isSafeInteger(remaining) ||
     remaining < operation.amount
   ) {
-    await updateOperation(operation, 'failed', { lastErrorCode: 'transfer_reversal_exceeds_remaining' });
-    throw operationError('STRIPE_REVERSAL_EXCEEDS_REMAINING', 'Approved reversal exceeds the transfer amount still available.');
+    await updateOperation(operation, 'failed', {
+      lastErrorCode: 'transfer_reversal_exceeds_remaining',
+    });
+    throw operationError(
+      'STRIPE_REVERSAL_EXCEEDS_REMAINING',
+      'Approved reversal exceeds the transfer amount still available.'
+    );
   }
   if (typeof stripe.transfers.createReversal !== 'function') {
-    await updateOperation(operation, 'reconciliation_required', { lastErrorCode: 'reversal_api_unavailable' });
-    throw operationError('STRIPE_REVERSAL_UNAVAILABLE', 'Stripe transfer reversal is unavailable; administrator review is required.');
+    await updateOperation(operation, 'reconciliation_required', {
+      lastErrorCode: 'reversal_api_unavailable',
+    });
+    throw operationError(
+      'STRIPE_REVERSAL_UNAVAILABLE',
+      'Stripe transfer reversal is unavailable; administrator review is required.'
+    );
   }
 
-  await updateOperation(operation, 'reconciliation_required', { attemptedAt: new Date(), lastErrorCode: null });
+  await updateOperation(operation, 'reconciliation_required', {
+    attemptedAt: new Date(),
+    lastErrorCode: null,
+  });
   try {
     reversal = await stripe.transfers.createReversal(
       operation.transferId,
@@ -334,12 +410,21 @@ async function executeTransferReversal(stripe, details) {
       await updateOperation(operation, 'failed', {
         lastErrorCode: error.code,
       });
-      throw operationError('STRIPE_REVERSAL_FAILED', 'Stripe could not recover the approved transfer amount; administrator review is required.');
+      throw operationError(
+        'STRIPE_REVERSAL_FAILED',
+        'Stripe could not recover the approved transfer amount; administrator review is required.'
+      );
     }
-    throw operationError('STRIPE_REVERSAL_RECONCILIATION_REQUIRED', 'Transfer reversal outcome is unknown; reconcile it in Stripe before retrying.');
+    throw operationError(
+      'STRIPE_REVERSAL_RECONCILIATION_REQUIRED',
+      'Transfer reversal outcome is unknown; reconcile it in Stripe before retrying.'
+    );
   }
   validateFinancialObject(reversal, operation, { expectedTransferId: operation.transferId });
-  await updateOperation(operation, 'succeeded', { stripeObjectId: reversal.id, lastErrorCode: null });
+  await updateOperation(operation, 'succeeded', {
+    stripeObjectId: reversal.id,
+    lastErrorCode: null,
+  });
   return { operation, reversal, status: 'succeeded' };
 }
 

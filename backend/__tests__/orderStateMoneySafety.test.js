@@ -121,7 +121,11 @@ describe('money invariant on cancellation', () => {
   });
 
   it('leaves unpaid orders alone — nothing is held, so nothing to settle', async () => {
-    const order = { _id: new mongoose.Types.ObjectId(), status: 'awaiting_payment', paymentStatus: 'unpaid' };
+    const order = {
+      _id: new mongoose.Types.ObjectId(),
+      status: 'awaiting_payment',
+      paymentStatus: 'unpaid',
+    };
     Payment.findOne.mockResolvedValue(null);
 
     await expect(assertTerminalIsMoneySafe(order, 'cancelled')).resolves.toBeUndefined();
@@ -146,7 +150,9 @@ describe('transitionOrder', () => {
 
   it('reports no change rather than double-applying when another writer won the race', async () => {
     const order = paidOrder('paid');
-    Order.findById.mockResolvedValueOnce(order).mockResolvedValueOnce({ ...order, status: 'in_progress' });
+    Order.findById
+      .mockResolvedValueOnce(order)
+      .mockResolvedValueOnce({ ...order, status: 'in_progress' });
     Order.findOneAndUpdate.mockResolvedValue(null); // CAS matched nothing
 
     const result = await transitionOrder({ orderId: order._id, to: 'in_progress' });

@@ -17,7 +17,8 @@ const VISIBLE_TABS = ['index', 'create-job', 'messages', 'alerts', 'profile'];
  * Older iOS: frosted blur. Android: near-opaque white (no cheap native blur).
  * Both checks are needed: some iOS 26 betas lack the API and crash without the first.
  */
-export const LIQUID_GLASS = Platform.OS === 'ios' && isGlassEffectAPIAvailable() && isLiquidGlassAvailable();
+export const LIQUID_GLASS =
+  Platform.OS === 'ios' && isGlassEffectAPIAvailable() && isLiquidGlassAvailable();
 
 /** Height the floating bar covers at the bottom of the screen (bar + gap + home indicator). */
 export function useTabBarSpace() {
@@ -46,7 +47,14 @@ export function GlassTabBar({ state, descriptors, emitter, navigateToTab }: TabB
           glassEffectStyle="regular"
           isInteractive
           colorScheme="auto"
-          style={{ position: 'absolute', top: 0, left: 0, right: 0, height: BAR_HEIGHT, borderRadius: BAR_HEIGHT / 2 }}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: BAR_HEIGHT,
+            borderRadius: BAR_HEIGHT / 2,
+          }}
         />
       ) : null}
       <View
@@ -65,13 +73,21 @@ export function GlassTabBar({ state, descriptors, emitter, navigateToTab }: TabB
                 shadowOffset: { width: 0, height: 6 },
                 elevation: 10,
                 backgroundColor: dark
-                  ? Platform.OS === 'ios' ? 'rgba(28,31,27,0.35)' : 'rgba(28,31,27,0.96)'
-                  : Platform.OS === 'ios' ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.96)',
+                  ? Platform.OS === 'ios'
+                    ? 'rgba(28,31,27,0.35)'
+                    : 'rgba(28,31,27,0.96)'
+                  : Platform.OS === 'ios'
+                    ? 'rgba(255,255,255,0.35)'
+                    : 'rgba(255,255,255,0.96)',
               }
         }
       >
         {Platform.OS === 'ios' && !LIQUID_GLASS ? (
-          <BlurView intensity={60} tint="systemChromeMaterial" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
+          <BlurView
+            intensity={60}
+            tint="systemChromeMaterial"
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+          />
         ) : null}
         <View className="flex-1 flex-row items-center px-1.5">
           {routes.map((route) => {
@@ -80,7 +96,11 @@ export function GlassTabBar({ state, descriptors, emitter, navigateToTab }: TabB
             const color = focused ? TC.brandText : TC.ink2;
             const label = typeof options.title === 'string' ? options.title : route.name;
             const onPress = () => {
-              const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+              const event = emitter.emit({
+                type: 'tabPress',
+                target: route.key,
+                canPreventDefault: true,
+              });
               if (!focused && !event.defaultPrevented) navigateToTab(route.key);
             };
             return (
@@ -92,10 +112,21 @@ export function GlassTabBar({ state, descriptors, emitter, navigateToTab }: TabB
                 accessibilityState={{ selected: focused }}
                 accessibilityLabel={label}
                 className="h-[54px] flex-1 items-center justify-center rounded-full"
-                style={focused ? { backgroundColor: LIQUID_GLASS ? 'rgba(120,120,128,0.16)' : 'rgba(46,102,65,0.13)' } : undefined}
+                style={
+                  focused
+                    ? {
+                        backgroundColor: LIQUID_GLASS
+                          ? 'rgba(120,120,128,0.16)'
+                          : 'rgba(46,102,65,0.13)',
+                      }
+                    : undefined
+                }
               >
                 {options.tabBarIcon?.({ focused, color, size: 22 })}
-                <Text numberOfLines={1} style={{ color, fontSize: 11, fontWeight: focused ? '600' : '500', marginTop: 3 }}>
+                <Text
+                  numberOfLines={1}
+                  style={{ color, fontSize: 11, fontWeight: focused ? '600' : '500', marginTop: 3 }}
+                >
                   {label}
                 </Text>
               </Pressable>

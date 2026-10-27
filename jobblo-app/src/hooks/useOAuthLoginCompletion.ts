@@ -5,7 +5,11 @@ import { queryKeys } from '@/queryKeys';
 import { exchangeOAuthCode, fetchProfileWithToken } from '@/services/auth.service';
 import { oauthErrorMessage } from '@/utils/oauthErrors';
 import { decideOAuthLink } from '@/utils/oauthPending';
-import { clearOAuthPending, getOAuthPendingSince, getOAuthVerifier } from '@/utils/oauthAuthSession';
+import {
+  clearOAuthPending,
+  getOAuthPendingSince,
+  getOAuthVerifier,
+} from '@/utils/oauthAuthSession';
 
 /**
  * Turning a finished Google or Vipps trip into a signed-in session — exactly once.
@@ -89,9 +93,7 @@ export function parseOAuthReturnUrl(url: string): ParsedOAuthReturn {
   return parseOAuthParams(params);
 }
 
-export type OAuthCompletion =
-  | { status: 'signed-in' }
-  | { status: 'failed'; message: string };
+export type OAuthCompletion = { status: 'signed-in' } | { status: 'failed'; message: string };
 
 /**
  * One entry per code, at module scope so it survives a screen unmounting mid-flight.
@@ -152,7 +154,10 @@ export async function completeOAuthSignIn(
     // Only a sign-in this app started, and never over an existing session: anyone can open a
     // jobblo://oauth-success link, and one carrying their own token used to switch the phone
     // into their account (security review H1).
-    const decision = decideOAuthLink(await getOAuthPendingSince(), useAuthStore.getState().isAuthenticated);
+    const decision = decideOAuthLink(
+      await getOAuthPendingSince(),
+      useAuthStore.getState().isAuthenticated
+    );
     if (decision !== 'accept') {
       return {
         status: 'failed' as const,
@@ -220,4 +225,3 @@ export function useOAuthLoginCompletion(params: OAuthReturnParams) {
 
   return { state, message } as const;
 }
-

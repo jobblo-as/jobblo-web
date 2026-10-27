@@ -92,7 +92,12 @@ exports.getNearbyServices = async (req, res) => {
       .limit(50)
       .lean();
 
-    recordSearch({ kind: 'nearby', radiusKm: Math.round(Math.min(radiusNum, 200_000) / 1000), results: services.length, ms: Date.now() - startedAt });
+    recordSearch({
+      kind: 'nearby',
+      radiusKm: Math.round(Math.min(radiusNum, 200_000) / 1000),
+      results: services.length,
+      ms: Date.now() - startedAt,
+    });
     res.json(withDefaults(Service, services));
   } catch (err) {
     console.error(err);

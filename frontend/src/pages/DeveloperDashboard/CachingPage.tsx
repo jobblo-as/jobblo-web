@@ -2,7 +2,16 @@ import { Link } from 'react-router-dom';
 import { Database, Globe, Layers } from 'lucide-react';
 import { duration, num, pct } from '@/lib/devFormat';
 import { useDevCaching } from '../../features/developer/hooks';
-import { CountBars, ErrorState, Mono, NotConfigured, PageHeader, RefreshButton, Section, StatCard } from '../../components/developer/kit';
+import {
+  CountBars,
+  ErrorState,
+  Mono,
+  NotConfigured,
+  PageHeader,
+  RefreshButton,
+  Section,
+  StatCard,
+} from '../../components/developer/kit';
 import { DataTable } from '../../components/developer/DataTable';
 import type { CachingInfo } from '../../api/developer';
 
@@ -30,27 +39,69 @@ export default function CachingPage() {
       {error && <ErrorState error={error} onRetry={() => refetch()} />}
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        <StatCard label="1 · nginx micro-cache" icon={<Globe />} loading={isLoading} value={ng ? pct(ng.hitRate) : 'n/a'} hint={ng ? `hit rate over ${num(ng.window.lines)} logged requests` : 'access log not available — see Nginx'} />
-        <StatCard label="2 · API cache (L1 + Redis)" icon={<Layers />} loading={isLoading} value={pct(apiRate)} hint={api ? `${num(hits + misses)} lookups on ${api.workers} worker${api.workers === 1 ? '' : 's'} · store: ${api.store}` : ''} />
-        <StatCard label="3 · Redis keys" icon={<Database />} loading={isLoading} value={num(api?.namespaces.reduce((a, n) => a + (n.redisKeys ?? 0), 0))} hint={data?.redisKeys.available ? 'cached responses (upper bound; exact on Cache Manager)' : (data?.redisKeys as { reason?: string })?.reason} />
+        <StatCard
+          label="1 · nginx micro-cache"
+          icon={<Globe />}
+          loading={isLoading}
+          value={ng ? pct(ng.hitRate) : 'n/a'}
+          hint={
+            ng
+              ? `hit rate over ${num(ng.window.lines)} logged requests`
+              : 'access log not available — see Nginx'
+          }
+        />
+        <StatCard
+          label="2 · API cache (L1 + Redis)"
+          icon={<Layers />}
+          loading={isLoading}
+          value={pct(apiRate)}
+          hint={
+            api
+              ? `${num(hits + misses)} lookups on ${api.workers} worker${api.workers === 1 ? '' : 's'} · store: ${api.store}`
+              : ''
+          }
+        />
+        <StatCard
+          label="3 · Redis keys"
+          icon={<Database />}
+          loading={isLoading}
+          value={num(api?.namespaces.reduce((a, n) => a + (n.redisKeys ?? 0), 0))}
+          hint={
+            data?.redisKeys.available
+              ? 'cached responses (upper bound; exact on Cache Manager)'
+              : (data?.redisKeys as { reason?: string })?.reason
+          }
+        />
       </div>
 
       <p className="text-sm text-muted-foreground">
-        The API layer only sees what nginx did not answer, so its hit rate is naturally lower than nginx's — requests nginx serves never reach it. Invalidate a namespace on the{' '}
+        The API layer only sees what nginx did not answer, so its hit rate is naturally lower than
+        nginx's — requests nginx serves never reach it. Invalidate a namespace on the{' '}
         <Link className="underline" to="../redis/cache">
           Cache Manager
         </Link>
         .
       </p>
 
-      {data && !ng && <NotConfigured title="nginx layer not visible" description={(data.nginx as { reason: string }).reason} />}
+      {data && !ng && (
+        <NotConfigured
+          title="nginx layer not visible"
+          description={(data.nginx as { reason: string }).reason}
+        />
+      )}
       {ng && (
-        <Section title="nginx micro-cache" description="HIT/STALE/UPDATING served by nginx · MISS/EXPIRED fetched from the API · BYPASS logged-in or not cacheable.">
+        <Section
+          title="nginx micro-cache"
+          description="HIT/STALE/UPDATING served by nginx · MISS/EXPIRED fetched from the API · BYPASS logged-in or not cacheable."
+        >
           <CountBars counts={ng.statuses} />
         </Section>
       )}
 
-      <Section title="API response cache by namespace" description="Hits and misses summed over all workers since they started; TTL as configured on the route; keys currently in Redis.">
+      <Section
+        title="API response cache by namespace"
+        description="Hits and misses summed over all workers since they started; TTL as configured on the route; keys currently in Redis."
+      >
         <DataTable<Ns>
           loading={isLoading}
           rows={api?.namespaces ?? []}
@@ -58,7 +109,12 @@ export default function CachingPage() {
           emptyTitle="No cached route has been used yet"
           columns={[
             { key: 'name', header: 'Namespace', cell: (n) => <Mono>{n.name}</Mono> },
-            { key: 'ttl', header: 'TTL', align: 'right', cell: (n) => (n.ttlSec ? duration(n.ttlSec) : '—') },
+            {
+              key: 'ttl',
+              header: 'TTL',
+              align: 'right',
+              cell: (n) => (n.ttlSec ? duration(n.ttlSec) : '—'),
+            },
             { key: 'hits', header: 'Hits', align: 'right', cell: (n) => num(n.hits) },
             { key: 'misses', header: 'Misses', align: 'right', cell: (n) => num(n.misses) },
             { key: 'rate', header: 'Hit rate', align: 'right', cell: (n) => pct(n.hitRate) },

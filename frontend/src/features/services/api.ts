@@ -19,5 +19,7 @@ export async function updateService(serviceId: string, jobData: ServiceUpdateDat
 /** Create (no id) or update a listing from the CreateJobForm multipart payload. Returns the raw response. */
 export function saveServiceForm(formData: FormData, id?: string) {
   const config = { headers: { 'Content-Type': 'multipart/form-data' } };
-  return id ? mainLink.put(`/api/services/${id}`, formData, config) : mainLink.post('/api/services', formData, config);
+  return id
+    ? mainLink.put(`/api/services/${id}`, formData, config)
+    : mainLink.post('/api/services', formData, config);
 }

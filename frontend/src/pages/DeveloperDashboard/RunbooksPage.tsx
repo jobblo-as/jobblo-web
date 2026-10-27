@@ -2,13 +2,40 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { AlertTriangle, ArrowLeft, ArrowUpRight, CheckCircle2, CircleX, Copy, Play, Search, Wrench } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowLeft,
+  ArrowUpRight,
+  CheckCircle2,
+  CircleX,
+  Copy,
+  Play,
+  Search,
+  Wrench,
+} from 'lucide-react';
 import { ago, dateTime } from '@/lib/devFormat';
 import { cn } from '@/lib/utils';
-import { devApi, type CheckState, type RunbookApproval, type RunbookRunRow, type RunbookStep } from '../../api/developer';
-import { useDevMe, useDevRunbook, useDevRunbooks, useUrlFilters } from '../../features/developer/hooks';
+import {
+  devApi,
+  type CheckState,
+  type RunbookApproval,
+  type RunbookRunRow,
+  type RunbookStep,
+} from '../../api/developer';
+import {
+  useDevMe,
+  useDevRunbook,
+  useDevRunbooks,
+  useUrlFilters,
+} from '../../features/developer/hooks';
 import { errMessage } from '../../features/developer/stepUp';
-import { EmptyState, ErrorState, PageHeader, Section, StatusBadge } from '../../components/developer/kit';
+import {
+  EmptyState,
+  ErrorState,
+  PageHeader,
+  Section,
+  StatusBadge,
+} from '../../components/developer/kit';
 import { Badge } from '../../components/developer/ui/badge';
 import { Button } from '../../components/developer/ui/button';
 import { Card, CardContent } from '../../components/developer/ui/card';
@@ -24,11 +51,29 @@ const APPROVAL: Record<RunbookApproval, { label: string; className: string }> = 
   none: { label: 'read-only', className: 'text-muted-foreground' },
   operations: { label: 'operations access', className: 'text-sky-700 border-sky-200 bg-sky-50' },
   'step-up': { label: 'step-up code', className: 'text-amber-700 border-amber-200 bg-amber-50' },
-  'change-request': { label: 'Super Admin approval', className: 'text-red-700 border-red-200 bg-red-50' },
-  human: { label: 'manual — shell / dashboard', className: 'text-violet-700 border-violet-200 bg-violet-50' },
+  'change-request': {
+    label: 'Super Admin approval',
+    className: 'text-red-700 border-red-200 bg-red-50',
+  },
+  human: {
+    label: 'manual — shell / dashboard',
+    className: 'text-violet-700 border-violet-200 bg-violet-50',
+  },
 };
 
-function StepRow({ step, i, run, canAct, onDone }: { step: RunbookStep; i: number; run?: RunbookRunRow; canAct: boolean; onDone: (i: number, note: string) => Promise<void> }) {
+function StepRow({
+  step,
+  i,
+  run,
+  canAct,
+  onDone,
+}: {
+  step: RunbookStep;
+  i: number;
+  run?: RunbookRunRow;
+  canAct: boolean;
+  onDone: (i: number, note: string) => Promise<void>;
+}) {
   const done = run?.steps.find((s) => s.index === i);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
@@ -49,17 +94,41 @@ function StepRow({ step, i, run, canAct, onDone }: { step: RunbookStep; i: numbe
   return (
     <li className={cn('rounded-md border p-3', done && 'bg-muted/40')}>
       <div className="flex items-start gap-3">
-        <span className={cn('mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border text-[11px] font-medium', done ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : 'text-muted-foreground')}>{done ? '✓' : i + 1}</span>
+        <span
+          className={cn(
+            'mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border text-[11px] font-medium',
+            done ? 'border-emerald-300 bg-emerald-50 text-emerald-700' : 'text-muted-foreground'
+          )}
+        >
+          {done ? '✓' : i + 1}
+        </span>
         <div className="min-w-0 flex-1 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            {step.kind === 'investigate' ? <Search className="size-3.5 text-muted-foreground" /> : <Wrench className="size-3.5 text-muted-foreground" />}
+            {step.kind === 'investigate' ? (
+              <Search className="size-3.5 text-muted-foreground" />
+            ) : (
+              <Wrench className="size-3.5 text-muted-foreground" />
+            )}
             <span className="text-sm">{step.text}</span>
-            {step.approval && <Badge variant="outline" className={APPROVAL[step.approval].className}>{APPROVAL[step.approval].label}</Badge>}
+            {step.approval && (
+              <Badge variant="outline" className={APPROVAL[step.approval].className}>
+                {APPROVAL[step.approval].label}
+              </Badge>
+            )}
           </div>
           {step.manual && (
             <div className="flex items-start gap-2">
-              <pre className="min-w-0 flex-1 overflow-x-auto rounded bg-muted px-2 py-1.5 font-mono text-xs whitespace-pre-wrap">{step.manual}</pre>
-              <Button size="icon-sm" variant="ghost" aria-label="Copy" onClick={() => navigator.clipboard?.writeText(step.manual!).then(() => toast.success('Copied'))}>
+              <pre className="min-w-0 flex-1 overflow-x-auto rounded bg-muted px-2 py-1.5 font-mono text-xs whitespace-pre-wrap">
+                {step.manual}
+              </pre>
+              <Button
+                size="icon-sm"
+                variant="ghost"
+                aria-label="Copy"
+                onClick={() =>
+                  navigator.clipboard?.writeText(step.manual!).then(() => toast.success('Copied'))
+                }
+              >
                 <Copy />
               </Button>
             </div>
@@ -79,7 +148,13 @@ function StepRow({ step, i, run, canAct, onDone }: { step: RunbookStep; i: numbe
             )}
             {run && !run.closedAt && !done && canAct && (
               <>
-                <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Note (optional)" className="h-8 w-56" maxLength={1000} />
+                <Input
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder="Note (optional)"
+                  className="h-8 w-56"
+                  maxLength={1000}
+                />
                 <Button
                   size="sm"
                   variant="secondary"
@@ -106,7 +181,15 @@ function StepRow({ step, i, run, canAct, onDone }: { step: RunbookStep; i: numbe
   );
 }
 
-function Detail({ runbookKey, incidentId, onBack }: { runbookKey: string; incidentId: string; onBack: () => void }) {
+function Detail({
+  runbookKey,
+  incidentId,
+  onBack,
+}: {
+  runbookKey: string;
+  incidentId: string;
+  onBack: () => void;
+}) {
   const { data, isLoading, error, refetch } = useDevRunbook(runbookKey);
   const { data: me } = useDevMe();
   const canAct = Boolean(me?.can.request || me?.can.execute);
@@ -114,7 +197,9 @@ function Detail({ runbookKey, incidentId, onBack }: { runbookKey: string; incide
   const [running, setRunning] = useState(false);
   const [outcome, setOutcome] = useState('');
   const r = data?.runbook;
-  const current = data?.runs.find((x) => !x.closedAt && (!incidentId || x.incidentId?._id === incidentId));
+  const current = data?.runs.find(
+    (x) => !x.closedAt && (!incidentId || x.incidentId?._id === incidentId)
+  );
   const refresh = () => qc.invalidateQueries({ queryKey: ['dev', 'runbook', runbookKey] });
 
   const start = async () => {
@@ -150,7 +235,8 @@ function Detail({ runbookKey, incidentId, onBack }: { runbookKey: string; incide
             </Button>
             {canAct && (
               <Button size="sm" disabled={running || isLoading} onClick={start}>
-                <Play /> {running ? 'Running checks…' : current ? 'Re-run checks' : 'Start: run checks'}
+                <Play />{' '}
+                {running ? 'Running checks…' : current ? 'Re-run checks' : 'Start: run checks'}
               </Button>
             )}
           </div>
@@ -159,8 +245,12 @@ function Detail({ runbookKey, incidentId, onBack }: { runbookKey: string; incide
       {incidentId && (
         <p className="text-sm text-muted-foreground">
           Working on incident{' '}
-          <Link to={`/developer/incidents?id=${incidentId}`} className="text-primary hover:underline">
-            {data?.runs.find((x) => x.incidentId?._id === incidentId)?.incidentId?.title || incidentId}
+          <Link
+            to={`/developer/incidents?id=${incidentId}`}
+            className="text-primary hover:underline"
+          >
+            {data?.runs.find((x) => x.incidentId?._id === incidentId)?.incidentId?.title ||
+              incidentId}
           </Link>
           . Runs, ticked steps and notes are added to its timeline.
         </p>
@@ -168,29 +258,67 @@ function Detail({ runbookKey, incidentId, onBack }: { runbookKey: string; incide
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
         <Section
           title="Diagnostic checks"
-          description={current ? `Run ${ago(current.createdAt)} by ${current.startedBy?.name || '—'}` : 'Read-only. Start the runbook to run them now.'}
+          description={
+            current
+              ? `Run ${ago(current.createdAt)} by ${current.startedBy?.name || '—'}`
+              : 'Read-only. Start the runbook to run them now.'
+          }
           action={current ? <StatusBadge status={current.state} /> : null}
         >
           <ul className="space-y-3">
-            {(current?.checks || r?.checks.map((c) => ({ ...c, state: null, detail: '', ms: 0 })) || []).map((c) => (
+            {(
+              current?.checks ||
+              r?.checks.map((c) => ({ ...c, state: null, detail: '', ms: 0 })) ||
+              []
+            ).map((c) => (
               <li key={c.key} className="flex gap-2.5">
-                <span className="mt-0.5">{c.state ? STATE_ICON[c.state as CheckState] : <span className="block size-4 rounded-full border" />}</span>
+                <span className="mt-0.5">
+                  {c.state ? (
+                    STATE_ICON[c.state as CheckState]
+                  ) : (
+                    <span className="block size-4 rounded-full border" />
+                  )}
+                </span>
                 <div className="min-w-0">
                   <div className="text-sm font-medium">{c.title}</div>
-                  {c.detail && <div className="text-xs break-words text-muted-foreground">{c.detail}</div>}
+                  {c.detail && (
+                    <div className="text-xs break-words text-muted-foreground">{c.detail}</div>
+                  )}
                 </div>
               </li>
             ))}
           </ul>
         </Section>
-        <Section title="Steps" description="Investigate first, then recover. Recovery only uses existing gated workflows — the badge says what each needs.">
+        <Section
+          title="Steps"
+          description="Investigate first, then recover. Recovery only uses existing gated workflows — the badge says what each needs."
+        >
           <ol className="space-y-2">
-            {r?.steps.map((s, i) => <StepRow key={i} step={s} i={i} run={current} canAct={canAct} onDone={(step, note) => update({ step, note: note || undefined })} />)}
+            {r?.steps.map((s, i) => (
+              <StepRow
+                key={i}
+                step={s}
+                i={i}
+                run={current}
+                canAct={canAct}
+                onDone={(step, note) => update({ step, note: note || undefined })}
+              />
+            ))}
           </ol>
           {current && canAct && (
             <div className="mt-4 flex flex-wrap items-center gap-2 border-t pt-4">
-              <Input value={outcome} onChange={(e) => setOutcome(e.target.value)} placeholder="Outcome — what fixed it?" className="h-8 min-w-60 flex-1" maxLength={2000} />
-              <Button size="sm" variant="outline" onClick={() => update({ close: true, outcome: outcome || undefined })}>
+              <Input
+                value={outcome}
+                onChange={(e) => setOutcome(e.target.value)}
+                placeholder="Outcome — what fixed it?"
+                className="h-8 min-w-60 flex-1"
+                maxLength={2000}
+              />
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => update({ close: true, outcome: outcome || undefined })}
+              >
                 Close run
               </Button>
             </div>
@@ -208,8 +336,14 @@ function Detail({ runbookKey, incidentId, onBack }: { runbookKey: string; incide
                 <span className="text-muted-foreground">
                   {x.steps.length}/{r?.steps.length} steps
                 </span>
-                {x.incidentId && <span className="text-xs text-muted-foreground">incident: {x.incidentId.title}</span>}
-                <span className="text-xs text-muted-foreground">{x.closedAt ? `closed${x.outcome ? ` — ${x.outcome}` : ''}` : 'open'}</span>
+                {x.incidentId && (
+                  <span className="text-xs text-muted-foreground">
+                    incident: {x.incidentId.title}
+                  </span>
+                )}
+                <span className="text-xs text-muted-foreground">
+                  {x.closedAt ? `closed${x.outcome ? ` — ${x.outcome}` : ''}` : 'open'}
+                </span>
               </li>
             ))}
           </ul>
@@ -224,7 +358,14 @@ function Detail({ runbookKey, incidentId, onBack }: { runbookKey: string; incide
 export default function RunbooksPage() {
   const [f, setF] = useUrlFilters({ key: '', incident: '' });
   const { data, isLoading, error, refetch } = useDevRunbooks();
-  if (f.key) return <Detail runbookKey={f.key} incidentId={f.incident} onBack={() => setF({ key: '', incident: '' })} />;
+  if (f.key)
+    return (
+      <Detail
+        runbookKey={f.key}
+        incidentId={f.incident}
+        onBack={() => setF({ key: '', incident: '' })}
+      />
+    );
 
   return (
     <div className="space-y-5">
@@ -244,12 +385,19 @@ export default function RunbooksPage() {
                 <span className="ml-auto flex flex-wrap gap-2">
                   {i.runbooks.length ? (
                     i.runbooks.map((k) => (
-                      <Button key={k} size="sm" variant="outline" onClick={() => setF({ key: k, incident: i._id })}>
+                      <Button
+                        key={k}
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setF({ key: k, incident: i._id })}
+                      >
                         {data.runbooks.find((r) => r.key === k)?.title}
                       </Button>
                     ))
                   ) : (
-                    <span className="text-xs text-muted-foreground">No runbook for this alert yet</span>
+                    <span className="text-xs text-muted-foreground">
+                      No runbook for this alert yet
+                    </span>
                   )}
                 </span>
               </li>
@@ -259,7 +407,15 @@ export default function RunbooksPage() {
       )}
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {(data?.runbooks || []).map((r) => (
-          <Card key={r.key} size="sm" role="button" tabIndex={0} className="cursor-pointer gap-2 transition-colors hover:border-primary/40" onClick={() => setF({ key: r.key })} onKeyDown={(e) => e.key === 'Enter' && setF({ key: r.key })}>
+          <Card
+            key={r.key}
+            size="sm"
+            role="button"
+            tabIndex={0}
+            className="cursor-pointer gap-2 transition-colors hover:border-primary/40"
+            onClick={() => setF({ key: r.key })}
+            onKeyDown={(e) => e.key === 'Enter' && setF({ key: r.key })}
+          >
             <CardContent className="space-y-2">
               <div className="flex items-start justify-between gap-2">
                 <span className="font-medium">{r.title}</span>
@@ -269,8 +425,14 @@ export default function RunbooksPage() {
               <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
                 <span>{r.checks.length} checks</span>
                 <span>{r.steps.length} steps</span>
-                <span>{r.lastRun ? `last run ${ago(r.lastRun.at)} · ${r.lastRun.state}` : 'never run'}</span>
-                {r.openIncidents ? <span className="font-medium text-red-600">{r.openIncidents} open incident(s)</span> : null}
+                <span>
+                  {r.lastRun ? `last run ${ago(r.lastRun.at)} · ${r.lastRun.state}` : 'never run'}
+                </span>
+                {r.openIncidents ? (
+                  <span className="font-medium text-red-600">
+                    {r.openIncidents} open incident(s)
+                  </span>
+                ) : null}
               </div>
             </CardContent>
           </Card>

@@ -23,12 +23,19 @@ const UA = 'JobbloSynthetic/1.0';
 const trimSlash = (u) => (u ? String(u).replace(/\/+$/, '') : null);
 const bases = () => ({
   api: trimSlash(process.env.SYNTHETIC_API_URL) || `http://127.0.0.1:${process.env.PORT || 5001}`,
-  web: trimSlash(process.env.SYNTHETIC_WEB_URL || process.env.PUBLIC_SITE_URL || process.env.FRONTEND_URL),
+  web: trimSlash(
+    process.env.SYNTHETIC_WEB_URL || process.env.PUBLIC_SITE_URL || process.env.FRONTEND_URL
+  ),
 });
 
 function allowedHosts() {
   const { api, web } = bases();
-  const hosts = new Set((process.env.SYNTHETIC_ALLOWED_HOSTS || '').split(',').map((h) => h.trim().toLowerCase()).filter(Boolean));
+  const hosts = new Set(
+    (process.env.SYNTHETIC_ALLOWED_HOSTS || '')
+      .split(',')
+      .map((h) => h.trim().toLowerCase())
+      .filter(Boolean)
+  );
   for (const u of [api, web, process.env.FRONTEND_URL, process.env.PUBLIC_SITE_URL]) {
     try {
       if (u) hosts.add(new URL(u).host.toLowerCase());
@@ -49,28 +56,56 @@ function checkUrlAllowed(raw, hosts = allowedHosts()) {
   }
   if (!['http:', 'https:'].includes(u.protocol)) return 'Only http and https URLs are allowed.';
   if (u.username || u.password) return 'URLs with credentials are not allowed.';
-  if (!hosts.has(u.host.toLowerCase())) return `Host ${u.host} is not allowed. Allowed: ${[...hosts].join(', ') || 'none'} (extend with SYNTHETIC_ALLOWED_HOSTS).`;
+  if (!hosts.has(u.host.toLowerCase()))
+    return `Host ${u.host} is not allowed. Allowed: ${[...hosts].join(', ') || 'none'} (extend with SYNTHETIC_ALLOWED_HOSTS).`;
   return null;
 }
 
 /** One HTTP step. Never follows redirects (a redirect could leave the allowed hosts). */
-async function step(name, url, { method = 'GET', headers = {}, body, expectStatus = 200, expect } = {}) {
+async function step(
+  name,
+  url,
+  { method = 'GET', headers = {}, body, expectStatus = 200, expect } = {}
+) {
   const started = Date.now();
   try {
     const res = await fetch(url, {
       method,
       redirect: 'manual',
-      headers: { 'User-Agent': UA, Accept: 'application/json, text/html;q=0.9', ...headers, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+      headers: {
+        'User-Agent': UA,
+        Accept: 'application/json, text/html;q=0.9',
+        ...headers,
+        ...(body ? { 'Content-Type': 'application/json' } : {}),
+      },
       body: body ? JSON.stringify(body) : undefined,
       signal: AbortSignal.timeout(STEP_TIMEOUT_MS),
     });
     const text = method === 'HEAD' ? '' : await res.text();
     const ms = Date.now() - started;
-    if (res.status !== expectStatus) return { name, ok: false, status: res.status, ms, error: `Expected ${expectStatus}, got ${res.status}` };
+    if (res.status !== expectStatus)
+      return {
+        name,
+        ok: false,
+        status: res.status,
+        ms,
+        error: `Expected ${expectStatus}, got ${res.status}`,
+      };
     const problem = expect ? expect(text, res) : null;
-    return problem ? { name, ok: false, status: res.status, ms, error: problem } : { name, ok: true, status: res.status, ms, text, res };
+    return problem
+      ? { name, ok: false, status: res.status, ms, error: problem }
+      : { name, ok: true, status: res.status, ms, text, res };
   } catch (e) {
-    return { name, ok: false, status: null, ms: Date.now() - started, error: e.name === 'TimeoutError' ? `Timed out after ${STEP_TIMEOUT_MS / 1000}s` : e.cause?.code || e.message };
+    return {
+      name,
+      ok: false,
+      status: null,
+      ms: Date.now() - started,
+      error:
+        e.name === 'TimeoutError'
+          ? `Timed out after ${STEP_TIMEOUT_MS / 1000}s`
+          : e.cause?.code || e.message,
+    };
   }
 }
 
@@ -91,7 +126,10 @@ function wsStep(name, url, { expect } = {}) {
       }
       resolve({ name, ms: Date.now() - started, status: null, ...r });
     };
-    const timer = setTimeout(() => done({ ok: false, error: `Timed out after ${STEP_TIMEOUT_MS / 1000}s` }), STEP_TIMEOUT_MS);
+    const timer = setTimeout(
+      () => done({ ok: false, error: `Timed out after ${STEP_TIMEOUT_MS / 1000}s` }),
+      STEP_TIMEOUT_MS
+    );
     try {
       ws = new WebSocket(url);
     } catch (e) {
@@ -102,8 +140,10 @@ function wsStep(name, url, { expect } = {}) {
       const problem = expect ? expect(text) : null;
       done(problem ? { ok: false, error: problem } : { ok: true, status: 101, text });
     };
-    ws.onerror = (ev) => done({ ok: false, error: ev?.message || ev?.error?.message || 'WebSocket error' });
-    ws.onclose = (ev) => done({ ok: false, error: `Closed before the handshake (code ${ev.code})` });
+    ws.onerror = (ev) =>
+      done({ ok: false, error: ev?.message || ev?.error?.message || 'WebSocket error' });
+    ws.onclose = (ev) =>
+      done({ ok: false, error: `Closed before the handshake (code ${ev.code})` });
   });
 }
 
@@ -119,28 +159,64 @@ const isJson = (text) => (json(text) === undefined ? 'Response is not JSON' : nu
 /** Built-in probes. Each returns the list of steps it ran (stops at the first failure). */
 const BUILT_IN = [
   // An /api route, not "/": behind nginx "/" is the web app, so a public SYNTHETIC_API_URL would always read as down.
-  { key: 'api', name: 'API', describe: 'GET /api/filter/options answers with JSON', run: ({ api }) => [step('GET /api/filter/options', `${api}/api/filter/options`, { expect: isJson })] },
-  { key: 'services', name: 'Job listing', describe: 'GET /api/services returns JSON', run: ({ api }) => [step('GET /api/services', `${api}/api/services?limit=1`, { expect: isJson })] },
-  { key: 'categories', name: 'Categories', describe: 'GET /api/categories returns JSON', run: ({ api }) => [step('GET /api/categories', `${api}/api/categories`, { expect: isJson })] },
+  {
+    key: 'api',
+    name: 'API',
+    describe: 'GET /api/filter/options answers with JSON',
+    run: ({ api }) => [
+      step('GET /api/filter/options', `${api}/api/filter/options`, { expect: isJson }),
+    ],
+  },
+  {
+    key: 'services',
+    name: 'Job listing',
+    describe: 'GET /api/services returns JSON',
+    run: ({ api }) => [
+      step('GET /api/services', `${api}/api/services?limit=1`, { expect: isJson }),
+    ],
+  },
+  {
+    key: 'categories',
+    name: 'Categories',
+    describe: 'GET /api/categories returns JSON',
+    run: ({ api }) => [step('GET /api/categories', `${api}/api/categories`, { expect: isJson })],
+  },
   {
     key: 'realtime',
     name: 'Realtime (socket.io)',
-    describe: 'socket.io websocket handshake opens a session (works single-process and in cluster mode)',
-    run: ({ api }) => [wsStep('socket.io handshake', `${api.replace(/^http/, 'ws')}/socket.io/?EIO=4&transport=websocket`, { expect: (t) => (t.startsWith('0{') ? null : 'Unexpected handshake payload') })],
+    describe:
+      'socket.io websocket handshake opens a session (works single-process and in cluster mode)',
+    run: ({ api }) => [
+      wsStep(
+        'socket.io handshake',
+        `${api.replace(/^http/, 'ws')}/socket.io/?EIO=4&transport=websocket`,
+        { expect: (t) => (t.startsWith('0{') ? null : 'Unexpected handshake payload') }
+      ),
+    ],
   },
   {
     key: 'web',
     name: 'Web app',
     describe: 'Home page serves the React shell',
     enabled: ({ web }) => Boolean(web),
-    run: ({ web }) => [step('GET web /', `${web}/`, { expect: (t) => (/<div id="root"/.test(t) ? null : 'Page does not contain the app root') })],
+    run: ({ web }) => [
+      step('GET web /', `${web}/`, {
+        expect: (t) => (/<div id="root"/.test(t) ? null : 'Page does not contain the app root'),
+      }),
+    ],
   },
   {
     key: 'geonorge',
     name: 'Geocoding (Geonorge)',
     describe: 'Kartverket address search used by the app answers',
     enabled: () => process.env.SYNTHETIC_GEO !== 'false',
-    run: () => [step('GET ws.geonorge.no/adresser/v1/sok', 'https://ws.geonorge.no/adresser/v1/sok?sok=Karl%20Johans%20gate%201&treffPerSide=1', { expect: (t) => (Array.isArray(json(t)?.adresser) ? null : 'No address list in response') })],
+    run: () => [
+      step(
+        'GET ws.geonorge.no/adresser/v1/sok',
+        'https://ws.geonorge.no/adresser/v1/sok?sok=Karl%20Johans%20gate%201&treffPerSide=1',
+        { expect: (t) => (Array.isArray(json(t)?.adresser) ? null : 'No address list in response') }
+      ),
+    ],
   },
   {
     key: 'login',
@@ -150,14 +226,23 @@ const BUILT_IN = [
     run: async ({ api }) => {
       const login = await step('POST /api/auth/login', `${api}/api/auth/login`, {
         method: 'POST',
-        body: { email: process.env.SYNTHETIC_USER_EMAIL, password: process.env.SYNTHETIC_USER_PASSWORD },
+        body: {
+          email: process.env.SYNTHETIC_USER_EMAIL,
+          password: process.env.SYNTHETIC_USER_PASSWORD,
+        },
         expect: (t) => (json(t)?.accessToken ? null : 'No access token in response'),
       });
       if (!login.ok) return [login];
       const auth = { Authorization: `Bearer ${json(login.text).accessToken}` };
-      const profile = await step('GET /api/auth/profile', `${api}/api/auth/profile`, { headers: auth, expect: isJson });
+      const profile = await step('GET /api/auth/profile', `${api}/api/auth/profile`, {
+        headers: auth,
+        expect: isJson,
+      });
       // Always end the session, even when the profile step failed.
-      const logout = await step('POST /api/auth/logout', `${api}/api/auth/logout`, { method: 'POST', headers: auth });
+      const logout = await step('POST /api/auth/logout', `${api}/api/auth/logout`, {
+        method: 'POST',
+        headers: auth,
+      });
       return [login, profile, logout];
     },
   },
@@ -170,8 +255,17 @@ const customProbe = (c) => ({
   describe: `${c.method} ${c.url} → ${c.expectStatus}${c.expectText ? ` containing "${c.expectText}"` : ''}`,
   run: () => {
     const blocked = checkUrlAllowed(c.url);
-    if (blocked) return [{ name: `${c.method} ${c.url}`, ok: false, status: null, ms: 0, error: blocked }];
-    return [step(`${c.method} ${c.url}`, c.url, { method: c.method, expectStatus: c.expectStatus, expect: c.expectText ? (t) => (t.includes(c.expectText) ? null : `Body does not contain "${c.expectText}"`) : null })];
+    if (blocked)
+      return [{ name: `${c.method} ${c.url}`, ok: false, status: null, ms: 0, error: blocked }];
+    return [
+      step(`${c.method} ${c.url}`, c.url, {
+        method: c.method,
+        expectStatus: c.expectStatus,
+        expect: c.expectText
+          ? (t) => (t.includes(c.expectText) ? null : `Body does not contain "${c.expectText}"`)
+          : null,
+      }),
+    ];
   },
 });
 
@@ -204,7 +298,11 @@ let running = false;
 async function runAll({ key = null, trigger = 'schedule' } = {}) {
   if (mongoose.connection.readyState !== 1) return [];
   const list = (await probes()).filter((p) => !key || p.key === key);
-  return Promise.all(list.map((p) => runProbe(p, trigger).catch((e) => ({ key: p.key, name: p.name, ok: false, error: e.message }))));
+  return Promise.all(
+    list.map((p) =>
+      runProbe(p, trigger).catch((e) => ({ key: p.key, name: p.name, ok: false, error: e.message }))
+    )
+  );
 }
 
 function startSynthetic() {

@@ -42,7 +42,8 @@ export function PostJobFlow() {
   const isFocused = useIsFocused();
   const user = useAuthStore((s) => s.user);
   const router = useRouter();
-  const { step, photos, values, summary, publishedId, editId, update, back, reset, goTo } = usePostJobStore();
+  const { step, photos, values, summary, publishedId, editId, update, back, reset, goTo } =
+    usePostJobStore();
   const customerType = values.customerType;
   const setCustomerType = (type: 'private' | 'business') => update({ customerType: type });
   const [confirmClose, setConfirmClose] = useState(false);
@@ -57,7 +58,9 @@ export function PostJobFlow() {
   // Android back: previous step; on the first step the system handles it (leaves the tab).
   useFocusEffect(
     useCallback(() => {
-      const sub = BackHandler.addEventListener('hardwareBackPress', () => usePostJobStore.getState().back());
+      const sub = BackHandler.addEventListener('hardwareBackPress', () =>
+        usePostJobStore.getState().back()
+      );
       return () => sub.remove();
     }, [])
   );
@@ -97,7 +100,8 @@ export function PostJobFlow() {
     setTimeout(reset, 600);
   };
   const cancelEdit = () => leaveEdit(() => router.back());
-  const saved = () => leaveEdit(() => router.push({ pathname: '/(app)/jobs/[id]', params: { id: editId ?? '' } }));
+  const saved = () =>
+    leaveEdit(() => router.push({ pathname: '/(app)/jobs/[id]', params: { id: editId ?? '' } }));
 
   if (publishedId) {
     // Navigate first, clear the flow after: resetting first re-opened the "Ny annonse" sheet (a
@@ -114,11 +118,31 @@ export function PostJobFlow() {
             <View className="h-16 w-16 items-center justify-center rounded-full bg-tint">
               <CheckCircle2 size={34} color={TC.brandText} />
             </View>
-            <Text className="mt-5 text-center text-[1.5rem] font-bold text-ink">{t('Oppdraget er publisert', 'Your job is published')}</Text>
-            <Text className="mt-2 text-center text-[1.0625rem] leading-6 text-ink-2">{t('Oppdraget er nå synlig for andre. Du får varsel når noen søker.', 'Your job is now visible to others. You will be notified when someone applies.')}</Text>
+            <Text className="mt-5 text-center text-[1.5rem] font-bold text-ink">
+              {t('Oppdraget er publisert', 'Your job is published')}
+            </Text>
+            <Text className="mt-2 text-center text-[1.0625rem] leading-6 text-ink-2">
+              {t(
+                'Oppdraget er nå synlig for andre. Du får varsel når noen søker.',
+                'Your job is now visible to others. You will be notified when someone applies.'
+              )}
+            </Text>
             <View className="mt-7 w-full gap-3">
-              <Button label={t('Se oppdraget', 'View the job')} fullWidth onPress={() => done(() => router.push({ pathname: '/(app)/jobs/[id]', params: { id: publishedId } }))} />
-              <Button label={t('Til forsiden', 'Go to home')} variant="secondary" fullWidth onPress={() => done(() => router.replace('/(app)'))} />
+              <Button
+                label={t('Se oppdraget', 'View the job')}
+                fullWidth
+                onPress={() =>
+                  done(() =>
+                    router.push({ pathname: '/(app)/jobs/[id]', params: { id: publishedId } })
+                  )
+                }
+              />
+              <Button
+                label={t('Til forsiden', 'Go to home')}
+                variant="secondary"
+                fullWidth
+                onPress={() => done(() => router.replace('/(app)'))}
+              />
             </View>
           </View>
         </View>
@@ -140,23 +164,40 @@ export function PostJobFlow() {
               </GlassButton>
             ) : null}
           </View>
-          <Text className="flex-1 text-center text-[1.0625rem] font-semibold text-ink" numberOfLines={1}>
+          <Text
+            className="flex-1 text-center text-[1.0625rem] font-semibold text-ink"
+            numberOfLines={1}
+          >
             {editId && step === 'review' ? t('Rediger annonse', 'Edit listing') : STEP_TITLES[step]}
           </Text>
           <View className="w-10">
-            <GlassButton label={editId ? t('Avbryt redigering', 'Cancel editing') : t('Avbryt annonsen', 'Cancel the listing')} onPress={close}>
+            <GlassButton
+              label={
+                editId
+                  ? t('Avbryt redigering', 'Cancel editing')
+                  : t('Avbryt annonsen', 'Cancel the listing')
+              }
+              onPress={close}
+            >
               <X size={20} color={TC.ink} />
             </GlassButton>
           </View>
         </View>
-        <View className="h-1 bg-surface-2" accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 100, now: Math.round(progress(step) * 100) }}>
+        <View
+          className="h-1 bg-surface-2"
+          accessibilityRole="progressbar"
+          accessibilityValue={{ min: 0, max: 100, now: Math.round(progress(step) * 100) }}
+        >
           <View className="h-1 bg-brand" style={{ width: `${progress(step) * 100}%` }} />
         </View>
       </View>
 
       {/* iOS does not shrink the screen for the keyboard (Android does): without this it covered the
           description, price and address fields and the "Continue" button of every step. */}
-      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
         {/* 'photos' is the full-screen camera below. */}
         {Screen ? <Screen /> : null}
         {step === 'review' ? <ReviewStep onSaved={saved} /> : null}
@@ -186,8 +227,16 @@ export function PostJobFlow() {
 
       <ConfirmDialog
         visible={confirmClose}
-        title={editId ? t('Forkaste endringene?', 'Discard your changes?') : t('Avbryte annonsen?', 'Cancel the listing?')}
-        message={editId ? t('Annonsen blir som den var.', 'The listing stays as it was.') : t('Bildene og svarene dine blir slettet.', 'Your photos and answers will be deleted.')}
+        title={
+          editId
+            ? t('Forkaste endringene?', 'Discard your changes?')
+            : t('Avbryte annonsen?', 'Cancel the listing?')
+        }
+        message={
+          editId
+            ? t('Annonsen blir som den var.', 'The listing stays as it was.')
+            : t('Bildene og svarene dine blir slettet.', 'Your photos and answers will be deleted.')
+        }
         confirmLabel={editId ? t('Forkast', 'Discard') : t('Avbryt annonsen', 'Cancel listing')}
         cancelLabel={t('Fortsett å redigere', 'Keep editing')}
         destructive

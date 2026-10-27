@@ -17,10 +17,24 @@ const backup = require('../services/backup');
   await mongoose.connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 15000 });
   let ok = true;
   if (cmd === 'backup' || cmd === 'drill') {
-    const { done } = cmd === 'backup' ? await backup.startBackup({ trigger: 'cron' }) : await backup.startDrill({ backupId: arg || null, trigger: 'cron' });
+    const { done } =
+      cmd === 'backup'
+        ? await backup.startBackup({ trigger: 'cron' })
+        : await backup.startDrill({ backupId: arg || null, trigger: 'cron' });
     const r = await done;
     ok = r.status === 'succeeded';
-    console.log(JSON.stringify({ kind: r.kind, status: r.status, file: r.file, sizeBytes: r.sizeBytes, durationMs: r.durationMs, offsite: r.offsite?.status, mismatches: r.mismatches, error: r.error }));
+    console.log(
+      JSON.stringify({
+        kind: r.kind,
+        status: r.status,
+        file: r.file,
+        sizeBytes: r.sizeBytes,
+        durationMs: r.durationMs,
+        offsite: r.offsite?.status,
+        mismatches: r.mismatches,
+        error: r.error,
+      })
+    );
   } else if (cmd === 'prune') {
     console.log(JSON.stringify({ pruned: await backup.prune() }));
   } else {

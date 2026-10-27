@@ -10,7 +10,16 @@ test('keeps same-site paths', () => {
 });
 
 test('rejects paths the browser resolves to another host', () => {
-  for (const p of ['//evil.com', '/\\evil.com', '/\t/evil.com', '/\n/evil.com', 'https://evil.com', 'evil.com', '', null]) {
+  for (const p of [
+    '//evil.com',
+    '/\\evil.com',
+    '/\t/evil.com',
+    '/\n/evil.com',
+    'https://evil.com',
+    'evil.com',
+    '',
+    null,
+  ]) {
     assert.equal(safeLocalPath(p, '/', O), '/', JSON.stringify(p));
   }
 });

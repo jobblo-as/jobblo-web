@@ -10,9 +10,7 @@ async function migrate() {
   const indexes = await collection.indexes();
   const oldUnique = indexes.find(
     (index) =>
-      index.unique &&
-      index.key?.subscriptionId === 1 &&
-      index.key?.billingPeriodStart === 1
+      index.unique && index.key?.subscriptionId === 1 && index.key?.billingPeriodStart === 1
   );
   await collection.createIndex(
     { userId: 1, billingPeriodStart: 1 },

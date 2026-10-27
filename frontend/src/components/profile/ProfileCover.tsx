@@ -153,13 +153,7 @@ export function ProfileCover({ seed, className = '' }: { seed?: string; classNam
         </defs>
 
         <rect width={VIEW_W} height={VIEW_H} fill={`url(#${gradientId})`} />
-        <ellipse
-          cx={cx}
-          cy={cy}
-          rx={VIEW_W * 0.45}
-          ry={VIEW_H * 0.9}
-          fill={`url(#${glowId})`}
-        />
+        <ellipse cx={cx} cy={cy} rx={VIEW_W * 0.45} ry={VIEW_H * 0.9} fill={`url(#${glowId})`} />
 
         <g fill="none" stroke="#FFFFFF">
           {arcs.map((arc, i) => (

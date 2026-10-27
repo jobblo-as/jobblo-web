@@ -7,7 +7,9 @@ const LAST_USED_EVERY_MS = 60 * 1000;
 
 /** A deactivated or deleted account may hold no live access (HTTP here, sockets in chat.socket.js). */
 const isInactiveAccount = (user) =>
-  user.accountStatus === 'inactive' || user.accountStatus === 'deactivated' || Boolean(user.isDeleted);
+  user.accountStatus === 'inactive' ||
+  user.accountStatus === 'deactivated' ||
+  Boolean(user.isDeleted);
 
 /**
  * Middleware to authenticate JWT tokens
@@ -24,7 +26,9 @@ const authenticate = async (req, res, next) => {
     // cookie while the header carries user B's token: cookie-first answered B as A.
     const authHeader = req.headers.authorization || '';
     const token =
-      (authHeader.startsWith('Bearer ') && authHeader.slice(7).trim()) || req.cookies?.accessToken || req.cookies?.token;
+      (authHeader.startsWith('Bearer ') && authHeader.slice(7).trim()) ||
+      req.cookies?.accessToken ||
+      req.cookies?.token;
 
     if (!token) {
       return res.status(401).json({
@@ -79,16 +83,21 @@ const authenticate = async (req, res, next) => {
     // created before the app sent it, or by an OAuth login in the browser, get it as well.
     // At most once a minute per session: this ran a write on every authenticated request.
     const touch = {};
-    if (!(Date.now() - new Date(sessionExists.lastUsed || 0).getTime() < LAST_USED_EVERY_MS)) touch.lastUsed = new Date();
+    if (!(Date.now() - new Date(sessionExists.lastUsed || 0).getTime() < LAST_USED_EVERY_MS))
+      touch.lastUsed = new Date();
     const deviceName = deviceNameFrom(req);
     if (deviceName && sessionExists.deviceName !== deviceName) touch.deviceName = deviceName;
-    if (Object.keys(touch).length) await Session.updateOne({ _id: sessionExists._id }, { $set: touch });
+    if (Object.keys(touch).length)
+      await Session.updateOne({ _id: sessionExists._id }, { $set: touch });
 
     // Lean (hydrating the whole user was most of this middleware's CPU). Every reader of
     // req.user only reads it (mfa.js reloads by id before saving); `id` and the schema
     // defaults a document carried are put back so it reads the same.
     const lean = await User.findById(decoded.id).select('-password').lean();
-    const user = lean && { ...withDefaults(User, lean, { populatedUsers: [] }), id: String(lean._id) };
+    const user = lean && {
+      ...withDefaults(User, lean, { populatedUsers: [] }),
+      id: String(lean._id),
+    };
 
     if (!user) {
       return res.status(401).json({
@@ -113,7 +122,9 @@ const authenticate = async (req, res, next) => {
       if (!/^\/api\/auth\/(mfa(\/|$)|profile$|logout$)/.test(path)) {
         return res.status(403).json({
           error: 'Two-factor authentication required',
-          message: user.mfaEnabledAt ? 'Enter the code from your authenticator app.' : 'Set up an authenticator app to continue.',
+          message: user.mfaEnabledAt
+            ? 'Enter the code from your authenticator app.'
+            : 'Set up an authenticator app to continue.',
           code: 'MFA_REQUIRED',
           setup: !user.mfaEnabledAt,
         });
@@ -180,25 +191,36 @@ const optionalAuthenticate = (req, res, next) => {
  *
  * @param {...string} roles - Roles allowed through
  */
-const requireRole = (...roles) => (req, res, next) => {
-  if (!req.user) {
-    return res.status(401).json({
-      error: 'Authentication required',
-      message: 'Please authenticate first',
-    });
-  }
+const requireRole =
+  (...roles) =>
+  (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        error: 'Authentication required',
+        message: 'Please authenticate first',
+      });
+    }
 
-  if (!roles.includes(req.user.role)) {
-    return res.status(403).json({
-      error: 'Access denied',
-      message: roles.includes('developer') ? 'Developer privileges required' : 'Admin privileges required',
-    });
-  }
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        error: 'Access denied',
+        message: roles.includes('developer')
+          ? 'Developer privileges required'
+          : 'Admin privileges required',
+      });
+    }
 
-  next();
-};
+    next();
+  };
 
 const requireAdmin = requireRole('superAdmin');
 const requireDeveloper = requireRole('developer', 'superAdmin');
 
-module.exports = { authenticate, optionalAuthenticate, requireAdmin, requireDeveloper, requireRole, isInactiveAccount };
+module.exports = {
+  authenticate,
+  optionalAuthenticate,
+  requireAdmin,
+  requireDeveloper,
+  requireRole,
+  isInactiveAccount,
+};

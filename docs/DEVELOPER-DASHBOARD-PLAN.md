@@ -1,13 +1,16 @@
 # Developer Dashboard + `developer` Role — Plan
 
 ## Context
+
 Jobblo needs a separate **Developer Dashboard**, used by a new `developer` role, for technical monitoring: APIs, errors, servers, MongoDB, the scheduler, Stripe, SafePay, security and deployments. The requirement lists 27 pages. The UI must:
+
 - use only reusable **shadcn/ui** components (input, button, select, dialog/popover, and so on)
 - have **small border radius**
 - use a **light colour palette**
 - look professional and consistent across all pages.
 
 The codebase already has most of the base pieces, so the plan is to **reuse first and build only what is missing**:
+
 - **shadcn is already set up:** `frontend/components.json` (style `radix-nova`, neutral, lucide), `cn()` in `frontend/src/lib/utils.ts`, and 20 components in `frontend/src/components/Ui/`.
 - **Tooling:** recharts, @tanstack/react-query, zustand and react-router v7 are installed.
 - **Roles:** the enum in `backend/models/User.js:28-32` is `['user','superAdmin','provider','company']`. The guard is `requireAdmin` in `backend/middleware/auth.js`.
@@ -23,6 +26,7 @@ The codebase already has most of the base pieces, so the plan is to **reuse firs
   - the admin `/system/health|metrics|errors|disk` endpoints in `controllers/admin/systemAdminController.js`.
 
 **Things that do not exist today.** Their pages will show "Not configured" instead of fake data:
+
 - a queue system (bull or agenda)
 - PM2 data
 - a GitHub Actions integration
@@ -33,6 +37,7 @@ The codebase already has most of the base pieces, so the plan is to **reuse firs
 ---
 
 ## Part 1 — Role and access (backend)
+
 1. Add `'developer'` to the role enum in `backend/models/User.js`.
 2. In `backend/middleware/auth.js`, turn the existing check into `requireRole(...roles)`. Then define `requireAdmin = requireRole('superAdmin')` (no behaviour change for current callers) and `requireDeveloper = requireRole('developer','superAdmin')`. That is one shared function, not one copy per role.
 3. Create `backend/routes/developer/index.js` with `router.use(authenticate, requireDeveloper, adminLimiter)` and mount it in `app.js` at `/api/developer`.
@@ -46,16 +51,18 @@ The codebase already has most of the base pieces, so the plan is to **reuse firs
 6. Assigning a role: superAdmin can set `role: 'developer'` from the existing admin users page. The current `role_change` audit entry already covers this.
 
 ## Part 2 — Telemetry the pages need (backend, minimal)
-| New piece | Why | Design |
-|---|---|---|
-| `middleware/requestMetrics.js` | API monitoring, APM, overview RPS/latency | Uses `res.on('finish')` to record route template (`req.route.path`), method, status and duration. Keeps in-memory per-route buckets and flushes every 60s to an `ApiMetricMinute` collection (TTL 30 days). P50/P95/P99 are computed from a capped sample array per bucket. `ponytail:` per-process and approximate; move to Prometheus/OTel when running multiple instances |
-| `ApiMetricMinute` model | API history charts | `{ minute, method, route, count, errors, statusCounts, durSum, samples[] }` |
-| Scheduler instrumentation in `services/scheduler/index.js` | Cron page, Overview | Wrap each job run once in the shared runner and write `SchedulerRun { job, startedAt, durationMs, ok, error }` (TTL 30 days). Next run = last run + interval |
-| `ErrorLog` fields (extend, not new model) | Error monitoring | Adds `fingerprint` (hash of message + top stack frame), `count`, `firstSeen`, `lastSeen`, `status` (new / investigating / resolved / reopened), `assignee`, `notes[]` and `severity`. `logApplicationError` upserts by fingerprint, so repeats are grouped. If a resolved error comes back, status becomes `reopened` |
-| `utils/redact.js` | Logs, diagnostics | One function, used everywhere |
-| Live counters via socket.io | Live activity page | A `developer` room. Every 5s the server emits `{ rps, activeRequests, sockets, errorsLastMin }`. Reuses `app.get('io')` |
+
+| New piece                                                  | Why                                       | Design                                                                                                                                                                                                                                                                                                                                                                       |
+| ---------------------------------------------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `middleware/requestMetrics.js`                             | API monitoring, APM, overview RPS/latency | Uses `res.on('finish')` to record route template (`req.route.path`), method, status and duration. Keeps in-memory per-route buckets and flushes every 60s to an `ApiMetricMinute` collection (TTL 30 days). P50/P95/P99 are computed from a capped sample array per bucket. `ponytail:` per-process and approximate; move to Prometheus/OTel when running multiple instances |
+| `ApiMetricMinute` model                                    | API history charts                        | `{ minute, method, route, count, errors, statusCounts, durSum, samples[] }`                                                                                                                                                                                                                                                                                                  |
+| Scheduler instrumentation in `services/scheduler/index.js` | Cron page, Overview                       | Wrap each job run once in the shared runner and write `SchedulerRun { job, startedAt, durationMs, ok, error }` (TTL 30 days). Next run = last run + interval                                                                                                                                                                                                                 |
+| `ErrorLog` fields (extend, not new model)                  | Error monitoring                          | Adds `fingerprint` (hash of message + top stack frame), `count`, `firstSeen`, `lastSeen`, `status` (new / investigating / resolved / reopened), `assignee`, `notes[]` and `severity`. `logApplicationError` upserts by fingerprint, so repeats are grouped. If a resolved error comes back, status becomes `reopened`                                                        |
+| `utils/redact.js`                                          | Logs, diagnostics                         | One function, used everywhere                                                                                                                                                                                                                                                                                                                                                |
+| Live counters via socket.io                                | Live activity page                        | A `developer` room. Every 5s the server emits `{ rps, activeRequests, sockets, errorsLastMin }`. Reuses `app.get('io')`                                                                                                                                                                                                                                                      |
 
 Everything else is **aggregation over existing models**:
+
 - Users, jobs/orders, payments and SafePay come from `User`, `Order`, `Payment` and `SafePayHistory`.
 - Webhooks come from `StripeEvent`.
 - Subscriptions come from `SubscriptionV2` and the billing operation models.
@@ -64,7 +71,9 @@ Everything else is **aggregation over existing models**:
 - MongoDB data comes from `db.stats()`, `collStats`, `serverStatus` and `$indexStats`, all read-only.
 
 ## Part 3 — UI system (frontend)
+
 **Theme, scoped so the admin UI is not affected:**
+
 - `DeveloperLayout` adds a `.dev-theme` wrapper class. In `src/styles/index.css`, `.dev-theme` sets:
   - `--radius: 0.375rem`, so lg = 6px and sm ≈ 4px
   - a soft background `oklch(0.985 0.003 250)`
@@ -75,9 +84,11 @@ Everything else is **aggregation over existing models**:
 - No hard-coded hex values. Only tokens.
 
 **shadcn components to add:** run `npx shadcn add` for sidebar, chart, tabs, badge, tooltip, separator, label, popover, switch, scroll-area, command, sonner, avatar, breadcrumb and hover-card.
+
 - **Decision (implemented):** the stock shadcn components live in `frontend/src/components/developer/ui/`. The existing `components/Ui/` was **not** renamed. It holds the public site's customised kit (full-width, green, 14px-radius buttons), and `Ui/button` vs `Ui/Button` resolve to different files on Windows and Linux, so a rename would change public-site behaviour. That casing problem is still open and needs its own fix.
 
 **Reusable dev building blocks.** All are thin wrappers over shadcn, in `frontend/src/components/developer/`:
+
 - `DevPageHeader` (title, description, actions, time-range select)
 - `StatCard` (value, delta, sparkline)
 - `StatusBadge` (ok / warn / error / unknown)
@@ -92,6 +103,7 @@ Everything else is **aggregation over existing models**:
 Check `components/admin/*` (AdminStatCard, AdminDataTable, AdminDateRangePicker) first. Where one already covers the need, reuse it with dev-theme styling instead of duplicating it.
 
 **Shell:**
+
 - `src/pages/DeveloperDashboard/DeveloperLayout.tsx` uses the shadcn `SidebarProvider` + `Sidebar`, collapsible, with grouped nav (A–F, matching the requirement).
 - The top bar has a breadcrumb, an environment badge (prod/staging), a ⌘K command palette for jumping between pages and doing trace-ID lookup, and the user menu.
 - `src/components/shared/DeveloperProtectedRoute.tsx` is a copy of the `AdminProtectedRoute` logic that allows `developer` and `superAdmin`.
@@ -99,30 +111,35 @@ Check `components/admin/*` (AdminStatCard, AdminDataTable, AdminDateRangePicker)
 - After login, a `developer` user goes to `/developer`.
 
 **Data layer:**
+
 - API calls go in `src/api/developer/*.ts` using the existing `mainLink` axios instance.
 - React Query hooks go in `src/features/developer/hooks.ts`, using `refetchInterval` for auto-refresh with a toggle in the header.
 - Live pages use the existing `src/socket` client.
 
 ## Part 4 — Pages and phases
+
 Each page uses the same layout: header + time filter, then a row of stat cards, then charts, then a table, then a detail sheet.
 
 **Phase 1 — foundation and pages backed by data that already exists**
+
 1. Overview: health score, users, jobs, RPS/latency, errors, Mongo/Stripe status, scheduler, recent activity
 2. API Monitoring
 3. Error Monitoring
-6. Server Monitoring
-7. MongoDB Center (read-only)
-9. Cron & Scheduler
-13. Stripe Webhook Center
-20. Audit Logs
-21. Developer Tools (health pings, env presence, DNS/SSL check, trace lookup)
+4. Server Monitoring
+5. MongoDB Center (read-only)
+6. Cron & Scheduler
+7. Stripe Webhook Center
+8. Audit Logs
+9. Developer Tools (health pings, env presence, DNS/SSL check, trace lookup)
 
 **Status:** Phase 1 and Phase 2 are implemented. One shared rule set, `orderIssues` in `backend/controllers/developer/diagnosticsController.js`, defines "stuck" and "inconsistent" for SafePay, Reconciliation and Job Diagnostics. It mirrors the scheduler's own thresholds.
 Not built yet from Phase 2:
+
 - Investigation notes, assignment and approval workflow on reconciliation issues. These need a new model.
 - Scheduled daily reports. CSV export is available now.
 
 **Security review follow-up (current model, replaces the "no permission levels" decision):**
+
 - **Access:** `User.developerAccess` is `readonly` (the default) or `operations`. `superAdmin` sits above both. The guards are `requireAccess()` in `controllers/developer/approvalsController.js` and `requireStepUp` in `services/developer/stepUp.js`.
   - **Readonly** sees everything and changes nothing.
   - **Operations** triages errors, tickets and incidents, and requests sensitive changes.
@@ -141,6 +158,7 @@ Not built yet from Phase 2:
 - **Duplicate payments:** the root cause was commit ff7eaab8. `scripts/archive-orphan-duplicate-payments.js` does a dry run by default; with `--apply` it archives the rows and then builds the unique index.
 
 **Earlier decision, superseded:** for a while every developer had full access.
+
 - **IP Management page (`/developer/ips`):**
   - Lists every client IP (`ApiMetricMinute.ips` merged with `SecurityEvent`), with a risk verdict (`ipRisk`).
   - Blocks are enforced by an `IpBlock` model and `services/monitoring/ipBlocks.js` (`net.BlockList`, 30s refresh). Durations go up to "Always".
@@ -148,6 +166,7 @@ Not built yet from Phase 2:
 - `SecurityEvent.emailHash` (an HMAC) lets the dashboard count distinct targeted accounts even though emails are masked.
 
 **Phase 4 status:** implemented. All 27 sections are now live.
+
 - **Queues:** shows the four DB-backed work queues that already exist: Stripe events, subscription webhooks, recovery emails and payouts.
 - **Tickets:** `SupportTicket` gains priority, assignee, escalation, an internal history, links to an error or incident, and a computed SLA.
 - **CI/CD:** GitHub Actions through `GITHUB_TOKEN` and `GITHUB_REPO`, release info from `APP_VERSION`, `GIT_COMMIT_SHA`, `GIT_BRANCH` and `DEPLOYED_AT`, and errors first seen after the deploy.
@@ -158,6 +177,7 @@ Not built yet from Phase 2:
 Not built: scheduled report delivery, ticket attachments, rollback from the dashboard (that stays in ArgoCD), and MFA.
 
 **Phase 3 status:** implemented. New telemetry:
+
 - `SecurityEvent`: every 401, 403 and 429, plus OTP failures, classified in one place (`services/monitoring/securityEvents.js`), with emails masked.
 - `DeliveryLog`: every email (`sendLogged`) and every push send.
 - In-process APM (`services/monitoring/apm.js`): event-loop delay, GC, heap and CPU, MongoDB command latency (driver `monitorCommands`), slow queries with filter keys only, and Stripe API latency.
@@ -168,23 +188,12 @@ Feature flags are `GlobalConfig` `feature_*`/`flag_*` keys. A toggle needs a rea
 
 Not available: rollout percentages, cohorts, scheduled flag changes, IP block list, SMS, bounce tracking, distributed tracing.
 
-**Phase 2 — money and diagnostics**
-10. Stripe Payments
-11. SafePay (lifecycle timeline, stuck detection, DB vs Stripe state)
-12. Subscriptions
-14. Reconciliation (reads `StripeFinancialSyncState` / `reconcileMoneyState` results)
-15. User Diagnostics (no passwords or tokens shown)
-16. Job Diagnostics
+**Phase 2 — money and diagnostics** 10. Stripe Payments 11. SafePay (lifecycle timeline, stuck detection, DB vs Stripe state) 12. Subscriptions 14. Reconciliation (reads `StripeFinancialSyncState` / `reconcileMoneyState` results) 15. User Diagnostics (no passwords or tokens shown) 16. Job Diagnostics
 
-**Phase 3 — operations**
-4. Logs Explorer (built on ErrorLog + AdminActivity + SchedulerRun + StripeEvent as a unified, redacted stream)
-5. Live Activity (socket)
-19. Security Center (from auth failures and rate-limit hits; needs a small `SecurityEvent` log written by `rateLimiter.js` and the auth middleware)
-22. Feature Flags (reuse the existing admin feature-flags API)
-24. Performance/APM (event-loop delay via `perf_hooks.monitorEventLoopDelay`, heap, GC)
-18. Notifications/Email (only once nodemailer and Firebase sends are logged)
+**Phase 3 — operations** 4. Logs Explorer (built on ErrorLog + AdminActivity + SchedulerRun + StripeEvent as a unified, redacted stream) 5. Live Activity (socket) 19. Security Center (from auth failures and rate-limit hits; needs a small `SecurityEvent` log written by `rateLimiter.js` and the auth middleware) 22. Feature Flags (reuse the existing admin feature-flags API) 24. Performance/APM (event-loop delay via `perf_hooks.monitorEventLoopDelay`, heap, GC) 18. Notifications/Email (only once nodemailer and Firebase sends are logged)
 
 **Phase 4 — needs new integrations or decisions**
+
 - 8. Queue: no queue exists, so show scheduler jobs plus "No queue configured"
 - 17. Tickets
 - 23. CI/CD (needs `GITHUB_TOKEN` and the GitHub Actions API, plus a deploy SHA env var)
@@ -193,6 +202,7 @@ Not available: rollout percentages, cohorts, scheduled flag changes, IP block li
 - 27. Developer Settings and sub-roles (read-only / senior / devops). For now there is one `developer` role. Sub-roles become a `permissions[]` field later if they are really needed.
 
 **Phase 5 — investigation and reliability (built one by one)**
+
 1. ✅ **Investigate** (`/developer/investigate`, `GET /api/developer/investigate?q=`). `classifyQuery` reads the pasted value as one of: ObjectId, Stripe ref (`pi_ cs_ ch_ re_ evt_ sub_ cus_ tr_ acct_ in_ py_ po_`), IP, email, or error reference / request ID.
    - It resolves the value across User, Order, Service, Payment, Payout, Dispute, Incident, SupportTicket, ErrorLog, ChangeRequest, SubscriptionV2, StripeEvent, StripeTransferRecord, SecurityEvent and IpBlock.
    - Every order it touches (max 3) gets the same `orderIssues` and `buildTimeline` as Job Diagnostics.
@@ -226,7 +236,7 @@ Not available: rollout percentages, cohorts, scheduled flag changes, IP block li
    - **Per-order view:** a path stepper, an actual vs expected record-state table, findings and the timeline.
    - Scans the newest 2000 orders.
    - **Bug found and fixed at the root:**
-     - **Cause:** payment confirmation upserts SafePayHistory as `payment_received`. `approveWork` only *created* the row when it was missing, and auto-release never touched it. So completed, paid-out jobs kept showing as still in escrow, and the customer's rating and comment were dropped.
+     - **Cause:** payment confirmation upserts SafePayHistory as `payment_received`. `approveWork` only _created_ the row when it was missing, and auto-release never touched it. So completed, paid-out jobs kept showing as still in escrow, and the customer's rating and comment were dropped.
      - **Fix:** both paths now move open rows (`SafePayHistory.OPEN_STATUSES`) to `completed`.
      - **Existing rows:** not backfilled. The inspector lists them. · then Synthetic, Mobile, Dependency Map, SLO, Deployment Impact, Fraud, Cost, Capacity, Config Drift, Staging Failure Simulator, API Contracts.
 5. ✅ **Synthetic Monitoring** (`/developer/synthetic`). Probes run on a timer inside the API process (`services/monitoring/synthetic.js`, every `SYNTHETIC_INTERVAL_MIN`, default 5 min).
@@ -329,7 +339,7 @@ Not available: rollout percentages, cohorts, scheduled flag changes, IP block li
       - a field present in ≥ 90 % of prior responses goes missing → breaking,
       - a never-seen type → breaking,
       - a new field → additive.
-      Empty arrays and null parents are not removals.
+        Empty arrays and null parents are not removals.
     - **Events:** `ContractEvent` (TTL 180 d), stamped with the running release.
     - **Alert:** `contract:<route>` for unacknowledged breaking changes in the last hour.
     - **Docs coverage:** Swagger paths compared with 30 days of traffic routes (undocumented / unused).
@@ -343,7 +353,7 @@ Not available: rollout percentages, cohorts, scheduled flag changes, IP block li
     - **Also lists:** providers with orders but no Connect account, Stripe accounts not linked to any user, failed transfers and failed bank payouts.
     - **Resync** reuses the owner-checked `persistConnectAccount` path.
     - **Finding:** `persistConnectAccount` never stores `restricted`, so a disabled account is saved as `pending_verification`.
-20. ✅ **Financial Ledger** (`/developer/ledger`; `GET /api/developer/ledger?month=YYYY-MM`, `GET /ledger/:orderId` as a journal with a running escrow balance). Read-only, all amounts in øre.
+17. ✅ **Financial Ledger** (`/developer/ledger`; `GET /api/developer/ledger?month=YYYY-MM`, `GET /ledger/:orderId` as a journal with a running escrow balance). Read-only, all amounts in øre.
     - **Identity** (`buildLedger()`, unit-tested): charged = refunded + paid out + kept + held.
       - charged = captured amount, else checkout amount.
       - refunded = succeeded refund operations, checked against `Payment.refundedAmountMinor`.
@@ -351,14 +361,14 @@ Not available: rollout percentages, cohorts, scheduled flag changes, IP block li
       - kept = customer fee + provider fee, recognised only on settled orders that were not fully refunded.
     - **Flags:** held on a closed order, overdisbursed, refund records disagreeing, transfer amount mismatch, transfer not recorded, payout arithmetic, gross ≠ agreed price, capture mismatch, charged below price, duplicate Payment rows.
     - **Escrow liability:** a balance over all open orders.
-31. ✅ **Business Transactions** (`/developer/transactions`; `GET /api/developer/transactions?days=`, `GET /transactions/:id`, where the id may be a job, order, payment, payout or bid). Read-only.
+18. ✅ **Business Transactions** (`/developer/transactions`; `GET /api/developer/transactions?days=`, `GET /transactions/:id`, where the id may be a job, order, payment, payout or bid). Read-only.
     - **Stages:** posted → first bid → accepted → paid → started → delivered → completed → paid out → reviewed. They come from Service, JobRequest, Order, Payment, Payout and Review.
     - **Branches:** cancelled, refunded, disputed, declined.
     - **Journey position** (`position()`, unit-tested): the journey stops at the first REQUIRED step that never happened, so a review written at approval cannot hide a missing payout. First bid and review are optional. Review timing is measured from completion.
     - **Journeys view:** funnel reach, p50/p90 per step, and jobs stuck past per-step limits.
     - **Trace view:** a stepper with time between steps, bids, earlier cancelled attempts, disputes and refunds. Investigate links to it.
     - Overlaps #19 Marketplace Health (conversion); #19 will add supply/demand, categories and geography rather than repeat this funnel.
-17. ✅ **Real Users (RUM)** (`/developer/rum`; intake `POST /api/rum` is public, rate-limited, 64 KB, whitelisted, and accepts text/plain for `sendBeacon`; read via `GET /api/developer/rum?days=1|7|30`).
+19. ✅ **Real Users (RUM)** (`/developer/rum`; intake `POST /api/rum` is public, rate-limited, 64 KB, whitelisted, and accepts text/plain for `sendBeacon`; read via `GET /api/developer/rum?days=1|7|30`).
     - **Web reporter** `frontend/src/lib/rum.ts`, using the `web-vitals` 5.3 dependency:
       - page views with load time,
       - LCP / INP / CLS / FCP / TTFB with Google ratings,
@@ -368,7 +378,7 @@ Not available: rollout percentages, cohorts, scheduled flag changes, IP block li
     - **Storage:** `RumEvent` (TTL 30 d).
     - **Page:** p75 per vital (the pass line) with a good / needs-improvement / poor split, crash-free visits, per-page p75 and errors, devices, browsers, error groups.
     - Verified with real Chromium visits (desktop and mobile emulation).
-18. ✅ **User Impact** (`/developer/impact`; `GET /api/developer/impact?days=1|7|30` and `GET /api/developer/impact/scope?kind=error|incident|release|window&id=|from=&to=`). Read-only. `services/monitoring/impact.js`.
+20. ✅ **User Impact** (`/developer/impact`; `GET /api/developer/impact?days=1|7|30` and `GET /api/developer/impact/scope?kind=error|incident|release|window&id=|from=&to=`). Read-only. `services/monitoring/impact.js`.
     - **Scopes:**
       - an error group (code + route + message, last 30 d),
       - an incident (its window, filtered to `relatedErrorCodes` when set, plus `relatedOrderIds`),
@@ -379,7 +389,7 @@ Not available: rollout percentages, cohorts, scheduled flag changes, IP block li
       - Rows with no user or job are reported as unattributed, never guessed.
     - **Money:** job value (agreed price) and the amount captured on those jobs, excluding refunded payments.
     - **Page:** error groups ranked by people affected, plus incidents and releases with headline numbers. The detail view lists users (emails masked), jobs and payments, with links to User/Job diagnostics, Transactions and Ledger.
-19. ✅ **Marketplace Health** (`/developer/marketplace`; `GET /api/developer/marketplace?days=7|30|90`). Read-only. `services/monitoring/marketplace.js`.
+21. ✅ **Marketplace Health** (`/developer/marketplace`; `GET /api/developer/marketplace?days=7|30|90`). Read-only. `services/monitoring/marketplace.js`.
     - **Data:**
       - demand = `Service` (jobs posted in the period),
       - supply = `JobRequest` (applications to those jobs),
@@ -405,7 +415,7 @@ Not available: rollout percentages, cohorts, scheduled flag changes, IP block li
       - a liquidity series (jobs posted, applications, hires),
       - a list of unanswered jobs that links to Transactions.
     - **Geography:** the county code is mapped to `NorwayCounty.name`; jobs without a county fall back to the listing's city. No overlap with the #31 funnel: this page covers supply and demand per segment, not a job's stages.
-21. ✅ **Event Consistency** (`/developer/event-consistency`; `GET /api/developer/event-consistency?days=7|30|90`). Read-only. `services/monitoring/eventConsistency.js`.
+22. ✅ **Event Consistency** (`/developer/event-consistency`; `GET /api/developer/event-consistency?days=7|30|90`). Read-only. `services/monitoring/eventConsistency.js`.
     - **12 checks, each classified by area (webhook / job / payment / notification) and by problem (missing / duplicate / out of order):**
       - **Webhooks:**
         - A Stripe event was never received. `events.list` covers the last 3 days, handled types only, capped at 300, cached for 10 min, and skips events younger than 5 min. If none of Stripe's events reached this database, the check reports that webhooks go to another deployment instead of flagging everything.
@@ -423,8 +433,8 @@ Not available: rollout percentages, cohorts, scheduled flag changes, IP block li
         - An identical in-app notification was sent within 2 min (`bursts`).
         - A job was paid or completed, but no notification followed.
         - An email or push was sent twice within 1 min.
-    - **Unit tests:** `outOfOrder`, `orderSequence` and `bursts`. Duplicate *records* stay on Data Integrity.
-22. ✅ **Migrations** (`/developer/migrations`; `GET /api/developer/migrations[?refresh=true]`, cached for 10 min). Read-only: scripts are never run from the dashboard. `services/monitoring/migrations.js`.
+    - **Unit tests:** `outOfOrder`, `orderSequence` and `bursts`. Duplicate _records_ stay on Data Integrity.
+23. ✅ **Migrations** (`/developer/migrations`; `GET /api/developer/migrations[?refresh=true]`, cached for 10 min). Read-only: scripts are never run from the dashboard. `services/monitoring/migrations.js`.
     - **No migration framework (YAGNI).** Each one-off script in `backend/scripts` has a detector that asks the database whether its work is still outstanding. A "has run" ledger would turn wrong after a restore; the detectors stay correct.
       - **Scripts covered:** admin role, phone index, usage-period index, payment dedupe, orphan duplicate archive (points to its runbook), chat merge, OG backfill.
       - **New scripts** whose names look like migrations but have no detector are listed so they get one.
@@ -438,7 +448,7 @@ Not available: rollout percentages, cohorts, scheduled flag changes, IP block li
       - data matches the schema,
       - no destructive migration pending.
     - **Incompatible app versions:** mobile versions active in the last 7 d, against breaking `ContractEvent`s recorded after each version first appeared.
-23. ✅ **External Services**: a tab on Dependency Map (`/developer/dependencies?view=external`; `GET /api/developer/dependencies/external?hours=24|168`). Read-only.
+24. ✅ **External Services**: a tab on Dependency Map (`/developer/dependencies?view=external`; `GET /api/developer/dependencies/external?hours=24|168`). Read-only.
     - **Recorder:** `services/monitoring/externalCalls.js`. Calls are held in memory per (service, operation) and written to `ExternalCallMinute` (TTL 30 d) every minute, the same way as `requestMetrics`.
       - **Stripe:** recorded from the existing Stripe `response` hook in `apm.recordStripe`.
       - **OpenAI:** recorded through a `timedFetch('openai')` passed to the OpenAI client.
@@ -452,7 +462,7 @@ Not available: rollout percentages, cohorts, scheduled flag changes, IP block li
       - Stripe: 100 req/s live or 25 req/s test, compared against the busiest minute.
       - SMTP: `SMTP_DAILY_QUOTA`, or 500 per day for Gmail.
       - OpenAI: `OPENAI_RPM_LIMIT`, when set.
-24. ✅ **Runbooks** (`/developer/runbooks`). `services/monitoring/runbooks.js`, `RunbookRun` model (TTL 1 y), `runbookController.js`.
+25. ✅ **Runbooks** (`/developer/runbooks`). `services/monitoring/runbooks.js`, `RunbookRun` model (TTL 1 y), `runbookController.js`.
     - **Routes:**
       - `GET /runbooks` and `GET /runbooks/:key`;
       - `POST /runbooks/:key/runs` (operations);
@@ -469,7 +479,7 @@ Not available: rollout percentages, cohorts, scheduled flag changes, IP block li
       - Re-running while a run is open refreshes it instead of opening a second one.
       - When a run is tied to an incident, results, steps and the close are written to the incident timeline.
       - Every write is audited.
-25. ✅ **Privacy & Data** (`/developer/privacy`; `GET /api/developer/privacy`, read-only; `POST /api/developer/privacy/export/:userId`, Super Admin + step-up + a reason of at least 10 characters, audited with `targetModel: 'User'`). `services/monitoring/privacy.js`.
+26. ✅ **Privacy & Data** (`/developer/privacy`; `GET /api/developer/privacy`, read-only; `POST /api/developer/privacy/export/:userId`, Super Admin + step-up + a reason of at least 10 characters, audited with `targetModel: 'User'`). `services/monitoring/privacy.js`.
     - **Retention:**
       - A declared `POLICY` lists 19 collections, each with its personal fields, purpose and retention. Accounting records are a legal hold of 5 years under bokføringsloven.
       - Each policy is checked against the real TTL index and the number of records older than the limit (`retentionStatus`, unit-tested).
@@ -486,7 +496,7 @@ Not available: rollout percentages, cohorts, scheduled flag changes, IP block li
     - **Export (Art. 15/20):**
       - Contents: profile via `sanitizeUserOwner` (no password, tokens or bank details), jobs, applications, orders, payments, reviews, only the chat messages the person wrote, notifications, sessions (no tokens), tickets, subscriptions, favourites.
       - Downloaded as JSON.
-26. ✅ **Search & Location** (`/developer/search`; `GET /api/developer/search-health?days=1|7|30`). Read-only. `services/monitoring/searchHealth.js`.
+27. ✅ **Search & Location** (`/developer/search`; `GET /api/developer/search-health?days=1|7|30`). Read-only. `services/monitoring/searchHealth.js`.
     - **New `SearchLog`** (anonymous, TTL 30 d, added to the privacy policy). `recordSearch` is a fire-and-forget write from `getAllServices` (first page only) and `getNearbyServices`. It stores the normalised words, categories, number of region codes, radius in km, result count and time taken.
     - **Listing problems on open listings (`geoIssue` / `listingFindings`, unit-tested):**
       - no coordinates,
@@ -505,7 +515,7 @@ Not available: rollout percentages, cohorts, scheduled flag changes, IP block li
       - It returned drafts, cancelled and completed listings with no limit; it now returns only public listings (`PUBLIC_SERVICE_STATUSES`).
       - Radius capped at 200 km and results at 50.
       - Invalid lat/lng/radius now get a 400 instead of a 500.
-27. ✅ **Sessions** (`/developer/sessions`; `GET /api/developer/sessions?days=&kind=` and `GET /api/developer/sessions/:sessionId`). Read-only. `services/monitoring/sessionDiagnostics.js`.
+28. ✅ **Sessions** (`/developer/sessions`; `GET /api/developer/sessions?days=&kind=` and `GET /api/developer/sessions/:sessionId`). Read-only. `services/monitoring/sessionDiagnostics.js`.
     - **A breadcrumb replay, not a DOM recording (rrweb is the documented upgrade path).**
       - `lib/rum.ts` keeps the last 30 steps in memory: pages, clicks described by role and label only (never input values), API calls with templated path, status and ms, and console errors.
       - It sends them only with a problem, capped at 20 per tab and deduplicated.
@@ -522,7 +532,7 @@ Not available: rollout percentages, cohorts, scheduled flag changes, IP block li
       - visits with problems,
       - the replay timeline (`buildTimeline`, unit-tested: merges views, crumbs and problems and removes duplicates).
     - Verified with a real mobile visitor session; the test data was deleted. Hard page reloads start a new visit, because the id lives only in memory.
-28. ✅ **Mobile releases**: a "Releases" tab on Mobile App (`/developer/mobile?view=releases`; `GET /api/developer/mobile/releases?days=7|30|90`). Read-only. `services/monitoring/mobileReleases.js`.
+29. ✅ **Mobile releases**: a "Releases" tab on Mobile App (`/developer/mobile?view=releases`; `GET /api/developer/mobile/releases?days=7|30|90`). Read-only. `services/monitoring/mobileReleases.js`.
     - **Per platform, over the last 7 days of `MobileEvent` sessions:**
       - latest version,
       - share of devices on the latest version,
@@ -539,7 +549,7 @@ Not available: rollout percentages, cohorts, scheduled flag changes, IP block li
       - the version in the repo's `jobblo-app/app.json` (the next build).
     - **Not built (YAGNI):** a force-update endpoint for the app. The minimum version is report-only until the app checks it.
     - Verified with marked seed data (`installId` starting `devtest-`), which was then deleted.
-29. ✅ **Test & Quality** (`/developer/quality`; `GET /api/developer/quality?days=7|30|90`). `services/monitoring/quality.js`, `QualityRun` model (TTL 180 d).
+30. ✅ **Test & Quality** (`/developer/quality`; `GET /api/developer/quality?days=7|30|90`). `services/monitoring/quality.js`, `QualityRun` model (TTL 180 d).
     - **Intake:** `POST /api/quality/report` (`routes/quality.js`).
       - Returns 404 unless `QUALITY_INGEST_TOKEN` is set. The token is checked with a timing-safe compare against the `X-Quality-Token` header.
       - Rate-limited.
@@ -565,7 +575,7 @@ Not available: rollout percentages, cohorts, scheduled flag changes, IP block li
       - Advisory only: flaky tests, reports missing, GitHub not configured.
       - Verdict: clear, warning or blocked.
     - **Tests:** `__tests__/qualityIngest.test.js` covers the intake (404 when off, 401 wrong token, 201 with a sanitised URL), flaky detection, gates and `toReport`. One real local run is stored: 1,586 of 1,606 passed, 45.5 % line coverage.
-30. ✅ **Change Risk** (`/developer/risk`; `GET /api/developer/risk`, `POST /api/developer/risk/assess`, a read-only preview). `services/monitoring/changeRisk.js`.
+31. ✅ **Change Risk** (`/developer/risk`; `GET /api/developer/risk`, `POST /api/developer/risk/assess`, a read-only preview). `services/monitoring/changeRisk.js`.
     - **Scoring:** a 0–100 score from hand-tuned weights (`ponytail:`, kept in one file). Each factor carries a reason and, where it helps, a mitigation. Levels: low, medium, high, critical (75 or more).
     - **Pure factor functions (unit-tested):**
       - `actionFactors`: IP block width, your own IP inside the block, signed-in sessions in the range, no expiry; flags touching payments, sign-in or availability, or disabling a feature; thresholds more than doubled; SLO targets lowered; operations access.
@@ -584,6 +594,7 @@ Not available: rollout percentages, cohorts, scheduled flag changes, IP block li
       - A first test run applied two harmless 1-hour blocks on documentation addresses (198.51.100.x); they were removed straight away.
 
 **Security: authenticator-app 2FA is required for superAdmin and developer**
+
 - **TOTP** (RFC 6238) on `node:crypto`, with no OTP library: `services/auth/mfa.js`.
   - It passes the RFC test vectors. Replay of a used 30 s step is refused, and ±1 step is allowed for clock drift.
   - The secret is stored AES-256-GCM-encrypted with `MFA_ENCRYPTION_KEY`, or with a key derived from `JWT_SECRET` (`ponytail:`).
@@ -608,25 +619,25 @@ Not available: rollout percentages, cohorts, scheduled flag changes, IP block li
   - Browser end to end: setup → wrong code → right code → backup codes → console reachable.
 - **Not covered:** the mobile app has no 2FA screen, so admin and developer accounts cannot use the app (their calls get `MFA_REQUIRED`). Step-up for sensitive actions still uses the emailed code.
 
-     | SLO | Default target | Measured as |
-     |---|---|---|
-     | API availability | 99.5 % | non-5xx |
-     | API latency | 99 % | ≤ `SLO_LATENCY_MS` |
-     | Synthetic uptime | 99.5 % | probe runs that passed |
-     | Stripe webhook processing | 99.9 % | events processed |
-     | Email delivery | 99 % | sends accepted |
-     | Push delivery | 98 % | sends accepted |
-     | Background jobs | 99 % | scheduler runs that succeeded |
-     | Mobile crash-free sessions | 99.5 % | sessions without a fatal crash |
-
-   - `/api/developer/*` and telemetry routes are excluded from the API SLOs.
-   - **Latency counting:** `requestMetrics` now counts `slow` requests per bucket (exact, not estimated from p95). Older rows have no `slow` field and are skipped.
-   - **Per SLO:** SLI, budget, budget remaining, 1 h / 6 h burn rate, and a status of ok, at_risk (≤ 25 % left or 6 h burn ≥ 6×), fast_burn (1 h burn ≥ 14.4×), breached or no_data. `evaluate()` is unit-tested.
-   - **Targets:** editable through the sensitive action `slo_targets_set` (90–99.999 %, step-up, approval for operations developers), stored in GlobalConfig `devdash_slo_targets`.
-   - **Alert:** `slo_burn:<key>` (high) on fast burn with at least 20 events in the hour, evaluated every 5 min.
-   - **Page:** SLO cards with a budget bar, plus a budget burn-down chart and a daily SLI chart.
+  | SLO                        | Default target | Measured as                    |
+  | -------------------------- | -------------- | ------------------------------ |
+  | API availability           | 99.5 %         | non-5xx                        |
+  | API latency                | 99 %           | ≤ `SLO_LATENCY_MS`             |
+  | Synthetic uptime           | 99.5 %         | probe runs that passed         |
+  | Stripe webhook processing  | 99.9 %         | events processed               |
+  | Email delivery             | 99 %           | sends accepted                 |
+  | Push delivery              | 98 %           | sends accepted                 |
+  | Background jobs            | 99 %           | scheduler runs that succeeded  |
+  | Mobile crash-free sessions | 99.5 %         | sessions without a fatal crash |
+  - `/api/developer/*` and telemetry routes are excluded from the API SLOs.
+  - **Latency counting:** `requestMetrics` now counts `slow` requests per bucket (exact, not estimated from p95). Older rows have no `slow` field and are skipped.
+  - **Per SLO:** SLI, budget, budget remaining, 1 h / 6 h burn rate, and a status of ok, at_risk (≤ 25 % left or 6 h burn ≥ 6×), fast_burn (1 h burn ≥ 14.4×), breached or no_data. `evaluate()` is unit-tested.
+  - **Targets:** editable through the sensitive action `slo_targets_set` (90–99.999 %, step-up, approval for operations developers), stored in GlobalConfig `devdash_slo_targets`.
+  - **Alert:** `slo_burn:<key>` (high) on fast burn with at least 20 events in the hour, evaluated every 5 min.
+  - **Page:** SLO cards with a budget bar, plus a budget burn-down chart and a daily SLI chart.
 
 **Admin dashboard (same UI as the Developer Console)**
+
 - Every admin page now uses dev-theme tokens: the hard-coded storefront hex colours, Tailwind grays and xl/2xl radii were replaced by a one-off codemod. The shared admin wrappers now use `components/developer/ui` instead of the storefront `components/Ui`, which fixes the full-width stacked filters and the green buttons.
 - New `/dashboard/users/:id`, backed by `GET /api/admin/users/:id/overview`. It uses an explicit safe field list (no bank or identity numbers) and covers profile, stats, orders, jobs, chats, reviews, money, disputes and support, devices and the admin log.
 - New `/dashboard/orders/:id`, backed by `GET /api/admin/orders/:id/details`, which reuses Job Diagnostics `getJob`. It shows the parties with contact details, payment, payout, the health check, disputes, the timeline and notifications.
@@ -634,6 +645,7 @@ Not available: rollout percentages, cohorts, scheduled flag changes, IP block li
 - The Chats list's Ordre-ID column showed `[object Object]` because `orderId` is populated. Its type is fixed and the column now links to the order detail page.
 
 ## Critical files
+
 - **Backend, edited:**
   - `backend/models/User.js`
   - `backend/middleware/auth.js`
@@ -662,6 +674,7 @@ Not available: rollout percentages, cohorts, scheduled flag changes, IP block li
   - `frontend/src/features/developer/hooks.ts`
 
 ## Verification
+
 - **Backend check:** one small jest + supertest file, `backend/tests/developer.test.js`, covering:
   - `user` → 403 on `/api/developer/overview`
   - `developer` → 200

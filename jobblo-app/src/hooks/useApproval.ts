@@ -1,8 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../queryKeys';
-import { approveSafePayJob, updateCustomerChecklist, uploadReviewPhotos } from '../services/approval.service';
+import {
+  approveSafePayJob,
+  updateCustomerChecklist,
+  uploadReviewPhotos,
+} from '../services/approval.service';
 
-function invalidateApprovalQueries(queryClient: ReturnType<typeof useQueryClient>, orderId: string) {
+function invalidateApprovalQueries(
+  queryClient: ReturnType<typeof useQueryClient>,
+  orderId: string
+) {
   void queryClient.invalidateQueries({ queryKey: queryKeys.safepay.checkout(orderId) });
   void queryClient.invalidateQueries({ queryKey: queryKeys.providerOrders.detail(orderId) });
   void queryClient.invalidateQueries({ queryKey: queryKeys.applicants.overview });
@@ -15,11 +22,18 @@ function invalidateApprovalQueries(queryClient: ReturnType<typeof useQueryClient
 
 export function useCustomerChecklistMutation(orderId: string) {
   const queryClient = useQueryClient();
-  return useMutation({ mutationFn: ({ itemId, checked }: { itemId: string; checked: boolean }) => updateCustomerChecklist(orderId, itemId, checked), onSuccess: () => invalidateApprovalQueries(queryClient, orderId) });
+  return useMutation({
+    mutationFn: ({ itemId, checked }: { itemId: string; checked: boolean }) =>
+      updateCustomerChecklist(orderId, itemId, checked),
+    onSuccess: () => invalidateApprovalQueries(queryClient, orderId),
+  });
 }
 
 export function useReviewPhotoUploadMutation(orderId: string) {
-  return useMutation({ mutationFn: (photos: Array<{ uri: string; name: string; type: string }>) => uploadReviewPhotos(orderId, photos) });
+  return useMutation({
+    mutationFn: (photos: Array<{ uri: string; name: string; type: string }>) =>
+      uploadReviewPhotos(orderId, photos),
+  });
 }
 
 export function useApproveSafePayJobMutation(orderId: string) {

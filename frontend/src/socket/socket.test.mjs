@@ -12,12 +12,15 @@ const fakeSocket = {
   disconnect: () => calls.push(['disconnect']),
 };
 mock.module('socket.io-client', { namedExports: { io: () => fakeSocket } });
-mock.module(new URL('../config/env.ts', import.meta.url).href, { namedExports: { API_BASE_URL: 'http://test' } });
+mock.module(new URL('../config/env.ts', import.meta.url).href, {
+  namedExports: { API_BASE_URL: 'http://test' },
+});
 
 const { initSocket, disconnectSocket } = await import('./socket.ts');
 // Wait for the lazy import itself, not a fixed delay: on a busy machine it takes longer than 100 ms.
 const loaded = async () => {
-  for (let i = 0; i < 250 && !initSocket().connected; i++) await new Promise((r) => setTimeout(r, 20));
+  for (let i = 0; i < 250 && !initSocket().connected; i++)
+    await new Promise((r) => setTimeout(r, 20));
 };
 
 test('calls made before the library loads are replayed on the real socket', async () => {
@@ -29,7 +32,10 @@ test('calls made before the library loads are replayed on the real socket', asyn
   s.emit('join', 'u1');
   await loaded();
   const replayed = calls.filter(([k, e]) => k === 'on' && e === 'msg');
-  assert.deepEqual(replayed.map((c) => c[2]), [a]);
+  assert.deepEqual(
+    replayed.map((c) => c[2]),
+    [a]
+  );
   assert.ok(calls.some(([k, e, v]) => k === 'emit' && e === 'join' && v === 'u1'));
   assert.equal(s.connected, true);
 
@@ -47,7 +53,9 @@ test('disconnect drops the socket and the next init makes a new one', async () =
 
 test('a refused handshake refreshes the session and reconnects (socket.io never retries it)', async () => {
   const profile = [];
-  mock.module(new URL('../api/mainURLs.ts', import.meta.url).href, { defaultExport: { get: async (u) => profile.push(u) } });
+  mock.module(new URL('../api/mainURLs.ts', import.meta.url).href, {
+    defaultExport: { get: async (u) => profile.push(u) },
+  });
   mock.timers.enable({ apis: ['setTimeout'] });
   try {
     fakeSocket.active = false;
@@ -57,7 +65,8 @@ test('a refused handshake refreshes the session and reconnects (socket.io never 
     mock.timers.tick(5000);
     mock.timers.reset();
     // The retry imports mainURLs lazily; wait for its reconnect rather than a fixed delay.
-    for (let i = 0; i < 250 && calls.at(-1)?.[0] !== 'connect'; i++) await new Promise((r) => setTimeout(r, 20));
+    for (let i = 0; i < 250 && calls.at(-1)?.[0] !== 'connect'; i++)
+      await new Promise((r) => setTimeout(r, 20));
     assert.deepEqual(profile, ['/api/auth/profile']);
     assert.deepEqual(calls.at(-1), ['connect']);
   } finally {

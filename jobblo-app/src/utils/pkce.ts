@@ -25,7 +25,9 @@ const K = [
 const ror = (x: number, n: number) => (x >>> n) | (x << (32 - n));
 
 export function sha256(message: Uint8Array): Uint8Array {
-  const h = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
+  const h = [
+    0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19,
+  ];
   const total = Math.ceil((message.length + 9) / 64) * 64;
   const buf = new Uint8Array(total);
   buf.set(message);
@@ -45,7 +47,8 @@ export function sha256(message: Uint8Array): Uint8Array {
     }
     let [a, b, c, d, e, f, g, hh] = h;
     for (let i = 0; i < 64; i++) {
-      const t1 = (hh + (ror(e, 6) ^ ror(e, 11) ^ ror(e, 25)) + ((e & f) ^ (~e & g)) + K[i] + w[i]) | 0;
+      const t1 =
+        (hh + (ror(e, 6) ^ ror(e, 11) ^ ror(e, 25)) + ((e & f) ^ (~e & g)) + K[i] + w[i]) | 0;
       const t2 = ((ror(a, 2) ^ ror(a, 13) ^ ror(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) | 0;
       hh = g;
       g = f;
@@ -66,7 +69,10 @@ export function sha256(message: Uint8Array): Uint8Array {
 }
 
 export function base64url(bytes: Uint8Array): string {
-  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return btoa(String.fromCharCode(...bytes))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/, '');
 }
 
 type RandomSources = {

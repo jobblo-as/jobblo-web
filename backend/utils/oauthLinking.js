@@ -169,7 +169,13 @@ async function resolveOAuthLogin({ provider, providerId, email, emailVerified, l
   // The provider vouching for the account's own address proves it, like the sign-up code.
   // The one write besides linking.
   const stampVerified = async (user) => {
-    if (emailVerified !== true || !normalisedEmail || user.emailVerifiedAt || user.email !== normalisedEmail) return;
+    if (
+      emailVerified !== true ||
+      !normalisedEmail ||
+      user.emailVerifiedAt ||
+      user.email !== normalisedEmail
+    )
+      return;
     user.emailVerifiedAt = new Date();
     await User.updateOne({ _id: user._id }, { $set: { emailVerifiedAt: user.emailVerifiedAt } });
   };

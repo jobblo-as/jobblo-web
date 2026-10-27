@@ -16,7 +16,8 @@ const { registerShutdown } = require('./shutdown');
 function warnIfPublic(port, host = process.env.HOST, env = process.env) {
   if (env.NODE_ENV !== 'production' || ['127.0.0.1', '::1', 'localhost'].includes(host)) return;
   const message = `[security] HOST is "${host || 'unset'}": the API listens on all interfaces. Set HOST=127.0.0.1 so only the local nginx can reach port ${port}, and firewall the port.`;
-  if (env.ALLOW_PUBLIC_HOST !== 'true') throw new Error(`${message} Refusing to start; set ALLOW_PUBLIC_HOST=true to override.`);
+  if (env.ALLOW_PUBLIC_HOST !== 'true')
+    throw new Error(`${message} Refusing to start; set ALLOW_PUBLIC_HOST=true to override.`);
   console.warn(message);
 }
 
@@ -47,15 +48,26 @@ async function start({ port = process.env.PORT || 5001, host = process.env.HOST 
   const redisAdapter = attachSocketAdapter(io);
 
   await new Promise((resolve, reject) => {
-    server.once('error', (err) => reject(err.code === 'EADDRINUSE' ? new Error(`Port ${port} is already in use — is another API instance running?`) : err));
+    server.once('error', (err) =>
+      reject(
+        err.code === 'EADDRINUSE'
+          ? new Error(`Port ${port} is already in use — is another API instance running?`)
+          : err
+      )
+    );
     server.listen({ port, host }, resolve);
   });
-  console.log(`🚀  Jobblo API listening on http://localhost:${port}${process.env.NODE_ENV !== 'production' ? ` (docs: /api/docs)` : ''}`);
-  console.log(`    WebSocket on ws://localhost:${port}${redisAdapter ? ' (Redis adapter)' : ''} · Redis: ${redis.enabled() ? 'on' : 'off (in-process queues, memory rate limits and cache)'}`);
+  console.log(
+    `🚀  Jobblo API listening on http://localhost:${port}${process.env.NODE_ENV !== 'production' ? ` (docs: /api/docs)` : ''}`
+  );
+  console.log(
+    `    WebSocket on ws://localhost:${port}${redisAdapter ? ' (Redis adapter)' : ''} · Redis: ${redis.enabled() ? 'on' : 'off (in-process queues, memory rate limits and cache)'}`
+  );
 
   await db;
   const bg = startBackground();
-  if (bg.failed.length) console.error(`[bootstrap] background starters failed: ${bg.failed.join(', ')}`);
+  if (bg.failed.length)
+    console.error(`[bootstrap] background starters failed: ${bg.failed.join(', ')}`);
 
   // bg.stops: the scheduler's timers, so timer-mode jobs do not start mid-shutdown.
   registerShutdown({ server, io, extra: bg.stops });

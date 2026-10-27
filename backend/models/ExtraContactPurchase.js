@@ -17,7 +17,12 @@ const extraContactPurchaseSchema = new mongoose.Schema(
     stripeMode: { type: String, enum: ['test', 'live'], required: true },
     amountMinor: { type: Number, required: true, min: 1 },
     currency: { type: String, default: 'nok' },
-    status: { type: String, enum: ['pending', 'paid', 'consumed', 'expired'], default: 'pending', required: true },
+    status: {
+      type: String,
+      enum: ['pending', 'paid', 'consumed', 'expired'],
+      default: 'pending',
+      required: true,
+    },
     checkoutSessionId: { type: String },
     paymentIntentId: { type: String },
     expiresAt: { type: Date, required: true },

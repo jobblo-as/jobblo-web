@@ -27,7 +27,8 @@ interface CampaignAnalytics {
 }
 
 export const fetchCampaigns = async (): Promise<Campaign[]> => {
-  const response = await mainLink.get<ApiResponse<{ campaigns: Campaign[] }>>('/api/admin/campaigns');
+  const response =
+    await mainLink.get<ApiResponse<{ campaigns: Campaign[] }>>('/api/admin/campaigns');
   return response.data.data.campaigns;
 };
 
@@ -39,7 +40,10 @@ export const fetchCampaignDefaults = async (): Promise<Omit<Campaign, '_id'>> =>
 };
 
 export const createCampaign = async (payload: Omit<Campaign, '_id'>): Promise<Campaign> => {
-  const response = await mainLink.post<ApiResponse<{ campaign: Campaign }>>('/api/admin/campaigns', payload);
+  const response = await mainLink.post<ApiResponse<{ campaign: Campaign }>>(
+    '/api/admin/campaigns',
+    payload
+  );
   return response.data.data.campaign;
 };
 

@@ -31,9 +31,24 @@ function toReport(results, coverage, env = process.env, suiteName = suite) {
   const rel = (f) => path.relative(process.cwd(), f || '').replace(/\\/g, '/');
   const failures = [];
   for (const f of files) {
-    for (const t of f.assertionResults || []) if (t.status === 'failed') failures.push({ file: rel(f.name), title: t.fullName || t.title, message: strip((t.failureMessages || [])[0]).split('\n').slice(0, 6).join('\n').slice(0, 1000) });
+    for (const t of f.assertionResults || [])
+      if (t.status === 'failed')
+        failures.push({
+          file: rel(f.name),
+          title: t.fullName || t.title,
+          message: strip((t.failureMessages || [])[0])
+            .split('\n')
+            .slice(0, 6)
+            .join('\n')
+            .slice(0, 1000),
+        });
     // A file that fails to load has no assertions, only a message.
-    if (f.status === 'failed' && !(f.assertionResults || []).some((t) => t.status === 'failed')) failures.push({ file: rel(f.name), title: '(test file failed to run)', message: strip(f.message).slice(0, 1000) });
+    if (f.status === 'failed' && !(f.assertionResults || []).some((t) => t.status === 'failed'))
+      failures.push({
+        file: rel(f.name),
+        title: '(test file failed to run)',
+        message: strip(f.message).slice(0, 1000),
+      });
   }
   const total = coverage?.total;
   const repo = env.GITHUB_REPOSITORY;
@@ -43,13 +58,25 @@ function toReport(results, coverage, env = process.env, suiteName = suite) {
     branch: env.GITHUB_HEAD_REF || env.GITHUB_REF_NAME || null,
     sha: env.GITHUB_SHA || null,
     ciRunId: env.GITHUB_RUN_ID ? `${env.GITHUB_RUN_ID}.${env.GITHUB_RUN_ATTEMPT || 1}` : null,
-    ciUrl: repo && env.GITHUB_RUN_ID ? `https://github.com/${repo}/actions/runs/${env.GITHUB_RUN_ID}` : null,
+    ciUrl:
+      repo && env.GITHUB_RUN_ID
+        ? `https://github.com/${repo}/actions/runs/${env.GITHUB_RUN_ID}`
+        : null,
     tests: results?.numTotalTests || 0,
     passed: results?.numPassedTests || 0,
     failed: (results?.numFailedTests || 0) + (results?.numRuntimeErrorTestSuites || 0),
     skipped: (results?.numPendingTests || 0) + (results?.numTodoTests || 0),
-    durationMs: results?.startTime ? Math.max(0, Math.max(...files.map((f) => f.endTime || 0)) - results.startTime) : null,
-    coverage: total ? { lines: total.lines?.pct, statements: total.statements?.pct, functions: total.functions?.pct, branches: total.branches?.pct } : undefined,
+    durationMs: results?.startTime
+      ? Math.max(0, Math.max(...files.map((f) => f.endTime || 0)) - results.startTime)
+      : null,
+    coverage: total
+      ? {
+          lines: total.lines?.pct,
+          statements: total.statements?.pct,
+          functions: total.functions?.pct,
+          branches: total.branches?.pct,
+        }
+      : undefined,
     failures: failures.slice(0, 100),
     slowest: files
       .map((f) => ({ file: rel(f.name), durationMs: (f.endTime || 0) - (f.startTime || 0) }))
@@ -60,11 +87,20 @@ function toReport(results, coverage, env = process.env, suiteName = suite) {
 
 async function main() {
   const results = readJson(resultsFile);
-  if (!results) return console.log(`[quality] no Jest results at ${resultsFile} — nothing to report`);
+  if (!results)
+    return console.log(`[quality] no Jest results at ${resultsFile} — nothing to report`);
   const report = toReport(results, coverageFile ? readJson(coverageFile) : null);
-  console.log(`[quality] ${suite}: ${report.passed}/${report.tests} passed, ${report.failed} failed${report.coverage ? `, ${report.coverage.lines}% lines` : ''}`);
-  if (!url || !token) return console.log('[quality] QUALITY_REPORT_URL / QUALITY_INGEST_TOKEN not set — not sent');
-  const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Quality-Token': token }, body: JSON.stringify(report), signal: AbortSignal.timeout(15_000) });
+  console.log(
+    `[quality] ${suite}: ${report.passed}/${report.tests} passed, ${report.failed} failed${report.coverage ? `, ${report.coverage.lines}% lines` : ''}`
+  );
+  if (!url || !token)
+    return console.log('[quality] QUALITY_REPORT_URL / QUALITY_INGEST_TOKEN not set — not sent');
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Quality-Token': token },
+    body: JSON.stringify(report),
+    signal: AbortSignal.timeout(15_000),
+  });
   console.log(`[quality] sent: HTTP ${res.status}`);
 }
 

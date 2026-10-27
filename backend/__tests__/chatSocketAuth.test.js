@@ -5,8 +5,15 @@ jest.mock('../models/ChatMessage', () => ({
   updateOne: jest.fn(async () => ({ modifiedCount: 1 })),
   find: jest.fn(() => mockChain([])),
 }));
-jest.mock('../models/User', () => ({ findById: jest.fn(), exists: jest.fn(async () => null), find: jest.fn(() => mockChain([])) }));
-jest.mock('../models/Session', () => ({ findById: jest.fn(), exists: jest.fn(async () => ({ _id: 's' })) }));
+jest.mock('../models/User', () => ({
+  findById: jest.fn(),
+  exists: jest.fn(async () => null),
+  find: jest.fn(() => mockChain([])),
+}));
+jest.mock('../models/Session', () => ({
+  findById: jest.fn(),
+  exists: jest.fn(async () => ({ _id: 's' })),
+}));
 jest.mock('../utils/tokenUtils', () => ({ verifyToken: jest.fn() }));
 /** A query whose select/sort/limit chain resolves to `rows`. */
 function mockChain(rows) {
@@ -119,7 +126,10 @@ describe('send-message membership (F-50)', () => {
     await handlers['send-message']({ chatId: String(CHAT_ID), text: 'hei' });
 
     expect(Chat.updateOne).toHaveBeenCalledTimes(1);
-    expect(Chat.updateOne.mock.calls[0][1].$push.messages).toMatchObject({ text: 'hei', senderId: String(PROVIDER) });
+    expect(Chat.updateOne.mock.calls[0][1].$push.messages).toMatchObject({
+      text: 'hei',
+      senderId: String(PROVIDER),
+    });
   });
 
   // M5(c): the socket path skipped the HTTP route's checks and stored anything as text.
@@ -134,7 +144,10 @@ describe('send-message membership (F-50)', () => {
     await handlers['send-message']({ chatId: String(CHAT_ID), text });
 
     expect(Chat.updateOne).not.toHaveBeenCalled();
-    expect(socket.emit).toHaveBeenCalledWith('chat-error', expect.objectContaining({ chatId: String(CHAT_ID) }));
+    expect(socket.emit).toHaveBeenCalledWith(
+      'chat-error',
+      expect.objectContaining({ chatId: String(CHAT_ID) })
+    );
   });
 
   it('M4: refuses a message when one side has blocked the other', async () => {
@@ -145,7 +158,10 @@ describe('send-message membership (F-50)', () => {
     await handlers['send-message']({ chatId: String(CHAT_ID), text: 'hei' });
 
     expect(Chat.updateOne).not.toHaveBeenCalled();
-    expect(socket.emit).toHaveBeenCalledWith('chat-error', expect.objectContaining({ code: 'user_blocked' }));
+    expect(socket.emit).toHaveBeenCalledWith(
+      'chat-error',
+      expect.objectContaining({ code: 'user_blocked' })
+    );
   });
 
   it('refuses to inject a message from an outsider', async () => {
@@ -193,17 +209,31 @@ describe('presence goes only to chat partners', () => {
     const PAIR_B = new mongoose.Types.ObjectId();
     Chat.find.mockImplementation((filter) => {
       const uid = String(filter.$or[0].clientId);
-      return mockChain(uid === String(PAIR_A) || uid === String(PAIR_B) ? [{ clientId: PAIR_A, providerId: PAIR_B }] : []);
+      return mockChain(
+        uid === String(PAIR_A) || uid === String(PAIR_B)
+          ? [{ clientId: PAIR_A, providerId: PAIR_B }]
+          : []
+      );
     });
     const emits = [];
     const io = {
       use: jest.fn(),
-      on: jest.fn((event, fn) => { if (event === 'connection') io._onConnection = fn; }),
+      on: jest.fn((event, fn) => {
+        if (event === 'connection') io._onConnection = fn;
+      }),
       to: jest.fn((room) => ({ emit: (event, data) => emits.push({ room, event, data }) })),
       emit: jest.fn(),
     };
     chatSocket(io);
-    const connect = (userId, id) => io._onConnection({ id, userId: String(userId), on: jest.fn(), join: jest.fn(), use: jest.fn(), emit: jest.fn() });
+    const connect = (userId, id) =>
+      io._onConnection({
+        id,
+        userId: String(userId),
+        on: jest.fn(),
+        join: jest.fn(),
+        use: jest.fn(),
+        emit: jest.fn(),
+      });
 
     connect(STRANGER, 's1');
     connect(PAIR_A, 's2');
@@ -211,7 +241,8 @@ describe('presence goes only to chat partners', () => {
     await new Promise((r) => setImmediate(r));
 
     expect(io.emit).not.toHaveBeenCalled(); // no global broadcast
-    const lastTo = (userId) => emits.filter((e) => e.room === String(userId) && e.event === 'get-online-users').at(-1)?.data;
+    const lastTo = (userId) =>
+      emits.filter((e) => e.room === String(userId) && e.event === 'get-online-users').at(-1)?.data;
     expect(lastTo(PAIR_A)).toEqual([String(PAIR_B)]);
     expect(lastTo(PAIR_B)).toEqual([String(PAIR_A)]);
     expect(lastTo(STRANGER)).toEqual([]);
@@ -236,13 +267,19 @@ describe('socket hardening', () => {
     Session.findById.mockResolvedValue({ userId: user._id, mfaVerifiedAt: new Date() });
     User.findById.mockReturnValue(mockChain(user));
     const socket = { handshake: { headers: {}, auth: { token: 't' } } };
-    return new Promise((resolve) => io.use.mock.calls[0][0](socket, (err) => resolve({ err, socket })));
+    return new Promise((resolve) =>
+      io.use.mock.calls[0][0](socket, (err) => resolve({ err, socket }))
+    );
   }
 
   it('S4: refuses a deactivated or deleted account, like authenticate()', async () => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
-    expect((await handshake({ _id: newId(), role: 'user', accountStatus: 'inactive' })).err).toBeInstanceOf(Error);
-    expect((await handshake({ _id: newId(), role: 'user', isDeleted: true })).err).toBeInstanceOf(Error);
+    expect(
+      (await handshake({ _id: newId(), role: 'user', accountStatus: 'inactive' })).err
+    ).toBeInstanceOf(Error);
+    expect((await handshake({ _id: newId(), role: 'user', isDeleted: true })).err).toBeInstanceOf(
+      Error
+    );
     const ok = await handshake({ _id: newId(), role: 'user', accountStatus: 'active' });
     expect(ok.err).toBeUndefined();
     expect(ok.socket.tokenExp).toBe(2e9);
@@ -261,7 +298,9 @@ describe('socket hardening', () => {
     await tick();
     connectAs(U, { id: 'second' });
     await tick();
-    expect(Chat.find.mock.calls.filter(([f]) => String(f.$or[0].clientId) === String(U))).toHaveLength(1);
+    expect(
+      Chat.find.mock.calls.filter(([f]) => String(f.$or[0].clientId) === String(U))
+    ).toHaveLength(1);
   });
 
   it('S7: presence is hidden between blocked users, both directions', async () => {
@@ -271,8 +310,19 @@ describe('socket hardening', () => {
     connectAs(B, { id: 'b' });
     connectAs(C, { id: 'c' });
     await tick();
-    Chat.find.mockImplementation((f) => mockChain(String(f.$or[0].clientId) === String(A) ? [{ clientId: A, providerId: B }, { clientId: C, providerId: A }] : []));
-    User.find.mockImplementation((f) => mockChain(f.blockedUsers === String(A) ? [{ _id: C }] : []));
+    Chat.find.mockImplementation((f) =>
+      mockChain(
+        String(f.$or[0].clientId) === String(A)
+          ? [
+              { clientId: A, providerId: B },
+              { clientId: C, providerId: A },
+            ]
+          : []
+      )
+    );
+    User.find.mockImplementation((f) =>
+      mockChain(f.blockedUsers === String(A) ? [{ _id: C }] : [])
+    );
     const { io } = connectAs(A, { id: 'a', blockedUsers: [B] });
     await tick();
     const toA = io.to.mock.results.filter((r, i) => io.to.mock.calls[i][0] === String(A));

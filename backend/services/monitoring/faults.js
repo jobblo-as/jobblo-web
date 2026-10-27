@@ -42,16 +42,20 @@ async function refreshStripeMode() {
 /** Why the simulator is (un)available on this instance. */
 function availability(env = process.env) {
   const reasons = [];
-  if (env.NODE_ENV === 'production') reasons.push('NODE_ENV is production — the simulator never runs in production.');
-  if (env.ENABLE_FAILURE_SIMULATOR !== 'true') reasons.push('ENABLE_FAILURE_SIMULATOR is not "true" on this instance.');
-  if (liveStripe === true) reasons.push('A live Stripe key is in use — faults could affect real money.');
+  if (env.NODE_ENV === 'production')
+    reasons.push('NODE_ENV is production — the simulator never runs in production.');
+  if (env.ENABLE_FAILURE_SIMULATOR !== 'true')
+    reasons.push('ENABLE_FAILURE_SIMULATOR is not "true" on this instance.');
+  if (liveStripe === true)
+    reasons.push('A live Stripe key is in use — faults could affect real money.');
   return { enabled: reasons.length === 0, reasons };
 }
 
 /** Pure: does an experiment apply to this request path / target now? Unit-tested. */
 function matches(exp, { type, target, path }, now = Date.now()) {
   if (exp.type !== type || exp.stoppedAt || new Date(exp.endsAt).getTime() <= now) return false;
-  if (type === 'http_latency' || type === 'http_error') return Boolean(path) && !EXCLUDED.test(path) && path.startsWith(exp.target || '/api/');
+  if (type === 'http_latency' || type === 'http_error')
+    return Boolean(path) && !EXCLUDED.test(path) && path.startsWith(exp.target || '/api/');
   if (type === 'scheduler') return !exp.target || exp.target === '*' || exp.target === target;
   return true;
 }
@@ -65,7 +69,9 @@ function find(type, ctx = {}) {
 function assertNoFault(type, target) {
   const exp = find(type, { target });
   if (exp) {
-    const err = new Error(`Simulated ${TYPES[type].label.toLowerCase()} (failure simulator experiment ${exp._id})`);
+    const err = new Error(
+      `Simulated ${TYPES[type].label.toLowerCase()} (failure simulator experiment ${exp._id})`
+    );
     err.code = 'SIMULATED_FAULT';
     throw err;
   }
@@ -79,14 +85,19 @@ async function faultMiddleware(req, res, next) {
   if (slow) await new Promise((r) => setTimeout(r, Math.min(slow.latencyMs || 0, 30_000)));
   const failing = find('http_error', { path });
   if (failing && Math.random() * 100 < (failing.errorRate ?? 100)) {
-    return res.status(failing.statusCode || 503).json({ success: false, message: 'Simulated failure (staging failure simulator).', code: 'SIMULATED_FAULT' });
+    return res.status(failing.statusCode || 503).json({
+      success: false,
+      message: 'Simulated failure (staging failure simulator).',
+      code: 'SIMULATED_FAULT',
+    });
   }
   return next();
 }
 
 /** Stripe webhook guard: 503 makes Stripe retry, exactly like a real outage. */
 function webhookGuard(req, res, next) {
-  if (find('stripe_webhook')) return res.status(503).json({ received: false, code: 'SIMULATED_FAULT' });
+  if (find('stripe_webhook'))
+    return res.status(503).json({ received: false, code: 'SIMULATED_FAULT' });
   return next();
 }
 
@@ -94,7 +105,9 @@ async function refresh() {
   try {
     const mongoose = require('mongoose');
     if (mongoose.connection.readyState !== 1) return;
-    active = await require('../../models/FailureExperiment').find({ stoppedAt: null, endsAt: { $gt: new Date() } }).lean();
+    active = await require('../../models/FailureExperiment')
+      .find({ stoppedAt: null, endsAt: { $gt: new Date() } })
+      .lean();
     if (active.length) await refreshStripeMode();
   } catch {
     /* keep the last known list */
@@ -112,25 +125,40 @@ function validate(body) {
   const type = String(body?.type || '');
   if (!TYPES[type]) return { error: 'Unknown fault type.' };
   const minutes = Number(body.durationMinutes);
-  if (!Number.isFinite(minutes) || minutes < 1 || minutes > MAX_MINUTES) return { error: `Duration must be 1–${MAX_MINUTES} minutes.` };
+  if (!Number.isFinite(minutes) || minutes < 1 || minutes > MAX_MINUTES)
+    return { error: `Duration must be 1–${MAX_MINUTES} minutes.` };
   const reason = String(body.reason || '').trim();
   if (reason.length < 5) return { error: 'Give a reason (at least 5 characters).' };
-  const v = { type, reason: reason.slice(0, 300), minutes, target: null, latencyMs: null, errorRate: null, statusCode: null };
+  const v = {
+    type,
+    reason: reason.slice(0, 300),
+    minutes,
+    target: null,
+    latencyMs: null,
+    errorRate: null,
+    statusCode: null,
+  };
   if (type === 'http_latency' || type === 'http_error') {
     const target = String(body.target || '/api/').trim();
-    if (!target.startsWith('/api/') || EXCLUDED.test(target)) return { error: 'Route prefix must start with /api/ and cannot be the developer API or telemetry.' };
+    if (!target.startsWith('/api/') || EXCLUDED.test(target))
+      return {
+        error: 'Route prefix must start with /api/ and cannot be the developer API or telemetry.',
+      };
     v.target = target.slice(0, 200);
   }
   if (type === 'http_latency') {
     const ms = Number(body.latencyMs);
-    if (!Number.isFinite(ms) || ms < 50 || ms > 30_000) return { error: 'Latency must be 50–30 000 ms.' };
+    if (!Number.isFinite(ms) || ms < 50 || ms > 30_000)
+      return { error: 'Latency must be 50–30 000 ms.' };
     v.latencyMs = Math.round(ms);
   }
   if (type === 'http_error') {
     const rate = Number(body.errorRate);
     const code = Number(body.statusCode || 503);
-    if (!Number.isFinite(rate) || rate <= 0 || rate > 100) return { error: 'Error rate must be 1–100 %.' };
-    if (![500, 502, 503, 504].includes(code)) return { error: 'Status must be 500, 502, 503 or 504.' };
+    if (!Number.isFinite(rate) || rate <= 0 || rate > 100)
+      return { error: 'Error rate must be 1–100 %.' };
+    if (![500, 502, 503, 504].includes(code))
+      return { error: 'Status must be 500, 502, 503 or 504.' };
     v.errorRate = rate;
     v.statusCode = code;
   }
@@ -158,9 +186,26 @@ async function startExperiment(body, userId) {
 }
 
 async function stopExperiments(filter, userId) {
-  const r = await require('../../models/FailureExperiment').updateMany({ ...filter, stoppedAt: null, endsAt: { $gt: new Date() } }, { $set: { stoppedAt: new Date(), stoppedBy: userId } });
+  const r = await require('../../models/FailureExperiment').updateMany(
+    { ...filter, stoppedAt: null, endsAt: { $gt: new Date() } },
+    { $set: { stoppedAt: new Date(), stoppedBy: userId } }
+  );
   await refresh();
   return r.modifiedCount;
 }
 
-module.exports = { TYPES, MAX_MINUTES, availability, matches, validate, assertNoFault, faultMiddleware, webhookGuard, startFaults, startExperiment, stopExperiments, refresh, refreshStripeMode };
+module.exports = {
+  TYPES,
+  MAX_MINUTES,
+  availability,
+  matches,
+  validate,
+  assertNoFault,
+  faultMiddleware,
+  webhookGuard,
+  startFaults,
+  startExperiment,
+  stopExperiments,
+  refresh,
+  refreshStripeMode,
+};

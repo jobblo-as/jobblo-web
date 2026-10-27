@@ -48,9 +48,15 @@ const periodEnd = now;
 function query(value) {
   return {
     lean: async () => value,
-    sort() { return this; },
-    limit() { return this; },
-    then(resolve, reject) { return Promise.resolve(value).then(resolve, reject); },
+    sort() {
+      return this;
+    },
+    limit() {
+      return this;
+    },
+    then(resolve, reject) {
+      return Promise.resolve(value).then(resolve, reject);
+    },
   };
 }
 
@@ -96,10 +102,12 @@ function stripeSubscription(overrides = {}) {
       stripeMode: 'test',
     },
     items: {
-      data: [{
-        current_period_start: periodStart.getTime() / 1000,
-        current_period_end: periodEnd.getTime() / 1000,
-      }],
+      data: [
+        {
+          current_period_start: periodStart.getTime() / 1000,
+          current_period_end: periodEnd.getTime() / 1000,
+        },
+      ],
     },
     ...overrides,
   };
@@ -107,21 +115,25 @@ function stripeSubscription(overrides = {}) {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  Usage.findOne.mockReturnValue(query({
-    _id: new mongoose.Types.ObjectId(),
-    billingPeriodStart: periodStart,
-    billingPeriodEnd: periodEnd,
-    periodType: 'paid',
-    consumedIncludedContacts: 3,
-  }));
+  Usage.findOne.mockReturnValue(
+    query({
+      _id: new mongoose.Types.ObjectId(),
+      billingPeriodStart: periodStart,
+      billingPeriodEnd: periodEnd,
+      periodType: 'paid',
+      consumedIncludedContacts: 3,
+    })
+  );
   Subscription.findOne.mockReturnValue(query(null));
-  Subscription.findOneAndUpdate.mockReturnValue(query({
-    ...recoveryRecord(),
-    paymentRecoveryStatus: 'retrying',
-    recoveryInvoiceId: 'in_failed',
-    firstPaymentFailureAt: now,
-    gracePeriodEndsAt: new Date(now.getTime() + GRACE_PERIOD_MS),
-  }));
+  Subscription.findOneAndUpdate.mockReturnValue(
+    query({
+      ...recoveryRecord(),
+      paymentRecoveryStatus: 'retrying',
+      recoveryInvoiceId: 'in_failed',
+      firstPaymentFailureAt: now,
+      gracePeriodEndsAt: new Date(now.getTime() + GRACE_PERIOD_MS),
+    })
+  );
   Subscription.updateOne.mockResolvedValue({ modifiedCount: 1 });
   RecoveryEmail.updateOne.mockResolvedValue({ upsertedCount: 1 });
   RecoveryEmail.updateMany.mockResolvedValue({ modifiedCount: 1 });
@@ -144,29 +156,36 @@ describe('Subscription V2 recovery policy flags and grace tracking', () => {
 
   test('starts an exact seven-day renewal grace and schedules emails once', async () => {
     const record = recoveryRecord();
-    Subscription.findOneAndUpdate.mockReturnValue(query({
-      ...record,
-      paymentRecoveryStatus: 'retrying',
-      recoveryInvoiceId: 'in_failed',
-      firstPaymentFailureAt: now,
-      gracePeriodEndsAt: new Date(now.getTime() + GRACE_PERIOD_MS),
-    }));
-    const result = await startRecovery({
-      record,
-      invoice: invoice(),
-      subscription: stripeSubscription(),
-      mode: 'test',
-      now,
-    }, {
-      env: {
-        SUBSCRIPTION_V2_GRACE_PERIOD_ENABLED: 'true',
-        SUBSCRIPTION_V2_RECOVERY_EMAILS_ENABLED: 'true',
+    Subscription.findOneAndUpdate.mockReturnValue(
+      query({
+        ...record,
+        paymentRecoveryStatus: 'retrying',
+        recoveryInvoiceId: 'in_failed',
+        firstPaymentFailureAt: now,
+        gracePeriodEndsAt: new Date(now.getTime() + GRACE_PERIOD_MS),
+      })
+    );
+    const result = await startRecovery(
+      {
+        record,
+        invoice: invoice(),
+        subscription: stripeSubscription(),
+        mode: 'test',
+        now,
       },
-    });
+      {
+        env: {
+          SUBSCRIPTION_V2_GRACE_PERIOD_ENABLED: 'true',
+          SUBSCRIPTION_V2_RECOVERY_EMAILS_ENABLED: 'true',
+        },
+      }
+    );
 
     expect(result.started).toBe(true);
     expect(Subscription.findOneAndUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ paymentRecoveryStatus: { $in: ['none', 'recovered', 'exhausted'] } }),
+      expect.objectContaining({
+        paymentRecoveryStatus: { $in: ['none', 'recovered', 'exhausted'] },
+      }),
       expect.objectContaining({
         $set: expect.objectContaining({
           firstPaymentFailureAt: now,
@@ -179,7 +198,11 @@ describe('Subscription V2 recovery policy flags and grace tracking', () => {
     );
     expect(RecoveryEmail.updateOne).toHaveBeenCalledTimes(3);
     expect(RecoveryEmail.updateOne).toHaveBeenCalledWith(
-      expect.objectContaining({ stripeMode: 'test', invoiceId: 'in_failed', kind: 'payment_failed' }),
+      expect.objectContaining({
+        stripeMode: 'test',
+        invoiceId: 'in_failed',
+        kind: 'payment_failed',
+      }),
       expect.objectContaining({
         $setOnInsert: expect.objectContaining({ status: 'pending', attempts: 0 }),
       }),
@@ -193,13 +216,16 @@ describe('Subscription V2 recovery policy flags and grace tracking', () => {
       recoveryInvoiceId: 'in_failed',
     });
     Subscription.findOne.mockReturnValue(query(alreadyRetrying));
-    const duplicate = await startRecovery({
-      record: alreadyRetrying,
-      invoice: invoice(),
-      subscription: stripeSubscription(),
-      mode: 'test',
-      now: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000),
-    }, { env: { SUBSCRIPTION_V2_GRACE_PERIOD_ENABLED: 'true' } });
+    const duplicate = await startRecovery(
+      {
+        record: alreadyRetrying,
+        invoice: invoice(),
+        subscription: stripeSubscription(),
+        mode: 'test',
+        now: new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000),
+      },
+      { env: { SUBSCRIPTION_V2_GRACE_PERIOD_ENABLED: 'true' } }
+    );
     expect(duplicate.duplicate).toBe(true);
     expect(Subscription.findOneAndUpdate).not.toHaveBeenCalled();
 
@@ -208,34 +234,43 @@ describe('Subscription V2 recovery policy flags and grace tracking', () => {
       recoveryInvoiceId: 'in_failed',
     });
     Subscription.findOne.mockReturnValue(query(exhausted));
-    const duplicateAfterExpiry = await startRecovery({
-      record: exhausted,
-      invoice: invoice(),
-      subscription: stripeSubscription(),
-      mode: 'test',
-      now,
-    }, { env: { SUBSCRIPTION_V2_GRACE_PERIOD_ENABLED: 'true' } });
+    const duplicateAfterExpiry = await startRecovery(
+      {
+        record: exhausted,
+        invoice: invoice(),
+        subscription: stripeSubscription(),
+        mode: 'test',
+        now,
+      },
+      { env: { SUBSCRIPTION_V2_GRACE_PERIOD_ENABLED: 'true' } }
+    );
     expect(duplicateAfterExpiry.duplicate).toBe(true);
     expect(Subscription.findOneAndUpdate).not.toHaveBeenCalled();
 
-    const initialFailure = await startRecovery({
-      record: recoveryRecord(),
-      invoice: invoice({ billing_reason: 'subscription_create' }),
-      subscription: stripeSubscription(),
-      mode: 'test',
-      now,
-    }, { env: { SUBSCRIPTION_V2_GRACE_PERIOD_ENABLED: 'true' } });
+    const initialFailure = await startRecovery(
+      {
+        record: recoveryRecord(),
+        invoice: invoice({ billing_reason: 'subscription_create' }),
+        subscription: stripeSubscription(),
+        mode: 'test',
+        now,
+      },
+      { env: { SUBSCRIPTION_V2_GRACE_PERIOD_ENABLED: 'true' } }
+    );
     expect(initialFailure.ignored).toBe(true);
 
     Subscription.findOne.mockReturnValue(query(null));
     Usage.findOne.mockReturnValue(query(null));
-    const noPaidPeriod = await startRecovery({
-      record: recoveryRecord(),
-      invoice: invoice(),
-      subscription: stripeSubscription(),
-      mode: 'test',
-      now,
-    }, { env: { SUBSCRIPTION_V2_GRACE_PERIOD_ENABLED: 'true' } });
+    const noPaidPeriod = await startRecovery(
+      {
+        record: recoveryRecord(),
+        invoice: invoice(),
+        subscription: stripeSubscription(),
+        mode: 'test',
+        now,
+      },
+      { env: { SUBSCRIPTION_V2_GRACE_PERIOD_ENABLED: 'true' } }
+    );
     expect(noPaidPeriod.noPaidUsage).toBe(true);
     expect(Subscription.findOneAndUpdate).not.toHaveBeenCalled();
   });
@@ -250,20 +285,26 @@ describe('Subscription V2 recovery policy flags and grace tracking', () => {
         stripeMode: 'test',
       },
     });
-    const wrongMode = await startRecovery({
-      record,
-      invoice: invoice(),
-      subscription: stripeSubscription({}, record),
-      mode: 'live',
-      now,
-    }, { env: { SUBSCRIPTION_V2_GRACE_PERIOD_ENABLED: 'true' } });
-    const wrongOwnership = await startRecovery({
-      record,
-      invoice: invoice(),
-      subscription: wrongPlan,
-      mode: 'test',
-      now,
-    }, { env: { SUBSCRIPTION_V2_GRACE_PERIOD_ENABLED: 'true' } });
+    const wrongMode = await startRecovery(
+      {
+        record,
+        invoice: invoice(),
+        subscription: stripeSubscription({}, record),
+        mode: 'live',
+        now,
+      },
+      { env: { SUBSCRIPTION_V2_GRACE_PERIOD_ENABLED: 'true' } }
+    );
+    const wrongOwnership = await startRecovery(
+      {
+        record,
+        invoice: invoice(),
+        subscription: wrongPlan,
+        mode: 'test',
+        now,
+      },
+      { env: { SUBSCRIPTION_V2_GRACE_PERIOD_ENABLED: 'true' } }
+    );
 
     expect(wrongMode.ignored).toBe(true);
     expect(wrongOwnership.ignored).toBe(true);
@@ -281,22 +322,30 @@ describe('Subscription V2 recovery policy flags and grace tracking', () => {
       status: 'paid',
       status_transitions: { paid_at: Math.floor(now.getTime() / 1000) + 60 },
     });
-    Subscription.findOneAndUpdate.mockReturnValue(query({
-      ...record,
-      paymentRecoveryStatus: 'recovered',
-    }));
-    const recovered = await markRecovered({
-      record,
-      invoice: paidInvoice,
-      subscription: stripeSubscription(),
-      now,
-    }, {
-      env: { SUBSCRIPTION_V2_RECOVERY_EMAILS_ENABLED: 'true' },
-    });
+    Subscription.findOneAndUpdate.mockReturnValue(
+      query({
+        ...record,
+        paymentRecoveryStatus: 'recovered',
+      })
+    );
+    const recovered = await markRecovered(
+      {
+        record,
+        invoice: paidInvoice,
+        subscription: stripeSubscription(),
+        now,
+      },
+      {
+        env: { SUBSCRIPTION_V2_RECOVERY_EMAILS_ENABLED: 'true' },
+      }
+    );
 
     expect(recovered).toBe(true);
     expect(Subscription.findOneAndUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ recoveryInvoiceId: 'in_failed', paymentRecoveryStatus: 'retrying' }),
+      expect.objectContaining({
+        recoveryInvoiceId: 'in_failed',
+        paymentRecoveryStatus: 'retrying',
+      }),
       expect.objectContaining({
         $set: expect.objectContaining({ paymentRecoveryStatus: 'recovered', status: 'active' }),
       }),
@@ -322,21 +371,25 @@ describe('Subscription V2 recovery policy flags and grace tracking', () => {
       recoveryInvoiceId: 'in_failed',
       gracePeriodEndsAt: now,
     });
-    expect(await markRecovered({
-      record,
-      invoice: invoice({ status: 'open' }),
-      subscription: stripeSubscription(),
-      now,
-    })).toBe(false);
-    expect(await markRecovered({
-      record,
-      invoice: invoice({
-        status: 'paid',
-        status_transitions: { paid_at: Math.floor(now.getTime() / 1000) },
-      }),
-      subscription: stripeSubscription(),
-      now,
-    })).toBe(false);
+    expect(
+      await markRecovered({
+        record,
+        invoice: invoice({ status: 'open' }),
+        subscription: stripeSubscription(),
+        now,
+      })
+    ).toBe(false);
+    expect(
+      await markRecovered({
+        record,
+        invoice: invoice({
+          status: 'paid',
+          status_transitions: { paid_at: Math.floor(now.getTime() / 1000) },
+        }),
+        subscription: stripeSubscription(),
+        now,
+      })
+    ).toBe(false);
     expect(Subscription.findOneAndUpdate).not.toHaveBeenCalled();
   });
 });
@@ -384,7 +437,9 @@ describe('grace-expiry recovery worker', () => {
     });
     const stripe = {
       subscriptions: {
-        retrieve: jest.fn(async () => canceled ? { ...canonical, status: 'canceled' } : canonical),
+        retrieve: jest.fn(async () =>
+          canceled ? { ...canonical, status: 'canceled' } : canonical
+        ),
         cancel: jest.fn(async () => {
           if (cancelThrows) throw new Error('timeout');
           canceled = true;
@@ -400,10 +455,12 @@ describe('grace-expiry recovery worker', () => {
 
   test('does not cancel a payment recovered before the grace deadline', async () => {
     const f = workerFixture({ invoiceStatus: 'paid' });
-    f.stripe.invoices.retrieve.mockResolvedValue(invoice({
-      status: 'paid',
-      status_transitions: { paid_at: Math.floor((now.getTime() - GRACE_PERIOD_MS) / 1000) },
-    }));
+    f.stripe.invoices.retrieve.mockResolvedValue(
+      invoice({
+        status: 'paid',
+        status_transitions: { paid_at: Math.floor((now.getTime() - GRACE_PERIOD_MS) / 1000) },
+      })
+    );
     const result = await cancelExpiredRecoveries({
       env: {
         SUBSCRIPTION_V2_GRACE_PERIOD_ENABLED: 'true',
@@ -443,7 +500,12 @@ describe('grace-expiry recovery worker', () => {
     // The unpaid renewal's operation no longer stays 'pending' after the cancellation.
     expect(Operation.updateOne).toHaveBeenCalledWith(
       { stripeMode: 'test', operationId: 'invoice:in_failed', status: 'pending' },
-      { $set: expect.objectContaining({ status: 'failed', lastErrorCode: 'renewal_unpaid_subscription_canceled' }) }
+      {
+        $set: expect.objectContaining({
+          status: 'failed',
+          lastErrorCode: 'renewal_unpaid_subscription_canceled',
+        }),
+      }
     );
   });
 
@@ -451,10 +513,17 @@ describe('grace-expiry recovery worker', () => {
     const f = workerFixture();
     // markCanceled's compare-and-swap loses (the recovery changed state meanwhile).
     Subscription.findOneAndUpdate.mockImplementation((filter, update) =>
-      query(update?.$set?.recoveryLeaseUntil ? { ...f.record, recoveryLeaseUntil: new Date(now.getTime() + 120000) } : null)
+      query(
+        update?.$set?.recoveryLeaseUntil
+          ? { ...f.record, recoveryLeaseUntil: new Date(now.getTime() + 120000) }
+          : null
+      )
     );
     await cancelExpiredRecoveries({
-      env: { SUBSCRIPTION_V2_GRACE_PERIOD_ENABLED: 'true', SUBSCRIPTION_V2_RECOVERY_JOB_ENABLED: 'true' },
+      env: {
+        SUBSCRIPTION_V2_GRACE_PERIOD_ENABLED: 'true',
+        SUBSCRIPTION_V2_RECOVERY_JOB_ENABLED: 'true',
+      },
       now: () => now,
       SubscriptionModel: Subscription,
       OperationModel: Operation,
@@ -503,7 +572,10 @@ describe('grace-expiry recovery worker', () => {
       stripeForMode: async () => f.stripe,
     });
     expect(Operation.updateOne).toHaveBeenCalledWith(
-      expect.objectContaining({ stripeMode: 'test', operationId: 'grace-expiry:sub_test:in_failed' }),
+      expect.objectContaining({
+        stripeMode: 'test',
+        operationId: 'grace-expiry:sub_test:in_failed',
+      }),
       expect.objectContaining({
         $set: expect.objectContaining({ status: 'reconciliation_required' }),
       })
@@ -511,7 +583,10 @@ describe('grace-expiry recovery worker', () => {
   });
 
   const workerOptions = (f) => ({
-    env: { SUBSCRIPTION_V2_GRACE_PERIOD_ENABLED: 'true', SUBSCRIPTION_V2_RECOVERY_JOB_ENABLED: 'true' },
+    env: {
+      SUBSCRIPTION_V2_GRACE_PERIOD_ENABLED: 'true',
+      SUBSCRIPTION_V2_RECOVERY_JOB_ENABLED: 'true',
+    },
     now: () => now,
     SubscriptionModel: Subscription,
     OperationModel: Operation,
@@ -525,7 +600,12 @@ describe('grace-expiry recovery worker', () => {
       const f = workerFixture();
       f.stripe.invoices.retrieve
         .mockResolvedValueOnce(invoice({ status: 'open' }))
-        .mockResolvedValue(invoice({ status: 'paid', status_transitions: { paid_at: Math.floor(paidAt.getTime() / 1000) } }));
+        .mockResolvedValue(
+          invoice({
+            status: 'paid',
+            status_transitions: { paid_at: Math.floor(paidAt.getTime() / 1000) },
+          })
+        );
       return f;
     }
 
@@ -542,10 +622,12 @@ describe('grace-expiry recovery worker', () => {
       expect(f.stripe.subscriptions.cancel).not.toHaveBeenCalled();
       expect(Operation.findOneAndUpdate).toHaveBeenCalledWith(
         expect.objectContaining({ operationId: 'invoice:in_failed' }),
-        expect.objectContaining({ $set: expect.objectContaining({
-          status: 'reconciliation_required',
-          lastErrorCode: 'late_payment_after_grace',
-        }) }),
+        expect.objectContaining({
+          $set: expect.objectContaining({
+            status: 'reconciliation_required',
+            lastErrorCode: 'late_payment_after_grace',
+          }),
+        }),
         expect.anything()
       );
     });
@@ -601,11 +683,13 @@ describe('recovery email outbox', () => {
     };
     RecoveryEmail.find.mockReturnValue(query([item]));
     RecoveryEmail.findOneAndUpdate.mockReturnValue(query({ ...item, status: 'sending' }));
-    Subscription.findById.mockReturnValue(query({
-      paymentRecoveryStatus: 'retrying',
-      recoveryInvoiceId: 'in_failed',
-      gracePeriodEndsAt: new Date(now.getTime() + GRACE_PERIOD_MS),
-    }));
+    Subscription.findById.mockReturnValue(
+      query({
+        paymentRecoveryStatus: 'retrying',
+        recoveryInvoiceId: 'in_failed',
+        gracePeriodEndsAt: new Date(now.getTime() + GRACE_PERIOD_MS),
+      })
+    );
     User.findById.mockReturnValue({
       select: () => query({ email: 'user@example.no', name: 'Test' }),
     });
@@ -622,10 +706,12 @@ describe('recovery email outbox', () => {
       sendEmail,
     });
     expect(result.sent).toBe(0);
-    expect(sendEmail).toHaveBeenCalledWith(expect.objectContaining({
-      to: 'user@example.no',
-      kind: 'reminder_day_3',
-    }));
+    expect(sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'user@example.no',
+        kind: 'reminder_day_3',
+      })
+    );
     expect(RecoveryEmail.updateOne).toHaveBeenCalledWith(
       expect.objectContaining({ _id: item._id, status: 'sending' }),
       expect.objectContaining({

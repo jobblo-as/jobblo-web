@@ -1,7 +1,11 @@
 const { OpenAI } = require('openai');
 const Category = require('../models/Category');
 const { validateSmartFillOutput, PAYMENT_TYPES } = require('../utils/aiSmartFill');
-const { buildRequest, supportsStrictSchema, SUPPORTED_LANGS } = require('../services/ai/jobListingPrompt');
+const {
+  buildRequest,
+  supportsStrictSchema,
+  SUPPORTED_LANGS,
+} = require('../services/ai/jobListingPrompt');
 
 // ──────────────────────────────────────────────────────────────────────────────
 // OpenAI client
@@ -89,7 +93,10 @@ function _respondWithAiError(res, err, prefix = 'AI generation failed') {
   const status = err && err.status;
   console.error(`[${prefix}]`, _redact(err && err.message ? err.message : err));
 
-  if (err && (status === 429 || err.code === 'insufficient_quota' || /\b429\b/.test(String(err.message)))) {
+  if (
+    err &&
+    (status === 429 || err.code === 'insufficient_quota' || /\b429\b/.test(String(err.message)))
+  ) {
     return res.status(429).json({
       success: false,
       error: 'AI-kvote overskredet',
@@ -103,7 +110,11 @@ function _respondWithAiError(res, err, prefix = 'AI generation failed') {
       message: 'Kontakt support hvis dette fortsetter.',
     });
   }
-  if (err && (err.name === 'APIConnectionTimeoutError' || /timeout|hang up|ECONNRESET/i.test(String(err.message)))) {
+  if (
+    err &&
+    (err.name === 'APIConnectionTimeoutError' ||
+      /timeout|hang up|ECONNRESET/i.test(String(err.message)))
+  ) {
     return res.status(504).json({
       success: false,
       error: 'AI-tjenesten svarte ikke i tide',
@@ -152,7 +163,10 @@ async function _callAi(context, images = []) {
       },
       ...images.map((file) => ({
         type: 'image_url',
-        image_url: { url: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`, detail: 'low' },
+        image_url: {
+          url: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
+          detail: 'low',
+        },
       })),
     ];
   }
@@ -211,8 +225,16 @@ async function _callVisionAi(file, categoryNames, lang) {
     type: 'object',
     additionalProperties: false,
     required: [
-      'title', 'description', 'category', 'duration', 'durationRange',
-      'suggestedPrice', 'priceMin', 'priceMax', 'hourlyRate', 'pricingReasoning',
+      'title',
+      'description',
+      'category',
+      'duration',
+      'durationRange',
+      'suggestedPrice',
+      'priceMin',
+      'priceMax',
+      'hourlyRate',
+      'pricingReasoning',
     ],
     properties: {
       title: { type: 'string' },
@@ -259,7 +281,8 @@ async function _callVisionAi(file, categoryNames, lang) {
         content: [
           {
             type: 'text',
-            text: `Requested language: ${lang === 'en' ? 'English' : 'Norwegian bokmål'}. ` +
+            text:
+              `Requested language: ${lang === 'en' ? 'English' : 'Norwegian bokmål'}. ` +
               'Suggest an editable draft for the work shown in this image.',
           },
           {
@@ -270,7 +293,10 @@ async function _callVisionAi(file, categoryNames, lang) {
       },
     ],
     response_format: useStrictSchema
-      ? { type: 'json_schema', json_schema: { name: 'jobblo_image_job_suggestion', strict: true, schema: visionSchema } }
+      ? {
+          type: 'json_schema',
+          json_schema: { name: 'jobblo_image_job_suggestion', strict: true, schema: visionSchema },
+        }
       : { type: 'json_object' },
   });
 
@@ -307,7 +333,9 @@ exports.analyzeJobImage = async (req, res) => {
     console.error('[analyze-job-image] raw AI output:', JSON.stringify(raw));
     const firstPass = validateSmartFillOutput(raw, { categoryAllowList: categoryNames });
     if (!firstPass.valid) {
-      return res.status(500).json({ success: false, error: 'AI returnerte ugyldige verdier. Prøv igjen.' });
+      return res
+        .status(500)
+        .json({ success: false, error: 'AI returnerte ugyldige verdier. Prøv igjen.' });
     }
 
     // category is best-effort from a photo — empty is acceptable, the user can
@@ -321,7 +349,9 @@ exports.analyzeJobImage = async (req, res) => {
     };
     const validated = validateSmartFillOutput(raw, validationCtx);
     if (!validated.valid) {
-      return res.status(500).json({ success: false, error: 'AI returnerte ugyldige verdier. Prøv igjen.' });
+      return res
+        .status(500)
+        .json({ success: false, error: 'AI returnerte ugyldige verdier. Prøv igjen.' });
     }
 
     const c = validated.cleaned;
@@ -566,21 +596,24 @@ exports.generateFullJobListing = async (req, res) => {
       ? existingPaymentType
       : 'Fastpris';
 
-    const { parsed } = await _callAi({
-      feature: 'full-listing',
-      lang: _resolveLang(req.body),
-      task: prompt,
-      categoryAllowList: catNames,
-      categoryName: catChosen,
-      title: existingTitle,
-      description: existingDescription,
-      paymentType: userPayment,
-      userDuration: duration,
-      userCity: existingCity,
-      userCounty: existingCounty,
-      equipment: existingEquipment,
-      urgency: existingUrgent === true || existingUrgent === 'true',
-    }, images);
+    const { parsed } = await _callAi(
+      {
+        feature: 'full-listing',
+        lang: _resolveLang(req.body),
+        task: prompt,
+        categoryAllowList: catNames,
+        categoryName: catChosen,
+        title: existingTitle,
+        description: existingDescription,
+        paymentType: userPayment,
+        userDuration: duration,
+        userCity: existingCity,
+        userCounty: existingCounty,
+        equipment: existingEquipment,
+        urgency: existingUrgent === true || existingUrgent === 'true',
+      },
+      images
+    );
 
     const validated = validateSmartFillOutput(parsed, {
       userPaymentType: userPayment,
@@ -628,7 +661,11 @@ function pickSuggestedCategories(raw, names) {
   const byLower = new Map(names.map((n) => [n.toLowerCase(), n]));
   const out = [];
   for (const value of Array.isArray(raw) ? raw : []) {
-    const name = byLower.get(String(value || '').trim().toLowerCase());
+    const name = byLower.get(
+      String(value || '')
+        .trim()
+        .toLowerCase()
+    );
     if (name && !out.includes(name)) out.push(name);
     if (out.length === 3) break;
   }
@@ -638,12 +675,19 @@ function pickSuggestedCategories(raw, names) {
 exports.suggestCategories = async (req, res) => {
   try {
     if (!process.env.OPENAI_API_KEY) {
-      return res.status(500).json({ success: false, error: 'AI-tjenesten er ikke konfigurert', message: 'Velg kategori selv.' });
+      return res.status(500).json({
+        success: false,
+        error: 'AI-tjenesten er ikke konfigurert',
+        message: 'Velg kategori selv.',
+      });
     }
     const files = (req.files || []).slice(0, MAX_SUGGESTION_IMAGES);
-    const text = typeof req.body?.text === 'string' ? req.body.text.trim().slice(0, MAX_SUGGESTION_TEXT) : '';
+    const text =
+      typeof req.body?.text === 'string' ? req.body.text.trim().slice(0, MAX_SUGGESTION_TEXT) : '';
     if (!files.length && !text) {
-      return res.status(400).json({ success: false, error: 'Legg til et bilde eller en kort beskrivelse.' });
+      return res
+        .status(400)
+        .json({ success: false, error: 'Legg til et bilde eller en kort beskrivelse.' });
     }
 
     const { names } = await _loadCategoryContext();
@@ -675,13 +719,19 @@ exports.suggestCategories = async (req, res) => {
             { type: 'text', text: text ? `The customer wrote: ${text}` : 'Photos of the job:' },
             ...files.map((file) => ({
               type: 'image_url',
-              image_url: { url: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`, detail: 'low' },
+              image_url: {
+                url: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
+                detail: 'low',
+              },
             })),
           ],
         },
       ],
       response_format: strict
-        ? { type: 'json_schema', json_schema: { name: 'jobblo_category_suggestions', strict: true, schema } }
+        ? {
+            type: 'json_schema',
+            json_schema: { name: 'jobblo_category_suggestions', strict: true, schema },
+          }
         : { type: 'json_object' },
     });
     recordAiUsage(VISION_MODEL, response.usage, files.length ? 'image' : 'text');
@@ -692,7 +742,10 @@ exports.suggestCategories = async (req, res) => {
     } catch {
       parsed = {};
     }
-    return res.json({ success: true, suggestions: pickSuggestedCategories(parsed.categories, names) });
+    return res.json({
+      success: true,
+      suggestions: pickSuggestedCategories(parsed.categories, names),
+    });
   } catch (err) {
     return _respondWithAiError(res, err, 'suggest-categories');
   }
@@ -733,8 +786,10 @@ exports.repeatsAdvice = repeatsAdvice;
 
 exports.photoHint = async (req, res) => {
   try {
-    if (!process.env.OPENAI_API_KEY) return res.status(500).json({ success: false, error: 'AI-tjenesten er ikke konfigurert' });
-    if (!req.file?.buffer) return res.status(400).json({ success: false, error: 'Et bilde er påkrevd.' });
+    if (!process.env.OPENAI_API_KEY)
+      return res.status(500).json({ success: false, error: 'AI-tjenesten er ikke konfigurert' });
+    if (!req.file?.buffer)
+      return res.status(400).json({ success: false, error: 'Et bilde er påkrevd.' });
     const lang = _resolveLang(req.body);
     const count = Math.max(1, Math.min(6, parseInt(req.body?.count, 10) || 1));
     // What the earlier photos showed and the advice already given, so the helper does not say
@@ -742,7 +797,12 @@ exports.photoHint = async (req, res) => {
     const list = (raw) => {
       try {
         const v = typeof raw === 'string' ? JSON.parse(raw) : raw;
-        return Array.isArray(v) ? v.filter((x) => typeof x === 'string' && x.trim()).slice(-5).map((x) => x.trim().slice(0, 160)) : [];
+        return Array.isArray(v)
+          ? v
+              .filter((x) => typeof x === 'string' && x.trim())
+              .slice(-5)
+              .map((x) => x.trim().slice(0, 160))
+          : [];
       } catch {
         return [];
       }
@@ -754,7 +814,11 @@ exports.photoHint = async (req, res) => {
       type: 'object',
       additionalProperties: false,
       required: ['hint', 'seen', 'quality'],
-      properties: { hint: { type: 'string' }, seen: { type: 'string' }, quality: { type: 'string', enum: PHOTO_QUALITIES } },
+      properties: {
+        hint: { type: 'string' },
+        seen: { type: 'string' },
+        quality: { type: 'string', enum: PHOTO_QUALITIES },
+      },
     };
     const response = await getClient().chat.completions.create({
       model: VISION_MODEL,
@@ -765,8 +829,11 @@ exports.photoHint = async (req, res) => {
           role: 'system',
           content:
             'You are the camera helper in Jobblo, where people post small jobs they want done (painting, cleaning, moving, ' +
-            'garden, repairs, assembly). The user just took photo number ' + count + ' of up to 6. Answer in ' +
-            (lang === 'en' ? 'English' : 'Norwegian bokmål') + '. hint: ONE short, friendly sentence (max 22 words). If the ' +
+            'garden, repairs, assembly). The user just took photo number ' +
+            count +
+            ' of up to 6. Answer in ' +
+            (lang === 'en' ? 'English' : 'Norwegian bokmål') +
+            '. hint: ONE short, friendly sentence (max 22 words). If the ' +
             'photo should be retaken, say why. Otherwise look at ALL photos so far and ask for the ONE view that is still ' +
             'missing for a pro to understand the job (an overview of the whole area, a close-up of the problem, something ' +
             'showing size, the access) - never a view already shown or already asked for. If nothing important is missing ' +
@@ -779,15 +846,28 @@ exports.photoHint = async (req, res) => {
             'shows nothing recognisable. The hint always guides the next step; never answer only that the photo is unclear. ' +
             'seen: what the photo shows that matters for the job, as plain facts for the listing text (max 15 words, same ' +
             'language, no advice, empty when unclear). Never mention people.' +
-            (strict ? '' : ' Respond with a JSON object: {"hint": string, "seen": string, "quality": "ok"|"blurry"|"dark"|"unclear"}.'),
+            (strict
+              ? ''
+              : ' Respond with a JSON object: {"hint": string, "seen": string, "quality": "ok"|"blurry"|"dark"|"unclear"}.'),
         },
         {
           role: 'user',
           content: [
             ...(earlierSeen.length || earlierHints.length
-              ? [{ type: 'text', text: `Earlier photos showed: ${earlierSeen.join('; ') || '—'}. Advice already given: ${earlierHints.join(' | ') || '—'}.` }]
+              ? [
+                  {
+                    type: 'text',
+                    text: `Earlier photos showed: ${earlierSeen.join('; ') || '—'}. Advice already given: ${earlierHints.join(' | ') || '—'}.`,
+                  },
+                ]
               : []),
-            { type: 'image_url', image_url: { url: `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`, detail: 'low' } },
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`,
+                detail: 'low',
+              },
+            },
           ],
         },
       ],
@@ -807,11 +887,13 @@ exports.photoHint = async (req, res) => {
     // The model still tends to ask for "a close-up" after every photo. Asking again for a view it
     // already asked for is replaced: the user has done that, so the set is good enough.
     const quality = PHOTO_QUALITIES.includes(parsed.quality) ? parsed.quality : 'ok';
-    if (quality === 'ok' && hint && repeatsAdvice(hint, earlierHints)) hint = PHOTO_DONE_HINT[lang === 'en' ? 'en' : 'no'];
+    if (quality === 'ok' && hint && repeatsAdvice(hint, earlierHints))
+      hint = PHOTO_DONE_HINT[lang === 'en' ? 'en' : 'no'];
     // "The photo is unclear" read like an error to testers, while the listing text (which also
     // uses the category and details) came out fine. Unclear photos get guidance instead.
     if (quality === 'unclear' || /\b(unclear|not clear|uklart|utydelig)\b/i.test(hint)) {
-      if (quality !== 'blurry' && quality !== 'dark') hint = PHOTO_UNCLEAR_HINT[lang === 'en' ? 'en' : 'no'];
+      if (quality !== 'blurry' && quality !== 'dark')
+        hint = PHOTO_UNCLEAR_HINT[lang === 'en' ? 'en' : 'no'];
     }
     if (!hint) return res.status(502).json({ success: false, error: 'AI ga ikke noe svar.' });
     // `seen` feeds the title/description later (the app keeps one per photo).

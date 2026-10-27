@@ -7,13 +7,26 @@ const ghCache = { at: 0, data: null };
 async function githubRuns() {
   const token = process.env.GITHUB_TOKEN;
   const repo = process.env.GITHUB_REPO || 'abdi4312/jobblo';
-  if (!token) return { configured: false, repo, reason: 'Set GITHUB_TOKEN (read-only: actions:read, contents:read) to show GitHub Actions runs.' };
+  if (!token)
+    return {
+      configured: false,
+      repo,
+      reason:
+        'Set GITHUB_TOKEN (read-only: actions:read, contents:read) to show GitHub Actions runs.',
+    };
   if (Date.now() - ghCache.at < MINUTE && ghCache.data) return ghCache.data;
   try {
-    const { data } = await require('axios').get(`https://api.github.com/repos/${repo}/actions/runs?per_page=25`, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28' },
-      timeout: 8000,
-    });
+    const { data } = await require('axios').get(
+      `https://api.github.com/repos/${repo}/actions/runs?per_page=25`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/vnd.github+json',
+          'X-GitHub-Api-Version': '2022-11-28',
+        },
+        timeout: 8000,
+      }
+    );
     const result = {
       configured: true,
       repo,
@@ -38,7 +51,11 @@ async function githubRuns() {
     ghCache.data = result;
     return result;
   } catch (err) {
-    return { configured: true, repo, error: err.response?.status ? `GitHub API ${err.response.status}` : err.message };
+    return {
+      configured: true,
+      repo,
+      error: err.response?.status ? `GitHub API ${err.response.status}` : err.message,
+    };
   }
 }
 

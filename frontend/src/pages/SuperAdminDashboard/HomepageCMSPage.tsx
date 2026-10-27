@@ -39,9 +39,10 @@ export default function HomepageCMSPage() {
     }
   }, [content]);
 
-  const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
-  };
+  const handleChange =
+    (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setForm((prev) => ({ ...prev, [field]: e.target.value }));
+    };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,7 +80,10 @@ export default function HomepageCMSPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <AdminPageHeader title="Hjemmeside CMS" description="Administrer innholdet på offentlige hjemmeside" />
+        <AdminPageHeader
+          title="Hjemmeside CMS"
+          description="Administrer innholdet på offentlige hjemmeside"
+        />
         <AdminLoadingSkeleton rows={8} />
       </div>
     );
@@ -88,7 +92,10 @@ export default function HomepageCMSPage() {
   if (isError) {
     return (
       <div className="space-y-6">
-        <AdminPageHeader title="Hjemmeside CMS" description="Administrer innholdet på offentlige hjemmeside" />
+        <AdminPageHeader
+          title="Hjemmeside CMS"
+          description="Administrer innholdet på offentlige hjemmeside"
+        />
         <AdminErrorState onRetry={refetch} />
       </div>
     );
@@ -183,7 +190,9 @@ export default function HomepageCMSPage() {
           </div>
 
           <div className="space-y-1">
-            <label className="text-sm font-medium text-foreground">Kategorier (én JSON per linje)</label>
+            <label className="text-sm font-medium text-foreground">
+              Kategorier (én JSON per linje)
+            </label>
             <textarea
               value={form.featuredCategories}
               onChange={handleChange('featuredCategories')}
@@ -191,7 +200,9 @@ export default function HomepageCMSPage() {
               rows={4}
               className="flex w-full rounded-md border border-border bg-card px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring disabled:cursor-not-allowed disabled:opacity-50 font-mono resize-y min-h-[100px]"
             />
-            <p className="text-xs text-muted-foreground">Hver linje må være gyldig JSON. Én kategori per linje.</p>
+            <p className="text-xs text-muted-foreground">
+              Hver linje må være gyldig JSON. Én kategori per linje.
+            </p>
           </div>
         </div>
 

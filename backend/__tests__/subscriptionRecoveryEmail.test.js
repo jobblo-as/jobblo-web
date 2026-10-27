@@ -20,12 +20,14 @@ describe('subscription recovery email templates', () => {
     });
 
     const sendMail = nodemailer.createTransport.mock.results[0].value.sendMail;
-    expect(sendMail).toHaveBeenCalledWith(expect.objectContaining({
-      to: 'customer@example.test',
-      subject: 'Betalingen for Jobblo-abonnementet mislyktes',
-      text: expect.stringContaining('https://jobblo.example/settings/subscriptions'),
-      html: expect.stringContaining('&lt;script&gt;alert(1)&lt;/script&gt;'),
-    }));
+    expect(sendMail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'customer@example.test',
+        subject: 'Betalingen for Jobblo-abonnementet mislyktes',
+        text: expect.stringContaining('https://jobblo.example/settings/subscriptions'),
+        html: expect.stringContaining('&lt;script&gt;alert(1)&lt;/script&gt;'),
+      })
+    );
     expect(sendMail.mock.calls[0][0].html).not.toContain('<script>alert(1)</script>');
     expect(sendMail.mock.calls[0][0].text).toContain('Betalingsfrist:');
   });
@@ -38,10 +40,12 @@ describe('subscription recovery email templates', () => {
     });
     expect(nodemailer.createTransport.mock.results[0].value.sendMail).toHaveBeenCalled();
 
-    await expect(sendSubscriptionRecoveryEmail({
-      to: 'customer@example.test',
-      kind: 'payment_failed',
-      frontendUrl: 'javascript:alert(1)',
-    })).rejects.toThrow('FRONTEND_URL must be a valid http(s) URL');
+    await expect(
+      sendSubscriptionRecoveryEmail({
+        to: 'customer@example.test',
+        kind: 'payment_failed',
+        frontendUrl: 'javascript:alert(1)',
+      })
+    ).rejects.toThrow('FRONTEND_URL must be a valid http(s) URL');
   });
 });

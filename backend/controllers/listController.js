@@ -76,7 +76,11 @@ exports.getUserLists = async (req, res) => {
 
     // Clients render every list, so the page is generous — but no longer unbounded.
     const { limit, skip } = parsePagination(req.query, { defaultLimit: 100 });
-    const lists = await List.find(query).sort({ _id: -1 }).skip(skip).limit(limit).populate(visibleServices(currentUserId));
+    const lists = await List.find(query)
+      .sort({ _id: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate(visibleServices(currentUserId));
     res.status(200).json(lists);
   } catch (error) {
     return failed(res, 500, 'lists_fetch_failed', 'Error fetching lists', error);
@@ -136,7 +140,10 @@ exports.addServiceToList = async (req, res) => {
      * screen rendered.
      */
     const service = await Service.findById(serviceId);
-    if (!service || (!isPubliclyVisible(service) && String(service.userId) !== String(req.userId))) {
+    if (
+      !service ||
+      (!isPubliclyVisible(service) && String(service.userId) !== String(req.userId))
+    ) {
       return failed(res, 404, 'service_not_found', 'Service not found');
     }
 
@@ -265,12 +272,16 @@ exports.addContributors = async (req, res) => {
     if (Array.isArray(userIds)) {
       // At most 20 per call, and only real, live accounts.
       const wanted = [...new Set(userIds.filter(isValidId).map(String))].slice(0, 20);
-      const existing = await User.find({ _id: { $in: wanted }, isDeleted: { $ne: true } }).select('_id').lean();
-      existing.map((u) => String(u._id)).forEach((userId) => {
-        if (!list.contributors.includes(userId)) {
-          list.contributors.push(userId);
-        }
-      });
+      const existing = await User.find({ _id: { $in: wanted }, isDeleted: { $ne: true } })
+        .select('_id')
+        .lean();
+      existing
+        .map((u) => String(u._id))
+        .forEach((userId) => {
+          if (!list.contributors.includes(userId)) {
+            list.contributors.push(userId);
+          }
+        });
       await list.save();
     }
 
@@ -359,7 +370,8 @@ exports.getListById = async (req, res) => {
     const ids = (people) => [].concat(people || []).map((p) => String(p?._id || p));
     const isOwner = ids(out.user).includes(String(req.userId));
     if (!isOwner) {
-      for (const person of [].concat(out.user || [], out.contributors || [])) if (person && typeof person === 'object') delete person.email;
+      for (const person of [].concat(out.user || [], out.contributors || []))
+        if (person && typeof person === 'object') delete person.email;
     }
 
     res.status(200).json(out);
@@ -388,4 +400,3 @@ exports.deleteList = async (req, res) => {
     return failed(res, 500, 'list_delete_failed', 'Error deleting list', error);
   }
 };
-

@@ -1,5 +1,12 @@
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts';
-import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, type ChartConfig } from './ui/chart';
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from './ui/chart';
 import { EmptyState } from './kit';
 import { tick } from '@/lib/devFormat';
 
@@ -25,15 +32,38 @@ export function TimeSeriesChart({
   variant?: 'area' | 'bar';
   valueFormatter?: (v: number) => string;
 }) {
-  if (!data?.length) return <EmptyState title="No data in this range" description="Data appears here once traffic is recorded." />;
-  const config = Object.fromEntries(series.map((s) => [s.key, { label: s.label, color: s.color }])) satisfies ChartConfig;
+  if (!data?.length)
+    return (
+      <EmptyState
+        title="No data in this range"
+        description="Data appears here once traffic is recorded."
+      />
+    );
+  const config = Object.fromEntries(
+    series.map((s) => [s.key, { label: s.label, color: s.color }])
+  ) satisfies ChartConfig;
   const fmt = tick(bucketMs);
   const axes = (
     <>
       <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-border" />
-      <XAxis dataKey="t" tickFormatter={fmt} tickLine={false} axisLine={false} minTickGap={32} fontSize={11} />
-      <YAxis tickLine={false} axisLine={false} width={44} fontSize={11} tickFormatter={valueFormatter} />
-      <ChartTooltip content={<ChartTooltipContent labelFormatter={(_, p) => fmt(p?.[0]?.payload?.t)} />} />
+      <XAxis
+        dataKey="t"
+        tickFormatter={fmt}
+        tickLine={false}
+        axisLine={false}
+        minTickGap={32}
+        fontSize={11}
+      />
+      <YAxis
+        tickLine={false}
+        axisLine={false}
+        width={44}
+        fontSize={11}
+        tickFormatter={valueFormatter}
+      />
+      <ChartTooltip
+        content={<ChartTooltipContent labelFormatter={(_, p) => fmt(p?.[0]?.payload?.t)} />}
+      />
       {series.length > 1 && <ChartLegend content={<ChartLegendContent />} />}
     </>
   );
@@ -43,7 +73,13 @@ export function TimeSeriesChart({
         <BarChart data={data} margin={{ left: 0, right: 8, top: 4 }}>
           {axes}
           {series.map((s, i) => (
-            <Bar key={s.key} dataKey={s.key} stackId="a" fill={`var(--color-${s.key})`} radius={i === series.length - 1 ? [2, 2, 0, 0] : 0} />
+            <Bar
+              key={s.key}
+              dataKey={s.key}
+              stackId="a"
+              fill={`var(--color-${s.key})`}
+              radius={i === series.length - 1 ? [2, 2, 0, 0] : 0}
+            />
           ))}
         </BarChart>
       ) : (
@@ -58,7 +94,14 @@ export function TimeSeriesChart({
           </defs>
           {axes}
           {series.map((s) => (
-            <Area key={s.key} dataKey={s.key} type="monotone" stroke={`var(--color-${s.key})`} strokeWidth={1.5} fill={`url(#fill-${s.key})`} />
+            <Area
+              key={s.key}
+              dataKey={s.key}
+              type="monotone"
+              stroke={`var(--color-${s.key})`}
+              strokeWidth={1.5}
+              fill={`url(#fill-${s.key})`}
+            />
           ))}
         </AreaChart>
       )}

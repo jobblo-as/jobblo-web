@@ -39,7 +39,9 @@ export const useAuth = () => {
       setStoreLogin(data.user, { accessToken: data.accessToken });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
       toast.success(`Velkommen tilbake, ${data.user.name}!`);
-      navigate(redirectAfterAuth(data.user.role === 'developer' ? '/developer' : '/home'), { replace: true });
+      navigate(redirectAfterAuth(data.user.role === 'developer' ? '/developer' : '/home'), {
+        replace: true,
+      });
     },
     onError: (error: unknown) => {
       // getErrorMessage also handles the object-shaped envelope from the Express

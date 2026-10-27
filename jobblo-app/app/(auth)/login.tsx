@@ -101,7 +101,10 @@ export default function LoginScreen() {
 
                 <View className="mt-6 gap-2.5">
                   {/* A stale password error above a fresh provider attempt reads as if the provider failed. */}
-                  <SocialSignInButtons onStart={() => loginMutation.reset()} onError={setSocialError} />
+                  <SocialSignInButtons
+                    onStart={() => loginMutation.reset()}
+                    onError={setSocialError}
+                  />
                 </View>
 
                 <View className="my-6 flex-row items-center gap-3">
@@ -114,7 +117,9 @@ export default function LoginScreen() {
 
                 {errorMessage ? (
                   <View className="mb-4 rounded-xl border border-danger-line bg-[#FCF5F4] dark:bg-danger-tint px-3 py-2.5">
-                    <Text className="text-[13px] leading-5 text-[#B0453B] dark:text-danger">{errorMessage}</Text>
+                    <Text className="text-[13px] leading-5 text-[#B0453B] dark:text-danger">
+                      {errorMessage}
+                    </Text>
                   </View>
                 ) : null}
 
@@ -133,17 +138,26 @@ export default function LoginScreen() {
                         setForm((current) => ({ ...current, email: value }));
                         setErrors((current) => ({ ...current, email: undefined }));
                       }}
-                      className={`h-[46px] rounded-xl border bg-[#F5F6F1] dark:bg-surface-2 px-3.5 text-[15px] text-ink ${errors.email ? 'border-danger-line bg-[#FCF5F4] dark:bg-danger-tint' : 'border-transparent'
-                        }`}
+                      className={`h-[46px] rounded-xl border bg-[#F5F6F1] dark:bg-surface-2 px-3.5 text-[15px] text-ink ${
+                        errors.email
+                          ? 'border-danger-line bg-[#FCF5F4] dark:bg-danger-tint'
+                          : 'border-transparent'
+                      }`}
                     />
-                    {errors.email ? <Text className="text-[0.8125rem] text-[#B0453B] dark:text-danger">{errors.email}</Text> : null}
+                    {errors.email ? (
+                      <Text className="text-[0.8125rem] text-[#B0453B] dark:text-danger">
+                        {errors.email}
+                      </Text>
+                    ) : null}
                   </View>
 
                   <View className="gap-2">
                     <View className="flex-row items-center justify-between gap-3">
                       <Text className="text-[13px] font-medium text-ink">Passord</Text>
                       <Pressable onPress={() => router.push('/(auth)/forgot-password')}>
-                        <Text className="text-[0.8125rem] font-medium text-brand">Glemt passord?</Text>
+                        <Text className="text-[0.8125rem] font-medium text-brand">
+                          Glemt passord?
+                        </Text>
                       </Pressable>
                     </View>
 
@@ -159,8 +173,11 @@ export default function LoginScreen() {
                           setForm((current) => ({ ...current, password: value }));
                           setErrors((current) => ({ ...current, password: undefined }));
                         }}
-                        className={`h-[46px] rounded-xl border bg-[#F5F6F1] dark:bg-surface-2 px-3.5 pr-12 text-[15px] text-ink ${errors.password ? 'border-danger-line bg-[#FCF5F4] dark:bg-danger-tint' : 'border-transparent'
-                          }`}
+                        className={`h-[46px] rounded-xl border bg-[#F5F6F1] dark:bg-surface-2 px-3.5 pr-12 text-[15px] text-ink ${
+                          errors.password
+                            ? 'border-danger-line bg-[#FCF5F4] dark:bg-danger-tint'
+                            : 'border-transparent'
+                        }`}
                       />
                       <Pressable
                         onPress={() => setShowPassword((current) => !current)}
@@ -174,15 +191,18 @@ export default function LoginScreen() {
                       </Pressable>
                     </View>
                     {errors.password ? (
-                      <Text className="text-[0.8125rem] text-[#B0453B] dark:text-danger">{errors.password}</Text>
+                      <Text className="text-[0.8125rem] text-[#B0453B] dark:text-danger">
+                        {errors.password}
+                      </Text>
                     ) : null}
                   </View>
 
                   <Pressable
                     onPress={handleSubmit}
                     disabled={loginMutation.isPending}
-                    className={`mt-2 h-[46px] flex-row items-center justify-center rounded-xl bg-brand ${loginMutation.isPending ? 'opacity-80' : ''
-                      }`}
+                    className={`mt-2 h-[46px] flex-row items-center justify-center rounded-xl bg-brand ${
+                      loginMutation.isPending ? 'opacity-80' : ''
+                    }`}
                   >
                     {loginMutation.isPending ? (
                       <Loader2 size={16} color="#FFFFFF" style={{ marginRight: 8 }} />

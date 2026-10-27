@@ -4,7 +4,9 @@ const { logActivity } = require('../../services/admin/activityService');
 const connect = require('../../services/monitoring/connectHealth');
 
 /** Developer dashboard — Stripe Connect health. */
-const getConnectHealth = asyncHandler(async (req, res) => sendSuccess(res, await connect.scan({ force: req.query.refresh === 'true' })));
+const getConnectHealth = asyncHandler(async (req, res) =>
+  sendSuccess(res, await connect.scan({ force: req.query.refresh === 'true' }))
+);
 
 const getConnectProvider = asyncHandler(async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.userId)) return sendError(res, 'Invalid id.', 400);

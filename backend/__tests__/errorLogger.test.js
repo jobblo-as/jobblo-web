@@ -9,7 +9,9 @@ afterEach(() => {
 describe('application error logging', () => {
   it('maps unknown integration error codes to a valid AdminActivity action', async () => {
     jest.replaceProperty(ErrorLog, 'db', { readyState: 1 }); // a connected database
-    jest.spyOn(ErrorLog, 'findOne').mockReturnValue({ sort: () => ({ select: () => ({ lean: async () => null }) }) });
+    jest
+      .spyOn(ErrorLog, 'findOne')
+      .mockReturnValue({ sort: () => ({ select: () => ({ lean: async () => null }) }) });
     const adminActivityCreate = jest.spyOn(AdminActivity, 'create').mockResolvedValue({});
     const errorLogCreate = jest.spyOn(ErrorLog, 'create').mockResolvedValue({});
 
@@ -42,7 +44,12 @@ describe('application error logging', () => {
     const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
 
     const started = Date.now();
-    await logApplicationError({ error: new Error('boom'), requestPath: '/api/x', httpMethod: 'GET', httpStatus: 500 });
+    await logApplicationError({
+      error: new Error('boom'),
+      requestPath: '/api/x',
+      httpMethod: 'GET',
+      httpStatus: 500,
+    });
 
     expect(Date.now() - started).toBeLessThan(1000);
     expect(errorLogCreate).not.toHaveBeenCalled();

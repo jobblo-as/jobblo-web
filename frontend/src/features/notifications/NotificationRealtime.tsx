@@ -124,7 +124,9 @@ export function NotificationRealtime() {
     const socket = initSocket();
     const seen = seenRef.current;
 
-    const handleNotification = (payload: AlertType & { urgent?: boolean; unreadCount?: number }) => {
+    const handleNotification = (
+      payload: AlertType & { urgent?: boolean; unreadCount?: number }
+    ) => {
       const id = String(payload?._id || '');
 
       // Guard against a duplicate delivery for any reason — two rooms, a double-mounted

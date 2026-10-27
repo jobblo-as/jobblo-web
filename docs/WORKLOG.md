@@ -28,17 +28,17 @@ or pushed — the owner reviews and commits.
 
 ### 1. Backend restructure (behaviour unchanged)
 
-| Before | After |
-|---|---|
-| `server.js`, 113 lines | `server.js`, 8 lines: `require('./bootstrap').start()` |
-| `app.js`, 388 lines | `app.js`, ~75 lines: middleware in order, `mountRoutes(app)`, error handlers |
-| — | `bootstrap/index.js`: env, Mongo, HTTP server, socket.io (+ Redis adapter), listen, background, shutdown |
-| — | `bootstrap/socket.js`: socket.io with the **same origin allowlist** as HTTP CORS |
-| — | `bootstrap/background.js`: the 14 background starters, each isolated (one failing never stops the rest) |
-| — | `bootstrap/shutdown.js`: graceful SIGTERM/SIGINT; HTTP, socket.io, queue workers, Redis and Mongo close in order, with a 10 s deadline |
-| — | `config/env.js` (`.env` loaded once), `config/cors.js`, `config/session.js` |
-| — | `routes/api.js`: one ordered route table (45 mounts) |
-| — | `middleware/errorHandlers.js`: 404, upload/payload errors, global error handler |
+| Before                 | After                                                                                                                                  |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `server.js`, 113 lines | `server.js`, 8 lines: `require('./bootstrap').start()`                                                                                 |
+| `app.js`, 388 lines    | `app.js`, ~75 lines: middleware in order, `mountRoutes(app)`, error handlers                                                           |
+| —                      | `bootstrap/index.js`: env, Mongo, HTTP server, socket.io (+ Redis adapter), listen, background, shutdown                               |
+| —                      | `bootstrap/socket.js`: socket.io with the **same origin allowlist** as HTTP CORS                                                       |
+| —                      | `bootstrap/background.js`: the 14 background starters, each isolated (one failing never stops the rest)                                |
+| —                      | `bootstrap/shutdown.js`: graceful SIGTERM/SIGINT; HTTP, socket.io, queue workers, Redis and Mongo close in order, with a 10 s deadline |
+| —                      | `config/env.js` (`.env` loaded once), `config/cors.js`, `config/session.js`                                                            |
+| —                      | `routes/api.js`: one ordered route table (45 mounts)                                                                                   |
+| —                      | `middleware/errorHandlers.js`: 404, upload/payload errors, global error handler                                                        |
 
 - **Removed dead code:** the `/api/test` and Swagger mounts after the 404 handler, which could never run; the double DB connect; the double `.env` load.
 - **Busy port:** a port already in use now fails with a clear message.
@@ -84,16 +84,17 @@ All optional: without `REDIS_URL` everything behaves as before.
 
 **Load tests,** `scripts/load-test.js`: 50 / 150 / 200 virtual users, each with its own IP.
 
-| Run | req/s | p50 | p95 | errors |
-|---|---|---|---|---|
-| 50 users, before | 212 | 39 ms | 187 ms | 0 |
-| 50 users, after job-detail fix + indexes | 233 | 25 ms | 115 ms | 0 |
-| 150 users, profiled, before | 381 | 209 ms | 410 ms | 0 |
-| 150 users, profiled, after lean + UA fix | **503** | 116 ms | **221 ms** | 0 |
-| 150 users, Redis mode | **545** | 89 ms | **177 ms** | 0 |
-| 200 users, nodemon dev server, before fixes | 204 | 757 ms | 1777 ms | 0 (saturated, but nothing failed) |
+| Run                                         | req/s   | p50    | p95        | errors                            |
+| ------------------------------------------- | ------- | ------ | ---------- | --------------------------------- |
+| 50 users, before                            | 212     | 39 ms  | 187 ms     | 0                                 |
+| 50 users, after job-detail fix + indexes    | 233     | 25 ms  | 115 ms     | 0                                 |
+| 150 users, profiled, before                 | 381     | 209 ms | 410 ms     | 0                                 |
+| 150 users, profiled, after lean + UA fix    | **503** | 116 ms | **221 ms** | 0                                 |
+| 150 users, Redis mode                       | **545** | 89 ms  | **177 ms** | 0                                 |
+| 200 users, nodemon dev server, before fixes | 204     | 757 ms | 1777 ms    | 0 (saturated, but nothing failed) |
 
 **What the CPU profile showed (150 users), and what changed:**
+
 - **Mongoose hydration was half the CPU** on the job list.
   - `.lean()` on the list and nearby queries, plus `utils/lean.withDefaults`, which puts back schema defaults and populated-user virtuals.
   - Output proven deep-equal to the hydrated JSON for all 23 listings.
@@ -106,11 +107,13 @@ All optional: without `REDIS_URL` everything behaves as before.
 - **Search log:** a raw insert instead of a Mongoose document per search.
 
 **Break-it run** (`--scenario abuse`, 1,749 requests): zero 5xx.
+
 - Bad id → 400; unknown id → 404.
 - Operator injection is ignored; a regex bomb is escaped; a huge limit is capped.
 - 13 MB body → 413; forged token → 401; path traversal → 404; anonymous developer API → 401.
 
 **Scaling path (not built, YAGNI):**
+
 - Redis now makes several API processes safe: shared limits, socket adapter, queue-distributed scheduler.
 - Socket.io long-polling needs sticky sessions, so scale out behind nginx with `ip_hash` (or sticky cookies) rather than Node's cluster module.
 
@@ -118,14 +121,14 @@ All optional: without `REDIS_URL` everything behaves as before.
 
 Big controllers are now folders of small files. The old path is a barrel that re-exports the same names, so routes, services and tests import exactly what they did before.
 
-| Was | Lines | Now |
-|---|---|---|
-| `controllers/developer/developerController.js` | 991 | barrel → overview, apiMonitoring, errors, infra, tools controllers + `services/monitoring/{system,summaries}.js` |
-| `controllers/developer/diagnosticsController.js` | 873 | barrel → money, job, subscription, reconciliation, user, investigate controllers + `services/monitoring/orderHealth.js` |
-| `controllers/developer/platformController.js` | 684 | barrel → queues, tickets, deployments, incidents, reports, devSettings controllers + `services/monitoring/{workQueues,github}.js` |
-| `controllers/userController.js` | 1,167 | `controllers/users/` → userHelpers, profile, search, portfolio, blocking |
-| `controllers/serviceController.js` | 1,062 | `controllers/services/` → serviceHelpers, browse, manage, location, progress |
-| `controllers/authController.js` | 815 | `controllers/auth/` → authHelpers, login, account, password |
+| Was                                              | Lines | Now                                                                                                                               |
+| ------------------------------------------------ | ----- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `controllers/developer/developerController.js`   | 991   | barrel → overview, apiMonitoring, errors, infra, tools controllers + `services/monitoring/{system,summaries}.js`                  |
+| `controllers/developer/diagnosticsController.js` | 873   | barrel → money, job, subscription, reconciliation, user, investigate controllers + `services/monitoring/orderHealth.js`           |
+| `controllers/developer/platformController.js`    | 684   | barrel → queues, tickets, deployments, incidents, reports, devSettings controllers + `services/monitoring/{workQueues,github}.js` |
+| `controllers/userController.js`                  | 1,167 | `controllers/users/` → userHelpers, profile, search, portfolio, blocking                                                          |
+| `controllers/serviceController.js`               | 1,062 | `controllers/services/` → serviceHelpers, browse, manage, location, progress                                                      |
+| `controllers/authController.js`                  | 815   | `controllers/auth/` → authHelpers, login, account, password                                                                       |
 
 - **Shared helpers:** `utils/devQuery.js` holds the time ranges, `?range` parsing, bucket expressions, safe regex, id checks, pagination, count helpers and the audit helper. The developer controllers used to carry their own copies.
 - **How the splits were checked:**
@@ -176,34 +179,34 @@ Run with `cd frontend && npm run test:e2e`. It starts the isolated backend on :5
 
 ### 6. Final verification (after everything above)
 
-| Check | Result |
-|---|---|
-| Backend jest, full suite including real-Mongo suites | 1,629 / 1,629 passed |
-| Real-Redis queue suites (worker, retry/backoff, dead letter, scheduler sync, shared rate limit, cache) | 11 / 11 passed |
-| Playwright e2e | 33 / 33 passed |
-| Load, 50 users × 15 s, browse (:5001, nodemon dev) | 267 req/s, p95 24 ms, 0 errors |
-| Load, 150 users × 20 s, browse (:5001, nodemon dev, morgan on) | 432 req/s, p95 301 ms, 0 errors |
-| Load, 150 users × 20 s, browse (:5097, Redis mode) | 470 req/s, p95 247 ms, 0 errors |
-| Break-it, 30 users × 10 s, abuse | 1,193 requests, 0 5xx, every case a correct 4xx |
+| Check                                                                                                  | Result                                          |
+| ------------------------------------------------------------------------------------------------------ | ----------------------------------------------- |
+| Backend jest, full suite including real-Mongo suites                                                   | 1,629 / 1,629 passed                            |
+| Real-Redis queue suites (worker, retry/backoff, dead letter, scheduler sync, shared rate limit, cache) | 11 / 11 passed                                  |
+| Playwright e2e                                                                                         | 33 / 33 passed                                  |
+| Load, 50 users × 15 s, browse (:5001, nodemon dev)                                                     | 267 req/s, p95 24 ms, 0 errors                  |
+| Load, 150 users × 20 s, browse (:5001, nodemon dev, morgan on)                                         | 432 req/s, p95 301 ms, 0 errors                 |
+| Load, 150 users × 20 s, browse (:5097, Redis mode)                                                     | 470 req/s, p95 247 ms, 0 errors                 |
+| Break-it, 30 users × 10 s, abuse                                                                       | 1,193 requests, 0 5xx, every case a correct 4xx |
 
 ## 2026-10-24 — Redis management pages (developer console)
 
 Twelve pages under a new **Redis** sidebar group, at `/developer/redis/<section>`:
 
-| # | Page | What it shows / does |
-|---|---|---|
-| 1 | Redis Overview | Version, uptime, ping latency, ops/s, hit rate, memory, health checks, and this instance's Redis connections |
-| 2 | Memory | Used / peak / RSS, the maxmemory limit, fragmentation, evicted and expired keys, memory per key group (sampled) |
-| 3 | Cache Manager | Every `cacheJson` namespace: TTL, hits and misses, cached keys with TTL and size; invalidate a namespace or delete one key |
-| 4 | Key Explorer | Keys under Jobblo's own prefixes only (cache, rate limits, BullMQ, socket.io). Uses SCAN, never KEYS. Shows type, TTL and size; values are never shown |
-| 5 | Queue Manager | The existing Queues page (BullMQ counts, dead letters, retry / remove) |
-| 6 | Workers | Workers per queue on every instance, concurrency, completed / failed per minute (BullMQ metrics), job duration |
-| 7 | Realtime Chat | socket.io adapter type, sockets on all instances, online users, rooms, Pub/Sub channels and their subscribers |
-| 8 | Rate Limits | Every limiter with its limit and window, live counters (clients over the limit first), 429s by route and IP; **reset** for a locked-out client |
-| 9 | Performance | Commands/s, ping latency, connections, keyspace hit rate, slowlog (command and key only), commands by total time |
-| 10 | Alerts | Four Redis rules wired into the existing alert engine: Redis down, memory ≥ 85 %, evictions, queue backlog ≥ 500 |
-| 11 | Configuration | Connection details from REDIS_URL (password never shown), approved settings via CONFIG GET (never `requirepass`), and checks against what Jobblo needs |
-| 12 | Audit Log | Cache invalidations, rate-limit resets and queue retries: who, what, when |
+| #   | Page           | What it shows / does                                                                                                                                   |
+| --- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | Redis Overview | Version, uptime, ping latency, ops/s, hit rate, memory, health checks, and this instance's Redis connections                                           |
+| 2   | Memory         | Used / peak / RSS, the maxmemory limit, fragmentation, evicted and expired keys, memory per key group (sampled)                                        |
+| 3   | Cache Manager  | Every `cacheJson` namespace: TTL, hits and misses, cached keys with TTL and size; invalidate a namespace or delete one key                             |
+| 4   | Key Explorer   | Keys under Jobblo's own prefixes only (cache, rate limits, BullMQ, socket.io). Uses SCAN, never KEYS. Shows type, TTL and size; values are never shown |
+| 5   | Queue Manager  | The existing Queues page (BullMQ counts, dead letters, retry / remove)                                                                                 |
+| 6   | Workers        | Workers per queue on every instance, concurrency, completed / failed per minute (BullMQ metrics), job duration                                         |
+| 7   | Realtime Chat  | socket.io adapter type, sockets on all instances, online users, rooms, Pub/Sub channels and their subscribers                                          |
+| 8   | Rate Limits    | Every limiter with its limit and window, live counters (clients over the limit first), 429s by route and IP; **reset** for a locked-out client         |
+| 9   | Performance    | Commands/s, ping latency, connections, keyspace hit rate, slowlog (command and key only), commands by total time                                       |
+| 10  | Alerts         | Four Redis rules wired into the existing alert engine: Redis down, memory ≥ 85 %, evictions, queue backlog ≥ 500                                       |
+| 11  | Configuration  | Connection details from REDIS_URL (password never shown), approved settings via CONFIG GET (never `requirepass`), and checks against what Jobblo needs |
+| 12  | Audit Log      | Cache invalidations, rate-limit resets and queue retries: who, what, when                                                                              |
 
 ### Backend
 
@@ -232,15 +235,16 @@ Twelve pages under a new **Redis** sidebar group, at `/developer/redis/<section>
 
 ### Load: 50 developers polling all Redis pages, plus 20 public visitors, for 20 s
 
-| | Before | After 2-second shared reads |
-|---|---|---|
-| Redis commands/s | 14,066 | **1,841** |
-| Total throughput | 172 req/s | **303 req/s** |
-| Developer pages p95 | ~800 ms | ~350 ms |
-| Public `/api/services` p95 | 469 ms | **228 ms** |
-| 5xx / errors | 0 | 0 |
+|                            | Before    | After 2-second shared reads |
+| -------------------------- | --------- | --------------------------- |
+| Redis commands/s           | 14,066    | **1,841**                   |
+| Total throughput           | 172 req/s | **303 req/s**               |
+| Developer pages p95        | ~800 ms   | ~350 ms                     |
+| Public `/api/services` p95 | 469 ms    | **228 ms**                  |
+| 5xx / errors               | 0         | 0                           |
 
 How the fix works:
+
 - Page reads are shared for 2 s.
 - Simultaneous viewers trigger one computation.
 - A failure is never kept.
@@ -248,17 +252,17 @@ How the fix works:
 
 ### Break-it checks
 
-| Attempt | Result |
-|---|---|
-| Unknown key group | 400 |
-| Cursor injection (`0 MATCH *`) | 400 |
-| `q=*` | Treated as literal text (escaped) |
-| 300-character search | Cut to 100 characters |
-| Delete a key outside a cache namespace (`../bull:email:1`) | 400 |
-| Unknown cache namespace | 404 |
-| Anonymous request / forged token | 401 |
-| Rate-limit reset without a step-up code | 401 `STEP_UP_REQUIRED` |
-| Read-only developer | No write buttons; the server answers 403 |
+| Attempt                                                    | Result                                   |
+| ---------------------------------------------------------- | ---------------------------------------- |
+| Unknown key group                                          | 400                                      |
+| Cursor injection (`0 MATCH *`)                             | 400                                      |
+| `q=*`                                                      | Treated as literal text (escaped)        |
+| 300-character search                                       | Cut to 100 characters                    |
+| Delete a key outside a cache namespace (`../bull:email:1`) | 400                                      |
+| Unknown cache namespace                                    | 404                                      |
+| Anonymous request / forged token                           | 401                                      |
+| Rate-limit reset without a step-up code                    | 401 `STEP_UP_REQUIRED`                   |
+| Read-only developer                                        | No write buttons; the server answers 403 |
 
 ### Tests
 

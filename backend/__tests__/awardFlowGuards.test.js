@@ -22,7 +22,12 @@ jest.mock('../models/Order', () => {
   Order.findByIdAndUpdate = jest.fn();
   return Order;
 });
-jest.mock('../models/Service', () => ({ findById: jest.fn(), findByIdAndUpdate: jest.fn(), findOneAndUpdate: jest.fn(async () => ({})), updateOne: jest.fn(async () => ({})) }));
+jest.mock('../models/Service', () => ({
+  findById: jest.fn(),
+  findByIdAndUpdate: jest.fn(),
+  findOneAndUpdate: jest.fn(async () => ({})),
+  updateOne: jest.fn(async () => ({})),
+}));
 jest.mock('../models/JobRequest', () => ({
   find: jest.fn(),
   findOne: jest.fn(),
@@ -31,7 +36,11 @@ jest.mock('../models/JobRequest', () => ({
 }));
 jest.mock('../models/ChatMessage', () => ({ findOne: jest.fn(), findOneAndUpdate: jest.fn() }));
 jest.mock('../models/Notification', () => ({ create: jest.fn() }));
-jest.mock('../models/User', () => ({ findById: jest.fn(), findByIdAndUpdate: jest.fn(), exists: jest.fn(async () => null) }));
+jest.mock('../models/User', () => ({
+  findById: jest.fn(),
+  findByIdAndUpdate: jest.fn(),
+  exists: jest.fn(async () => null),
+}));
 jest.mock('../services/notifications', () => ({ notify: jest.fn() }));
 jest.mock('../services/stripeConnectReadiness', () => ({
   getConnectReadiness: jest.fn().mockResolvedValue({ ready: true }),
@@ -212,7 +221,9 @@ describe('the contract uses the price agreed in the conversation', () => {
 
   it('creates the order at the chat agreedPrice and keeps that price on the chat', async () => {
     // Previously: order at the listing price (2500) and the chat overwritten to 2500.
-    Chat.findOne.mockReturnValue({ select: () => ({ lean: async () => ({ agreedPrice: 1800, orderId: null }) }) });
+    Chat.findOne.mockReturnValue({
+      select: () => ({ lean: async () => ({ agreedPrice: 1800, orderId: null }) }),
+    });
     await safepayController.createContract(req(), makeRes());
     expect(Order.mock.calls[0][0]).toMatchObject({ initialPrice: 2500, agreedPrice: 1800 });
     expect(Chat.findOneAndUpdate.mock.calls[0][1]).toMatchObject({ agreedPrice: 1800 });

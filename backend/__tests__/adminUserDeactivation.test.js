@@ -127,7 +127,9 @@ test('an existing access token is rejected after the user is deactivated', async
   const session = { _id: 'session_1', lastUsed: null };
   Session.findOne = jest.fn().mockReturnValue({ lean: jest.fn().mockResolvedValue(session) });
   Session.updateOne = jest.fn();
-  User.findById.mockReturnValue(lean({ _id: TARGET_ID, accountStatus: 'inactive', isDeleted: false }));
+  User.findById.mockReturnValue(
+    lean({ _id: TARGET_ID, accountStatus: 'inactive', isDeleted: false })
+  );
 
   const req = { cookies: { accessToken: 'old-token' }, headers: {} };
   const res = response();

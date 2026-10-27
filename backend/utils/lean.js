@@ -24,7 +24,8 @@ const defaultsOf = (schema) => {
   if (!cache.has(schema)) cache.set(schema, staticDefaults(schema));
   return cache.get(schema);
 };
-const clone = (v) => (Array.isArray(v) ? [...v] : v && typeof v === 'object' && !(v instanceof Date) ? { ...v } : v);
+const clone = (v) =>
+  Array.isArray(v) ? [...v] : v && typeof v === 'object' && !(v instanceof Date) ? { ...v } : v;
 
 /** A populated user as toJSON({ virtuals: true }) renders it: `id` and `totalEarned`. */
 function userVirtuals(u) {
@@ -39,7 +40,8 @@ function withDefaults(Model, docs, { populatedUsers = ['userId'] } = {}) {
     if (!doc) return doc;
     const out = { ...doc };
     for (const [path, d] of defs) if (out[path] === undefined) out[path] = clone(d);
-    for (const p of populatedUsers) if (out[p] && typeof out[p] === 'object' && out[p]._id) out[p] = userVirtuals(out[p]);
+    for (const p of populatedUsers)
+      if (out[p] && typeof out[p] === 'object' && out[p]._id) out[p] = userVirtuals(out[p]);
     return out;
   };
   return Array.isArray(docs) ? docs.map(one) : one(docs);
@@ -54,7 +56,8 @@ function selectedDefaults(Model, doc, select) {
   if (!doc || typeof doc !== 'object' || !Model?.schema) return doc;
   const wanted = new Set(String(select).split(/\s+/));
   const out = { ...doc };
-  for (const [path, d] of defaultsOf(Model.schema)) if (wanted.has(path) && out[path] === undefined) out[path] = clone(d);
+  for (const [path, d] of defaultsOf(Model.schema))
+    if (wanted.has(path) && out[path] === undefined) out[path] = clone(d);
   return out;
 }
 

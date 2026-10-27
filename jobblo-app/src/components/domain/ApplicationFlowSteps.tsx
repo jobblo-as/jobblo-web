@@ -22,13 +22,7 @@ export function ApplicationFlowSteps({
   const isWorking = ['in_progress', 'ready_for_review', 'completed'].includes(orderStatus ?? '');
   const isDone = orderStatus === 'completed';
 
-  const completedStates = [
-    true,
-    hasAccepted || hasOrder,
-    hasPaid,
-    isWorking,
-    isDone,
-  ];
+  const completedStates = [true, hasAccepted || hasOrder, hasPaid, isWorking, isDone];
 
   const completedCount = completedStates.filter(Boolean).length;
   const current = steps[Math.min(completedCount, steps.length - 1)];
@@ -47,7 +41,9 @@ export function ApplicationFlowSteps({
         })}
       </View>
       <Text className="mt-2 text-[0.8125rem] text-muted">
-        <Text className="font-semibold text-ink">Steg {Math.min(completedCount, steps.length)} av {steps.length}</Text>
+        <Text className="font-semibold text-ink">
+          Steg {Math.min(completedCount, steps.length)} av {steps.length}
+        </Text>
         {' · '}
         {completedCount === steps.length ? 'Fullført' : current.label}
       </Text>

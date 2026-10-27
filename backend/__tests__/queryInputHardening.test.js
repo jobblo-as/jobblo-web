@@ -21,11 +21,19 @@ const NorwayMunicipality = require('../models/NorwayMunicipality');
 const nodemailer = require('nodemailer');
 const { queryString } = require('../utils/devQuery');
 
-const mkRes = () => { const r = {}; r.status = jest.fn(() => r); r.json = jest.fn(() => r); return r; };
+const mkRes = () => {
+  const r = {};
+  r.status = jest.fn(() => r);
+  r.json = jest.fn(() => r);
+  return r;
+};
 
 beforeEach(() => {
   jest.clearAllMocks();
-  for (const M of [Service, User, ErrorLog]) { M.find.mockImplementation(() => chain([])); M.countDocuments.mockResolvedValue(0); }
+  for (const M of [Service, User, ErrorLog]) {
+    M.find.mockImplementation(() => chain([]));
+    M.countDocuments.mockResolvedValue(0);
+  }
   NorwayMunicipality.find.mockImplementation(() => chain([]));
 });
 
@@ -38,7 +46,17 @@ test('queryString keeps strings, drops arrays/objects', () => {
 test('browse: 200-char search ending in a special char compiles; repeated region keys do not 500', async () => {
   const { getAllServices } = require('../controllers/services/browseController');
   const res = mkRes();
-  await getAllServices({ query: { search: `${'a'.repeat(199)}.`, countyCodes: ['01', '02'], municipalityCodes: ['x', 'y'], areaCodes: ['z', 'w'] } }, res);
+  await getAllServices(
+    {
+      query: {
+        search: `${'a'.repeat(199)}.`,
+        countyCodes: ['01', '02'],
+        municipalityCodes: ['x', 'y'],
+        areaCodes: ['z', 'w'],
+      },
+    },
+    res
+  );
   expect(res.status).not.toHaveBeenCalledWith(500);
   const pattern = Service.find.mock.calls[0][0].$and[0].$or[0].title.$regex;
   expect(() => new RegExp(pattern)).not.toThrow();

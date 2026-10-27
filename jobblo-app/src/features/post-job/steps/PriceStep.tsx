@@ -11,9 +11,17 @@ import { t } from '../i18n';
 import { priceProblem, totalPrice } from '../price';
 
 const TYPES: { value: PaymentType; label: string; hint: string }[] = [
-  { value: 'Fastpris', label: t('Fastpris', 'Fixed price'), hint: t('Én pris for hele jobben', 'One price for the whole job') },
+  {
+    value: 'Fastpris',
+    label: t('Fastpris', 'Fixed price'),
+    hint: t('Én pris for hele jobben', 'One price for the whole job'),
+  },
   { value: 'Timepris', label: t('Timepris', 'Hourly'), hint: t('Betal per time', 'Pay per hour') },
-  { value: 'Anbud', label: t('Anbud', 'Quotes'), hint: t('Be om tilbud – oppgi et antatt budsjett', 'Ask for quotes – give an estimated budget') },
+  {
+    value: 'Anbud',
+    label: t('Anbud', 'Quotes'),
+    hint: t('Be om tilbud – oppgi et antatt budsjett', 'Ask for quotes – give an estimated budget'),
+  },
 ];
 
 const kr = (n: number) => `${Math.round(n).toLocaleString('nb-NO')} kr`;
@@ -31,7 +39,8 @@ export function PriceStep() {
 
   // The AI's payment type once, while the user has typed no price.
   useEffect(() => {
-    if (ai?.paymentType && !values.price && !values.hourlyRate) update({ paymentType: ai.paymentType });
+    if (ai?.paymentType && !values.price && !values.hourlyRate)
+      update({ paymentType: ai.paymentType });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -54,7 +63,10 @@ export function PriceStep() {
         ? [{ label: t('Forslag', 'Suggested'), value: ai.hourlyRate }]
         : []
       : [ai?.priceMin, ai?.suggestedPrice, ai?.priceMax]
-          .map((v, i) => ({ label: [t('Lav', 'Low'), t('Forslag', 'Suggested'), t('Høy', 'High')][i], value: v ?? 0 }))
+          .map((v, i) => ({
+            label: [t('Lav', 'Low'), t('Forslag', 'Suggested'), t('Høy', 'High')][i],
+            value: v ?? 0,
+          }))
           .filter((c) => c.value > 0);
 
   const setAmount = (text: string) => {
@@ -64,8 +76,13 @@ export function PriceStep() {
 
   return (
     <View className="flex-1">
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 24 }} keyboardShouldPersistTaps="handled">
-        <Text className="text-[1.625rem] font-bold leading-tight tracking-[-0.02em] text-ink">{t('Pris', 'Price')}</Text>
+      <ScrollView
+        contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Text className="text-[1.625rem] font-bold leading-tight tracking-[-0.02em] text-ink">
+          {t('Pris', 'Price')}
+        </Text>
 
         <View className="mt-4 flex-row rounded-xl bg-surface-2 p-1" accessibilityRole="radiogroup">
           {TYPES.map((pt) => {
@@ -78,12 +95,18 @@ export function PriceStep() {
                 accessibilityState={{ selected }}
                 className={`h-10 flex-1 items-center justify-center rounded-lg ${selected ? 'bg-surface' : ''}`}
               >
-                <Text className={`text-[0.875rem] font-semibold ${selected ? 'text-ink' : 'text-muted'}`}>{pt.label}</Text>
+                <Text
+                  className={`text-[0.875rem] font-semibold ${selected ? 'text-ink' : 'text-muted'}`}
+                >
+                  {pt.label}
+                </Text>
               </Pressable>
             );
           })}
         </View>
-        <Text className="mt-2 text-[0.8125rem] text-muted">{TYPES.find((pt) => pt.value === values.paymentType)?.hint}</Text>
+        <Text className="mt-2 text-[0.8125rem] text-muted">
+          {TYPES.find((pt) => pt.value === values.paymentType)?.hint}
+        </Text>
 
         <View className="mt-8 flex-row items-baseline justify-center">
           <TextInput
@@ -92,20 +115,36 @@ export function PriceStep() {
             keyboardType="number-pad"
             placeholder="0"
             placeholderTextColor={tc('#9B9E96', 'placeholder')}
-            accessibilityLabel={timepris ? t('Timepris i kroner', 'Hourly rate in kroner') : values.paymentType === 'Anbud' ? t('Antatt budsjett i kroner', 'Estimated budget in kroner') : t('Pris i kroner', 'Price in kroner')}
+            accessibilityLabel={
+              timepris
+                ? t('Timepris i kroner', 'Hourly rate in kroner')
+                : values.paymentType === 'Anbud'
+                  ? t('Antatt budsjett i kroner', 'Estimated budget in kroner')
+                  : t('Pris i kroner', 'Price in kroner')
+            }
             className="min-w-[60px] text-center text-[2.75rem] font-bold text-ink"
           />
-          <Text className="ml-2 text-[1.5rem] font-semibold text-ink">{timepris ? t('kr/t', 'kr/h') : 'kr'}</Text>
+          <Text className="ml-2 text-[1.5rem] font-semibold text-ink">
+            {timepris ? t('kr/t', 'kr/h') : 'kr'}
+          </Text>
         </View>
         {timepris && totalPrice(values) > 0 ? (
-          <Text className="mt-1 text-center text-[0.9375rem] text-muted">≈ {kr(totalPrice(values))} {t('totalt', 'in total')}</Text>
+          <Text className="mt-1 text-center text-[0.9375rem] text-muted">
+            ≈ {kr(totalPrice(values))} {t('totalt', 'in total')}
+          </Text>
         ) : null}
-        {amount && problem ? <Text className="mt-2 text-center text-[0.875rem] font-medium text-danger">{problem}</Text> : null}
+        {amount && problem ? (
+          <Text className="mt-2 text-center text-[0.875rem] font-medium text-danger">
+            {problem}
+          </Text>
+        ) : null}
 
         {chips.length ? (
           <View className="mt-6 items-center">
             <Text className="text-[0.8125rem] font-medium text-brand-text">
-              {market ? `${t('Pris basert på', 'Price based on')} ${stats!.count} ${t('lignende oppdrag', 'similar jobs')}${stats!.scope === 'county' ? t(' i fylket', ' in your county') : ''}` : t('AI-estimat – ikke en markedspris', 'AI estimate – not a market price')}
+              {market
+                ? `${t('Pris basert på', 'Price based on')} ${stats!.count} ${t('lignende oppdrag', 'similar jobs')}${stats!.scope === 'county' ? t(' i fylket', ' in your county') : ''}`
+                : t('AI-estimat – ikke en markedspris', 'AI estimate – not a market price')}
             </Text>
             <View className="mt-2 flex-row flex-wrap justify-center gap-2">
               {chips.map((c) => (
@@ -126,7 +165,9 @@ export function PriceStep() {
 
         {!values.durationValue ? (
           <View className="mt-8">
-            <Text className="text-[0.875rem] font-semibold text-ink">{t('Hvor lang tid tror du det tar?', 'How long do you think it will take?')}</Text>
+            <Text className="text-[0.875rem] font-semibold text-ink">
+              {t('Hvor lang tid tror du det tar?', 'How long do you think it will take?')}
+            </Text>
             <View className="mt-2 flex-row flex-wrap gap-2">
               {DURATION_OPTIONS.map((d) => (
                 <Pressable
@@ -147,4 +188,3 @@ export function PriceStep() {
     </View>
   );
 }
-

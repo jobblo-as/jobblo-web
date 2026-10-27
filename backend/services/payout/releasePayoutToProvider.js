@@ -15,8 +15,8 @@
  *    returns the existing Payout without creating a second transfer.
  */
 
-const Payout  = require('../../models/Payout');
-const User    = require('../../models/User');
+const Payout = require('../../models/Payout');
+const User = require('../../models/User');
 const Payment = require('../../models/Payment');
 const Order = require('../../models/Order');
 const Dispute = require('../../models/Dispute');
@@ -49,7 +49,10 @@ async function creditProviderEarnings(payout) {
     { $set: { earningsCreditedAt: new Date() } }
   );
   if (claimed) {
-    await User.updateOne({ _id: payout.providerId }, { $inc: { earnings: payout.netProviderAmount } });
+    await User.updateOne(
+      { _id: payout.providerId },
+      { $inc: { earnings: payout.netProviderAmount } }
+    );
   }
 }
 
@@ -94,7 +97,10 @@ async function recordRecoveredTransfer(payout, recovered, { orderId, livemode, s
  */
 function releasablePaymentStates(releaseSource) {
   return releaseSource === 'dispute_release'
-    ? { payment: ['completed', 'released', 'disputed'], order: ['paid', 'released', 'partially_refunded'] }
+    ? {
+        payment: ['completed', 'released', 'disputed'],
+        order: ['paid', 'released', 'partially_refunded'],
+      }
     : { payment: ['completed', 'released'], order: ['paid', 'released'] };
 }
 
@@ -144,7 +150,10 @@ async function verifiedSourceCharge({
       payment.stripeLivemode !== undefined &&
       payment.stripeLivemode !== session.livemode)
   ) {
-    throw payoutError('PAYOUT_SOURCE_PAYMENT_MISMATCH', 'SafePay checkout does not match the order.');
+    throw payoutError(
+      'PAYOUT_SOURCE_PAYMENT_MISMATCH',
+      'SafePay checkout does not match the order.'
+    );
   }
 
   const intent = await stripe.paymentIntents.retrieve(paymentIntentId, {
@@ -159,7 +168,10 @@ async function verifiedSourceCharge({
     idOf(intent.customer) !== expectedCustomer ||
     !chargeId
   ) {
-    throw payoutError('PAYOUT_SOURCE_PAYMENT_INTENT_INVALID', 'PaymentIntent is not a matching captured payment.');
+    throw payoutError(
+      'PAYOUT_SOURCE_PAYMENT_INTENT_INVALID',
+      'PaymentIntent is not a matching captured payment.'
+    );
   }
 
   const charge = await stripe.charges.retrieve(chargeId, { expand: ['dispute'] });
@@ -178,7 +190,10 @@ async function verifiedSourceCharge({
     // `disputed` stays true after a chargeback is WON; only an open or lost one blocks.
     (charge.disputed === true && !['won', 'warning_closed'].includes(charge.dispute?.status))
   ) {
-    throw payoutError('PAYOUT_SOURCE_CHARGE_INVALID', 'Source charge is refunded, disputed, or mismatched.');
+    throw payoutError(
+      'PAYOUT_SOURCE_CHARGE_INVALID',
+      'Source charge is refunded, disputed, or mismatched.'
+    );
   }
   return { chargeId, livemode: session.livemode };
 }
@@ -217,12 +232,18 @@ async function releasePayoutToProvider(opts) {
   } = opts;
 
   if (!orderId || !providerId || !customerId || !serviceId) {
-    throw new Error('releasePayoutToProvider: orderId, providerId, customerId, serviceId are required');
+    throw new Error(
+      'releasePayoutToProvider: orderId, providerId, customerId, serviceId are required'
+    );
   }
   if (typeof grossAmount !== 'number' || grossAmount <= 0) {
     throw new Error('releasePayoutToProvider: grossAmount must be a positive number');
   }
-  if (!['customer_approve', 'legacy_complete', 'dispute_release', 'admin_override'].includes(releaseSource)) {
+  if (
+    !['customer_approve', 'legacy_complete', 'dispute_release', 'admin_override'].includes(
+      releaseSource
+    )
+  ) {
     throw new Error(`releasePayoutToProvider: unknown releaseSource "${releaseSource}"`);
   }
 
@@ -255,9 +276,14 @@ async function releasePayoutToProvider(opts) {
     orderId,
     kind: 'charge_dispute',
     status: 'manual_review',
-  }).select('_id').lean();
+  })
+    .select('_id')
+    .lean();
   if (stripeChargeback) {
-    throw payoutError('PAYOUT_STRIPE_CHARGEBACK_ACTIVE', 'Payout is blocked while a Stripe chargeback requires review.');
+    throw payoutError(
+      'PAYOUT_STRIPE_CHARGEBACK_ACTIVE',
+      'Payout is blocked while a Stripe chargeback requires review.'
+    );
   }
 
   let dispute;
@@ -266,14 +292,25 @@ async function releasePayoutToProvider(opts) {
     if (
       !dispute ||
       String(dispute.orderId) !== String(orderId) ||
-      !['open', 'under_review', 'waiting_for_customer', 'waiting_for_provider', 'evidence_submitted'].includes(dispute.status) ||
-      !['release_to_provider', 'partial_refund', 'split_payment'].includes(dispute.resolution?.outcome) ||
+      ![
+        'open',
+        'under_review',
+        'waiting_for_customer',
+        'waiting_for_provider',
+        'evidence_submitted',
+      ].includes(dispute.status) ||
+      !['release_to_provider', 'partial_refund', 'split_payment'].includes(
+        dispute.resolution?.outcome
+      ) ||
       // `reconciliation_required` too: an unknown-outcome dispute transfer must reach the
       // Stripe lookup below, or nothing (retry job or admin) could ever finish it.
       !['pending', 'failed', 'reconciliation_required'].includes(dispute.resolution?.moneyState) ||
       dispute.resolution.providerAmount !== grossAmount
     ) {
-      throw payoutError('PAYOUT_DISPUTE_NOT_AUTHORIZED', 'Approved dispute resolution is required.');
+      throw payoutError(
+        'PAYOUT_DISPUTE_NOT_AUTHORIZED',
+        'Approved dispute resolution is required.'
+      );
     }
   } else {
     if (!['ready_for_review', 'completed'].includes(order.status)) {
@@ -282,7 +319,9 @@ async function releasePayoutToProvider(opts) {
     const activeDispute = await Dispute.findOne({
       orderId,
       status: { $nin: ['resolved', 'closed', 'cancelled'] },
-    }).select('_id').lean();
+    })
+      .select('_id')
+      .lean();
     if (activeDispute) {
       throw payoutError('PAYOUT_DISPUTE_ACTIVE', 'Payout is blocked while a dispute is active.');
     }
@@ -290,7 +329,10 @@ async function releasePayoutToProvider(opts) {
 
   const storedMode = order.checkoutMode;
   if (!['test', 'live'].includes(storedMode)) {
-    throw payoutError('PAYOUT_MODE_UNKNOWN', 'Payment mode is missing; manual reconciliation is required.');
+    throw payoutError(
+      'PAYOUT_MODE_UNKNOWN',
+      'Payment mode is missing; manual reconciliation is required.'
+    );
   }
   if (
     (payment?.stripeLivemode !== null &&
@@ -299,7 +341,10 @@ async function releasePayoutToProvider(opts) {
     (order.checkoutSessionId && stripeCheckoutSessionId !== order.checkoutSessionId) ||
     (order.paymentIntentId && stripePaymentIntentId !== order.paymentIntentId)
   ) {
-    throw payoutError('PAYOUT_MODE_MISMATCH', 'Payment identifiers do not match the confirmed order.');
+    throw payoutError(
+      'PAYOUT_MODE_MISMATCH',
+      'Payment identifiers do not match the confirmed order.'
+    );
   }
   const stripe = await getStripeForMode(storedMode === 'test');
   let source;
@@ -322,9 +367,7 @@ async function releasePayoutToProvider(opts) {
     const existing = await Payout.findOne({ orderId });
     if (!existing || ['pending', 'released_internal', 'failed'].includes(existing.status)) {
       await Payout.updateOne(
-        existing
-          ? { _id: existing._id, status: existing.status }
-          : { orderId },
+        existing ? { _id: existing._id, status: existing.status } : { orderId },
         {
           $set: {
             orderId,
@@ -368,14 +411,18 @@ async function releasePayoutToProvider(opts) {
       }
     }
     if (payout.status === 'cancelled') {
-      throw new Error(`Payout for order ${orderId} was cancelled and cannot be retried automatically.`);
+      throw new Error(
+        `Payout for order ${orderId} was cancelled and cannot be retried automatically.`
+      );
     }
     if (
       payout.stripeLivemode !== null &&
       payout.stripeLivemode !== undefined &&
       payout.stripeLivemode !== source.livemode
     ) {
-      const err = new Error('PAYOUT_MODE_MISMATCH: Existing payout belongs to another Stripe mode.');
+      const err = new Error(
+        'PAYOUT_MODE_MISMATCH: Existing payout belongs to another Stripe mode.'
+      );
       err.code = 'PAYOUT_MODE_MISMATCH';
       throw err;
     }
@@ -392,9 +439,7 @@ async function releasePayoutToProvider(opts) {
 
   // ── 2. Verify provider has a working Stripe Connect account ────────────────
   const testMode = !source.livemode;
-  const connectAccountField = testMode
-    ? 'stripeConnectAccountIdTest'
-    : 'stripeConnectAccountId';
+  const connectAccountField = testMode ? 'stripeConnectAccountIdTest' : 'stripeConnectAccountId';
   const provider = await User.findById(providerId).select(
     `stripeConnectAccountId stripeConnectAccountIdTest payoutEnabled chargesEnabled detailsSubmitted payoutOnboardingStatus name email`
   );
@@ -413,13 +458,21 @@ async function releasePayoutToProvider(opts) {
         payout ? { _id: payout._id, status: payout.status } : { orderId },
         {
           $set: {
-            orderId, providerId, customerId, serviceId,
-            grossAmount, platformFee, netProviderAmount, currency: 'NOK',
-            stripePaymentIntentId, stripeCheckoutSessionId,
+            orderId,
+            providerId,
+            customerId,
+            serviceId,
+            grossAmount,
+            platformFee,
+            netProviderAmount,
+            currency: 'NOK',
+            stripePaymentIntentId,
+            stripeCheckoutSessionId,
             stripeLivemode: source.livemode,
             status: 'failed',
             failureCode: 'PAYOUT_SETUP_REQUIRED',
-            failureReason: 'Provider has not connected a Stripe payout account; no transfer was attempted.',
+            failureReason:
+              'Provider has not connected a Stripe payout account; no transfer was attempted.',
             idempotencyKey,
           },
           $setOnInsert: { releaseSource, releasedBy, disputeId },
@@ -427,7 +480,9 @@ async function releasePayoutToProvider(opts) {
         { upsert: !payout }
       );
     }
-    const err = new Error('PAYOUT_SETUP_REQUIRED: Provider has not connected a Stripe payout account.');
+    const err = new Error(
+      'PAYOUT_SETUP_REQUIRED: Provider has not connected a Stripe payout account.'
+    );
     err.code = 'PAYOUT_SETUP_REQUIRED';
     err.providerId = String(providerId);
     throw err;
@@ -444,17 +499,17 @@ async function releasePayoutToProvider(opts) {
       serviceId,
       grossAmount,
       platformFee,
-      taxAmount:         0,
+      taxAmount: 0,
       netProviderAmount,
-      currency:          'NOK',
+      currency: 'NOK',
       releaseSource,
       releasedBy,
-      stripePaymentIntentId:    stripePaymentIntentId || undefined,
-      stripeCheckoutSessionId:  stripeCheckoutSessionId || undefined,
+      stripePaymentIntentId: stripePaymentIntentId || undefined,
+      stripeCheckoutSessionId: stripeCheckoutSessionId || undefined,
       stripeConnectAccountId,
       stripeLivemode: source.livemode,
-      safePayHistoryId:         safePayHistoryId || undefined,
-      disputeId:                disputeId || undefined,
+      safePayHistoryId: safePayHistoryId || undefined,
+      disputeId: disputeId || undefined,
       idempotencyKey,
       status: 'pending',
     });
@@ -517,7 +572,10 @@ async function releasePayoutToProvider(opts) {
         payout.failureCode = 'PAYOUT_TRANSFER_LOOKUP_INCOMPLETE';
         payout.failureReason = 'Stripe transfer history could not be fully checked.';
         await payout.save(saveOpts);
-        throw payoutError('PAYOUT_RECONCILIATION_REQUIRED', 'Stripe transfer history could not be fully checked.');
+        throw payoutError(
+          'PAYOUT_RECONCILIATION_REQUIRED',
+          'Stripe transfer history could not be fully checked.'
+        );
       }
     }
     if (!recovered) {
@@ -526,8 +584,10 @@ async function releasePayoutToProvider(opts) {
       // back to `failed` for retryFailedPayouts — it used to wait here forever. Only when
       // the lookup covered the account the attempt actually paid to.
       const since = payout.transferFailedAt || new Date();
-      const sameAccount = !payout.stripeConnectAccountId || payout.stripeConnectAccountId === stripeConnectAccountId;
-      const settled = sameAccount && Date.now() - new Date(since).getTime() >= UNKNOWN_OUTCOME_SETTLE_MS;
+      const sameAccount =
+        !payout.stripeConnectAccountId || payout.stripeConnectAccountId === stripeConnectAccountId;
+      const settled =
+        sameAccount && Date.now() - new Date(since).getTime() >= UNKNOWN_OUTCOME_SETTLE_MS;
       payout.status = settled ? 'failed' : 'reconciliation_required';
       payout.transferFailedAt = since;
       payout.failureCode = 'PAYOUT_TRANSFER_NOT_FOUND';
@@ -535,7 +595,10 @@ async function releasePayoutToProvider(opts) {
         ? 'No transfer was made (checked with Stripe after 24 h); it will be retried.'
         : 'A previous transfer attempt is unresolved; no automatic retry was made.';
       await payout.save(saveOpts);
-      throw payoutError('PAYOUT_RECONCILIATION_REQUIRED', 'Previous Stripe transfer attempt requires manual reconciliation.');
+      throw payoutError(
+        'PAYOUT_RECONCILIATION_REQUIRED',
+        'Previous Stripe transfer attempt requires manual reconciliation.'
+      );
     }
     if (
       idOf(recovered.destination) !== stripeConnectAccountId ||
@@ -548,44 +611,51 @@ async function releasePayoutToProvider(opts) {
       payout.failureCode = 'PAYOUT_TRANSFER_MISMATCH';
       payout.failureReason = 'A transfer exists but does not match the authorized payout.';
       await payout.save(saveOpts);
-      throw payoutError('PAYOUT_TRANSFER_MISMATCH', 'Existing Stripe transfer requires manual review.');
+      throw payoutError(
+        'PAYOUT_TRANSFER_MISMATCH',
+        'Existing Stripe transfer requires manual review.'
+      );
     }
-    return recordRecoveredTransfer(payout, recovered, { orderId, livemode: source.livemode, saveOpts });
+    return recordRecoveredTransfer(payout, recovered, {
+      orderId,
+      livemode: source.livemode,
+      saveOpts,
+    });
   } else {
-  payout = await Payout.findOneAndUpdate(
-    {
-      _id: payout._id,
-      status: { $in: ['pending', 'released_internal', 'failed'] },
-      ...(payout.stripeLivemode === null || payout.stripeLivemode === undefined
-        ? {}
-        : { stripeLivemode: source.livemode }),
-    },
-    {
-      $set: {
-        status: 'processing',
-        stripeConnectAccountId,
-        stripeLivemode: source.livemode,
-        lastAttemptedAt: new Date(),
-        failureReason: null,
-        failureCode: null,
-        // No transfer exists for pending/failed records, so the record must describe
-        // THIS release. A failed customer-approval payout later released through a
-        // dispute split used to keep its old amounts while Stripe was sent the new
-        // ones, breaking every later reconciliation and reversal check.
-        grossAmount,
-        platformFee,
-        netProviderAmount,
-        releaseSource,
-        releasedBy,
-        disputeId: disputeId || null,
+    payout = await Payout.findOneAndUpdate(
+      {
+        _id: payout._id,
+        status: { $in: ['pending', 'released_internal', 'failed'] },
+        ...(payout.stripeLivemode === null || payout.stripeLivemode === undefined
+          ? {}
+          : { stripeLivemode: source.livemode }),
       },
-      $inc: { retryCount: 1 },
-    },
-    { new: true, ...saveOpts }
-  );
-  if (!payout) {
-    throw payoutError('PAYOUT_PROCESSING', 'Payout is already being processed.');
-  }
+      {
+        $set: {
+          status: 'processing',
+          stripeConnectAccountId,
+          stripeLivemode: source.livemode,
+          lastAttemptedAt: new Date(),
+          failureReason: null,
+          failureCode: null,
+          // No transfer exists for pending/failed records, so the record must describe
+          // THIS release. A failed customer-approval payout later released through a
+          // dispute split used to keep its old amounts while Stripe was sent the new
+          // ones, breaking every later reconciliation and reversal check.
+          grossAmount,
+          platformFee,
+          netProviderAmount,
+          releaseSource,
+          releasedBy,
+          disputeId: disputeId || null,
+        },
+        $inc: { retryCount: 1 },
+      },
+      { new: true, ...saveOpts }
+    );
+    if (!payout) {
+      throw payoutError('PAYOUT_PROCESSING', 'Payout is already being processed.');
+    }
   }
 
   // ── 4. Create Stripe transfer ──────────────────────────────────────────────
@@ -597,13 +667,15 @@ async function releasePayoutToProvider(opts) {
     payout.failureCode = 'PAYOUT_CONNECT_ACCOUNT_LOOKUP_FAILED';
     payout.failureReason = 'Could not verify provider Connect account before transfer.';
     await payout.save(saveOpts);
-    throw payoutError('PAYOUT_CONNECT_ACCOUNT_LOOKUP_FAILED', 'Provider payout account could not be verified.');
+    throw payoutError(
+      'PAYOUT_CONNECT_ACCOUNT_LOOKUP_FAILED',
+      'Provider payout account could not be verified.'
+    );
   }
   if (
     account.id !== stripeConnectAccountId ||
     account.deleted ||
-    (account.metadata?.jobbloUserId &&
-      account.metadata.jobbloUserId !== String(providerId)) ||
+    (account.metadata?.jobbloUserId && account.metadata.jobbloUserId !== String(providerId)) ||
     account.payouts_enabled !== true ||
     account.capabilities?.transfers !== 'active'
   ) {
@@ -611,7 +683,10 @@ async function releasePayoutToProvider(opts) {
     payout.failureCode = 'PAYOUT_CONNECT_ACCOUNT_UNVERIFIED';
     payout.failureReason = 'Provider Connect account is not payout-ready.';
     await payout.save(saveOpts);
-    const err = payoutError('PAYOUT_CONNECT_ACCOUNT_UNVERIFIED', 'Provider Connect account is not payout-ready.');
+    const err = payoutError(
+      'PAYOUT_CONNECT_ACCOUNT_UNVERIFIED',
+      'Provider Connect account is not payout-ready.'
+    );
     err.providerId = String(providerId);
     throw err;
   }
@@ -636,7 +711,10 @@ async function releasePayoutToProvider(opts) {
         payout.failureCode = 'PAYOUT_TRANSFER_LOOKUP_INCOMPLETE';
         payout.failureReason = 'Stripe transfer history could not be fully checked.';
         await payout.save(saveOpts);
-        throw payoutError('PAYOUT_RECONCILIATION_REQUIRED', 'Stripe transfer history could not be fully checked.');
+        throw payoutError(
+          'PAYOUT_RECONCILIATION_REQUIRED',
+          'Stripe transfer history could not be fully checked.'
+        );
       }
     }
     if (recovered) {
@@ -651,11 +729,18 @@ async function releasePayoutToProvider(opts) {
         payout.failureCode = 'PAYOUT_TRANSFER_MISMATCH';
         payout.failureReason = 'A transfer exists but does not match the authorized payout.';
         await payout.save(saveOpts);
-        throw payoutError('PAYOUT_TRANSFER_MISMATCH', 'Existing Stripe transfer requires manual review.');
+        throw payoutError(
+          'PAYOUT_TRANSFER_MISMATCH',
+          'Existing Stripe transfer requires manual review.'
+        );
       }
       // It used to only mark the payout transferred: the Payment stayed unreleased and the
       // transfer never reached the financial history.
-      return recordRecoveredTransfer(payout, recovered, { orderId, livemode: source.livemode, saveOpts });
+      return recordRecoveredTransfer(payout, recovered, {
+        orderId,
+        livemode: source.livemode,
+        saveOpts,
+      });
     }
   }
 
@@ -668,7 +753,9 @@ async function releasePayoutToProvider(opts) {
   const fenced = await Order.findOneAndUpdate(
     {
       _id: orderId,
-      status: { $in: releaseSource === 'dispute_release' ? ['disputed'] : ['ready_for_review', 'completed'] },
+      status: {
+        $in: releaseSource === 'dispute_release' ? ['disputed'] : ['ready_for_review', 'completed'],
+      },
       $or: [
         { payoutLockId: null },
         { payoutLockId: String(payout._id) },
@@ -685,26 +772,30 @@ async function releasePayoutToProvider(opts) {
         $set: {
           status: 'failed',
           failureCode: 'PAYOUT_ORDER_HOLD_ACTIVE',
-          failureReason: 'The order changed (e.g. a dispute opened) before the transfer; no transfer was attempted.',
+          failureReason:
+            'The order changed (e.g. a dispute opened) before the transfer; no transfer was attempted.',
         },
       }
     );
-    throw payoutError('PAYOUT_ORDER_HOLD_ACTIVE', 'Order is no longer releasable; no transfer was attempted.');
+    throw payoutError(
+      'PAYOUT_ORDER_HOLD_ACTIVE',
+      'Order is no longer releasable; no transfer was attempted.'
+    );
   }
 
   let transfer;
   try {
     const transferParams = {
-      amount:      Math.round(netProviderAmount * 100), // Stripe uses øre/cents
-      currency:    'nok',
+      amount: Math.round(netProviderAmount * 100), // Stripe uses øre/cents
+      currency: 'nok',
       destination: stripeConnectAccountId,
       source_transaction: source.chargeId,
       metadata: {
-        orderId:       String(orderId),
-        providerId:    String(providerId),
-        customerId:    String(customerId),
+        orderId: String(orderId),
+        providerId: String(providerId),
+        customerId: String(customerId),
         releaseSource,
-        payoutId:      String(payout._id),
+        payoutId: String(payout._id),
       },
     };
 
@@ -726,7 +817,10 @@ async function releasePayoutToProvider(opts) {
       payout.failureCode = stripeErr.code || stripeErr.type || 'stripe_transfer_refused';
       await payout.save(saveOpts);
       await releaseOrderPayoutLock(orderId, payout._id);
-      const err = payoutError('PAYOUT_TRANSFER_FAILED', 'Stripe refused the transfer; it will be retried.');
+      const err = payoutError(
+        'PAYOUT_TRANSFER_FAILED',
+        'Stripe refused the transfer; it will be retried.'
+      );
       err.stripeCode = payout.failureCode;
       err.payoutId = String(payout._id);
       err.retryable = true;
@@ -738,16 +832,19 @@ async function releasePayoutToProvider(opts) {
     payout.failureCode = stripeErr.code || stripeErr.type || 'stripe_transfer_outcome_unknown';
     await payout.save(saveOpts);
 
-    const err = payoutError('PAYOUT_RECONCILIATION_REQUIRED', 'Stripe transfer outcome is unknown; manual reconciliation is required.');
-    err.stripeCode   = stripeErr.code || stripeErr.type;
-    err.payoutId     = String(payout._id);
-    err.retryable    = true;
+    const err = payoutError(
+      'PAYOUT_RECONCILIATION_REQUIRED',
+      'Stripe transfer outcome is unknown; manual reconciliation is required.'
+    );
+    err.stripeCode = stripeErr.code || stripeErr.type;
+    err.payoutId = String(payout._id);
+    err.retryable = true;
     throw err;
   }
 
   // ── 5. Mark transfer as completed ─────────────────────────────────────────
   payout.transitionTo('transferred', {
-    stripeTransferId:    transfer.id,
+    stripeTransferId: transfer.id,
     transferInitiatedAt: new Date(),
     stripeLivemode: source.livemode,
   });
@@ -777,10 +874,7 @@ async function releasePayoutToProvider(opts) {
   await payout.save(saveOpts);
 
   // ── 6. Update Payment record status to 'released' if it exists ────────────
-  await Payment.findOneAndUpdate(
-    { orderId },
-    { $set: { status: 'released' } }
-  );
+  await Payment.findOneAndUpdate({ orderId }, { $set: { status: 'released' } });
 
   return { payout, transfer, alreadyPaid: false };
 }
@@ -812,7 +906,11 @@ async function releasePayoutToProviderLogged(opts) {
         httpStatus: 409,
         errorCode: err.code,
         source: 'payout',
-        metadata: { orderId: String(opts?.orderId || ''), releaseSource: opts?.releaseSource, needsReconciliation: true },
+        metadata: {
+          orderId: String(opts?.orderId || ''),
+          releaseSource: opts?.releaseSource,
+          needsReconciliation: true,
+        },
       });
     }
     throw err;

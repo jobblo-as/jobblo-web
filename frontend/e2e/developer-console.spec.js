@@ -24,9 +24,24 @@ const failedJob = (id) => ({
   finishedAt: '2026-10-24T01:04:36.914Z',
 });
 
-const counts = (failed) => ({ waiting: 0, active: 0, delayed: 0, completed: 0, failed, paused: 0, prioritized: 0 });
+const counts = (failed) => ({
+  waiting: 0,
+  active: 0,
+  delayed: 0,
+  completed: 0,
+  failed,
+  paused: 0,
+  prioritized: 0,
+});
 
-async function mockApi(page, { mfa = { required: true, enabled: true, verified: true }, failed = [failedJob(25), failedJob(24)], access = 'operations' } = {}) {
+async function mockApi(
+  page,
+  {
+    mfa = { required: true, enabled: true, verified: true },
+    failed = [failedJob(25), failedJob(24)],
+    access = 'operations',
+  } = {}
+) {
   const calls = [];
   const state = { mfa: { ...mfa }, failed: [...failed] };
   await page.route(`${API}/api/**`, async (route) => {
@@ -36,18 +51,34 @@ async function mockApi(page, { mfa = { required: true, enabled: true, verified: 
     calls.push({ method, pathname, body: request.postDataJSON?.() ?? null });
     const ok = (data) => route.fulfill({ json: { success: true, data } });
 
-    if (pathname === '/api/auth/refresh-token') return route.fulfill({ json: { accessToken: 'at-dev' } });
+    if (pathname === '/api/auth/refresh-token')
+      return route.fulfill({ json: { accessToken: 'at-dev' } });
     if (pathname === '/api/auth/profile') return route.fulfill({ json: DEV });
     if (pathname === '/api/auth/mfa' && method === 'GET') return route.fulfill({ json: state.mfa });
     if (pathname === '/api/auth/mfa/verify') {
-      if (request.postDataJSON()?.code !== '123456') return route.fulfill({ status: 400, json: { message: 'That code is not right — try again.' } });
+      if (request.postDataJSON()?.code !== '123456')
+        return route.fulfill({
+          status: 400,
+          json: { message: 'That code is not right — try again.' },
+        });
       state.mfa.verified = true;
       return route.fulfill({ json: { ok: true } });
     }
     // The backend refuses developer calls until the code is checked; so does this mock.
-    if (pathname.startsWith('/api/developer/') && !state.mfa.verified) return route.fulfill({ status: 403, json: { code: 'MFA_REQUIRED' } });
+    if (pathname.startsWith('/api/developer/') && !state.mfa.verified)
+      return route.fulfill({ status: 403, json: { code: 'MFA_REQUIRED' } });
     if (pathname === '/api/developer/me') {
-      return ok({ ...DEV, environment: 'test', access, can: { triage: true, request: access !== 'readonly', execute: access === 'operations', approve: false } });
+      return ok({
+        ...DEV,
+        environment: 'test',
+        access,
+        can: {
+          triage: true,
+          request: access !== 'readonly',
+          execute: access === 'operations',
+          approve: false,
+        },
+      });
     }
     if (pathname === '/api/developer/queues') {
       return ok({
@@ -57,8 +88,26 @@ async function mockApi(page, { mfa = { required: true, enabled: true, verified: 
           redisState: { status: 'ready', lastError: null, lastErrorAt: null },
           inline: { ran: 0, failed: 0, lastError: null },
           queues: [
-            { name: 'email', concurrency: 5, attempts: 5, counts: counts(state.failed.length), isPaused: false, workerHere: true, failed: state.failed, schedulers: [] },
-            { name: 'push', concurrency: 10, attempts: 3, counts: counts(0), isPaused: false, workerHere: true, failed: [], schedulers: [] },
+            {
+              name: 'email',
+              concurrency: 5,
+              attempts: 5,
+              counts: counts(state.failed.length),
+              isPaused: false,
+              workerHere: true,
+              failed: state.failed,
+              schedulers: [],
+            },
+            {
+              name: 'push',
+              concurrency: 10,
+              attempts: 3,
+              counts: counts(0),
+              isPaused: false,
+              workerHere: true,
+              failed: [],
+              schedulers: [],
+            },
           ],
         },
         queues: [],
@@ -68,7 +117,8 @@ async function mockApi(page, { mfa = { required: true, enabled: true, verified: 
       });
     }
     const retry = pathname.match(/^\/api\/developer\/queues\/(\w+)\/jobs\/(\w+)\/retry$/);
-    const remove = method === 'DELETE' && pathname.match(/^\/api\/developer\/queues\/(\w+)\/jobs\/(\w+)$/);
+    const remove =
+      method === 'DELETE' && pathname.match(/^\/api\/developer\/queues\/(\w+)\/jobs\/(\w+)$/);
     if (retry || remove) {
       const id = (retry || remove)[2];
       state.failed = state.failed.filter((j) => j.id !== id);
@@ -102,18 +152,32 @@ test('a developer must enter the authenticator code before the console loads', a
   await input.fill('123456');
   await verify.click();
   await expect(page.getByText('Failed (dead letters)')).toBeVisible();
-  expect(calls.filter((c) => c.pathname === '/api/auth/mfa/verify').map((c) => c.body)).toEqual([{ code: '000000' }, { code: '123456' }]);
+  expect(calls.filter((c) => c.pathname === '/api/auth/mfa/verify').map((c) => c.body)).toEqual([
+    { code: '000000' },
+    { code: '123456' },
+  ]);
 });
 
 test('first sign-in: an emailed code is required before the QR set-up (H9)', async ({ page }) => {
   await mockApi(page, { mfa: { required: true, enabled: false, verified: false } });
   const setupBodies = [];
-  await page.route(`${API}/api/auth/mfa/setup/send-code`, (route) => route.fulfill({ json: { sentTo: 'd***@example.test' } }));
+  await page.route(`${API}/api/auth/mfa/setup/send-code`, (route) =>
+    route.fulfill({ json: { sentTo: 'd***@example.test' } })
+  );
   await page.route(`${API}/api/auth/mfa/setup`, (route) => {
     const body = route.request().postDataJSON();
     setupBodies.push(body);
-    if (body?.emailCode !== '424242') return route.fulfill({ status: 400, json: { message: 'Wrong code. 4 attempt(s) left.', code: 'MFA_SETUP_EMAIL_CODE' } });
-    return route.fulfill({ json: { secret: 'JBSWY3DPEHPK3PXP', otpauthUrl: 'otpauth://totp/Jobblo:dev@example.test?secret=JBSWY3DPEHPK3PXP&issuer=Jobblo' } });
+    if (body?.emailCode !== '424242')
+      return route.fulfill({
+        status: 400,
+        json: { message: 'Wrong code. 4 attempt(s) left.', code: 'MFA_SETUP_EMAIL_CODE' },
+      });
+    return route.fulfill({
+      json: {
+        secret: 'JBSWY3DPEHPK3PXP',
+        otpauthUrl: 'otpauth://totp/Jobblo:dev@example.test?secret=JBSWY3DPEHPK3PXP&issuer=Jobblo',
+      },
+    });
   });
   await page.goto('/developer/queues');
 
@@ -140,7 +204,9 @@ test('first sign-in: an emailed code is required before the QR set-up (H9)', asy
 
 test('an ordinary user is sent away from /developer', async ({ page }) => {
   await mockApi(page);
-  await page.route(`${API}/api/auth/profile`, (route) => route.fulfill({ json: { ...DEV, role: 'user' } }));
+  await page.route(`${API}/api/auth/profile`, (route) =>
+    route.fulfill({ json: { ...DEV, role: 'user' } })
+  );
   await page.goto('/developer/queues');
   await expect(page).toHaveURL(/\/profile$/);
 });
@@ -162,7 +228,11 @@ test('dead-letter jobs can be retried and removed from the Queues page', async (
   await expect(page.getByText('Job #24 removed')).toBeVisible();
   await expect(page.getByText('Failed (dead letters)')).toHaveCount(0);
 
-  expect(calls.filter((c) => c.method !== 'GET' && c.pathname.startsWith('/api/developer/')).map((c) => `${c.method} ${c.pathname}`)).toEqual([
+  expect(
+    calls
+      .filter((c) => c.method !== 'GET' && c.pathname.startsWith('/api/developer/'))
+      .map((c) => `${c.method} ${c.pathname}`)
+  ).toEqual([
     'POST /api/developer/queues/email/jobs/25/retry',
     'DELETE /api/developer/queues/email/jobs/24',
   ]);

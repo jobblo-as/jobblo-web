@@ -22,7 +22,9 @@ export function CategoryGrid({ categories, selected, onSelect }: CategoryGridPro
   const tiles = [{ name: 'Alle' }, ...categories];
   // Reads left to right per row: the first half fills the top row, the rest the bottom row.
   const perRow = Math.max(4, Math.ceil(tiles.length / 2));
-  const columns = Array.from({ length: perRow }, (_, i) => [tiles[i], tiles[i + perRow]].filter(Boolean));
+  const columns = Array.from({ length: perRow }, (_, i) =>
+    [tiles[i], tiles[i + perRow]].filter(Boolean)
+  );
 
   return (
     <ScrollView
@@ -48,7 +50,9 @@ export function CategoryGrid({ categories, selected, onSelect }: CategoryGridPro
                 accessibilityLabel={isAll ? 'Alle kategorier' : category.name}
                 className="h-[104px] items-center px-1 pt-2 active:opacity-60"
               >
-                <View className={`h-12 w-12 items-center justify-center rounded-full ${active ? 'bg-tint' : ''}`}>
+                <View
+                  className={`h-12 w-12 items-center justify-center rounded-full ${active ? 'bg-tint' : ''}`}
+                >
                   <Icon size={26} color={TC.brandText} strokeWidth={1.75} />
                 </View>
                 <Text

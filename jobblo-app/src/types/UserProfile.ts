@@ -32,8 +32,20 @@ export interface PublicUser {
   hourlyRate?: number;
   availabilityText?: string;
   locations?: string[];
-  portfolio?: { _id: string; title?: string; description?: string; link?: string; imageUrl?: string }[];
-  previousProjects?: { _id: string; title?: string; description?: string; link?: string; imageUrl?: string }[];
+  portfolio?: {
+    _id: string;
+    title?: string;
+    description?: string;
+    link?: string;
+    imageUrl?: string;
+  }[];
+  previousProjects?: {
+    _id: string;
+    title?: string;
+    description?: string;
+    link?: string;
+    imageUrl?: string;
+  }[];
   subscription?: string;
   createdAt?: string;
   identityVerified?: boolean;

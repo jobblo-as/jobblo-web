@@ -11,16 +11,16 @@ are `__tests__/aiJobListingPrompt.test.js` and
 
 ## Layout
 
-| File | Purpose |
-|---|---|
-| `cases.js` | 28 synthetic cases. All invented — no real customer data. |
-| `rubric.js` | Deterministic pass/fail checks + final-score maths. No model involved. |
-| `judge.js` | LLM judge for the ten 1–5 dimensions. Fixed rubric, `gpt-4.1`, temp 0. |
-| `variants/v1_before.js` | Frozen verbatim copy of the pre-improvement prompt. Do not edit. |
-| `run.js` | Runs a variant against all cases, writes `results/<tag>.json`. |
-| `rejudge.js` | Re-runs the judge over stored outputs when the rubric text changes. |
-| `rescore.js` | Recomputes hard checks + scores offline. Free. |
-| `report.js` | Builds the BEFORE vs AFTER markdown. |
+| File                    | Purpose                                                                |
+| ----------------------- | ---------------------------------------------------------------------- |
+| `cases.js`              | 28 synthetic cases. All invented — no real customer data.              |
+| `rubric.js`             | Deterministic pass/fail checks + final-score maths. No model involved. |
+| `judge.js`              | LLM judge for the ten 1–5 dimensions. Fixed rubric, `gpt-4.1`, temp 0. |
+| `variants/v1_before.js` | Frozen verbatim copy of the pre-improvement prompt. Do not edit.       |
+| `run.js`                | Runs a variant against all cases, writes `results/<tag>.json`.         |
+| `rejudge.js`            | Re-runs the judge over stored outputs when the rubric text changes.    |
+| `rescore.js`            | Recomputes hard checks + scores offline. Free.                         |
+| `report.js`             | Builds the BEFORE vs AFTER markdown.                                   |
 
 ## Running
 

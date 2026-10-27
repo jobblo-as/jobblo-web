@@ -6,14 +6,14 @@ resumption, paid-plan changes, and webhook-confirmed plan synchronization. Free
 fallback and billing-period contact usage are described in Phase 4 below; grace
 recovery is described in Phase 5 below; refunds are not implemented.
 
-| Model | Collection | Responsibility |
-| --- | --- | --- |
-| `SubscriptionPlan` | `subscriptionplans` | Existing plan catalogue and unchanged seed compatibility |
-| `SubscriptionV2` | `subscription_v2` | Current subscription snapshot plus plan-change history |
-| `SubscriptionBillingOperationV2` | `subscription_billing_operations_v2` | Idempotency and outcome record for a billing operation |
-| `SubscriptionUsagePeriod` | `subscription_usage_periods` | Included-contact and separately purchased-contact accounting by exact period |
-| `SubscriptionWebhookEventV2` | `subscription_webhook_events_v2` | Mode-scoped, retryable webhook event ledger |
-| `SubscriptionRecoveryEmailV2` | `subscription_recovery_emails_v2` | Idempotent recovery-email outbox and delivery attempts |
+| Model                            | Collection                           | Responsibility                                                               |
+| -------------------------------- | ------------------------------------ | ---------------------------------------------------------------------------- |
+| `SubscriptionPlan`               | `subscriptionplans`                  | Existing plan catalogue and unchanged seed compatibility                     |
+| `SubscriptionV2`                 | `subscription_v2`                    | Current subscription snapshot plus plan-change history                       |
+| `SubscriptionBillingOperationV2` | `subscription_billing_operations_v2` | Idempotency and outcome record for a billing operation                       |
+| `SubscriptionUsagePeriod`        | `subscription_usage_periods`         | Included-contact and separately purchased-contact accounting by exact period |
+| `SubscriptionWebhookEventV2`     | `subscription_webhook_events_v2`     | Mode-scoped, retryable webhook event ledger                                  |
+| `SubscriptionRecoveryEmailV2`    | `subscription_recovery_emails_v2`    | Idempotent recovery-email outbox and delivery attempts                       |
 
 The `SubscriptionV2` collection is intentionally distinct from the historical
 `subscriptions` collection. No application code reads or writes that historical
@@ -65,16 +65,16 @@ Stripe Products or Prices. Checkout and customer creation use persisted operatio
 idempotency keys. A pending-checkout unique partial index plus a short atomic operation
 lease serializes simultaneous requests.
 
-| API surface | Current behavior |
-| --- | --- |
-| `POST /api/stripe/v2/create-checkout-session` | Authenticated; accepts `{ planId }`; returns `{ url }`; disabled by default with `503 SUBSCRIPTION_V2_CHECKOUT_DISABLED` |
-| Legacy Stripe checkout/status and subscription management | `503 SUBSCRIPTION_REBUILD_IN_PROGRESS` by default; these URLs are V2 adapters when their required flags are enabled (see Phase 6) |
-| Extra-contact checkout/status at `/api/stripe/create-extra-contact-payment` and `/api/stripe/extra-contact-status/:sessionId` | `503 SUBSCRIPTION_REBUILD_IN_PROGRESS`; purchase fulfillment remains disabled |
-| Plan catalogue at `GET /api/plans` | Read-only active-plan projection when checkout is enabled; otherwise `503 SUBSCRIPTION_REBUILD_IN_PROGRESS` |
-| Plan catalogue writes at `/api/plans` | `503 SUBSCRIPTION_REBUILD_IN_PROGRESS`; seed-defined plan data is not editable through these routes |
-| Membership coupon CRUD and validation at `/api/coupons` | `503 SUBSCRIPTION_REBUILD_IN_PROGRESS`; legacy membership coupon endpoints only |
-| Admin subscription billing and membership promotion-code routes | `503 SUBSCRIPTION_REBUILD_IN_PROGRESS` |
-| Promotional campaign routes | Remain active and separate from membership subscriptions |
+| API surface                                                                                                                   | Current behavior                                                                                                                  |
+| ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /api/stripe/v2/create-checkout-session`                                                                                 | Authenticated; accepts `{ planId }`; returns `{ url }`; disabled by default with `503 SUBSCRIPTION_V2_CHECKOUT_DISABLED`          |
+| Legacy Stripe checkout/status and subscription management                                                                     | `503 SUBSCRIPTION_REBUILD_IN_PROGRESS` by default; these URLs are V2 adapters when their required flags are enabled (see Phase 6) |
+| Extra-contact checkout/status at `/api/stripe/create-extra-contact-payment` and `/api/stripe/extra-contact-status/:sessionId` | `503 SUBSCRIPTION_REBUILD_IN_PROGRESS`; purchase fulfillment remains disabled                                                     |
+| Plan catalogue at `GET /api/plans`                                                                                            | Read-only active-plan projection when checkout is enabled; otherwise `503 SUBSCRIPTION_REBUILD_IN_PROGRESS`                       |
+| Plan catalogue writes at `/api/plans`                                                                                         | `503 SUBSCRIPTION_REBUILD_IN_PROGRESS`; seed-defined plan data is not editable through these routes                               |
+| Membership coupon CRUD and validation at `/api/coupons`                                                                       | `503 SUBSCRIPTION_REBUILD_IN_PROGRESS`; legacy membership coupon endpoints only                                                   |
+| Admin subscription billing and membership promotion-code routes                                                               | `503 SUBSCRIPTION_REBUILD_IN_PROGRESS`                                                                                            |
+| Promotional campaign routes                                                                                                   | Remain active and separate from membership subscriptions                                                                          |
 
 V2 checkout error codes include `SUBSCRIPTION_V2_CHECKOUT_DISABLED`,
 `INVALID_PLAN_ID`, `PLAN_NOT_FOUND`, `plan_inactive`, `plan_type_not_allowed`,
@@ -107,13 +107,13 @@ complete safely without a transaction-capable Mongo deployment.
 
 Authenticated V2 management endpoints are available at:
 
-| Route | Request | Behavior |
-| --- | --- | --- |
-| `GET /api/stripe/v2/subscription` | none | Returns the verified Stripe subscription snapshot |
-| `POST /api/stripe/v2/subscription/cancel` | none | Stops renewal at the verified billing-period end; no proration |
-| `POST /api/stripe/v2/subscription/resume` | none | Reverses period-end cancellation before expiry |
-| `POST /api/stripe/v2/subscription/change/preview` | `{ "planId": "..." }` | Previews immediate-upgrade proration or downgrade effective date |
-| `POST /api/stripe/v2/subscription/change` | `{ "planId": "..." }` | Applies a paid upgrade pending invoice payment or schedules a downgrade |
+| Route                                             | Request               | Behavior                                                                |
+| ------------------------------------------------- | --------------------- | ----------------------------------------------------------------------- |
+| `GET /api/stripe/v2/subscription`                 | none                  | Returns the verified Stripe subscription snapshot                       |
+| `POST /api/stripe/v2/subscription/cancel`         | none                  | Stops renewal at the verified billing-period end; no proration          |
+| `POST /api/stripe/v2/subscription/resume`         | none                  | Reverses period-end cancellation before expiry                          |
+| `POST /api/stripe/v2/subscription/change/preview` | `{ "planId": "..." }` | Previews immediate-upgrade proration or downgrade effective date        |
+| `POST /api/stripe/v2/subscription/change`         | `{ "planId": "..." }` | Applies a paid upgrade pending invoice payment or schedules a downgrade |
 
 These endpoints require `SUBSCRIPTION_V2_MANAGEMENT_ENABLED=true`; the default is
 OFF. They use the Stripe mode and subscription/customer IDs stored on the V2 record,
@@ -307,18 +307,18 @@ the following existing URLs as adapters to V2; all adapters are gated and remain
 unavailable unless their listed flags are explicitly enabled. The common response
 envelope for errors is `{ "code": "...", "message": "..." }`.
 
-| Existing UI request | Enabled behavior | Flags |
-| --- | --- | --- |
-| `GET /api/plans` | Read-only array of active plans with `_id`, `name`, `price`, `type`, `entitlements`, `featuresText`, `features`, `freeViews`, and `pricePerExtraView`; no Stripe IDs are returned | Plan catalogue or Checkout |
-| `POST /api/stripe/create-checkout-session` | Accepts `{ "planId": "..." }`; returns `{ "url": "..." }`. Unsupported coupon input is rejected by the V2 checkout service | Checkout |
-| `GET /api/stripe/checkout-session/:sessionId` | Authenticated, owner-scoped, mode-verified read-only checkout projection (`payment_status`, `provisioning_status`, `checkout_status`, plan, amount, currency); does not provision | Checkout |
-| `GET /api/stripe/subscription` | Returns `{ "subscription": ... }` with V2 plan/status, contact summary, billing dates, pending change, and recovery summary | Management + Entitlements |
-| `POST /api/stripe/subscription/cancel` / `resume` | Existing V2 cancellation/resumption service | Management |
-| `POST /api/stripe/subscription/portal` | Returns an ownership/mode-scoped V2 Billing Portal URL | Management |
-| `POST /api/stripe/subscription/change/preview` / `change` | Existing V2 preview and paid-plan change service; preview accepts `{ "planId": "..." }` | Management |
-| `POST /api/stripe/subscription/change/cancel` | Releases a verified scheduled downgrade; the current paid plan remains in effect | Management |
-| `GET /api/stripe/subscription/billing-history` | Returns V2 invoices, payments projection, payment method, and billing address for the recorded V2 customer and Stripe mode | Management |
-| `GET /api/stripe/subscription/invoices/:invoiceId/pdf` | Returns an invoice PDF URL only after checking invoice customer, subscription, and recorded Stripe mode | Management |
+| Existing UI request                                       | Enabled behavior                                                                                                                                                                  | Flags                      |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| `GET /api/plans`                                          | Read-only array of active plans with `_id`, `name`, `price`, `type`, `entitlements`, `featuresText`, `features`, `freeViews`, and `pricePerExtraView`; no Stripe IDs are returned | Plan catalogue or Checkout |
+| `POST /api/stripe/create-checkout-session`                | Accepts `{ "planId": "..." }`; returns `{ "url": "..." }`. Unsupported coupon input is rejected by the V2 checkout service                                                        | Checkout                   |
+| `GET /api/stripe/checkout-session/:sessionId`             | Authenticated, owner-scoped, mode-verified read-only checkout projection (`payment_status`, `provisioning_status`, `checkout_status`, plan, amount, currency); does not provision | Checkout                   |
+| `GET /api/stripe/subscription`                            | Returns `{ "subscription": ... }` with V2 plan/status, contact summary, billing dates, pending change, and recovery summary                                                       | Management + Entitlements  |
+| `POST /api/stripe/subscription/cancel` / `resume`         | Existing V2 cancellation/resumption service                                                                                                                                       | Management                 |
+| `POST /api/stripe/subscription/portal`                    | Returns an ownership/mode-scoped V2 Billing Portal URL                                                                                                                            | Management                 |
+| `POST /api/stripe/subscription/change/preview` / `change` | Existing V2 preview and paid-plan change service; preview accepts `{ "planId": "..." }`                                                                                           | Management                 |
+| `POST /api/stripe/subscription/change/cancel`             | Releases a verified scheduled downgrade; the current paid plan remains in effect                                                                                                  | Management                 |
+| `GET /api/stripe/subscription/billing-history`            | Returns V2 invoices, payments projection, payment method, and billing address for the recorded V2 customer and Stripe mode                                                        | Management                 |
+| `GET /api/stripe/subscription/invoices/:invoiceId/pdf`    | Returns an invoice PDF URL only after checking invoice customer, subscription, and recorded Stripe mode                                                                           | Management                 |
 
 All legacy subscription adapters return exactly `503
 SUBSCRIPTION_REBUILD_IN_PROGRESS` when their required flag is off, before
@@ -341,12 +341,12 @@ billing-history adapter returns only invoices associated with the V2 record's
 current or recorded historical subscription IDs in its recorded Stripe mode; it
 does not merge historical V1 invoices or test/live data.
 
-| Flag | Gates | Default |
-| --- | --- | --- |
-| `SUBSCRIPTION_V2_PLAN_CATALOGUE_ENABLED` | Read-only plan catalogue without enabling payments | OFF |
-| `SUBSCRIPTION_V2_CHECKOUT_ENABLED` | Legacy checkout and checkout status; also exposes the catalogue for the existing checkout flow | OFF |
-| `SUBSCRIPTION_V2_MANAGEMENT_ENABLED` | Legacy status-management, portal, cancellation/resumption, changes, invoices | OFF |
-| `SUBSCRIPTION_V2_ENTITLEMENTS_ENABLED` | Legacy current-subscription/contact projection and contact entitlement flow | OFF |
+| Flag                                     | Gates                                                                                          | Default |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------- | ------- |
+| `SUBSCRIPTION_V2_PLAN_CATALOGUE_ENABLED` | Read-only plan catalogue without enabling payments                                             | OFF     |
+| `SUBSCRIPTION_V2_CHECKOUT_ENABLED`       | Legacy checkout and checkout status; also exposes the catalogue for the existing checkout flow | OFF     |
+| `SUBSCRIPTION_V2_MANAGEMENT_ENABLED`     | Legacy status-management, portal, cancellation/resumption, changes, invoices                   | OFF     |
+| `SUBSCRIPTION_V2_ENTITLEMENTS_ENABLED`   | Legacy current-subscription/contact projection and contact entitlement flow                    | OFF     |
 
 The plan-catalogue flag does not enable Checkout. `/api/plans` remains read-only
 and retains its existing route/authentication behavior. The Checkout flag also

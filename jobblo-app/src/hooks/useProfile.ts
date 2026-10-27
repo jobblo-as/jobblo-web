@@ -1,6 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../queryKeys';
-import { getCurrentProfile, updateCurrentProfile, type CurrentProfile, type ProfileUpdate } from '../services/profile.service';
+import {
+  getCurrentProfile,
+  updateCurrentProfile,
+  type CurrentProfile,
+  type ProfileUpdate,
+} from '../services/profile.service';
 import { useAuthStore } from '../store/authStore';
 
 export function useProfile() {

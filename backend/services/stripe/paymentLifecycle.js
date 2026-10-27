@@ -39,11 +39,12 @@ async function findVerifiedRefundOperation(refund, paymentIntentId, livemode) {
 
 /** Record the refund's Stripe status on its operation (and its duplicate-payment incident). */
 async function applyRefundOperationResult(operation, refund) {
-  const status = refund.status === 'succeeded'
-    ? 'succeeded'
-    : refund.status === 'failed' || refund.status === 'canceled'
-      ? 'failed'
-      : 'pending';
+  const status =
+    refund.status === 'succeeded'
+      ? 'succeeded'
+      : refund.status === 'failed' || refund.status === 'canceled'
+        ? 'failed'
+        : 'pending';
   const changes = {
     status,
     stripeObjectId: refund.id,
@@ -156,14 +157,15 @@ async function recordStripePaymentLifecycle(event) {
   // when the admin approved it (202) was never reconciled: the operation stayed
   // pending, the incident stayed in manual review, and every refund event added a new
   // unmatched incident.
-  const refundOperation = kind === 'refund'
-    ? await findVerifiedRefundOperation(object, paymentIntentId, event.livemode)
-    : null;
+  const refundOperation =
+    kind === 'refund'
+      ? await findVerifiedRefundOperation(object, paymentIntentId, event.livemode)
+      : null;
   const operationKey = String(object.metadata?.jobbloOperationKey || '');
-  const ownDuplicateRefund = !matched && refundOperation && operationKey.startsWith('duplicate-payment:');
+  const ownDuplicateRefund =
+    !matched && refundOperation && operationKey.startsWith('duplicate-payment:');
   const stripeDisputeId = kind === 'charge_dispute' ? object.id : undefined;
-  const disputeWon = kind === 'charge_dispute' &&
-    ['won', 'warning_closed'].includes(object.status);
+  const disputeWon = kind === 'charge_dispute' && ['won', 'warning_closed'].includes(object.status);
 
   if (ownDuplicateRefund) {
     await applyRefundOperationResult(refundOperation, object);
@@ -200,9 +202,10 @@ async function recordStripePaymentLifecycle(event) {
         amountRefunded: Number.isSafeInteger(charge?.amount_refunded)
           ? charge.amount_refunded
           : undefined,
-        currency: typeof object.currency === 'string'
-          ? object.currency.toUpperCase()
-          : charge?.currency?.toUpperCase(),
+        currency:
+          typeof object.currency === 'string'
+            ? object.currency.toUpperCase()
+            : charge?.currency?.toUpperCase(),
         reason: matched
           ? kind === 'charge_dispute'
             ? `Stripe chargeback status ${object.status}; provider payout remains frozen until review or a verified favorable resolution.`
@@ -245,11 +248,12 @@ async function recordStripePaymentLifecycle(event) {
           object.livemode === event.livemode
       );
       if (timeoutRefund) {
-        const status = timeoutRefund.status === 'succeeded'
-          ? 'succeeded'
-          : timeoutRefund.status === 'failed' || timeoutRefund.status === 'canceled'
-            ? 'failed'
-            : 'pending';
+        const status =
+          timeoutRefund.status === 'succeeded'
+            ? 'succeeded'
+            : timeoutRefund.status === 'failed' || timeoutRefund.status === 'canceled'
+              ? 'failed'
+              : 'pending';
         await StripeFinancialOperation.updateOne(
           { _id: operation._id },
           {
@@ -275,23 +279,28 @@ async function recordStripePaymentLifecycle(event) {
     }
   }
 
-  if (kind === 'charge_dispute' &&
-      !disputeWon) {
+  if (kind === 'charge_dispute' && !disputeWon) {
     await Payment.updateOne(
       { _id: payment._id, status: { $in: ['completed', 'released'] } },
       { $set: { status: 'disputed' } }
     );
     if (order.status !== 'cancelled') {
       await Order.updateOne(
-        { _id: order._id, status: { $in: ['paid', 'in_progress', 'ready_for_review', 'completed'] } },
+        {
+          _id: order._id,
+          status: { $in: ['paid', 'in_progress', 'ready_for_review', 'completed'] },
+        },
         { $set: { status: 'disputed' } }
       );
     }
   }
 
   if (kind === 'charge_dispute' && disputeWon) {
-    const firstIncident = await StripePaymentIncident.findOne({ stripeDisputeId }).sort({ createdAt: 1 }).lean();
-    const restoredStatus = firstIncident?.previousOrderStatus ||
+    const firstIncident = await StripePaymentIncident.findOne({ stripeDisputeId })
+      .sort({ createdAt: 1 })
+      .lean();
+    const restoredStatus =
+      firstIncident?.previousOrderStatus ||
       (payout?.status === 'transferred' ? 'completed' : 'paid');
     await StripePaymentIncident.updateMany(
       { stripeDisputeId },
@@ -364,7 +373,8 @@ async function recordDuplicateSafePayPayment({
         originalCharge.paid === true &&
         originalCharge.captured === true &&
         originalCharge.amount === order.checkoutAmountMinor &&
-        String(originalCharge.currency).toLowerCase() === String(order.checkoutCurrency).toLowerCase() &&
+        String(originalCharge.currency).toLowerCase() ===
+          String(order.checkoutCurrency).toLowerCase() &&
         idOf(originalCharge.payment_intent) === originalPaymentIntentId &&
         idOf(originalCharge.customer) === order.checkoutCustomerId &&
         originalCharge.livemode === session.livemode
@@ -394,7 +404,8 @@ async function recordDuplicateSafePayPayment({
         livemode: session.livemode,
         amount: session.amount_total,
         currency: String(session.currency || '').toUpperCase(),
-        reason: 'A second independently verified SafePay payment exists for an already-paid order; no second entitlement or provider transfer was created. Manual refund review is required.',
+        reason:
+          'A second independently verified SafePay payment exists for an already-paid order; no second entitlement or provider transfer was created. Manual refund review is required.',
       },
     },
     { upsert: true, new: true, setDefaultsOnInsert: true }
@@ -422,20 +433,12 @@ async function recordDuplicateSafePayPayment({
 }
 
 async function recordRejectedSafePayPayment({ event, session, reason }) {
-  if (
-    !event?.id ||
-    !event.type ||
-    typeof event.livemode !== 'boolean' ||
-    !session?.id ||
-    !reason
-  ) {
+  if (!event?.id || !event.type || typeof event.livemode !== 'boolean' || !session?.id || !reason) {
     throw new Error('Rejected SafePay payment incident is missing required identifiers');
   }
 
   const metadataOrderId = session.metadata?.orderId;
-  const orderId = mongoose.Types.ObjectId.isValid(metadataOrderId)
-    ? metadataOrderId
-    : undefined;
+  const orderId = mongoose.Types.ObjectId.isValid(metadataOrderId) ? metadataOrderId : undefined;
   const paymentIntentId = idOf(session.payment_intent);
   const incident = await StripePaymentIncident.findOneAndUpdate(
     { eventId: event.id },
@@ -452,9 +455,7 @@ async function recordRejectedSafePayPayment({ event, session, reason }) {
         stripeObjectId: session.id,
         livemode: event.livemode,
         amount: Number.isSafeInteger(session.amount_total) ? session.amount_total : undefined,
-        currency: typeof session.currency === 'string'
-          ? session.currency.toUpperCase()
-          : undefined,
+        currency: typeof session.currency === 'string' ? session.currency.toUpperCase() : undefined,
         reason: `Paid SafePay checkout failed canonical verification (${reason}). No order payment state was confirmed; manual review is required.`,
       },
     },

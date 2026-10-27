@@ -61,10 +61,7 @@ function getFrontendBaseUrl() {
 }
 
 function validateAccountOwner(account, userId) {
-  if (
-    account.metadata?.jobbloUserId &&
-    account.metadata.jobbloUserId !== String(userId)
-  ) {
+  if (account.metadata?.jobbloUserId && account.metadata.jobbloUserId !== String(userId)) {
     const error = new Error('Connected account owner does not match.');
     error.code = 'STRIPE_CONNECT_ACCOUNT_OWNER_MISMATCH';
     throw error;
@@ -74,7 +71,9 @@ function validateAccountOwner(account, userId) {
 async function persistConnectAccount(user, account, testMode) {
   const accountField = accountFieldForMode(testMode);
   const onboardingStatus = account.details_submitted
-    ? account.payouts_enabled ? 'enabled' : 'pending_verification'
+    ? account.payouts_enabled
+      ? 'enabled'
+      : 'pending_verification'
     : 'started';
   const result = await User.updateOne(
     {
@@ -141,10 +140,14 @@ function sendConnectError(res, error) {
     param: stripeError.param,
   });
 
-  if (error.code === 'STRIPE_CONNECT_PLATFORM_SETUP_REQUIRED' ||
-      stripeError.type === 'StripePermissionError' ||
-      stripeError.code === 'connect_not_enabled' ||
-      /review the responsibilities of managing losses|negative balance liability|settings\/connect\/platform-profile/i.test(message)) {
+  if (
+    error.code === 'STRIPE_CONNECT_PLATFORM_SETUP_REQUIRED' ||
+    stripeError.type === 'StripePermissionError' ||
+    stripeError.code === 'connect_not_enabled' ||
+    /review the responsibilities of managing losses|negative balance liability|settings\/connect\/platform-profile/i.test(
+      message
+    )
+  ) {
     return res.status(503).json({
       code: 'STRIPE_CONNECT_PLATFORM_SETUP_REQUIRED',
       error: 'Stripe Connect-oppsettet må fullføres av plattformadministratoren.',
@@ -159,7 +162,8 @@ function sendConnectError(res, error) {
   if (error.code === 'STRIPE_CONNECT_ACCOUNT_MODE_MISMATCH') {
     return res.status(409).json({
       code: error.code,
-      error: 'Den lagrede Stripe-kontoen samsvarer ikke med denne brukeren eller valgt modus. Kontakt kundestøtte.',
+      error:
+        'Den lagrede Stripe-kontoen samsvarer ikke med denne brukeren eller valgt modus. Kontakt kundestøtte.',
     });
   }
   if (error.code === 'STRIPE_CONNECT_ACCOUNT_CONFLICT') {
@@ -174,7 +178,9 @@ function sendConnectError(res, error) {
       error: 'Stripe Connect-returadressen mangler eller er ugyldig. Kontakt kundestøtte.',
     });
   }
-  if (/Stripe secret key is missing or invalid|Stripe mode configuration is invalid/i.test(message)) {
+  if (
+    /Stripe secret key is missing or invalid|Stripe mode configuration is invalid/i.test(message)
+  ) {
     return res.status(503).json({
       code: 'STRIPE_API_KEY_MISSING_OR_INVALID',
       error: 'Stripe API-nøkkelen mangler eller samsvarer ikke med valgt modus.',
@@ -193,14 +199,19 @@ function sendConnectError(res, error) {
       stripeError.statusCode === 404)
   ) {
     return res.status(409).json({
-      code: stripeError.code === 'account_invalid'
-        ? 'STRIPE_CONNECT_ACCOUNT_MODE_MISMATCH'
-        : 'STRIPE_CONNECT_ACCOUNT_NOT_FOUND',
-      error: 'Stripe-kontoen finnes ikke i valgt modus. Test- og live-kontoer kan ikke brukes om hverandre.',
+      code:
+        stripeError.code === 'account_invalid'
+          ? 'STRIPE_CONNECT_ACCOUNT_MODE_MISMATCH'
+          : 'STRIPE_CONNECT_ACCOUNT_NOT_FOUND',
+      error:
+        'Stripe-kontoen finnes ikke i valgt modus. Test- og live-kontoer kan ikke brukes om hverandre.',
     });
   }
-  if (stripeError.param === 'refresh_url' || stripeError.param === 'return_url' ||
-      error.code === 'STRIPE_CONNECT_RETURN_URL_INVALID') {
+  if (
+    stripeError.param === 'refresh_url' ||
+    stripeError.param === 'return_url' ||
+    error.code === 'STRIPE_CONNECT_RETURN_URL_INVALID'
+  ) {
     return res.status(503).json({
       code: 'STRIPE_CONNECT_RETURN_URL_INVALID',
       error: 'Stripe Connect-returadressen mangler eller er ugyldig. Kontakt kundestøtte.',
@@ -239,7 +250,9 @@ exports.createOrGetAccount = async (req, res) => {
     res.json({
       accountId: account.id,
       status: account.details_submitted
-        ? account.payouts_enabled ? 'enabled' : 'pending_verification'
+        ? account.payouts_enabled
+          ? 'enabled'
+          : 'pending_verification'
         : 'started',
     });
   } catch (err) {
@@ -341,7 +354,9 @@ exports.refreshAccountStatus = async (req, res) => {
         : account.requirements?.pending_verification?.length
           ? 'pending_verification'
           : account.details_submitted
-            ? account.payouts_enabled ? 'enabled' : 'pending_verification'
+            ? account.payouts_enabled
+              ? 'enabled'
+              : 'pending_verification'
             : 'started',
       payoutEnabled: account.payouts_enabled === true,
       chargesEnabled: account.charges_enabled === true,

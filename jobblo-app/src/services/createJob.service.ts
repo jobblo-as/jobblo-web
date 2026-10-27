@@ -83,21 +83,32 @@ export interface CreateServiceResponse {
 
 type NativeFilePart = { uri: string; name: string; type: string };
 
-export function buildJobFormData(values: CreateJobFormValues, images: CreateJobImage[], imagesToDelete: string[] = []) {
+export function buildJobFormData(
+  values: CreateJobFormValues,
+  images: CreateJobImage[],
+  imagesToDelete: string[] = []
+) {
   const formData = new FormData();
   const append = (name: string, value: string) => formData.append(name, value);
   const duration = Number(values.durationValue);
   const hourlyRate = Number(values.hourlyRate);
-  const price = values.paymentType === 'Timepris'
-    ? hourlyRate * (values.durationUnit === 'days' ? duration * 8 : values.durationUnit === 'minutes' ? duration / 60 : duration)
-    : Number(values.price);
+  const price =
+    values.paymentType === 'Timepris'
+      ? hourlyRate *
+        (values.durationUnit === 'days'
+          ? duration * 8
+          : values.durationUnit === 'minutes'
+            ? duration / 60
+            : duration)
+      : Number(values.price);
 
   append('title', values.title.trim());
   append('description', values.description.trim());
   append('price', String(price));
   // Only Timepris has an hourly rate; AI fill could leave one on a Fastpris job, which then
   // showed both "800 kr" and "400 kr/t".
-  if (values.paymentType === 'Timepris' && values.hourlyRate.trim()) append('hourlyRate', values.hourlyRate.trim());
+  if (values.paymentType === 'Timepris' && values.hourlyRate.trim())
+    append('hourlyRate', values.hourlyRate.trim());
   append('paymentType', values.paymentType);
   append('urgent', String(values.urgent));
   append('maxApplicants', values.maxApplicants.trim() || '0');
@@ -124,14 +135,20 @@ export function buildJobFormData(values: CreateJobFormValues, images: CreateJobI
 
   images.forEach((image) => {
     const part: NativeFilePart = { uri: image.uri, name: image.name, type: image.type };
-    (formData as FormData & { append(name: string, value: NativeFilePart): void }).append('images', part);
+    (formData as FormData & { append(name: string, value: NativeFilePart): void }).append(
+      'images',
+      part
+    );
   });
   imagesToDelete.forEach((imageUrl) => formData.append('imagesToDelete', imageUrl));
 
   return formData;
 }
 
-export async function createJob(values: CreateJobFormValues, images: CreateJobImage[]): Promise<CreateServiceResponse> {
+export async function createJob(
+  values: CreateJobFormValues,
+  images: CreateJobImage[]
+): Promise<CreateServiceResponse> {
   const formData = buildJobFormData(values, images);
 
   const response = await apiClient.post<CreateServiceResponse>('/services', formData, {
@@ -144,13 +161,22 @@ export async function createJob(values: CreateJobFormValues, images: CreateJobIm
   return response.data;
 }
 
-export async function updateJob(serviceId: string, values: CreateJobFormValues, images: CreateJobImage[], imagesToDelete: string[]): Promise<CreateServiceResponse> {
+export async function updateJob(
+  serviceId: string,
+  values: CreateJobFormValues,
+  images: CreateJobImage[],
+  imagesToDelete: string[]
+): Promise<CreateServiceResponse> {
   if (!serviceId.trim()) throw new Error('Mangler gyldig annonse-ID');
-  const response = await apiClient.put<CreateServiceResponse>(`/services/${serviceId.trim()}`, buildJobFormData(values, images, imagesToDelete), {
-    headers: { 'Content-Type': 'multipart/form-data' },
-    // Image uploads outlast the 15 s default on mobile data; a timeout here made users
-    // publish again while the first request had already succeeded.
-    timeout: 90_000,
-  });
+  const response = await apiClient.put<CreateServiceResponse>(
+    `/services/${serviceId.trim()}`,
+    buildJobFormData(values, images, imagesToDelete),
+    {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      // Image uploads outlast the 15 s default on mobile data; a timeout here made users
+      // publish again while the first request had already succeeded.
+      timeout: 90_000,
+    }
+  );
   return response.data;
 }

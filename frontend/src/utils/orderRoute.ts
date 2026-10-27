@@ -37,8 +37,7 @@ export function resolveOrderRoute(order: unknown, userId?: string | null): strin
   const orderId = idOf(order);
   if (!orderId) return null;
 
-  const populated =
-    order && typeof order === 'object' ? (order as OrderRouteSubject) : null;
+  const populated = order && typeof order === 'object' ? (order as OrderRouteSubject) : null;
 
   // Without a populated order we can't tell the customer from the provider.
   // Guessing "provider" is what produced the bug; send them to their order list

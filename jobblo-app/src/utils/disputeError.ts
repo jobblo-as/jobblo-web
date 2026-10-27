@@ -12,7 +12,8 @@ export function httpStatus(error: unknown): number | undefined {
 
 export function serverMessage(error: unknown): string | undefined {
   if (typeof error !== 'object' || error === null || !('response' in error)) return undefined;
-  const data = (error.response as { data?: { error?: string; message?: string } } | undefined)?.data;
+  const data = (error.response as { data?: { error?: string; message?: string } } | undefined)
+    ?.data;
   const raw = data?.error ?? data?.message;
   return typeof raw === 'string' && raw.trim() ? raw.trim() : undefined;
 }

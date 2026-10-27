@@ -119,7 +119,10 @@ function resolveSecureStore(): StorageBackend | null {
       getItem: (key) => store.getItemAsync(key),
       // Readable after the first unlock so a refresh or a push handled while the phone is
       // locked still has the token; THIS_DEVICE_ONLY keeps it out of backups and device moves.
-      setItem: (key, value) => store.setItemAsync(key, value, { keychainAccessible: store.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY }),
+      setItem: (key, value) =>
+        store.setItemAsync(key, value, {
+          keychainAccessible: store.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
+        }),
       removeItem: (key) => store.deleteItemAsync(key),
     };
   } catch {
@@ -150,7 +153,9 @@ function secureBackend(): Promise<StorageBackend | null> {
     secureSelection = (async () => {
       const secure = resolveSecureStore();
       if (!secure || !(await worksAtRuntime(secure))) return null;
-      await migrateLegacyKeys(secure).catch((error) => console.error('[jobblo] Token migration to SecureStore failed.', error));
+      await migrateLegacyKeys(secure).catch((error) =>
+        console.error('[jobblo] Token migration to SecureStore failed.', error)
+      );
       return secure;
     })();
   }
@@ -166,7 +171,10 @@ async function backendFor(key: string): Promise<StorageBackend> {
  * Degrading to memory keeps the current session usable instead of throwing into
  * `hydrate()`'s catch block, which would sign the user out.
  */
-async function withFallback<T>(key: string, op: (target: StorageBackend) => Promise<T>): Promise<T> {
+async function withFallback<T>(
+  key: string,
+  op: (target: StorageBackend) => Promise<T>
+): Promise<T> {
   const target = await backendFor(key);
   try {
     return await op(target);
@@ -178,7 +186,8 @@ async function withFallback<T>(key: string, op: (target: StorageBackend) => Prom
 
 export const authStorage = {
   getItem: (key: string) => withFallback(key, (target) => target.getItem(key)),
-  setItem: (key: string, value: string) => withFallback(key, (target) => target.setItem(key, value)),
+  setItem: (key: string, value: string) =>
+    withFallback(key, (target) => target.setItem(key, value)),
   removeItem: (key: string) => withFallback(key, (target) => target.removeItem(key)),
 };
 

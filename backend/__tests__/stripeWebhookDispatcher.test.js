@@ -48,7 +48,9 @@ const constructEvent = jest.spyOn(Stripe.webhooks, 'constructEvent');
 // The test-mode config is what each case sets; live stays unconfigured.
 function mockTestModeConfig(config) {
   getStripeConfigurationForMode.mockImplementation((testMode) =>
-    testMode ? config : { testMode: false, mode: 'live', webhookSecret: null, webhookSecretValid: false }
+    testMode
+      ? config
+      : { testMode: false, mode: 'live', webhookSecret: null, webhookSecretValid: false }
   );
 }
 
@@ -193,7 +195,11 @@ describe('signature verification', () => {
       webhookSecretValid: false,
       fingerprint: null,
     });
-    mockStripeConstructing({ id: 'evt_1', type: 'checkout.session.completed', data: { object: {} } });
+    mockStripeConstructing({
+      id: 'evt_1',
+      type: 'checkout.session.completed',
+      data: { object: {} },
+    });
 
     const res = makeRes();
     await stripeWebhook(makeReq(), res);
@@ -416,7 +422,6 @@ describe('routing by session type', () => {
 
     expect(confirmPaidSession).not.toHaveBeenCalled();
   });
-
 });
 
 describe('legacy subscription webhook events', () => {
@@ -570,7 +575,9 @@ describe('SafePay event routing', () => {
 
     expect(Order.updateOne).toHaveBeenCalledTimes(1);
     const [filter, update] = Order.updateOne.mock.calls[0];
-    expect(filter).toEqual(expect.objectContaining({ checkoutSessionId: 'cs_async', paymentStatus: { $ne: 'paid' } }));
+    expect(filter).toEqual(
+      expect.objectContaining({ checkoutSessionId: 'cs_async', paymentStatus: { $ne: 'paid' } })
+    );
     expect(update).toEqual({ $set: { checkoutSessionStatus: 'failed' } });
     expect(JSON.stringify(update)).not.toMatch(/"paid"/);
   });
@@ -581,7 +588,15 @@ describe('SafePay event routing', () => {
       mockStripeConstructing({
         id: `evt_${type}`,
         type,
-        data: { object: { id: 'in_g', status: 'void', parent: { subscription_details: { subscription: 'sub_g', metadata: { subscriptionV2: 'true' } } } } },
+        data: {
+          object: {
+            id: 'in_g',
+            status: 'void',
+            parent: {
+              subscription_details: { subscription: 'sub_g', metadata: { subscriptionV2: 'true' } },
+            },
+          },
+        },
       });
       const res = makeRes();
       await stripeWebhook(makeReq(), res);

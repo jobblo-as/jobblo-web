@@ -16,7 +16,15 @@ require('../../config/env'); // backend/.env.development (production: .env.produ
 const autocannon = require('autocannon');
 
 const args = Object.fromEntries(
-  process.argv.slice(2).reduce((acc, a, i, all) => (a.startsWith('--') ? [...acc, [a.slice(2), all[i + 1] && !all[i + 1].startsWith('--') ? all[i + 1] : 'true']] : acc), [])
+  process.argv
+    .slice(2)
+    .reduce(
+      (acc, a, i, all) =>
+        a.startsWith('--')
+          ? [...acc, [a.slice(2), all[i + 1] && !all[i + 1].startsWith('--') ? all[i + 1] : 'true']]
+          : acc,
+      []
+    )
 );
 const BASE = (args.url || 'http://127.0.0.1:5101').replace(/\/$/, '');
 const SECONDS = Number(args.seconds || 10);
@@ -33,16 +41,40 @@ const randomIp = () => `10.77.${(Math.random() * 256) | 0}.${(Math.random() * 25
 async function mintSession() {
   const mongoose = require('mongoose');
   const uri = process.env.MONGO_URI || '';
-  if (process.env.NODE_ENV === 'production' || !/127\.0\.0\.1|localhost/.test(uri)) throw new Error('token minting needs a local dev MONGO_URI');
+  if (process.env.NODE_ENV === 'production' || !/127\.0\.0\.1|localhost/.test(uri))
+    throw new Error('token minting needs a local dev MONGO_URI');
   await mongoose.connect(uri);
   const User = require('../../models/User');
   const Session = require('../../models/Session');
   const { generateTokens } = require('../../utils/tokenUtils');
-  const user = await User.findOne({ role: 'user', isDeleted: { $ne: true }, accountStatus: { $nin: ['inactive', 'deactivated'] } }).select('_id').lean();
+  const user = await User.findOne({
+    role: 'user',
+    isDeleted: { $ne: true },
+    accountStatus: { $nin: ['inactive', 'deactivated'] },
+  })
+    .select('_id')
+    .lean();
   if (!user) throw new Error('no ordinary user in the local DB');
-  const s = await Session.create({ userId: user._id, refreshToken: 'loadtest', ip: '127.0.0.1', userAgent: 'loadtest', device: 'loadtest', deviceName: 'loadtest', browser: 'loadtest', os: 'loadtest', location: 'local', expiresAt: new Date(Date.now() + 30 * 60 * 1000) });
+  const s = await Session.create({
+    userId: user._id,
+    refreshToken: 'loadtest',
+    ip: '127.0.0.1',
+    userAgent: 'loadtest',
+    device: 'loadtest',
+    deviceName: 'loadtest',
+    browser: 'loadtest',
+    os: 'loadtest',
+    location: 'local',
+    expiresAt: new Date(Date.now() + 30 * 60 * 1000),
+  });
   const { accessToken } = generateTokens(String(user._id), String(s._id));
-  return { token: accessToken, cleanup: async () => (await Session.deleteOne({ _id: s._id, deviceName: 'loadtest' }), mongoose.disconnect()) };
+  return {
+    token: accessToken,
+    cleanup: async () => (
+      await Session.deleteOne({ _id: s._id, deviceName: 'loadtest' }),
+      mongoose.disconnect()
+    ),
+  };
 }
 
 async function cleanupRateLimitKeys() {
@@ -50,7 +82,11 @@ async function cleanupRateLimitKeys() {
   const Redis = require('ioredis');
   const r = new Redis(process.env.REDIS_URL);
   let n = 0;
-  for await (const keys of r.scanStream({ match: `${process.env.REDIS_PREFIX || 'jobblo'}:rl:*10.77.*`, count: 1000 })) if (keys.length) n += await r.unlink(...keys);
+  for await (const keys of r.scanStream({
+    match: `${process.env.REDIS_PREFIX || 'jobblo'}:rl:*10.77.*`,
+    count: 1000,
+  }))
+    if (keys.length) n += await r.unlink(...keys);
   r.disconnect();
   return n;
 }
@@ -62,15 +98,39 @@ function bench(name, path, headers = {}) {
         url: BASE,
         connections: CONNECTIONS,
         duration: SECONDS,
-        requests: [{ method: 'GET', path, setupRequest: (req) => ({ ...req, headers: { ...req.headers, ...headers, 'x-forwarded-for': randomIp() } }) }],
+        requests: [
+          {
+            method: 'GET',
+            path,
+            setupRequest: (req) => ({
+              ...req,
+              headers: { ...req.headers, ...headers, 'x-forwarded-for': randomIp() },
+            }),
+          },
+        ],
       },
-      (err, r) => (err ? reject(err) : resolve({ name, path, rps: Math.round(r.requests.average), p50: r.latency.p50, p99: r.latency.p99, non2xx: r.non2xx, errors: r.errors + r.timeouts, kbPerReq: r.requests.total ? Math.round(r.throughput.total / r.requests.total / 102.4) / 10 : 0 }))
+      (err, r) =>
+        err
+          ? reject(err)
+          : resolve({
+              name,
+              path,
+              rps: Math.round(r.requests.average),
+              p50: r.latency.p50,
+              p99: r.latency.p99,
+              non2xx: r.non2xx,
+              errors: r.errors + r.timeouts,
+              kbPerReq: r.requests.total
+                ? Math.round(r.throughput.total / r.requests.total / 102.4) / 10
+                : 0,
+            })
     );
   });
 }
 
 (async () => {
-  const get = (p) => fetch(BASE + p, { headers: { 'x-forwarded-for': randomIp() } }).then((r) => r.json());
+  const get = (p) =>
+    fetch(BASE + p, { headers: { 'x-forwarded-for': randomIp() } }).then((r) => r.json());
   const list = await get('/api/services?limit=1');
   const listingId = list.data?.[0]?._id;
   const cats = await get('/api/categories');

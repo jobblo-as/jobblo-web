@@ -20,11 +20,14 @@ export interface MessageConversation {
     isSold?: boolean;
     userId?: string;
   } | null;
-  orderId?: {
-    _id: string;
-    status?: string;
-    paymentStatus?: string;
-  } | string | null;
+  orderId?:
+    | {
+        _id: string;
+        status?: string;
+        paymentStatus?: string;
+      }
+    | string
+    | null;
   messages?: Array<{
     _id?: string;
     text?: string;
@@ -67,12 +70,16 @@ export async function getMyConversations(): Promise<MessageConversation[]> {
 
 export async function getChatDetail(chatId: string, offset = 0, limit = 50): Promise<ChatDetail> {
   if (!chatId.trim()) throw new Error('Mangler chatId');
-  const response = await apiClient.get<ChatDetail>(`/chats/${chatId.trim()}`, { params: { offset, limit } });
+  const response = await apiClient.get<ChatDetail>(`/chats/${chatId.trim()}`, {
+    params: { offset, limit },
+  });
   return response.data;
 }
 
 export async function sendChatMessage(chatId: string, text: string): Promise<ChatMessage> {
-  const response = await apiClient.post<ChatMessage>(`/chats/${chatId.trim()}/message`, { text: text.trim() });
+  const response = await apiClient.post<ChatMessage>(`/chats/${chatId.trim()}/message`, {
+    text: text.trim(),
+  });
   return response.data;
 }
 
@@ -94,8 +101,14 @@ export type ChatReportResponse = {
   };
 };
 
-export async function submitChatReport(chatId: string, payload: ChatReportPayload): Promise<ChatReportResponse> {
-  const response = await apiClient.post<ChatReportResponse>(`/chats/${chatId.trim()}/reports`, payload);
+export async function submitChatReport(
+  chatId: string,
+  payload: ChatReportPayload
+): Promise<ChatReportResponse> {
+  const response = await apiClient.post<ChatReportResponse>(
+    `/chats/${chatId.trim()}/reports`,
+    payload
+  );
   return response.data;
 }
 

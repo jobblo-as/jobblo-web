@@ -31,19 +31,26 @@ async function loadPartners(userId, blockedUsers = []) {
     .sort({ updatedAt: -1 })
     .limit(MAX_PRESENCE_PARTNERS)
     .lean();
-  const partners = new Set(chats.map((c) => String(String(c.clientId) === userId ? c.providerId : c.clientId)));
+  const partners = new Set(
+    chats.map((c) => String(String(c.clientId) === userId ? c.providerId : c.clientId))
+  );
   for (const id of blockedUsers) partners.delete(String(id));
   if (partners.size) {
-    const blockers = await require('../models/User').find({ _id: { $in: [...partners] }, blockedUsers: userId }).select('_id').lean();
+    const blockers = await require('../models/User')
+      .find({ _id: { $in: [...partners] }, blockedUsers: userId })
+      .select('_id')
+      .lean();
     for (const u of blockers) partners.delete(String(u._id));
   }
   return partners;
 }
-const onlinePartners = (userId) => [...(partnersOf.get(userId) || [])].filter((id) => onlineUsers.has(id));
+const onlinePartners = (userId) =>
+  [...(partnersOf.get(userId) || [])].filter((id) => onlineUsers.has(id));
 function broadcastPresence(io, userId) {
   io.to(userId).emit('get-online-users', onlinePartners(userId));
   for (const partnerId of partnersOf.get(userId) || []) {
-    if (partnersOf.has(partnerId)) io.to(partnerId).emit('get-online-users', onlinePartners(partnerId));
+    if (partnersOf.has(partnerId))
+      io.to(partnerId).emit('get-online-users', onlinePartners(partnerId));
   }
 }
 
@@ -80,8 +87,12 @@ module.exports = (io) => {
         return next(new Error('Session expired or revoked'));
       }
       // Same account rule as authenticate(): a deactivated or deleted user gets no socket.
-      const user = await require('../models/User').findById(decoded.id).select('role accountStatus isDeleted blockedUsers').lean();
-      if (!user || require('../middleware/auth').isInactiveAccount(user)) return next(new Error('Account inactive'));
+      const user = await require('../models/User')
+        .findById(decoded.id)
+        .select('role accountStatus isDeleted blockedUsers')
+        .lean();
+      if (!user || require('../middleware/auth').isInactiveAccount(user))
+        return next(new Error('Account inactive'));
       // Same two-factor rule as authenticate(): no socket for an unverified admin session.
       if (!sessionExists.mfaVerifiedAt && require('../services/auth/mfa').requiresMfa(user)) {
         return next(new Error('Two-factor authentication required'));
@@ -120,7 +131,10 @@ module.exports = (io) => {
     // and the handshake checks its fresh token (an expired one is refused).
     let expiry = null;
     if (socket.tokenExp) {
-      expiry = setTimeout(() => socket.conn?.close(), Math.max(0, socket.tokenExp * 1000 - Date.now()));
+      expiry = setTimeout(
+        () => socket.conn?.close(),
+        Math.max(0, socket.tokenExp * 1000 - Date.now())
+      );
       expiry.unref?.();
     }
 
@@ -246,8 +260,13 @@ module.exports = (io) => {
         // The HTTP route's path: membership, type and length checks, block list, send
         // limit and the document-size cap. This handler used to write `text` unchecked.
         const { postChatMessage } = require('../controllers/chatController');
-        const result = await postChatMessage({ chatId, userId: socket.userId, text: payload?.text });
-        if (result.error) return socket.emit('chat-error', { chatId, error: result.error, code: result.code });
+        const result = await postChatMessage({
+          chatId,
+          userId: socket.userId,
+          text: payload?.text,
+        });
+        if (result.error)
+          return socket.emit('chat-error', { chatId, error: result.error, code: result.code });
 
         io.to(`chat-${chatId}`).emit('receive-message', { chatId, message: result.message });
       } catch (err) {

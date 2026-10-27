@@ -39,7 +39,9 @@ const submitChatReport = async (req, res) => {
 
     // Validate scope
     if (!scope || !['chat', 'message'].includes(scope)) {
-      return res.status(400).json({ success: false, message: 'Ugyldig scope. Tillatte: chat, message.' });
+      return res
+        .status(400)
+        .json({ success: false, message: 'Ugyldig scope. Tillatte: chat, message.' });
     }
 
     // Validate reportType
@@ -66,7 +68,9 @@ const submitChatReport = async (req, res) => {
       });
     }
     if (description.trim().length > 3000) {
-      return res.status(400).json({ success: false, message: 'Beskrivelse er for lang (maks 3000 tegn).' });
+      return res
+        .status(400)
+        .json({ success: false, message: 'Beskrivelse er for lang (maks 3000 tegn).' });
     }
 
     // Fetch chat
@@ -90,7 +94,9 @@ const submitChatReport = async (req, res) => {
     // Determine reported user (the other participant)
     const reportedUserId = reporterId === clientId ? chat.providerId : chat.clientId;
     if (!reportedUserId) {
-      return res.status(400).json({ success: false, message: 'Motparten i chatten ble ikke funnet.' });
+      return res
+        .status(400)
+        .json({ success: false, message: 'Motparten i chatten ble ikke funnet.' });
     }
 
     // Validate messageId when scope is message
@@ -103,7 +109,9 @@ const submitChatReport = async (req, res) => {
       }
       const msgExists = chat.messages?.some((m) => String(m._id) === String(messageId));
       if (!msgExists) {
-        return res.status(404).json({ success: false, message: 'Melding ikke funnet i denne chatten.' });
+        return res
+          .status(404)
+          .json({ success: false, message: 'Melding ikke funnet i denne chatten.' });
       }
     }
 

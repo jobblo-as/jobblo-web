@@ -7,7 +7,11 @@
  * router fell back to a full-page load on the other host. Resolving the path the way the
  * browser will and comparing origins covers every such spelling.
  */
-export const safeLocalPath = (path: unknown, fallback: string, origin = window.location.origin): string => {
+export const safeLocalPath = (
+  path: unknown,
+  fallback: string,
+  origin = window.location.origin
+): string => {
   if (typeof path !== 'string' || !path.startsWith('/')) return fallback;
   try {
     const url = new URL(path, origin);

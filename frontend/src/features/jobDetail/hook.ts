@@ -1,10 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { getJobDetail, createChat, createStripeSession, getNearbyJobs } from './jobApi';
 import { fetchJobs } from '../jobsList/jobListingAPI';
-import {
-  createJobRequest,
-  getMyJobRequests,
-} from '../../api/orderAPI';
+import { createJobRequest, getMyJobRequests } from '../../api/orderAPI';
 import type { Jobs } from '../../types/Jobs';
 import { useUserStore } from '../../stores/userStore';
 
@@ -31,7 +28,10 @@ export const useCreateJobRequestMutation = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['jobRequests'] });
       queryClient.invalidateQueries({ queryKey: ['my-subscription'] });
-      useUserStore.getState().fetchProfile().catch(() => {});
+      useUserStore
+        .getState()
+        .fetchProfile()
+        .catch(() => {});
     },
   });
 };

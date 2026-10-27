@@ -84,8 +84,8 @@ const SafePaySteps: React.FC<SafePayStepsProps> = ({
                       ? 'bg-[#122A1C] text-white'
                       : done
                         ? 'bg-[#2E6641] text-white group-hover:bg-[#255335]'
-                          : navigable
-                            ? 'border border-[#2E6641]/50 bg-white text-[#2E6641] group-hover:bg-[#EAF1E9]'
+                        : navigable
+                          ? 'border border-[#2E6641]/50 bg-white text-[#2E6641] group-hover:bg-[#EAF1E9]'
                           : 'border border-[#E6E7E1] bg-white text-[#9B9E96]'
                   }`}
                 >

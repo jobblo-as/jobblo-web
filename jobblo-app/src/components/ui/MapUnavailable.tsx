@@ -8,7 +8,9 @@ export function MapUnavailable() {
   return (
     <View className="flex-1 items-center justify-center gap-2 bg-surface-2 p-4">
       <MapPinOff size={22} color={tc('#9B9E96', 'subtle')} />
-      <Text className="text-center text-[0.8125rem] text-muted">Kartet er ikke tilgjengelig i denne versjonen av appen.</Text>
+      <Text className="text-center text-[0.8125rem] text-muted">
+        Kartet er ikke tilgjengelig i denne versjonen av appen.
+      </Text>
     </View>
   );
 }

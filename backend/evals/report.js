@@ -16,7 +16,8 @@ if (!beforeTag || !afterTag) {
   process.exit(1);
 }
 
-const load = (tag) => JSON.parse(fs.readFileSync(path.join(__dirname, 'results', `${tag}.json`), 'utf8'));
+const load = (tag) =>
+  JSON.parse(fs.readFileSync(path.join(__dirname, 'results', `${tag}.json`), 'utf8'));
 const before = load(beforeTag);
 const after = load(afterTag);
 
@@ -36,18 +37,26 @@ p(`| Prompt | v1 (frozen baseline) | v2 (services/ai/jobListingPrompt.js) |`);
 p(`| Model | \`${before.summary.model}\` | \`${after.summary.model}\` |`);
 p(`| Judge | \`${before.summary.judgeModel}\` | \`${after.summary.judgeModel}\` |`);
 p(`| Cases | ${before.summary.caseCount} | ${after.summary.caseCount} |`);
-p(`| Hard-check pass | ${before.summary.passed}/${before.summary.caseCount} | ${after.summary.passed}/${after.summary.caseCount} |`);
-p(`| **Avg final score** | **${before.summary.avgFinalScore}** | **${after.summary.avgFinalScore}** |`);
+p(
+  `| Hard-check pass | ${before.summary.passed}/${before.summary.caseCount} | ${after.summary.passed}/${after.summary.caseCount} |`
+);
+p(
+  `| **Avg final score** | **${before.summary.avgFinalScore}** | **${after.summary.avgFinalScore}** |`
+);
 p(`| Avg rubric mean | ${before.summary.avgRubricMean} | ${after.summary.avgRubricMean} |`);
 p(`| Avg latency | ${before.summary.avgLatencyMs} ms | ${after.summary.avgLatencyMs} ms |`);
 p(`| Avg prompt tokens | ${before.summary.avgPromptTokens} | ${after.summary.avgPromptTokens} |`);
-p(`| Avg completion tokens | ${before.summary.avgCompletionTokens} | ${after.summary.avgCompletionTokens} |`);
+p(
+  `| Avg completion tokens | ${before.summary.avgCompletionTokens} | ${after.summary.avgCompletionTokens} |`
+);
 p(`| Run cost (all cases) | $${before.summary.totalCostUsd} | $${after.summary.totalCostUsd} |`);
 p();
 
 const delta = after.summary.avgFinalScore - before.summary.avgFinalScore;
 const pct = (delta / before.summary.avgFinalScore) * 100;
-p(`**Improvement: ${delta >= 0 ? '+' : ''}${delta.toFixed(3)} points (${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%)**`);
+p(
+  `**Improvement: ${delta >= 0 ? '+' : ''}${delta.toFixed(3)} points (${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%)**`
+);
 p();
 
 // ── Per-dimension ────────────────────────────────────────────────────────────
@@ -109,7 +118,9 @@ p(`## Regressions (${regressions.length})`);
 p();
 if (!regressions.length) p('_None._');
 for (const r of regressions) {
-  p(`### ${r.id} — ${r.b.finalScore.toFixed(2)} → ${r.a.finalScore.toFixed(2)} (${r.d.toFixed(2)})`);
+  p(
+    `### ${r.id} — ${r.b.finalScore.toFixed(2)} → ${r.a.finalScore.toFixed(2)} (${r.d.toFixed(2)})`
+  );
   p();
   p('**BEFORE**');
   p('```');
@@ -133,7 +144,8 @@ for (const r of worst) {
   p(`Input: \`${JSON.stringify(r.input)}\``);
   p('```');
   p(`${r.output?.title}\n\n${r.output?.description}`);
-  if (r.output?.openQuestions?.length) p(`\nopenQuestions: ${JSON.stringify(r.output.openQuestions)}`);
+  if (r.output?.openQuestions?.length)
+    p(`\nopenQuestions: ${JSON.stringify(r.output.openQuestions)}`);
   p('```');
   p(`Failures: ${r.failures.map((f) => `${f.code}(${f.detail})`).join(', ') || 'none'}`);
   p(`Judge: ${r.judge?.rationale || 'n/a'}`);
@@ -157,7 +169,8 @@ for (const id of ids) {
   p(`**AFTER**`);
   p('```');
   p(`${a.output?.title}\n\n${a.output?.description}`);
-  if (a.output?.openQuestions?.length) p(`\nopenQuestions: ${JSON.stringify(a.output.openQuestions)}`);
+  if (a.output?.openQuestions?.length)
+    p(`\nopenQuestions: ${JSON.stringify(a.output.openQuestions)}`);
   p('```');
   p();
 }

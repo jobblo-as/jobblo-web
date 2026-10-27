@@ -1,12 +1,6 @@
 import { useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import {
-  ArrowLeft,
-  ChevronsUpDown,
-  LogOut,
-  ShieldCheck,
-  Terminal,
-} from 'lucide-react';
+import { ArrowLeft, ChevronsUpDown, LogOut, ShieldCheck, Terminal } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { useUserStore } from '../../stores/userStore';
 import { AdminConfirmDialog } from './AdminConfirmDialog';
@@ -44,7 +38,9 @@ export function AdminSidebar() {
   const [confirmLogout, setConfirmLogout] = useState(false);
   const initials = (user?.name || '?').slice(0, 2).toUpperCase();
   const isActive = (item: AdminNavItem) =>
-    item.end ? pathname === item.to || pathname === `${item.to}/` : pathname === item.to || pathname.startsWith(`${item.to}/`);
+    item.end
+      ? pathname === item.to || pathname === `${item.to}/`
+      : pathname === item.to || pathname.startsWith(`${item.to}/`);
 
   const handleLogout = async () => {
     await logout();

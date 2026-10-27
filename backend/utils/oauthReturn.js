@@ -520,7 +520,9 @@ function mobileReturn(req, res) {
       : '';
   // `code` is the one-time code on `state=success`, the error code otherwise.
   const oneTimeCode =
-    pick(query.state) === 'success' && ONE_TIME_CODE_RE.test(pick(query.code)) ? pick(query.code) : '';
+    pick(query.state) === 'success' && ONE_TIME_CODE_RE.test(pick(query.code))
+      ? pick(query.code)
+      : '';
   const code = !oneTimeCode && ERROR_CODE_RE.test(pick(query.code)) ? pick(query.code) : '';
 
   const link = resolveAppLinkPrefix();
@@ -554,7 +556,9 @@ function mobileReturn(req, res) {
   // the status code separates "we are misconfigured" from "those parameters were unusable"
   // for whoever reads the logs.
   const status = link.error ? 500 : usable ? 200 : 400;
-  res.status(status).send(mobileReturnPage({ nonce, target, failed: failed || !(token || oneTimeCode) }));
+  res
+    .status(status)
+    .send(mobileReturnPage({ nonce, target, failed: failed || !(token || oneTimeCode) }));
 }
 
 module.exports = {

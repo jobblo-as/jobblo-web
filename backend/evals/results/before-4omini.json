@@ -44,13 +44,7 @@
         "title": "Maling av to soverom",
         "description": "Jeg trenger hjelp til å male to soverom. Det er kun veggene som skal males, ikke taket eller listene. Jeg har allerede kjøpt malingen, så det er klart til bruk. Jeg ser etter noen som kan gjøre dette effektivt og med godt resultat.",
         "category": "Maling",
-        "skills": [
-          "Maling",
-          "Innendørs arbeid",
-          "Fargevalg",
-          "Forberedelse",
-          "Rengjøring"
-        ],
+        "skills": ["Maling", "Innendørs arbeid", "Fargevalg", "Forberedelse", "Rengjøring"],
         "paymentType": "Fastpris",
         "hourlyRate": 420,
         "suggestedPrice": 2520,
@@ -253,13 +247,7 @@
         "title": "Flytting av sofa, dobbeltseng og flytesker",
         "description": "Jeg trenger hjelp til å flytte en sofa, en dobbeltseng og ca. 10 flytesker fra 2. etasje ned til varebil. Det er ingen heis i bygget, så det vil være nødvendig med fysisk arbeid for å bære ned møblene og eskene. Jeg ser etter noen som kan hjelpe meg med dette oppdraget.",
         "category": "Flytting",
-        "skills": [
-          "Flyttehjelp",
-          "Bæring av møbler",
-          "Pakking",
-          "Organisering",
-          "Fysisk arbeid"
-        ],
+        "skills": ["Flyttehjelp", "Bæring av møbler", "Pakking", "Organisering", "Fysisk arbeid"],
         "paymentType": "Timepris",
         "hourlyRate": 400,
         "suggestedPrice": 1600,
@@ -358,13 +346,7 @@
         "title": "Montering av IKEA PAX garderobe",
         "description": "Jeg trenger hjelp til å montere to skap fra IKEA PAX garderobe. Jeg har verktøy som kan lånes, inkludert skrutrekker og drill. Oppdraget vil ta omtrent to timer, og jeg ser etter noen som kan gjøre dette effektivt og med godt resultat.",
         "category": "Småjobber",
-        "skills": [
-          "Montering",
-          "IKEA-møbler",
-          "Verktøybruk",
-          "Håndverker",
-          "Effektivitet"
-        ],
+        "skills": ["Montering", "IKEA-møbler", "Verktøybruk", "Håndverker", "Effektivitet"],
         "paymentType": "Timepris",
         "hourlyRate": 390,
         "suggestedPrice": 780,
@@ -462,13 +444,7 @@
         "title": "Klippe plen og trimme hekk i hage",
         "description": "Jeg trenger hjelp til å klippe plenen og trimme hekken i hagen min. Hagen er ca 300 kvm, og hekken går rundt hele tomta. Jeg ønsker at arbeidet skal gjøres grundig og effektivt, slik at hagen ser fin ut. Det er viktig for meg at jobben blir gjort på en profesjonell måte.",
         "category": "Hagearbeid",
-        "skills": [
-          "Hagearbeid",
-          "Plenklipping",
-          "Hecktriming",
-          "Utearbeid",
-          "Kvalitetsarbeid"
-        ],
+        "skills": ["Hagearbeid", "Plenklipping", "Hecktriming", "Utearbeid", "Kvalitetsarbeid"],
         "paymentType": "Fastpris",
         "hourlyRate": 360,
         "suggestedPrice": 1440,
@@ -566,13 +542,7 @@
         "title": "Reparasjon av vannlås under kjøkkenvask",
         "description": "Jeg trenger hjelp til å fikse vannlåsen under kjøkkenvasken, da det drypper vann. Jeg har allerede satt en bøtte under for å samle opp vannet. Det haster å få dette fikset, så jeg ser etter noen som kan komme raskt.",
         "category": "Rørlegger",
-        "skills": [
-          "Rørleggerarbeid",
-          "Reparasjon",
-          "Vannlekkasje",
-          "Kjøkkenvask",
-          "Service"
-        ],
+        "skills": ["Rørleggerarbeid", "Reparasjon", "Vannlekkasje", "Kjøkkenvask", "Service"],
         "paymentType": "Timepris",
         "hourlyRate": 620,
         "suggestedPrice": 1860,
@@ -774,12 +744,7 @@
         "title": "Snømåking av innkjørsel og trapp",
         "description": "Jeg trenger hjelp til å måke innkjørselen og trappen min. Innkjørselen er ca 40 kvm, og jeg ønsker hjelp gjennom hele vinteren. Det er viktig for meg å holde området ryddig og trygt, så jeg ser etter noen som kan være tilgjengelig regelmessig for denne oppgaven.",
         "category": "Snørydding",
-        "skills": [
-          "Snømåking",
-          "Utendørs arbeid",
-          "Fysisk arbeid",
-          "Kundebehandling"
-        ],
+        "skills": ["Snømåking", "Utendørs arbeid", "Fysisk arbeid", "Kundebehandling"],
         "paymentType": "Timepris",
         "hourlyRate": 410,
         "suggestedPrice": 820,
@@ -877,13 +842,7 @@
         "title": "Vask og polering av bil",
         "description": "Jeg trenger hjelp til innvendig og utvendig vask av bilen min, samt polering. Bilen står i garasjen, og jeg ønsker at dette skal gjøres grundig. Det er viktig for meg at bilen blir ren og ser bra ut. Jeg ser etter noen som kan ta seg av dette på en profesjonell måte.",
         "category": "Bilvask",
-        "skills": [
-          "Bilvask",
-          "Polering",
-          "Rengjøring",
-          "Service",
-          "Detaljarbeid"
-        ],
+        "skills": ["Bilvask", "Polering", "Rengjøring", "Service", "Detaljarbeid"],
         "paymentType": "Fastpris",
         "hourlyRate": 360,
         "suggestedPrice": 1080,
@@ -1085,13 +1044,7 @@
         "title": "Matematikkhjelp av R1 for ungdom",
         "description": "Jeg trenger hjelp til matematikk R1 for datteren min, to ganger i uka. Det kan være digitalt, så jeg ser etter noen som kan tilby undervisning på nett. Det er viktig at du har erfaring med faget og kan forklare emnene på en forståelig måte. Jeg ønsker en engasjerende og tålmodig person som kan tilpasse undervisningen etter datterens behov.",
         "category": "Småjobber",
-        "skills": [
-          "Matematikk",
-          "Undervisning",
-          "Digital læring",
-          "R1",
-          "Engasjement"
-        ],
+        "skills": ["Matematikk", "Undervisning", "Digital læring", "R1", "Engasjement"],
         "paymentType": "Timepris",
         "hourlyRate": 390,
         "suggestedPrice": 780,
@@ -1188,13 +1141,7 @@
         "title": "Maling av rom",
         "description": "Jeg trenger hjelp til maling. Det er et rom som skal males, og jeg leter etter noen som kan gjøre dette. Arbeidet bør ta omtrent to timer. Jeg ønsker en person med erfaring innen maling som kan levere et godt resultat.",
         "category": "Maling",
-        "skills": [
-          "Maling",
-          "Rengjøring",
-          "Fargevalg",
-          "Forberedelse",
-          "Detaljarbeid"
-        ],
+        "skills": ["Maling", "Rengjøring", "Fargevalg", "Forberedelse", "Detaljarbeid"],
         "paymentType": "Fastpris",
         "hourlyRate": 390,
         "suggestedPrice": 780,
@@ -1291,13 +1238,7 @@
         "title": "Hjelp til småjobber hjemme",
         "description": "Jeg trenger hjelp til å få gjort noen småjobber hjemme. Det kan være alt fra å rydde opp til å fikse ting som trenger litt ekstra oppmerksomhet. Jeg ser etter noen som kan være effektiv og pålitelig, og som kan bidra til å gjøre hjemmet mitt mer funksjonelt. Hvis du har erfaring med småjobber og kan jobbe selvstendig, vil jeg gjerne høre fra deg.",
         "category": "Småjobber",
-        "skills": [
-          "Rydding",
-          "Fiksing",
-          "Organisering",
-          "Håndverk",
-          "Generell hjelp"
-        ],
+        "skills": ["Rydding", "Fiksing", "Organisering", "Håndverk", "Generell hjelp"],
         "paymentType": "Fastpris",
         "hourlyRate": 390,
         "suggestedPrice": 780,
@@ -1395,13 +1336,7 @@
         "title": "Legging av membran og fliser på bad",
         "description": "Jeg trenger hjelp til å pusse opp et bad på 5 kvm i en enebolig fra 1978. Membran og fliser er allerede revet ut. Jeg leter etter noen som kan legge ny membran, flislegge gulv og vegger, samt montere dusjvegg. Sluk er byttet i fjor, og vi har ikke kjøpt fliser ennå.",
         "category": "Oppussing",
-        "skills": [
-          "Flislegging",
-          "Membranlegging",
-          "Montering",
-          "Renovering",
-          "Bad"
-        ],
+        "skills": ["Flislegging", "Membranlegging", "Montering", "Renovering", "Bad"],
         "paymentType": "Anbud",
         "hourlyRate": 440,
         "suggestedPrice": 3520,
@@ -1605,13 +1540,7 @@
         "title": "Oppussing av bad",
         "description": "Jeg trenger hjelp til oppussing av badet. Det er behov for å oppdatere fliser, innredning og sanitærutstyr. Jeg ønsker en grundig jobb som gir badet et nytt og friskt utseende. Det er viktig at arbeidet utføres av en erfaren håndverker som kan levere godt håndverk. Jeg ser frem til å motta tilbud.",
         "category": "Oppussing",
-        "skills": [
-          "Flislegging",
-          "Rørleggerarbeid",
-          "Maling",
-          "Montering",
-          "Renovering"
-        ],
+        "skills": ["Flislegging", "Rørleggerarbeid", "Maling", "Montering", "Renovering"],
         "paymentType": "Anbud",
         "hourlyRate": 440,
         "suggestedPrice": 3520,
@@ -2255,13 +2184,7 @@
         "title": "Maling av rom",
         "description": "Jeg trenger hjelp til å male et rom. Det haster litt, så jeg ser etter noen som kan komme og gjøre jobben snart. Jeg ønsker et profesjonelt resultat, så erfaring med maling er viktig. Hvis du har utstyr, er det et pluss. Ta gjerne kontakt hvis du er interessert.",
         "category": "Maling",
-        "skills": [
-          "Maling",
-          "Erfaring",
-          "Kvalitet",
-          "Utstyr",
-          "Rask levering"
-        ],
+        "skills": ["Maling", "Erfaring", "Kvalitet", "Utstyr", "Rask levering"],
         "paymentType": "Fastpris",
         "hourlyRate": 390,
         "suggestedPrice": 780,
@@ -2372,13 +2295,7 @@
         "title": "Flytting av møbler",
         "description": "Jeg trenger hjelp til å flytte møbler neste helg. Det er snakk om å bære og transportere møbler fra ett sted til et annet. Jeg ser etter noen som kan bidra med fysisk arbeid og erfaring med flytting. Det er viktig at du er pålitelig og kan jobbe effektivt. Ta kontakt hvis du er tilgjengelig og kan hjelpe meg med dette oppdraget.",
         "category": "Flytting",
-        "skills": [
-          "Fysisk arbeid",
-          "Transport",
-          "Bæring",
-          "Organisering",
-          "Tidshåndtering"
-        ],
+        "skills": ["Fysisk arbeid", "Transport", "Bæring", "Organisering", "Tidshåndtering"],
         "paymentType": "Timepris",
         "hourlyRate": 400,
         "suggestedPrice": 1600,
@@ -2589,13 +2506,7 @@
         "title": "Hagearbeid i hagen",
         "description": "Jeg trenger hjelp til hagen. Jeg leter etter noen som kan hjelpe med ulike oppgaver i hagen, som for eksempel planting, luking eller beskjæring. Det er viktig at du har erfaring med hagearbeid og kan jobbe selvstendig. Jeg ønsker at arbeidet skal utføres i løpet av noen timer, så jeg ser etter en pålitelig person som kan bidra til å gjøre hagen min finere.",
         "category": "Hagearbeid",
-        "skills": [
-          "Hagearbeid",
-          "Planting",
-          "Luking",
-          "Beskjæring",
-          "Utearbeid"
-        ],
+        "skills": ["Hagearbeid", "Planting", "Luking", "Beskjæring", "Utearbeid"],
         "paymentType": "Timepris",
         "hourlyRate": 360,
         "suggestedPrice": 1440,
@@ -2703,13 +2614,7 @@
         "title": "Flyttevask av 3-roms leilighet",
         "description": "Jeg trenger hjelp til flyttevask av en 3-roms leilighet. Det er viktig at leiligheten blir grundig rengjort før innflytting. Jeg ser etter noen som kan utføre oppgaven effektivt og grundig. Vennligst ta kontakt hvis du har erfaring med flyttevask og kan gjøre jobben i Stavanger.",
         "category": "Rengjøring",
-        "skills": [
-          "Rengjøring",
-          "Flyttevask",
-          "Effektivitet",
-          "Detaljorientert",
-          "Erfaring"
-        ],
+        "skills": ["Rengjøring", "Flyttevask", "Effektivitet", "Detaljorientert", "Erfaring"],
         "paymentType": "Fastpris",
         "hourlyRate": 360,
         "suggestedPrice": 1440,
@@ -2807,13 +2712,7 @@
         "title": "Luke ugress i bedene",
         "description": "Jeg trenger hjelp til å luke ugress i bedene. Det er mye ugress som må fjernes for å få hagen til å se penere ut. Jeg ser etter noen som kan gjøre dette effektivt og grundig. Hvis du har erfaring med hagearbeid og liker å jobbe utendørs, vil jeg gjerne høre fra deg.",
         "category": "Hagearbeid",
-        "skills": [
-          "Hagearbeid",
-          "Ugressluking",
-          "Plantering",
-          "Jordarbeid",
-          "Rengjøring av hage"
-        ],
+        "skills": ["Hagearbeid", "Ugressluking", "Plantering", "Jordarbeid", "Rengjøring av hage"],
         "paymentType": "Timepris",
         "hourlyRate": 360,
         "suggestedPrice": 1440,
@@ -2911,13 +2810,7 @@
         "title": "Rengjøring av takrenner",
         "description": "Jeg trenger hjelp til å rense takrennene mine. Det er viktig at dette gjøres grundig for å unngå vannskader. Jeg ser etter noen med erfaring i takrennerengjøring. Jobben bør kunne utføres på en dag med godt vær. Ta kontakt hvis du har nødvendig utstyr og kan gjøre jobben.",
         "category": "Rengjøring",
-        "skills": [
-          "Rengjøring",
-          "Takrenner",
-          "Utearbeid",
-          "Håndverker",
-          "Erfaring"
-        ],
+        "skills": ["Rengjøring", "Takrenner", "Utearbeid", "Håndverker", "Erfaring"],
         "paymentType": "Fastpris",
         "hourlyRate": 390,
         "suggestedPrice": 780,

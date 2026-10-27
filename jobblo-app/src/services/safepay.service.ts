@@ -1,5 +1,9 @@
 import apiClient from '../api/client';
-import type { SafePayCheckoutResponse, SafePaySessionResponse, SafePaySessionStatusResponse } from '../types/SafePay';
+import type {
+  SafePayCheckoutResponse,
+  SafePaySessionResponse,
+  SafePaySessionStatusResponse,
+} from '../types/SafePay';
 
 function requireId(value: string, name: string) {
   if (typeof value !== 'string' || !value.trim()) throw new Error(`Mangler gyldig ${name}`);
@@ -7,7 +11,9 @@ function requireId(value: string, name: string) {
 }
 
 export async function getSafePayCheckout(orderId: string): Promise<SafePayCheckoutResponse> {
-  const response = await apiClient.get(`/safepay-checkout/details/${requireId(orderId, 'orderId')}`);
+  const response = await apiClient.get(
+    `/safepay-checkout/details/${requireId(orderId, 'orderId')}`
+  );
   return response.data;
 }
 
@@ -23,8 +29,12 @@ export async function createSafePaySession(orderId: string): Promise<SafePaySess
   return response.data;
 }
 
-export async function getSafePaySessionStatus(sessionId: string): Promise<SafePaySessionStatusResponse> {
-  const response = await apiClient.get(`/safepay-checkout/status/${requireId(sessionId, 'sessionId')}`);
+export async function getSafePaySessionStatus(
+  sessionId: string
+): Promise<SafePaySessionStatusResponse> {
+  const response = await apiClient.get(
+    `/safepay-checkout/status/${requireId(sessionId, 'sessionId')}`
+  );
   return response.data;
 }
 

@@ -30,7 +30,13 @@ function makeLimiter(name, options) {
     const store = new RedisStore({ sendCommand, prefix: `${redis.PREFIX}:rl:${name}:` });
     limiter = rateLimit({ ...options, store, passOnStoreError: options.passOnStoreError ?? true });
   }
-  LIMITERS.set(name, { name, windowMs: options.windowMs, max: typeof options.max === 'number' ? options.max : null, failedOnly: Boolean(options.skipSuccessfulRequests), limiter });
+  LIMITERS.set(name, {
+    name,
+    windowMs: options.windowMs,
+    max: typeof options.max === 'number' ? options.max : null,
+    failedOnly: Boolean(options.skipSuccessfulRequests),
+    limiter,
+  });
   return limiter;
 }
 

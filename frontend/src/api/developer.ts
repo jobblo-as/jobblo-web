@@ -20,7 +20,9 @@ const get = async <T>(url: string, query?: Query) => {
   Object.entries(query || {}).forEach(([k, v]) => {
     if (v !== undefined && v !== '') params.set(k, String(v));
   });
-  const res = await mainLink.get<ApiResponse<T>>(`/api/developer${url}${params.size ? `?${params}` : ''}`);
+  const res = await mainLink.get<ApiResponse<T>>(
+    `/api/developer${url}${params.size ? `?${params}` : ''}`
+  );
   return { ...res.data.data, pagination: res.data.pagination as Pagination | null };
 };
 
@@ -74,10 +76,23 @@ export interface Overview {
   healthScore: number;
   deductions: { reason: string; points: number }[];
   users: { total: number; new: number; active: number; activeSessions: number };
-  jobs: { listings: number; orders: number; active: number; completed: number; cancelled: number; disputed: number };
+  jobs: {
+    listings: number;
+    orders: number;
+    active: number;
+    completed: number;
+    cancelled: number;
+    disputed: number;
+  };
   api: ApiTotals & { live: LiveSnapshot };
   errors: { inRange: number; openCritical: number };
-  server: { cpuPercent: number | null; ramPercent: number; disk: Disk | null; uptime: number; processUptime: number };
+  server: {
+    cpuPercent: number | null;
+    ramPercent: number;
+    disk: Disk | null;
+    uptime: number;
+    processUptime: number;
+  };
   integrations: {
     mongo: { ok: boolean; ms: number | null };
     stripeWebhook: { status: string; mode: string | null; lastDeliveryAt: string | null };
@@ -85,7 +100,13 @@ export interface Overview {
     safePay: { total: number };
   };
   scheduler: { enabled: boolean; jobs: number; failing: number };
-  recentActivity: { _id: string; action: string; description: string; createdAt: string; adminId?: Actor }[];
+  recentActivity: {
+    _id: string;
+    action: string;
+    description: string;
+    createdAt: string;
+    adminId?: Actor;
+  }[];
   trafficSeries: { t: string; requests: number; errors: number }[];
 }
 
@@ -114,7 +135,13 @@ export interface ApiClient {
 export interface IpActivity {
   ip: string;
   range: RangeInfo;
-  endpoints: { method: string; route: string; requests: number; failed: number; lastSeen: string }[];
+  endpoints: {
+    method: string;
+    route: string;
+    requests: number;
+    failed: number;
+    lastSeen: string;
+  }[];
   series: { t: string; requests: number; failed: number }[];
   security: Record<string, number>;
 }
@@ -178,17 +205,44 @@ export interface ErrorDetail {
     createdAt: string;
   };
   location: { fn: string; file: string; line: number; column: number } | null;
-  occurrences: { _id: string; referenceId: string; requestId: string | null; userId: string | null; statusCode: number | null; createdAt: string; environment: string }[];
+  occurrences: {
+    _id: string;
+    referenceId: string;
+    requestId: string | null;
+    userId: string | null;
+    statusCode: number | null;
+    createdAt: string;
+    environment: string;
+  }[];
   timeline: { t: string; count: number }[];
   notes: { by?: { name: string }; text: string; at: string }[];
 }
 
 export interface ServerInfo {
-  host: { hostname: string; environment: string; platform: string; release: string; type: string; arch: string; cpus: number; cpuModel: string | null; uptime: number };
+  host: {
+    hostname: string;
+    environment: string;
+    platform: string;
+    release: string;
+    type: string;
+    arch: string;
+    cpus: number;
+    cpuModel: string | null;
+    uptime: number;
+  };
   cpu: { percent: number | null; loadavg: number[] };
   memory: { total: number; free: number; used: number };
   disk: Disk | null;
-  process: { pid: number; nodeVersion: string; uptime: number; rss: number; heapUsed: number; heapTotal: number; external: number; pm2: { id: string; name: string | null; restarts: number } | null };
+  process: {
+    pid: number;
+    nodeVersion: string;
+    uptime: number;
+    rss: number;
+    heapUsed: number;
+    heapTotal: number;
+    external: number;
+    pm2: { id: string; name: string | null; restarts: number } | null;
+  };
   network: { name: string; family: string }[];
   sockets: number | null;
   live: LiveSnapshot;
@@ -206,7 +260,14 @@ export interface MongoInfo {
   connected: boolean;
   ping: { ok: boolean; ms: number | null };
   database?: { name: string; version: string | null };
-  stats?: { collections: number; objects: number; dataSize: number; storageSize: number; indexSize: number; indexes: number };
+  stats?: {
+    collections: number;
+    objects: number;
+    dataSize: number;
+    storageSize: number;
+    indexSize: number;
+    indexes: number;
+  };
   connections?: { current: number; available: number; totalCreated: number } | null;
   opcounters?: Record<string, number> | null;
   replicaSet?: { set: string; members: { name: string; state: string; health: number }[] } | null;
@@ -245,8 +306,24 @@ export interface WebhookEvent {
 }
 export interface WebhookInfo {
   range: RangeInfo;
-  readiness: { status: string; mode: string | null; ready?: boolean; reason?: string; lastVerifiedAt?: string | null; lastDeliveryAt?: string | null; lastFailureAt?: string | null; lastFailureCode?: string | null };
-  summary: { total: number; processed: number; processing: number; failed: number; retried: number; avgMs: number | null };
+  readiness: {
+    status: string;
+    mode: string | null;
+    ready?: boolean;
+    reason?: string;
+    lastVerifiedAt?: string | null;
+    lastDeliveryAt?: string | null;
+    lastFailureAt?: string | null;
+    lastFailureCode?: string | null;
+  };
+  summary: {
+    total: number;
+    processed: number;
+    processing: number;
+    failed: number;
+    retried: number;
+    avgMs: number | null;
+  };
   types: { type: string; count: number }[];
   series: { t: string; received: number; failed: number }[];
   events: WebhookEvent[];
@@ -312,7 +389,14 @@ export interface PaymentRow {
   stripeRefundId?: string;
   stripeLivemode: boolean | null;
   createdAt: string;
-  orderId?: { _id: string; status: string; paymentStatus: string; agreedPrice?: number; customerId?: NamedRef; providerId?: NamedRef } | null;
+  orderId?: {
+    _id: string;
+    status: string;
+    paymentStatus: string;
+    agreedPrice?: number;
+    customerId?: NamedRef;
+    providerId?: NamedRef;
+  } | null;
 }
 export interface FinancialOp {
   _id: string;
@@ -330,7 +414,14 @@ export interface FinancialOp {
   updatedAt: string;
 }
 export interface PaymentsInfo {
-  summary: { byStatus: Record<string, number>; byRefund: Record<string, number>; mode: { live: number; test: number; unknown: number }; gross: number; refunded: number; count: number };
+  summary: {
+    byStatus: Record<string, number>;
+    byRefund: Record<string, number>;
+    mode: { live: number; test: number; unknown: number };
+    gross: number;
+    refunded: number;
+    count: number;
+  };
   incidents: { kind: string; status: string; count: number }[];
   failedOperations: FinancialOp[];
   payments: PaymentRow[];
@@ -341,7 +432,13 @@ export interface SafePayRecord {
   serviceTitle: string;
   customerId?: NamedRef;
   providerId?: NamedRef;
-  amounts: { agreedPrice: number; fee: number; tax: number; totalCustomer: number; netProvider: number };
+  amounts: {
+    agreedPrice: number;
+    fee: number;
+    tax: number;
+    totalCustomer: number;
+    netProvider: number;
+  };
   status: string;
   refundStatus: string;
   providerConnectStatus?: string;
@@ -360,7 +457,13 @@ export interface SafePayInfo {
     byStatus: Record<string, number>;
     byRefund: Record<string, number>;
     timeoutStates: Record<string, number>;
-    amounts: { customer: number; provider: number; fee: number; tax: number; refunded: number } | null;
+    amounts: {
+      customer: number;
+      provider: number;
+      fee: number;
+      tax: number;
+      refunded: number;
+    } | null;
   };
   stuck: StuckOrder[];
   rules: { autoReleaseDays: number; abandonedOrderHours: number };
@@ -393,17 +496,61 @@ export interface ImpactNumbers {
 export interface ImpactDetail extends ImpactNumbers {
   kind: 'error' | 'incident' | 'release' | 'window';
   id: string | null;
-  people: { id: string; name: string; role: string; email: string; how: 'direct' | 'via job'; hits: number }[];
-  jobRows: { id: string; status: string; paymentStatus?: string; valueNok: number; createdAt: string }[];
-  paymentRows: { id: string; orderId: string; status: string; refundStatus?: string; amountNok: number; createdAt: string }[];
+  people: {
+    id: string;
+    name: string;
+    role: string;
+    email: string;
+    how: 'direct' | 'via job';
+    hits: number;
+  }[];
+  jobRows: {
+    id: string;
+    status: string;
+    paymentStatus?: string;
+    valueNok: number;
+    createdAt: string;
+  }[];
+  paymentRows: {
+    id: string;
+    orderId: string;
+    status: string;
+    refundStatus?: string;
+    amountNok: number;
+    createdAt: string;
+  }[];
 }
 export interface ImpactOverview {
   days: number;
-  errors: { id: string; errorCode: string; route: string | null; message: string; severity: string; occurrences: number; last: string; users: number; jobs: number }[];
-  incidents: { id: string; title: string; severity: string; status: string; startedAt: string; impact: ImpactNumbers | null }[];
-  releases: { id: string; version: string; commit?: string; deployedAt: string; impact: ImpactNumbers | null }[];
+  errors: {
+    id: string;
+    errorCode: string;
+    route: string | null;
+    message: string;
+    severity: string;
+    occurrences: number;
+    last: string;
+    users: number;
+    jobs: number;
+  }[];
+  incidents: {
+    id: string;
+    title: string;
+    severity: string;
+    status: string;
+    startedAt: string;
+    impact: ImpactNumbers | null;
+  }[];
+  releases: {
+    id: string;
+    version: string;
+    commit?: string;
+    deployedAt: string;
+    impact: ImpactNumbers | null;
+  }[];
 }
-export type MarketVerdict = 'healthy' | 'thin' | 'undersupplied' | 'oversupplied' | 'low_conversion';
+export type MarketVerdict =
+  'healthy' | 'thin' | 'undersupplied' | 'oversupplied' | 'low_conversion';
 export interface MarketSegment {
   key: string;
   posted: number;
@@ -427,7 +574,14 @@ export interface MarketplaceInfo {
   emptyCategories: string[];
   concentration: { providersHired: number; topShare: number | null; top3Share: number | null };
   series: { t: string; posted: number; applications: number; hires: number }[];
-  unanswered: { id: string; title: string; category: string | null; region: string; price: number; createdAt: string }[];
+  unanswered: {
+    id: string;
+    title: string;
+    category: string | null;
+    region: string;
+    price: number;
+    createdAt: string;
+  }[];
 }
 export interface EventCheck {
   key: string;
@@ -450,12 +604,44 @@ export interface EventConsistencyInfo {
 }
 export interface MigrationsInfo {
   at: string;
-  migrations: { script: string; title: string; kind: 'data' | 'index'; reversible: boolean; destructive?: boolean; run: string; pending: boolean | null; detail: string }[];
+  migrations: {
+    script: string;
+    title: string;
+    kind: 'data' | 'index';
+    reversible: boolean;
+    destructive?: boolean;
+    run: string;
+    pending: boolean | null;
+    detail: string;
+  }[];
   unregistered: string[];
-  indexChanges: { collection: string; key: string; problem: 'missing' | 'not_unique'; unique: boolean; severity: string }[];
+  indexChanges: {
+    collection: string;
+    key: string;
+    problem: 'missing' | 'not_unique';
+    unique: boolean;
+    severity: string;
+  }[];
   undeclaredIndexes: { collection: string; key: string; name?: string; unique: boolean }[];
-  schema: { model: string; collection: string; path: string; rule: 'enum' | 'required'; count: number; sampleId: string; value: string | null; allowed?: string[] }[];
-  clients: { version: string; platform: string; firstSeen: string; lastSeen: string; sessions7d: number; breakingSince: number; routes: string[] }[];
+  schema: {
+    model: string;
+    collection: string;
+    path: string;
+    rule: 'enum' | 'required';
+    count: number;
+    sampleId: string;
+    value: string | null;
+    allowed?: string[];
+  }[];
+  clients: {
+    version: string;
+    platform: string;
+    firstSeen: string;
+    lastSeen: string;
+    sessions7d: number;
+    breakingSince: number;
+    routes: string[];
+  }[];
   rollback: { key: string; label: string; state: 'pass' | 'warn' | 'fail'; detail: string }[];
 }
 export interface ExternalService {
@@ -476,7 +662,14 @@ export interface ExternalService {
   lastError: string | null;
   lastErrorAt: string | null;
   series: { t: string; calls: number; errors: number; rateLimited: number; p95: number | null }[];
-  ops: { op: string; calls: number; failed: number; rateLimited: number; avgMs: number | null; p95: number | null }[];
+  ops: {
+    op: string;
+    calls: number;
+    failed: number;
+    rateLimited: number;
+    avgMs: number | null;
+    p95: number | null;
+  }[];
   quota: { label: string; used: number; limit: number; unit: string; pct: number | null } | null;
 }
 export interface ExternalServicesInfo {
@@ -512,27 +705,95 @@ export interface RunbookRunRow {
   startedBy: { _id: string; name: string } | null;
   state: 'pass' | 'warn' | 'fail';
   checks: { key: string; title: string; state: CheckState; detail: string; ms: number }[];
-  steps: { index: number; doneBy: { _id: string; name: string } | null; doneAt: string; note?: string }[];
+  steps: {
+    index: number;
+    doneBy: { _id: string; name: string } | null;
+    doneAt: string;
+    note?: string;
+  }[];
   closedAt: string | null;
   outcome: string | null;
   createdAt: string;
 }
 export interface RunbooksInfo {
   runbooks: Runbook[];
-  incidents: { _id: string; title: string; fingerprint: string | null; severity: string; status: string; startedAt: string; runbooks: string[] }[];
+  incidents: {
+    _id: string;
+    title: string;
+    fingerprint: string | null;
+    severity: string;
+    status: string;
+    startedAt: string;
+    runbooks: string[];
+  }[];
 }
 export interface PrivacyInfo {
   at: string;
-  retention: { collection: string; personal: string; purpose: string; retentionDays: number | null; legal?: boolean; count: number; ttlDays: number | null; overdue: number; oldest: string | null; state: 'pass' | 'warn' | 'fail'; note: string }[];
-  deletions: { id: string; deletedAt: string | null; role: string; method: 'anonymised' | 'soft-deleted'; fields: string[]; linked: string[]; clean: boolean }[];
-  requests: { id: string; subject: string; status: string; createdAt: string; userId: string | null; kind: 'deletion' | 'access/export'; dueAt: string; daysLeft: number | null; overdue: boolean }[];
-  consent: { currentVersion: string; active: number; onCurrent: number; versions: { version: string | null; users: number; current: boolean; lastActive: string | null }[]; newsletterSubscribers: number; cookieConsent: string };
+  retention: {
+    collection: string;
+    personal: string;
+    purpose: string;
+    retentionDays: number | null;
+    legal?: boolean;
+    count: number;
+    ttlDays: number | null;
+    overdue: number;
+    oldest: string | null;
+    state: 'pass' | 'warn' | 'fail';
+    note: string;
+  }[];
+  deletions: {
+    id: string;
+    deletedAt: string | null;
+    role: string;
+    method: 'anonymised' | 'soft-deleted';
+    fields: string[];
+    linked: string[];
+    clean: boolean;
+  }[];
+  requests: {
+    id: string;
+    subject: string;
+    status: string;
+    createdAt: string;
+    userId: string | null;
+    kind: 'deletion' | 'access/export';
+    dueAt: string;
+    daysLeft: number | null;
+    overdue: boolean;
+  }[];
+  consent: {
+    currentVersion: string;
+    active: number;
+    onCurrent: number;
+    versions: {
+      version: string | null;
+      users: number;
+      current: boolean;
+      lastActive: string | null;
+    }[];
+    newsletterSubscribers: number;
+    cookieConsent: string;
+  };
 }
 export interface SearchHealthInfo {
   days: number;
   bucketMs: number;
   listings: { public: number; findable: number };
-  issues: { key: string; title: string; why: string; count: number; samples: { issue: string; id: string; title: string; city?: string | null; coordinates?: number[] | null; detail?: string }[] }[];
+  issues: {
+    key: string;
+    title: string;
+    why: string;
+    count: number;
+    samples: {
+      issue: string;
+      id: string;
+      title: string;
+      city?: string | null;
+      coordinates?: number[] | null;
+      detail?: string;
+    }[];
+  }[];
   geoIndex: { name: string; key: string } | null;
   search: {
     total: number;
@@ -548,7 +809,13 @@ export interface SearchHealthInfo {
     radius: { k: string; n: number }[];
     series: { t: string; searches: number; zero: number }[];
   };
-  endpoints: { route: string; requests: number; c5xx: number; slowShare: number | null; p95: number | null }[];
+  endpoints: {
+    route: string;
+    requests: number;
+    c5xx: number;
+    slowShare: number | null;
+    p95: number | null;
+  }[];
 }
 export type SessionProblemKind = 'js_error' | 'render' | 'not_found' | 'chunk' | 'api' | 'console';
 export interface SessionsInfo {
@@ -557,8 +824,28 @@ export interface SessionsInfo {
   affectedSessions: number;
   problemFree: number | null;
   kinds: Partial<Record<SessionProblemKind, { events: number; sessions: number }>>;
-  list: { sessionId: string; first: string; last: string; problems: number; kinds: SessionProblemKind[]; pages: string[]; device: string; browser: string | null; release: string | null; lastMessage: string | null }[];
-  groups: { fingerprint: string; kind: SessionProblemKind; message: string; n: number; sessions: number; pages: string[]; last: string; sampleSession: string }[];
+  list: {
+    sessionId: string;
+    first: string;
+    last: string;
+    problems: number;
+    kinds: SessionProblemKind[];
+    pages: string[];
+    device: string;
+    browser: string | null;
+    release: string | null;
+    lastMessage: string | null;
+  }[];
+  groups: {
+    fingerprint: string;
+    kind: SessionProblemKind;
+    message: string;
+    n: number;
+    sessions: number;
+    pages: string[];
+    last: string;
+    sampleSession: string;
+  }[];
 }
 export interface SessionReplay {
   sessionId: string;
@@ -568,7 +855,16 @@ export interface SessionReplay {
   release: string | null;
   started: string;
   ended: string;
-  timeline: { at: string; type: 'view' | 'click' | 'api' | 'console' | 'error' | 'problem'; kind?: SessionProblemKind; page: string; label: string | null; status?: number | null; ms?: number | null; source?: string | null }[];
+  timeline: {
+    at: string;
+    type: 'view' | 'click' | 'api' | 'console' | 'error' | 'problem';
+    kind?: SessionProblemKind;
+    page: string;
+    label: string | null;
+    status?: number | null;
+    ms?: number | null;
+    source?: string | null;
+  }[];
 }
 export type MobileReleaseStatus = 'latest' | 'previous' | 'outdated' | 'unsupported';
 export interface MobileReleasesInfo {
@@ -576,8 +872,31 @@ export interface MobileReleasesInfo {
   bucketMs: number;
   repoVersion: string | null;
   minVersion: { ios: string | null; android: string | null };
-  platforms: { platform: 'ios' | 'android'; latest: string | null; installs: number; onLatest: number | null; outdated: number | null; unsupported: number | null; minVersion: string | null }[];
-  versions: { platform: string; version: string; latest: string; behind: number; status: MobileReleaseStatus; installs: number; share: number | null; sessions: number; crashFree: number | null; apiFailuresPer100: number | null; firstSeen: string | null; lastSeen: string | null; breakingSince: number; breakingRoutes: string[] }[];
+  platforms: {
+    platform: 'ios' | 'android';
+    latest: string | null;
+    installs: number;
+    onLatest: number | null;
+    outdated: number | null;
+    unsupported: number | null;
+    minVersion: string | null;
+  }[];
+  versions: {
+    platform: string;
+    version: string;
+    latest: string;
+    behind: number;
+    status: MobileReleaseStatus;
+    installs: number;
+    share: number | null;
+    sessions: number;
+    crashFree: number | null;
+    apiFailuresPer100: number | null;
+    firstSeen: string | null;
+    lastSeen: string | null;
+    breakingSince: number;
+    breakingRoutes: string[];
+  }[];
   adoption: Record<string, { latest: string | null; series: { t: string; share: number }[] }>;
   os: { platform: string; os: string; installs: number }[];
 }
@@ -603,13 +922,53 @@ export interface QualityInfo {
   ingestEnabled: boolean;
   verdict: 'clear' | 'warning' | 'blocked';
   blocking: string[];
-  gates: { key: string; label: string; blocking: boolean; state: 'pass' | 'warn' | 'fail'; detail: string }[];
-  suites: { suite: string; latest: QualityRunRow & { slowest?: { file: string; durationMs: number }[] }; runs: number; passRate: number; coverageDelta: number | null }[];
+  gates: {
+    key: string;
+    label: string;
+    blocking: boolean;
+    state: 'pass' | 'warn' | 'fail';
+    detail: string;
+  }[];
+  suites: {
+    suite: string;
+    latest: QualityRunRow & { slowest?: { file: string; durationMs: number }[] };
+    runs: number;
+    passRate: number;
+    coverageDelta: number | null;
+  }[];
   runs: QualityRunRow[];
-  failing: { id: string; suite: string; file: string; title: string; message: string | null; count: number; lastAt: string; branches: string[] }[];
+  failing: {
+    id: string;
+    suite: string;
+    file: string;
+    title: string;
+    message: string | null;
+    count: number;
+    lastAt: string;
+    branches: string[];
+  }[];
   flaky: { id: string; suite: string; flips: number; lastAt: string; shas: string[] }[];
   coverage: { t: string; suite: string; lines: number; branches?: number; functions?: number }[];
-  ci: { configured: boolean; reason: string | null; successRate: number | null; reruns: number; runs: { id: number; name: string; title: string; branch: string; sha: string; event: string; status: string; conclusion: string | null; createdAt: string; durationMs: number | null; url: string; attempt: number }[] };
+  ci: {
+    configured: boolean;
+    reason: string | null;
+    successRate: number | null;
+    reruns: number;
+    runs: {
+      id: number;
+      name: string;
+      title: string;
+      branch: string;
+      sha: string;
+      event: string;
+      status: string;
+      conclusion: string | null;
+      createdAt: string;
+      durationMs: number | null;
+      url: string;
+      attempt: number;
+    }[];
+  };
 }
 export type RiskLevel = 'low' | 'medium' | 'high' | 'critical';
 export interface RiskAssessment {
@@ -618,12 +977,21 @@ export interface RiskAssessment {
   factors: { key: string; points: number; why: string; mitigate?: string }[];
   mitigations: string[];
   subject?: string;
-  diff?: { source: 'git' | 'github' | null; error: string | null; files: number; lines: number; sample: { path: string; added: number; deleted: number }[] };
+  diff?: {
+    source: 'git' | 'github' | null;
+    error: string | null;
+    files: number;
+    lines: number;
+    sample: { path: string; added: number; deleted: number }[];
+  };
   ci?: { conclusion: string; url: string } | null;
 }
 export interface RiskOverview {
   now: RiskAssessment;
-  requests: (Pick<ChangeRequestRow, '_id' | 'type' | 'summary' | 'status' | 'createdAt' | 'requestedBy' | 'reviewedBy'> & { risk: RiskAssessment })[];
+  requests: (Pick<
+    ChangeRequestRow,
+    '_id' | 'type' | 'summary' | 'status' | 'createdAt' | 'requestedBy' | 'reviewedBy'
+  > & { risk: RiskAssessment })[];
 }
 export type VitalRating = 'good' | 'needs-improvement' | 'poor';
 export interface RumInfo {
@@ -633,21 +1001,62 @@ export interface RumInfo {
   views: number;
   errorCount: number;
   crashFreeSessions: number | null;
-  metrics: { metric: 'LCP' | 'INP' | 'CLS' | 'FCP' | 'TTFB'; p75: number | null; rating: VitalRating | null; samples: number; goodShare: number | null; poorShare: number | null; thresholds: [number, number] }[];
-  pages: { page: string; views: number; errors: number; vitals: Record<string, { p75: number; samples: number }>; worst: VitalRating | null }[];
-  errors: { fingerprint: string; n: number; sessions: number; message: string; source: string | null; pages: string[]; browsers: string[]; last: string; first: string }[];
+  metrics: {
+    metric: 'LCP' | 'INP' | 'CLS' | 'FCP' | 'TTFB';
+    p75: number | null;
+    rating: VitalRating | null;
+    samples: number;
+    goodShare: number | null;
+    poorShare: number | null;
+    thresholds: [number, number];
+  }[];
+  pages: {
+    page: string;
+    views: number;
+    errors: number;
+    vitals: Record<string, { p75: number; samples: number }>;
+    worst: VitalRating | null;
+  }[];
+  errors: {
+    fingerprint: string;
+    n: number;
+    sessions: number;
+    message: string;
+    source: string | null;
+    pages: string[];
+    browsers: string[];
+    last: string;
+    first: string;
+  }[];
   devices: Record<string, number>;
   browsers: Record<string, number>;
   series: { t: string; views: number; errors: number }[];
 }
-export type TxStage = 'posted' | 'first_bid' | 'accepted' | 'paid' | 'started' | 'delivered' | 'completed' | 'paid_out' | 'reviewed';
+export type TxStage =
+  | 'posted'
+  | 'first_bid'
+  | 'accepted'
+  | 'paid'
+  | 'started'
+  | 'delivered'
+  | 'completed'
+  | 'paid_out'
+  | 'reviewed';
 export interface TxTrace {
   serviceId: string;
   title: string | null;
   serviceStatus: string | null;
   orderId: string | null;
   chatId: string | null;
-  steps: { key: TxStage; label: string; optional: boolean; at: string | null; afterMs: number | null; skipped: boolean; detail: string | null }[];
+  steps: {
+    key: TxStage;
+    label: string;
+    optional: boolean;
+    at: string | null;
+    afterMs: number | null;
+    skipped: boolean;
+    detail: string | null;
+  }[];
   current: TxStage | null;
   branch: 'cancelled' | 'refunded' | 'disputed' | 'declined' | null;
   skipped: TxStage[];
@@ -655,7 +1064,13 @@ export interface TxTrace {
   stuck: boolean;
   totalMs: number | null;
   bids: { provider: string; status: string; at: string }[];
-  attempts: { orderId: string; status: string; paymentStatus: string; at: string; reason: string | null }[];
+  attempts: {
+    orderId: string;
+    status: string;
+    paymentStatus: string;
+    at: string;
+    reason: string | null;
+  }[];
   disputes: { id: string; status: string; title: string; at: string; outcome: string | null }[];
   refund: number | null;
 }
@@ -663,9 +1078,22 @@ export interface TxJourneys {
   days: number;
   jobs: number;
   funnel: { key: TxStage; label: string; reached: number; share: number | null }[];
-  steps: { from: TxStage; to: TxStage; label: string; count: number; p50: number | null; p90: number | null }[];
+  steps: {
+    from: TxStage;
+    to: TxStage;
+    label: string;
+    count: number;
+    p50: number | null;
+    p90: number | null;
+  }[];
   branches: Record<string, number>;
-  stuck: { serviceId: string; title: string; stage: TxStage; waitingMs: number; orderId: string | null }[];
+  stuck: {
+    serviceId: string;
+    title: string;
+    stage: TxStage;
+    waitingMs: number;
+    orderId: string | null;
+  }[];
   stuckAfter: Record<string, number>;
 }
 export interface LedgerIssue {
@@ -693,7 +1121,15 @@ export interface LedgerInfo {
   generatedAt: string;
   period: string;
   orders: number;
-  totals: { charged: number; refunded: number; paidOut: number; customerFees: number; providerFees: number; kept: number; held: number };
+  totals: {
+    charged: number;
+    refunded: number;
+    paidOut: number;
+    customerFees: number;
+    providerFees: number;
+    kept: number;
+    held: number;
+  };
   balanced: boolean;
   escrow: { orders: number; held: number; oldestDays: number };
   issues: (LedgerIssue & { orderId: string; title: string | null; status: string; at: string })[];
@@ -701,7 +1137,13 @@ export interface LedgerInfo {
   ledgers: OrderLedger[];
 }
 export interface OrderJournal extends OrderLedger {
-  entries: { at: string | null; label: string; amount: number; balance: number; ref: string | null }[];
+  entries: {
+    at: string | null;
+    label: string;
+    amount: number;
+    balance: number;
+    ref: string | null;
+  }[];
 }
 export interface ConnectIssue {
   code: string;
@@ -714,7 +1156,20 @@ export interface ConnectProviderRow {
   email: string;
   accountId: string;
   db: { payoutEnabled: boolean; status: string; lastRefreshed: string | null };
-  stripe: { ready: boolean; status: string; payoutsEnabled: boolean; transfersEnabled: boolean; chargesEnabled: boolean; disabledReason: string | null; currentlyDue: number; pastDue: number; pendingVerification: number; currentDeadline: string | null; country: string; created: string | null } | null;
+  stripe: {
+    ready: boolean;
+    status: string;
+    payoutsEnabled: boolean;
+    transfersEnabled: boolean;
+    chargesEnabled: boolean;
+    disabledReason: string | null;
+    currentlyDue: number;
+    pastDue: number;
+    pendingVerification: number;
+    currentDeadline: string | null;
+    country: string;
+    created: string | null;
+  } | null;
   heldNok: number;
   heldOrders: number;
   issues: ConnectIssue[];
@@ -725,15 +1180,68 @@ export interface ConnectHealthInfo {
   mode: 'test' | 'live';
   stripeError: string | null;
   providers: ConnectProviderRow[];
-  withoutAccount: { userId: string; name: string; email: string; orders: number; heldNok: number }[];
-  orphanAccounts: { id: string; email: string | null; jobbloUserId: string | null; created: string | null; ready: boolean }[];
-  failedPayouts: { _id: string; orderId: string; providerId: { _id: string; name: string; email: string } | null; status: string; failureCode?: string; failureReason?: string; netProviderAmount: number; updatedAt: string }[];
-  bankFailures: { _id: string; stripeAccountId: string; providerId: { _id: string; name: string } | null; amount: number; currency: string; failureCode?: string; failureMessage?: string; createdAt: string }[];
-  summary: { accounts: number; ready: number; restricted: number; pending: number; missing: number; staleFlags: number; blockedNok: number; failedPayouts: number; bankFailures: number };
+  withoutAccount: {
+    userId: string;
+    name: string;
+    email: string;
+    orders: number;
+    heldNok: number;
+  }[];
+  orphanAccounts: {
+    id: string;
+    email: string | null;
+    jobbloUserId: string | null;
+    created: string | null;
+    ready: boolean;
+  }[];
+  failedPayouts: {
+    _id: string;
+    orderId: string;
+    providerId: { _id: string; name: string; email: string } | null;
+    status: string;
+    failureCode?: string;
+    failureReason?: string;
+    netProviderAmount: number;
+    updatedAt: string;
+  }[];
+  bankFailures: {
+    _id: string;
+    stripeAccountId: string;
+    providerId: { _id: string; name: string } | null;
+    amount: number;
+    currency: string;
+    failureCode?: string;
+    failureMessage?: string;
+    createdAt: string;
+  }[];
+  summary: {
+    accounts: number;
+    ready: number;
+    restricted: number;
+    pending: number;
+    missing: number;
+    staleFlags: number;
+    blockedNok: number;
+    failedPayouts: number;
+    bankFailures: number;
+  };
 }
 export interface ConnectProviderDetail {
   mode: string;
-  user: { _id: string; name: string; email: string; accountId: string | null; db: { payoutEnabled: boolean; status: string; chargesEnabled: boolean; detailsSubmitted: boolean; lastRefreshed: string | null; connectedAt: string | null } };
+  user: {
+    _id: string;
+    name: string;
+    email: string;
+    accountId: string | null;
+    db: {
+      payoutEnabled: boolean;
+      status: string;
+      chargesEnabled: boolean;
+      detailsSubmitted: boolean;
+      lastRefreshed: string | null;
+      connectedAt: string | null;
+    };
+  };
   stripeError: string | null;
   stripe: {
     ready: boolean;
@@ -757,8 +1265,25 @@ export interface ConnectProviderDetail {
     externalAccounts: { bank: string; last4: string; currency: string; status: string }[];
   } | null;
   issues: ConnectIssue[];
-  payouts: { _id: string; orderId: string; status: string; netProviderAmount: number; stripeTransferId?: string; failureCode?: string; failureReason?: string; createdAt: string }[];
-  bankPayouts: { _id: string; amount: number; currency: string; status: string; arrivalDate?: string; failureMessage?: string; createdAt: string }[];
+  payouts: {
+    _id: string;
+    orderId: string;
+    status: string;
+    netProviderAmount: number;
+    stripeTransferId?: string;
+    failureCode?: string;
+    failureReason?: string;
+    createdAt: string;
+  }[];
+  bankPayouts: {
+    _id: string;
+    amount: number;
+    currency: string;
+    status: string;
+    arrivalDate?: string;
+    failureMessage?: string;
+    createdAt: string;
+  }[];
   heldOrders: { _id: string; status: string; agreedPrice: number; createdAt: string }[];
 }
 export interface ContractEventRow {
@@ -793,8 +1318,19 @@ export interface ContractsInfo {
   generatedAt: string;
   endpoints: ContractEndpoint[];
   events: ContractEventRow[];
-  docs: { documented: number; used: number; undocumented: { key: string; n: number }[]; unused: string[] };
-  summary: { endpoints: number; samples: number; openBreaking: number; additive7d: number; undocumented: number };
+  docs: {
+    documented: number;
+    used: number;
+    undocumented: { key: string; n: number }[];
+    unused: string[];
+  };
+  summary: {
+    endpoints: number;
+    samples: number;
+    openBreaking: number;
+    additive7d: number;
+    undocumented: number;
+  };
 }
 export interface ContractDetail {
   method: string;
@@ -804,7 +1340,15 @@ export interface ContractDetail {
   firstSeen: string;
   lastSeen: string;
   fields: { path: string; types: string[]; presence: number; required: boolean }[];
-  variants: { sig: string; count: number; firstSeen: string; lastSeen: string; version: string | null; commit: string | null; fieldCount: number }[];
+  variants: {
+    sig: string;
+    count: number;
+    firstSeen: string;
+    lastSeen: string;
+    version: string | null;
+    commit: string | null;
+    fieldCount: number;
+  }[];
   events: ContractEventRow[];
 }
 export type FraudStatus = 'open' | 'investigating' | 'confirmed' | 'dismissed';
@@ -818,29 +1362,68 @@ export interface FraudHit {
 }
 export interface FraudFlag {
   userId: string;
-  user: { name: string; email: string; role: string; accountStatus: string; createdAt: string; avatarUrl?: string } | null;
+  user: {
+    name: string;
+    email: string;
+    role: string;
+    accountStatus: string;
+    createdAt: string;
+    avatarUrl?: string;
+  } | null;
   score: number;
   level: 'high' | 'medium' | 'low';
   rules: string[];
   status: FraudStatus;
   reopened: boolean;
-  review: { note: string | null; by: string | null; at: string | null; scoreAtReview: number | null } | null;
+  review: {
+    note: string | null;
+    by: string | null;
+    at: string | null;
+    scoreAtReview: number | null;
+  } | null;
   topEvidence: string[];
 }
 export interface FraudInfo {
   generatedAt: string;
   sessionsScanned: number;
   flagged: FraudFlag[];
-  ruleStats: { key: string; title: string; category: string; users: number; error: string | null }[];
-  summary: { high: number; medium: number; investigating: number; confirmed: number; dismissed: number };
+  ruleStats: {
+    key: string;
+    title: string;
+    category: string;
+    users: number;
+    error: string | null;
+  }[];
+  summary: {
+    high: number;
+    medium: number;
+    investigating: number;
+    confirmed: number;
+    dismissed: number;
+  };
 }
 export interface FraudCaseDetail extends Omit<FraudFlag, 'topEvidence' | 'rules'> {
   hits: FraudHit[];
   rules: { key: string; title: string; category: string }[];
-  related: { _id: string; name: string; email: string; role: string; accountStatus: string; createdAt: string; flagged: boolean }[];
-  history: { at: string; by: { name: string } | null; status: FraudStatus; note: string | null; score: number | null }[];
+  related: {
+    _id: string;
+    name: string;
+    email: string;
+    role: string;
+    accountStatus: string;
+    createdAt: string;
+    flagged: boolean;
+  }[];
+  history: {
+    at: string;
+    by: { name: string } | null;
+    status: FraudStatus;
+    note: string | null;
+    score: number | null;
+  }[];
 }
-export type FaultType = 'http_latency' | 'http_error' | 'stripe' | 'email' | 'push' | 'stripe_webhook' | 'scheduler';
+export type FaultType =
+  'http_latency' | 'http_error' | 'stripe' | 'email' | 'push' | 'stripe_webhook' | 'scheduler';
 export interface FailureExperiment {
   _id: string;
   type: FaultType;
@@ -858,8 +1441,17 @@ export interface FailureExperiment {
   status: 'running' | 'ended' | 'stopped';
   impact: {
     window: { from: string; to: string };
-    api: { during: { requests: number; c5xx: number; p95: number | null }; before: { requests: number; c5xx: number; p95: number | null } };
-    incidents: { _id: string; title: string; service: string; severity: string; startedAt: string }[];
+    api: {
+      during: { requests: number; c5xx: number; p95: number | null };
+      before: { requests: number; c5xx: number; p95: number | null };
+    };
+    incidents: {
+      _id: string;
+      title: string;
+      service: string;
+      severity: string;
+      startedAt: string;
+    }[];
     detected: boolean;
     detectionSeconds: number | null;
     deliveryFailures: Record<string, number>;
@@ -901,15 +1493,54 @@ export interface PolicyCheck {
 export interface ConfigDriftInfo {
   generatedAt: string;
   environment: string;
-  current: { digest: string; nodeVersion: string; version: string; commit: string | null; envDeclared: number; envSet: number; packages: number; globalConfigKeys: number };
-  baseline: { at: string; by: string | null; note: string | null; digest: string; matches: boolean } | null;
+  current: {
+    digest: string;
+    nodeVersion: string;
+    version: string;
+    commit: string | null;
+    envDeclared: number;
+    envSet: number;
+    packages: number;
+    globalConfigKeys: number;
+  };
+  baseline: {
+    at: string;
+    by: string | null;
+    note: string | null;
+    digest: string;
+    matches: boolean;
+  } | null;
   baselineDiff: DriftChange[] | null;
-  history: { at: string; host: string | null; version: string | null; commit: string | null; changes: DriftChange[] | null }[];
+  history: {
+    at: string;
+    host: string | null;
+    version: string | null;
+    commit: string | null;
+    changes: DriftChange[] | null;
+  }[];
   policies: PolicyCheck[];
-  dependencies: { name: string; wanted: string; installed: string | null; problem: 'missing' | 'out_of_range' }[];
+  dependencies: {
+    name: string;
+    wanted: string;
+    installed: string | null;
+    problem: 'missing' | 'out_of_range';
+  }[];
   unsetEnv: string[];
-  stripeWebhooks: { ok: boolean; error?: string; handled: number; missing: string[]; unhandled: string[]; endpoints: { id: string; url: string; status: string; events: string[] }[] };
-  summary: { driftFromBaseline: number | null; policyFailures: number; criticalOrHigh: number; dependencyProblems: number; webhookGaps: number };
+  stripeWebhooks: {
+    ok: boolean;
+    error?: string;
+    handled: number;
+    missing: string[];
+    unhandled: string[];
+    endpoints: { id: string; url: string; status: string; events: string[] }[];
+  };
+  summary: {
+    driftFromBaseline: number | null;
+    policyFailures: number;
+    criticalOrHigh: number;
+    dependencyProblems: number;
+    webhookGaps: number;
+  };
 }
 export type ForecastConfidence = 'high' | 'medium' | 'low' | 'estimated' | 'insufficient';
 export interface Forecast {
@@ -933,9 +1564,25 @@ export interface CapacityInfo {
   generatedAt: string;
   snapshots: { days: number; latestAt: string | null };
   resources: CapacityResource[];
-  traffic: Forecast & { maxRps: number | null; headroom: number | null; requestsPerDay: Forecast; series: { t: string; requests: number; peakRps: number }[] };
+  traffic: Forecast & {
+    maxRps: number | null;
+    headroom: number | null;
+    requestsPerDay: Forecast;
+    series: { t: string; requests: number; peakRps: number }[];
+  };
   host: { cpus: number; loadPerCpu: number | null; totalMem: number };
-  collections: { name: string; documents: number; bytes: number; storage: number; avgObjSize: number; addedLast90d: number; docsPerDay: number | null; bytesPerDay: number | null; docsIn90: number | null; confidence: ForecastConfidence }[];
+  collections: {
+    name: string;
+    documents: number;
+    bytes: number;
+    storage: number;
+    avgObjSize: number;
+    addedLast90d: number;
+    docsPerDay: number | null;
+    bytesPerDay: number | null;
+    docsIn90: number | null;
+    confidence: ForecastConfidence;
+  }[];
 }
 export interface CostLine {
   key: string;
@@ -951,7 +1598,13 @@ export interface CostLine {
 export interface CostConfig {
   monthlyBudgetNok: number | null;
   fixed: { name: string; category: string; monthlyNok: number }[];
-  prices: { usdToNok: number; bankIdPerAuthNok: number; emailPerSendNok: number; blobPerGbMonthNok: number; aiModels: Record<string, [number, number]> };
+  prices: {
+    usdToNok: number;
+    bankIdPerAuthNok: number;
+    emailPerSendNok: number;
+    blobPerGbMonthNok: number;
+    aiModels: Record<string, [number, number]>;
+  };
 }
 export interface CostInfo {
   month: string;
@@ -962,10 +1615,20 @@ export interface CostInfo {
   projectedNok: number;
   budgetNok: number | null;
   income: { platformFeesNok: number; payouts: number };
-  units: { ordersCompleted: number; activeUsers: number; costPerOrder: number | null; costPerActiveUser: number | null };
+  units: {
+    ordersCompleted: number;
+    activeUsers: number;
+    costPerOrder: number | null;
+    costPerActiveUser: number | null;
+  };
   database: { dataBytes: number; storageBytes: number; indexBytes: number } | null;
   config: CostConfig;
-  previous: { month: string; totalNok: number; byCategory: Record<string, number>; income: { platformFeesNok: number } };
+  previous: {
+    month: string;
+    totalNok: number;
+    byCategory: Record<string, number>;
+    income: { platformFeesNok: number };
+  };
 }
 export type ImpactVerdict = 'regression' | 'warning' | 'healthy' | 'improved' | 'insufficient';
 export interface ImpactWindow {
@@ -1010,7 +1673,16 @@ export interface ImpactInfo {
   mobile: MobileRelease[];
 }
 export interface ImpactDetail {
-  deployment: { _id: string; version: string; commit: string | null; branch: string | null; deployedAt: string; host: string | null; boots: number; previous: { version: string; commit: string | null; deployedAt: string } | null };
+  deployment: {
+    _id: string;
+    version: string;
+    commit: string | null;
+    branch: string | null;
+    deployedAt: string;
+    host: string | null;
+    boots: number;
+    previous: { version: string; commit: string | null; deployedAt: string } | null;
+  };
   next: { deployedAt: string; version: string } | null;
   bucketMs: number;
   windowHours: number;
@@ -1018,9 +1690,23 @@ export interface ImpactDetail {
   after: ImpactWindow;
   verdict: ImpactVerdict;
   reasons: string[];
-  newErrors: { id: string; errorCode: string; route: string | null; message: string; firstSeen: string; count: number }[];
+  newErrors: {
+    id: string;
+    errorCode: string;
+    route: string | null;
+    message: string;
+    firstSeen: string;
+    count: number;
+  }[];
   synthetic: { before: { runs: number; failed: number }; after: { runs: number; failed: number } };
-  routes: { route: string; before: { requests: number; c5xx: number; p95: number | null } | null; after: { requests: number; c5xx: number; p95: number | null }; errorDelta: number; latencyDelta: number | null; isNew: boolean }[];
+  routes: {
+    route: string;
+    before: { requests: number; c5xx: number; p95: number | null } | null;
+    after: { requests: number; c5xx: number; p95: number | null };
+    errorDelta: number;
+    latencyDelta: number | null;
+    isNew: boolean;
+  }[];
   series: { t: string; requests: number; errors: number; p95: number | null }[];
 }
 export type SloStatus = 'ok' | 'at_risk' | 'fast_burn' | 'breached' | 'no_data';
@@ -1077,14 +1763,58 @@ export interface MobileErrorGroup {
 }
 export interface MobileInfo {
   range: { from: string; to: string; bucketMs: number };
-  summary: { installs: number; users: number; sessions: number; errors: number; fatal: number; apiFailures: number; crashedSessions: number; crashFreeSessions: number | null };
-  versions: { appVersion: string | null; build: string | null; platform: string | null; sessions: number; installs: number; lastSeen: string; firstSeen: string; crashedSessions: number; crashFree: number | null }[];
-  platforms: { platform: string | null; osVersion: string | null; sessions: number; installs: number }[];
+  summary: {
+    installs: number;
+    users: number;
+    sessions: number;
+    errors: number;
+    fatal: number;
+    apiFailures: number;
+    crashedSessions: number;
+    crashFreeSessions: number | null;
+  };
+  versions: {
+    appVersion: string | null;
+    build: string | null;
+    platform: string | null;
+    sessions: number;
+    installs: number;
+    lastSeen: string;
+    firstSeen: string;
+    crashedSessions: number;
+    crashFree: number | null;
+  }[];
+  platforms: {
+    platform: string | null;
+    osVersion: string | null;
+    sessions: number;
+    installs: number;
+  }[];
   devices: { device: string | null; sessions: number; installs: number }[];
   errorGroups: MobileErrorGroup[];
-  api: { method: string | null; path: string; count: number; installs: number; lastSeen: string; codes: Record<string, number>; p50: number | null; p95: number | null }[];
+  api: {
+    method: string | null;
+    path: string;
+    count: number;
+    installs: number;
+    lastSeen: string;
+    codes: Record<string, number>;
+    p50: number | null;
+    p95: number | null;
+  }[];
   series: { t: string; sessions: number; errors: number; crashes: number }[];
-  recentCrashes: { _id: string; at: string; name: string; message: string; screen: string | null; appVersion: string | null; build: string | null; platform: string | null; device: string | null; fingerprint: string }[];
+  recentCrashes: {
+    _id: string;
+    at: string;
+    name: string;
+    message: string;
+    screen: string | null;
+    appVersion: string | null;
+    build: string | null;
+    platform: string | null;
+    device: string | null;
+    fingerprint: string;
+  }[];
 }
 export interface MobileErrorEvent {
   _id: string;
@@ -1139,11 +1869,21 @@ export interface SyntheticCustom {
   enabled: boolean;
   createdBy?: { _id: string; name: string } | null;
 }
-export type SyntheticCheckInput = Pick<SyntheticCustom, 'name' | 'url' | 'method' | 'expectStatus' | 'expectText' | 'enabled'>;
+export type SyntheticCheckInput = Pick<
+  SyntheticCustom,
+  'name' | 'url' | 'method' | 'expectStatus' | 'expectText' | 'enabled'
+>;
 export interface SyntheticInfo {
   checks: SyntheticCheckRow[];
   customs: SyntheticCustom[];
-  config: { api: string; web: string | null; loginJourney: boolean; intervalMin: number; enabled: boolean; allowedHosts: string[] };
+  config: {
+    api: string;
+    web: string | null;
+    loginJourney: boolean;
+    intervalMin: number;
+    enabled: boolean;
+    allowedHosts: string[];
+  };
 }
 export interface MachineState {
   status: string;
@@ -1161,7 +1901,10 @@ export interface MachineInfo {
   states: MachineState[];
   unknownStates: { status: string; count: number }[];
   edges: { from: string; to: string; n: number; legal: boolean }[];
-  companions: Record<string, { payment?: (string | null)[]; safePay?: (string | null)[]; payout?: (string | null)[] }>;
+  companions: Record<
+    string,
+    { payment?: (string | null)[]; safePay?: (string | null)[]; payout?: (string | null)[] }
+  >;
   scanned: number;
   scanLimit: number;
   affectedOrders: number;
@@ -1169,8 +1912,22 @@ export interface MachineInfo {
   violations: MachineViolation[];
 }
 export interface OrderMachine {
-  order: { _id: string; title: string | null; status: string; paymentStatus: string; agreedPrice: number; createdAt: string; updatedAt: string };
-  path: { at: string | null; action: string; from: string | null; to: string; legal: boolean | null }[];
+  order: {
+    _id: string;
+    title: string | null;
+    status: string;
+    paymentStatus: string;
+    agreedPrice: number;
+    createdAt: string;
+    updatedAt: string;
+  };
+  path: {
+    at: string | null;
+    action: string;
+    from: string | null;
+    to: string;
+    legal: boolean | null;
+  }[];
   next: string[];
   companions: { model: string; actual: string | null; expected: (string | null)[] | null }[];
   issues: Issue[];
@@ -1220,7 +1977,11 @@ export interface BackupInfo {
   };
   rpo: { lastBackupAt: string | null; ageHours: number | null; ok: boolean };
   lastDrill: BackupRunRow | null;
-  storage: { retained: number; bytes: number; disk: { freeBytes: number; totalBytes: number } | null };
+  storage: {
+    retained: number;
+    bytes: number;
+    disk: { freeBytes: number; totalBytes: number } | null;
+  };
   runs: BackupRunRow[];
   atlas: { configured: boolean; cluster?: string; snapshots: AtlasSnapshot[]; error?: string };
 }
@@ -1251,14 +2012,34 @@ export interface IntegrityInfo {
   durationMs: number;
   scanLimit: number;
   running: boolean;
-  summary: { checks: number; passing: number; failing: number; affected: number; indexProblems: number; bySeverity: Record<string, number> };
+  summary: {
+    checks: number;
+    passing: number;
+    failing: number;
+    affected: number;
+    indexProblems: number;
+    bySeverity: Record<string, number>;
+  };
   checks: IntegrityCheck[];
   indexes: IndexDrift[];
   indexError: string | null;
 }
 export type InvestigateKind = 'objectId' | 'stripe' | 'ip' | 'email' | 'reference';
 export interface InvestigateMatch {
-  type: 'user' | 'service' | 'payment' | 'payout' | 'dispute' | 'incident' | 'ticket' | 'error' | 'approval' | 'subscription' | 'webhook' | 'ip' | 'audit';
+  type:
+    | 'user'
+    | 'service'
+    | 'payment'
+    | 'payout'
+    | 'dispute'
+    | 'incident'
+    | 'ticket'
+    | 'error'
+    | 'approval'
+    | 'subscription'
+    | 'webhook'
+    | 'ip'
+    | 'audit';
   id: string;
   label: string;
   detail?: string | null;
@@ -1311,7 +2092,13 @@ export interface JobDetail {
   incidents: Doc[];
   transfers: Doc[];
   notifications: { _id: string; type: string; content: string; read: boolean; createdAt: string }[];
-  errors: { _id: string; referenceId: string; errorCode: string; message: string; createdAt: string }[];
+  errors: {
+    _id: string;
+    referenceId: string;
+    errorCode: string;
+    message: string;
+    createdAt: string;
+  }[];
   timeline: TimelineEvent[];
 }
 export interface StripeState {
@@ -1346,8 +2133,19 @@ export interface SubscriptionRow {
   nextRenewalAt?: string;
   paymentRecoveryStatus: string;
   gracePeriodEndsAt?: string;
-  pendingPlanChange?: { targetPlanId?: { name: string } | string; targetPlanType: string; effectiveAt: string; operationId: string };
-  planHistory?: { planName: string; planPrice: number; changeType: string; effectiveAt: string; operationId?: string }[];
+  pendingPlanChange?: {
+    targetPlanId?: { name: string } | string;
+    targetPlanType: string;
+    effectiveAt: string;
+    operationId: string;
+  };
+  planHistory?: {
+    planName: string;
+    planPrice: number;
+    changeType: string;
+    effectiveAt: string;
+    operationId?: string;
+  }[];
   recoveryHistory?: { invoiceId: string; action: string; at: string }[];
   cancellationEffectiveAt?: string;
   updatedAt: string;
@@ -1377,8 +2175,23 @@ export interface SubscriptionsInfo {
     autoRenewOff: number;
     renewingSoon: number;
   };
-  operations: { byStatus: Record<string, number>; byType: Record<string, number>; problems: BillingOp[] };
-  webhooks: { byStatus: Record<string, number>; failed: { _id: string; eventType: string; stripeEventId: string; lastErrorCode?: string; lastErrorMessage?: string; attempts: number; lastFailureAt?: string }[] };
+  operations: {
+    byStatus: Record<string, number>;
+    byType: Record<string, number>;
+    problems: BillingOp[];
+  };
+  webhooks: {
+    byStatus: Record<string, number>;
+    failed: {
+      _id: string;
+      eventType: string;
+      stripeEventId: string;
+      lastErrorCode?: string;
+      lastErrorMessage?: string;
+      attempts: number;
+      lastFailureAt?: string;
+    }[];
+  };
   subscriptions: SubscriptionRow[];
 }
 export interface ReconIssue {
@@ -1396,7 +2209,14 @@ export interface ReconInfo {
   bySeverity: Partial<Record<Sev, number>>;
   byCategory: Record<string, number>;
   issues: ReconIssue[];
-  lastRuns: { job: string; startedAt: string; ok: boolean; durationMs: number; error: string | null; result: unknown }[];
+  lastRuns: {
+    job: string;
+    startedAt: string;
+    ok: boolean;
+    durationMs: number;
+    error: string | null;
+    result: unknown;
+  }[];
 }
 export interface UserHit {
   _id: string;
@@ -1414,18 +2234,36 @@ export interface UserDiag {
   auth: {
     lastLogin: string | null;
     activeSessions: number;
-    sessions: { _id: string; deviceName?: string; device?: string; browser?: string; os?: string; location?: string; lastUsed?: string; createdAt: string }[];
+    sessions: {
+      _id: string;
+      deviceName?: string;
+      device?: string;
+      browser?: string;
+      os?: string;
+      location?: string;
+      lastUsed?: string;
+      createdAt: string;
+    }[];
     oauth: string[];
     emailVerified: boolean;
     mfa: null;
     failedLogins: null;
   };
   jobs: { asCustomer: Record<string, number>; asProvider: Record<string, number> };
-  subscription: (Omit<SubscriptionRow, 'planId'> & { planId?: { name: string; type: string; price: number } }) | null;
+  subscription:
+    | (Omit<SubscriptionRow, 'planId'> & { planId?: { name: string; type: string; price: number } })
+    | null;
   billingOps: BillingOp[];
   paymentIssues: { kind: string; orderId: string; status: string; detail?: string; at: string }[];
   disputes: { _id: string; orderId: string; status: string; title: string; openedAt: string }[];
-  errors: { _id: string; referenceId: string; errorCode: string; message: string; route?: string; createdAt: string }[];
+  errors: {
+    _id: string;
+    referenceId: string;
+    errorCode: string;
+    message: string;
+    route?: string;
+    createdAt: string;
+  }[];
   tickets: { _id: string; subject: string; status: string; orderId?: string; createdAt: string }[];
   roleChanges: { _id: string; description: string; createdAt: string; adminId?: NamedRef }[];
   timeline: TimelineEvent[];
@@ -1455,8 +2293,19 @@ export interface LiveInfo {
   traffic: LiveSnapshot;
   sessions: { online: number; loggedInUsers: number };
   sockets: number | null;
-  lastTwoMinutes: { orders: number; payments: number; signups: number; errors: number; security: number };
-  events: { at: string; type: 'job' | 'payment' | 'error' | 'security'; title: string; ref: string | null }[];
+  lastTwoMinutes: {
+    orders: number;
+    payments: number;
+    signups: number;
+    errors: number;
+    security: number;
+  };
+  events: {
+    at: string;
+    type: 'job' | 'payment' | 'error' | 'security';
+    title: string;
+    ref: string | null;
+  }[];
   onlineHistory: { t: string; sessions: number | null; rps: number }[];
 }
 export interface SecurityEventRow {
@@ -1489,7 +2338,14 @@ export interface IpRow {
 export interface IpsInfo {
   range: { from: string; to: string };
   yourIp: string | null;
-  summary: { total: number; requests: number; blocked: number; high: number; suspicious: number; activeBlocks: number };
+  summary: {
+    total: number;
+    requests: number;
+    blocked: number;
+    high: number;
+    suspicious: number;
+    activeBlocks: number;
+  };
   ips: IpRow[];
 }
 export interface IpBlockRow {
@@ -1509,8 +2365,18 @@ export interface SecurityInfo {
   topIps: { ip: string; count: number; types: string[]; last: string; routes: string[] }[];
   alerts: { severity: Sev; title: string; detail: string }[];
   recent: SecurityEventRow[];
-  roleChanges: { _id: string; description: string; createdAt: string; adminId?: NamedRef & { role?: string } }[];
-  developerActions: { _id: string; description: string; createdAt: string; adminId?: NamedRef & { role?: string } }[];
+  roleChanges: {
+    _id: string;
+    description: string;
+    createdAt: string;
+    adminId?: NamedRef & { role?: string };
+  }[];
+  developerActions: {
+    _id: string;
+    description: string;
+    createdAt: string;
+    adminId?: NamedRef & { role?: string };
+  }[];
 }
 export interface FlagRow {
   key: string;
@@ -1523,7 +2389,13 @@ export interface FlagRow {
 export interface FlagsInfo {
   environment: string;
   flags: FlagRow[];
-  history: { _id: string; description: string; createdAt: string; metadata?: Doc; adminId?: NamedRef & { role?: string } }[];
+  history: {
+    _id: string;
+    description: string;
+    createdAt: string;
+    metadata?: Doc;
+    adminId?: NamedRef & { role?: string };
+  }[];
 }
 export interface OpStat {
   key: string;
@@ -1540,9 +2412,28 @@ export interface PerfInfo {
   db: OpStat[];
   stripe: OpStat[];
   stripeErrors: number;
-  slowQueries: { at: string; command: string; collection: string; ms: number; failed: boolean; shape: unknown }[];
+  slowQueries: {
+    at: string;
+    command: string;
+    collection: string;
+    ms: number;
+    failed: boolean;
+    shape: unknown;
+  }[];
   slowQueryMs: number;
-  history: { t: string; loopP50: number | null; loopP99: number | null; loopMax: number | null; heapUsed: number; rss: number; cpu: number; gcCount: number; gcMs: number; rps: number; sessionsOnline: number | null }[];
+  history: {
+    t: string;
+    loopP50: number | null;
+    loopP99: number | null;
+    loopMax: number | null;
+    heapUsed: number;
+    rss: number;
+    cpu: number;
+    gcCount: number;
+    gcMs: number;
+    rps: number;
+    sessionsOnline: number | null;
+  }[];
   process: { uptime: number; pid: number; node: string; rss: number };
   live: LiveSnapshot;
   slowestEndpoints: { method: string; route: string; count: number; p95: number; maxMs: number }[];
@@ -1561,12 +2452,29 @@ export interface DeliveryRow {
 }
 export interface NotificationsInfo {
   range: RangeInfo;
-  totals: Partial<Record<'email' | 'push', { sent: number; partial: number; failed: number; skipped: number }>>;
-  latency: { email: { avg: number; p95: number } | null; push: { avg: number; p95: number } | null };
-  health: { channel: string; lastSuccess: string | null; lastFailure: string | null; lastError: string | null; status: string }[];
+  totals: Partial<
+    Record<'email' | 'push', { sent: number; partial: number; failed: number; skipped: number }>
+  >;
+  latency: {
+    email: { avg: number; p95: number } | null;
+    push: { avg: number; p95: number } | null;
+  };
+  health: {
+    channel: string;
+    lastSuccess: string | null;
+    lastFailure: string | null;
+    lastError: string | null;
+    status: string;
+  }[];
   templates: { channel: string; template: string | null; count: number; failed: number }[];
   series: { t: string; sent: number; failed: number }[];
-  failures: { channel: string; code: string | null; count: number; last: string; example: string | null }[];
+  failures: {
+    channel: string;
+    code: string | null;
+    count: number;
+    last: string;
+    example: string | null;
+  }[];
   recent: DeliveryRow[];
   inApp: { byType: Record<string, number>; readRate: number | null; total: number };
   pushTokens: number;
@@ -1575,7 +2483,14 @@ export interface NotificationsInfo {
 
 // ─── Phase 4: platform ───────────────────────────────────────────────────────
 export type DevAccess = 'readonly' | 'operations' | 'superAdmin';
-export type ActionType = 'ip_block' | 'ip_unblock' | 'flag_set' | 'thresholds_set' | 'slo_targets_set' | 'developer_access' | 'rate_limit_reset';
+export type ActionType =
+  | 'ip_block'
+  | 'ip_unblock'
+  | 'flag_set'
+  | 'thresholds_set'
+  | 'slo_targets_set'
+  | 'developer_access'
+  | 'rate_limit_reset';
 export interface ChangeRequestRow {
   _id: string;
   type: ActionType;
@@ -1636,7 +2551,10 @@ export interface BrokerInfo {
     name: string;
     concurrency: number;
     attempts: number;
-    counts: Record<'waiting' | 'active' | 'delayed' | 'completed' | 'failed' | 'paused' | 'prioritized', number> | null;
+    counts: Record<
+      'waiting' | 'active' | 'delayed' | 'completed' | 'failed' | 'paused' | 'prioritized',
+      number
+    > | null;
     isPaused?: boolean;
     workerHere: boolean;
     failed: BrokerJob[];
@@ -1675,7 +2593,10 @@ export interface RedisMemory {
   evictedKeys: number;
   expiredKeys: number;
 }
-export interface RedisConnection { label: string; status: string }
+export interface RedisConnection {
+  label: string;
+  status: string;
+}
 export interface RedisOverview extends RedisStatus {
   connections: RedisConnection[];
   server?: { version: string; mode: string; os: string; uptimeSec: number; port: number };
@@ -1687,7 +2608,12 @@ export interface RedisOverview extends RedisStatus {
   keyspace?: Record<string, { keys: number; expires: number; avg_ttl: number }>;
   health?: { score: number; checks: { key: string; ok: boolean; label: string }[] };
 }
-export interface RedisKeyRow { key: string; type: string; ttlMs: number | null; bytes: number | null }
+export interface RedisKeyRow {
+  key: string;
+  type: string;
+  ttlMs: number | null;
+  bytes: number | null;
+}
 export interface RedisMemoryInfo extends RedisStatus {
   memory?: RedisMemory;
   groups?: { id: string; label: string; sampledKeys: number; complete: boolean; bytes: number }[];
@@ -1696,7 +2622,14 @@ export interface RedisMemoryInfo extends RedisStatus {
 export interface RedisCacheInfo extends RedisStatus {
   store: 'redis' | 'memory';
   localEntries: number;
-  namespaces: { name: string; ttlSec: number; hits: number; misses: number; hitRate: number | null; keys: RedisKeyRow[] }[];
+  namespaces: {
+    name: string;
+    ttlSec: number;
+    hits: number;
+    misses: number;
+    hitRate: number | null;
+    keys: RedisKeyRow[];
+  }[];
 }
 export interface RedisKeysInfo extends RedisStatus {
   group?: string;
@@ -1711,27 +2644,74 @@ export interface RedisPerformance extends RedisStatus {
   totalCommands?: number | null;
   inputKbps?: number | null;
   outputKbps?: number | null;
-  connections?: { connected: number | null; blocked: number | null; received: number | null; rejected: number };
+  connections?: {
+    connected: number | null;
+    blocked: number | null;
+    received: number | null;
+    rejected: number;
+  };
   keyspace?: { hits: number; misses: number };
   latency?: { min: number; avg: number; max: number };
   latencyEvents?: { event: string; at: string; lastMs: number; maxMs: number }[];
-  commands?: { command: string; calls: number; usec: number; usecPerCall: number; failed: number }[];
-  slowlog?: { id: number; at: string; ms: number; command: string; key: string | null; args: number; client: string | null; clientAddr: string | null }[];
+  commands?: {
+    command: string;
+    calls: number;
+    usec: number;
+    usecPerCall: number;
+    failed: number;
+  }[];
+  slowlog?: {
+    id: number;
+    at: string;
+    ms: number;
+    command: string;
+    key: string | null;
+    args: number;
+    client: string | null;
+    clientAddr: string | null;
+  }[];
 }
 export interface RedisConfigInfo extends RedisStatus {
-  url: { scheme?: string; tls?: boolean; host?: string; port?: number; db?: number; user?: string | null; password?: string; invalid?: boolean } | null;
+  url: {
+    scheme?: string;
+    tls?: boolean;
+    host?: string;
+    port?: number;
+    db?: number;
+    user?: string | null;
+    password?: string;
+    invalid?: boolean;
+  } | null;
   environment: string;
   workersEnabled: boolean;
   settings: Record<string, string> | null;
   configError?: string | null;
-  checks: { key: string; value: string | null; expected: string; ok: boolean; severity: 'ok' | 'info' | 'warning' | 'critical'; why: string }[];
+  checks: {
+    key: string;
+    value: string | null;
+    expected: string;
+    ok: boolean;
+    severity: 'ok' | 'info' | 'warning' | 'critical';
+    why: string;
+  }[];
 }
 export interface RedisRateLimits extends RedisStatus {
   store: 'redis' | 'memory';
   limiters: { name: string; windowMs: number; max: number | null; failedOnly: boolean }[];
-  counters: { limiter: string; client: string; hits: number; max: number | null; resetInMs: number | null; blocked: boolean }[];
+  counters: {
+    limiter: string;
+    client: string;
+    hits: number;
+    max: number | null;
+    resetInMs: number | null;
+    blocked: boolean;
+  }[];
   complete: boolean;
-  blocked: { total: number; byRoute: { route: string | null; n: number; last: string }[]; byIp: { ip: string | null; n: number; last: string }[] };
+  blocked: {
+    total: number;
+    byRoute: { route: string | null; n: number; last: string }[];
+    byIp: { ip: string | null; n: number; last: string }[];
+  };
 }
 export interface RedisWorkerQueue {
   name: string;
@@ -1756,15 +2736,51 @@ export interface RedisRealtime extends RedisStatus {
   adapter?: 'redis' | 'memory';
   local?: { sockets: number; rooms: number; onlineUsers: number };
   cluster?: { servers: number | null; sockets: number | null; roundTripMs: number } | null;
-  pubsub?: { channels: { channel: string; subscribers: number }[]; connections: RedisConnection[] } | null;
+  pubsub?: {
+    channels: { channel: string; subscribers: number }[];
+    connections: RedisConnection[];
+  } | null;
 }
 export interface RedisAlerts {
   enabled: boolean;
-  metrics: { enabled: boolean; ok?: boolean; error?: string; memoryPct?: number | null; evictedKeys?: number; policy?: string; backlog?: { name: string; waiting: number }[] };
-  rules: { key: string; label: string; severity: string; threshold: string; thresholdKey?: string; firing: string[] }[];
-  incidents: { _id: string; title: string; severity: string; status: string; detail: string | null; fingerprint: string; startedAt: string; lastSeenAt: string; recoveredAt: string | null; occurrences: number }[];
+  metrics: {
+    enabled: boolean;
+    ok?: boolean;
+    error?: string;
+    memoryPct?: number | null;
+    evictedKeys?: number;
+    policy?: string;
+    backlog?: { name: string; waiting: number }[];
+  };
+  rules: {
+    key: string;
+    label: string;
+    severity: string;
+    threshold: string;
+    thresholdKey?: string;
+    firing: string[];
+  }[];
+  incidents: {
+    _id: string;
+    title: string;
+    severity: string;
+    status: string;
+    detail: string | null;
+    fingerprint: string;
+    startedAt: string;
+    lastSeenAt: string;
+    recoveredAt: string | null;
+    occurrences: number;
+  }[];
 }
-export interface RedisAuditRow { _id: string; description: string; metadata: Doc; createdAt: string; ip?: string; adminId?: { name: string; email: string; role: string } | null }
+export interface RedisAuditRow {
+  _id: string;
+  description: string;
+  metadata: Doc;
+  createdAt: string;
+  ip?: string;
+  adminId?: { name: string; email: string; role: string } | null;
+}
 
 export type TicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
 export type Priority = 'low' | 'medium' | 'high' | 'critical';
@@ -1785,14 +2801,30 @@ export interface TicketRow {
   sla: { dueAt: string; breached: boolean; metAt: string | null };
 }
 export interface TicketsInfo {
-  summary: { byStatus: Record<string, number>; byPriority: Record<string, number>; breached: number; escalated: number };
+  summary: {
+    byStatus: Record<string, number>;
+    byPriority: Record<string, number>;
+    breached: number;
+    escalated: number;
+  };
   slaHours: Record<Priority, number>;
   tickets: TicketRow[];
 }
 export interface TicketDetail {
-  ticket: TicketRow & { message: string; userId?: { _id: string; name: string; role: string; accountStatus: string } | null; history: { at: string; by?: NamedRef; kind: string; text: string }[] };
+  ticket: TicketRow & {
+    message: string;
+    userId?: { _id: string; name: string; role: string; accountStatus: string } | null;
+    history: { at: string; by?: NamedRef; kind: string; text: string }[];
+  };
   order: { _id: string; status: string; paymentStatus: string } | null;
-  error: { referenceId: string; errorCode: string; message: string; route: string; createdAt: string; status: string } | null;
+  error: {
+    referenceId: string;
+    errorCode: string;
+    message: string;
+    route: string;
+    createdAt: string;
+    status: string;
+  } | null;
   incident: { _id: string; title: string; status: string; severity: string } | null;
 }
 export interface GithubRun {
@@ -1810,10 +2842,37 @@ export interface GithubRun {
   url: string;
 }
 export interface DeploymentsInfo {
-  current: { environment: string; version: string; commit: string | null; branch: string | null; deployedAt: string; deployedAtSource: string; node: string; deliveredBy: string };
-  comparison: { windowHours: number; before: { errors: number; requests: number; errorRate: number | null; p95: number | null }; after: { errors: number; requests: number; errorRate: number | null; p95: number | null } };
-  newErrors: { id: string; errorCode: string; route: string | null; message: string; count: number; firstSeen: string; lastSeen: string }[];
-  github: { configured: boolean; repo: string; reason?: string; error?: string; runs?: GithubRun[] };
+  current: {
+    environment: string;
+    version: string;
+    commit: string | null;
+    branch: string | null;
+    deployedAt: string;
+    deployedAtSource: string;
+    node: string;
+    deliveredBy: string;
+  };
+  comparison: {
+    windowHours: number;
+    before: { errors: number; requests: number; errorRate: number | null; p95: number | null };
+    after: { errors: number; requests: number; errorRate: number | null; p95: number | null };
+  };
+  newErrors: {
+    id: string;
+    errorCode: string;
+    route: string | null;
+    message: string;
+    count: number;
+    firstSeen: string;
+    lastSeen: string;
+  }[];
+  github: {
+    configured: boolean;
+    repo: string;
+    reason?: string;
+    error?: string;
+    runs?: GithubRun[];
+  };
   audit: Doc[];
   rollback: { available: boolean; reason: string };
 }
@@ -1837,7 +2896,13 @@ export interface IncidentRow {
   fingerprint: string | null;
 }
 export interface IncidentsInfo {
-  metrics: { open: number; acknowledged: number; mttaMinutes: number | null; mttrMinutes: number | null; resolved30d: number };
+  metrics: {
+    open: number;
+    acknowledged: number;
+    mttaMinutes: number | null;
+    mttrMinutes: number | null;
+    resolved30d: number;
+  };
   repeats: { fingerprint: string; count: number; title: string }[];
   byService: Record<string, number>;
   incidents: IncidentRow[];
@@ -1851,7 +2916,13 @@ export interface IncidentDetail {
     acknowledgedBy?: NamedRef | null;
     resolvedBy?: NamedRef | null;
   };
-  relatedErrors: { id: string; errorCode: string; route: string | null; count: number; last: string }[];
+  relatedErrors: {
+    id: string;
+    errorCode: string;
+    route: string | null;
+    count: number;
+    last: string;
+  }[];
   tickets: { _id: string; subject: string; status: string; priority: string; createdAt: string }[];
 }
 export interface ReportSection {
@@ -1869,11 +2940,26 @@ export interface ReportInfo {
 }
 export interface SettingsInfo {
   me: { role: string; access: DevAccess };
-  developers: { _id: string; name: string; email: string; role: string; access: DevAccess; lastLogin?: string; activeSessions: number; lastActive: string | null; accountStatus: string }[];
+  developers: {
+    _id: string;
+    name: string;
+    email: string;
+    role: string;
+    access: DevAccess;
+    lastLogin?: string;
+    activeSessions: number;
+    lastActive: string | null;
+    accountStatus: string;
+  }[];
   thresholds: Record<string, number>;
   defaultThresholds: Record<string, number>;
   retention: { data: string; days: number | null }[];
-  integrations: { key: string; label: string; configured: boolean; secrets: { name: string; present: boolean }[] }[];
+  integrations: {
+    key: string;
+    label: string;
+    configured: boolean;
+    secrets: { name: string; present: boolean }[];
+  }[];
   policies: { action: string; rule: string }[];
   accessAudit: { _id: string; description: string; createdAt: string; adminId?: NamedRef }[];
 }
@@ -1885,10 +2971,16 @@ export const devApi = {
   apiTraces: (q: Query) => get<{ traces: Trace[] }>('/api-metrics/traces', q),
   endpointClients: (q: Query) => get<{ clients: ApiClient[] }>('/api-metrics/clients', q),
   ipActivity: (q: Query) => get<IpActivity>('/api-metrics/clients', q),
-  errors: (q: Query) => get<{ groups: ErrorGroup[]; summary: { status: ErrorStatus; severity: Severity; count: number }[] }>('/errors', q),
+  errors: (q: Query) =>
+    get<{
+      groups: ErrorGroup[];
+      summary: { status: ErrorStatus; severity: Severity; count: number }[];
+    }>('/errors', q),
   errorDetail: (id: string) => get<ErrorDetail>(`/errors/${id}`),
-  updateError: (id: string, body: { status?: ErrorStatus; assignee?: string | null; note?: string }) =>
-    mainLink.patch(`/api/developer/errors/${id}`, body),
+  updateError: (
+    id: string,
+    body: { status?: ErrorStatus; assignee?: string | null; note?: string }
+  ) => mainLink.patch(`/api/developer/errors/${id}`, body),
   server: () => get<ServerInfo>('/server'),
   workers: () => get<WorkersInfo>('/workers'),
   nginx: () => get<NginxInfo>('/nginx'),
@@ -1896,29 +2988,59 @@ export const devApi = {
   caching: () => get<CachingInfo>('/caching'),
   mongo: () => get<MongoInfo>('/mongo'),
   mongoIndexes: (name: string) =>
-    get<{ indexes: { name: string; key: Record<string, number>; ops: number; since: string | null }[] }>(`/mongo/collections/${encodeURIComponent(name)}/indexes`),
+    get<{
+      indexes: { name: string; key: Record<string, number>; ops: number; since: string | null }[];
+    }>(`/mongo/collections/${encodeURIComponent(name)}/indexes`),
   scheduler: (q: Query) => get<SchedulerInfo>('/scheduler', q),
   webhooks: (q: Query) => get<WebhookInfo>('/webhooks', q),
   audit: (q: Query) => get<{ logs: AuditLog[]; actions: string[] }>('/audit', q),
   developers: () => get<{ developers: Actor[] }>('/developers'),
-  runChecks: async () => (await mainLink.post<ApiResponse<ChecksResult>>('/api/developer/tools/checks')).data.data,
+  runChecks: async () =>
+    (await mainLink.post<ApiResponse<ChecksResult>>('/api/developer/tools/checks')).data.data,
   rum: (days: number) => get<RumInfo>('/rum', { days }),
   risk: () => get<RiskOverview>('/risk'),
-  riskAssess: async (body: Doc) => (await mainLink.post<ApiResponse<RiskAssessment>>('/api/developer/risk/assess', body)).data.data,
+  riskAssess: async (body: Doc) =>
+    (await mainLink.post<ApiResponse<RiskAssessment>>('/api/developer/risk/assess', body)).data
+      .data,
   quality: (days: number) => get<QualityInfo>('/quality', { days }),
   mobileReleases: (days: number) => get<MobileReleasesInfo>('/mobile/releases', { days }),
-  sessions: (days: number, kind?: string) => get<SessionsInfo>('/sessions', { days, kind: kind || undefined }),
+  sessions: (days: number, kind?: string) =>
+    get<SessionsInfo>('/sessions', { days, kind: kind || undefined }),
   sessionReplay: (id: string) => get<SessionReplay>(`/sessions/${encodeURIComponent(id)}`),
   searchHealth: (days: number) => get<SearchHealthInfo>('/search-health', { days }),
   privacy: () => get<PrivacyInfo>('/privacy'),
   exportUserData: async (userId: string, reason: string, stepUp: string) =>
-    (await mainLink.post<Record<string, unknown>>(`/api/developer/privacy/export/${userId}`, { reason }, { headers: { 'X-Step-Up-Token': stepUp } })).data,
+    (
+      await mainLink.post<Record<string, unknown>>(
+        `/api/developer/privacy/export/${userId}`,
+        { reason },
+        { headers: { 'X-Step-Up-Token': stepUp } }
+      )
+    ).data,
   runbooks: () => get<RunbooksInfo>('/runbooks'),
-  runbook: (key: string) => get<{ runbook: Runbook; runs: RunbookRunRow[] }>(`/runbooks/${encodeURIComponent(key)}`),
-  startRunbook: async (key: string, incidentId?: string) => (await mainLink.post<ApiResponse<{ run: RunbookRunRow }>>(`/api/developer/runbooks/${encodeURIComponent(key)}/runs`, { incidentId })).data.data,
-  updateRunbookRun: async (id: string, body: { step?: number; note?: string; close?: boolean; outcome?: string }) => (await mainLink.patch<ApiResponse<{ run: RunbookRunRow }>>(`/api/developer/runbooks/runs/${id}`, body)).data.data,
-  externalServices: (hours: number) => get<ExternalServicesInfo>('/dependencies/external', { hours }),
-  migrations: (refresh?: boolean) => get<MigrationsInfo>('/migrations', refresh ? { refresh: 'true' } : {}),
+  runbook: (key: string) =>
+    get<{ runbook: Runbook; runs: RunbookRunRow[] }>(`/runbooks/${encodeURIComponent(key)}`),
+  startRunbook: async (key: string, incidentId?: string) =>
+    (
+      await mainLink.post<ApiResponse<{ run: RunbookRunRow }>>(
+        `/api/developer/runbooks/${encodeURIComponent(key)}/runs`,
+        { incidentId }
+      )
+    ).data.data,
+  updateRunbookRun: async (
+    id: string,
+    body: { step?: number; note?: string; close?: boolean; outcome?: string }
+  ) =>
+    (
+      await mainLink.patch<ApiResponse<{ run: RunbookRunRow }>>(
+        `/api/developer/runbooks/runs/${id}`,
+        body
+      )
+    ).data.data,
+  externalServices: (hours: number) =>
+    get<ExternalServicesInfo>('/dependencies/external', { hours }),
+  migrations: (refresh?: boolean) =>
+    get<MigrationsInfo>('/migrations', refresh ? { refresh: 'true' } : {}),
   eventConsistency: (days: number) => get<EventConsistencyInfo>('/event-consistency', { days }),
   marketplace: (days: number) => get<MarketplaceInfo>('/marketplace', { days }),
   userImpact: (days: number) => get<ImpactOverview>('/impact', { days }),
@@ -1927,50 +3049,86 @@ export const devApi = {
   txTrace: (id: string) => get<TxTrace>(`/transactions/${encodeURIComponent(id)}`),
   ledger: (month?: string) => get<LedgerInfo>('/ledger', month ? { month } : undefined),
   ledgerOrder: (orderId: string) => get<OrderJournal>(`/ledger/${orderId}`),
-  connectHealth: (refresh?: boolean) => get<ConnectHealthInfo>('/connect', refresh ? { refresh: 'true' } : undefined),
+  connectHealth: (refresh?: boolean) =>
+    get<ConnectHealthInfo>('/connect', refresh ? { refresh: 'true' } : undefined),
   connectProvider: (userId: string) => get<ConnectProviderDetail>(`/connect/${userId}`),
   connectResync: (userId: string) => mainLink.post(`/api/developer/connect/${userId}/resync`),
-  contracts: (flush?: boolean) => get<ContractsInfo>('/contracts', flush ? { flush: 'true' } : undefined),
-  contract: (method: string, route: string, status: string) => get<ContractDetail>('/contracts/endpoint', { method, route, status }),
-  ackContract: (id: string, note: string) => mainLink.post(`/api/developer/contracts/events/${id}/ack`, { note }),
+  contracts: (flush?: boolean) =>
+    get<ContractsInfo>('/contracts', flush ? { flush: 'true' } : undefined),
+  contract: (method: string, route: string, status: string) =>
+    get<ContractDetail>('/contracts/endpoint', { method, route, status }),
+  ackContract: (id: string, note: string) =>
+    mainLink.post(`/api/developer/contracts/events/${id}/ack`, { note }),
   fraud: (refresh?: boolean) => get<FraudInfo>('/fraud', refresh ? { refresh: 'true' } : undefined),
   fraudCase: (userId: string) => get<FraudCaseDetail>(`/fraud/${userId}`),
-  updateFraudCase: (userId: string, status: FraudStatus, note: string) => mainLink.patch(`/api/developer/fraud/${userId}`, { status, note }),
+  updateFraudCase: (userId: string, status: FraudStatus, note: string) =>
+    mainLink.patch(`/api/developer/fraud/${userId}`, { status, note }),
   failures: () => get<FailuresInfo>('/failures'),
   startFailure: (body: StartFailureInput) => mainLink.post('/api/developer/failures', body),
   stopFailure: (id: string | 'all') => mainLink.post(`/api/developer/failures/${id}/stop`),
-  configDrift: (refresh?: boolean) => get<ConfigDriftInfo>('/config-drift', refresh ? { refresh: 'true' } : undefined),
+  configDrift: (refresh?: boolean) =>
+    get<ConfigDriftInfo>('/config-drift', refresh ? { refresh: 'true' } : undefined),
   acceptBaseline: (note: string) => mainLink.post('/api/developer/config-drift/baseline', { note }),
-  capacity: (refresh?: boolean) => get<CapacityInfo>('/capacity', refresh ? { refresh: 'true' } : undefined),
+  capacity: (refresh?: boolean) =>
+    get<CapacityInfo>('/capacity', refresh ? { refresh: 'true' } : undefined),
   costs: (month?: string) => get<CostInfo>('/costs', month ? { month } : undefined),
-  saveCostConfig: (body: Partial<Pick<CostConfig, 'monthlyBudgetNok' | 'fixed'>> & { prices?: Partial<CostConfig['prices']> }) => mainLink.put('/api/developer/costs/config', body),
+  saveCostConfig: (
+    body: Partial<Pick<CostConfig, 'monthlyBudgetNok' | 'fixed'>> & {
+      prices?: Partial<CostConfig['prices']>;
+    }
+  ) => mainLink.put('/api/developer/costs/config', body),
   impact: (hours: number) => get<ImpactInfo>('/deployments/impact', { hours }),
-  impactDetail: (id: string, hours: number) => get<ImpactDetail>(`/deployments/impact/${id}`, { hours }),
+  impactDetail: (id: string, hours: number) =>
+    get<ImpactDetail>(`/deployments/impact/${id}`, { hours }),
   slo: (window: number) => get<SloInfo>('/slo', { window }),
-  dependencies: (refresh?: boolean) => get<DependencyInfo>('/dependencies', refresh ? { refresh: 'true' } : undefined),
+  dependencies: (refresh?: boolean) =>
+    get<DependencyInfo>('/dependencies', refresh ? { refresh: 'true' } : undefined),
   mobile: (q: Query) => get<MobileInfo>('/mobile', q),
   mobileError: (fp: string) => get<{ events: MobileErrorEvent[] }>(`/mobile/errors/${fp}`),
   synthetic: () => get<SyntheticInfo>('/synthetic'),
-  syntheticRuns: (key: string) => get<{ runs: SyntheticRunRow[] }>(`/synthetic/${encodeURIComponent(key)}/runs`),
-  syntheticRun: async (key?: string) => (await mainLink.post<ApiResponse<{ results: SyntheticRunRow[] }>>('/api/developer/synthetic/run', { key })).data.data,
-  syntheticCreate: (body: SyntheticCheckInput) => mainLink.post('/api/developer/synthetic/checks', body),
-  syntheticUpdate: (id: string, body: SyntheticCheckInput) => mainLink.patch(`/api/developer/synthetic/checks/${id}`, body),
+  syntheticRuns: (key: string) =>
+    get<{ runs: SyntheticRunRow[] }>(`/synthetic/${encodeURIComponent(key)}/runs`),
+  syntheticRun: async (key?: string) =>
+    (
+      await mainLink.post<ApiResponse<{ results: SyntheticRunRow[] }>>(
+        '/api/developer/synthetic/run',
+        { key }
+      )
+    ).data.data,
+  syntheticCreate: (body: SyntheticCheckInput) =>
+    mainLink.post('/api/developer/synthetic/checks', body),
+  syntheticUpdate: (id: string, body: SyntheticCheckInput) =>
+    mainLink.patch(`/api/developer/synthetic/checks/${id}`, body),
   syntheticDelete: (id: string) => mainLink.delete(`/api/developer/synthetic/checks/${id}`),
   safepayMachine: () => get<MachineInfo>('/safepay/machine'),
-  safepayOrderMachine: (id: string) => get<OrderMachine>(`/safepay/machine/${encodeURIComponent(id)}`),
+  safepayOrderMachine: (id: string) =>
+    get<OrderMachine>(`/safepay/machine/${encodeURIComponent(id)}`),
   backups: () => get<BackupInfo>('/backups'),
-  runBackup: async () => (await mainLink.post<ApiResponse<{ run: BackupRunRow }>>('/api/developer/backups/run')).data.data,
+  runBackup: async () =>
+    (await mainLink.post<ApiResponse<{ run: BackupRunRow }>>('/api/developer/backups/run')).data
+      .data,
   runDrill: async (backupId: string | null, stepUp: string) =>
-    (await mainLink.post<ApiResponse<{ run: BackupRunRow }>>('/api/developer/backups/drill', { backupId }, { headers: { 'X-Step-Up-Token': stepUp } })).data.data,
+    (
+      await mainLink.post<ApiResponse<{ run: BackupRunRow }>>(
+        '/api/developer/backups/drill',
+        { backupId },
+        { headers: { 'X-Step-Up-Token': stepUp } }
+      )
+    ).data.data,
   integrity: () => get<IntegrityInfo>('/integrity'),
-  runIntegrity: async () => (await mainLink.post<ApiResponse<IntegrityInfo>>('/api/developer/integrity/run')).data.data,
+  runIntegrity: async () =>
+    (await mainLink.post<ApiResponse<IntegrityInfo>>('/api/developer/integrity/run')).data.data,
   investigate: (q: string) => get<InvestigateResult>('/investigate', { q }),
   trace: (id: string) => get<TraceResult>(`/tools/trace/${encodeURIComponent(id)}`),
   payments: (q: Query) => get<PaymentsInfo>('/payments', q),
   safePay: (q: Query) => get<SafePayInfo>('/safepay', q),
   subscriptions: (q: Query) => get<SubscriptionsInfo>('/subscriptions', q),
   subscription: (id: string) =>
-    get<{ subscription: SubscriptionRow; operations: BillingOp[]; duplicates: { key: string; count: number }[] }>(`/subscriptions/${id}`),
+    get<{
+      subscription: SubscriptionRow;
+      operations: BillingOp[];
+      duplicates: { key: string; count: number }[];
+    }>(`/subscriptions/${id}`),
   reconciliation: () => get<ReconInfo>('/reconciliation'),
   jobs: (q: Query) => get<{ orders: JobRow[]; stuck: JobRow[] }>('/jobs', q),
   job: (id: string) => get<JobDetail>(`/jobs/${id}`),
@@ -1982,22 +3140,58 @@ export const devApi = {
   security: (q: Query) => get<SecurityInfo>('/security', q),
   blocks: () => get<{ yourIp: string | null; blocks: IpBlockRow[] }>('/security/blocks'),
   ips: (q: Query) => get<IpsInfo>('/ips', q),
-  stepUpSend: async () => (await mainLink.post<ApiResponse<{ sentTo: string }>>('/api/developer/step-up/send')).data.data,
-  stepUpVerify: async (code: string) => (await mainLink.post<ApiResponse<{ token: string; expiresAt: string }>>('/api/developer/step-up/verify', { code })).data.data,
-  action: async (type: ActionType, input: Doc, reason: string, stepUp: string, acknowledgeRisk = false) =>
-    (await mainLink.post<ApiResponse<{ executed: boolean; summary: string; requestId?: string; risk?: RiskAssessment | null }>>(`/api/developer/actions/${type}`, { input, reason, acknowledgeRisk }, { headers: { 'X-Step-Up-Token': stepUp } })).data.data,
+  stepUpSend: async () =>
+    (await mainLink.post<ApiResponse<{ sentTo: string }>>('/api/developer/step-up/send')).data.data,
+  stepUpVerify: async (code: string) =>
+    (
+      await mainLink.post<ApiResponse<{ token: string; expiresAt: string }>>(
+        '/api/developer/step-up/verify',
+        { code }
+      )
+    ).data.data,
+  action: async (
+    type: ActionType,
+    input: Doc,
+    reason: string,
+    stepUp: string,
+    acknowledgeRisk = false
+  ) =>
+    (
+      await mainLink.post<
+        ApiResponse<{
+          executed: boolean;
+          summary: string;
+          requestId?: string;
+          risk?: RiskAssessment | null;
+        }>
+      >(
+        `/api/developer/actions/${type}`,
+        { input, reason, acknowledgeRisk },
+        { headers: { 'X-Step-Up-Token': stepUp } }
+      )
+    ).data.data,
   approvals: (q: Query) => get<{ pending: number; requests: ChangeRequestRow[] }>('/approvals', q),
-  approve: (id: string, note: string, stepUp: string, acknowledgeRisk = false) => mainLink.post(`/api/developer/approvals/${id}/approve`, { note, acknowledgeRisk }, { headers: { 'X-Step-Up-Token': stepUp } }),
-  reject: (id: string, note: string) => mainLink.post(`/api/developer/approvals/${id}/reject`, { note }),
+  approve: (id: string, note: string, stepUp: string, acknowledgeRisk = false) =>
+    mainLink.post(
+      `/api/developer/approvals/${id}/approve`,
+      { note, acknowledgeRisk },
+      { headers: { 'X-Step-Up-Token': stepUp } }
+    ),
+  reject: (id: string, note: string) =>
+    mainLink.post(`/api/developer/approvals/${id}/reject`, { note }),
   cancelRequest: (id: string) => mainLink.post(`/api/developer/approvals/${id}/cancel`),
   flags: () => get<FlagsInfo>('/flags'),
   performance: () => get<PerfInfo>('/performance'),
   notifications: (q: Query) => get<NotificationsInfo>('/notifications', q),
   me: () => get<DevMe>('/me'),
   queues: () => get<QueuesInfo>('/queues'),
-  retryQueueJob: async (queue: string, id: string) => (await mainLink.post(`/api/developer/queues/${queue}/jobs/${encodeURIComponent(id)}/retry`)).data,
-  removeQueueJob: async (queue: string, id: string) => (await mainLink.delete(`/api/developer/queues/${queue}/jobs/${encodeURIComponent(id)}`)).data,
-  retryFailedJobs: async (queue: string) => (await mainLink.post(`/api/developer/queues/${queue}/retry-failed`)).data,
+  retryQueueJob: async (queue: string, id: string) =>
+    (await mainLink.post(`/api/developer/queues/${queue}/jobs/${encodeURIComponent(id)}/retry`))
+      .data,
+  removeQueueJob: async (queue: string, id: string) =>
+    (await mainLink.delete(`/api/developer/queues/${queue}/jobs/${encodeURIComponent(id)}`)).data,
+  retryFailedJobs: async (queue: string) =>
+    (await mainLink.post(`/api/developer/queues/${queue}/retry-failed`)).data,
   redisOverview: () => get<RedisOverview>('/redis/overview'),
   redisMemory: () => get<RedisMemoryInfo>('/redis/memory'),
   redisCache: () => get<RedisCacheInfo>('/redis/cache'),
@@ -2009,8 +3203,11 @@ export const devApi = {
   redisRealtime: () => get<RedisRealtime>('/redis/realtime'),
   redisAlerts: () => get<RedisAlerts>('/redis/alerts'),
   redisAudit: () => get<{ logs: RedisAuditRow[] }>('/redis/audit'),
-  invalidateCache: async (namespace: string) => (await mainLink.post(`/api/developer/redis/cache/${encodeURIComponent(namespace)}/invalidate`)).data,
-  deleteCacheKey: async (key: string) => (await mainLink.post('/api/developer/redis/cache/delete-key', { key })).data,
+  invalidateCache: async (namespace: string) =>
+    (await mainLink.post(`/api/developer/redis/cache/${encodeURIComponent(namespace)}/invalidate`))
+      .data,
+  deleteCacheKey: async (key: string) =>
+    (await mainLink.post('/api/developer/redis/cache/delete-key', { key })).data,
   tickets: (q: Query) => get<TicketsInfo>('/tickets', q),
   ticket: (id: string) => get<TicketDetail>(`/tickets/${id}`),
   updateTicket: (id: string, body: Doc) => mainLink.patch(`/api/developer/tickets/${id}`, body),
@@ -2052,7 +3249,15 @@ export interface WorkerInfo {
   scheduler: boolean;
   redis: boolean;
   cache: Record<string, { hits: number; misses: number }>;
-  passwordQueue: { active: number; waiting: number; done: number; busy: number; maxWaiting: number; maxActive: number; maxQueue: number };
+  passwordQueue: {
+    active: number;
+    waiting: number;
+    done: number;
+    busy: number;
+    maxWaiting: number;
+    maxActive: number;
+    maxQueue: number;
+  };
 }
 export interface WorkersInfo {
   configured: string;
@@ -2077,10 +3282,27 @@ export interface WorkersInfo {
 }
 
 type Unavailable = { available: false; reason: string };
-export interface NginxPath { path: string; requests: number; hitRate: number | null; p95Ms: number | null }
+export interface NginxPath {
+  path: string;
+  requests: number;
+  hitRate: number | null;
+  p95Ms: number | null;
+}
 export interface NginxInfo {
   version: string | null;
-  status: Unavailable | { available: true; active: number; accepts: number; handled: number; requests: number; dropped: number; reading: number; writing: number; waiting: number };
+  status:
+    | Unavailable
+    | {
+        available: true;
+        active: number;
+        accepts: number;
+        handled: number;
+        requests: number;
+        dropped: number;
+        reading: number;
+        writing: number;
+        waiting: number;
+      };
   accessLog:
     | Unavailable
     | {
@@ -2099,8 +3321,14 @@ export interface NginxInfo {
         upstreamP95Ms: number | null;
         topPaths: NginxPath[];
       };
-  processes: { available: boolean; reason?: string; list: { pid: number; ppid: number | null; role: string; rssBytes: number; command: string }[] };
-  cacheDir: (Unavailable & { dir: string }) | { available: true; dir: string; files: number; bytes: number; truncated: boolean };
+  processes: {
+    available: boolean;
+    reason?: string;
+    list: { pid: number; ppid: number | null; role: string; rssBytes: number; command: string }[];
+  };
+  cacheDir:
+    | (Unavailable & { dir: string })
+    | { available: true; dir: string; files: number; bytes: number; truncated: boolean };
   config: { statusUrl: string; accessLog: string; cacheDir: string };
 }
 export interface Pm2Process {
@@ -2123,9 +3351,29 @@ export interface Pm2Process {
   createdAt: string | null;
   errLogTail: string[];
 }
-export type Pm2Info = Unavailable | { available: true; processes: Pm2Process[]; self: string | null };
+export type Pm2Info =
+  Unavailable | { available: true; processes: Pm2Process[]; self: string | null };
 export interface CachingInfo {
-  nginx: Unavailable | { available: true; hitRate: number | null; statuses: Record<string, number>; topPaths: NginxPath[]; window: { from: string | null; to: string | null; lines: number } };
-  api: { store: 'redis' | 'in-process'; workers: number; namespaces: { name: string; ttlSec: number | null; hits: number; misses: number; hitRate: number | null; redisKeys: number | null }[] };
+  nginx:
+    | Unavailable
+    | {
+        available: true;
+        hitRate: number | null;
+        statuses: Record<string, number>;
+        topPaths: NginxPath[];
+        window: { from: string | null; to: string | null; lines: number };
+      };
+  api: {
+    store: 'redis' | 'in-process';
+    workers: number;
+    namespaces: {
+      name: string;
+      ttlSec: number | null;
+      hits: number;
+      misses: number;
+      hitRate: number | null;
+      redisKeys: number | null;
+    }[];
+  };
   redisKeys: Unavailable | { available: true; truncated: boolean };
 }

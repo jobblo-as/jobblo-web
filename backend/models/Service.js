@@ -166,8 +166,19 @@ const TIMESTAMP_OPS = { $set: 'updatedAt', $setOnInsert: 'createdAt' };
 const isViewCountOnly = (update) =>
   !!update &&
   Object.keys(update.$inc || {}).join() === 'views' &&
-  Object.keys(update).every((op) => op === '$inc' || Object.keys(update[op]).join() === TIMESTAMP_OPS[op]);
-for (const op of ['save', 'findOneAndUpdate', 'findOneAndDelete', 'deleteOne', 'deleteMany', 'updateOne', 'updateMany', 'insertMany']) {
+  Object.keys(update).every(
+    (op) => op === '$inc' || Object.keys(update[op]).join() === TIMESTAMP_OPS[op]
+  );
+for (const op of [
+  'save',
+  'findOneAndUpdate',
+  'findOneAndDelete',
+  'deleteOne',
+  'deleteMany',
+  'updateOne',
+  'updateMany',
+  'insertMany',
+]) {
   serviceSchema.post(op, function clearServiceCache() {
     if (typeof this?.getUpdate === 'function' && isViewCountOnly(this.getUpdate())) return;
     void require('../utils/cache').invalidate('services');

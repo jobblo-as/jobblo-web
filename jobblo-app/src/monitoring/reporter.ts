@@ -18,8 +18,25 @@ import { templatePath } from './paths';
 
 type Event =
   | { type: 'session'; at: string; screen?: string }
-  | { type: 'error'; at: string; name: string; message: string; stack?: string; fatal: boolean; kind: 'js' | 'render' | 'promise'; screen?: string }
-  | { type: 'api'; at: string; method?: string; path: string; status: number; ms: number; screen?: string };
+  | {
+      type: 'error';
+      at: string;
+      name: string;
+      message: string;
+      stack?: string;
+      fatal: boolean;
+      kind: 'js' | 'render' | 'promise';
+      screen?: string;
+    }
+  | {
+      type: 'api';
+      at: string;
+      method?: string;
+      path: string;
+      status: number;
+      ms: number;
+      screen?: string;
+    };
 
 const INSTALL_KEY = 'jobblo.monitoring.installId';
 const PENDING_KEY = 'jobblo.monitoring.pendingCrash';
@@ -36,7 +53,10 @@ let started = false;
 const sessionId = randomId();
 
 const appVersion = Constants.expoConfig?.version ?? null;
-const build = (Platform.OS === 'ios' ? Constants.expoConfig?.ios?.buildNumber : Constants.expoConfig?.android?.versionCode?.toString()) ?? null;
+const build =
+  (Platform.OS === 'ios'
+    ? Constants.expoConfig?.ios?.buildNumber
+    : Constants.expoConfig?.android?.versionCode?.toString()) ?? null;
 
 function randomId() {
   return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;
@@ -54,7 +74,10 @@ async function send(forSession: string, events: Event[]) {
     const token = await authStorage.getItem('token').catch(() => null);
     const res = await fetch(endpoint, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify({
         installId,
         sessionId: forSession,
@@ -78,19 +101,39 @@ async function flush() {
   const batch = queue.splice(0, 50);
   try {
     if (!(await send(sessionId, batch))) queue.unshift(...batch);
-    else if (batch.some((e) => e.type === 'error' && e.fatal)) await authStorage.removeItem(PENDING_KEY).catch(() => undefined);
+    else if (batch.some((e) => e.type === 'error' && e.fatal))
+      await authStorage.removeItem(PENDING_KEY).catch(() => undefined);
   } finally {
     flushing = false;
   }
 }
 
-export function captureError(error: unknown, { fatal = false, kind = 'js' }: { fatal?: boolean; kind?: 'js' | 'render' | 'promise' } = {}) {
+export function captureError(
+  error: unknown,
+  { fatal = false, kind = 'js' }: { fatal?: boolean; kind?: 'js' | 'render' | 'promise' } = {}
+) {
   try {
-    const e = error instanceof Error ? error : new Error(typeof error === 'string' ? error : JSON.stringify(error));
-    const event: Event = { type: 'error', at: new Date().toISOString(), name: e.name || 'Error', message: e.message || '(no message)', stack: e.stack?.slice(0, 4000), fatal, kind, screen };
+    const e =
+      error instanceof Error
+        ? error
+        : new Error(typeof error === 'string' ? error : JSON.stringify(error));
+    const event: Event = {
+      type: 'error',
+      at: new Date().toISOString(),
+      name: e.name || 'Error',
+      message: e.message || '(no message)',
+      stack: e.stack?.slice(0, 4000),
+      fatal,
+      kind,
+      screen,
+    };
     push(event);
     // Fatal: persist first, so a successful send can clear it (no duplicate next launch).
-    if (fatal) void authStorage.setItem(PENDING_KEY, JSON.stringify({ sessionId, event })).catch(() => undefined).finally(() => void flush());
+    if (fatal)
+      void authStorage
+        .setItem(PENDING_KEY, JSON.stringify({ sessionId, event }))
+        .catch(() => undefined)
+        .finally(() => void flush());
     else void flush();
   } catch {
     /* never throw from the reporter */
@@ -113,7 +156,15 @@ export function monitorAxios(client: AxiosInstance) {
     if (!config?._startedAt) return;
     const ms = Date.now() - config._startedAt;
     if (status === 0 || status >= 500 || ms >= SLOW_MS) {
-      push({ type: 'api', at: new Date().toISOString(), method: config.method?.toUpperCase(), path: templatePath(config.url), status, ms, screen });
+      push({
+        type: 'api',
+        at: new Date().toISOString(),
+        method: config.method?.toUpperCase(),
+        path: templatePath(config.url),
+        status,
+        ms,
+        screen,
+      });
     }
   };
   client.interceptors.response.use(
@@ -136,7 +187,12 @@ export async function startMonitoring(apiBaseUrl: string) {
 
   // Uncaught JS errors. Keep the previous handler: it shows the red box in dev and
   // terminates the app in release, which is the correct crash behaviour.
-  const g = globalThis as unknown as { ErrorUtils?: { getGlobalHandler: () => (e: unknown, fatal?: boolean) => void; setGlobalHandler: (h: (e: unknown, fatal?: boolean) => void) => void } };
+  const g = globalThis as unknown as {
+    ErrorUtils?: {
+      getGlobalHandler: () => (e: unknown, fatal?: boolean) => void;
+      setGlobalHandler: (h: (e: unknown, fatal?: boolean) => void) => void;
+    };
+  };
   const previous = g.ErrorUtils?.getGlobalHandler();
   g.ErrorUtils?.setGlobalHandler((error, isFatal) => {
     captureError(error, { fatal: Boolean(isFatal), kind: 'js' });
@@ -144,8 +200,15 @@ export async function startMonitoring(apiBaseUrl: string) {
   });
 
   // Unhandled promise rejections (Hermes).
-  const hermes = (globalThis as unknown as { HermesInternal?: { enablePromiseRejectionTracker?: (o: object) => void } }).HermesInternal;
-  hermes?.enablePromiseRejectionTracker?.({ allRejections: true, onUnhandled: (_id: number, error: unknown) => captureError(error, { kind: 'promise' }) });
+  const hermes = (
+    globalThis as unknown as {
+      HermesInternal?: { enablePromiseRejectionTracker?: (o: object) => void };
+    }
+  ).HermesInternal;
+  hermes?.enablePromiseRejectionTracker?.({
+    allRejections: true,
+    onUnhandled: (_id: number, error: unknown) => captureError(error, { kind: 'promise' }),
+  });
 
   try {
     installId = (await authStorage.getItem(INSTALL_KEY)) || null;
@@ -156,7 +219,10 @@ export async function startMonitoring(apiBaseUrl: string) {
     // A crash the previous launch could not deliver; counted against that session.
     const pending = await authStorage.getItem(PENDING_KEY);
     if (pending) {
-      const { sessionId: crashed, event } = JSON.parse(pending) as { sessionId: string; event: Event };
+      const { sessionId: crashed, event } = JSON.parse(pending) as {
+        sessionId: string;
+        event: Event;
+      };
       if (await send(crashed, [event])) await authStorage.removeItem(PENDING_KEY);
     }
   } catch {

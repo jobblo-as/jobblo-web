@@ -103,7 +103,11 @@ describe('signedInDestination', () => {
   it('mobile + challenge: issues a hashed 60 s code, no token, no session yet', async () => {
     const res = makeRes();
     const url = await oauthReturn.signedInDestination({
-      req: {}, res, platform: 'mobile', userId: 'u1', codeChallenge: CHALLENGE,
+      req: {},
+      res,
+      platform: 'mobile',
+      userId: 'u1',
+      codeChallenge: CHALLENGE,
     });
     const code = codeFrom(url);
     expect(code).toMatch(/^[A-Za-z0-9_-]{43}$/);
@@ -117,7 +121,12 @@ describe('signedInDestination', () => {
 
   it('mobile without challenge (old app builds) still gets the token link', async () => {
     const res = makeRes();
-    const url = await oauthReturn.signedInDestination({ req: {}, res, platform: 'mobile', userId: 'u1' });
+    const url = await oauthReturn.signedInDestination({
+      req: {},
+      res,
+      platform: 'mobile',
+      userId: 'u1',
+    });
     expect(new URL(url).searchParams.get('token')).toBe('h.p.s');
     expect(MobileOAuthCode.create).not.toHaveBeenCalled();
   });
@@ -125,7 +134,11 @@ describe('signedInDestination', () => {
   it('web ignores a challenge and keeps cookies + /oauth-success', async () => {
     const res = makeRes();
     const url = await oauthReturn.signedInDestination({
-      req: {}, res, platform: 'web', userId: 'u1', codeChallenge: CHALLENGE,
+      req: {},
+      res,
+      platform: 'web',
+      userId: 'u1',
+      codeChallenge: CHALLENGE,
     });
     expect(url).toBe('https://jobblo.example/oauth-success');
     expect(res.cookies.refreshToken).toBe('rt');
@@ -177,7 +190,12 @@ describe('exchangeMobileCode', () => {
   });
 
   it('malformed input never reaches the database', async () => {
-    for (const body of [{}, { code: CODE }, { code: 'abc', code_verifier: VERIFIER }, { code: { $ne: null }, code_verifier: VERIFIER }]) {
+    for (const body of [
+      {},
+      { code: CODE },
+      { code: 'abc', code_verifier: VERIFIER },
+      { code: { $ne: null }, code_verifier: VERIFIER },
+    ]) {
       expect((await exchange(body)).statusCode).toBe(400);
     }
     expect(MobileOAuthCode.findOneAndDelete).not.toHaveBeenCalled();

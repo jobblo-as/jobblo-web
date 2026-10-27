@@ -1,5 +1,14 @@
 import { useState, type ReactNode } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { ShieldCheck } from 'lucide-react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -30,9 +39,18 @@ export default function MfaGate({ children }: { children: ReactNode }) {
 
   const verify = useMutation({
     mutationFn: async (value: string) =>
-      (await apiClient.post('/auth/mfa/verify', useBackup ? { backupCode: value } : { code: value })).data,
+      (
+        await apiClient.post(
+          '/auth/mfa/verify',
+          useBackup ? { backupCode: value } : { code: value }
+        )
+      ).data,
     onSuccess: async () => {
-      queryClient.setQueryData<MfaStatus>(['mfa-status'], { required: true, enabled: true, verified: true });
+      queryClient.setQueryData<MfaStatus>(['mfa-status'], {
+        required: true,
+        enabled: true,
+        verified: true,
+      });
       // Everything that came back 403 before the code: fetch it again.
       await queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] !== 'mfa-status' });
     },
@@ -56,8 +74,14 @@ export default function MfaGate({ children }: { children: ReactNode }) {
 
   return (
     <SafeAreaView className="flex-1 bg-page">
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} className="flex-1">
-        <ScrollView contentContainerClassName="flex-grow justify-center px-6 py-10" keyboardShouldPersistTaps="handled">
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        className="flex-1"
+      >
+        <ScrollView
+          contentContainerClassName="flex-grow justify-center px-6 py-10"
+          keyboardShouldPersistTaps="handled"
+        >
           <View className="mb-5 h-12 w-12 items-center justify-center rounded-full bg-[#F0F1EB] dark:bg-surface-2">
             <ShieldCheck size={22} color={TC.ink} />
           </View>
@@ -66,28 +90,46 @@ export default function MfaGate({ children }: { children: ReactNode }) {
             <ActivityIndicator accessibilityLabel="Laster" color={TC.ink} />
           ) : status.isError ? (
             <>
-              <Text accessibilityRole="header" className="text-[26px] font-bold text-ink">Kunne ikke laste</Text>
-              <Text className="mt-2 text-[15px] leading-6 text-muted">Sjekk nettforbindelsen og prøv igjen.</Text>
-              <Pressable onPress={() => status.refetch()} accessibilityRole="button" className="mt-6 items-center rounded-xl bg-brand py-3.5">
+              <Text accessibilityRole="header" className="text-[26px] font-bold text-ink">
+                Kunne ikke laste
+              </Text>
+              <Text className="mt-2 text-[15px] leading-6 text-muted">
+                Sjekk nettforbindelsen og prøv igjen.
+              </Text>
+              <Pressable
+                onPress={() => status.refetch()}
+                accessibilityRole="button"
+                className="mt-6 items-center rounded-xl bg-brand py-3.5"
+              >
                 <Text className="text-sm font-bold text-white">Prøv igjen</Text>
               </Pressable>
             </>
           ) : !s?.enabled ? (
             <>
-              <Text accessibilityRole="header" className="text-[26px] font-bold text-ink">Totrinnsbekreftelse kreves</Text>
-              <Text className="mt-2 text-[15px] leading-6 text-muted">
-                Denne kontoen må sette opp en autentiseringsapp før den kan brukes. Logg inn på jobblo.no på en
-                datamaskin for å sette den opp, og kom tilbake hit etterpå.
+              <Text accessibilityRole="header" className="text-[26px] font-bold text-ink">
+                Totrinnsbekreftelse kreves
               </Text>
-              <Pressable onPress={() => status.refetch()} accessibilityRole="button" className="mt-6 items-center rounded-xl bg-brand py-3.5">
+              <Text className="mt-2 text-[15px] leading-6 text-muted">
+                Denne kontoen må sette opp en autentiseringsapp før den kan brukes. Logg inn på
+                jobblo.no på en datamaskin for å sette den opp, og kom tilbake hit etterpå.
+              </Text>
+              <Pressable
+                onPress={() => status.refetch()}
+                accessibilityRole="button"
+                className="mt-6 items-center rounded-xl bg-brand py-3.5"
+              >
                 <Text className="text-sm font-bold text-white">Jeg har satt den opp</Text>
               </Pressable>
             </>
           ) : (
             <>
-              <Text accessibilityRole="header" className="text-[26px] font-bold text-ink">Totrinnsbekreftelse</Text>
+              <Text accessibilityRole="header" className="text-[26px] font-bold text-ink">
+                Totrinnsbekreftelse
+              </Text>
               <Text className="mt-2 text-[15px] leading-6 text-muted">
-                {useBackup ? 'Skriv inn en av backupkodene dine.' : 'Skriv inn den 6-sifrede koden fra autentiseringsappen din.'}
+                {useBackup
+                  ? 'Skriv inn en av backupkodene dine.'
+                  : 'Skriv inn den 6-sifrede koden fra autentiseringsappen din.'}
               </Text>
               <TextInput
                 value={code}
@@ -108,7 +150,10 @@ export default function MfaGate({ children }: { children: ReactNode }) {
                 className="mt-6 rounded-2xl border border-line bg-surface px-4 py-3.5 text-center text-[20px] font-semibold tracking-[0.3em] text-ink"
               />
               {error ? (
-                <Text accessibilityRole="alert" className="mt-3 text-[13px] text-[#B4544A] dark:text-danger">
+                <Text
+                  accessibilityRole="alert"
+                  className="mt-3 text-[13px] text-[#B4544A] dark:text-danger"
+                >
                   {error}
                 </Text>
               ) : null}
@@ -118,7 +163,9 @@ export default function MfaGate({ children }: { children: ReactNode }) {
                 accessibilityRole="button"
                 className="mt-5 items-center rounded-xl bg-brand py-3.5"
               >
-                <Text className="text-sm font-bold text-white">{verify.isPending ? 'Bekrefter…' : 'Bekreft'}</Text>
+                <Text className="text-sm font-bold text-white">
+                  {verify.isPending ? 'Bekrefter…' : 'Bekreft'}
+                </Text>
               </Pressable>
               <Pressable
                 onPress={() => {
@@ -136,8 +183,14 @@ export default function MfaGate({ children }: { children: ReactNode }) {
             </>
           )}
 
-          <Pressable onPress={() => logout()} accessibilityRole="button" className="mt-8 items-center">
-            <Text className="text-[13px] font-medium" style={{ color: tc('#63665F', 'muted') }}>Logg ut</Text>
+          <Pressable
+            onPress={() => logout()}
+            accessibilityRole="button"
+            className="mt-8 items-center"
+          >
+            <Text className="text-[13px] font-medium" style={{ color: tc('#63665F', 'muted') }}>
+              Logg ut
+            </Text>
           </Pressable>
         </ScrollView>
       </KeyboardAvoidingView>

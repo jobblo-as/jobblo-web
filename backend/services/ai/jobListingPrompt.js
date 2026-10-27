@@ -312,7 +312,8 @@ function buildContextBlock(context) {
   const anchorDur = anchorDuration(context.categoryName);
   const durValue = context.userDuration?.value ?? anchorDur.value;
   const durUnit = context.userDuration?.unit ?? anchorDur.unit;
-  const hours = durUnit === 'days' ? durValue * 8 : durUnit === 'minutes' ? durValue / 60 : durValue;
+  const hours =
+    durUnit === 'days' ? durValue * 8 : durUnit === 'minutes' ? durValue / 60 : durValue;
   const heuristicTotal = Math.round(anchorHr * hours);
 
   const payment = PAYMENT_TYPES.includes(context.paymentType) ? context.paymentType : 'Fastpris';

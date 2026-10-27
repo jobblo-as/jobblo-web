@@ -15,7 +15,10 @@ export interface ProviderOrderHistoryItem {
   data?: Record<string, unknown>;
 }
 
-export interface ProviderOrder extends Omit<SafePayOrder, 'serviceId' | 'customerId' | 'providerId' | 'checklist'> {
+export interface ProviderOrder extends Omit<
+  SafePayOrder,
+  'serviceId' | 'customerId' | 'providerId' | 'checklist'
+> {
   serviceId: SafePayService | null;
   customerId: SafePayParty | null;
   providerId: (SafePayParty & { completedJobs?: number }) | null;

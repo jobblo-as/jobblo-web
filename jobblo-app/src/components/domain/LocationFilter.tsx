@@ -22,9 +22,7 @@ interface LocationFilterProps {
 const Checkbox = ({ checked }: { checked: boolean }) => (
   <View
     className={`flex size-5 items-center justify-center rounded-[0.3rem] border ${
-      checked
-        ? 'border-brand-text bg-brand'
-        : 'border-[#D4D6CD] bg-surface'
+      checked ? 'border-brand-text bg-brand' : 'border-[#D4D6CD] bg-surface'
     }`}
   >
     {checked && <Check size={12} color="white" strokeWidth={3} />}
@@ -59,9 +57,7 @@ export function LocationFilter({
   return (
     <View className="border-b border-line py-4">
       <View className="mb-3 flex-row items-center justify-between">
-        <Text className="text-[0.9375rem] font-semibold text-ink">
-          Område
-        </Text>
+        <Text className="text-[0.9375rem] font-semibold text-ink">Område</Text>
         {hasLocationFilter && (
           <Text
             onPress={onReset}
@@ -81,10 +77,10 @@ export function LocationFilter({
               className={`flex-row items-center gap-2.5 rounded-lg px-2.5 py-2 ${selectedCountyCodes.includes(county.code) ? 'bg-tint' : ''}`}
             >
               <Checkbox checked={selectedCountyCodes.includes(county.code)} />
-              <Text className="flex-1 text-[0.875rem] font-medium text-ink">
-                {county.name}
-              </Text>
-              {typeof county.count === 'number' ? <Text className="text-[0.8125rem] text-muted">{county.count}</Text> : null}
+              <Text className="flex-1 text-[0.875rem] font-medium text-ink">{county.name}</Text>
+              {typeof county.count === 'number' ? (
+                <Text className="text-[0.8125rem] text-muted">{county.count}</Text>
+              ) : null}
               {county.children && county.children.length > 0 && (
                 <Pressable onPress={() => onToggleCountyExpand(county.code)}>
                   {expandedCounties.includes(county.code) ? (
@@ -105,39 +101,20 @@ export function LocationFilter({
                     onPress={() => onToggleMunicipality(municipality.code)}
                     className={`ml-8 flex-row items-center gap-2.5 rounded-lg px-2.5 py-1.5 ${selectedMunicipalityCodes.includes(municipality.code) ? 'bg-tint' : ''}`}
                   >
-                    <Checkbox
-                      checked={selectedMunicipalityCodes.includes(
-                        municipality.code
-                      )}
-                    />
-                    <Text className="flex-1 text-[0.8125rem] text-muted">
-                      {municipality.name}
-                    </Text>
-                    {typeof municipality.count === 'number' ? <Text className="text-[0.8125rem] text-muted">{municipality.count}</Text> : null}
-                    {municipality.children &&
-                      municipality.children.length > 0 && (
-                        <Pressable
-                          onPress={() =>
-                            onToggleMunicipalityExpand(municipality.code)
-                          }
-                        >
-                          {expandedMunicipalities.includes(
-                            municipality.code
-                          ) ? (
-                            <ChevronDown
-                              size={14}
-                              color={tc('#9B9E96', 'subtle')}
-                              strokeWidth={2}
-                            />
-                          ) : (
-                            <ChevronRight
-                              size={14}
-                              color={tc('#9B9E96', 'subtle')}
-                              strokeWidth={2}
-                            />
-                          )}
-                        </Pressable>
-                      )}
+                    <Checkbox checked={selectedMunicipalityCodes.includes(municipality.code)} />
+                    <Text className="flex-1 text-[0.8125rem] text-muted">{municipality.name}</Text>
+                    {typeof municipality.count === 'number' ? (
+                      <Text className="text-[0.8125rem] text-muted">{municipality.count}</Text>
+                    ) : null}
+                    {municipality.children && municipality.children.length > 0 && (
+                      <Pressable onPress={() => onToggleMunicipalityExpand(municipality.code)}>
+                        {expandedMunicipalities.includes(municipality.code) ? (
+                          <ChevronDown size={14} color={tc('#9B9E96', 'subtle')} strokeWidth={2} />
+                        ) : (
+                          <ChevronRight size={14} color={tc('#9B9E96', 'subtle')} strokeWidth={2} />
+                        )}
+                      </Pressable>
+                    )}
                   </Pressable>
 
                   {/* Areas */}
@@ -149,13 +126,11 @@ export function LocationFilter({
                         onPress={() => onToggleArea(area.code)}
                         className={`ml-16 flex-row items-center gap-2.5 rounded-lg px-2.5 py-1 ${selectedAreaCodes.includes(area.code) ? 'bg-tint' : ''}`}
                       >
-                        <Checkbox
-                          checked={selectedAreaCodes.includes(area.code)}
-                        />
-                        <Text className="flex-1 text-[0.8125rem] text-muted">
-                          {area.name}
-                        </Text>
-                        {typeof area.count === 'number' ? <Text className="text-[0.8125rem] text-muted">{area.count}</Text> : null}
+                        <Checkbox checked={selectedAreaCodes.includes(area.code)} />
+                        <Text className="flex-1 text-[0.8125rem] text-muted">{area.name}</Text>
+                        {typeof area.count === 'number' ? (
+                          <Text className="text-[0.8125rem] text-muted">{area.count}</Text>
+                        ) : null}
                       </Pressable>
                     ))}
                 </View>

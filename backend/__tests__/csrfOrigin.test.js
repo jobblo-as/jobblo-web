@@ -155,12 +155,19 @@ describe('legitimate traffic', () => {
   });
 
   it('6b. no Origin but a trusted Referer, or same-origin fetch metadata, is accepted', async () => {
-    expect((await request(app).post('/api/auth/logout').set('Referer', `${FRONTEND}/profile`)).status).toBe(200);
-    expect((await request(app).post('/api/auth/logout').set('Sec-Fetch-Site', 'same-origin')).status).toBe(200);
+    expect(
+      (await request(app).post('/api/auth/logout').set('Referer', `${FRONTEND}/profile`)).status
+    ).toBe(200);
+    expect(
+      (await request(app).post('/api/auth/logout').set('Sec-Fetch-Site', 'same-origin')).status
+    ).toBe(200);
   });
 
   it('reads (GET) are not affected', async () => {
-    const res = await request(app).get('/api/auth/profile').set('Origin', EVIL).set('Cookie', VICTIM_COOKIES);
+    const res = await request(app)
+      .get('/api/auth/profile')
+      .set('Origin', EVIL)
+      .set('Cookie', VICTIM_COOKIES);
     expect(res.status).toBe(200);
     // CORS still withholds the response from the attacker's page.
     expect(res.headers['access-control-allow-origin']).toBeUndefined();
@@ -203,7 +210,11 @@ describe('cross-site forgery is refused before any handler runs', () => {
 
   it('login CSRF: a cross-site form login is refused even without victim cookies', async () => {
     rejected(
-      await request(app).post('/api/auth/login').set('Origin', EVIL).type('form').send('email=a@evil&password=x')
+      await request(app)
+        .post('/api/auth/login')
+        .set('Origin', EVIL)
+        .type('form')
+        .send('email=a@evil&password=x')
     );
   });
 
@@ -218,7 +229,9 @@ describe('cross-site forgery is refused before any handler runs', () => {
     ['no Origin, cross-site fetch metadata', { 'Sec-Fetch-Site': 'cross-site' }],
     ['no Origin, same-site (sibling subdomain) fetch metadata', { 'Sec-Fetch-Site': 'same-site' }],
   ])('6. %s', async (_label, headers) => {
-    rejected(await request(app).post('/api/auth/logout').set(headers).set('Cookie', VICTIM_COOKIES));
+    rejected(
+      await request(app).post('/api/auth/logout').set(headers).set('Cookie', VICTIM_COOKIES)
+    );
   });
 
   it('7. forged Host / X-Forwarded-Host cannot make an evil Origin "same-origin"', async () => {
@@ -252,14 +265,25 @@ describe('cross-site forgery is refused before any handler runs', () => {
       '/api/stripe/subscription/change',
       '/api/stripe/create-checkout-session',
     ]) {
-      rejected(await request(app).post(p).set('Origin', EVIL).set('Cookie', VICTIM_COOKIES).send({}));
+      rejected(
+        await request(app).post(p).set('Origin', EVIL).set('Cookie', VICTIM_COOKIES).send({})
+      );
     }
   });
 
   it('16. PUT, PATCH and DELETE get the same treatment', async () => {
-    rejected(await request(app).put('/api/services/s1').set('Origin', EVIL).set('Cookie', VICTIM_COOKIES));
-    rejected(await request(app).patch('/api/admin/disputes/d1/status').set('Origin', EVIL).set('Cookie', VICTIM_COOKIES));
-    rejected(await request(app).delete('/api/users/u1').set('Origin', EVIL).set('Cookie', VICTIM_COOKIES));
+    rejected(
+      await request(app).put('/api/services/s1').set('Origin', EVIL).set('Cookie', VICTIM_COOKIES)
+    );
+    rejected(
+      await request(app)
+        .patch('/api/admin/disputes/d1/status')
+        .set('Origin', EVIL)
+        .set('Cookie', VICTIM_COOKIES)
+    );
+    rejected(
+      await request(app).delete('/api/users/u1').set('Origin', EVIL).set('Cookie', VICTIM_COOKIES)
+    );
   });
 
   afterEach(() => {
@@ -293,6 +317,8 @@ describe('app.js wiring', () => {
     expect(src).toMatch(/cors\(corsOptions\(origins\)\)/);
     expect(src).toMatch(/createCsrfOriginGuard\(origins\)/);
     expect(src).not.toMatch(/req\.(hostname|headers\.host)/);
-    expect(fs.readFileSync(path.join(__dirname, '..', 'config', 'cors.js'), 'utf8')).not.toMatch(/req\.(hostname|headers\.host)/);
+    expect(fs.readFileSync(path.join(__dirname, '..', 'config', 'cors.js'), 'utf8')).not.toMatch(
+      /req\.(hostname|headers\.host)/
+    );
   });
 });

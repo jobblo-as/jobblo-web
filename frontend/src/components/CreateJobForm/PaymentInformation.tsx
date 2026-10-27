@@ -179,8 +179,8 @@ export const PaymentInformation: React.FC<PaymentInformationProps> = ({
 
         {paymentType === 'Anbud' && (
           <p className="mt-3 text-[0.8125rem] leading-relaxed text-[#63665F]">
-            Budsjettet vises til de som gir tilbud, så de har en økonomisk ramme å forholde seg
-            til. Du binder deg ikke til beløpet.
+            Budsjettet vises til de som gir tilbud, så de har en økonomisk ramme å forholde seg til.
+            Du binder deg ikke til beløpet.
           </p>
         )}
       </div>

@@ -17,11 +17,13 @@ const here = new URL('.', import.meta.url);
 registerHooks({
   resolve(specifier, context, next) {
     if (specifier in stubs) return { url: `stub:${specifier}`, shortCircuit: true };
-    if (specifier === '@/utils/pkce') return { url: new URL('./pkce.ts', here).href, shortCircuit: true };
+    if (specifier === '@/utils/pkce')
+      return { url: new URL('./pkce.ts', here).href, shortCircuit: true };
     return next(specifier, context);
   },
   load(url, context, next) {
-    if (url.startsWith('stub:')) return { format: 'module', source: stubs[url.slice(5)], shortCircuit: true };
+    if (url.startsWith('stub:'))
+      return { format: 'module', source: stubs[url.slice(5)], shortCircuit: true };
     return next(url, context);
   },
 });
@@ -31,7 +33,8 @@ const { appleNonceHash, createAppleNonce, signInWithApple } = await import('./ap
 const nodeHex = (s) => crypto.createHash('sha256').update(s).digest('hex');
 
 // Hashing matches node:crypto (which is what the backend compares against).
-for (const s of ['', 'abc', 'a'.repeat(55), 'a'.repeat(64), 'x'.repeat(200)]) assert.equal(appleNonceHash(s), nodeHex(s), `len ${s.length}`);
+for (const s of ['', 'abc', 'a'.repeat(55), 'a'.repeat(64), 'x'.repeat(200)])
+  assert.equal(appleNonceHash(s), nodeHex(s), `len ${s.length}`);
 const n1 = createAppleNonce();
 const n2 = createAppleNonce();
 assert.ok(n1.raw.length >= 43 && /^[A-Za-z0-9_-]+$/.test(n1.raw), 'raw nonce is long and URL-safe');
@@ -43,7 +46,11 @@ let r = await signInWithApple();
 assert.deepEqual(r, { status: 'signed-in' });
 assert.deepEqual(globalThis.__appleReq.requestedScopes, [0, 1]);
 assert.equal(globalThis.__post.url, '/auth/apple/native');
-assert.equal(globalThis.__appleReq.nonce, nodeHex(globalThis.__post.body.rawNonce), 'Apple nonce = sha256(raw sent to backend)');
+assert.equal(
+  globalThis.__appleReq.nonce,
+  nodeHex(globalThis.__post.body.rawNonce),
+  'Apple nonce = sha256(raw sent to backend)'
+);
 assert.notEqual(globalThis.__appleReq.nonce, globalThis.__post.body.rawNonce);
 assert.equal(globalThis.__post.body.identityToken, 'apple.id.token');
 assert.deepEqual(globalThis.__post.body.fullName, { givenName: 'Kari', familyName: undefined });
@@ -63,7 +70,10 @@ assert.deepEqual(await signInWithApple(), { status: 'cancelled' });
 globalThis.__appleError = null;
 
 globalThis.__postError = { response: { data: { message: 'Det finnes allerede en konto' } } };
-assert.deepEqual(await signInWithApple(), { status: 'failed', message: 'Det finnes allerede en konto' });
+assert.deepEqual(await signInWithApple(), {
+  status: 'failed',
+  message: 'Det finnes allerede en konto',
+});
 assert.equal(useAuthStore.getState().isAuthenticated, false);
 
 console.log('appleSignIn: all checks passed');

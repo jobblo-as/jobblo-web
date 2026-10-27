@@ -1,5 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, FlatList, Image, Modal, Pressable, ScrollView, Text, View, useWindowDimensions } from 'react-native';
+import {
+  Animated,
+  FlatList,
+  Image,
+  Modal,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X } from 'lucide-react-native';
@@ -44,10 +54,20 @@ export function ImageViewer({ images, index, onClose }: ImageViewerProps) {
       else Animated.spring(dragY, { toValue: 0, useNativeDriver: true }).start();
     });
 
-  const backdrop = dragY.interpolate({ inputRange: [0, 300], outputRange: [1, 0.3], extrapolate: 'clamp' });
+  const backdrop = dragY.interpolate({
+    inputRange: [0, 300],
+    outputRange: [1, 0.3],
+    extrapolate: 'clamp',
+  });
 
   return (
-    <Modal visible={index !== null} transparent animationType="fade" statusBarTranslucent onRequestClose={onClose}>
+    <Modal
+      visible={index !== null}
+      transparent
+      animationType="fade"
+      statusBarTranslucent
+      onRequestClose={onClose}
+    >
       <GestureHandlerRootView style={{ flex: 1 }}>
         <Animated.View style={{ flex: 1, backgroundColor: 'black', opacity: backdrop }}>
           <GestureDetector gesture={swipeDown}>
@@ -61,7 +81,9 @@ export function ImageViewer({ images, index, onClose }: ImageViewerProps) {
                 initialScrollIndex={index ?? 0}
                 getItemLayout={(_, i) => ({ length: width, offset: width * i, index: i })}
                 keyExtractor={(uri, i) => `${uri}-${i}`}
-                onMomentumScrollEnd={(event) => setCurrent(Math.round(event.nativeEvent.contentOffset.x / width))}
+                onMomentumScrollEnd={(event) =>
+                  setCurrent(Math.round(event.nativeEvent.contentOffset.x / width))
+                }
                 renderItem={({ item }) => (
                   <ScrollView
                     style={{ width, height }}

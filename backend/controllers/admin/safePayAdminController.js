@@ -5,7 +5,12 @@ const SafePayHistory = require('../../models/SafePayHistory');
 const Chat = require('../../models/ChatMessage');
 const Dispute = require('../../models/Dispute');
 const AdminActivity = require('../../models/AdminActivity');
-const { asyncHandler, sendSuccess, sendError, buildPagination } = require('../../utils/apiResponse');
+const {
+  asyncHandler,
+  sendSuccess,
+  sendError,
+  buildPagination,
+} = require('../../utils/apiResponse');
 const { parsePagination, parseObjectId, parseSort, parseDate } = require('../../utils/pagination');
 const { logActivity } = require('../../services/admin/activityService');
 
@@ -23,11 +28,21 @@ const getSafePayList = asyncHandler(async (req, res) => {
   const query = {};
 
   if (req.query.status) {
-    const valid = ['pending','accepted','declined','in_progress','completed','cancelled','awaiting_payment','paid','disputed'];
+    const valid = [
+      'pending',
+      'accepted',
+      'declined',
+      'in_progress',
+      'completed',
+      'cancelled',
+      'awaiting_payment',
+      'paid',
+      'disputed',
+    ];
     if (valid.includes(req.query.status)) query.status = req.query.status;
   }
   if (req.query.paymentStatus) {
-    const valid = ['unpaid','pending','paid','refunded'];
+    const valid = ['unpaid', 'pending', 'paid', 'refunded'];
     if (valid.includes(req.query.paymentStatus)) query.paymentStatus = req.query.paymentStatus;
   }
   if (req.query.timeoutReview === 'true') {
@@ -84,15 +99,25 @@ const getSafePayList = asyncHandler(async (req, res) => {
         ).lean(),
         SafePayHistory.find(
           { orderId: { $in: orderIds } },
-          { orderId: 1, providerConnectStatus: 1, refundStatus: 1, refundAmountMinor: 1, refundedAmountMinor: 1 }
+          {
+            orderId: 1,
+            providerConnectStatus: 1,
+            refundStatus: 1,
+            refundAmountMinor: 1,
+            refundedAmountMinor: 1,
+          }
         ).lean(),
       ])
     : [[], []];
 
   const disputeMap = {};
-  disputes.forEach((d) => { disputeMap[String(d.orderId)] = d; });
+  disputes.forEach((d) => {
+    disputeMap[String(d.orderId)] = d;
+  });
   const safePayMap = {};
-  safePayRecords.forEach((record) => { safePayMap[String(record.orderId)] = record; });
+  safePayRecords.forEach((record) => {
+    safePayMap[String(record.orderId)] = record;
+  });
 
   // Fee calculation (3% Jobblo fee)
   const enriched = orders.map((o) => {
@@ -121,16 +146,23 @@ const getSafePayList = asyncHandler(async (req, res) => {
     { _id: 1, status: 1, messages: { $slice: -1 } }
   ).lean();
   const chatMap = {};
-  chats.forEach((c) => { chatMap[String(c._id)] = c; });
+  chats.forEach((c) => {
+    chatMap[String(c._id)] = c;
+  });
 
   const final = enriched.map((o) => ({
     ...o,
-    chatStatus: o.chatId ? chatMap[String(o.chatId)]?.status ?? null : null,
+    chatStatus: o.chatId ? (chatMap[String(o.chatId)]?.status ?? null) : null,
     // chatId is already on the order — expose it explicitly for the admin table
     chatId: o.chatId ?? null,
   }));
 
-  return sendSuccess(res, { contracts: final }, 'SafePay-kontrakter hentet.', buildPagination(total, page, limit));
+  return sendSuccess(
+    res,
+    { contracts: final },
+    'SafePay-kontrakter hentet.',
+    buildPagination(total, page, limit)
+  );
 });
 
 // ── SafePay summary ───────────────────────────────────────────────────────────
@@ -172,7 +204,9 @@ const getSafePaySummary = asyncHandler(async (req, res) => {
 
   const byStatus = (arr, key) => {
     const map = {};
-    arr.forEach((item) => { map[item._id] = item[key] || 0; });
+    arr.forEach((item) => {
+      map[item._id] = item[key] || 0;
+    });
     return map;
   };
 
@@ -217,8 +251,14 @@ const getSafePayDetail = asyncHandler(async (req, res) => {
   if (!id) return sendError(res, 'Ugyldig ordre-ID.', 400);
 
   const order = await Order.findById(id)
-    .populate('customerId', 'name email avatarUrl phone role accountStatus verified averageRating completedJobs reviewCount')
-    .populate('providerId', 'name email avatarUrl phone role accountStatus verified averageRating completedJobs reviewCount')
+    .populate(
+      'customerId',
+      'name email avatarUrl phone role accountStatus verified averageRating completedJobs reviewCount'
+    )
+    .populate(
+      'providerId',
+      'name email avatarUrl phone role accountStatus verified averageRating completedJobs reviewCount'
+    )
     .populate('serviceId', 'title price status categories images location')
     .populate('checklist.checkedBy', 'name email')
     .lean();
@@ -240,7 +280,9 @@ const getSafePayDetail = asyncHandler(async (req, res) => {
       .lean(),
     order.chatId
       ? Chat.findById(order.chatId)
-          .select('status clientId providerId messages.type messages.createdAt messages.text messages.systemData agreedPrice')
+          .select(
+            'status clientId providerId messages.type messages.createdAt messages.text messages.systemData agreedPrice'
+          )
           .lean()
       : null,
   ]);
@@ -283,7 +325,12 @@ const getSafePayDetail = asyncHandler(async (req, res) => {
     },
     payment: safePay,
     safePayHistory: safePayHistory
-      ? { ...safePayHistory, transactionId: safePayHistory.transactionId ? `...${safePayHistory.transactionId.slice(-8)}` : null }
+      ? {
+          ...safePayHistory,
+          transactionId: safePayHistory.transactionId
+            ? `...${safePayHistory.transactionId.slice(-8)}`
+            : null,
+        }
       : null,
     dispute,
     chatMeta,
@@ -380,13 +427,25 @@ const getSafePayChat = asyncHandler(async (req, res) => {
   // 2. Admin explicitly requests audit mode with a valid reason (access is always logged)
   const activeDispute = await Dispute.findOne({
     orderId: id,
-    status: { $in: ['open', 'under_review', 'waiting_for_customer', 'waiting_for_provider', 'evidence_submitted'] },
+    status: {
+      $in: [
+        'open',
+        'under_review',
+        'waiting_for_customer',
+        'waiting_for_provider',
+        'evidence_submitted',
+      ],
+    },
   }).lean();
 
   const isAuditMode = req.query.auditMode === 'true';
 
   if (!activeDispute && !isAuditMode) {
-    return sendError(res, 'Oppgi auditMode=true for å se chat uten aktiv tvist. Tilgang logges alltid.', 403);
+    return sendError(
+      res,
+      'Oppgi auditMode=true for å se chat uten aktiv tvist. Tilgang logges alltid.',
+      403
+    );
   }
 
   const chat = await Chat.findById(order.chatId)
@@ -402,7 +461,12 @@ const getSafePayChat = asyncHandler(async (req, res) => {
     targetModel: 'Order',
     targetId: id,
     description: `Admin åpnet fullstendig chatthistorikk (${activeDispute ? 'aktiv tvist' : 'revisjonsmodus'}). Årsak: ${accessReason.trim()}`,
-    metadata: { chatId: order.chatId, orderId: id, reason: accessReason.trim(), hasActiveDispute: !!activeDispute },
+    metadata: {
+      chatId: order.chatId,
+      orderId: id,
+      reason: accessReason.trim(),
+      hasActiveDispute: !!activeDispute,
+    },
     ip: req.ip,
     userAgent: req.headers['user-agent'],
   });

@@ -18,6 +18,9 @@ const stripeFinancialSyncStateSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-stripeFinancialSyncStateSchema.index({ stripeAccountId: 1, livemode: 1, objectType: 1 }, { unique: true });
+stripeFinancialSyncStateSchema.index(
+  { stripeAccountId: 1, livemode: 1, objectType: 1 },
+  { unique: true }
+);
 
 module.exports = mongoose.model('StripeFinancialSyncState', stripeFinancialSyncStateSchema);

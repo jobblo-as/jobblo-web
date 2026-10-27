@@ -146,7 +146,10 @@ async function runCase(testCase) {
     ? hardChecks(testCase, raw, CATEGORIES)
     : {
         failures: [
-          { code: apiError ? 'API_ERROR' : 'JSON_PARSE_FAILED', detail: apiError || rawText.slice(0, 200) },
+          {
+            code: apiError ? 'API_ERROR' : 'JSON_PARSE_FAILED',
+            detail: apiError || rawText.slice(0, 200),
+          },
         ],
         metrics: {},
       };

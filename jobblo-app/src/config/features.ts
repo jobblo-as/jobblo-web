@@ -8,7 +8,8 @@ import { Platform } from 'react-native';
  * checkout. Set EXPO_PUBLIC_MEMBERSHIP_ENABLED=true to bring the screens back (e.g. local dev).
  * Never on iOS, whatever the env says: there it would have to be In-App Purchase.
  */
-export const MEMBERSHIP_ENABLED = process.env.EXPO_PUBLIC_MEMBERSHIP_ENABLED === 'true' && Platform.OS !== 'ios';
+export const MEMBERSHIP_ENABLED =
+  process.env.EXPO_PUBLIC_MEMBERSHIP_ENABLED === 'true' && Platform.OS !== 'ios';
 
 /**
  * Which Sign in with Apple this build shows: the native sheet on iOS; on Android Apple's web
@@ -19,4 +20,7 @@ export function appleSignInMode(os: string, webFlag: string | undefined): 'nativ
   if (os === 'ios') return 'native';
   return os === 'android' && webFlag === 'true' ? 'web' : null;
 }
-export const APPLE_SIGNIN_MODE = appleSignInMode(Platform.OS, process.env.EXPO_PUBLIC_APPLE_WEB_SIGNIN);
+export const APPLE_SIGNIN_MODE = appleSignInMode(
+  Platform.OS,
+  process.env.EXPO_PUBLIC_APPLE_WEB_SIGNIN
+);

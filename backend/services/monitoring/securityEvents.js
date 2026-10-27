@@ -21,7 +21,11 @@ const maskEmail = (email) => {
 const emailHash = (email) => {
   if (typeof email !== 'string' || !email.includes('@')) return null;
   const key = process.env.JWT_SECRET || 'jobblo-security-events';
-  return require('crypto').createHmac('sha256', key).update(email.trim().toLowerCase()).digest('hex').slice(0, 24);
+  return require('crypto')
+    .createHmac('sha256', key)
+    .update(email.trim().toLowerCase())
+    .digest('hex')
+    .slice(0, 24);
 };
 
 /** Client IP as shown everywhere in the dashboard (IPv4-mapped IPv6 unwrapped). */
@@ -32,7 +36,8 @@ function classify({ status, path, code }) {
   const p = String(path || '');
   if (status === 429) return 'rate_limited';
   if (p === '/api/auth/login' && status === 401) return 'login_failed';
-  if (/^\/api\/auth\/(verify-otp|reset-password)$/.test(p) && (status === 400 || status === 401)) return 'otp_failed';
+  if (/^\/api\/auth\/(verify-otp|reset-password)$/.test(p) && (status === 400 || status === 401))
+    return 'otp_failed';
   if (status === 401) {
     if (code === 'TOKEN_EXPIRED') return 'token_expired';
     if (code === 'SESSION_REVOKED') return 'session_revoked';
@@ -50,7 +55,11 @@ function record(req, res) {
   const type = classify({ status, path, code: res.locals?.errorCode });
   if (!type) return;
   // Expected noise: the app probes the session on every page load while logged out.
-  if (type === 'unauthenticated' && /^\/api\/(auth\/(profile|refresh-token)|notifications)/.test(path)) return;
+  if (
+    type === 'unauthenticated' &&
+    /^\/api\/(auth\/(profile|refresh-token)|notifications)/.test(path)
+  )
+    return;
   if (buffer.length >= BUFFER_CAP) {
     dropped += 1;
     return;
@@ -90,4 +99,12 @@ function startSecurityFlush() {
 
 const droppedCount = () => dropped;
 
-module.exports = { classify, maskEmail, emailHash, clientIp, record, startSecurityFlush, droppedCount };
+module.exports = {
+  classify,
+  maskEmail,
+  emailHash,
+  clientIp,
+  record,
+  startSecurityFlush,
+  droppedCount,
+};

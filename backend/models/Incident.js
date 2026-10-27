@@ -8,8 +8,18 @@ const incidentSchema = new mongoose.Schema(
   {
     title: { type: String, required: true, maxlength: 200 },
     fingerprint: { type: String, default: null, index: true },
-    severity: { type: String, enum: ['critical', 'high', 'medium', 'low'], default: 'medium', index: true },
-    status: { type: String, enum: ['open', 'acknowledged', 'resolved'], default: 'open', index: true },
+    severity: {
+      type: String,
+      enum: ['critical', 'high', 'medium', 'low'],
+      default: 'medium',
+      index: true,
+    },
+    status: {
+      type: String,
+      enum: ['open', 'acknowledged', 'resolved'],
+      default: 'open',
+      index: true,
+    },
     source: { type: String, enum: ['alert', 'manual'], default: 'manual' },
     service: { type: String, default: null },
     detail: { type: String, default: null, maxlength: 1000 },
@@ -32,7 +42,10 @@ const incidentSchema = new mongoose.Schema(
         _id: false,
         at: { type: Date, default: Date.now },
         by: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
-        kind: { type: String, enum: ['opened', 'alert', 'status', 'note', 'assign', 'notify', 'recovered', 'escalate'] },
+        kind: {
+          type: String,
+          enum: ['opened', 'alert', 'status', 'note', 'assign', 'notify', 'recovered', 'escalate'],
+        },
         text: { type: String, maxlength: 2000 },
       },
     ],

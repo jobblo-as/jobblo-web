@@ -17,9 +17,7 @@ export default function VisibilityScreen() {
               <Eye size={21} color={TC.brandText} />
             </View>
             <View className="min-w-0 flex-1">
-              <Text className="text-[1.25rem] font-bold text-ink">
-                Synlighet i søkemotorer
-              </Text>
+              <Text className="text-[1.25rem] font-bold text-ink">Synlighet i søkemotorer</Text>
               <Text className="mt-2 text-[0.9375rem] leading-6 text-muted">
                 Oppdrag du legger ut er offentlige, slik at oppdragstakere kan finne dem. Det betyr
                 at de også kan bli indeksert av søkemotorer som Google.

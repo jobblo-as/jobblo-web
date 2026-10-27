@@ -28,14 +28,13 @@ export function createAppleNonce(): { raw: string; hashed: string } {
 }
 
 export type AppleSignInResult =
-  | { status: 'signed-in' }
-  | { status: 'cancelled' }
-  | { status: 'failed'; message: string };
+  { status: 'signed-in' } | { status: 'cancelled' } | { status: 'failed'; message: string };
 
 const GENERIC_FAILURE = 'Apple-innloggingen mislyktes. Prøv igjen.';
 
 function serverMessage(error: unknown): string | null {
-  const message = (error as { response?: { data?: { message?: unknown } } })?.response?.data?.message;
+  const message = (error as { response?: { data?: { message?: unknown } } })?.response?.data
+    ?.message;
   return typeof message === 'string' && message.trim() ? message : null;
 }
 
@@ -56,7 +55,8 @@ export async function signInWithApple(): Promise<AppleSignInResult> {
       nonce: nonce.hashed,
     });
   } catch (error) {
-    if ((error as { code?: string })?.code === 'ERR_REQUEST_CANCELED') return { status: 'cancelled' };
+    if ((error as { code?: string })?.code === 'ERR_REQUEST_CANCELED')
+      return { status: 'cancelled' };
     return { status: 'failed', message: GENERIC_FAILURE };
   }
   if (!credential.identityToken) return { status: 'failed', message: GENERIC_FAILURE };
@@ -69,7 +69,10 @@ export async function signInWithApple(): Promise<AppleSignInResult> {
         rawNonce: nonce.raw,
         // Apple shares the name on the first sign-in only; the backend uses it for a new account.
         fullName: credential.fullName
-          ? { givenName: credential.fullName.givenName ?? undefined, familyName: credential.fullName.familyName ?? undefined }
+          ? {
+              givenName: credential.fullName.givenName ?? undefined,
+              familyName: credential.fullName.familyName ?? undefined,
+            }
           : undefined,
       },
       // Same as the OAuth code exchange: no stored token, a refusal never refreshes or signs out,

@@ -3,7 +3,15 @@ import { setStatusBarStyle } from 'expo-status-bar';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { Award, BadgeCheck, Briefcase, CalendarClock, FolderOpen, GraduationCap, MapPin } from 'lucide-react-native';
+import {
+  Award,
+  BadgeCheck,
+  Briefcase,
+  CalendarClock,
+  FolderOpen,
+  GraduationCap,
+  MapPin,
+} from 'lucide-react-native';
 import { usePublicProfile } from '../../../src/hooks/usePublicProfile';
 import { useJobs } from '../../../src/hooks/useJobs';
 import { useProfile } from '../../../src/hooks/useProfile';
@@ -24,7 +32,10 @@ import {
 } from '../../../src/components/profile/ProfileParts';
 import type { ExperienceItem } from '../../../src/types/UserProfile';
 import { TC } from '../../../src/theme/colors';
-import { PublicProfileSkeleton, SkJobGrid } from '../../../src/components/skeletons/ScreenSkeletons';
+import {
+  PublicProfileSkeleton,
+  SkJobGrid,
+} from '../../../src/components/skeletons/ScreenSkeletons';
 
 /**
  * Another user's profile: the same layout as your own (profile/me.tsx, client review P2) but read
@@ -47,7 +58,9 @@ function asExperience(field: unknown): ExperienceItem[] {
 function formatExperienceDate(value?: string) {
   if (!value) return '';
   const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('nb-NO', { month: 'short', year: 'numeric' });
+  return Number.isNaN(d.getTime())
+    ? ''
+    : d.toLocaleDateString('nb-NO', { month: 'short', year: 'numeric' });
 }
 
 function formatDateRange(item: ExperienceItem) {
@@ -65,9 +78,15 @@ function ExperienceCard({ item }: { item: ExperienceItem }) {
   return (
     <View className="rounded-2xl bg-surface-2 p-4">
       {title ? <Text className="text-[0.9375rem] font-semibold text-ink">{title}</Text> : null}
-      {company ? <Text className="mt-0.5 text-[0.875rem] font-medium text-brand-text">{company}</Text> : null}
-      {formatDateRange(item) ? <Text className="mt-0.5 text-[0.8125rem] text-muted">{formatDateRange(item)}</Text> : null}
-      {description ? <Text className="mt-2 text-[0.9375rem] leading-6 text-ink-2">{description}</Text> : null}
+      {company ? (
+        <Text className="mt-0.5 text-[0.875rem] font-medium text-brand-text">{company}</Text>
+      ) : null}
+      {formatDateRange(item) ? (
+        <Text className="mt-0.5 text-[0.8125rem] text-muted">{formatDateRange(item)}</Text>
+      ) : null}
+      {description ? (
+        <Text className="mt-2 text-[0.9375rem] leading-6 text-ink-2">{description}</Text>
+      ) : null}
     </View>
   );
 }
@@ -78,7 +97,9 @@ function ItemList({ items }: { items: { _id: string; title?: string; description
       {items.map((item) => (
         <View key={item._id} className="rounded-2xl bg-surface-2 p-4">
           <Text className="text-[0.9375rem] font-semibold text-ink">{item.title}</Text>
-          {item.description ? <Text className="mt-1 text-[0.9375rem] leading-6 text-ink-2">{item.description}</Text> : null}
+          {item.description ? (
+            <Text className="mt-1 text-[0.9375rem] leading-6 text-ink-2">{item.description}</Text>
+          ) : null}
         </View>
       ))}
     </View>
@@ -98,7 +119,12 @@ export default function PublicProfileScreen() {
     if (isSelf) router.replace('/(app)/profile');
   }, [isSelf]);
 
-  const { data: user, isLoading, isError, refetch } = usePublicProfile(isSelf ? null : userId ?? null);
+  const {
+    data: user,
+    isLoading,
+    isError,
+    refetch,
+  } = usePublicProfile(isSelf ? null : (userId ?? null));
   const isCompany = user?.role === 'company';
   const [view, setView] = useState<ProfileView>('seeker');
   const tabs = isCompany ? TABS.company : TABS[view];
@@ -131,7 +157,11 @@ export default function PublicProfileScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const handleRefresh = async () => {
     setRefreshing(true);
-    try { await Promise.all([refetch(), refetchJobs()]); } finally { setRefreshing(false); }
+    try {
+      await Promise.all([refetch(), refetchJobs()]);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   if (isSelf) return null;
@@ -162,16 +192,35 @@ export default function PublicProfileScreen() {
   const reviewCount = reviews.length || user.reviewCount || 0;
   const experience = asExperience(user.experience ?? null);
   const hasAbout = Boolean(
-    user.bio || user.skills?.length || user.locations?.length || user.availabilityText || experience.length || user.portfolio?.length || user.previousProjects?.length
+    user.bio ||
+    user.skills?.length ||
+    user.locations?.length ||
+    user.availabilityText ||
+    experience.length ||
+    user.portfolio?.length ||
+    user.previousProjects?.length
   );
 
   return (
     <SafeAreaView edges={['left', 'right', 'bottom']} className="flex-1 bg-page">
       <ScrollView
         contentContainerStyle={{ paddingBottom: 40 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void handleRefresh()} tintColor="#FFFFFF" colors={[TC.brandText]} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => void handleRefresh()}
+            tintColor="#FFFFFF"
+            colors={[TC.brandText]}
+          />
+        }
       >
-        <ProfileIdentity user={user} fullName={fullName} topInset={insets.top} onBack={() => router.back()} chips={profileChips(user, view)} />
+        <ProfileIdentity
+          user={user}
+          fullName={fullName}
+          topInset={insets.top}
+          onBack={() => router.back()}
+          chips={profileChips(user, view)}
+        />
 
         <View className="px-4">
           {!isCompany ? <ProfileViewSwitch value={view} onChange={setView} /> : null}
@@ -182,7 +231,8 @@ export default function PublicProfileScreen() {
               <View className="flex-1">
                 <Text className="text-[1.0625rem] font-semibold text-ink">Identitet bekreftet</Text>
                 <Text className="mt-0.5 text-[0.875rem] text-muted">
-                  Bekreftet med BankID{user.identityVerifiedAt ? ` · ${dayDate(user.identityVerifiedAt)}` : ''}
+                  Bekreftet med BankID
+                  {user.identityVerifiedAt ? ` · ${dayDate(user.identityVerifiedAt)}` : ''}
                 </Text>
               </View>
             </View>
@@ -204,7 +254,9 @@ export default function PublicProfileScreen() {
                     <View className="flex-row flex-wrap gap-2">
                       {user.skills.map((skill) => (
                         <View key={skill} className="rounded-full bg-tint px-3 py-1.5">
-                          <Text className="text-[0.875rem] font-medium text-brand-text">{skill}</Text>
+                          <Text className="text-[0.875rem] font-medium text-brand-text">
+                            {skill}
+                          </Text>
                         </View>
                       ))}
                     </View>
@@ -225,14 +277,18 @@ export default function PublicProfileScreen() {
 
                 {user.availabilityText ? (
                   <Panel icon={CalendarClock} title="Tilgjengelighet">
-                    <Text className="text-[0.9375rem] leading-6 text-ink-2">{user.availabilityText}</Text>
+                    <Text className="text-[0.9375rem] leading-6 text-ink-2">
+                      {user.availabilityText}
+                    </Text>
                   </Panel>
                 ) : null}
 
                 {experience.length ? (
                   <Panel icon={GraduationCap} title="Erfaring">
                     <View className="gap-3">
-                      {experience.map((item, index) => <ExperienceCard key={item._id ?? item.id ?? index} item={item} />)}
+                      {experience.map((item, index) => (
+                        <ExperienceCard key={item._id ?? item.id ?? index} item={item} />
+                      ))}
                     </View>
                   </Panel>
                 ) : null}
@@ -249,9 +305,18 @@ export default function PublicProfileScreen() {
                   </Panel>
                 ) : null}
 
-                {!hasAbout ? <Empty title="Ingenting her ennå" text={`${firstName} har ikke fylt ut profilen sin.`} /> : null}
+                {!hasAbout ? (
+                  <Empty
+                    title="Ingenting her ennå"
+                    text={`${firstName} har ikke fylt ut profilen sin.`}
+                  />
+                ) : null}
 
-                <RatingCard reviews={reviews} average={Number(user.averageRating || 0)} count={reviewCount} />
+                <RatingCard
+                  reviews={reviews}
+                  average={Number(user.averageRating || 0)}
+                  count={reviewCount}
+                />
                 <ReliabilityCard user={user} />
               </>
             ) : null}
@@ -260,7 +325,12 @@ export default function PublicProfileScreen() {
               jobsLoading ? (
                 <SkJobGrid />
               ) : jobsError ? (
-                <ErrorState title="Kunne ikke laste oppdrag" message="Prøv igjen." actionLabel="Prøv igjen" onAction={() => void refetchJobs()} />
+                <ErrorState
+                  title="Kunne ikke laste oppdrag"
+                  message="Prøv igjen."
+                  actionLabel="Prøv igjen"
+                  onAction={() => void refetchJobs()}
+                />
               ) : activeJobs.length ? (
                 <View className="flex-row flex-wrap gap-3">
                   {activeJobs.map((job) => (
@@ -270,15 +340,25 @@ export default function PublicProfileScreen() {
                   ))}
                 </View>
               ) : (
-                <Empty title="Ingen aktive oppdrag" text={`${firstName} har ingen aktive oppdrag ute akkurat nå.`} />
+                <Empty
+                  title="Ingen aktive oppdrag"
+                  text={`${firstName} har ingen aktive oppdrag ute akkurat nå.`}
+                />
               )
             ) : null}
 
             {tab === 'Vurderinger' ? (
               reviews.length ? (
-                <View className="gap-3">{reviews.map((review) => <ReviewCard key={review._id} review={review} />)}</View>
+                <View className="gap-3">
+                  {reviews.map((review) => (
+                    <ReviewCard key={review._id} review={review} />
+                  ))}
+                </View>
               ) : (
-                <Empty title="Ingen vurderinger ennå" text="Vurderinger fra fullførte oppdrag vises her." />
+                <Empty
+                  title="Ingen vurderinger ennå"
+                  text="Vurderinger fra fullførte oppdrag vises her."
+                />
               )
             ) : null}
           </View>

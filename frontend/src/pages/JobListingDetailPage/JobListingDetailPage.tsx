@@ -36,14 +36,20 @@ import { dateFormatter } from '../../utils/dateFormatter';
 import { isClosedService, statusLabel } from '../../constants/statuses';
 import { listingUrl } from '../../utils/shareListing';
 
-const SITE_URL = (import.meta.env.VITE_PUBLIC_SITE_URL as string | undefined)?.replace(/\/$/, '') || 'https://jobblo.no';
+const SITE_URL =
+  (import.meta.env.VITE_PUBLIC_SITE_URL as string | undefined)?.replace(/\/$/, '') ||
+  'https://jobblo.no';
 import { ShareModal } from '../../components/shared/ShareModal/ShareModal';
 import { UpgradeModal, type ExtraContactOffer } from '../../components/shared/UpgradeModal';
 import OrderRequestModal from '../../components/job/OrderRequestModal';
 import ReportJobModal from '../../components/job/ReportJobModal';
 import { submitUserJobReport } from '../../api/admin/jobReports';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { getConnectStatus, getContactEntitlements, getExtraContactStatus } from '../../api/stripeAPI';
+import {
+  getConnectStatus,
+  getContactEntitlements,
+  getExtraContactStatus,
+} from '../../api/stripeAPI';
 
 import { useConfigByKey, usePlans } from '../../features/plans/hooks';
 import { errorBody } from '../../utils/getErrorMessage';
@@ -51,7 +57,9 @@ import { errorBody } from '../../utils/getErrorMessage';
 const DEFAULT_SHARE_IMAGE = `${SITE_URL}/assets/share-image.png`;
 
 function truncateText(value: string | undefined | null, limit: number): string {
-  const text = String(value || '').replace(/\s+/g, ' ').trim();
+  const text = String(value || '')
+    .replace(/\s+/g, ' ')
+    .trim();
   if (text.length <= limit) return text;
   const cut = text.slice(0, limit - 1);
   const lastSpace = cut.lastIndexOf(' ');
@@ -97,8 +105,11 @@ function useListingSeo(
       'Finn eller legg ut oppdrag i Norge. Trygg betaling med SafePay på Jobblo.';
     const description = truncateText(baseDescription, 200);
     const firstImage =
-      absoluteImageUrl(Array.isArray(job?.images) ? job.images.find((i: unknown) => typeof i === 'string' && i.trim()) : null) ||
-      DEFAULT_SHARE_IMAGE;
+      absoluteImageUrl(
+        Array.isArray(job?.images)
+          ? job.images.find((i: unknown) => typeof i === 'string' && i.trim())
+          : null
+      ) || DEFAULT_SHARE_IMAGE;
     const url = serviceId ? listingUrl(serviceId) : SITE_URL;
 
     document.title = displayTitle;
@@ -166,11 +177,14 @@ const JobListingDetailPage = () => {
 
   const isAuth = useUserStore((state) => state.isAuthenticated);
   const currentUser = useUserStore((state) => state.user);
-  const entitlementsQuery = useQuery<{
-    includedContacts: number;
-    consumedIncludedContacts: number;
-    remainingIncludedContacts: number;
-  }, AxiosError<{ code?: string }>>({
+  const entitlementsQuery = useQuery<
+    {
+      includedContacts: number;
+      consumedIncludedContacts: number;
+      remainingIncludedContacts: number;
+    },
+    AxiosError<{ code?: string }>
+  >({
     queryKey: ['v2-contact-entitlements', currentUser?._id],
     queryFn: getContactEntitlements,
     enabled: isAuth,
@@ -189,18 +203,19 @@ const JobListingDetailPage = () => {
   const accountPlanType = currentUser?.role === 'company' ? 'business' : 'private';
   const currentPlan = plans?.find(
     (plan) =>
-      plan.name === (currentUser?.subscription || 'Standard') &&
-      plan.type === accountPlanType
+      plan.name === (currentUser?.subscription || 'Standard') && plan.type === accountPlanType
   );
   const entitlementErrorCode = entitlementsQuery.error?.response?.data?.code;
   const useLegacyContactUsage =
-    entitlementsQuery.isError &&
-    entitlementErrorCode === 'SUBSCRIPTION_V2_ENTITLEMENTS_DISABLED';
-  const includedContactLimit = entitlementsQuery.data?.includedContacts ??
+    entitlementsQuery.isError && entitlementErrorCode === 'SUBSCRIPTION_V2_ENTITLEMENTS_DISABLED';
+  const includedContactLimit =
+    entitlementsQuery.data?.includedContacts ??
     (useLegacyContactUsage ? currentPlan?.entitlements?.freeContact : undefined);
-  const includedContactsUsed = entitlementsQuery.data?.consumedIncludedContacts ??
+  const includedContactsUsed =
+    entitlementsQuery.data?.consumedIncludedContacts ??
     (useLegacyContactUsage ? currentUser?.monthlyContactUsage || 0 : undefined);
-  const includedContactsRemaining = entitlementsQuery.data?.remainingIncludedContacts ??
+  const includedContactsRemaining =
+    entitlementsQuery.data?.remainingIncludedContacts ??
     (includedContactLimit !== undefined && includedContactsUsed !== undefined
       ? Math.max(0, includedContactLimit - includedContactsUsed)
       : undefined);
@@ -249,7 +264,9 @@ const JobListingDetailPage = () => {
       }
       if (!cancelled) toast('Betalingen bekreftes fortsatt. Prøv å sende forespørselen om litt.');
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuth]);
 
@@ -267,8 +284,7 @@ const JobListingDetailPage = () => {
       }
 
       // Bypass cooldown if job is under 10k and toggle is ON (Private users only)
-      const isFreeUnder10k =
-        accountPlanType === 'private' && freeJobsToggle && job.price < 10000;
+      const isFreeUnder10k = accountPlanType === 'private' && freeJobsToggle && job.price < 10000;
 
       if (isFreeUnder10k) {
         setIsTimerActive(false);
@@ -285,9 +301,7 @@ const JobListingDetailPage = () => {
           // Only requests this user *sent*. /orders/requests/my returns received
           // ones too, so a job poster whose listing had just been applied to was
           // shown a bogus "Åpner for deg om 4:32" on completely unrelated jobs.
-          const sentRequests = jobRequests.filter(
-            (req) => req.customerId?._id === currentUser._id
-          );
+          const sentRequests = jobRequests.filter((req) => req.customerId?._id === currentUser._id);
           const lastRequest = [...sentRequests].sort(
             (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
           )[0];
@@ -444,9 +458,10 @@ const JobListingDetailPage = () => {
             response?.data?.upgradeRequired
           ) {
             setUpgradeInfo({
-              message: errorCode === 'CONTACT_LIMIT_REACHED'
-                ? 'Du har brukt alle inkluderte kontakter denne perioden.'
-                : response?.data?.message,
+              message:
+                errorCode === 'CONTACT_LIMIT_REACHED'
+                  ? 'Du har brukt alle inkluderte kontakter denne perioden.'
+                  : response?.data?.message,
               limit: includedContactLimit ?? response?.data?.limit,
               usage: includedContactsUsed ?? response?.data?.usage,
               serviceId: job._id,
@@ -464,9 +479,7 @@ const JobListingDetailPage = () => {
     );
   };
 
-  const isMessageLoading =
-    sendMessageMutation.isPending ||
-    createJobRequestMutation.isPending;
+  const isMessageLoading = sendMessageMutation.isPending || createJobRequestMutation.isPending;
 
   const handleShare = () => {
     setIsShareModalOpen(true);
@@ -710,36 +723,43 @@ const JobListingDetailPage = () => {
                   Sjekkliste
                 </h2>
                 <ul className="mt-3 space-y-2.5">
-                  {job.checklist.map((
-                    item: { text?: string; checked?: boolean; checkedBy?: { name?: string }; checkedAt: string },
-                    idx: number
-                  ) => (
-                    <li key={idx} className="flex items-start gap-2.5">
-                      <span
-                        className={`mt-0.5 flex size-4.5 shrink-0 items-center justify-center rounded-[0.3rem] border ${
-                          item.checked
-                            ? 'border-[#2E6641] bg-[#2E6641] text-white'
-                            : 'border-[#D4D6CD] bg-white'
-                        }`}
-                      >
-                        {item.checked && <CheckCircle2 size={11} strokeWidth={3} />}
-                      </span>
-                      <span className="min-w-0 flex-1">
+                  {job.checklist.map(
+                    (
+                      item: {
+                        text?: string;
+                        checked?: boolean;
+                        checkedBy?: { name?: string };
+                        checkedAt: string;
+                      },
+                      idx: number
+                    ) => (
+                      <li key={idx} className="flex items-start gap-2.5">
                         <span
-                          className={`block text-[0.875rem] leading-relaxed ${
-                            item.checked ? 'text-[#9B9E96] line-through' : 'text-[#0B0B0B]'
+                          className={`mt-0.5 flex size-4.5 shrink-0 items-center justify-center rounded-[0.3rem] border ${
+                            item.checked
+                              ? 'border-[#2E6641] bg-[#2E6641] text-white'
+                              : 'border-[#D4D6CD] bg-white'
                           }`}
                         >
-                          {item.text}
+                          {item.checked && <CheckCircle2 size={11} strokeWidth={3} />}
                         </span>
-                        {item.checkedBy && (
-                          <span className="mt-0.5 block text-[0.75rem] text-[#9B9E96]">
-                            Merket av {item.checkedBy.name} · {formatDate(item.checkedAt)}
+                        <span className="min-w-0 flex-1">
+                          <span
+                            className={`block text-[0.875rem] leading-relaxed ${
+                              item.checked ? 'text-[#9B9E96] line-through' : 'text-[#0B0B0B]'
+                            }`}
+                          >
+                            {item.text}
                           </span>
-                        )}
-                      </span>
-                    </li>
-                  ))}
+                          {item.checkedBy && (
+                            <span className="mt-0.5 block text-[0.75rem] text-[#9B9E96]">
+                              Merket av {item.checkedBy.name} · {formatDate(item.checkedAt)}
+                            </span>
+                          )}
+                        </span>
+                      </li>
+                    )
+                  )}
                 </ul>
               </section>
             )}
@@ -884,14 +904,18 @@ const JobListingDetailPage = () => {
                     />
                   </div>
 
-                  {isAuth && includedContactLimit !== undefined && includedContactsUsed !== undefined &&
+                  {isAuth &&
+                    includedContactLimit !== undefined &&
+                    includedContactsUsed !== undefined &&
                     includedContactsRemaining !== undefined && (
                       <p
                         data-testid="contact-usage-summary"
                         className="rounded-xl bg-[#F4F6F0] px-4 py-3 text-sm text-[#63665F]"
                       >
-                        Kontakter denne perioden: {includedContactsUsed} brukt av {includedContactLimit}
-                        {' · '}{includedContactsRemaining} igjen
+                        Kontakter denne perioden: {includedContactsUsed} brukt av{' '}
+                        {includedContactLimit}
+                        {' · '}
+                        {includedContactsRemaining} igjen
                       </p>
                     )}
 
@@ -977,11 +1001,7 @@ const JobListingDetailPage = () => {
                         anyone who had simply never been rated. */}
                     {job.userId?.averageRating > 0 ? (
                       <span className="inline-flex items-center gap-1">
-                        <Star
-                          size={12}
-                          strokeWidth={2}
-                          className="fill-[#2E6641] text-[#2E6641]"
-                        />
+                        <Star size={12} strokeWidth={2} className="fill-[#2E6641] text-[#2E6641]" />
                         {job.userId.averageRating}
                       </span>
                     ) : (
@@ -1024,9 +1044,7 @@ const JobListingDetailPage = () => {
             <h2 className="text-[clamp(1.25rem,2.4vw,1.625rem)] font-bold tracking-[-0.03em] text-[#0B0B0B]">
               Lignende oppdrag
             </h2>
-            <p className="mt-1 text-[0.875rem] text-[#63665F]">
-              Basert på sted og kategori
-            </p>
+            <p className="mt-1 text-[0.875rem] text-[#63665F]">Basert på sted og kategori</p>
           </div>
           <RelatedJobs
             coordinates={job?.location?.coordinates}
@@ -1084,7 +1102,8 @@ const JobListingDetailPage = () => {
               </button>
             </div>
             <p className="mt-3 text-sm leading-relaxed text-[#63665F]">
-              Du må fullføre og verifisere Stripe Connect-kontoen din før du kan sende forespørsler eller starte oppdrag.
+              Du må fullføre og verifisere Stripe Connect-kontoen din før du kan sende forespørsler
+              eller starte oppdrag.
             </p>
             {connectStatusQuery.isError && (
               <p className="mt-2 text-sm text-[#B4453A]">

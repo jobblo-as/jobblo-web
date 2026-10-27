@@ -56,7 +56,8 @@ export default function AboutPage() {
 
         <div style={styles.footer}>
           <p style={styles.footerText}>
-            Takk for at du bruker Jobblo. Vi jobber hver dag for \u00E5 gj\u00F8re plattformen bedre for deg.
+            Takk for at du bruker Jobblo. Vi jobber hver dag for \u00E5 gj\u00F8re plattformen bedre
+            for deg.
           </p>
         </div>
       </div>

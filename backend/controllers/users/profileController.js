@@ -6,7 +6,12 @@ const JobRequest = require('../../models/JobRequest');
 const Order = require('../../models/Order');
 const List = require('../../models/List');
 const { sendMongoError } = require('../../utils/mongoErrors');
-const { PUBLIC_USER_SELECT, OWN_USER_SELECT, sanitizeUserPublic, sanitizeUserOwner } = require('../../utils/userProjections');
+const {
+  PUBLIC_USER_SELECT,
+  OWN_USER_SELECT,
+  sanitizeUserPublic,
+  sanitizeUserOwner,
+} = require('../../utils/userProjections');
 const { isValidId, authorizeUser } = require('./userHelpers');
 const { verifyCurrentPassword, sendServerError } = require('../auth/authHelpers');
 
@@ -208,9 +213,15 @@ exports.updateUser = async (req, res) => {
     if (updates.website !== undefined && updates.website !== null && updates.website !== '') {
       const website = String(updates.website).trim();
       let url = null;
-      try { url = new URL(website); } catch { /* not a URL */ }
+      try {
+        url = new URL(website);
+      } catch {
+        /* not a URL */
+      }
       if (website.length > 200 || !url || !['http:', 'https:'].includes(url.protocol)) {
-        return res.status(400).json({ error: 'Nettsiden må være en gyldig http(s)-adresse (maks 200 tegn).' });
+        return res
+          .status(400)
+          .json({ error: 'Nettsiden må være en gyldig http(s)-adresse (maks 200 tegn).' });
       }
       updates.website = website;
     }
@@ -259,8 +270,14 @@ exports.updateUser = async (req, res) => {
     const { isOurPublicBlobUrl } = require('../../utils/azureUpload');
     for (const k of ['portfolio', 'previousProjects']) {
       const stored = (user[k] || []).map((item) => item?.imageUrl);
-      const bad = [].concat(updates[k] || []).some((item) => item?.imageUrl && !stored.includes(item.imageUrl) && !isOurPublicBlobUrl(item.imageUrl));
-      if (bad) return res.status(400).json({ error: 'Bilde-URL er ikke tillatt. Last opp bildet først.' });
+      const bad = []
+        .concat(updates[k] || [])
+        .some(
+          (item) =>
+            item?.imageUrl && !stored.includes(item.imageUrl) && !isOurPublicBlobUrl(item.imageUrl)
+        );
+      if (bad)
+        return res.status(400).json({ error: 'Bilde-URL er ikke tillatt. Last opp bildet først.' });
     }
 
     // The login e-mail is where reset codes go, so changing it takes the current
@@ -270,7 +287,9 @@ exports.updateUser = async (req, res) => {
       if (String(updates.email).trim().toLowerCase() === user.email) {
         delete updates.email;
       } else if (String(req.userId) !== String(id)) {
-        return res.status(403).json({ code: 'EMAIL_SELF_ONLY', error: 'Bare kontoeieren kan endre e-postadressen.' });
+        return res
+          .status(403)
+          .json({ code: 'EMAIL_SELF_ONLY', error: 'Bare kontoeieren kan endre e-postadressen.' });
       } else {
         const passwordOk = await verifyCurrentPassword(user, req.body.currentPassword);
         if (!passwordOk) {
@@ -302,7 +321,9 @@ exports.updateUser = async (req, res) => {
       select: OWN_USER_SELECT,
     });
     // A superAdmin setting trust flags on someone else is an admin action: audit it.
-    const flags = ['verified', 'isTrusted'].filter((k) => updates[k] !== undefined && String(req.userId) !== String(id));
+    const flags = ['verified', 'isTrusted'].filter(
+      (k) => updates[k] !== undefined && String(req.userId) !== String(id)
+    );
     if (flags.length) {
       await require('../../services/admin/activityService').logActivity({
         adminId: req.user._id,
@@ -310,7 +331,10 @@ exports.updateUser = async (req, res) => {
         targetModel: 'User',
         targetId: id,
         description: `Endret ${flags.map((k) => `${k}=${updates[k]}`).join(', ')} for ${user.email}`,
-        metadata: { area: 'users.update', ...Object.fromEntries(flags.map((k) => [k, updates[k]])) },
+        metadata: {
+          area: 'users.update',
+          ...Object.fromEntries(flags.map((k) => [k, updates[k]])),
+        },
         ip: req.ip,
         userAgent: req.get?.('user-agent') || 'unknown',
       });
@@ -319,7 +343,8 @@ exports.updateUser = async (req, res) => {
   } catch (err) {
     // Was `res.status(400).json({ error: err.message })`, which forwarded the raw
     // driver string (E11000 duplicate key ... index: email_1 ...) to a toast.
-    if (err?.code === 'PASSWORD_ATTEMPTS' || err?.code === 'PASSWORD_HASH_BUSY') return sendServerError(res, err);
+    if (err?.code === 'PASSWORD_ATTEMPTS' || err?.code === 'PASSWORD_HASH_BUSY')
+      return sendServerError(res, err);
     console.error('updateUser Error:', err);
     sendMongoError(res, err, 'Kunne ikke lagre endringene. Prøv igjen.');
   }
@@ -353,7 +378,10 @@ exports.deleteUser = async (req, res) => {
           });
         }
       } else {
-        const session = await require('../../models/Session').findById(req.sessionId).select('createdAt').lean();
+        const session = await require('../../models/Session')
+          .findById(req.sessionId)
+          .select('createdAt')
+          .lean();
         if (!session || Date.now() - new Date(session.createdAt).getTime() > REAUTH_WINDOW_MS) {
           return res.status(403).json({
             code: 'REAUTH_REQUIRED',
@@ -370,7 +398,9 @@ exports.deleteUser = async (req, res) => {
         accountStatus: { $ne: 'inactive' },
       });
       if (activeSuperAdmins <= 1) {
-        return res.status(403).json({ code: 'last_superadmin', error: 'Kan ikke slette den siste superadmin.' });
+        return res
+          .status(403)
+          .json({ code: 'last_superadmin', error: 'Kan ikke slette den siste superadmin.' });
       }
     }
 
@@ -557,7 +587,8 @@ exports.deleteUser = async (req, res) => {
 
     res.json({ message: 'Profilen din er slettet.' });
   } catch (err) {
-    if (err?.code === 'PASSWORD_ATTEMPTS' || err?.code === 'PASSWORD_HASH_BUSY') return sendServerError(res, err);
+    if (err?.code === 'PASSWORD_ATTEMPTS' || err?.code === 'PASSWORD_HASH_BUSY')
+      return sendServerError(res, err);
     console.error('deleteUser Error:', err);
     res.status(500).json({ error: 'Kunne ikke slette profilen. Prøv igjen.' });
   }
@@ -576,7 +607,6 @@ exports.getUserServices = async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
-
 
 // List all users
 exports.getAllUsers = async (req, res) => {

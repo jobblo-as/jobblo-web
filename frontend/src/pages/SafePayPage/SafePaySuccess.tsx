@@ -134,20 +134,13 @@ const SafePaySuccess: React.FC = () => {
 
           <div className="mt-7 flex flex-col gap-2.5">
             {sessionId && (
-              <button
-                onClick={reconcileAndRefresh}
-                disabled={isRefetchingStatus}
-                className={SOLID}
-              >
+              <button onClick={reconcileAndRefresh} disabled={isRefetchingStatus} className={SOLID}>
                 {isRefetchingStatus && <Loader2 size={16} className="animate-spin" />}
                 {isRefetchingStatus ? 'Sjekker…' : 'Sjekk på nytt'}
               </button>
             )}
             {orderId && (
-              <button
-                onClick={() => navigate(`/safepay/checkout/${orderId}`)}
-                className={OUTLINE}
-              >
+              <button onClick={() => navigate(`/safepay/checkout/${orderId}`)} className={OUTLINE}>
                 Gå til betaling
               </button>
             )}
@@ -200,10 +193,7 @@ const SafePaySuccess: React.FC = () => {
 
           <div className="mt-7 flex flex-col gap-2.5">
             {isProvider && orderId && (
-              <button
-                onClick={() => navigate(`/provider/orders/${orderId}`)}
-                className={SOLID}
-              >
+              <button onClick={() => navigate(`/provider/orders/${orderId}`)} className={SOLID}>
                 <Briefcase size={16} strokeWidth={2} />
                 Gå til aktiv jobb
               </button>

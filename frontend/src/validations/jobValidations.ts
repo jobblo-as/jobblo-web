@@ -44,11 +44,13 @@ export const jobValidationSchema = {
   description: [
     required<JobFormValues>('description', 'Vennligst skriv inn en beskrivelse'),
     {
-      test: (values: JobFormValues) => values.description.trim().length >= JOB_LIMITS.DESCRIPTION_MIN,
+      test: (values: JobFormValues) =>
+        values.description.trim().length >= JOB_LIMITS.DESCRIPTION_MIN,
       message: 'Beskrivelsen må være minst 20 tegn',
     },
     {
-      test: (values: JobFormValues) => values.description.trim().length <= JOB_LIMITS.DESCRIPTION_MAX,
+      test: (values: JobFormValues) =>
+        values.description.trim().length <= JOB_LIMITS.DESCRIPTION_MAX,
       message: 'Beskrivelsen kan være maks 5000 tegn',
     },
   ],
@@ -77,7 +79,8 @@ export const jobValidationSchema = {
     {
       test: (values: JobFormValues) => {
         const val = values.price;
-        if (val === undefined || val === null || (typeof val === 'string' && val.trim() === '')) return false;
+        if (val === undefined || val === null || (typeof val === 'string' && val.trim() === ''))
+          return false;
         const num = numericValue(val);
         return num > 0;
       },
@@ -92,28 +95,30 @@ export const jobValidationSchema = {
     {
       test: (values: JobFormValues) => {
         const val = values.durationValue;
-        if (val === undefined || val === null || (typeof val === 'string' && val.trim() === '')) return false;
+        if (val === undefined || val === null || (typeof val === 'string' && val.trim() === ''))
+          return false;
         const num = numericValue(val);
         return num > 0;
       },
       message: 'Vennligst oppgi forventet varighet',
     },
     {
-      test: (values: JobFormValues) => numericValue(values.durationValue) <= JOB_LIMITS.DURATION_MAX,
+      test: (values: JobFormValues) =>
+        numericValue(values.durationValue) <= JOB_LIMITS.DURATION_MAX,
       message: 'Varigheten kan ikke overstige 1000',
     },
   ],
   fromDate: [
-    required<JobFormValues>('fromDate', 'Vennligst velg startdato'),
     {
-      test: (values: JobFormValues) => !values.fromDate || !Number.isNaN(new Date(values.fromDate).getTime()),
+      test: (values: JobFormValues) =>
+        !values.fromDate || !Number.isNaN(new Date(values.fromDate).getTime()),
       message: 'Ugyldig fra-dato',
     },
   ],
   toDate: [
-    required<JobFormValues>('toDate', 'Vennligst velg sluttdato'),
     {
-      test: (values: JobFormValues) => !values.toDate || !Number.isNaN(new Date(values.toDate).getTime()),
+      test: (values: JobFormValues) =>
+        !values.toDate || !Number.isNaN(new Date(values.toDate).getTime()),
       message: 'Ugyldig sluttdato',
     },
     {

@@ -18,7 +18,9 @@ let timer = null;
 
 /** Pure: validate a block target. Returns { type, address, prefix } or an { error }. */
 function parseTarget(raw) {
-  const value = String(raw || '').trim().replace(/^::ffff:/, '');
+  const value = String(raw || '')
+    .trim()
+    .replace(/^::ffff:/, '');
   const [address, prefixRaw] = value.split('/');
   const type = net.isIP(address);
   if (!type) return { error: 'Not a valid IPv4 or IPv6 address.' };
@@ -27,7 +29,8 @@ function parseTarget(raw) {
   // Refuse ranges wide enough to take out whole ISPs by accident.
   const min = type === 4 ? 16 : 48;
   const max = type === 4 ? 32 : 128;
-  if (!Number.isInteger(prefix) || prefix < min || prefix > max) return { error: `CIDR prefix must be /${min}–/${max} for IPv${type}.` };
+  if (!Number.isInteger(prefix) || prefix < min || prefix > max)
+    return { error: `CIDR prefix must be /${min}–/${max} for IPv${type}.` };
   return { type, address, prefix, target: `${address}/${prefix}` };
 }
 
@@ -46,7 +49,11 @@ function build(docs) {
 async function refresh() {
   try {
     const IpBlock = require('../../models/IpBlock');
-    const docs = await IpBlock.find({ $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }] }).select('target expiresAt').lean();
+    const docs = await IpBlock.find({
+      $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }],
+    })
+      .select('target expiresAt')
+      .lean();
     entries = docs;
     list = build(docs);
   } catch (err) {
@@ -64,7 +71,11 @@ function isBlocked(ip) {
 function ipBlockGuard(req, res, next) {
   if (!entries.length) return next();
   if (!isBlocked(clientIp(req))) return next();
-  return res.status(403).json({ error: 'Access denied', message: 'Access from your network is blocked.', code: 'IP_BLOCKED' });
+  return res.status(403).json({
+    error: 'Access denied',
+    message: 'Access from your network is blocked.',
+    code: 'IP_BLOCKED',
+  });
 }
 
 function startIpBlocks() {

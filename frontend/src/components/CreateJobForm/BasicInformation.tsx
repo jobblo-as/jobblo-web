@@ -1,48 +1,20 @@
 import React, { useState, useMemo } from 'react';
 import { useCategories } from '../../features/categories/hooks';
-import { Search, Info, Check, Sparkles, Loader2, X, Plus, AlertCircle } from 'lucide-react';
+import { Search, Info, Check, Sparkles, X, Plus, AlertCircle } from 'lucide-react';
 import type { CategoryType } from '../../features/categories/types';
-import { useMutation } from '@tanstack/react-query';
-import { generateJobInfo, generateJobTitle } from '../../api/aiAPI';
-import { useTranslate } from '../../i18n/useTranslate';
-import toast from 'react-hot-toast';
-import { isAxiosError } from 'axios';
-import { summariseAiFill, clampMessage } from '../../utils/aiFillSummary';
 
 interface BasicInformationProps {
   title: string;
   setTitle: (val: string) => void;
   description: string;
   setDescription: (val: string) => void;
-  price: string | number;
-  setPrice: (val: string) => void;
   categories: string;
   setCategories: (val: string) => void;
   tags: string[];
   setTags: (val: string[]) => void;
-  setDurationValue: (val: string) => void;
-  setDurationUnit: (val: string) => void;
-  setHourlyRate: (val: string) => void;
   maxApplicants: string | number;
   setMaxApplicants: (val: string | number) => void;
   errors?: Partial<Record<string, string>>;
-  // BUG-012: optional context for richer AI suggestions
-  durationValue?: string | number;
-  durationUnit?: string;
-  city?: string;
-  countyCode?: string;
-  paymentType?: string;
-  equipment?: string;
-  urgent?: boolean;
-  // Output: which fields were AI-generated (so parent can show labels)
-  onAiGenerated?: (flags: {
-    title?: boolean;
-    description?: boolean;
-    price?: boolean;
-    duration?: boolean;
-    hourlyRate?: boolean;
-    tags?: boolean;
-  }) => void;
   aiGeneratedFlags?: {
     title?: boolean;
     description?: boolean;
@@ -61,41 +33,18 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({
   setTitle,
   description,
   setDescription,
-  price,
-  setPrice,
   categories,
   setCategories,
   tags,
   setTags,
-  setDurationValue,
-  setDurationUnit,
-  setHourlyRate,
   errors,
-  durationValue,
-  durationUnit,
-  city,
-  countyCode,
-  paymentType,
-  equipment,
-  urgent,
-  onAiGenerated,
   aiPricingNote,
   onDismissAiPricingNote,
 }) => {
   const { data: categoryData = [], isLoading, error } = useCategories();
   const [searchTerm, setSearchTerm] = useState('');
-  const jobInfoMutation = useMutation({ mutationFn: generateJobInfo });
-  const titleMutation = useMutation({ mutationFn: generateJobTitle });
-  const isGenerating = jobInfoMutation.isPending;
-  const isGeneratingTitle = titleMutation.isPending;
-  const [showTitleAiInput, setShowTitleAiInput] = useState(false);
-  const [titleAiPrompt, setTitleAiPrompt] = useState('');
   const [newTag, setNewTag] = useState('');
-  /** The model's pricing rationale. Shown next to the price, not inside a toast. */
-  const [pricingNote, setPricingNote] = useState('');
   const maxDescriptionLength = 2000;
-  /** Tells the backend which language to answer in. */
-  const { locale } = useTranslate();
 
   const handleAddTag = () => {
     if (newTag.trim() && !tags.includes(newTag.trim())) {
@@ -106,176 +55,6 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({
 
   const handleRemoveTag = (tagToRemove: string) => {
     setTags(tags.filter((t) => t !== tagToRemove));
-  };
-
-  const handleAiGenerate = async () => {
-    if (!title || title.length < 5) {
-      toast.error('Vennligst skriv en tittel først (min. 5 tegn)');
-      return;
-    }
-
-    const userHas = {
-      description: description.trim().length >= 20,
-      price: !!price && String(price).length > 0 && Number(price) > 0,
-      hourlyRate: false,
-      duration: !!durationValue && String(durationValue).length > 0 && Number(durationValue) > 0,
-    };
-    const flags: Record<string, boolean> = {};
-
-    try {
-      const data = await jobInfoMutation.mutateAsync({
-        lang: locale,
-        title,
-        category: categories,
-        paymentType,
-        duration: durationValue
-          ? { value: durationValue, unit: durationUnit || 'minutes' }
-          : undefined,
-        city,
-        countyCode,
-        equipment,
-        urgent,
-        existingDescription: description || undefined,
-      });
-
-      if (data?.success) {
-        const {
-          description: aiDesc,
-          estimatedPrice,
-          suggestedPrice,
-          priceMin,
-          hourlyRate: aiHourlyRate,
-          category: aiCategory,
-          duration: aiDuration,
-          skills: aiSkills,
-          pricingReasoning,
-        } = data.data;
-
-        if (!userHas.description && aiDesc) {
-          setDescription(aiDesc);
-          flags.description = true;
-        }
-        if (aiSkills && Array.isArray(aiSkills)) {
-          setTags(aiSkills);
-          flags.tags = true;
-        }
-        if (aiHourlyRate) {
-          setHourlyRate(aiHourlyRate.toString());
-          flags.hourlyRate = true;
-        }
-        if (!userHas.price) {
-          const suggested = suggestedPrice ?? estimatedPrice ?? priceMin;
-          if (typeof suggested === 'number' && suggested > 0) {
-            setPrice(suggested.toString());
-            flags.price = true;
-          }
-        }
-        if (aiCategory && !categories) {
-          setCategories(aiCategory);
-        }
-        if (!userHas.duration && aiDuration && aiDuration.value) {
-          setDurationValue(aiDuration.value.toString());
-          setDurationUnit(aiDuration.unit || 'minutes');
-          flags.duration = true;
-        }
-
-        // The toast used to carry `pricingReasoning` — a whole sentence written by the
-        // model — inside a pill-shaped toast with a 30rem cap. It wrapped to four or five
-        // lines and became a rounded slab across the bottom of the screen. A toast should
-        // confirm that something happened; the reasoning is shown under the price field
-        // instead, where it is next to the number it explains.
-        setPricingNote(pricingReasoning || '');
-        toast.success(summariseAiFill(flags), { duration: 3000 });
-        onAiGenerated?.(flags);
-      }
-    } catch (err) {
-      console.error(err);
-      const body = isAxiosError<{ message?: string; error?: string }>(err) ? err.response?.data : undefined;
-      const errorMessage =
-        body?.message ||
-        body?.error ||
-        'Kunne ikke generere AI-innhold. Sjekk API-nøkkel.';
-      toast.error(clampMessage(errorMessage));
-    }
-  };
-
-  const handleGenerateTitle = async () => {
-    if (!titleAiPrompt || titleAiPrompt.length < 5) {
-      toast.error('Vennligst beskriv hva jobben går ut på (min. 5 tegn)');
-      return;
-    }
-
-    const userHas = {
-      title: title.trim().length >= 5,
-      description: description.trim().length >= 20,
-      price: !!price && String(price).length > 0 && Number(price) > 0,
-      duration: !!durationValue && String(durationValue).length > 0 && Number(durationValue) > 0,
-    };
-    const flags: Record<string, boolean> = {};
-
-    try {
-      const data = await titleMutation.mutateAsync({
-        lang: locale,
-        description: titleAiPrompt,
-        category: categories,
-        paymentType,
-        duration: durationValue
-          ? { value: durationValue, unit: durationUnit || 'minutes' }
-          : undefined,
-        city,
-        countyCode,
-        equipment,
-        urgent,
-      });
-
-      if (data?.success) {
-        const {
-          title: aiTitle,
-          estimatedPrice,
-          suggestedPrice,
-          priceMin,
-          hourlyRate: aiHourlyRate,
-          duration: aiDuration,
-          skills: aiSkills,
-          pricingReasoning,
-        } = data.data;
-
-        if (!userHas.title && aiTitle) {
-          setTitle(aiTitle);
-          flags.title = true;
-        }
-        if (aiSkills && Array.isArray(aiSkills)) {
-          setTags(aiSkills);
-          flags.tags = true;
-        }
-        if (aiHourlyRate) {
-          setHourlyRate(aiHourlyRate.toString());
-          flags.hourlyRate = true;
-        }
-        if (!userHas.duration && aiDuration && aiDuration.value) {
-          setDurationValue(aiDuration.value.toString());
-          setDurationUnit(aiDuration.unit || 'minutes');
-          flags.duration = true;
-        }
-        if (!userHas.price) {
-          const suggested = suggestedPrice ?? estimatedPrice ?? priceMin;
-          if (typeof suggested === 'number' && suggested > 0) {
-            setPrice(suggested.toString());
-            flags.price = true;
-          }
-        }
-        setShowTitleAiInput(false);
-        setTitleAiPrompt('');
-        setPricingNote(pricingReasoning || '');
-        toast.success(summariseAiFill(flags), { duration: 3000 });
-        onAiGenerated?.(flags);
-      }
-    } catch (err) {
-      console.error('TITLE GEN ERROR:', err);
-      const body = isAxiosError<{ message?: string; error?: string }>(err) ? err.response?.data : undefined;
-      const errorMessage = body?.error || body?.message || 'Kunne ikke generere tittel.';
-      toast.error(clampMessage(errorMessage));
-    }
   };
 
   const filteredCategories = useMemo(() => {
@@ -290,19 +69,13 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({
       {/* 1. Title Section */}
       <div className="box-card-custom rounded-[14px] p-4 md:p-6">
         <div className="flex items-center justify-between mb-4">
-          <label htmlFor="job-title" className="text-[11px] md:text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
+          <label
+            htmlFor="job-title"
+            className="text-[11px] md:text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2"
+          >
             Tittel <span className="text-red-500">*</span>
           </label>
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={() => setShowTitleAiInput(!showTitleAiInput)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-600 rounded-lg
-              text-[10px] md:text-xs font-bold hover:bg-purple-100 transition-all border border-purple-200"
-            >
-              <Sparkles size={12} />
-              Generer med AI
-            </button>
             <span
               className={`text-[9px] md:text-[10px] font-bold px-2 py-0.5 rounded-full
               ${title.length > 50 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'}`}
@@ -311,33 +84,6 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({
             </span>
           </div>
         </div>
-
-        {showTitleAiInput && (
-          <div className="mb-4 p-3 bg-purple-50/50 rounded-xl border border-purple-100 animate-in slide-in-from-top-2 duration-300">
-            <p className="text-[10px] font-bold text-purple-600 mb-2 uppercase tracking-tight">
-              Hva skal gjøres?
-            </p>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={titleAiPrompt}
-                onChange={(e) => setTitleAiPrompt(e.target.value)}
-                placeholder="Beskriv jobben kort (f.eks. male en liten bod utvendig)"
-                className="flex-1 px-3 py-2 text-xs md:text-sm rounded-lg border border-purple-200 focus:border-purple-400 outline-none"
-                onKeyDown={(e) => e.key === 'Enter' && handleGenerateTitle()}
-              />
-              <button
-                type="button"
-                onClick={handleGenerateTitle}
-                disabled={isGeneratingTitle}
-                className="px-4 py-2 bg-purple-600 text-white rounded-lg text-xs font-bold
-              hover:bg-purple-700 disabled:opacity-50 transition-all flex items-center gap-2"
-              >
-                {isGeneratingTitle ? <Loader2 size={12} className="animate-spin" /> : 'Generer'}
-              </button>
-            </div>
-          </div>
-        )}
 
         <input
           id="job-title"
@@ -361,7 +107,10 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({
       <div
         className={`box-card-custom rounded-[14px] p-4 md:p-6 border transition-colors ${errors?.categories ? 'border-red-500' : 'border-transparent'}`}
       >
-        <label htmlFor="job-category-search" className="text-[11px] md:text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2 mb-4">
+        <label
+          htmlFor="job-category-search"
+          className="text-[11px] md:text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2 mb-4"
+        >
           Velg kategori <span className="text-red-500">*</span>
         </label>
 
@@ -427,7 +176,10 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({
       <div className="box-card-custom rounded-[14px] p-4 md:p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="flex flex-col gap-1">
-            <label htmlFor="job-description" className="text-[11px] md:text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
+            <label
+              htmlFor="job-description"
+              className="text-[11px] md:text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2"
+            >
               Beskrivelse <span className="text-red-500">*</span>
             </label>
             <div className="flex items-center gap-1.5 text-[9px] md:text-[10px] font-bold text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full w-fit">
@@ -435,18 +187,6 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({
               Min. 20 tegn
             </div>
           </div>
-
-          {/* AI Generate Button */}
-          <button
-            type="button"
-            onClick={handleAiGenerate}
-            disabled={isGenerating}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-600
-            rounded-lg text-[10px] md:text-xs font-bold hover:bg-purple-100 transition-all border border-purple-200"
-          >
-            {isGenerating ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
-            {isGenerating ? 'Genererer...' : 'Generer med AI'}
-          </button>
         </div>
         <div className="relative">
           <textarea
@@ -479,19 +219,16 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({
           It lives here now: dismissible, next to the fields it explains, and readable for
           as long as the person wants rather than for five seconds.
         */}
-        {(pricingNote || aiPricingNote) && (
+        {aiPricingNote && (
           <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-[#E6E7E1] bg-[#F4F6F0] p-3 animate-in fade-in slide-in-from-top-1">
             <Sparkles size={14} className="mt-0.5 shrink-0 text-[#2E6641]" />
             <p className="min-w-0 flex-1 text-[0.8125rem] leading-relaxed text-[#63665F]">
               <span className="font-semibold text-[#0B0B0B]">Slik ble prisen anslått: </span>
-              {pricingNote || aiPricingNote}
+              {aiPricingNote}
             </p>
             <button
               type="button"
-              onClick={() => {
-                setPricingNote('');
-                onDismissAiPricingNote?.();
-              }}
+              onClick={() => onDismissAiPricingNote?.()}
               aria-label="Skjul prisforklaring"
               className="-mr-1 -mt-1 flex size-7 shrink-0 items-center justify-center rounded-full text-[#9B9E96] transition-colors hover:bg-white hover:text-[#0B0B0B]"
             >
@@ -503,7 +240,10 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({
 
       {/* 4. Skills/Tags Section */}
       <div className="box-card-custom rounded-[14px] p-4 md:p-6">
-        <label htmlFor="job-tags" className="text-[11px] md:text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2 mb-4">
+        <label
+          htmlFor="job-tags"
+          className="text-[11px] md:text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2 mb-4"
+        >
           Ferdigheter / Tags
         </label>
         <div className="space-y-4">

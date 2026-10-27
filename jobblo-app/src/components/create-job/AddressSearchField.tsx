@@ -16,7 +16,14 @@ interface AddressSearchFieldProps {
 }
 
 /** One search field with Kartverket suggestions; replaces street + fylke + kommune + sted. */
-export function AddressSearchField({ value, detail, confirmed, error, onSelect, onClear }: AddressSearchFieldProps) {
+export function AddressSearchField({
+  value,
+  detail,
+  confirmed,
+  error,
+  onSelect,
+  onClear,
+}: AddressSearchFieldProps) {
   const [query, setQuery] = useState(value);
   const [hits, setHits] = useState<AddressHit[]>([]);
   const [loading, setLoading] = useState(false);
@@ -89,7 +96,11 @@ export function AddressSearchField({ value, detail, confirmed, error, onSelect, 
           error ? 'border-danger' : confirmed ? 'border-brand-text/50' : 'border-line'
         }`}
       >
-        {confirmed ? <CheckCircle2 size={17} color={TC.brandText} /> : <Search size={17} color={tc('#9B9E96', 'subtle')} />}
+        {confirmed ? (
+          <CheckCircle2 size={17} color={TC.brandText} />
+        ) : (
+          <Search size={17} color={tc('#9B9E96', 'subtle')} />
+        )}
         <TextInput
           value={query}
           onChangeText={(text) => {
@@ -125,17 +136,23 @@ export function AddressSearchField({ value, detail, confirmed, error, onSelect, 
               >
                 <MapPin size={16} color={TC.brandText} />
                 <View className="min-w-0 flex-1">
-                  <Text className="text-[0.9375rem] font-medium text-ink" numberOfLines={1}>{hit.address}</Text>
+                  <Text className="text-[0.9375rem] font-medium text-ink" numberOfLines={1}>
+                    {hit.address}
+                  </Text>
                   <Text className="text-[0.8125rem] text-muted" numberOfLines={1}>
                     {[hit.postalCode, hit.city].filter(Boolean).join(' ')}
-                    {hit.municipalityName && hit.municipalityName !== hit.city ? ` · ${hit.municipalityName}` : ''}
+                    {hit.municipalityName && hit.municipalityName !== hit.city
+                      ? ` · ${hit.municipalityName}`
+                      : ''}
                   </Text>
                 </View>
               </Pressable>
             ))
           ) : !loading ? (
             <Text className="px-3 py-3 text-[0.875rem] text-muted">
-              {failed ? 'Adressesøket svarer ikke. Prøv igjen, eller trykk i kartet.' : 'Fant ingen adresse. Prøv en annen skrivemåte, eller trykk i kartet.'}
+              {failed
+                ? 'Adressesøket svarer ikke. Prøv igjen, eller trykk i kartet.'
+                : 'Fant ingen adresse. Prøv en annen skrivemåte, eller trykk i kartet.'}
             </Text>
           ) : null}
         </View>
@@ -144,9 +161,13 @@ export function AddressSearchField({ value, detail, confirmed, error, onSelect, 
       {error ? (
         <Text className="text-[0.8125rem] font-medium text-danger">{error}</Text>
       ) : confirmed ? (
-        <Text className="text-[0.8125rem] font-medium text-brand-text">Lokasjon bekreftet{detail ? ` · ${detail}` : ''}</Text>
+        <Text className="text-[0.8125rem] font-medium text-brand-text">
+          Lokasjon bekreftet{detail ? ` · ${detail}` : ''}
+        </Text>
       ) : (
-        <Text className="text-[0.8125rem] text-muted">Velg et forslag fra listen, eller trykk i kartet.</Text>
+        <Text className="text-[0.8125rem] text-muted">
+          Velg et forslag fra listen, eller trykk i kartet.
+        </Text>
       )}
     </View>
   );

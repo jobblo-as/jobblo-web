@@ -170,13 +170,11 @@ export function LocationPickerMap({
           {isLocating ? <Loader2 size={15} className="animate-spin" /> : <Locate size={15} />}
           {isLocating ? 'Henter...' : 'Bruk min nåværende posisjon'}
         </button>
-        <span className="text-xs text-gray-500">
-          eller klikk på kartet / dra i markøren
-        </span>
+        <span className="text-xs text-gray-500">eller klikk på kartet / dra i markøren</span>
       </div>
     </div>
   );
-};
+}
 
 function PanToMap({
   mapId,

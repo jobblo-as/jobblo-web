@@ -29,7 +29,8 @@ async function mockApi(page, { cookieSession, profileFailsOnce = false } = {}) {
     calls.push({ method: request.method(), pathname, auth });
 
     if (pathname === '/api/auth/refresh-token') {
-      if (!cookieSession) return route.fulfill({ status: 401, json: { error: 'Refresh token missing' } });
+      if (!cookieSession)
+        return route.fulfill({ status: 401, json: { error: 'Refresh token missing' } });
       refreshCount += 1;
       return route.fulfill({ json: { accessToken: `at-${cookieSession._id}-${refreshCount}` } });
     }
@@ -37,7 +38,10 @@ async function mockApi(page, { cookieSession, profileFailsOnce = false } = {}) {
       profileCalls += 1;
       const expected = cookieSession && auth?.startsWith(`Bearer at-${cookieSession._id}-`);
       if (!expected || (profileFailsOnce && profileCalls === 1)) {
-        return route.fulfill({ status: 401, json: { error: 'Token expired', code: 'TOKEN_EXPIRED' } });
+        return route.fulfill({
+          status: 401,
+          json: { error: 'Token expired', code: 'TOKEN_EXPIRED' },
+        });
       }
       return route.fulfill({ json: cookieSession });
     }
@@ -67,7 +71,9 @@ test('a forged ?token= cannot sign in a visitor who has no session', async ({ pa
   expect(calls.some((c) => c.auth?.includes(ATTACKER_TOKEN))).toBe(false);
 });
 
-test("a forged ?token= does not switch a signed-in victim to the attacker's account", async ({ page }) => {
+test("a forged ?token= does not switch a signed-in victim to the attacker's account", async ({
+  page,
+}) => {
   const calls = await mockApi(page, { cookieSession: VICTIM });
   await page.goto(`/oauth-success?token=${ATTACKER_TOKEN}`);
 
@@ -78,7 +84,9 @@ test("a forged ?token= does not switch a signed-in victim to the attacker's acco
   expect(calls.some((c) => c.auth?.includes(ATTACKER_TOKEN))).toBe(false);
 });
 
-test('a real OAuth sign-in (cookie session) is completed from the server session', async ({ page }) => {
+test('a real OAuth sign-in (cookie session) is completed from the server session', async ({
+  page,
+}) => {
   const calls = await mockApi(page, { cookieSession: NEW_USER });
   await page.goto('/oauth-success');
 

@@ -19,8 +19,9 @@ describe('SafePay Connect onboarding deadline', () => {
 
     expect(snapshot.providerConnectDeadlineDays).toBe(days);
     expect(snapshot.paymentConfirmedAt).toBe(confirmedAt);
-    expect(snapshot.providerConnectDeadlineAt.getTime() - confirmedAt.getTime())
-      .toBe(days * 24 * 60 * 60 * 1000);
+    expect(snapshot.providerConnectDeadlineAt.getTime() - confirmedAt.getTime()).toBe(
+      days * 24 * 60 * 60 * 1000
+    );
   });
 
   it('persists the three-day default when no admin value exists', async () => {
@@ -39,7 +40,9 @@ describe('SafePay Connect onboarding deadline', () => {
     GlobalConfig.findOneAndUpdate.mockReturnValue({
       lean: jest.fn().mockResolvedValue({ value: 3.5 }),
     });
-    await expect(getProviderConnectDeadlineDays()).rejects.toThrow('Invalid SAFEPAY_CONNECT_ONBOARDING_DEADLINE_DAYS');
+    await expect(getProviderConnectDeadlineDays()).rejects.toThrow(
+      'Invalid SAFEPAY_CONNECT_ONBOARDING_DEADLINE_DAYS'
+    );
   });
 
   it('supports a recorded one-minute deadline override outside production', () => {

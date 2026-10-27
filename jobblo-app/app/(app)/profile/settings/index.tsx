@@ -34,7 +34,11 @@ import { ScreenHeader } from '../../../../src/components/ui/ScreenHeader';
 import { MEMBERSHIP_ENABLED } from '../../../../src/config/features';
 import { useProfile } from '../../../../src/hooks/useProfile';
 import { TC, tc } from '../../../../src/theme/colors';
-import { loadThemePreference, setThemePreference, type ThemePreference } from '../../../../src/theme/themePreference';
+import {
+  loadThemePreference,
+  setThemePreference,
+  type ThemePreference,
+} from '../../../../src/theme/themePreference';
 
 const THEME_OPTIONS: { value: ThemePreference; label: string; icon: LucideIcon }[] = [
   { value: 'system', label: 'Automatisk', icon: Smartphone },
@@ -42,57 +46,151 @@ const THEME_OPTIONS: { value: ThemePreference; label: string; icon: LucideIcon }
   { value: 'dark', label: 'Mørk', icon: Moon },
 ];
 
-type Row = { label: string; description?: string; icon: LucideIcon; href: Href; destructive?: boolean };
+type Row = {
+  label: string;
+  description?: string;
+  icon: LucideIcon;
+  href: Href;
+  destructive?: boolean;
+};
 
 const GROUPS: { title: string; rows: Row[] }[] = [
   {
     title: 'Profil',
     rows: [
-      { label: 'Adresser', description: 'Gateadresse, postnummer og sted', icon: Home, href: '/profile/settings/addresses' },
-      { label: 'Jobbsøker-profil', description: 'Tilgjengelighet, ferdigheter og erfaring', icon: Briefcase, href: '/profile/settings/seeker' },
+      {
+        label: 'Adresser',
+        description: 'Gateadresse, postnummer og sted',
+        icon: Home,
+        href: '/profile/settings/addresses',
+      },
+      {
+        label: 'Jobbsøker-profil',
+        description: 'Tilgjengelighet, ferdigheter og erfaring',
+        icon: Briefcase,
+        href: '/profile/settings/seeker',
+      },
     ],
   },
   {
     title: 'Konto og sikkerhet',
     rows: [
-      { label: 'E-postadresse', description: 'Adressen du logger inn med', icon: AtSign, href: '/profile/settings/email' },
-      { label: 'Telefonnummer', description: 'Kontaktinformasjon', icon: Phone, href: '/profile/settings/phone' },
-      { label: 'Endre passord', description: 'Med kode på e-post', icon: KeyRound, href: '/profile/settings/password' },
-      { label: 'Aktive økter', description: 'Enheter som er logget inn', icon: Monitor, href: '/profile/settings/sessions' },
+      {
+        label: 'E-postadresse',
+        description: 'Adressen du logger inn med',
+        icon: AtSign,
+        href: '/profile/settings/email',
+      },
+      {
+        label: 'Telefonnummer',
+        description: 'Kontaktinformasjon',
+        icon: Phone,
+        href: '/profile/settings/phone',
+      },
+      {
+        label: 'Endre passord',
+        description: 'Med kode på e-post',
+        icon: KeyRound,
+        href: '/profile/settings/password',
+      },
+      {
+        label: 'Aktive økter',
+        description: 'Enheter som er logget inn',
+        icon: Monitor,
+        href: '/profile/settings/sessions',
+      },
     ],
   },
   {
     title: 'Betaling',
     rows: [
-      { label: 'SafePay-historikk', description: 'Betalinger, utbetalinger og refusjoner', icon: ShieldCheck, href: '/profile/settings/safepay' },
-      { label: 'Utbetalinger', description: 'Stripe Connect-oppsett', icon: Wallet, href: '/profile/settings/payout' },
-      ...(MEMBERSHIP_ENABLED ? [
-        { label: 'Abonnement', description: 'Administrer aktivt abonnement', icon: CreditCard, href: '/profile/settings/subscription' },
-        { label: 'Medlemskap', description: 'Planvalg og kjøp', icon: Sparkles, href: '/profile/membership' },
-      ] satisfies Row[] : []),
+      {
+        label: 'SafePay-historikk',
+        description: 'Betalinger, utbetalinger og refusjoner',
+        icon: ShieldCheck,
+        href: '/profile/settings/safepay',
+      },
+      {
+        label: 'Utbetalinger',
+        description: 'Stripe Connect-oppsett',
+        icon: Wallet,
+        href: '/profile/settings/payout',
+      },
+      ...(MEMBERSHIP_ENABLED
+        ? ([
+            {
+              label: 'Abonnement',
+              description: 'Administrer aktivt abonnement',
+              icon: CreditCard,
+              href: '/profile/settings/subscription',
+            },
+            {
+              label: 'Medlemskap',
+              description: 'Planvalg og kjøp',
+              icon: Sparkles,
+              href: '/profile/membership',
+            },
+          ] satisfies Row[])
+        : []),
     ],
   },
   {
     title: 'Varsler og personvern',
     rows: [
-      { label: 'Varsler', description: 'Push-varsler på denne enheten', icon: Bell, href: '/profile/settings/notifications' },
-      { label: 'Personvern og informasjonskapsler', description: 'Personvernerklæring og cookie-policy', icon: ShieldCheck, href: '/profile/settings/privacy' },
-      { label: 'Søkemotorsynlighet', description: 'Om profilen din vises i søk', icon: Eye, href: '/profile/settings/visibility' },
-      { label: 'Blokkerte brukere', description: 'Personer du har blokkert', icon: ShieldBan, href: '/profile/settings/blocked-users' },
+      {
+        label: 'Varsler',
+        description: 'Push-varsler på denne enheten',
+        icon: Bell,
+        href: '/profile/settings/notifications',
+      },
+      {
+        label: 'Personvern og informasjonskapsler',
+        description: 'Personvernerklæring og cookie-policy',
+        icon: ShieldCheck,
+        href: '/profile/settings/privacy',
+      },
+      {
+        label: 'Søkemotorsynlighet',
+        description: 'Om profilen din vises i søk',
+        icon: Eye,
+        href: '/profile/settings/visibility',
+      },
+      {
+        label: 'Blokkerte brukere',
+        description: 'Personer du har blokkert',
+        icon: ShieldBan,
+        href: '/profile/settings/blocked-users',
+      },
     ],
   },
   {
     title: 'Annet',
     rows: [
-      { label: 'Kundesenter', description: 'FAQ, e-post og saksregistrering', icon: HelpCircle, href: '/profile/support' },
-      { label: 'Lokasjon', description: 'Landet som vises på profilen din', icon: MapPin, href: '/profile/settings/location' },
+      {
+        label: 'Kundesenter',
+        description: 'FAQ, e-post og saksregistrering',
+        icon: HelpCircle,
+        href: '/profile/support',
+      },
+      {
+        label: 'Lokasjon',
+        description: 'Landet som vises på profilen din',
+        icon: MapPin,
+        href: '/profile/settings/location',
+      },
       { label: 'Om Jobblo', icon: Info, href: '/profile/settings/about' },
     ],
   },
   {
     title: 'Faresone',
     rows: [
-      { label: 'Slett profilen min', description: 'Kan ikke angres', icon: Trash2, href: '/profile/settings/delete-account', destructive: true },
+      {
+        label: 'Slett profilen min',
+        description: 'Kan ikke angres',
+        icon: Trash2,
+        href: '/profile/settings/delete-account',
+        destructive: true,
+      },
     ],
   },
 ];
@@ -104,7 +202,13 @@ export default function SettingsOverviewScreen() {
     profile?.role === 'company'
       ? profile.companyName || profile.name || 'Bedrift'
       : `${profile?.name || ''} ${profile?.lastName || ''}`.trim() || 'Profil';
-  const initials = name.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase();
+  const initials = name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase();
   const version = Constants.expoConfig?.version;
   const [theme, setTheme] = useState<ThemePreference>('system');
   useEffect(() => {
@@ -143,11 +247,17 @@ export default function SettingsOverviewScreen() {
               )}
             </View>
             <View className="min-w-0 flex-1">
-              <Text className="text-[1.0625rem] font-bold text-ink" numberOfLines={1}>{name}</Text>
+              <Text className="text-[1.0625rem] font-bold text-ink" numberOfLines={1}>
+                {name}
+              </Text>
               {profile?.email ? (
-                <Text className="mt-0.5 text-[0.8125rem] text-muted" numberOfLines={1}>{profile.email}</Text>
+                <Text className="mt-0.5 text-[0.8125rem] text-muted" numberOfLines={1}>
+                  {profile.email}
+                </Text>
               ) : null}
-              <Text className="mt-1 text-[0.8125rem] font-semibold text-brand-text">Rediger profil</Text>
+              <Text className="mt-1 text-[0.8125rem] font-semibold text-brand-text">
+                Rediger profil
+              </Text>
             </View>
             <ChevronRight size={18} color={tc('#9B9E96', 'subtle')} />
           </Pressable>
@@ -169,7 +279,11 @@ export default function SettingsOverviewScreen() {
                     className={`flex-1 items-center gap-1.5 rounded-xl py-3 ${active ? 'bg-tint' : 'active:bg-surface-2'}`}
                   >
                     <Icon size={20} color={active ? TC.brandText : tc('#9B9E96', 'subtle')} />
-                    <Text className={`text-[0.875rem] ${active ? 'font-semibold text-brand-text' : 'text-muted'}`}>{label}</Text>
+                    <Text
+                      className={`text-[0.875rem] ${active ? 'font-semibold text-brand-text' : 'text-muted'}`}
+                    >
+                      {label}
+                    </Text>
                   </Pressable>
                 );
               })}

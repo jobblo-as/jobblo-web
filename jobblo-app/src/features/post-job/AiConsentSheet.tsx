@@ -14,7 +14,11 @@ import { t } from './i18n';
 export function AiConsentSheet({ visible }: { visible: boolean }) {
   const setConsent = useAiConsent((s) => s.set);
   return (
-    <BottomSheet visible={visible} onClose={() => setConsent(false)} title={t('AI-hjelper', 'AI helper')}>
+    <BottomSheet
+      visible={visible}
+      onClose={() => setConsent(false)}
+      title={t('AI-hjelper', 'AI helper')}
+    >
       <View className="items-center pb-2">
         <View className="h-14 w-14 items-center justify-center rounded-full bg-tint">
           <Sparkles size={26} color={TC.brandText} />
@@ -36,8 +40,17 @@ export function AiConsentSheet({ visible }: { visible: boolean }) {
         </Text>
       </View>
       <View className="mt-5 gap-3">
-        <Button label={t('Bruk AI-hjelper', 'Use the AI helper')} fullWidth onPress={() => setConsent(true)} />
-        <Button label={t('Fortsett uten AI', 'Continue without AI')} variant="secondary" fullWidth onPress={() => setConsent(false)} />
+        <Button
+          label={t('Bruk AI-hjelper', 'Use the AI helper')}
+          fullWidth
+          onPress={() => setConsent(true)}
+        />
+        <Button
+          label={t('Fortsett uten AI', 'Continue without AI')}
+          variant="secondary"
+          fullWidth
+          onPress={() => setConsent(false)}
+        />
       </View>
     </BottomSheet>
   );

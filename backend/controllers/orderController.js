@@ -61,7 +61,9 @@ exports.createJobRequest = async (req, res) => {
     // stored unchecked: any type, any length).
     const { MAX_MESSAGE_LENGTH } = require('./chatController');
     if (message != null && (typeof message !== 'string' || message.length > MAX_MESSAGE_LENGTH)) {
-      return res.status(400).json({ error: `Meldingen må være tekst på maks ${MAX_MESSAGE_LENGTH} tegn.` });
+      return res
+        .status(400)
+        .json({ error: `Meldingen må være tekst på maks ${MAX_MESSAGE_LENGTH} tegn.` });
     }
 
     const service = await Service.findById(serviceId);
@@ -69,17 +71,22 @@ exports.createJobRequest = async (req, res) => {
 
     // ── Block applications on non-open services ───────────────────────────────
     const BLOCKED_STATUSES = [
-      'completed', 'in_progress', 'closed', 'cancelled',
-      'expired', 'draft', 'waiting_for_approval',
+      'completed',
+      'in_progress',
+      'closed',
+      'cancelled',
+      'expired',
+      'draft',
+      'waiting_for_approval',
     ];
     if (BLOCKED_STATUSES.includes(service.status)) {
       const STATUS_MESSAGES = {
-        completed:            'Dette oppdraget er allerede fullført.',
-        in_progress:          'Dette oppdraget er under arbeid og tar ikke imot nye søknader.',
-        closed:               'Dette oppdraget er lukket.',
-        cancelled:            'Dette oppdraget er kansellert.',
-        expired:              'Dette oppdraget har utløpt.',
-        draft:                'Dette oppdraget er ikke publisert ennå.',
+        completed: 'Dette oppdraget er allerede fullført.',
+        in_progress: 'Dette oppdraget er under arbeid og tar ikke imot nye søknader.',
+        closed: 'Dette oppdraget er lukket.',
+        cancelled: 'Dette oppdraget er kansellert.',
+        expired: 'Dette oppdraget har utløpt.',
+        draft: 'Dette oppdraget er ikke publisert ennå.',
         waiting_for_approval: 'Dette oppdraget venter på godkjenning.',
       };
       return res.status(400).json({
@@ -109,7 +116,9 @@ exports.createJobRequest = async (req, res) => {
 
     // Applying opens a chat with the owner, so a block in either direction stops it here too.
     if (await require('./chatController').isBlockedBetween(customerId, providerId)) {
-      return res.status(403).json({ error: 'Du kan ikke søke på dette oppdraget.', code: 'user_blocked' });
+      return res
+        .status(403)
+        .json({ error: 'Du kan ikke søke på dette oppdraget.', code: 'user_blocked' });
     }
 
     // Check if a request already exists
@@ -145,19 +154,27 @@ exports.createJobRequest = async (req, res) => {
     const session = await mongoose.startSession();
     try {
       await session.withTransaction(async () => {
-        await consumeApplicationContact({
-          userId: customerId,
-          jobRequestId,
-          servicePrice: service.price,
-          serviceId: service._id,
-        }, { session });
-        [jobRequest] = await JobRequest.create([{
-          _id: jobRequestId,
-          serviceId,
-          customerId,
-          providerId,
-          ...(message && { message }),
-        }], { session });
+        await consumeApplicationContact(
+          {
+            userId: customerId,
+            jobRequestId,
+            servicePrice: service.price,
+            serviceId: service._id,
+          },
+          { session }
+        );
+        [jobRequest] = await JobRequest.create(
+          [
+            {
+              _id: jobRequestId,
+              serviceId,
+              customerId,
+              providerId,
+              ...(message && { message }),
+            },
+          ],
+          { session }
+        );
       });
     } catch (err) {
       if (err.code === 11000) {
@@ -279,7 +296,10 @@ exports.updateJobRequestStatus = async (req, res) => {
 
     // Accepting opens a chat and posts into it; a block either way stops that (declining still works).
     const { isBlockedBetween, BLOCKED_DEAL } = require('./chatController');
-    if (status === 'accepted' && (await isBlockedBetween(jobRequest.customerId, jobRequest.providerId))) {
+    if (
+      status === 'accepted' &&
+      (await isBlockedBetween(jobRequest.customerId, jobRequest.providerId))
+    ) {
       return res.status(403).json(BLOCKED_DEAL);
     }
 
@@ -402,9 +422,7 @@ exports.getAllOrders = async (req, res) => {
     // parties each other's address at `awaiting_payment`, which is precisely the
     // point at which they can agree to settle off-platform. Released only once the
     // payment is confirmed, which is when they legitimately need to reach each other.
-    const paidOrderIds = orders
-      .filter((o) => o.paymentStatus === 'paid')
-      .map((o) => o._id);
+    const paidOrderIds = orders.filter((o) => o.paymentStatus === 'paid').map((o) => o._id);
 
     if (paidOrderIds.length > 0) {
       const contactIds = new Set();
@@ -478,7 +496,6 @@ exports.getOrderById = async (req, res) => {
  * derive payer/payee from the service.
  */
 
-
 /**
  * REMOVED: PATCH /api/orders/:id (updateOrder)
  *
@@ -493,7 +510,6 @@ exports.getOrderById = async (req, res) => {
  * money unaccounted for. The supported paths are the SafePay flow and the admin
  * routes under /api/admin/orders.
  */
-
 
 /**
  * GET /api/orders/:id/completed-details
@@ -552,7 +568,8 @@ exports.getCompletedJobDetails = async (req, res) => {
     // this endpoint handed both parties each other's email (security review C3).
     const out = order.toObject();
     if (out.paymentStatus !== 'paid') {
-      for (const party of [out.customerId, out.providerId]) if (party && typeof party === 'object') delete party.email;
+      for (const party of [out.customerId, out.providerId])
+        if (party && typeof party === 'object') delete party.email;
     }
 
     res.json({

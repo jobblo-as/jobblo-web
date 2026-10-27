@@ -26,8 +26,8 @@ export default function AuthShowcase() {
       </h2>
 
       <p className="mt-5 max-w-88 text-[0.9375rem] leading-relaxed text-[#63665F]">
-        Beskriv jobben, så svarer folk i nærheten med pris. Pengene holdes trygt til du har
-        godkjent resultatet.
+        Beskriv jobben, så svarer folk i nærheten med pris. Pengene holdes trygt til du har godkjent
+        resultatet.
       </p>
 
       <OppdragStack

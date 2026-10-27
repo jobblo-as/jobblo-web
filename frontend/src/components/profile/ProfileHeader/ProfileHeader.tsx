@@ -203,7 +203,9 @@ export function ProfileHeader({
     <div className="relative z-10 -mt-14 rounded-3xl border border-[#E6E7E1] bg-white shadow-[0_18px_48px_rgba(11,11,11,0.08)] sm:-mt-18">
       {isBlockedByMe && (
         <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 rounded-t-3xl border-b border-[#E6E7E1] bg-[#FBF4F2] px-5 py-3 text-center">
-          <p className="text-[0.875rem] font-medium text-[#0B0B0B]">Du har blokkert denne brukeren.</p>
+          <p className="text-[0.875rem] font-medium text-[#0B0B0B]">
+            Du har blokkert denne brukeren.
+          </p>
           <button
             type="button"
             onClick={() => setIsUnblockModalOpen(true)}

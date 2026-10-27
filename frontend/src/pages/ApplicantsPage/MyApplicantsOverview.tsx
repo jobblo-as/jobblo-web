@@ -511,15 +511,17 @@ const MyApplicantsOverview: React.FC = () => {
                       <div className="flex shrink-0 items-center gap-3">
                         <div className="text-right">
                           <div className="mb-1 flex justify-end -space-x-1.5">
-                            {service.applicantAvatars?.slice(0, 3).map((avatar: string, i: number) => (
-                              <img
-                                key={i}
-                                src={avatar}
-                                alt=""
-                                loading="lazy"
-                                className="size-6 rounded-full border-2 border-white object-cover"
-                              />
-                            ))}
+                            {service.applicantAvatars
+                              ?.slice(0, 3)
+                              .map((avatar: string, i: number) => (
+                                <img
+                                  key={i}
+                                  src={avatar}
+                                  alt=""
+                                  loading="lazy"
+                                  className="size-6 rounded-full border-2 border-white object-cover"
+                                />
+                              ))}
                           </div>
                           <span className="whitespace-nowrap text-[0.75rem] text-[#63665F]">
                             <span className="font-semibold tabular-nums text-[#0B0B0B]">
@@ -628,8 +630,7 @@ const MyApplicantsOverview: React.FC = () => {
                               <span className="text-[0.8125rem] text-[#63665F]">
                                 Oppdragsgiver:{' '}
                                 <span className="font-medium text-[#0B0B0B]">
-                                  {app.service.customer.name}{' '}
-                                  {app.service.customer.lastName || ''}
+                                  {app.service.customer.name} {app.service.customer.lastName || ''}
                                 </span>
                               </span>
                             </div>

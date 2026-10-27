@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { AtSign, CheckCircle2, Info } from 'lucide-react-native';
 import { useProfile, useUpdateProfile } from '../../../../src/hooks/useProfile';
 import { useAuthStore } from '../../../../src/store/authStore';
@@ -90,7 +98,8 @@ function saveErrorMessage(error: unknown): string {
   if (status === 409) return safeServerMessage(error) || 'Denne e-postadressen er allerede i bruk.';
   if (status === 400) return 'E-postadressen ble ikke godtatt. Kontroller den og prøv igjen.';
   if (status === 401) return 'Økten din er ikke lenger gyldig. Logg inn på nytt.';
-  if (status === 403) return safeServerMessage(error) || 'Du har ikke tilgang til å endre denne e-postadressen.';
+  if (status === 403)
+    return safeServerMessage(error) || 'Du har ikke tilgang til å endre denne e-postadressen.';
   if (status === 404) return 'Fant ikke profilen din. Prøv å laste inn siden på nytt.';
   if (status >= 500) return 'Serverfeil. Prøv igjen litt senere.';
   return 'Kunne ikke oppdatere e-postadressen. Prøv igjen.';
@@ -105,7 +114,9 @@ export default function EmailSettingsScreen() {
   // `authorizeUser(req, id)`, which compares the token-derived `req.userId` with
   // the :id in the path and answers 403 unless they match, so a tampered id
   // cannot change another account's e-mail.
-  const storedUserId = useAuthStore((state) => (typeof state.user?._id === 'string' ? state.user._id : undefined));
+  const storedUserId = useAuthStore((state) =>
+    typeof state.user?._id === 'string' ? state.user._id : undefined
+  );
   const userId = typeof profile?._id === 'string' ? profile._id : storedUserId;
 
   const serverEmail = emailOf(profile);
@@ -169,9 +180,19 @@ export default function EmailSettingsScreen() {
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
-      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
-          <ScreenHeader title="E-postadresse" subtitle="Adressen du logger inn med." icon={AtSign} />
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
+        >
+          <ScreenHeader
+            title="E-postadresse"
+            subtitle="Adressen du logger inn med."
+            icon={AtSign}
+          />
 
           <View className="rounded-3xl bg-surface p-5">
             <View className="mb-4">
@@ -195,20 +216,31 @@ export default function EmailSettingsScreen() {
                 editable={!update.isPending}
                 maxLength={254}
                 accessibilityLabel="E-postadresse"
-                className={[inputClass, validationHint ? 'border-[#B4544A] dark:border-danger' : ''].join(' ')}
+                className={[
+                  inputClass,
+                  validationHint ? 'border-[#B4544A] dark:border-danger' : '',
+                ].join(' ')}
               />
               {validationHint ? (
-                <Text className="mt-1.5 text-[0.8125rem] text-[#B4544A] dark:text-danger">{validationHint}</Text>
+                <Text className="mt-1.5 text-[0.8125rem] text-[#B4544A] dark:text-danger">
+                  {validationHint}
+                </Text>
               ) : changed ? (
-                <Text className="mt-1.5 text-[0.8125rem] leading-4 text-muted">Lagret nå: {serverEmail || 'ingen adresse'}</Text>
+                <Text className="mt-1.5 text-[0.8125rem] leading-4 text-muted">
+                  Lagret nå: {serverEmail || 'ingen adresse'}
+                </Text>
               ) : (
-                <Text className="mt-1.5 text-[0.8125rem] leading-4 text-muted">Store bokstaver og mellomrom fjernes automatisk.</Text>
+                <Text className="mt-1.5 text-[0.8125rem] leading-4 text-muted">
+                  Store bokstaver og mellomrom fjernes automatisk.
+                </Text>
               )}
             </View>
 
             {changed ? (
               <View className="mb-4">
-                <Text className="mb-1.5 text-[0.8125rem] font-semibold text-ink">Nåværende passord</Text>
+                <Text className="mb-1.5 text-[0.8125rem] font-semibold text-ink">
+                  Nåværende passord
+                </Text>
                 <TextInput
                   value={currentPassword}
                   onChangeText={(value) => {
@@ -234,7 +266,9 @@ export default function EmailSettingsScreen() {
               <View
                 className={[
                   'mb-4 flex-row items-start rounded-2xl border p-3',
-                  feedback.tone === 'success' ? 'border-line bg-tint' : 'border-[#B4544A] dark:border-danger bg-danger-tint',
+                  feedback.tone === 'success'
+                    ? 'border-line bg-tint'
+                    : 'border-[#B4544A] dark:border-danger bg-danger-tint',
                 ].join(' ')}
               >
                 {feedback.tone === 'success' ? (
@@ -245,7 +279,9 @@ export default function EmailSettingsScreen() {
                 <Text
                   className={[
                     'ml-2 min-w-0 flex-1 text-[0.8125rem] leading-4',
-                    feedback.tone === 'success' ? 'text-brand-text' : 'text-[#B4544A] dark:text-danger',
+                    feedback.tone === 'success'
+                      ? 'text-brand-text'
+                      : 'text-[#B4544A] dark:text-danger',
                   ].join(' ')}
                 >
                   {feedback.text}
@@ -278,14 +314,16 @@ export default function EmailSettingsScreen() {
             <View className="flex-row items-start">
               <Info size={16} color={tc('#63665F', 'muted')} />
               <View className="ml-2 min-w-0 flex-1">
-                <Text className="text-[0.8125rem] font-semibold text-ink">Dette skjer når du endrer adressen</Text>
+                <Text className="text-[0.8125rem] font-semibold text-ink">
+                  Dette skjer når du endrer adressen
+                </Text>
                 <Text className="mt-1.5 text-[0.8125rem] leading-4 text-muted">
-                  Endringen skjer med en gang, og du bruker den nye adressen neste gang du logger inn. Vi sender ingen
-                  bekreftelseslenke, så pass på at adressen er riktig.
+                  Endringen skjer med en gang, og du bruker den nye adressen neste gang du logger
+                  inn. Vi sender ingen bekreftelseslenke, så pass på at adressen er riktig.
                 </Text>
                 <Text className="mt-2 text-[0.8125rem] leading-4 text-muted">
-                  Koden for glemt passord og svar fra kundesenteret går også til den nye adressen. Du blir ikke logget ut,
-                  verken på denne enheten eller på andre.
+                  Koden for glemt passord og svar fra kundesenteret går også til den nye adressen.
+                  Du blir ikke logget ut, verken på denne enheten eller på andre.
                 </Text>
               </View>
             </View>

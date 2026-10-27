@@ -54,8 +54,16 @@ export async function confirmEmailCode(code: string): Promise<{ emailVerified: b
   return response.data;
 }
 
-export async function acceptTerms(): Promise<{ user: AuthUser; acceptedTerms: boolean; termsVersion: string }> {
-  const response = await apiClient.post<{ user: AuthUser; acceptedTerms: boolean; termsVersion: string }>('/auth/accept-terms', {});
+export async function acceptTerms(): Promise<{
+  user: AuthUser;
+  acceptedTerms: boolean;
+  termsVersion: string;
+}> {
+  const response = await apiClient.post<{
+    user: AuthUser;
+    acceptedTerms: boolean;
+    termsVersion: string;
+  }>('/auth/accept-terms', {});
   return response.data;
 }
 
@@ -164,12 +172,20 @@ export async function resetPassword(
 }
 
 export async function changePasswordSendOtp(currentPassword: string): Promise<{ message: string }> {
-  const response = await apiClient.post<{ message: string }>('/auth/change-password/send-otp', { currentPassword });
+  const response = await apiClient.post<{ message: string }>('/auth/change-password/send-otp', {
+    currentPassword,
+  });
   return response.data;
 }
 
-export async function changePasswordVerifyOtp(otp: string, newPassword: string): Promise<{ message: string }> {
-  const response = await apiClient.post<{ message: string }>('/auth/change-password/verify-otp', { otp, newPassword });
+export async function changePasswordVerifyOtp(
+  otp: string,
+  newPassword: string
+): Promise<{ message: string }> {
+  const response = await apiClient.post<{ message: string }>('/auth/change-password/verify-otp', {
+    otp,
+    newPassword,
+  });
   return response.data;
 }
 

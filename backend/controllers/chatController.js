@@ -202,7 +202,9 @@ exports.getChatById = async (req, res) => {
     // cost as much as the unpaginated response this replaced.
     const [meta] = await Chat.aggregate([
       { $match: { _id: new mongoose.Types.ObjectId(chatId) } },
-      { $project: { clientId: 1, providerId: 1, total: { $size: { $ifNull: ['$messages', []] } } } },
+      {
+        $project: { clientId: 1, providerId: 1, total: { $size: { $ifNull: ['$messages', []] } } },
+      },
     ]);
     if (!meta) {
       return res.status(404).json({ message: 'Chat not found' });
@@ -291,12 +293,26 @@ async function overSendLimit(chatId, userId) {
 
 /** True when either user has blocked the other. */
 const isBlockedBetween = async (a, b) =>
-  Boolean(await User.exists({ $or: [{ _id: a, blockedUsers: b }, { _id: b, blockedUsers: a }] }));
+  Boolean(
+    await User.exists({
+      $or: [
+        { _id: a, blockedUsers: b },
+        { _id: b, blockedUsers: a },
+      ],
+    })
+  );
 exports.isBlockedBetween = isBlockedBetween;
 
-const BLOCKED = { status: 403, error: 'Du kan ikke sende meldinger til denne brukeren.', code: 'user_blocked' };
+const BLOCKED = {
+  status: 403,
+  error: 'Du kan ikke sende meldinger til denne brukeren.',
+  code: 'user_blocked',
+};
 /** 403 body for a deal step (price, contract, accepting an application) between blocked users. */
-const BLOCKED_DEAL = { error: 'Dette er ikke mulig fordi en av dere har blokkert den andre.', code: 'user_blocked' };
+const BLOCKED_DEAL = {
+  error: 'Dette er ikke mulig fordi en av dere har blokkert den andre.',
+  code: 'user_blocked',
+};
 exports.BLOCKED_DEAL = BLOCKED_DEAL;
 
 /**
@@ -307,7 +323,8 @@ exports.BLOCKED_DEAL = BLOCKED_DEAL;
 async function postChatMessage({ chatId, userId, text }) {
   if (!isValidId(chatId)) return { status: 400, error: 'Invalid chat ID format' };
   // Empty text wrote a blank unread row; no length cap let a few messages fill the document.
-  if (typeof text !== 'string' || !text.trim()) return { status: 400, error: 'Meldingen kan ikke være tom.' };
+  if (typeof text !== 'string' || !text.trim())
+    return { status: 400, error: 'Meldingen kan ikke være tom.' };
   if (text.length > MAX_MESSAGE_LENGTH) {
     return { status: 400, error: `Meldingen er for lang (maks ${MAX_MESSAGE_LENGTH} tegn).` };
   }
@@ -321,7 +338,11 @@ async function postChatMessage({ chatId, userId, text }) {
   const otherId = String(chat.clientId) === uid ? chat.providerId : chat.clientId;
   if (await isBlockedBetween(uid, otherId)) return BLOCKED;
   if (await overSendLimit(chatId, uid)) {
-    return { status: 429, error: 'Du sender meldinger for raskt. Vent litt.', code: 'chat_send_rate_limited' };
+    return {
+      status: 429,
+      error: 'Du sender meldinger for raskt. Vent litt.',
+      code: 'chat_send_rate_limited',
+    };
   }
 
   const trimmed = text.trim();
@@ -351,7 +372,9 @@ exports.sendMessage = async (req, res) => {
     const { chatId } = req.params;
     const result = await postChatMessage({ chatId, userId: req.user.id, text: req.body?.text });
     if (result.error) {
-      return res.status(result.status).json({ message: result.error, error: result.error, code: result.code });
+      return res
+        .status(result.status)
+        .json({ message: result.error, error: result.error, code: result.code });
     }
 
     // Emit socket event to notify users in the chat room
@@ -464,7 +487,8 @@ exports.createContract = async (req, res) => {
         error: 'Bare oppdragsgiveren kan opprette kontrakten',
       });
     }
-    if (await isBlockedBetween(chat.clientId, chat.providerId)) return res.status(403).json(BLOCKED_DEAL);
+    if (await isBlockedBetween(chat.clientId, chat.providerId))
+      return res.status(403).json(BLOCKED_DEAL);
 
     // Check if a live contract already exists (a cancelled one frees the chat)
     if (await liveContractOrderId(chat)) {
@@ -620,13 +644,18 @@ exports.updateAgreedPrice = async (req, res) => {
     // Either participant could set it, so the worker could raise the price the owner then
     // contracted at. Only the payer sets it.
     if (!chat.serviceId?.userId || String(chat.serviceId.userId) !== String(id)) {
-      return res.status(403).json({ error: 'Bare oppdragsgiveren kan sette prisen.', code: 'price_owner_only' });
+      return res
+        .status(403)
+        .json({ error: 'Bare oppdragsgiveren kan sette prisen.', code: 'price_owner_only' });
     }
-    if (await isBlockedBetween(chat.clientId, chat.providerId)) return res.status(403).json(BLOCKED_DEAL);
+    if (await isBlockedBetween(chat.clientId, chat.providerId))
+      return res.status(403).json(BLOCKED_DEAL);
     // Each change posts a system message, so it shares the chat send limit: repeated price
     // changes could otherwise grow the document toward MongoDB's 16 MB ceiling.
     if (await overSendLimit(chatId, id)) {
-      return res.status(429).json({ error: 'Du endrer prisen for ofte. Vent litt.', code: 'chat_send_rate_limited' });
+      return res
+        .status(429)
+        .json({ error: 'Du endrer prisen for ofte. Vent litt.', code: 'chat_send_rate_limited' });
     }
 
     // Once a contract exists the price is settled — the Order carries it, and escrow

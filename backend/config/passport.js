@@ -215,7 +215,9 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   passport.use(
     'google-web',
     buildGoogleStrategy(
-      process.env.GOOGLE_WEB_CALLBACK_URL || process.env.CALLBACK_URL || '/api/auth/web/google/callback',
+      process.env.GOOGLE_WEB_CALLBACK_URL ||
+        process.env.CALLBACK_URL ||
+        '/api/auth/web/google/callback',
       'googleOAuth:web'
     )
   );

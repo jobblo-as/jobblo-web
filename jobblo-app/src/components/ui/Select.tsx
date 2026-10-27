@@ -34,7 +34,8 @@ export function Select({
   const [visible, setVisible] = React.useState(false);
   // An empty value means "nothing chosen yet": show the placeholder, not the first option
   // dressed up as a choice (a form showed the first fylke as if it had been picked).
-  const selected = options.find((option) => option.value === value) ?? (value ? options[0] : undefined);
+  const selected =
+    options.find((option) => option.value === value) ?? (value ? options[0] : undefined);
   const isField = variant === 'field';
 
   return (
@@ -65,7 +66,12 @@ export function Select({
         </Text>
         <ChevronDown size={isField ? 16 : 14} color={tc('#63665F', 'muted')} />
       </Pressable>
-      <BottomSheet visible={visible} onClose={() => setVisible(false)} title={placeholder} hideClose>
+      <BottomSheet
+        visible={visible}
+        onClose={() => setVisible(false)}
+        title={placeholder}
+        hideClose
+      >
         <View className="-mx-2 -my-2">
           {options.map((option) => {
             const active = option.value === value;
@@ -79,9 +85,19 @@ export function Select({
                 }}
                 accessibilityRole="radio"
                 accessibilityState={{ selected: active }}
-                className={cn('flex-row items-center justify-between rounded-xl px-3 py-3.5', active ? 'bg-tint' : 'active:bg-surface-2')}
+                className={cn(
+                  'flex-row items-center justify-between rounded-xl px-3 py-3.5',
+                  active ? 'bg-tint' : 'active:bg-surface-2'
+                )}
               >
-                <Text className={cn('text-[1.0625rem]', active ? 'font-semibold text-brand-text' : 'text-ink')}>{option.label}</Text>
+                <Text
+                  className={cn(
+                    'text-[1.0625rem]',
+                    active ? 'font-semibold text-brand-text' : 'text-ink'
+                  )}
+                >
+                  {option.label}
+                </Text>
                 {active ? <Check size={18} color={TC.brandText} /> : null}
               </Pressable>
             );

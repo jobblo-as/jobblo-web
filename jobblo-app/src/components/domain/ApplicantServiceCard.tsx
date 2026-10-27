@@ -47,7 +47,10 @@ export function ApplicantServiceCard({
             ) : null}
           </View>
 
-          <Text className="text-[1.0625rem] font-semibold tracking-[-0.02em] text-ink" numberOfLines={2}>
+          <Text
+            className="text-[1.0625rem] font-semibold tracking-[-0.02em] text-ink"
+            numberOfLines={2}
+          >
             {service.title}
           </Text>
 
@@ -60,17 +63,20 @@ export function ApplicantServiceCard({
                 <Text className="text-[0.8125rem] text-muted">{service.location.city}</Text>
               </View>
             ) : null}
+            {formatPrice(service.price) ? <Text className="text-muted">·</Text> : null}
             {formatPrice(service.price) ? (
-              <Text className="text-muted">·</Text>
-            ) : null}
-            {formatPrice(service.price) ? (
-              <Text className="text-[0.8125rem] font-semibold text-ink">{formatPrice(service.price)}</Text>
+              <Text className="text-[0.8125rem] font-semibold text-ink">
+                {formatPrice(service.price)}
+              </Text>
             ) : null}
           </View>
         </View>
 
         <View className="shrink-0 items-end gap-1.5">
-          <ApplicantAvatarStack avatars={service.applicantAvatars} applicantCount={service.applicantCount} />
+          <ApplicantAvatarStack
+            avatars={service.applicantAvatars}
+            applicantCount={service.applicantCount}
+          />
           <Text className="text-[0.8125rem] text-muted">
             <Text className="font-semibold text-ink">{service.applicantCount}</Text>{' '}
             {service.applicantCount === 1 ? 'søker' : 'søkere'}

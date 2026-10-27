@@ -21,9 +21,7 @@ export const SessionsView = () => {
 
   if (isLoadingSessions) {
     return (
-      <div className="flex justify-center p-10 font-medium text-gray-400">
-        Laster økter...
-      </div>
+      <div className="flex justify-center p-10 font-medium text-gray-400">Laster økter...</div>
     );
   }
 
@@ -69,7 +67,6 @@ export const SessionsView = () => {
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
-
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
@@ -107,13 +104,17 @@ export const SessionsView = () => {
             >
               {/* Device info */}
               <div className="flex items-center gap-4">
-                <div className={`p-2.5 rounded-xl ${session.isCurrent ? 'bg-green-100' : 'bg-orange-50'}`}>
+                <div
+                  className={`p-2.5 rounded-xl ${session.isCurrent ? 'bg-green-100' : 'bg-orange-50'}`}
+                >
                   {getDeviceIcon(session.device)}
                 </div>
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold text-gray-900 text-sm">
-                      {session.deviceName ? `${session.deviceName} · Jobblo-appen` : `${session.browser} · ${session.os}`}
+                      {session.deviceName
+                        ? `${session.deviceName} · Jobblo-appen`
+                        : `${session.browser} · ${session.os}`}
                     </span>
                     {session.isCurrent && (
                       <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-black uppercase rounded-full tracking-wide">
@@ -133,9 +134,7 @@ export const SessionsView = () => {
                     </div>
                     <div className="flex items-center gap-1">
                       <Clock size={12} className="text-gray-400" />
-                      <span className="text-xs text-gray-500">
-                        {formatDate(session.lastUsed)}
-                      </span>
+                      <span className="text-xs text-gray-500">{formatDate(session.lastUsed)}</span>
                     </div>
                   </div>
                 </div>
@@ -161,11 +160,10 @@ export const SessionsView = () => {
       <div className="flex gap-3 p-4 bg-amber-50 rounded-2xl border border-amber-100">
         <ShieldAlert size={18} className="text-amber-500 shrink-0 mt-0.5" />
         <p className="text-xs text-amber-800 leading-relaxed">
-          <strong>Sikkerhetsmerknad:</strong> Hvis du ser en enhet eller et sted du ikke
-          kjenner igjen, bør du logge ut økten umiddelbart og endre passordet ditt.
+          <strong>Sikkerhetsmerknad:</strong> Hvis du ser en enhet eller et sted du ikke kjenner
+          igjen, bør du logge ut økten umiddelbart og endre passordet ditt.
         </p>
       </div>
-
     </div>
   );
 };

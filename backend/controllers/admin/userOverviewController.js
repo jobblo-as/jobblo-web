@@ -56,7 +56,9 @@ const getUserOverview = asyncHandler(async (req, res) => {
       .limit(25)
       .populate('serviceId', 'title')
       .populate('customerId providerId', 'name avatarUrl')
-      .select('status paymentStatus agreedPrice createdAt completedAt serviceId customerId providerId chatId')
+      .select(
+        'status paymentStatus agreedPrice createdAt completedAt serviceId customerId providerId chatId'
+      )
       .lean(),
     Order.aggregate([
       { $match: either },
@@ -66,14 +68,35 @@ const getUserOverview = asyncHandler(async (req, res) => {
           count: { $sum: 1 },
           completed: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] } },
           cancelled: { $sum: { $cond: [{ $eq: ['$status', 'cancelled'] }, 1, 0] } },
-          active: { $sum: { $cond: [{ $in: ['$status', ['paid', 'in_progress', 'ready_for_review', 'disputed']] }, 1, 0] } },
-          paidValue: { $sum: { $cond: [{ $in: ['$paymentStatus', PAID] }, { $ifNull: ['$agreedPrice', 0] }, 0] } },
+          active: {
+            $sum: {
+              $cond: [
+                { $in: ['$status', ['paid', 'in_progress', 'ready_for_review', 'disputed']] },
+                1,
+                0,
+              ],
+            },
+          },
+          paidValue: {
+            $sum: {
+              $cond: [{ $in: ['$paymentStatus', PAID] }, { $ifNull: ['$agreedPrice', 0] }, 0],
+            },
+          },
         },
       },
     ]),
-    Service.find({ userId: id }).sort({ createdAt: -1 }).limit(12).select('title status price createdAt images').lean(),
+    Service.find({ userId: id })
+      .sort({ createdAt: -1 })
+      .limit(12)
+      .select('title status price createdAt images')
+      .lean(),
     Service.countDocuments({ userId: id }),
-    Review.find({ revieweeId: id }).sort({ createdAt: -1 }).limit(10).populate('reviewerId', 'name avatarUrl').select('rating comment createdAt reviewerId orderId').lean(),
+    Review.find({ revieweeId: id })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .populate('reviewerId', 'name avatarUrl')
+      .select('rating comment createdAt reviewerId orderId')
+      .lean(),
     Review.countDocuments({ reviewerId: id }),
     Chat.find({ $or: [{ clientId: id }, { providerId: id }] })
       .sort({ updatedAt: -1 })
@@ -83,17 +106,58 @@ const getUserOverview = asyncHandler(async (req, res) => {
       .select('clientId providerId serviceId orderId status lastMessage updatedAt createdAt')
       .lean(),
     Chat.countDocuments({ $or: [{ clientId: id }, { providerId: id }] }),
-    Payout.find({ providerId: id }).sort({ createdAt: -1 }).limit(10).select('orderId status grossAmount netProviderAmount releaseSource createdAt transferCompletedAt failureReason').lean(),
-    Payout.aggregate([{ $match: { providerId: id } }, { $group: { _id: '$status', n: { $sum: 1 }, net: { $sum: '$netProviderAmount' } } }]),
-    Dispute.find({ $or: [{ openedBy: id }, { openedAgainst: id }] }).sort({ createdAt: -1 }).limit(10).select('orderId status title priority openedAt openedBy').lean(),
-    Session.find({ userId: id }).sort({ lastUsed: -1 }).limit(10).select('deviceName device browser os location ip lastUsed createdAt expiresAt').lean(),
-    SupportTicket.find({ userId: id }).sort({ createdAt: -1 }).limit(10).select('subject status priority orderId createdAt').lean(),
-    AdminActivity.find({ targetId: id }).sort({ createdAt: -1 }).limit(20).populate('adminId', 'name').select('action description createdAt adminId').lean(),
-    SubscriptionV2.findOne({ userId: id }).sort({ createdAt: -1 }).populate('planId', 'name price').select('status planType autoRenew currentPeriodEnd nextRenewalAt cancellationEffectiveAt planId').lean(),
+    Payout.find({ providerId: id })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .select(
+        'orderId status grossAmount netProviderAmount releaseSource createdAt transferCompletedAt failureReason'
+      )
+      .lean(),
+    Payout.aggregate([
+      { $match: { providerId: id } },
+      { $group: { _id: '$status', n: { $sum: 1 }, net: { $sum: '$netProviderAmount' } } },
+    ]),
+    Dispute.find({ $or: [{ openedBy: id }, { openedAgainst: id }] })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .select('orderId status title priority openedAt openedBy')
+      .lean(),
+    Session.find({ userId: id })
+      .sort({ lastUsed: -1 })
+      .limit(10)
+      .select('deviceName device browser os location ip lastUsed createdAt expiresAt')
+      .lean(),
+    SupportTicket.find({ userId: id })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .select('subject status priority orderId createdAt')
+      .lean(),
+    AdminActivity.find({ targetId: id })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .populate('adminId', 'name')
+      .select('action description createdAt adminId')
+      .lean(),
+    SubscriptionV2.findOne({ userId: id })
+      .sort({ createdAt: -1 })
+      .populate('planId', 'name price')
+      .select(
+        'status planType autoRenew currentPeriodEnd nextRenewalAt cancellationEffectiveAt planId'
+      )
+      .lean(),
   ]);
 
-  const role = (r) => orderStats.find((s) => s._id === r) || { count: 0, completed: 0, cancelled: 0, active: 0, paidValue: 0 };
-  const transferred = payoutTotals.filter((p) => ['transferred', 'released_internal', 'processing'].includes(p._id));
+  const role = (r) =>
+    orderStats.find((s) => s._id === r) || {
+      count: 0,
+      completed: 0,
+      cancelled: 0,
+      active: 0,
+      paidValue: 0,
+    };
+  const transferred = payoutTotals.filter((p) =>
+    ['transferred', 'released_internal', 'processing'].includes(p._id)
+  );
   const now = Date.now();
 
   return sendSuccess(res, {
@@ -108,8 +172,11 @@ const getUserOverview = asyncHandler(async (req, res) => {
       chats: chatCount,
       disputes: disputes.length,
       paidOut: transferred.reduce((a, p) => a + p.net, 0),
-      payoutsFailed: payoutTotals.filter((p) => ['failed', 'reconciliation_required'].includes(p._id)).reduce((a, p) => a + p.n, 0),
-      activeSessions: sessions.filter((s) => !s.expiresAt || new Date(s.expiresAt).getTime() > now).length,
+      payoutsFailed: payoutTotals
+        .filter((p) => ['failed', 'reconciliation_required'].includes(p._id))
+        .reduce((a, p) => a + p.n, 0),
+      activeSessions: sessions.filter((s) => !s.expiresAt || new Date(s.expiresAt).getTime() > now)
+        .length,
     },
     orders: orders.map((o) => {
       const asCustomer = String(o.customerId?._id) === String(id);
@@ -118,7 +185,9 @@ const getUserOverview = asyncHandler(async (req, res) => {
         _id: o._id,
         title: o.serviceId?.title || null,
         role: asCustomer ? 'customer' : 'provider',
-        counterpart: other ? { _id: other._id, name: other.name, avatarUrl: other.avatarUrl } : null,
+        counterpart: other
+          ? { _id: other._id, name: other.name, avatarUrl: other.avatarUrl }
+          : null,
         status: o.status,
         paymentStatus: o.paymentStatus,
         agreedPrice: o.agreedPrice,
@@ -133,7 +202,9 @@ const getUserOverview = asyncHandler(async (req, res) => {
       const other = isClient ? c.providerId : c.clientId;
       return {
         _id: c._id,
-        counterpart: other ? { _id: other._id, name: other.name, avatarUrl: other.avatarUrl } : null,
+        counterpart: other
+          ? { _id: other._id, name: other.name, avatarUrl: other.avatarUrl }
+          : null,
         role: isClient ? 'customer' : 'provider',
         service: c.serviceId?.title || null,
         orderId: c.orderId || null,

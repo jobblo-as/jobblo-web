@@ -47,7 +47,12 @@ const withId = (u) => ({ ...u, id: String(u._id) });
 // filter is { _id: not me, isDeleted: not true }, and the viewer passed authenticate, so is not
 // deleted: the total is every live user minus one. One count for everyone instead of one per call.
 // ponytail: the total can be up to 60 s stale (pagination only); invalidate on user writes if that matters.
-const othersTotal = async () => Math.max(0, (await memo('users:live-count', 60, () => User.countDocuments({ isDeleted: { $ne: true } }))) - 1);
+const othersTotal = async () =>
+  Math.max(
+    0,
+    (await memo('users:live-count', 60, () => User.countDocuments({ isDeleted: { $ne: true } }))) -
+      1
+  );
 
 // Get Top 10 Users by Rating and Reviews (only paid subscription users)
 exports.getTopUsers = async (req, res) => {
@@ -79,8 +84,10 @@ exports.getTopUsers = async (req, res) => {
       typeof req.query.postNumber === 'string' ? req.query.postNumber.trim().slice(0, 2) : '';
     const isNumericPrefix = /^\d{2}$/.test(prefix);
     // Capped: every token becomes a regex in two $or branches and two $nin lists.
-    const city = typeof req.query.postSted === 'string' ? req.query.postSted.trim().slice(0, 100) : '';
-    const address = typeof req.query.address === 'string' ? req.query.address.trim().slice(0, 100) : '';
+    const city =
+      typeof req.query.postSted === 'string' ? req.query.postSted.trim().slice(0, 100) : '';
+    const address =
+      typeof req.query.address === 'string' ? req.query.address.trim().slice(0, 100) : '';
 
     if (isNumericPrefix || city || address) {
       const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -200,7 +207,10 @@ exports.getTopUsers = async (req, res) => {
         others.forEach((u) => pushUnique(ordered, u, false));
       }
 
-      const paginated = ordered.slice(skip, skip + limit).map(withId).map(sanitizeUserPublic);
+      const paginated = ordered
+        .slice(skip, skip + limit)
+        .map(withId)
+        .map(sanitizeUserPublic);
       const total = await othersTotal();
 
       return res.status(200).json({
@@ -241,7 +251,11 @@ exports.searchAll = async (req, res) => {
     }
 
     const regex = new RegExp(escapeRegex(query), 'i');
-    const { page, limit: numericLimit, skip } = parsePagination(req.query, { defaultLimit: 10, maxLimit: 50 });
+    const {
+      page,
+      limit: numericLimit,
+      skip,
+    } = parsePagination(req.query, { defaultLimit: 10, maxLimit: 50 });
 
     // If a specific type is requested, return only that type with pagination
     if (type) {

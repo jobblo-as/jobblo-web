@@ -10,12 +10,15 @@ interface EmptyStateProps {
   onActionClick?: () => void;
 }
 
-const config: Record<string, {
-  icon: React.ReactNode;
-  defaultTitle: string;
-  defaultDescription: string;
-  defaultActionLabel: string | null;
-}> = {
+const config: Record<
+  string,
+  {
+    icon: React.ReactNode;
+    defaultTitle: string;
+    defaultDescription: string;
+    defaultActionLabel: string | null;
+  }
+> = {
   jobs: {
     icon: <Briefcase size={40} className="text-custom-green" />,
     defaultTitle: 'Ingen oppdrag enda',
@@ -43,7 +46,8 @@ const config: Record<string, {
   applications: {
     icon: <ClipboardList size={40} className="text-custom-green" />,
     defaultTitle: 'Ingen søknader enda',
-    defaultDescription: 'Du har ikke søkt på noen oppdrag ennå. Utforsk oppdrag for å komme i gang.',
+    defaultDescription:
+      'Du har ikke søkt på noen oppdrag ennå. Utforsk oppdrag for å komme i gang.',
     defaultActionLabel: 'Utforsk oppdrag',
   },
 };

@@ -38,8 +38,19 @@ export function DropdownMenu({ visible, onClose, label, items, top }: DropdownMe
     action?.();
   };
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose} onDismiss={runPending}>
-      <Pressable className="flex-1" onPress={onClose} accessibilityRole="button" accessibilityLabel="Lukk meny">
+    <Modal
+      visible={visible}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+      onDismiss={runPending}
+    >
+      <Pressable
+        className="flex-1"
+        onPress={onClose}
+        accessibilityRole="button"
+        accessibilityLabel="Lukk meny"
+      >
         <View
           className="absolute right-3 w-60 rounded-xl border border-line bg-surface p-1"
           style={{
@@ -53,7 +64,10 @@ export function DropdownMenu({ visible, onClose, label, items, top }: DropdownMe
           onStartShouldSetResponder={() => true}
         >
           {label ? (
-            <Text className="px-2.5 pb-1.5 pt-2 text-[0.8125rem] font-semibold text-muted" numberOfLines={1}>
+            <Text
+              className="px-2.5 pb-1.5 pt-2 text-[0.8125rem] font-semibold text-muted"
+              numberOfLines={1}
+            >
               {label}
             </Text>
           ) : null}
@@ -72,8 +86,17 @@ export function DropdownMenu({ visible, onClose, label, items, top }: DropdownMe
                 accessibilityRole="menuitem"
                 className="flex-row items-center gap-2.5 rounded-lg px-2.5 py-2.5 active:bg-surface-2"
               >
-                {item.icon ? <item.icon size={17} color={item.destructive ? TC.danger : TC.ink2} /> : null}
-                <Text className={cn('text-[0.9375rem]', item.destructive ? 'font-medium text-danger' : 'text-ink')}>{item.label}</Text>
+                {item.icon ? (
+                  <item.icon size={17} color={item.destructive ? TC.danger : TC.ink2} />
+                ) : null}
+                <Text
+                  className={cn(
+                    'text-[0.9375rem]',
+                    item.destructive ? 'font-medium text-danger' : 'text-ink'
+                  )}
+                >
+                  {item.label}
+                </Text>
               </Pressable>
             )
           )}

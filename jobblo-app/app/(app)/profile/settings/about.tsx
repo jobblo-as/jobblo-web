@@ -1,12 +1,7 @@
 import React from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  Building2,
-  ChevronRight,
-  FileText,
-  Info,
-} from 'lucide-react-native';
+import { Building2, ChevronRight, FileText, Info } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { userTerms } from '../../../../src/content/userTerms';
 import { ScreenHeader } from '../../../../src/components/ui/ScreenHeader';
@@ -79,7 +74,9 @@ export default function AboutScreen() {
             <View className="flex-row items-start gap-2">
               <Info size={16} color={TC.brandText} className="mt-[2px]" />
               <Text className="flex-1 text-[0.9375rem] leading-6 text-ink">
-                Jobblo er en digital markedsplass som kobler folk som trenger hjelp med de som vil utføre oppdrag. Les gjennom våre vilkår for å forstå hvordan plattformen fungerer og hvilke regler som gjelder for bruk av tjenesten.
+                Jobblo er en digital markedsplass som kobler folk som trenger hjelp med de som vil
+                utføre oppdrag. Les gjennom våre vilkår for å forstå hvordan plattformen fungerer og
+                hvilke regler som gjelder for bruk av tjenesten.
               </Text>
             </View>
           </View>

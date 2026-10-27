@@ -2,7 +2,15 @@ import { useState, useMemo } from 'react';
 import { Save, Settings, RefreshCw } from 'lucide-react';
 import { useAllConfigs, useUpdateConfig } from '../../hooks/admin/content';
 import { AdminPageHeader, AdminLoadingSkeleton, AdminErrorState } from '../../components/admin';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '../../components/developer/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '../../components/developer/ui/dialog';
 import { Input } from '../../components/developer/ui/input';
 import { Textarea } from '../../components/developer/ui/textarea';
 import { Button } from '../../components/developer/ui/button';
@@ -31,7 +39,12 @@ function formatDisplayValue(value: unknown): string {
 function normalizeConfigs(data: Record<string, unknown> | undefined): ConfigEntry[] {
   if (!data) return [];
   return Object.entries(data).map(([key, val]) => {
-    if (val !== null && typeof val === 'object' && !Array.isArray(val) && 'value' in (val as Record<string, unknown>)) {
+    if (
+      val !== null &&
+      typeof val === 'object' &&
+      !Array.isArray(val) &&
+      'value' in (val as Record<string, unknown>)
+    ) {
       const obj = val as { value: unknown; description?: string };
       return { key, value: obj.value, description: obj.description };
     }
@@ -48,7 +61,10 @@ export default function GlobalSettingsPage() {
   const [editDescription, setEditDescription] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const configs = useMemo(() => normalizeConfigs(data as Record<string, unknown> | undefined), [data]);
+  const configs = useMemo(
+    () => normalizeConfigs(data as Record<string, unknown> | undefined),
+    [data]
+  );
   const connectDeadline = configs.find((entry) => entry.key === CONNECT_DEADLINE_KEY);
   const visibleConfigs = configs.filter((entry) => entry.key !== CONNECT_DEADLINE_KEY);
 
@@ -112,7 +128,10 @@ export default function GlobalSettingsPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <AdminPageHeader title="Globale innstillinger" description="Administrer systeminnstillinger og konfigurasjon" />
+        <AdminPageHeader
+          title="Globale innstillinger"
+          description="Administrer systeminnstillinger og konfigurasjon"
+        />
         <AdminLoadingSkeleton rows={8} />
       </div>
     );
@@ -121,7 +140,10 @@ export default function GlobalSettingsPage() {
   if (isError) {
     return (
       <div className="space-y-6">
-        <AdminPageHeader title="Globale innstillinger" description="Administrer systeminnstillinger og konfigurasjon" />
+        <AdminPageHeader
+          title="Globale innstillinger"
+          description="Administrer systeminnstillinger og konfigurasjon"
+        />
         <AdminErrorState onRetry={refetch} />
       </div>
     );
@@ -148,7 +170,9 @@ export default function GlobalSettingsPage() {
             <Settings size={28} className="text-muted-foreground/60" />
           </div>
           <p className="text-sm font-semibold text-foreground">Ingen innstillinger</p>
-          <p className="text-xs text-muted-foreground mt-0.5">Det er ingen konfigurasjonsinnstillinger tilgjengelig.</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Det er ingen konfigurasjonsinnstillinger tilgjengelig.
+          </p>
         </div>
       </div>
     );
@@ -176,18 +200,15 @@ export default function GlobalSettingsPage() {
             <div>
               <h2 className="text-sm font-semibold text-foreground">SafePay</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Frist for at utføreren starter oppdraget etter bekreftet betaling. Startes det
-                ikke i tide, kanselleres oppdraget og kunden får full refusjon automatisk.
-                Hver dag tilsvarer 24 timer.
+                Frist for at utføreren starter oppdraget etter bekreftet betaling. Startes det ikke
+                i tide, kanselleres oppdraget og kunden får full refusjon automatisk. Hver dag
+                tilsvarer 24 timer.
               </p>
               <p className="mt-2 text-sm font-medium text-foreground">
                 Nåværende frist: {formatDisplayValue(connectDeadline.value)} dager
               </p>
             </div>
-            <Button
-              variant="outline"
-              onClick={() => handleOpenEdit(connectDeadline)}
-            >
+            <Button variant="outline" onClick={() => handleOpenEdit(connectDeadline)}>
               Endre frist
             </Button>
           </div>
@@ -199,21 +220,36 @@ export default function GlobalSettingsPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-muted/50">
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Nøkkel</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Verdi</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Type</th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Beskrivelse</th>
-                <th className="text-right px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Handlinger</th>
+                <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Nøkkel
+                </th>
+                <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Verdi
+                </th>
+                <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Type
+                </th>
+                <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Beskrivelse
+                </th>
+                <th className="text-right px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Handlinger
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {visibleConfigs.map((entry) => (
                 <tr key={entry.key} className="hover:bg-muted/50 transition-colors">
                   <td className="px-5 py-3.5">
-                    <code className="text-sm font-mono font-medium text-foreground">{entry.key}</code>
+                    <code className="text-sm font-mono font-medium text-foreground">
+                      {entry.key}
+                    </code>
                   </td>
                   <td className="px-5 py-3.5 max-w-[260px]">
-                    <span className="block truncate text-sm text-muted-foreground font-mono" title={formatDisplayValue(entry.value)}>
+                    <span
+                      className="block truncate text-sm text-muted-foreground font-mono"
+                      title={formatDisplayValue(entry.value)}
+                    >
                       {formatDisplayValue(entry.value)}
                     </span>
                   </td>
@@ -224,7 +260,9 @@ export default function GlobalSettingsPage() {
                   </td>
                   <td className="px-5 py-3.5 max-w-[200px]">
                     <span className="block truncate text-sm text-muted-foreground">
-                      {entry.description ?? <span className="text-muted-foreground/60 italic">–</span>}
+                      {entry.description ?? (
+                        <span className="text-muted-foreground/60 italic">–</span>
+                      )}
                     </span>
                   </td>
                   <td className="px-5 py-3.5 text-right">
@@ -241,15 +279,24 @@ export default function GlobalSettingsPage() {
           </table>
         </div>
         <div className="px-5 py-3 border-t border-border bg-muted/50">
-          <p className="text-xs text-muted-foreground">{visibleConfigs.length} innstillinger totalt</p>
+          <p className="text-xs text-muted-foreground">
+            {visibleConfigs.length} innstillinger totalt
+          </p>
         </div>
       </div>
 
-      <Dialog open={!!editingConfig} onOpenChange={(open) => { if (!open) handleCloseEdit(); }}>
+      <Dialog
+        open={!!editingConfig}
+        onOpenChange={(open) => {
+          if (!open) handleCloseEdit();
+        }}
+      >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>Rediger innstilling</DialogTitle>
-            <DialogDescription>Oppdater verdien og beskrivelsen for denne konfigurasjonsnøkkelen.</DialogDescription>
+            <DialogDescription>
+              Oppdater verdien og beskrivelsen for denne konfigurasjonsnøkkelen.
+            </DialogDescription>
           </DialogHeader>
 
           {editingConfig && (
@@ -266,7 +313,9 @@ export default function GlobalSettingsPage() {
                     ({getValueType(editingConfig.value)})
                   </span>
                 </label>
-                {typeof editingConfig.value === 'object' && editingConfig.value !== null && !Array.isArray(editingConfig.value) ? (
+                {typeof editingConfig.value === 'object' &&
+                editingConfig.value !== null &&
+                !Array.isArray(editingConfig.value) ? (
                   <Textarea
                     value={editValue}
                     onChange={(e) => setEditValue(e.target.value)}
@@ -288,7 +337,9 @@ export default function GlobalSettingsPage() {
               </div>
 
               <div>
-                <label className="block mb-1 text-sm font-medium text-foreground">Beskrivelse</label>
+                <label className="block mb-1 text-sm font-medium text-foreground">
+                  Beskrivelse
+                </label>
                 <Input
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
@@ -300,7 +351,9 @@ export default function GlobalSettingsPage() {
 
           <DialogFooter>
             <DialogClose asChild>
-              <Button variant="outline" disabled={saving}>Avbryt</Button>
+              <Button variant="outline" disabled={saving}>
+                Avbryt
+              </Button>
             </DialogClose>
             <Button
               onClick={handleSave}
@@ -310,8 +363,19 @@ export default function GlobalSettingsPage() {
               {saving ? (
                 <span className="flex items-center gap-2">
                   <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
                   </svg>
                   Lagrer...
                 </span>

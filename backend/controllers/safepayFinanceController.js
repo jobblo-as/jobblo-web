@@ -6,7 +6,11 @@ const StripeTransferRecord = require('../models/StripeTransferRecord');
 const StripeBankPayoutRecord = require('../models/StripeBankPayoutRecord');
 const StripeFinancialSyncState = require('../models/StripeFinancialSyncState');
 const { getStripeConfiguration, getStripeForMode } = require('../config/stripe');
-const { syncTransfersPage, syncBankPayoutsPage, modeField } = require('../services/stripe/financialHistory');
+const {
+  syncTransfersPage,
+  syncBankPayoutsPage,
+  modeField,
+} = require('../services/stripe/financialHistory');
 const { logActivity } = require('../services/admin/activityService');
 
 const MAX_LIMIT = 100;
@@ -95,10 +99,7 @@ function boundedChronology(field, snapshotAt) {
   return {
     $cond: [
       {
-        $and: [
-          { $ne: [field, null] },
-          { $lte: [field, snapshotAt] },
-        ],
+        $and: [{ $ne: [field, null] }, { $lte: [field, snapshotAt] }],
       },
       field,
       '$createdAt',
@@ -107,7 +108,13 @@ function boundedChronology(field, snapshotAt) {
 }
 
 function transferDate(item) {
-  return item.stripeCreatedAt || item.transferCompletedAt || item.updatedAt || item.createdAt || new Date(0);
+  return (
+    item.stripeCreatedAt ||
+    item.transferCompletedAt ||
+    item.updatedAt ||
+    item.createdAt ||
+    new Date(0)
+  );
 }
 
 function safeAccountDashboardUrl(accountId, livemode) {
@@ -116,9 +123,8 @@ function safeAccountDashboardUrl(accountId, livemode) {
 }
 
 function mapTransferRecord(record, admin) {
-  const localPayout = record.payoutId && typeof record.payoutId === 'object'
-    ? record.payoutId
-    : null;
+  const localPayout =
+    record.payoutId && typeof record.payoutId === 'object' ? record.payoutId : null;
   return {
     id: String(record._id),
     type: 'stripe_transfer',
@@ -134,11 +140,18 @@ function mapTransferRecord(record, admin) {
       ? Math.round(localPayout.platformFee * 100)
       : null,
     provider: record.providerId
-      ? { id: String(record.providerId._id || record.providerId), name: record.providerId.name || null }
+      ? {
+          id: String(record.providerId._id || record.providerId),
+          name: record.providerId.name || null,
+        }
       : null,
-    customer: admin && localPayout?.customerId
-      ? { id: String(localPayout.customerId._id || localPayout.customerId), name: localPayout.customerId.name || null }
-      : undefined,
+    customer:
+      admin && localPayout?.customerId
+        ? {
+            id: String(localPayout.customerId._id || localPayout.customerId),
+            name: localPayout.customerId.name || null,
+          }
+        : undefined,
     stripeAccountId: record.stripeAccountId,
     amount: record.amount,
     amountReversed: record.amountReversed || 0,
@@ -157,19 +170,22 @@ function mapTransferRecord(record, admin) {
       status: entry.normalizedStatus,
       at: entry.eventCreatedAt || entry.recordedAt,
     })),
-    stripeDashboardUrl: admin ? `${safeAccountDashboardUrl(record.stripeAccountId, record.livemode)}/transfers/${encodeURIComponent(record.stripeObjectId)}` : undefined,
+    stripeDashboardUrl: admin
+      ? `${safeAccountDashboardUrl(record.stripeAccountId, record.livemode)}/transfers/${encodeURIComponent(record.stripeObjectId)}`
+      : undefined,
   };
 }
 
 function mapLocalTransferAttempt(payout, admin) {
-  const status = {
-    pending: 'awaiting_customer_approval',
-    released_internal: 'release_scheduled',
-    processing: 'transfer_processing',
-    failed: 'transfer_failed',
-    transferred: 'reconciliation_required',
-    cancelled: 'reconciliation_required',
-  }[payout.status] || 'unknown';
+  const status =
+    {
+      pending: 'awaiting_customer_approval',
+      released_internal: 'release_scheduled',
+      processing: 'transfer_processing',
+      failed: 'transfer_failed',
+      transferred: 'reconciliation_required',
+      cancelled: 'reconciliation_required',
+    }[payout.status] || 'unknown';
   return {
     id: String(payout._id),
     type: 'jobblo_transfer_attempt',
@@ -182,24 +198,37 @@ function mapLocalTransferAttempt(payout, admin) {
       ? Math.round(payout.netProviderAmount * 100)
       : null,
     provider: payout.providerId
-      ? { id: String(payout.providerId._id || payout.providerId), name: payout.providerId.name || null }
+      ? {
+          id: String(payout.providerId._id || payout.providerId),
+          name: payout.providerId.name || null,
+        }
       : null,
-    customer: admin && payout.customerId
-      ? { id: String(payout.customerId._id || payout.customerId), name: payout.customerId.name || null }
-      : undefined,
+    customer:
+      admin && payout.customerId
+        ? {
+            id: String(payout.customerId._id || payout.customerId),
+            name: payout.customerId.name || null,
+          }
+        : undefined,
     stripeAccountId: payout.stripeConnectAccountId || null,
     amount: Math.round(Number(payout.netProviderAmount) * 100),
     amountReversed: null,
     currency: payout.currency || null,
     status,
     stripeStatus: null,
-    mode: payout.stripeLivemode === true ? 'live' : payout.stripeLivemode === false ? 'test' : 'unknown',
+    mode:
+      payout.stripeLivemode === true
+        ? 'live'
+        : payout.stripeLivemode === false
+          ? 'test'
+          : 'unknown',
     stripeCreatedAt: payout.transferInitiatedAt || payout.createdAt,
     lastSyncedAt: payout.updatedAt || null,
     failureCode: payout.failureCode || null,
-    failureMessage: payout.status === 'failed'
-      ? 'Overføringen ble ikke opprettet. Administrator må kontrollere forsøket.'
-      : null,
+    failureMessage:
+      payout.status === 'failed'
+        ? 'Overføringen ble ikke opprettet. Administrator må kontrollere forsøket.'
+        : null,
   };
 }
 
@@ -209,7 +238,10 @@ function mapBankPayout(record, admin) {
     type: 'stripe_bank_payout',
     stripePayoutId: record.stripeObjectId,
     provider: record.providerId
-      ? { id: String(record.providerId._id || record.providerId), name: record.providerId.name || null }
+      ? {
+          id: String(record.providerId._id || record.providerId),
+          name: record.providerId.name || null,
+        }
       : null,
     stripeAccountId: record.stripeAccountId,
     amount: record.amount,
@@ -239,12 +271,8 @@ async function paginated(req, res, { admin, kind }) {
   const mode = options.mode === 'current' ? config.mode : options.mode;
   const livemode = mode === 'all' ? null : mode === 'live';
   const baseQuery = {
-    ...(options.providerId
-      ? { providerId: new mongoose.Types.ObjectId(options.providerId) }
-      : {}),
-    ...(options.orderId
-      ? { orderId: new mongoose.Types.ObjectId(options.orderId) }
-      : {}),
+    ...(options.providerId ? { providerId: new mongoose.Types.ObjectId(options.providerId) } : {}),
+    ...(options.orderId ? { orderId: new mongoose.Types.ObjectId(options.orderId) } : {}),
     ...(livemode === null ? {} : { livemode }),
   };
   const searchQuery = options.search
@@ -259,7 +287,9 @@ async function paginated(req, res, { admin, kind }) {
     : {};
   const recordModel = kind === 'transfers' ? StripeTransferRecord : StripeBankPayoutRecord;
   const statusFilter = req.query.status
-    ? kind === 'transfers' ? TRANSFER_STATUSES : PAYOUT_STATUSES
+    ? kind === 'transfers'
+      ? TRANSFER_STATUSES
+      : PAYOUT_STATUSES
     : null;
   if (req.query.status && !statusFilter.has(req.query.status)) {
     return res.status(400).json({ error: 'Ugyldig transaksjonsstatus.' });
@@ -294,24 +324,30 @@ async function paginated(req, res, { admin, kind }) {
       ...(options.providerId
         ? { providerId: new mongoose.Types.ObjectId(options.providerId) }
         : {}),
-      ...(options.orderId
-        ? { orderId: new mongoose.Types.ObjectId(options.orderId) }
-        : {}),
+      ...(options.orderId ? { orderId: new mongoose.Types.ObjectId(options.orderId) } : {}),
       ...(livemode === null ? {} : { stripeLivemode: livemode }),
       createdAt: { $lte: options.snapshotAt },
-      ...(localStatus ? { status: localStatus } : { status: { $in: ['pending', 'released_internal', 'processing', 'failed', 'transferred'] } }),
+      ...(localStatus
+        ? { status: localStatus }
+        : {
+            status: {
+              $in: ['pending', 'released_internal', 'processing', 'failed', 'transferred'],
+            },
+          }),
       ...chronologyFilter(
         boundedChronology('$transferInitiatedAt', options.snapshotAt),
         options.dateFrom,
         options.dateTo
       ),
       ...(options.search
-        ? { $or: [
-            { stripeTransferId: options.search },
-            ...(mongoose.Types.ObjectId.isValid(options.search)
-              ? [{ orderId: new mongoose.Types.ObjectId(options.search) }]
-              : []),
-          ] }
+        ? {
+            $or: [
+              { stripeTransferId: options.search },
+              ...(mongoose.Types.ObjectId.isValid(options.search)
+                ? [{ orderId: new mongoose.Types.ObjectId(options.search) }]
+                : []),
+            ],
+          }
         : {}),
     };
     const [result] = await StripeTransferRecord.aggregate([
@@ -415,7 +451,8 @@ async function paginated(req, res, { admin, kind }) {
     total = result?.metadata?.[0]?.total || 0;
   } else {
     total = await recordModel.countDocuments(recordQuery);
-    const records = await recordModel.find(recordQuery)
+    const records = await recordModel
+      .find(recordQuery)
       .sort({ stripeCreatedAt: -1, _id: -1 })
       .skip(options.skip)
       .limit(options.limit)
@@ -426,13 +463,19 @@ async function paginated(req, res, { admin, kind }) {
 
   const latestSync = await StripeFinancialSyncState.find({
     ...(options.providerId
-      ? { stripeAccountId: await User.findById(options.providerId).select(
-          modeField(config.testMode)
-        ).then((user) => user?.[modeField(config.testMode)] || '__unconfigured__') }
+      ? {
+          stripeAccountId: await User.findById(options.providerId)
+            .select(modeField(config.testMode))
+            .then((user) => user?.[modeField(config.testMode)] || '__unconfigured__'),
+        }
       : {}),
     objectType: kind === 'transfers' ? 'transfers' : 'bank_payouts',
     ...(livemode === null ? {} : { livemode }),
-  }).sort({ lastSucceededAt: -1 }).select('lastSucceededAt').limit(1).lean();
+  })
+    .sort({ lastSucceededAt: -1 })
+    .select('lastSucceededAt')
+    .limit(1)
+    .lean();
 
   return res.json({
     items,
@@ -447,9 +490,7 @@ async function paginated(req, res, { admin, kind }) {
     snapshotAt: options.snapshotAt.toISOString(),
     mode,
     ...(admin ? { activeMode: config.mode } : {}),
-    testDataNotice: mode === 'test'
-      ? 'Testdata er ikke ekte bankbevegelser.'
-      : null,
+    testDataNotice: mode === 'test' ? 'Testdata er ikke ekte bankbevegelser.' : null,
     lastSyncedAt: latestSync[0]?.lastSucceededAt || null,
   });
 }
@@ -457,7 +498,8 @@ async function paginated(req, res, { admin, kind }) {
 exports.getTransfers = (req, res) => paginated(req, res, { admin: false, kind: 'transfers' });
 exports.getAdminTransfers = (req, res) => paginated(req, res, { admin: true, kind: 'transfers' });
 exports.getBankPayouts = (req, res) => paginated(req, res, { admin: false, kind: 'bank_payouts' });
-exports.getAdminBankPayouts = (req, res) => paginated(req, res, { admin: true, kind: 'bank_payouts' });
+exports.getAdminBankPayouts = (req, res) =>
+  paginated(req, res, { admin: true, kind: 'bank_payouts' });
 
 async function getOne(req, res, { admin, kind }) {
   try {
@@ -468,16 +510,18 @@ async function getOne(req, res, { admin, kind }) {
     if (!admin) query.providerId = req.userId;
     let record = await Model.findOne(query)
       .populate('providerId', 'name')
-      .populate(kind === 'transfers'
-        ? {
-            path: 'payoutId',
-            select: 'customerId orderId platformFee grossAmount netProviderAmount serviceId',
-            populate: [
-              { path: 'customerId', select: 'name' },
-              { path: 'serviceId', select: 'title' },
-            ],
-          }
-        : { path: 'providerId', select: 'name' })
+      .populate(
+        kind === 'transfers'
+          ? {
+              path: 'payoutId',
+              select: 'customerId orderId platformFee grossAmount netProviderAmount serviceId',
+              populate: [
+                { path: 'customerId', select: 'name' },
+                { path: 'serviceId', select: 'title' },
+              ],
+            }
+          : { path: 'providerId', select: 'name' }
+      )
       .lean();
     if (!record && kind === 'transfers') {
       const payoutQuery = mongoose.Types.ObjectId.isValid(req.params.id)
@@ -487,14 +531,16 @@ async function getOne(req, res, { admin, kind }) {
       record = await Payout.findOne(payoutQuery)
         .populate('providerId', 'name')
         .populate('serviceId', 'title')
-        .populate(admin ? { path: 'customerId', select: 'name' } : { path: 'customerId', select: '_id' })
+        .populate(
+          admin ? { path: 'customerId', select: 'name' } : { path: 'customerId', select: '_id' }
+        )
         .lean();
       if (record) return res.json(mapLocalTransferAttempt(record, admin));
     }
     if (!record) return res.status(404).json({ error: 'Transaksjonen ble ikke funnet.' });
-    return res.json(kind === 'transfers'
-      ? mapTransferRecord(record, admin)
-      : mapBankPayout(record, admin));
+    return res.json(
+      kind === 'transfers' ? mapTransferRecord(record, admin) : mapBankPayout(record, admin)
+    );
   } catch (err) {
     console.error('SafePay finance detail failed:', err.code || err.name || 'Error');
     return res.status(503).json({ error: 'Kunne ikke hente transaksjonsdetaljene.' });
@@ -510,8 +556,14 @@ exports.getSummary = async (req, res) => {
   try {
     const config = await getStripeConfiguration();
     const providerId = req.userId;
-    const modeMatch = { providerId: new mongoose.Types.ObjectId(providerId), livemode: !config.testMode };
-    const payoutModeMatch = { providerId: new mongoose.Types.ObjectId(providerId), stripeLivemode: !config.testMode };
+    const modeMatch = {
+      providerId: new mongoose.Types.ObjectId(providerId),
+      livemode: !config.testMode,
+    };
+    const payoutModeMatch = {
+      providerId: new mongoose.Types.ObjectId(providerId),
+      stripeLivemode: !config.testMode,
+    };
     const [transfers, bankPayouts, pendingTransfers] = await Promise.all([
       StripeTransferRecord.aggregate([
         { $match: modeMatch },
@@ -550,10 +602,21 @@ exports.getSummary = async (req, res) => {
       ]),
       StripeBankPayoutRecord.aggregate([
         { $match: modeMatch },
-        { $group: { _id: { currency: '$currency', status: '$status' }, count: { $sum: 1 }, amount: { $sum: '$amount' } } },
+        {
+          $group: {
+            _id: { currency: '$currency', status: '$status' },
+            count: { $sum: 1 },
+            amount: { $sum: '$amount' },
+          },
+        },
       ]),
       Payout.aggregate([
-        { $match: { ...payoutModeMatch, status: { $in: ['pending', 'released_internal', 'processing'] } } },
+        {
+          $match: {
+            ...payoutModeMatch,
+            status: { $in: ['pending', 'released_internal', 'processing'] },
+          },
+        },
         {
           $lookup: {
             from: StripeTransferRecord.collection.name,
@@ -564,32 +627,34 @@ exports.getSummary = async (req, res) => {
               providerId: '$providerId',
               livemode: '$stripeLivemode',
             },
-            pipeline: [{
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ['$livemode', '$$livemode'] },
-                    {
-                      $or: [
-                        { $eq: ['$payoutId', '$$payoutId'] },
-                        {
-                          $and: [
-                            { $ne: ['$$transferId', null] },
-                            { $eq: ['$stripeObjectId', '$$transferId'] },
-                          ],
-                        },
-                        {
-                          $and: [
-                            { $eq: ['$orderId', '$$orderId'] },
-                            { $eq: ['$providerId', '$$providerId'] },
-                          ],
-                        },
-                      ],
-                    },
-                  ],
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ['$livemode', '$$livemode'] },
+                      {
+                        $or: [
+                          { $eq: ['$payoutId', '$$payoutId'] },
+                          {
+                            $and: [
+                              { $ne: ['$$transferId', null] },
+                              { $eq: ['$stripeObjectId', '$$transferId'] },
+                            ],
+                          },
+                          {
+                            $and: [
+                              { $eq: ['$orderId', '$$orderId'] },
+                              { $eq: ['$providerId', '$$providerId'] },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
                 },
               },
-            }],
+            ],
             as: 'verifiedTransfers',
           },
         },
@@ -617,9 +682,10 @@ exports.getAdminSummary = async (req, res) => {
       return res.status(400).json({ error: 'Ugyldig Stripe-modus.' });
     }
     const match = mode === 'all' ? {} : { livemode: mode === 'live' };
-    const payoutMatch = mode === 'all'
-      ? { stripeLivemode: { $in: [true, false] } }
-      : { stripeLivemode: mode === 'live' };
+    const payoutMatch =
+      mode === 'all'
+        ? { stripeLivemode: { $in: [true, false] } }
+        : { stripeLivemode: mode === 'live' };
     const [transfers, bankPayouts, pendingTransfers] = await Promise.all([
       StripeTransferRecord.aggregate([
         { $match: match },
@@ -658,10 +724,21 @@ exports.getAdminSummary = async (req, res) => {
       ]),
       StripeBankPayoutRecord.aggregate([
         { $match: match },
-        { $group: { _id: { mode: '$livemode', currency: '$currency', status: '$status' }, count: { $sum: 1 }, amount: { $sum: '$amount' } } },
+        {
+          $group: {
+            _id: { mode: '$livemode', currency: '$currency', status: '$status' },
+            count: { $sum: 1 },
+            amount: { $sum: '$amount' },
+          },
+        },
       ]),
       Payout.aggregate([
-        { $match: { ...payoutMatch, status: { $in: ['pending', 'released_internal', 'processing'] } } },
+        {
+          $match: {
+            ...payoutMatch,
+            status: { $in: ['pending', 'released_internal', 'processing'] },
+          },
+        },
         {
           $lookup: {
             from: StripeTransferRecord.collection.name,
@@ -672,32 +749,34 @@ exports.getAdminSummary = async (req, res) => {
               providerId: '$providerId',
               livemode: '$stripeLivemode',
             },
-            pipeline: [{
-              $match: {
-                $expr: {
-                  $and: [
-                    { $eq: ['$livemode', '$$livemode'] },
-                    {
-                      $or: [
-                        { $eq: ['$payoutId', '$$payoutId'] },
-                        {
-                          $and: [
-                            { $ne: ['$$transferId', null] },
-                            { $eq: ['$stripeObjectId', '$$transferId'] },
-                          ],
-                        },
-                        {
-                          $and: [
-                            { $eq: ['$orderId', '$$orderId'] },
-                            { $eq: ['$providerId', '$$providerId'] },
-                          ],
-                        },
-                      ],
-                    },
-                  ],
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ['$livemode', '$$livemode'] },
+                      {
+                        $or: [
+                          { $eq: ['$payoutId', '$$payoutId'] },
+                          {
+                            $and: [
+                              { $ne: ['$$transferId', null] },
+                              { $eq: ['$stripeObjectId', '$$transferId'] },
+                            ],
+                          },
+                          {
+                            $and: [
+                              { $eq: ['$orderId', '$$orderId'] },
+                              { $eq: ['$providerId', '$$providerId'] },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
                 },
               },
-            }],
+            ],
             as: 'verifiedTransfers',
           },
         },
@@ -729,7 +808,9 @@ exports.reconcile = async (req, res) => {
     }
     const limit = Number(req.body.limit || 10);
     if (!Number.isInteger(limit) || limit < 1 || limit > 20) {
-      return res.status(400).json({ error: 'Avstemming kan omfatte 1 til 20 kontoer per forespørsel.' });
+      return res
+        .status(400)
+        .json({ error: 'Avstemming kan omfatte 1 til 20 kontoer per forespørsel.' });
     }
     if (req.body.cursorProviderId && !mongoose.Types.ObjectId.isValid(req.body.cursorProviderId)) {
       return res.status(400).json({ error: 'Ugyldig avstemmingsmarkør.' });
@@ -743,9 +824,7 @@ exports.reconcile = async (req, res) => {
     const query = {
       [field]: { $exists: true, $ne: null },
       ...(req.body.providerId ? { _id: req.body.providerId } : {}),
-      ...(req.body.cursorProviderId
-        ? { _id: { $gt: req.body.cursorProviderId } }
-        : {}),
+      ...(req.body.cursorProviderId ? { _id: { $gt: req.body.cursorProviderId } } : {}),
     };
     const providers = await User.find(query)
       .select('_id name stripeConnectAccountId stripeConnectAccountIdTest')
@@ -791,7 +870,8 @@ exports.reconcile = async (req, res) => {
       mode,
       requestedBy: String(req.userId),
       synchronizedAccounts: results.length,
-      nextCursorProviderId: providers.length === limit ? String(providers[providers.length - 1]._id) : null,
+      nextCursorProviderId:
+        providers.length === limit ? String(providers[providers.length - 1]._id) : null,
       results,
     });
   } catch (err) {
@@ -809,12 +889,18 @@ exports.getReconciliationIssues = async (_req, res) => {
         .limit(100)
         .lean(),
       Payout.find({ status: 'failed' })
-        .select('orderId providerId stripeConnectAccountId stripeTransferId stripeLivemode failureCode createdAt updatedAt')
+        .select(
+          'orderId providerId stripeConnectAccountId stripeTransferId stripeLivemode failureCode createdAt updatedAt'
+        )
         .sort({ updatedAt: -1 })
         .limit(100)
         .lean(),
-      StripeTransferRecord.find({ normalizedStatus: { $in: ['partially_reversed', 'fully_reversed'] } })
-        .select('stripeObjectId stripeAccountId orderId providerId livemode amount amountReversed normalizedStatus lastVerifiedAt')
+      StripeTransferRecord.find({
+        normalizedStatus: { $in: ['partially_reversed', 'fully_reversed'] },
+      })
+        .select(
+          'stripeObjectId stripeAccountId orderId providerId livemode amount amountReversed normalizedStatus lastVerifiedAt'
+        )
         .sort({ lastVerifiedAt: -1 })
         .limit(100)
         .lean(),
@@ -825,7 +911,8 @@ exports.getReconciliationIssues = async (_req, res) => {
         orderId: row.orderId,
         providerId: row.providerId,
         stripeTransferId: row.stripeTransferId || null,
-        mode: row.stripeLivemode === true ? 'live' : row.stripeLivemode === false ? 'test' : 'unknown',
+        mode:
+          row.stripeLivemode === true ? 'live' : row.stripeLivemode === false ? 'test' : 'unknown',
         failureCode: row.failureCode || null,
         updatedAt: row.updatedAt,
       })),

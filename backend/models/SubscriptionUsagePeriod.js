@@ -30,7 +30,8 @@ const subscriptionUsagePeriodSchema = new mongoose.Schema(
 
 subscriptionUsagePeriodSchema.path('billingPeriodEnd').validate(function (periodEnd) {
   const update = typeof this.getUpdate === 'function' ? this.getUpdate() : null;
-  const periodStart = this.billingPeriodStart ||
+  const periodStart =
+    this.billingPeriodStart ||
     update?.$set?.billingPeriodStart ||
     update?.$setOnInsert?.billingPeriodStart ||
     update?.billingPeriodStart;

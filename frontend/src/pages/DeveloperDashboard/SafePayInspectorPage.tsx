@@ -1,11 +1,32 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, ArrowUpRight, CircleAlert, CircleCheck, Search, Workflow } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  ArrowUpRight,
+  CircleAlert,
+  CircleCheck,
+  Search,
+  Workflow,
+} from 'lucide-react';
 import { ago, dateTime, num } from '@/lib/devFormat';
 import { cn } from '@/lib/utils';
 import type { MachineInfo, MachineViolation } from '../../api/developer';
-import { useDevSafePayMachine, useDevSafePayOrderMachine, useUrlFilters } from '../../features/developer/hooks';
-import { ErrorState, IssueList, PageHeader, RefreshButton, Section, StatCard, StatusBadge, Timeline } from '../../components/developer/kit';
+import {
+  useDevSafePayMachine,
+  useDevSafePayOrderMachine,
+  useUrlFilters,
+} from '../../features/developer/hooks';
+import {
+  ErrorState,
+  IssueList,
+  PageHeader,
+  RefreshButton,
+  Section,
+  StatCard,
+  StatusBadge,
+  Timeline,
+} from '../../components/developer/kit';
 import { DataTable, type Column } from '../../components/developer/DataTable';
 import { Badge } from '../../components/developer/ui/badge';
 import { Button } from '../../components/developer/ui/button';
@@ -35,7 +56,10 @@ const label = (s: string) => s.replace(/_/g, ' ');
 function boxExit([cx, cy]: [number, number], tx: number, ty: number) {
   const dx = tx - cx;
   const dy = ty - cy;
-  const s = Math.min(dx ? NODE_W / 2 / Math.abs(dx) : Infinity, dy ? NODE_H / 2 / Math.abs(dy) : Infinity);
+  const s = Math.min(
+    dx ? NODE_W / 2 / Math.abs(dx) : Infinity,
+    dy ? NODE_H / 2 / Math.abs(dy) : Infinity
+  );
   return [cx + dx * s, cy + dy * s];
 }
 
@@ -50,23 +74,60 @@ function edgePath(from: string, to: string) {
   const [qx, qy] = [mx - ((b[1] - a[1]) / len) * bend, my + ((b[0] - a[0]) / len) * bend];
   const [sx, sy] = boxExit(a, qx, qy);
   const [ex, ey] = boxExit(b, qx, qy);
-  return { d: `M${sx},${sy} Q${qx},${qy} ${ex},${ey}`, lx: (sx + 2 * qx + ex) / 4, ly: (sy + 2 * qy + ey) / 4 };
+  return {
+    d: `M${sx},${sy} Q${qx},${qy} ${ex},${ey}`,
+    lx: (sx + 2 * qx + ex) / 4,
+    ly: (sy + 2 * qy + ey) / 4,
+  };
 }
 
-function StateDiagram({ data, selected, onSelect }: { data: MachineInfo; selected: string; onSelect: (s: string) => void }) {
+function StateDiagram({
+  data,
+  selected,
+  onSelect,
+}: {
+  data: MachineInfo;
+  selected: string;
+  onSelect: (s: string) => void;
+}) {
   const observed = new Map(data.edges.map((e) => [`${e.from}>${e.to}`, e]));
   const allowed = data.states.flatMap((s) => s.next.map((to) => ({ from: s.status, to })));
   const illegal = data.edges.filter((e) => !e.legal);
   const max = Math.max(1, ...data.edges.map((e) => e.n));
-  const touches = (e: { from: string; to: string }) => !selected || e.from === selected || e.to === selected;
+  const touches = (e: { from: string; to: string }) =>
+    !selected || e.from === selected || e.to === selected;
   const violating = new Set(data.violations.map((v) => v.status));
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full min-w-[720px] select-none" role="img" aria-label="Order state machine">
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      className="h-auto w-full min-w-[720px] select-none"
+      role="img"
+      aria-label="Order state machine"
+    >
       <defs>
         {(['muted', 'flow', 'bad'] as const).map((k) => (
-          <marker key={k} id={`arrow-${k}`} viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
-            <path d="M0,0 L10,5 L0,10 z" className={k === 'bad' ? 'fill-red-500' : k === 'flow' ? 'fill-primary' : 'fill-muted-foreground/40'} />
+          <marker
+            key={k}
+            id={`arrow-${k}`}
+            viewBox="0 0 10 10"
+            refX="9"
+            refY="5"
+            markerUnits="userSpaceOnUse"
+            markerWidth="9"
+            markerHeight="9"
+            orient="auto-start-reverse"
+          >
+            <path
+              d="M0,0 L10,5 L0,10 z"
+              className={
+                k === 'bad'
+                  ? 'fill-red-500'
+                  : k === 'flow'
+                    ? 'fill-primary'
+                    : 'fill-muted-foreground/40'
+              }
+            />
           </marker>
         ))}
       </defs>
@@ -88,7 +149,14 @@ function StateDiagram({ data, selected, onSelect }: { data: MachineInfo; selecte
               <title>{`${label(e.from)} → ${label(e.to)}: ${o ? `${o.n} order(s)` : 'allowed, not observed'}`}</title>
             </path>
             {o && (
-              <text x={p.lx} y={p.ly - 4} textAnchor="middle" paintOrder="stroke" strokeWidth={4} className="fill-primary stroke-card text-[11px] font-medium tabular-nums">
+              <text
+                x={p.lx}
+                y={p.ly - 4}
+                textAnchor="middle"
+                paintOrder="stroke"
+                strokeWidth={4}
+                className="fill-primary stroke-card text-[11px] font-medium tabular-nums"
+              >
                 {o.n}
               </text>
             )}
@@ -100,10 +168,24 @@ function StateDiagram({ data, selected, onSelect }: { data: MachineInfo; selecte
         if (!p) return null;
         return (
           <g key={`bad-${e.from}>${e.to}`} className={cn(!touches(e) && 'opacity-15')}>
-            <path d={p.d} fill="none" strokeWidth={2.5} strokeDasharray="6 3" markerEnd="url(#arrow-bad)" className="stroke-red-500">
+            <path
+              d={p.d}
+              fill="none"
+              strokeWidth={2.5}
+              strokeDasharray="6 3"
+              markerEnd="url(#arrow-bad)"
+              className="stroke-red-500"
+            >
               <title>{`ILLEGAL ${label(e.from)} → ${label(e.to)}: ${e.n} order(s)`}</title>
             </path>
-            <text x={p.lx} y={p.ly - 4} textAnchor="middle" paintOrder="stroke" strokeWidth={4} className="fill-red-600 stroke-card text-[11px] font-semibold">
+            <text
+              x={p.lx}
+              y={p.ly - 4}
+              textAnchor="middle"
+              paintOrder="stroke"
+              strokeWidth={4}
+              className="fill-red-600 stroke-card text-[11px] font-semibold"
+            >
               ✕ {e.n}
             </text>
           </g>
@@ -114,19 +196,47 @@ function StateDiagram({ data, selected, onSelect }: { data: MachineInfo; selecte
         if (!pos) return null;
         const active = selected === s.status;
         return (
-          <g key={s.status} transform={`translate(${pos[0] - NODE_W / 2},${pos[1] - NODE_H / 2})`} className="cursor-pointer" onClick={() => onSelect(active ? '' : s.status)}>
+          <g
+            key={s.status}
+            transform={`translate(${pos[0] - NODE_W / 2},${pos[1] - NODE_H / 2})`}
+            className="cursor-pointer"
+            onClick={() => onSelect(active ? '' : s.status)}
+          >
             <rect
               width={NODE_W}
               height={NODE_H}
               rx={6}
               strokeWidth={active ? 2 : 1}
-              className={cn(active ? 'fill-primary/10 stroke-primary' : 'fill-card stroke-border', violating.has(s.status) && !active && 'stroke-amber-500')}
+              className={cn(
+                active ? 'fill-primary/10 stroke-primary' : 'fill-card stroke-border',
+                violating.has(s.status) && !active && 'stroke-amber-500'
+              )}
             />
-            {s.terminal && <rect x={3} y={3} width={NODE_W - 6} height={NODE_H - 6} rx={4} fill="none" className="stroke-border" />}
-            <text x={NODE_W / 2} y={19} textAnchor="middle" className="fill-foreground text-[12px] font-medium capitalize">
+            {s.terminal && (
+              <rect
+                x={3}
+                y={3}
+                width={NODE_W - 6}
+                height={NODE_H - 6}
+                rx={4}
+                fill="none"
+                className="stroke-border"
+              />
+            )}
+            <text
+              x={NODE_W / 2}
+              y={19}
+              textAnchor="middle"
+              className="fill-foreground text-[12px] font-medium capitalize"
+            >
               {label(s.status)}
             </text>
-            <text x={NODE_W / 2} y={35} textAnchor="middle" className="fill-muted-foreground text-[11px] tabular-nums">
+            <text
+              x={NODE_W / 2}
+              y={35}
+              textAnchor="middle"
+              className="fill-muted-foreground text-[11px] tabular-nums"
+            >
               {num(s.count)} order{s.count === 1 ? '' : 's'}
             </text>
           </g>
@@ -159,19 +269,32 @@ function OrderView({ id, onBack }: { id: string; onBack: () => void }) {
           </span>
         }
       >
-        <h4 className="mb-2 text-xs font-medium text-muted-foreground uppercase">Path through the machine</h4>
+        <h4 className="mb-2 text-xs font-medium text-muted-foreground uppercase">
+          Path through the machine
+        </h4>
         {data.path.length ? (
           <ol className="flex flex-wrap items-center gap-1.5">
             {data.path.map((s, i) => (
               <li key={i} className="flex items-center gap-1.5">
-                {i === 0 && s.from && <Badge variant="outline" className="capitalize">{label(s.from)}</Badge>}
+                {i === 0 && s.from && (
+                  <Badge variant="outline" className="capitalize">
+                    {label(s.from)}
+                  </Badge>
+                )}
                 <span
-                  className={cn('flex items-center text-xs', s.legal === false ? 'text-red-600' : 'text-muted-foreground')}
+                  className={cn(
+                    'flex items-center text-xs',
+                    s.legal === false ? 'text-red-600' : 'text-muted-foreground'
+                  )}
                   title={`${s.action}${s.at ? ` · ${dateTime(s.at)}` : ''}${s.legal === false ? ' · NOT ALLOWED' : ''}`}
                 >
                   <ArrowRight className="size-3.5" />
                 </span>
-                <Badge variant={s.legal === false ? 'destructive' : 'secondary'} className="capitalize" title={s.action}>
+                <Badge
+                  variant={s.legal === false ? 'destructive' : 'secondary'}
+                  className="capitalize"
+                  title={s.action}
+                >
                   {label(s.to)}
                 </Badge>
               </li>
@@ -179,12 +302,16 @@ function OrderView({ id, onBack }: { id: string; onBack: () => void }) {
             {data.path[data.path.length - 1]?.to !== o.status && (
               <li className="flex items-center gap-1.5">
                 <ArrowRight className="size-3.5 text-amber-600" />
-                <Badge variant="outline" className="border-amber-400 text-amber-700 capitalize">{label(o.status)} (unrecorded)</Badge>
+                <Badge variant="outline" className="border-amber-400 text-amber-700 capitalize">
+                  {label(o.status)} (unrecorded)
+                </Badge>
               </li>
             )}
           </ol>
         ) : (
-          <p className="text-sm text-muted-foreground">No status changes recorded in history — current status {label(o.status)}.</p>
+          <p className="text-sm text-muted-foreground">
+            No status changes recorded in history — current status {label(o.status)}.
+          </p>
         )}
         <p className="mt-3 text-xs text-muted-foreground">
           Allowed next: {data.next.length ? data.next.map(label).join(', ') : 'none (terminal)'}
@@ -192,7 +319,10 @@ function OrderView({ id, onBack }: { id: string; onBack: () => void }) {
       </Section>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Section title="Record states" description={`What each related record says while the order is ${label(o.status)}.`}>
+        <Section
+          title="Record states"
+          description={`What each related record says while the order is ${label(o.status)}.`}
+        >
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-muted-foreground">
@@ -204,7 +334,9 @@ function OrderView({ id, onBack }: { id: string; onBack: () => void }) {
             <tbody className="divide-y">
               <tr>
                 <td className="py-2">Order</td>
-                <td className="py-2"><StatusBadge status={o.status} /></td>
+                <td className="py-2">
+                  <StatusBadge status={o.status} />
+                </td>
                 <td className="py-2 text-xs text-muted-foreground">payment {o.paymentStatus}</td>
               </tr>
               {data.companions.map((c) => {
@@ -214,11 +346,21 @@ function OrderView({ id, onBack }: { id: string; onBack: () => void }) {
                     <td className="py-2">{c.model}</td>
                     <td className="py-2">
                       <span className="flex items-center gap-1.5">
-                        {ok ? <CircleCheck className="size-4 text-emerald-600" /> : <CircleAlert className="size-4 text-red-600" />}
-                        {c.actual ? <StatusBadge status={c.actual} /> : <span className="text-xs text-muted-foreground">none</span>}
+                        {ok ? (
+                          <CircleCheck className="size-4 text-emerald-600" />
+                        ) : (
+                          <CircleAlert className="size-4 text-red-600" />
+                        )}
+                        {c.actual ? (
+                          <StatusBadge status={c.actual} />
+                        ) : (
+                          <span className="text-xs text-muted-foreground">none</span>
+                        )}
                       </span>
                     </td>
-                    <td className="py-2 text-xs text-muted-foreground">{c.expected ? c.expected.map((x) => x ?? 'none').join(' / ') : 'any'}</td>
+                    <td className="py-2 text-xs text-muted-foreground">
+                      {c.expected ? c.expected.map((x) => x ?? 'none').join(' / ') : 'any'}
+                    </td>
                   </tr>
                 );
               })}
@@ -241,17 +383,47 @@ export default function SafePayInspectorPage() {
   const [f, setF] = useUrlFilters({ order: '', state: '' });
   const [input, setInput] = useState('');
   const { data, isLoading, isFetching, error, refetch } = useDevSafePayMachine();
-  const rows = useMemo(() => (data?.violations || []).filter((v) => !f.state || v.status === f.state), [data, f.state]);
+  const rows = useMemo(
+    () => (data?.violations || []).filter((v) => !f.state || v.status === f.state),
+    [data, f.state]
+  );
   const illegal = data?.edges.filter((e) => !e.legal).reduce((a, e) => a + e.n, 0) || 0;
   const totalMoves = data?.edges.reduce((a, e) => a + e.n, 0) || 0;
 
   const columns: Column<MachineViolation>[] = [
     { key: 'sev', header: 'Severity', cell: (v) => <StatusBadge status={v.severity} /> },
-    { key: 'code', header: 'Finding', cell: (v) => <span className="font-medium">{v.code.replace(/_/g, ' ')}</span> },
-    { key: 'order', header: 'Order', cell: (v) => <div className="text-xs"><div className="truncate">{v.title || '—'}</div><div className="font-mono text-muted-foreground">{v.orderId}</div></div> },
+    {
+      key: 'code',
+      header: 'Finding',
+      cell: (v) => <span className="font-medium">{v.code.replace(/_/g, ' ')}</span>,
+    },
+    {
+      key: 'order',
+      header: 'Order',
+      cell: (v) => (
+        <div className="text-xs">
+          <div className="truncate">{v.title || '—'}</div>
+          <div className="font-mono text-muted-foreground">{v.orderId}</div>
+        </div>
+      ),
+    },
     { key: 'status', header: 'Status', cell: (v) => <StatusBadge status={v.status} /> },
-    { key: 'detail', header: 'Detail', className: 'max-w-[380px]', cell: (v) => <span className="block truncate text-xs text-muted-foreground" title={v.detail}>{v.detail}</span> },
-    { key: 'at', header: 'Updated', align: 'right', cell: (v) => <span className="text-xs text-muted-foreground">{ago(v.at)}</span> },
+    {
+      key: 'detail',
+      header: 'Detail',
+      className: 'max-w-[380px]',
+      cell: (v) => (
+        <span className="block truncate text-xs text-muted-foreground" title={v.detail}>
+          {v.detail}
+        </span>
+      ),
+    },
+    {
+      key: 'at',
+      header: 'Updated',
+      align: 'right',
+      cell: (v) => <span className="text-xs text-muted-foreground">{ago(v.at)}</span>,
+    },
   ];
 
   return (
@@ -270,7 +442,13 @@ export default function SafePayInspectorPage() {
             >
               <div className="relative">
                 <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Inspect order ID…" className="w-64 bg-card pl-8 font-mono text-xs" aria-label="Order ID" />
+                <Input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Inspect order ID…"
+                  className="w-64 bg-card pl-8 font-mono text-xs"
+                  aria-label="Order ID"
+                />
               </div>
             </form>
             <RefreshButton onClick={() => refetch()} spinning={isFetching} />
@@ -284,10 +462,41 @@ export default function SafePayInspectorPage() {
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-            <StatCard label="Orders checked" icon={<Workflow />} loading={isLoading} value={num(data?.scanned)} hint={data && data.scanned >= data.scanLimit ? `newest ${num(data.scanLimit)} only` : 'all orders'} />
-            <StatCard label="Transitions observed" icon={<ArrowRight />} loading={isLoading} value={num(totalMoves)} hint={`${data?.edges.length ?? 0} distinct`} />
-            <StatCard label="Illegal transitions" icon={<CircleAlert />} tone={illegal ? 'danger' : 'success'} loading={isLoading} value={num(illegal)} />
-            <StatCard label="Orders off the machine" icon={<CircleAlert />} tone={data?.affectedOrders ? 'warning' : 'success'} loading={isLoading} value={num(data?.affectedOrders)} hint={Object.entries(data?.byCode || {}).map(([k, n]) => `${n} ${k.replace(/_/g, ' ')}`).join(' · ')} />
+            <StatCard
+              label="Orders checked"
+              icon={<Workflow />}
+              loading={isLoading}
+              value={num(data?.scanned)}
+              hint={
+                data && data.scanned >= data.scanLimit
+                  ? `newest ${num(data.scanLimit)} only`
+                  : 'all orders'
+              }
+            />
+            <StatCard
+              label="Transitions observed"
+              icon={<ArrowRight />}
+              loading={isLoading}
+              value={num(totalMoves)}
+              hint={`${data?.edges.length ?? 0} distinct`}
+            />
+            <StatCard
+              label="Illegal transitions"
+              icon={<CircleAlert />}
+              tone={illegal ? 'danger' : 'success'}
+              loading={isLoading}
+              value={num(illegal)}
+            />
+            <StatCard
+              label="Orders off the machine"
+              icon={<CircleAlert />}
+              tone={data?.affectedOrders ? 'warning' : 'success'}
+              loading={isLoading}
+              value={num(data?.affectedOrders)}
+              hint={Object.entries(data?.byCode || {})
+                .map(([k, n]) => `${n} ${k.replace(/_/g, ' ')}`)
+                .join(' · ')}
+            />
           </div>
 
           <Section
@@ -295,14 +504,31 @@ export default function SafePayInspectorPage() {
             description="Solid arrows: transitions orders actually took (thicker = more). Dashed grey: allowed but never seen. Red: taken but not allowed. Double border: terminal. Click a state to focus it."
             contentClassName="overflow-x-auto"
           >
-            {data ? <StateDiagram data={data} selected={f.state} onSelect={(state) => setF({ state })} /> : <Skeleton className="h-80 w-full" />}
+            {data ? (
+              <StateDiagram data={data} selected={f.state} onSelect={(state) => setF({ state })} />
+            ) : (
+              <Skeleton className="h-80 w-full" />
+            )}
             {data?.unknownStates.length ? (
-              <p className="mt-2 text-xs text-red-600">Statuses outside the machine: {data.unknownStates.map((s) => `${s.status} (${s.count})`).join(', ')}</p>
+              <p className="mt-2 text-xs text-red-600">
+                Statuses outside the machine:{' '}
+                {data.unknownStates.map((s) => `${s.status} (${s.count})`).join(', ')}
+              </p>
             ) : null}
           </Section>
 
-          <Section title={f.state ? `Findings · ${label(f.state)}` : 'Findings'} description="Click a row to walk that order through the machine.">
-            <DataTable columns={columns} rows={rows} loading={isLoading} rowKey={(v, i) => `${v.orderId}-${v.code}-${i}`} onRowClick={(v) => setF({ order: v.orderId })} emptyTitle="Every order follows the machine" />
+          <Section
+            title={f.state ? `Findings · ${label(f.state)}` : 'Findings'}
+            description="Click a row to walk that order through the machine."
+          >
+            <DataTable
+              columns={columns}
+              rows={rows}
+              loading={isLoading}
+              rowKey={(v, i) => `${v.orderId}-${v.code}-${i}`}
+              onRowClick={(v) => setF({ order: v.orderId })}
+              emptyTitle="Every order follows the machine"
+            />
           </Section>
         </>
       )}

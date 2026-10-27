@@ -179,9 +179,14 @@ async function applyVerification(userId, identity) {
    * they stay — but `identityVerification` is the source of truth and these two
    * are derived from it, written only here and only after a full OIDC validation.
    */
-  await User.findByIdAndUpdate(userId, { $set: { identityVerification: identity, verified: true } });
+  await User.findByIdAndUpdate(userId, {
+    $set: { identityVerification: identity, verified: true },
+  });
   // Verifying never reactivates: an account an admin set 'inactive' stays inactive.
-  await User.updateOne({ _id: userId, accountStatus: { $ne: 'inactive' } }, { $set: { accountStatus: 'verified' } });
+  await User.updateOne(
+    { _id: userId, accountStatus: { $ne: 'inactive' } },
+    { $set: { accountStatus: 'verified' } }
+  );
 }
 
 exports.iduraCallback = async (req, res) => {
@@ -224,7 +229,10 @@ exports.iduraCallback = async (req, res) => {
 
   // The transaction outlives a logout in the same browser: someone else finishing BankID
   // there must not verify the starter's account. Same rule as the Google state store.
-  if (String(req.userId) !== pending.jobbloUserId || String(req.sessionId) !== pending.jobbloSessionId) {
+  if (
+    String(req.userId) !== pending.jobbloUserId ||
+    String(req.sessionId) !== pending.jobbloSessionId
+  ) {
     logFailure(req, 'link_callback_outside_starting_session');
     return res.redirect(frontendUrl(`${failureTarget}?error=${ERRORS.VERIFICATION_FAILED}`));
   }

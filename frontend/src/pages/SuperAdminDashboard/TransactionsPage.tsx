@@ -117,7 +117,9 @@ export default function TransactionsPage() {
       key: 'refunded',
       header: 'Refundert',
       render: (t) => (
-        <span className={`text-xs font-medium ${t.refunded ? 'text-purple-600' : 'text-muted-foreground'}`}>
+        <span
+          className={`text-xs font-medium ${t.refunded ? 'text-purple-600' : 'text-muted-foreground'}`}
+        >
           {t.refunded ? 'Ja' : 'Nei'}
         </span>
       ),
@@ -127,7 +129,9 @@ export default function TransactionsPage() {
       header: 'Dato',
       render: (t) =>
         new Date(t.createdAt).toLocaleDateString('nb-NO', {
-          day: '2-digit', month: 'short', year: 'numeric',
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
         }),
     },
   ];
@@ -160,13 +164,19 @@ export default function TransactionsPage() {
             />
             <AdminFilterSelect
               value={statusFilter}
-              onChange={(v) => { setStatusFilter(v); setPage(1); }}
+              onChange={(v) => {
+                setStatusFilter(v);
+                setPage(1);
+              }}
               options={STATUS_OPTIONS}
               placeholder="Alle statuser"
             />
             <AdminFilterSelect
               value={typeFilter}
-              onChange={(v) => { setTypeFilter(v); setPage(1); }}
+              onChange={(v) => {
+                setTypeFilter(v);
+                setPage(1);
+              }}
               options={TYPE_OPTIONS}
               placeholder="Alle typer"
             />
@@ -178,8 +188,18 @@ export default function TransactionsPage() {
       {data && !isLoading && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: 'Totalt', value: data.pagination.total, icon: <CreditCard size={16} />, color: 'text-muted-foreground' },
-            { label: 'Denne siden', value: data.transactions.length, icon: <CreditCard size={16} />, color: 'text-blue-600' },
+            {
+              label: 'Totalt',
+              value: data.pagination.total,
+              icon: <CreditCard size={16} />,
+              color: 'text-muted-foreground',
+            },
+            {
+              label: 'Denne siden',
+              value: data.transactions.length,
+              icon: <CreditCard size={16} />,
+              color: 'text-blue-600',
+            },
             {
               label: 'Vellykket',
               value: data.transactions.filter((t) => t.status === 'succeeded').length,
@@ -193,7 +213,10 @@ export default function TransactionsPage() {
               color: 'text-red-600',
             },
           ].map((s) => (
-            <div key={s.label} className="bg-card rounded-md border border-border p-4 flex items-center gap-3">
+            <div
+              key={s.label}
+              className="bg-card rounded-md border border-border p-4 flex items-center gap-3"
+            >
               <span className={s.color}>{s.icon}</span>
               <div>
                 <p className="text-lg font-bold text-foreground">{s.value}</p>

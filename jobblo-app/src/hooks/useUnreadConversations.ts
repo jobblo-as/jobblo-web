@@ -10,11 +10,20 @@ import { useMessages } from './useMessages';
  */
 export function useUnreadConversations() {
   const user = useAuthStore((s) => s.user);
-  const userId = user && typeof user === 'object' && '_id' in user && typeof user._id === 'string' ? user._id : null;
+  const userId =
+    user && typeof user === 'object' && '_id' in user && typeof user._id === 'string'
+      ? user._id
+      : null;
   const { data } = useMessages();
   const count = (data ?? []).filter((chat) => {
     const latest = chat.messages?.[0];
-    return Boolean(userId && latest?.senderId && String(typeof latest.senderId === 'string' ? latest.senderId : latest.senderId._id) !== userId && !latest.seenBy?.includes(userId));
+    return Boolean(
+      userId &&
+      latest?.senderId &&
+      String(typeof latest.senderId === 'string' ? latest.senderId : latest.senderId._id) !==
+        userId &&
+      !latest.seenBy?.includes(userId)
+    );
   }).length;
   return count;
 }

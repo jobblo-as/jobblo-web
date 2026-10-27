@@ -26,11 +26,16 @@ export default function TermsAcceptanceScreen() {
       });
       router.replace('/(app)');
     } catch (err) {
-      const message = err && typeof err === 'object' && 'response' in err
-        ? (err as { response?: { data?: { error?: string; message?: string } } }).response?.data?.error
-          ?? (err as { response?: { data?: { error?: string; message?: string } } }).response?.data?.message
-        : 'Kunne ikke registrere godkjenningen. Prøv igjen.';
-      setError(typeof message === 'string' ? message : 'Kunne ikke registrere godkjenningen. Prøv igjen.');
+      const message =
+        err && typeof err === 'object' && 'response' in err
+          ? ((err as { response?: { data?: { error?: string; message?: string } } }).response?.data
+              ?.error ??
+            (err as { response?: { data?: { error?: string; message?: string } } }).response?.data
+              ?.message)
+          : 'Kunne ikke registrere godkjenningen. Prøv igjen.';
+      setError(
+        typeof message === 'string' ? message : 'Kunne ikke registrere godkjenningen. Prøv igjen.'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -40,7 +45,9 @@ export default function TermsAcceptanceScreen() {
     <SafeAreaView className="flex-1 bg-page">
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 32 }}>
         <View className="rounded-[28px] bg-surface p-5 shadow-sm">
-          <Text className="text-[28px] font-bold leading-tight tracking-[-0.05em] text-ink">Godkjenn vilkårene</Text>
+          <Text className="text-[28px] font-bold leading-tight tracking-[-0.05em] text-ink">
+            Godkjenn vilkårene
+          </Text>
           <Text className="mt-2 text-[15px] leading-6 text-muted">
             For å fortsette å bruke Jobblo må du godkjenne de gjeldende brukervilkårene.
           </Text>
@@ -52,9 +59,13 @@ export default function TermsAcceptanceScreen() {
           ) : null}
 
           <View className="mt-5 rounded-2xl bg-[#F5F6F1] dark:bg-surface-2 p-3">
-            <Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.18em] text-muted">Brukervilkår</Text>
+            <Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.18em] text-muted">
+              Brukervilkår
+            </Text>
             <Text className="mt-2 text-[13px] font-semibold text-ink">{userTerms.title}</Text>
-            <Text className="mt-1 text-[0.8125rem] text-muted">Sist oppdatert: {userTerms.lastUpdatedDisplay}</Text>
+            <Text className="mt-1 text-[0.8125rem] text-muted">
+              Sist oppdatert: {userTerms.lastUpdatedDisplay}
+            </Text>
             <Text className="mt-3 text-[0.8125rem] leading-5 text-muted">{userTerms.intro}</Text>
           </View>
 
@@ -85,7 +96,8 @@ export default function TermsAcceptanceScreen() {
           </View>
 
           <Text className="mt-5 text-[0.8125rem] leading-5 text-muted">
-            Logget inn som {typeof user?.email === 'string' && user.email.trim() ? user.email : 'bruker'}.
+            Logget inn som{' '}
+            {typeof user?.email === 'string' && user.email.trim() ? user.email : 'bruker'}.
           </Text>
         </View>
       </ScrollView>

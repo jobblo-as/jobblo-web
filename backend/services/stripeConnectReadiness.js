@@ -43,8 +43,14 @@ function readinessFromAccount(account) {
     pastDue,
     pendingVerification,
     eventuallyDue: requirements.eventually_due || [],
-    currentDeadline: requirements.current_deadline ? new Date(requirements.current_deadline * 1000) : null,
-    errors: (requirements.errors || []).map((e) => ({ requirement: e.requirement, code: e.code, reason: e.reason })),
+    currentDeadline: requirements.current_deadline
+      ? new Date(requirements.current_deadline * 1000)
+      : null,
+    errors: (requirements.errors || []).map((e) => ({
+      requirement: e.requirement,
+      code: e.code,
+      reason: e.reason,
+    })),
     payoutOnboardingStatus: ready
       ? 'enabled'
       : requirements.disabled_reason
@@ -57,10 +63,8 @@ function readinessFromAccount(account) {
 
 async function getConnectReadiness(userId, selectedConfig) {
   try {
-    const config = selectedConfig || await getStripeConfiguration();
-    const accountField = config.testMode
-      ? 'stripeConnectAccountIdTest'
-      : 'stripeConnectAccountId';
+    const config = selectedConfig || (await getStripeConfiguration());
+    const accountField = config.testMode ? 'stripeConnectAccountIdTest' : 'stripeConnectAccountId';
     const user = await User.findById(userId).select(
       'stripeConnectAccountId stripeConnectAccountIdTest payoutOnboardingStatus payoutEnabled chargesEnabled detailsSubmitted connectAccountCreatedAt payoutOnboardingLastRefreshedAt'
     );
@@ -89,8 +93,7 @@ async function getConnectReadiness(userId, selectedConfig) {
     const account = await stripe.accounts.retrieve(accountId);
     if (
       account.id !== accountId ||
-      (account.metadata?.jobbloUserId &&
-        account.metadata.jobbloUserId !== String(userId))
+      (account.metadata?.jobbloUserId && account.metadata.jobbloUserId !== String(userId))
     ) {
       const error = new Error('Connected account does not match the stored Jobblo provider.');
       error.code = 'STRIPE_CONNECT_ACCOUNT_MODE_MISMATCH';
@@ -112,7 +115,9 @@ async function getConnectReadiness(userId, selectedConfig) {
       error.type === 'StripeInvalidRequestError' &&
       (error.code === 'resource_missing' || error.statusCode === 404)
     ) {
-      const missing = new Error('Stored Stripe Connect account was not found in the selected mode.');
+      const missing = new Error(
+        'Stored Stripe Connect account was not found in the selected mode.'
+      );
       missing.code = 'STRIPE_CONNECT_ACCOUNT_NOT_FOUND';
       missing.cause = error;
       throw missing;

@@ -8,10 +8,18 @@ const captured = {};
 jest.mock('../utils/apiResponse', () => ({
   asyncHandler: (fn) => fn,
   sendSuccess: jest.fn(),
-  sendError: jest.fn((res, message, status) => { captured.error = { message, status }; return res; }),
+  sendError: jest.fn((res, message, status) => {
+    captured.error = { message, status };
+    return res;
+  }),
   buildPagination: jest.fn(),
 }));
-jest.mock('../utils/pagination', () => ({ parsePagination: jest.fn(), parseObjectId: jest.fn((v) => v), parseSort: jest.fn(), parseDate: jest.fn() }));
+jest.mock('../utils/pagination', () => ({
+  parsePagination: jest.fn(),
+  parseObjectId: jest.fn((v) => v),
+  parseSort: jest.fn(),
+  parseDate: jest.fn(),
+}));
 jest.mock('../models/Dispute', () => ({ findById: jest.fn() }));
 jest.mock('../models/Order', () => ({}));
 jest.mock('../models/Payment', () => ({}));
@@ -20,11 +28,18 @@ jest.mock('../models/SafePayHistory', () => ({}));
 jest.mock('../models/ChatMessage', () => ({}));
 jest.mock('../models/Notification', () => ({}));
 jest.mock('../models/JobbloShop', () => ({ findById: jest.fn() }));
-jest.mock('../models/User', () => ({ findById: jest.fn(), findOneAndUpdate: jest.fn(), exists: jest.fn() }));
+jest.mock('../models/User', () => ({
+  findById: jest.fn(),
+  findOneAndUpdate: jest.fn(),
+  exists: jest.fn(),
+}));
 jest.mock('../services/admin/activityService', () => ({ logActivity: jest.fn() }));
 jest.mock('../utils/errorLogger', () => ({ logApplicationError: jest.fn() }));
 jest.mock('../config/stripe', () => ({ getStripe: jest.fn(), getStripeForMode: jest.fn() }));
-jest.mock('../services/stripe/financialOperations', () => ({ executeRefund: jest.fn(), executeTransferReversal: jest.fn() }));
+jest.mock('../services/stripe/financialOperations', () => ({
+  executeRefund: jest.fn(),
+  executeTransferReversal: jest.fn(),
+}));
 
 const Dispute = require('../models/Dispute');
 const JobbloShop = require('../models/JobbloShop');
@@ -41,11 +56,22 @@ describe('shop purchase', () => {
 
   it('only one of two concurrent purchases spends the balance', async () => {
     const row = { _id: 'u1', pointsBalance: 10, pointsHistory: [] };
-    JobbloShop.findById.mockResolvedValue({ _id: 'item1', title: 'Boost', coins: 10, isActive: true });
+    JobbloShop.findById.mockResolvedValue({
+      _id: 'item1',
+      title: 'Boost',
+      coins: 10,
+      isActive: true,
+    });
     // A read-modify-write sees a snapshot and writes it back later (the old race)...
     User.findById.mockImplementation(async () => {
       const snap = { ...row, pointsHistory: [...row.pointsHistory] };
-      snap.save = async () => { await tick(); Object.assign(row, { pointsBalance: snap.pointsBalance, pointsHistory: snap.pointsHistory }); };
+      snap.save = async () => {
+        await tick();
+        Object.assign(row, {
+          pointsBalance: snap.pointsBalance,
+          pointsHistory: snap.pointsHistory,
+        });
+      };
       return snap;
     });
     // ...while a conditional update is atomic.
@@ -58,11 +84,22 @@ describe('shop purchase', () => {
     });
     User.exists.mockResolvedValue(true);
 
-    const results = await Promise.all([1, 2].map(async () => {
-      const res = { code: 200, status(c) { this.code = c; return this; }, json() { return this; } };
-      await buyItem({ body: { id: 'item1' }, user: { id: 'u1' } }, res);
-      return res.code;
-    }));
+    const results = await Promise.all(
+      [1, 2].map(async () => {
+        const res = {
+          code: 200,
+          status(c) {
+            this.code = c;
+            return this;
+          },
+          json() {
+            return this;
+          },
+        };
+        await buyItem({ body: { id: 'item1' }, user: { id: 'u1' } }, res);
+        return res.code;
+      })
+    );
     expect(results.sort()).toEqual([200, 400]);
     expect(row.pointsBalance).toBe(0);
     expect(row.pointsHistory).toHaveLength(1);
@@ -71,11 +108,18 @@ describe('shop purchase', () => {
 
 describe('admin dispute amounts', () => {
   const { resolveDispute } = require('../controllers/admin/disputesAdminController');
-  const run = (body) => resolveDispute(
-    { params: { disputeId: 'd1' }, body: { outcome: 'partial_refund', reason: 'ok', ...body }, user: { _id: 'a1' }, ip: '1', headers: {} },
-    {},
-    jest.fn()
-  );
+  const run = (body) =>
+    resolveDispute(
+      {
+        params: { disputeId: 'd1' },
+        body: { outcome: 'partial_refund', reason: 'ok', ...body },
+        user: { _id: 'a1' },
+        ip: '1',
+        headers: {},
+      },
+      {},
+      jest.fn()
+    );
 
   it.each([
     ['a negative amount', { customerAmount: -100 }],

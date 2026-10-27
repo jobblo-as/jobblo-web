@@ -1,6 +1,9 @@
 jest.mock('../models/Session', () => ({ findOne: jest.fn(), updateOne: jest.fn() }));
 jest.mock('../models/User', () => ({ findById: jest.fn() }));
-jest.mock('../utils/tokenUtils', () => ({ verifyToken: jest.fn(() => ({ id: 'u1', sid: 's1' })), deviceNameFrom: () => null }));
+jest.mock('../utils/tokenUtils', () => ({
+  verifyToken: jest.fn(() => ({ id: 'u1', sid: 's1' })),
+  deviceNameFrom: () => null,
+}));
 
 const Session = require('../models/Session');
 const User = require('../models/User');
@@ -40,18 +43,45 @@ describe('TOTP (RFC 6238 test vectors, SHA-1)', () => {
 });
 
 describe('authenticate: superAdmin/developer need a verified session', () => {
-  const run = async (role, { verified = false, enabled = true, path = '/api/developer/overview' } = {}) => {
-    Session.findOne.mockReturnValue({ lean: () => Promise.resolve({ _id: 's1', mfaVerifiedAt: verified ? new Date() : null }) });
-    User.findById.mockReturnValue({ select: () => ({ lean: () => Promise.resolve({ _id: 'u1', role, mfaEnabledAt: enabled ? new Date() : null }) }) });
+  const run = async (
+    role,
+    { verified = false, enabled = true, path = '/api/developer/overview' } = {}
+  ) => {
+    Session.findOne.mockReturnValue({
+      lean: () => Promise.resolve({ _id: 's1', mfaVerifiedAt: verified ? new Date() : null }),
+    });
+    User.findById.mockReturnValue({
+      select: () => ({
+        lean: () => Promise.resolve({ _id: 'u1', role, mfaEnabledAt: enabled ? new Date() : null }),
+      }),
+    });
     const req = { cookies: { accessToken: 't' }, headers: {}, originalUrl: path };
-    const res = { statusCode: 200, body: null, status(c) { this.statusCode = c; return this; }, json(b) { this.body = b; return this; }, clearCookie() {} };
+    const res = {
+      statusCode: 200,
+      body: null,
+      status(c) {
+        this.statusCode = c;
+        return this;
+      },
+      json(b) {
+        this.body = b;
+        return this;
+      },
+      clearCookie() {},
+    };
     const next = jest.fn();
     await authenticate(req, res, next);
     return { status: next.mock.calls.length ? 'next' : res.statusCode, body: res.body };
   };
   it('blocks an unverified admin or developer session everywhere but the 2FA screens', async () => {
-    expect(await run('superAdmin')).toMatchObject({ status: 403, body: { code: 'MFA_REQUIRED', setup: false } });
-    expect(await run('developer', { enabled: false })).toMatchObject({ status: 403, body: { setup: true } });
+    expect(await run('superAdmin')).toMatchObject({
+      status: 403,
+      body: { code: 'MFA_REQUIRED', setup: false },
+    });
+    expect(await run('developer', { enabled: false })).toMatchObject({
+      status: 403,
+      body: { setup: true },
+    });
     expect((await run('superAdmin', { path: '/api/auth/mfa/verify' })).status).toBe('next');
     expect((await run('superAdmin', { path: '/api/auth/profile?x=1' })).status).toBe('next');
     expect((await run('superAdmin', { path: '/api/auth/mfa-bypass' })).status).toBe(403);

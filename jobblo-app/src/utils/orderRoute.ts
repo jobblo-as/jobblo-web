@@ -21,7 +21,13 @@ interface OrderRouteSubject {
 }
 
 const APPROVABLE_STATUSES = ['ready_for_review', 'completed'];
-const PAID_STATUSES = ['paid', 'in_progress', 'ready_for_review', 'waiting_for_approval', 'completed'];
+const PAID_STATUSES = [
+  'paid',
+  'in_progress',
+  'ready_for_review',
+  'waiting_for_approval',
+  'completed',
+];
 
 /** Object hrefs, so `router.push(...)` needs no cast at the call site. */
 export type OrderRoute =

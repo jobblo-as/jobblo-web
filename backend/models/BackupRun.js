@@ -7,7 +7,12 @@ const mongoose = require('mongoose');
 const backupRunSchema = new mongoose.Schema(
   {
     kind: { type: String, enum: ['backup', 'drill'], required: true, index: true },
-    status: { type: String, enum: ['running', 'succeeded', 'failed'], default: 'running', index: true },
+    status: {
+      type: String,
+      enum: ['running', 'succeeded', 'failed'],
+      default: 'running',
+      index: true,
+    },
     trigger: { type: String, enum: ['cron', 'dashboard'], default: 'cron' },
     by: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     host: { type: String, default: null },
@@ -23,7 +28,11 @@ const backupRunSchema = new mongoose.Schema(
     sha256: { type: String, default: null },
     collections: { type: [{ _id: false, name: String, count: Number }], default: undefined }, // source counts when the dump started
     offsite: {
-      status: { type: String, enum: ['not_configured', 'succeeded', 'failed'], default: 'not_configured' },
+      status: {
+        type: String,
+        enum: ['not_configured', 'succeeded', 'failed'],
+        default: 'not_configured',
+      },
       at: Date,
       error: String,
     },
@@ -32,7 +41,10 @@ const backupRunSchema = new mongoose.Schema(
     // drill
     backupId: { type: mongoose.Schema.Types.ObjectId, ref: 'BackupRun', default: null },
     restoredDb: { type: String, default: null },
-    mismatches: { type: [{ _id: false, name: String, expected: Number, actual: Number }], default: undefined },
+    mismatches: {
+      type: [{ _id: false, name: String, expected: Number, actual: Number }],
+      default: undefined,
+    },
   },
   { versionKey: false }
 );

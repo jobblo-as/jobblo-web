@@ -34,7 +34,11 @@ export function groupSystemMessages<T extends GroupableMessage>(messages: T[]): 
       latestByText.set(text, message);
     }
     const items = [...latestByText.values()];
-    out.push({ kind: 'status', key: `status-${items[0]._id ?? items[0].createdAt ?? out.length}`, items });
+    out.push({
+      kind: 'status',
+      key: `status-${items[0]._id ?? items[0].createdAt ?? out.length}`,
+      items,
+    });
     run = [];
   };
   for (const message of messages) {

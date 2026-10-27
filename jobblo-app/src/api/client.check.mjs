@@ -13,7 +13,8 @@ const stubs = {
     };
     export default { create: () => instance, post: async () => ({ data: { accessToken: globalThis.__refreshed } }) };`,
   'expo-device': 'export const modelName = "Pixel"; export const manufacturer = "Google";',
-  '../utils/authStorage': 'const m = globalThis.__storage = new Map(); export const authStorage = { getItem: async (k) => m.get(k) ?? null, setItem: async (k, v) => void m.set(k, v), removeItem: async (k) => void m.delete(k) };',
+  '../utils/authStorage':
+    'const m = globalThis.__storage = new Map(); export const authStorage = { getItem: async (k) => m.get(k) ?? null, setItem: async (k, v) => void m.set(k, v), removeItem: async (k) => void m.delete(k) };',
   '../monitoring/reporter': 'export const monitorAxios = () => {};',
 };
 registerHooks({
@@ -22,7 +23,8 @@ registerHooks({
     return next(specifier, context);
   },
   load(url, context, next) {
-    if (url.startsWith('stub:')) return { format: 'module', source: stubs[url.slice(5)], shortCircuit: true };
+    if (url.startsWith('stub:'))
+      return { format: 'module', source: stubs[url.slice(5)], shortCircuit: true };
     return next(url, context);
   },
 });
@@ -30,7 +32,12 @@ registerHooks({
 // The lazy `require('../store/authStore')` in client.ts.
 let state;
 const useAuthStore = {
-  getState: () => ({ ...state, logout: async () => { state.loggedOut = true; } }),
+  getState: () => ({
+    ...state,
+    logout: async () => {
+      state.loggedOut = true;
+    },
+  }),
   setState: (patch) => Object.assign(state, patch),
 };
 globalThis.require = (spec) => {
@@ -39,15 +46,22 @@ globalThis.require = (spec) => {
 };
 
 await import('./client.ts');
-const jwt = (id) => `h.${Buffer.from(JSON.stringify({ id, typ: 'access' })).toString('base64url')}.sig`;
-const expired401 = () => ({ response: { status: 401 }, config: { url: '/jobs', headers: { Authorization: `Bearer ${jwt('userB')}` } } });
+const jwt = (id) =>
+  `h.${Buffer.from(JSON.stringify({ id, typ: 'access' })).toString('base64url')}.sig`;
+const expired401 = () => ({
+  response: { status: 401 },
+  config: { url: '/jobs', headers: { Authorization: `Bearer ${jwt('userB')}` } },
+});
 
 async function refreshAs(refreshedId) {
   state = { user: { _id: 'userB' }, token: jwt('userB'), loggedOut: false };
   globalThis.__storage.set('token', jwt('userB'));
   globalThis.__refreshed = jwt(refreshedId);
   globalThis.__retried = null;
-  const result = await globalThis.__onError(expired401()).then((r) => r, (e) => e);
+  const result = await globalThis.__onError(expired401()).then(
+    (r) => r,
+    (e) => e
+  );
   await new Promise((r) => setTimeout(r, 0)); // teardown is fire-and-forget
   return result;
 }

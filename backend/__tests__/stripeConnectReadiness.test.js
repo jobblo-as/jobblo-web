@@ -68,9 +68,9 @@ it('rejects missing accounts and incomplete or revoked capabilities', async () =
   User.findById.mockReturnValue({
     select: jest.fn().mockResolvedValue({ stripeConnectAccountIdTest: 'acct_test' }),
   });
-  const retrieve = jest.fn().mockResolvedValue(
-    account({ requirements: { currently_due: ['individual.address.line1'] } })
-  );
+  const retrieve = jest
+    .fn()
+    .mockResolvedValue(account({ requirements: { currently_due: ['individual.address.line1'] } }));
   getStripeForMode.mockResolvedValue({ accounts: { retrieve } });
   expect((await getConnectReadiness('worker')).ready).toBe(false);
 
@@ -115,19 +115,19 @@ it('fails closed with a distinct error when Stripe cannot verify the account', a
     accounts: { retrieve: jest.fn().mockRejectedValue(new Error('network error')) },
   });
 
-  await expect(getConnectReadiness('worker')).rejects.toBeInstanceOf(
-    StripeConnectUnavailableError
-  );
+  await expect(getConnectReadiness('worker')).rejects.toBeInstanceOf(StripeConnectUnavailableError);
 });
 
 it('reports a saved account missing from the selected mode instead of treating it as unconnected', async () => {
   getStripeForMode.mockResolvedValue({
     accounts: {
-      retrieve: jest.fn().mockRejectedValue(Object.assign(new Error('No such account'), {
-        type: 'StripeInvalidRequestError',
-        code: 'resource_missing',
-        statusCode: 404,
-      })),
+      retrieve: jest.fn().mockRejectedValue(
+        Object.assign(new Error('No such account'), {
+          type: 'StripeInvalidRequestError',
+          code: 'resource_missing',
+          statusCode: 404,
+        })
+      ),
     },
   });
 

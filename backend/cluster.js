@@ -42,10 +42,16 @@ const SHUTDOWN_MSG = 'jobblo:shutdown';
 
 /** Pure: how many workers to run for this env, and a warning when we refuse the request. */
 function plan(env = process.env, cpus = os.availableParallelism()) {
-  const raw = String(env.WEB_CONCURRENCY ?? '').trim().toLowerCase();
+  const raw = String(env.WEB_CONCURRENCY ?? '')
+    .trim()
+    .toLowerCase();
   if (!raw || raw === '1') return { workers: 1, warning: null };
   const asked = raw === 'auto' ? cpus : Number(raw);
-  if (!Number.isInteger(asked) || asked < 1) return { workers: 1, warning: `[cluster] WEB_CONCURRENCY="${env.WEB_CONCURRENCY}" is not a positive integer or "auto" — running 1 process.` };
+  if (!Number.isInteger(asked) || asked < 1)
+    return {
+      workers: 1,
+      warning: `[cluster] WEB_CONCURRENCY="${env.WEB_CONCURRENCY}" is not a positive integer or "auto" — running 1 process.`,
+    };
   if (asked > 1 && !env.REDIS_URL) {
     return {
       workers: 1,
@@ -64,7 +70,8 @@ function workerEnv(slot) {
 
 /** Removes the singleton starters from bootstrap's STARTERS array in place (slots 2..N). */
 function dropSingletons(starters) {
-  for (let i = starters.length - 1; i >= 0; i--) if (SINGLETON_STARTERS.includes(starters[i][0])) starters.splice(i, 1);
+  for (let i = starters.length - 1; i >= 0; i--)
+    if (SINGLETON_STARTERS.includes(starters[i][0])) starters.splice(i, 1);
   return starters;
 }
 
@@ -84,7 +91,11 @@ function runPrimary(n) {
   let stopping = false;
 
   const fork = (slot) => {
-    const w = cluster.fork({ ...workerEnv(slot), WORKER_RESTARTS: String(restarts[slot] || 0), WORKER_LAST_EXIT: lastExit[slot] || '' });
+    const w = cluster.fork({
+      ...workerEnv(slot),
+      WORKER_RESTARTS: String(restarts[slot] || 0),
+      WORKER_LAST_EXIT: lastExit[slot] || '',
+    });
     slotOf.set(w.id, slot);
     startedAt[slot] = Date.now();
   };
@@ -102,7 +113,9 @@ function runPrimary(n) {
     restarts[slot] = (restarts[slot] || 0) + 1;
     lastExit[slot] = `${new Date().toISOString()} ${signal || `code ${code}`}`;
     const delay = backoffMs(fails[slot]);
-    console.error(`[cluster] worker ${slot} (pid ${w.process.pid}) exited (${signal || `code ${code}`}) — restarting in ${delay / 1000}s`);
+    console.error(
+      `[cluster] worker ${slot} (pid ${w.process.pid}) exited (${signal || `code ${code}`}) — restarting in ${delay / 1000}s`
+    );
     setTimeout(() => !stopping && fork(slot), delay);
   });
 
@@ -128,7 +141,9 @@ function runPrimary(n) {
   process.on('SIGTERM', () => stop('SIGTERM'));
   process.on('SIGINT', () => stop('SIGINT'));
 
-  console.log(`[cluster] primary ${process.pid}: starting ${n} API workers (slot 1 runs the scheduler and other singletons)`);
+  console.log(
+    `[cluster] primary ${process.pid}: starting ${n} API workers (slot 1 runs the scheduler and other singletons)`
+  );
   for (let slot = 1; slot <= n; slot++) fork(slot);
 }
 
@@ -142,7 +157,9 @@ function slotFrom(env = process.env, isWorker = require('node:cluster').isWorker
   if (!isWorker) return null;
   if (env.WORKER_SLOT) return String(env.WORKER_SLOT);
   const n = Number(env.NODE_APP_INSTANCE);
-  return env.NODE_APP_INSTANCE !== undefined && Number.isInteger(n) && n >= 0 ? String(n + 1) : null;
+  return env.NODE_APP_INSTANCE !== undefined && Number.isInteger(n) && n >= 0
+    ? String(n + 1)
+    : null;
 }
 
 /**
@@ -163,4 +180,16 @@ function onShutdownMessage(msg) {
   else process.exit(0); // still booting: nothing to drain
 }
 
-module.exports = { SINGLETON_STARTERS, PER_WORKER_STARTERS, SHUTDOWN_MSG, plan, workerEnv, dropSingletons, backoffMs, slotFrom, workerRefusal, runPrimary, onShutdownMessage };
+module.exports = {
+  SINGLETON_STARTERS,
+  PER_WORKER_STARTERS,
+  SHUTDOWN_MSG,
+  plan,
+  workerEnv,
+  dropSingletons,
+  backoffMs,
+  slotFrom,
+  workerRefusal,
+  runPrimary,
+  onShutdownMessage,
+};

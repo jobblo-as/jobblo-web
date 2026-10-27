@@ -1,6 +1,7 @@
 // These are the "flags off" responses. config/redis.js loads backend/.env, which may switch
 // the V2 flags on for local development; set them off explicitly (dotenv never overrides).
-for (const flag of ['CHECKOUT', 'MANAGEMENT', 'PLAN_CATALOGUE', 'ENTITLEMENTS']) process.env[`SUBSCRIPTION_V2_${flag}_ENABLED`] = 'false';
+for (const flag of ['CHECKOUT', 'MANAGEMENT', 'PLAN_CATALOGUE', 'ENTITLEMENTS'])
+  process.env[`SUBSCRIPTION_V2_${flag}_ENABLED`] = 'false';
 const express = require('express');
 const request = require('supertest');
 
@@ -47,7 +48,6 @@ describe('legacy subscription endpoints', () => {
 
     expect(response.status).toBe(503);
     expect(response.body.code).toBe(code);
-
   });
 
   it('keeps the V2 checkout route disabled unless its server-side flag is enabled', async () => {

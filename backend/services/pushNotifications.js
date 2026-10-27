@@ -28,7 +28,8 @@ async function sendFcm(tokens, message) {
   const invalid = response.responses
     .map((result, index) => {
       const code = result.error?.code;
-      return code === 'messaging/registration-token-not-registered' || code === 'messaging/invalid-registration-token'
+      return code === 'messaging/registration-token-not-registered' ||
+        code === 'messaging/invalid-registration-token'
         ? tokens[index]
         : null;
     })
@@ -53,7 +54,9 @@ async function sendExpo(tokens, message) {
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
-      ...(process.env.EXPO_ACCESS_TOKEN ? { Authorization: `Bearer ${process.env.EXPO_ACCESS_TOKEN}` } : {}),
+      ...(process.env.EXPO_ACCESS_TOKEN
+        ? { Authorization: `Bearer ${process.env.EXPO_ACCESS_TOKEN}` }
+        : {}),
     },
     body: JSON.stringify(
       tokens.slice(0, 100).map((to) => ({
@@ -77,7 +80,9 @@ async function sendExpo(tokens, message) {
     accepted: tickets.length - failed.length,
     rejected: failed.length,
     errorCode: failed[0]?.details?.error || null,
-    invalid: tickets.map((t, i) => (t?.details?.error === 'DeviceNotRegistered' ? tokens[i] : null)).filter(Boolean),
+    invalid: tickets
+      .map((t, i) => (t?.details?.error === 'DeviceNotRegistered' ? tokens[i] : null))
+      .filter(Boolean),
   };
 }
 
@@ -89,20 +94,30 @@ async function deliverPush(userId, message) {
   const tokens = await PushToken.find({ userId, active: true }).select('token provider').lean();
   const started = Date.now();
   const log = (fields) =>
-    logDelivery({ channel: 'push', template: String(message?.title || '').slice(0, 200), userId, latencyMs: Date.now() - started, ...fields });
+    logDelivery({
+      channel: 'push',
+      template: String(message?.title || '').slice(0, 200),
+      userId,
+      latencyMs: Date.now() - started,
+      ...fields,
+    });
   if (!tokens.length) {
     log({ status: 'skipped', error: 'no active push tokens' });
     return;
   }
 
   const byProvider = { fcm: [], expo: [] };
-  for (const { token, provider } of tokens) (byProvider[provider === 'expo' ? 'expo' : 'fcm']).push(token);
+  for (const { token, provider } of tokens)
+    byProvider[provider === 'expo' ? 'expo' : 'fcm'].push(token);
 
   const results = [];
   const errors = [];
   try {
     require('./monitoring/faults').assertNoFault('push'); // staging failure simulator only
-    for (const [provider, send] of [['fcm', sendFcm], ['expo', sendExpo]]) {
+    for (const [provider, send] of [
+      ['fcm', sendFcm],
+      ['expo', sendExpo],
+    ]) {
       if (!byProvider[provider].length) continue;
       try {
         results.push(await send(byProvider[provider], message));
@@ -116,13 +131,18 @@ async function deliverPush(userId, message) {
   }
 
   const invalid = results.flatMap((r) => r.invalid);
-  if (invalid.length) await PushToken.updateMany({ token: { $in: invalid } }, { $set: { active: false } });
+  if (invalid.length)
+    await PushToken.updateMany({ token: { $in: invalid } }, { $set: { active: false } });
 
   const accepted = results.reduce((n, r) => n + r.accepted, 0);
   const rejected = results.reduce((n, r) => n + r.rejected, 0);
   if (!results.length) {
     const error = errors[0];
-    log({ status: 'failed', error: String(error?.message).slice(0, 300), errorCode: error?.code || null });
+    log({
+      status: 'failed',
+      error: String(error?.message).slice(0, 300),
+      errorCode: error?.code || null,
+    });
     throw error;
   }
   log({

@@ -36,7 +36,9 @@ function base32Encode(buf) {
   return out;
 }
 function base32Decode(str) {
-  const clean = String(str).toUpperCase().replace(/=+$|\s/g, '');
+  const clean = String(str)
+    .toUpperCase()
+    .replace(/=+$|\s/g, '');
   let bits = 0;
   let value = 0;
   const out = [];
@@ -84,7 +86,15 @@ const box = require('../../utils/secretBox').createBox('totp-secret');
 const encrypt = (buf) => box.seal(buf);
 const decrypt = (str) => box.open(str);
 
-const hashBackup = (code) => crypto.createHash('sha256').update(String(code).toUpperCase().replace(/[^A-Z0-9]/g, '')).digest('hex');
+const hashBackup = (code) =>
+  crypto
+    .createHash('sha256')
+    .update(
+      String(code)
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, '')
+    )
+    .digest('hex');
 function newBackupCodes() {
   const codes = Array.from({ length: BACKUP_CODES }, () => {
     const raw = base32Encode(crypto.randomBytes(5)).slice(0, 8);
@@ -93,7 +103,8 @@ function newBackupCodes() {
   return { codes, hashes: codes.map(hashBackup) };
 }
 
-const otpauthUrl = (secretB32, account) => `otpauth://totp/${encodeURIComponent(`${ISSUER}:${account}`)}?secret=${secretB32}&issuer=${ISSUER}&algorithm=SHA1&digits=${DIGITS}&period=${STEP_S}`;
+const otpauthUrl = (secretB32, account) =>
+  `otpauth://totp/${encodeURIComponent(`${ISSUER}:${account}`)}?secret=${secretB32}&issuer=${ISSUER}&algorithm=SHA1&digits=${DIGITS}&period=${STEP_S}`;
 
 const SECRET_FIELDS = '+mfaSecret +mfaPendingSecret +mfaLastStep +mfaBackupCodes';
 
@@ -102,7 +113,13 @@ async function startSetup(userId) {
   const User = require('../../models/User');
   const user = await User.findById(userId).select(`email role mfaEnabledAt ${SECRET_FIELDS}`);
   if (!user) throw Object.assign(new Error('User not found'), { status: 404 });
-  if (user.mfaEnabledAt) throw Object.assign(new Error('An authenticator is already set up. Ask a Super Admin to reset it if the phone is lost.'), { status: 409 });
+  if (user.mfaEnabledAt)
+    throw Object.assign(
+      new Error(
+        'An authenticator is already set up. Ask a Super Admin to reset it if the phone is lost.'
+      ),
+      { status: 409 }
+    );
   const secret = crypto.randomBytes(20);
   user.mfaPendingSecret = encrypt(secret);
   await user.save({ validateBeforeSave: false });
@@ -125,7 +142,8 @@ async function verify(userId, sessionId, { code, backupCode }) {
   let left = (user.mfaBackupCodes || []).length;
   let won;
   if (!user.mfaEnabledAt) {
-    if (!user.mfaPendingSecret) throw Object.assign(new Error('Start the authenticator setup first.'), { status: 400 });
+    if (!user.mfaPendingSecret)
+      throw Object.assign(new Error('Start the authenticator setup first.'), { status: 400 });
     const step = verifyCode(decrypt(user.mfaPendingSecret), code);
     if (step === null) return { ok: false };
     const fresh = newBackupCodes();
@@ -133,17 +151,31 @@ async function verify(userId, sessionId, { code, backupCode }) {
     left = fresh.hashes.length;
     won = await User.updateOne(
       { _id: userId, mfaEnabledAt: null, mfaPendingSecret: user.mfaPendingSecret },
-      { $set: { mfaSecret: user.mfaPendingSecret, mfaPendingSecret: null, mfaEnabledAt: new Date(), mfaLastStep: step, mfaBackupCodes: fresh.hashes } }
+      {
+        $set: {
+          mfaSecret: user.mfaPendingSecret,
+          mfaPendingSecret: null,
+          mfaEnabledAt: new Date(),
+          mfaLastStep: step,
+          mfaBackupCodes: fresh.hashes,
+        },
+      }
     );
   } else if (backupCode) {
     const h = hashBackup(backupCode);
     if (!(user.mfaBackupCodes || []).includes(h)) return { ok: false };
     left -= 1;
-    won = await User.updateOne({ _id: userId, mfaBackupCodes: h }, { $pull: { mfaBackupCodes: h } }); // one use each
+    won = await User.updateOne(
+      { _id: userId, mfaBackupCodes: h },
+      { $pull: { mfaBackupCodes: h } }
+    ); // one use each
   } else {
     const step = verifyCode(decrypt(user.mfaSecret), code, { lastStep: user.mfaLastStep ?? -1 });
     if (step === null) return { ok: false };
-    won = await User.updateOne({ _id: userId, $or: [{ mfaLastStep: null }, { mfaLastStep: { $lt: step } }] }, { $set: { mfaLastStep: step } });
+    won = await User.updateOne(
+      { _id: userId, $or: [{ mfaLastStep: null }, { mfaLastStep: { $lt: step } }] },
+      { $set: { mfaLastStep: step } }
+    );
   }
   if (won.modifiedCount !== 1) return { ok: false };
   await Session.updateOne({ _id: sessionId, userId }, { $set: { mfaVerifiedAt: new Date() } });
@@ -153,8 +185,34 @@ async function verify(userId, sessionId, { code, backupCode }) {
 /** Remove a user's authenticator (lost phone) and sign them out everywhere. */
 async function reset(userId) {
   const User = require('../../models/User');
-  await User.updateOne({ _id: userId }, { $set: { mfaSecret: null, mfaPendingSecret: null, mfaEnabledAt: null, mfaLastStep: null, mfaBackupCodes: [] } });
+  await User.updateOne(
+    { _id: userId },
+    {
+      $set: {
+        mfaSecret: null,
+        mfaPendingSecret: null,
+        mfaEnabledAt: null,
+        mfaLastStep: null,
+        mfaBackupCodes: [],
+      },
+    }
+  );
   await require('../../models/Session').deleteMany({ userId });
 }
 
-module.exports = { MFA_ROLES, requiresMfa, base32Encode, base32Decode, codeAt, verifyCode, encrypt, decrypt, hashBackup, newBackupCodes, otpauthUrl, startSetup, verify, reset };
+module.exports = {
+  MFA_ROLES,
+  requiresMfa,
+  base32Encode,
+  base32Decode,
+  codeAt,
+  verifyCode,
+  encrypt,
+  decrypt,
+  hashBackup,
+  newBackupCodes,
+  otpauthUrl,
+  startSetup,
+  verify,
+  reset,
+};

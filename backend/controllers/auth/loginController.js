@@ -4,7 +4,20 @@ const PushToken = require('../../models/PushToken');
 const { isBcryptHash, comparePassword, hashPassword } = require('../../utils/passwordUtils');
 const { generateTokens, verifyToken, createSession } = require('../../utils/tokenUtils');
 const { sendOtpEmail } = require('../../utils/emailService');
-const { windowCounter, CURRENT_TERMS_VERSION, sanitizeUser, sendServerError, validateRegisterInput, setAuthCookies, clearAuthCookies, emailUnverified, issueOtp, checkOtp, validatePasswordStrength, CLEAR_RESET_STATE } = require('./authHelpers');
+const {
+  windowCounter,
+  CURRENT_TERMS_VERSION,
+  sanitizeUser,
+  sendServerError,
+  validateRegisterInput,
+  setAuthCookies,
+  clearAuthCookies,
+  emailUnverified,
+  issueOtp,
+  checkOtp,
+  validatePasswordStrength,
+  CLEAR_RESET_STATE,
+} = require('./authHelpers');
 
 /** Register (+ e-mail verification), login, logout and refresh-token rotation. */
 
@@ -17,7 +30,10 @@ const { windowCounter, CURRENT_TERMS_VERSION, sanitizeUser, sendServerError, val
 const VERIFY_EMAIL = 'verify-email';
 const MAX_VERIFY_MAILS_PER_HOUR = 5;
 const verifyMails = windowCounter('verifymail', 60 * 60 * 1000);
-const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
+const normalizeEmail = (value) =>
+  String(value || '')
+    .trim()
+    .toLowerCase();
 const EMAIL_TAKEN = { error: 'E-post er allerede registrert' };
 
 /**
@@ -89,7 +105,8 @@ exports.register = async (req, res) => {
     // ponytail: a taken address says so (accepted trade-off of signing in at sign-up:
     // account enumeration through this endpoint, limited by authLimiter). A neutral answer
     // would need the old "verify before sign-in" step back.
-    if (await User.findOne({ email: normalizedEmail }).select('_id')) return res.status(400).json(EMAIL_TAKEN);
+    if (await User.findOne({ email: normalizedEmail }).select('_id'))
+      return res.status(400).json(EMAIL_TAKEN);
 
     const hashedPassword = await hashPassword(password);
 
@@ -114,7 +131,9 @@ exports.register = async (req, res) => {
 
     // In the background: a mail failure must not undo a finished sign-up. "Send kode" on the
     // profile page sends a new one.
-    mailVerification(user).catch((err) => console.error('Sign-up verification mail failed: %s', err.message));
+    mailVerification(user).catch((err) =>
+      console.error('Sign-up verification mail failed: %s', err.message)
+    );
 
     return res.status(201).json({ user: sanitizeUser(user), accessToken });
   } catch (error) {
@@ -148,7 +167,10 @@ exports.login = async (req, res) => {
       return res.status(400).json({ error: 'Email and password are required' });
     }
 
-    const [byClient, byEmail] = await Promise.all([clientFails.get(clientKey(req, normalizedEmail)), emailFails.get(normalizedEmail)]);
+    const [byClient, byEmail] = await Promise.all([
+      clientFails.get(clientKey(req, normalizedEmail)),
+      emailFails.get(normalizedEmail),
+    ]);
     if (byClient >= LOCKOUT_PER_CLIENT || (byClient > 0 && byEmail >= LOCKOUT_PER_EMAIL)) {
       return res.status(429).json({
         error: 'Too many failed attempts',
@@ -179,7 +201,10 @@ exports.login = async (req, res) => {
     const matches = await comparePassword(String(password), hasHash ? user.password : DUMMY_HASH);
 
     if (!hasHash || !matches) {
-      await Promise.all([clientFails.incr(clientKey(req, normalizedEmail)), emailFails.incr(normalizedEmail)]);
+      await Promise.all([
+        clientFails.incr(clientKey(req, normalizedEmail)),
+        emailFails.incr(normalizedEmail),
+      ]);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
     await clientFails.reset(clientKey(req, normalizedEmail)); // the e-mail-wide count stays: it measures the attack
@@ -217,9 +242,14 @@ exports.sendEmailCode = async (req, res) => {
   try {
     const user = await User.findById(req.userId).select('_id name email emailVerifiedAt createdAt');
     if (!user) return res.status(401).json({ error: 'Unauthorized' });
-    if (!emailUnverified(user)) return res.status(409).json({ error: 'E-posten er allerede bekreftet', code: 'EMAIL_ALREADY_VERIFIED' });
+    if (!emailUnverified(user))
+      return res
+        .status(409)
+        .json({ error: 'E-posten er allerede bekreftet', code: 'EMAIL_ALREADY_VERIFIED' });
     if (!(await mailVerification(user))) {
-      return res.status(429).json({ error: 'For mange koder sendt. Prøv igjen om en time.', code: 'rate_limited' });
+      return res
+        .status(429)
+        .json({ error: 'For mange koder sendt. Prøv igjen om en time.', code: 'rate_limited' });
     }
     return res.json({ message: 'Vi har sendt en kode til ' + user.email + '.' });
   } catch (error) {
@@ -231,7 +261,8 @@ exports.sendEmailCode = async (req, res) => {
 exports.confirmEmailCode = async (req, res) => {
   try {
     const code = typeof req.body?.code === 'string' ? req.body.code.trim() : '';
-    if (!/^\d{6}$/.test(code)) return res.status(400).json({ error: 'Skriv inn den 6-sifrede koden' });
+    if (!/^\d{6}$/.test(code))
+      return res.status(400).json({ error: 'Skriv inn den 6-sifrede koden' });
     const user = await User.findById(req.userId).select('_id emailVerifiedAt createdAt');
     if (!user) return res.status(401).json({ error: 'Unauthorized' });
     if (!emailUnverified(user)) return res.json({ emailVerified: true });
@@ -239,7 +270,10 @@ exports.confirmEmailCode = async (req, res) => {
     if (!(await checkOtp({ _id: user._id }, code, req.ip, VERIFY_EMAIL))) {
       return res.status(400).json({ error: 'Ugyldig eller utløpt kode' });
     }
-    await User.updateOne({ _id: user._id }, { $set: { emailVerifiedAt: new Date() }, ...CLEAR_RESET_STATE });
+    await User.updateOne(
+      { _id: user._id },
+      { $set: { emailVerifiedAt: new Date() }, ...CLEAR_RESET_STATE }
+    );
     return res.json({ emailVerified: true });
   } catch (error) {
     return sendServerError(res, error, 'Verify e-mail code failed');
@@ -272,9 +306,11 @@ exports.verifyEmail = async (req, res) => {
     const user = pending && (await User.findById(pending._id).select('+password'));
     // Only an account still waiting for proof: this endpoint can set the password, so a
     // verified account must never be reachable through it (password reset is the way there).
-    if (!user || !emailUnverified(user)) return res.status(400).json({ error: 'Ugyldig eller utløpt kode' });
+    if (!user || !emailUnverified(user))
+      return res.status(400).json({ error: 'Ugyldig eller utløpt kode' });
 
-    const samePassword = isBcryptHash(user.password) && (await comparePassword(password, user.password));
+    const samePassword =
+      isBcryptHash(user.password) && (await comparePassword(password, user.password));
     const $set = {
       emailVerifiedAt: new Date(),
       ...(!samePassword && { password: await hashPassword(password), oauthProviders: [] }),
@@ -284,7 +320,11 @@ exports.verifyEmail = async (req, res) => {
     user.set($set);
 
     if (require('../../middleware/auth').isInactiveAccount(user)) {
-      return res.status(403).json({ error: 'Account inactive', message: 'Kontoen din er deaktivert.', code: 'account_inactive' });
+      return res.status(403).json({
+        error: 'Account inactive',
+        message: 'Kontoen din er deaktivert.',
+        code: 'account_inactive',
+      });
     }
 
     const { accessToken, refreshToken } = await createSession(req, user._id);
@@ -304,7 +344,9 @@ exports.resendVerification = async (req, res) => {
     }
     const user = await User.findOne({ email }).select('_id name email emailVerifiedAt createdAt');
     if (emailUnverified(user)) await mailVerification(user);
-    return res.json({ message: 'Hvis e-postadressen venter på bekreftelse, har vi sendt en ny kode dit.' });
+    return res.json({
+      message: 'Hvis e-postadressen venter på bekreftelse, har vi sendt en ny kode dit.',
+    });
   } catch (error) {
     return sendServerError(res, error, 'Resend verification failed');
   }
@@ -342,12 +384,14 @@ exports.logout = async (req, res) => {
 };
 
 /** A string cookie or null — never an object a query would read as an operator. */
-const cookieString = (req, name) => (typeof req.cookies?.[name] === 'string' ? req.cookies[name] : null);
+const cookieString = (req, name) =>
+  typeof req.cookies?.[name] === 'string' ? req.cookies[name] : null;
 
 /** How long a just-rotated-out refresh token still works (concurrent refreshes, lost responses). */
 const ROTATION_GRACE_MS = 60 * 1000;
 const rotatedJustNow = (session) =>
-  Boolean(session?.rotatedAt) && Date.now() - new Date(session.rotatedAt).getTime() < ROTATION_GRACE_MS;
+  Boolean(session?.rotatedAt) &&
+  Date.now() - new Date(session.rotatedAt).getTime() < ROTATION_GRACE_MS;
 
 exports.refreshToken = async (req, res) => {
   try {
@@ -425,15 +469,22 @@ exports.refreshToken = async (req, res) => {
     // Only the current token rotates. A token rotated out seconds ago (two tabs refreshing
     // at once) gets the session's current token back: rotating again used to orphan the
     // token the other tab had just received.
-    let current = session.refreshToken === refreshToken
-      ? await Session.findOneAndUpdate(
-        { _id: session._id, refreshToken },
-        { oldRefreshToken: refreshToken, refreshToken: newRefreshToken, rotatedAt: new Date(), lastUsed: new Date() },
-        { new: true }
-      )
-      : session;
+    let current =
+      session.refreshToken === refreshToken
+        ? await Session.findOneAndUpdate(
+            { _id: session._id, refreshToken },
+            {
+              oldRefreshToken: refreshToken,
+              refreshToken: newRefreshToken,
+              rotatedAt: new Date(),
+              lastUsed: new Date(),
+            },
+            { new: true }
+          )
+        : session;
     // Lost the race to a concurrent refresh with the same token: that one rotated it.
-    if (!current) current = await Session.findOne({ _id: session._id, oldRefreshToken: refreshToken });
+    if (!current)
+      current = await Session.findOne({ _id: session._id, oldRefreshToken: refreshToken });
 
     if (!current || !(current.refreshToken === newRefreshToken || rotatedJustNow(current))) {
       clearAuthCookies(res);

@@ -1,5 +1,17 @@
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
-import { ArrowLeft, BarChart3, CalendarDays, Edit2, Megaphone, Plus, RefreshCw, Save, ScrollText, Sparkles, Trash2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  BarChart3,
+  CalendarDays,
+  Edit2,
+  Megaphone,
+  Plus,
+  RefreshCw,
+  Save,
+  ScrollText,
+  Sparkles,
+  Trash2,
+} from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import {
   AdminEmptyState,
@@ -53,7 +65,9 @@ const dateInput = (value: string) => {
 function Field({ label, id, children }: { label: string; id: string; children: React.ReactNode }) {
   return (
     <div className="min-w-0 space-y-1.5">
-      <label htmlFor={id} className="block text-sm font-medium text-foreground">{label}</label>
+      <label htmlFor={id} className="block text-sm font-medium text-foreground">
+        {label}
+      </label>
       {children}
     </div>
   );
@@ -100,7 +114,9 @@ export default function CampaignManagementPage() {
       render: (campaign) => (
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-foreground">{campaign.name}</p>
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">{campaign.bannerCtaLabel} · Popup {campaign.popupDelayMs / 1000}s</p>
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+            {campaign.bannerCtaLabel} · Popup {campaign.popupDelayMs / 1000}s
+          </p>
         </div>
       ),
     },
@@ -114,7 +130,8 @@ export default function CampaignManagementPage() {
       header: 'Kampanjeperiode',
       render: (campaign) => (
         <span className="whitespace-nowrap text-sm text-muted-foreground">
-          {new Date(campaign.startDate).toLocaleDateString('nb-NO')} – {new Date(campaign.endDate).toLocaleDateString('nb-NO')}
+          {new Date(campaign.startDate).toLocaleDateString('nb-NO')} –{' '}
+          {new Date(campaign.endDate).toLocaleDateString('nb-NO')}
         </span>
       ),
     },
@@ -157,15 +174,21 @@ export default function CampaignManagementPage() {
   useEffect(() => {
     if (isNewCampaign || !selected) return;
     const { _id, ...values } = selected;
-    setForm({ ...values, startDate: dateInput(values.startDate), endDate: dateInput(values.endDate) });
+    setForm({
+      ...values,
+      startDate: dateInput(values.startDate),
+      endDate: dateInput(values.endDate),
+    });
   }, [selected, isNewCampaign]);
 
-  const change = (field: keyof EditableCampaign) =>
+  const change =
+    (field: keyof EditableCampaign) =>
     (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const value = event.target instanceof HTMLInputElement && event.target.type === 'checkbox'
-        ? event.target.checked
-        : event.target.value;
-      setForm((previous) => previous ? { ...previous, [field]: value } : previous);
+      const value =
+        event.target instanceof HTMLInputElement && event.target.type === 'checkbox'
+          ? event.target.checked
+          : event.target.value;
+      setForm((previous) => (previous ? { ...previous, [field]: value } : previous));
     };
 
   const save = async (event: FormEvent) => {
@@ -235,7 +258,10 @@ export default function CampaignManagementPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <AdminPageHeader title="Kampanjer" description="Administrer kampanjeinnhold og resultater." />
+        <AdminPageHeader
+          title="Kampanjer"
+          description="Administrer kampanjeinnhold og resultater."
+        />
         <AdminLoadingSkeleton rows={6} />
       </div>
     );
@@ -244,14 +270,27 @@ export default function CampaignManagementPage() {
   if (isError) {
     return (
       <div className="space-y-6">
-        <AdminPageHeader title="Kampanjer" description="Administrer kampanjeinnhold og resultater." />
+        <AdminPageHeader
+          title="Kampanjer"
+          description="Administrer kampanjeinnhold og resultater."
+        />
         <AdminErrorState onRetry={refetch} />
       </div>
     );
   }
 
-  const sections: { id: EditorSection; label: string; description: string; icon: React.ReactNode }[] = [
-    { id: 'campaign', label: 'Kampanje', description: 'Status og periode', icon: <CalendarDays size={17} /> },
+  const sections: {
+    id: EditorSection;
+    label: string;
+    description: string;
+    icon: React.ReactNode;
+  }[] = [
+    {
+      id: 'campaign',
+      label: 'Kampanje',
+      description: 'Status og periode',
+      icon: <CalendarDays size={17} />,
+    },
     { id: 'banner', label: 'Banner', description: 'Landingsside', icon: <Megaphone size={17} /> },
     { id: 'popup', label: 'Popup', description: 'A/B-varianter', icon: <Sparkles size={17} /> },
     { id: 'terms', label: 'Vilkår', description: 'Vilkårsside', icon: <ScrollText size={17} /> },
@@ -268,16 +307,31 @@ export default function CampaignManagementPage() {
         return (
           <section className="space-y-5" aria-labelledby="campaign-settings-heading">
             <div>
-              <h2 id="campaign-settings-heading" className="text-base font-semibold text-foreground">Grunninnstillinger</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Navngi kampanjen og velg når den skal være synlig.</p>
+              <h2
+                id="campaign-settings-heading"
+                className="text-base font-semibold text-foreground"
+              >
+                Grunninnstillinger
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Navngi kampanjen og velg når den skal være synlig.
+              </p>
             </div>
             <Field label="Kampanjenavn" id="campaign-name">
-              <Input id="campaign-name" value={form.name} onChange={change('name')} maxLength={120} required />
+              <Input
+                id="campaign-name"
+                value={form.name}
+                onChange={change('name')}
+                maxLength={120}
+                required
+              />
             </Field>
             <div className="flex flex-col justify-between gap-3 rounded-md border border-border bg-muted/50 p-4 sm:flex-row sm:items-center">
               <div>
                 <p className="text-sm font-medium text-foreground">Publiser kampanjen</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">Når aktivert, blir kampanjen vist innenfor den valgte perioden.</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Når aktivert, blir kampanjen vist innenfor den valgte perioden.
+                </p>
               </div>
               <label className="inline-flex cursor-pointer items-center gap-3">
                 <span className="text-sm text-muted-foreground">{form.enabled ? 'På' : 'Av'}</span>
@@ -293,10 +347,22 @@ export default function CampaignManagementPage() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Startdato" id="campaign-start-date">
-                <Input id="campaign-start-date" type="date" value={form.startDate} onChange={change('startDate')} required />
+                <Input
+                  id="campaign-start-date"
+                  type="date"
+                  value={form.startDate}
+                  onChange={change('startDate')}
+                  required
+                />
               </Field>
               <Field label="Sluttdato" id="campaign-end-date">
-                <Input id="campaign-end-date" type="date" value={form.endDate} onChange={change('endDate')} required />
+                <Input
+                  id="campaign-end-date"
+                  type="date"
+                  value={form.endDate}
+                  onChange={change('endDate')}
+                  required
+                />
               </Field>
             </div>
           </section>
@@ -305,18 +371,41 @@ export default function CampaignManagementPage() {
         return (
           <section className="space-y-5" aria-labelledby="campaign-banner-heading">
             <div>
-              <h2 id="campaign-banner-heading" className="text-base font-semibold text-foreground">Landingssidebanner</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Banneret vises så lenge kampanjen er aktiv og innenfor kampanjeperioden.</p>
+              <h2 id="campaign-banner-heading" className="text-base font-semibold text-foreground">
+                Landingssidebanner
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Banneret vises så lenge kampanjen er aktiv og innenfor kampanjeperioden.
+              </p>
             </div>
             <Field label="Bannertekst" id="campaign-banner-text">
-              <Textarea id="campaign-banner-text" rows={4} value={form.bannerText} onChange={change('bannerText')} maxLength={1000} required />
+              <Textarea
+                id="campaign-banner-text"
+                rows={4}
+                value={form.bannerText}
+                onChange={change('bannerText')}
+                maxLength={1000}
+                required
+              />
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Knappetekst" id="campaign-banner-label">
-                <Input id="campaign-banner-label" value={form.bannerCtaLabel} onChange={change('bannerCtaLabel')} maxLength={80} required />
+                <Input
+                  id="campaign-banner-label"
+                  value={form.bannerCtaLabel}
+                  onChange={change('bannerCtaLabel')}
+                  maxLength={80}
+                  required
+                />
               </Field>
               <Field label="Knappelenke" id="campaign-banner-url">
-                <Input id="campaign-banner-url" value={form.bannerCtaUrl} onChange={change('bannerCtaUrl')} maxLength={300} required />
+                <Input
+                  id="campaign-banner-url"
+                  value={form.bannerCtaUrl}
+                  onChange={change('bannerCtaUrl')}
+                  maxLength={300}
+                  required
+                />
               </Field>
             </div>
           </section>
@@ -325,29 +414,81 @@ export default function CampaignManagementPage() {
         return (
           <section className="space-y-5" aria-labelledby="campaign-popup-heading">
             <div>
-              <h2 id="campaign-popup-heading" className="text-base font-semibold text-foreground">Popup og A/B-varianter</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Besøkende fordeles automatisk likt mellom variant A og B.</p>
+              <h2 id="campaign-popup-heading" className="text-base font-semibold text-foreground">
+                Popup og A/B-varianter
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Besøkende fordeles automatisk likt mellom variant A og B.
+              </p>
             </div>
             <div className="grid gap-4 lg:grid-cols-2">
               <Field label="Variant A" id="campaign-popup-a">
-                <Textarea id="campaign-popup-a" rows={4} value={form.popupVersionA} onChange={change('popupVersionA')} maxLength={500} required />
+                <Textarea
+                  id="campaign-popup-a"
+                  rows={4}
+                  value={form.popupVersionA}
+                  onChange={change('popupVersionA')}
+                  maxLength={500}
+                  required
+                />
               </Field>
               <Field label="Variant B" id="campaign-popup-b">
-                <Textarea id="campaign-popup-b" rows={4} value={form.popupVersionB} onChange={change('popupVersionB')} maxLength={500} required />
+                <Textarea
+                  id="campaign-popup-b"
+                  rows={4}
+                  value={form.popupVersionB}
+                  onChange={change('popupVersionB')}
+                  maxLength={500}
+                  required
+                />
               </Field>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Knappetekst" id="campaign-popup-label">
-                <Input id="campaign-popup-label" value={form.popupCtaLabel} onChange={change('popupCtaLabel')} maxLength={80} required />
+                <Input
+                  id="campaign-popup-label"
+                  value={form.popupCtaLabel}
+                  onChange={change('popupCtaLabel')}
+                  maxLength={80}
+                  required
+                />
               </Field>
               <Field label="Knappelenke" id="campaign-popup-url">
-                <Input id="campaign-popup-url" value={form.popupCtaUrl} onChange={change('popupCtaUrl')} maxLength={300} required />
+                <Input
+                  id="campaign-popup-url"
+                  value={form.popupCtaUrl}
+                  onChange={change('popupCtaUrl')}
+                  maxLength={300}
+                  required
+                />
               </Field>
               <Field label="Vis etter (sekunder)" id="campaign-popup-delay">
-                <Input id="campaign-popup-delay" type="number" min={0} max={30} step="0.5" value={form.popupDelayMs / 1000} onChange={(event) => setForm({ ...form, popupDelayMs: Number(event.target.value) * 1000 })} required />
+                <Input
+                  id="campaign-popup-delay"
+                  type="number"
+                  min={0}
+                  max={30}
+                  step="0.5"
+                  value={form.popupDelayMs / 1000}
+                  onChange={(event) =>
+                    setForm({ ...form, popupDelayMs: Number(event.target.value) * 1000 })
+                  }
+                  required
+                />
               </Field>
               <Field label="Pause etter lukking (timer)" id="campaign-popup-cooldown">
-                <Input id="campaign-popup-cooldown" type="number" min={1 / 60} max={8760} step="0.25" value={form.popupCooldownMs / 3600000} onChange={(event) => setForm({ ...form, popupCooldownMs: Number(event.target.value) * 3600000 })} required />
+                <Input
+                  id="campaign-popup-cooldown"
+                  type="number"
+                  min={1 / 60}
+                  max={8760}
+                  step="0.25"
+                  value={form.popupCooldownMs / 3600000}
+                  onChange={(event) =>
+                    setForm({ ...form, popupCooldownMs: Number(event.target.value) * 3600000 })
+                  }
+                  required
+                />
               </Field>
             </div>
           </section>
@@ -356,19 +497,42 @@ export default function CampaignManagementPage() {
         return (
           <section className="space-y-5" aria-labelledby="campaign-terms-heading">
             <div>
-              <h2 id="campaign-terms-heading" className="text-base font-semibold text-foreground">Kampanjevilkår</h2>
-              <p className="mt-1 text-sm text-muted-foreground">Fullstendige vilkår vises på den offentlige vilkårssiden.</p>
+              <h2 id="campaign-terms-heading" className="text-base font-semibold text-foreground">
+                Kampanjevilkår
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Fullstendige vilkår vises på den offentlige vilkårssiden.
+              </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Lenketekst" id="campaign-terms-label">
-                <Input id="campaign-terms-label" value={form.termsLabel} onChange={change('termsLabel')} maxLength={80} required />
+                <Input
+                  id="campaign-terms-label"
+                  value={form.termsLabel}
+                  onChange={change('termsLabel')}
+                  maxLength={80}
+                  required
+                />
               </Field>
               <Field label="Vilkårsside" id="campaign-terms-url">
-                <Input id="campaign-terms-url" value={form.termsUrl} onChange={change('termsUrl')} maxLength={300} required />
+                <Input
+                  id="campaign-terms-url"
+                  value={form.termsUrl}
+                  onChange={change('termsUrl')}
+                  maxLength={300}
+                  required
+                />
               </Field>
             </div>
             <Field label="Vilkårstekst" id="campaign-disclaimer">
-              <Textarea id="campaign-disclaimer" rows={8} value={form.disclaimer} onChange={change('disclaimer')} maxLength={10000} required />
+              <Textarea
+                id="campaign-disclaimer"
+                rows={8}
+                value={form.disclaimer}
+                onChange={change('disclaimer')}
+                maxLength={10000}
+                required
+              />
             </Field>
           </section>
         );
@@ -379,19 +543,43 @@ export default function CampaignManagementPage() {
     <main className="space-y-5">
       <AdminPageHeader
         title={view === 'edit' ? (isNewCampaign ? 'Ny kampanje' : 'Rediger kampanje') : 'Kampanjer'}
-        description={view === 'edit' ? (isNewCampaign ? 'Konfigurer kampanjen. Den opprettes når du lagrer.' : 'Oppdater kampanjeinnhold, publisering og vilkår.') : 'Administrer kampanjeinnhold, publisering og resultater.'}
+        description={
+          view === 'edit'
+            ? isNewCampaign
+              ? 'Konfigurer kampanjen. Den opprettes når du lagrer.'
+              : 'Oppdater kampanjeinnhold, publisering og vilkår.'
+            : 'Administrer kampanjeinnhold, publisering og resultater.'
+        }
         actions={
           <>
             {view === 'edit' ? (
-              <Button type="button" variant="secondary" size="sm" className="w-auto gap-2 rounded-lg" onClick={backToList}>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="w-auto gap-2 rounded-lg"
+                onClick={backToList}
+              >
                 <ArrowLeft size={15} /> Tilbake til kampanjer
               </Button>
             ) : (
               <>
-                <Button type="button" variant="secondary" size="sm" className="w-auto gap-2 rounded-lg" onClick={() => refetch()}>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="w-auto gap-2 rounded-lg"
+                  onClick={() => refetch()}
+                >
                   <RefreshCw size={15} /> Oppdater
                 </Button>
-                <Button type="button" size="sm" className="w-auto gap-2 rounded-lg" onClick={openCreate} disabled={isLoadingDefaults || !campaignDefaults}>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="w-auto gap-2 rounded-lg"
+                  onClick={openCreate}
+                  disabled={isLoadingDefaults || !campaignDefaults}
+                >
                   <Plus size={16} /> Ny kampanje
                 </Button>
               </>
@@ -403,10 +591,23 @@ export default function CampaignManagementPage() {
       {view === 'list' && (
         <>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <AdminStatCard title="Totale kampanjer" value={campaigns.length} icon={<Megaphone size={18} />} />
+            <AdminStatCard
+              title="Totale kampanjer"
+              value={campaigns.length}
+              icon={<Megaphone size={18} />}
+            />
             <AdminStatCard title="Aktive nå" value={activeCount} icon={<Sparkles size={18} />} />
-            <AdminStatCard title="Planlagt" value={scheduledCount} icon={<CalendarDays size={18} />} />
-            <AdminStatCard title="Popupvisninger" value={analytics?.total.impressions ?? '–'} icon={<BarChart3 size={18} />} subtitle={selected ? `Målt for ${selected.name}` : undefined} />
+            <AdminStatCard
+              title="Planlagt"
+              value={scheduledCount}
+              icon={<CalendarDays size={18} />}
+            />
+            <AdminStatCard
+              title="Popupvisninger"
+              value={analytics?.total.impressions ?? '–'}
+              icon={<BarChart3 size={18} />}
+              subtitle={selected ? `Målt for ${selected.name}` : undefined}
+            />
           </div>
           <AdminDataTable
             columns={campaignColumns}
@@ -415,10 +616,19 @@ export default function CampaignManagementPage() {
             loading={false}
             error={false}
             emptyTitle={campaigns.length ? 'Ingen treff' : 'Ingen kampanjer ennå'}
-            emptyDescription={campaigns.length ? 'Prøv et annet søk eller statusfilter.' : 'Opprett en kampanje for å konfigurere banner, popup og vilkår.'}
+            emptyDescription={
+              campaigns.length
+                ? 'Prøv et annet søk eller statusfilter.'
+                : 'Opprett en kampanje for å konfigurere banner, popup og vilkår.'
+            }
             toolbar={
               <div className="flex w-full flex-wrap gap-3">
-                <AdminSearchInput value={search} onChange={setSearch} placeholder="Søk på kampanjenavn..." className="min-w-50 flex-1" />
+                <AdminSearchInput
+                  value={search}
+                  onChange={setSearch}
+                  placeholder="Søk på kampanjenavn..."
+                  className="min-w-50 flex-1"
+                />
                 <AdminFilterSelect
                   value={statusFilter}
                   onChange={setStatusFilter}
@@ -451,33 +661,54 @@ export default function CampaignManagementPage() {
         </div>
       ) : view === 'edit' && form && (isNewCampaign || selected) ? (
         <>
-          {!isNewCampaign && selected && <section className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-            <div className="min-w-0 flex-1">
-              <label htmlFor="campaign-select" className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground">Valgt kampanje</label>
-              <Select value={selected._id} onValueChange={setSelectedId}>
-                <SelectTrigger id="campaign-select" className="max-w-xl rounded-md border-border bg-card">
-                  <SelectValue placeholder="Velg kampanje" />
-                </SelectTrigger>
-                <SelectContent>
-                  {campaigns.map((campaign) => (
-                    <SelectItem key={campaign._id} value={campaign._id}>{campaign.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex flex-wrap items-center gap-3 sm:justify-end">
-              <AdminStatusBadge status={campaignStatus} />
-              <span className="text-xs text-muted-foreground">
-                {new Date(selected.startDate).toLocaleDateString('nb-NO')} – {new Date(selected.endDate).toLocaleDateString('nb-NO')}
-              </span>
-            </div>
-          </section>}
+          {!isNewCampaign && selected && (
+            <section className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+              <div className="min-w-0 flex-1">
+                <label
+                  htmlFor="campaign-select"
+                  className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                >
+                  Valgt kampanje
+                </label>
+                <Select value={selected._id} onValueChange={setSelectedId}>
+                  <SelectTrigger
+                    id="campaign-select"
+                    className="max-w-xl rounded-md border-border bg-card"
+                  >
+                    <SelectValue placeholder="Velg kampanje" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {campaigns.map((campaign) => (
+                      <SelectItem key={campaign._id} value={campaign._id}>
+                        {campaign.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-wrap items-center gap-3 sm:justify-end">
+                <AdminStatusBadge status={campaignStatus} />
+                <span className="text-xs text-muted-foreground">
+                  {new Date(selected.startDate).toLocaleDateString('nb-NO')} –{' '}
+                  {new Date(selected.endDate).toLocaleDateString('nb-NO')}
+                </span>
+              </div>
+            </section>
+          )}
 
           {!isNewCampaign && analytics && (
-            <section aria-label="Kampanjeanalyse" className="rounded-lg border border-border bg-card p-4 sm:p-5">
-              <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground"><BarChart3 size={17} className="text-primary" /> Resultater</div>
+            <section
+              aria-label="Kampanjeanalyse"
+              className="rounded-lg border border-border bg-card p-4 sm:p-5"
+            >
+              <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
+                <BarChart3 size={17} className="text-primary" /> Resultater
+              </div>
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                <Metric label="Visninger" value={analytics.total.impressions.toLocaleString('nb-NO')} />
+                <Metric
+                  label="Visninger"
+                  value={analytics.total.impressions.toLocaleString('nb-NO')}
+                />
                 <Metric label="CTA-klikk" value={analytics.total.clicks.toLocaleString('nb-NO')} />
                 <Metric label="Lukket" value={analytics.total.closes.toLocaleString('nb-NO')} />
                 <Metric label="CTR" value={`${analytics.total.ctr}%`} />
@@ -485,12 +716,19 @@ export default function CampaignManagementPage() {
               <div className="mt-5 grid gap-4 border-t border-border pt-4 md:grid-cols-2">
                 {(['A', 'B'] as const).map((variant) => {
                   const stats = analytics.variants[variant];
-                  return <div key={variant} className="min-w-0">
-                    <p className="mb-2 text-sm font-semibold text-foreground">Variant {variant}</p>
-                    <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs text-muted-foreground sm:grid-cols-4">
-                      <span>{stats.impressions} visninger</span><span>{stats.clicks} klikk</span><span>{stats.closes} lukket</span><span className="font-semibold text-primary">CTR {stats.ctr}%</span>
+                  return (
+                    <div key={variant} className="min-w-0">
+                      <p className="mb-2 text-sm font-semibold text-foreground">
+                        Variant {variant}
+                      </p>
+                      <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs text-muted-foreground sm:grid-cols-4">
+                        <span>{stats.impressions} visninger</span>
+                        <span>{stats.clicks} klikk</span>
+                        <span>{stats.closes} lukket</span>
+                        <span className="font-semibold text-primary">CTR {stats.ctr}%</span>
+                      </div>
                     </div>
-                  </div>;
+                  );
                 })}
               </div>
             </section>
@@ -498,7 +736,10 @@ export default function CampaignManagementPage() {
 
           <form onSubmit={save} className="overflow-hidden rounded-lg border border-border bg-card">
             <div className="grid min-h-112 lg:grid-cols-[14rem_minmax(0,1fr)]">
-              <nav aria-label="Kampanjeinnstillinger" className="flex gap-1 overflow-x-auto border-b border-border p-2 lg:flex-col lg:overflow-visible lg:border-b-0 lg:border-r lg:p-3">
+              <nav
+                aria-label="Kampanjeinnstillinger"
+                className="flex gap-1 overflow-x-auto border-b border-border p-2 lg:flex-col lg:overflow-visible lg:border-b-0 lg:border-r lg:p-3"
+              >
                 {sections.map((section) => {
                   const active = activeSection === section.id;
                   return (
@@ -510,10 +751,14 @@ export default function CampaignManagementPage() {
                       onClick={() => setActiveSection(section.id)}
                       className={`flex min-w-max items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors lg:w-full ${active ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50'}`}
                     >
-                      <span className={active ? 'text-primary' : 'text-muted-foreground'}>{section.icon}</span>
+                      <span className={active ? 'text-primary' : 'text-muted-foreground'}>
+                        {section.icon}
+                      </span>
                       <span className="min-w-0">
                         <span className="block text-sm font-semibold">{section.label}</span>
-                        <span className="hidden text-xs text-muted-foreground lg:block">{section.description}</span>
+                        <span className="hidden text-xs text-muted-foreground lg:block">
+                          {section.description}
+                        </span>
                       </span>
                     </button>
                   );
@@ -527,17 +772,49 @@ export default function CampaignManagementPage() {
               <p className="text-xs text-muted-foreground">Endringer trer i kraft etter lagring.</p>
               <div className="flex items-center justify-end gap-2">
                 {activeSection !== 'campaign' && (
-                  <Button type="button" variant="secondary" size="sm" className="w-auto rounded-lg" onClick={() => setActiveSection(sections[sections.findIndex((section) => section.id === activeSection) - 1].id)}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="w-auto rounded-lg"
+                    onClick={() =>
+                      setActiveSection(
+                        sections[sections.findIndex((section) => section.id === activeSection) - 1]
+                          .id
+                      )
+                    }
+                  >
                     Tilbake
                   </Button>
                 )}
                 {activeSection !== 'terms' && (
-                  <Button type="button" variant="secondary" size="sm" className="w-auto rounded-lg" onClick={() => setActiveSection(sections[sections.findIndex((section) => section.id === activeSection) + 1].id)}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="w-auto rounded-lg"
+                    onClick={() =>
+                      setActiveSection(
+                        sections[sections.findIndex((section) => section.id === activeSection) + 1]
+                          .id
+                      )
+                    }
+                  >
                     Neste
                   </Button>
                 )}
-                <Button type="submit" size="sm" className="w-auto gap-2 rounded-lg" disabled={updateMutation.isPending || createMutation.isPending}>
-                  <Save size={15} />{updateMutation.isPending || createMutation.isPending ? 'Lagrer...' : (isNewCampaign ? 'Opprett kampanje' : 'Lagre kampanje')}
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="w-auto gap-2 rounded-lg"
+                  disabled={updateMutation.isPending || createMutation.isPending}
+                >
+                  <Save size={15} />
+                  {updateMutation.isPending || createMutation.isPending
+                    ? 'Lagrer...'
+                    : isNewCampaign
+                      ? 'Opprett kampanje'
+                      : 'Lagre kampanje'}
                 </Button>
               </div>
             </div>
@@ -549,7 +826,11 @@ export default function CampaignManagementPage() {
         isOpen={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
         title="Slett kampanje?"
-        description={deleteTarget ? `«${deleteTarget.name}» fjernes fra kampanjelisten og slås av umiddelbart. Analysehistorikken beholdes.` : 'Denne kampanjen fjernes fra kampanjelisten.'}
+        description={
+          deleteTarget
+            ? `«${deleteTarget.name}» fjernes fra kampanjelisten og slås av umiddelbart. Analysehistorikken beholdes.`
+            : 'Denne kampanjen fjernes fra kampanjelisten.'
+        }
         confirmText="Slett kampanje"
         cancelText="Avbryt"
         variant="destructive"

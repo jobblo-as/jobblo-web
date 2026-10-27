@@ -186,7 +186,10 @@ exports.vippsCallback = async (req, res, options = {}) => {
   }
   // A link survives in the browser session after its starter logs out: a different person
   // finishing the provider flow there must not be attached to the starter's account.
-  if (pending.linkUserId && (String(req.userId) !== pending.linkUserId || String(req.sessionId) !== pending.linkSessionId)) {
+  if (
+    pending.linkUserId &&
+    (String(req.userId) !== pending.linkUserId || String(req.sessionId) !== pending.linkSessionId)
+  ) {
     console.warn('Vipps: link callback outside the session that started it');
     return res.redirect(failed(ERRORS.FAILED, 'profile'));
   }

@@ -16,14 +16,22 @@ const read = (fn) =>
 const getRedisOverview = read(() => redisInsights.overview());
 const getRedisMemory = read(() => redisInsights.memory());
 const getRedisCache = read(() => redisInsights.cacheInfo());
-const getRedisKeys = read((req) => redisInsights.keys({ group: req.query.group || 'cache', q: req.query.q, cursor: req.query.cursor || '0' }));
+const getRedisKeys = read((req) =>
+  redisInsights.keys({
+    group: req.query.group || 'cache',
+    q: req.query.q,
+    cursor: req.query.cursor || '0',
+  })
+);
 const getRedisPerformance = read(() => redisInsights.performance());
 const getRedisConfig = read(() => redisInsights.config());
 const getRedisRateLimits = read(() => redisInsights.rateLimits());
 const getRedisWorkers = read(() => redisInsights.workers());
 const getRedisRealtime = read(() => redisInsights.realtime());
 const getRedisAlerts = read(() => redisInsights.alerts());
-const getRedisAudit = read((req) => redisInsights.audit({ limit: req.query.limit }).then((logs) => ({ logs })));
+const getRedisAudit = read((req) =>
+  redisInsights.audit({ limit: req.query.limit }).then((logs) => ({ logs }))
+);
 
 // Cache writes: operations access (route), audited.
 const write = (fn, describe) =>
@@ -37,7 +45,27 @@ const write = (fn, describe) =>
     }
   });
 
-const invalidateCache = write((req) => redisInsights.invalidateNamespace(req.params.namespace), (r) => `Redis cache: invalidated namespace ${r.namespace}`);
-const deleteCacheKey = write((req) => redisInsights.deleteCacheKey(req.body?.key), (r) => `Redis cache: deleted key ${r.key}`);
+const invalidateCache = write(
+  (req) => redisInsights.invalidateNamespace(req.params.namespace),
+  (r) => `Redis cache: invalidated namespace ${r.namespace}`
+);
+const deleteCacheKey = write(
+  (req) => redisInsights.deleteCacheKey(req.body?.key),
+  (r) => `Redis cache: deleted key ${r.key}`
+);
 
-module.exports = { getRedisOverview, getRedisMemory, getRedisCache, getRedisKeys, getRedisPerformance, getRedisConfig, getRedisRateLimits, getRedisWorkers, getRedisRealtime, getRedisAlerts, getRedisAudit, invalidateCache, deleteCacheKey };
+module.exports = {
+  getRedisOverview,
+  getRedisMemory,
+  getRedisCache,
+  getRedisKeys,
+  getRedisPerformance,
+  getRedisConfig,
+  getRedisRateLimits,
+  getRedisWorkers,
+  getRedisRealtime,
+  getRedisAlerts,
+  getRedisAudit,
+  invalidateCache,
+  deleteCacheKey,
+};

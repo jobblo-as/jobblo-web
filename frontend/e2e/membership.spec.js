@@ -46,17 +46,19 @@ const defaultUser = {
 };
 const billingHistory = {
   payments: [],
-  invoices: [{
-    id: 'in_test_membership',
-    number: 'INV-TEST-001',
-    createdAt: '2026-10-19T00:00:00.000Z',
-    amountPaid: 9900,
-    amountDue: 0,
-    currency: 'nok',
-    status: 'paid',
-    mode: 'test',
-    hasPdf: false,
-  }],
+  invoices: [
+    {
+      id: 'in_test_membership',
+      number: 'INV-TEST-001',
+      createdAt: '2026-10-19T00:00:00.000Z',
+      amountPaid: 9900,
+      amountDue: 0,
+      currency: 'nok',
+      status: 'paid',
+      mode: 'test',
+      hasPdf: false,
+    },
+  ],
   paymentMethod: { brand: 'visa', last4: '4242', expMonth: 12, expYear: 2030 },
   billingAddress: null,
 };
@@ -83,9 +85,7 @@ function subscription(overrides = {}) {
 }
 
 async function openMembership(page, initialSubscription = null) {
-  let currentSubscription = initialSubscription
-    ? structuredClone(initialSubscription)
-    : null;
+  let currentSubscription = initialSubscription ? structuredClone(initialSubscription) : null;
   const user = {
     ...defaultUser,
     subscription: currentSubscription?.plan || 'Standard',
@@ -182,29 +182,35 @@ async function openMembership(page, initialSubscription = null) {
       body: '<!doctype html><title>Mock Stripe Checkout</title><main>Mocked Stripe TEST Checkout</main>',
     })
   );
-  await page.addInitScript((state) => {
-    localStorage.setItem('user-storage', JSON.stringify({ state, version: 0 }));
-    localStorage.setItem('cookie-consent', 'rejected');
-  }, {
-    user,
-    tokens: { accessToken: 'mock-access-token' },
-    isAuthenticated: true,
-    notificationsEnabled: true,
-    browserNotificationsEnabled: true,
-    emailNotificationsEnabled: true,
-    smsNotificationsEnabled: false,
-  });
+  await page.addInitScript(
+    (state) => {
+      localStorage.setItem('user-storage', JSON.stringify({ state, version: 0 }));
+      localStorage.setItem('cookie-consent', 'rejected');
+    },
+    {
+      user,
+      tokens: { accessToken: 'mock-access-token' },
+      isAuthenticated: true,
+      notificationsEnabled: true,
+      browserNotificationsEnabled: true,
+      emailNotificationsEnabled: true,
+      smsNotificationsEnabled: false,
+    }
+  );
   await page.goto('/membership');
   return { requests, unexpectedRequests };
 }
 
 test('shows Pro, a scheduled Plus downgrade, and TEST billing history', async ({ page }) => {
-  const { unexpectedRequests } = await openMembership(page, subscription({
-    plan: 'Pro',
-    planId: proPlan._id,
-    price: 149,
-    pendingPlan: { plan: 'Plus', effectiveAt: '2026-11-19T15:35:30.000Z' },
-  }));
+  const { unexpectedRequests } = await openMembership(
+    page,
+    subscription({
+      plan: 'Pro',
+      planId: proPlan._id,
+      price: 149,
+      pendingPlan: { plan: 'Plus', effectiveAt: '2026-11-19T15:35:30.000Z' },
+    })
+  );
 
   await expect(page.getByText('Ditt abonnement')).toBeVisible();
   await expect(page.getByText('Planen endres til Plus')).toBeVisible();
@@ -220,30 +226,40 @@ test('cancels at period end through the mocked management API', async ({ page })
   await page.getByRole('button', { name: 'Si opp abonnementet' }).click();
 
   await expect(page.getByText('Avsluttes ved periodens slutt', { exact: true })).toBeVisible();
-  expect(requests.filter((request) => request.pathname === '/api/stripe/subscription/cancel')).toHaveLength(1);
+  expect(
+    requests.filter((request) => request.pathname === '/api/stripe/subscription/cancel')
+  ).toHaveLength(1);
   expect(unexpectedRequests).toEqual([]);
 });
 
 test('resumes a cancellation through the mocked management API', async ({ page }) => {
-  const { requests, unexpectedRequests } = await openMembership(page, subscription({
-    status: 'canceling',
-    autoRenew: false,
-    cancelAtPeriodEnd: true,
-  }));
+  const { requests, unexpectedRequests } = await openMembership(
+    page,
+    subscription({
+      status: 'canceling',
+      autoRenew: false,
+      cancelAtPeriodEnd: true,
+    })
+  );
 
   await page.getByRole('button', { name: 'Gjenoppta abonnementet' }).click();
 
   await expect(page.getByText('Aktiv')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Si opp abonnementet' })).toBeVisible();
-  expect(requests.filter((request) => request.pathname === '/api/stripe/subscription/resume')).toHaveLength(1);
+  expect(
+    requests.filter((request) => request.pathname === '/api/stripe/subscription/resume')
+  ).toHaveLength(1);
   expect(unexpectedRequests).toEqual([]);
 });
 
 test('previews and confirms a paid plan change with mocked responses', async ({ page }) => {
   const { requests, unexpectedRequests } = await openMembership(page, subscription());
-  await page.locator('label').filter({
-    has: page.locator(`input[name="plan"][value="${proPlan._id}"]`),
-  }).click();
+  await page
+    .locator('label')
+    .filter({
+      has: page.locator(`input[name="plan"][value="${proPlan._id}"]`),
+    })
+    .click();
 
   const confirmChange = page.getByRole('button', { name: 'Bekreft planendring' });
   await expect(confirmChange).toBeEnabled();
@@ -251,25 +267,34 @@ test('previews and confirms a paid plan change with mocked responses', async ({ 
 
   await expect(page.getByText('Planendringen er sendt til Stripe')).toBeVisible();
   await expect(page.locator('input[name="plan"][value="' + proPlan._id + '"]')).toBeChecked();
-  expect(requests.filter((request) => request.pathname === '/api/stripe/subscription/change/preview'))
-    .toContainEqual(expect.objectContaining({
+  expect(
+    requests.filter((request) => request.pathname === '/api/stripe/subscription/change/preview')
+  ).toContainEqual(
+    expect.objectContaining({
       method: 'POST',
       body: { planId: proPlan._id },
-    }));
-  expect(requests.filter((request) => request.pathname === '/api/stripe/subscription/change')).toHaveLength(1);
+    })
+  );
+  expect(
+    requests.filter((request) => request.pathname === '/api/stripe/subscription/change')
+  ).toHaveLength(1);
   expect(unexpectedRequests).toEqual([]);
 });
 
 test('starts checkout using a mocked Stripe Checkout page', async ({ page }) => {
   const { requests, unexpectedRequests } = await openMembership(page);
-  await page.locator('label').filter({
-    has: page.locator(`input[name="plan"][value="${plusPlan._id}"]`),
-  }).click();
+  await page
+    .locator('label')
+    .filter({
+      has: page.locator(`input[name="plan"][value="${plusPlan._id}"]`),
+    })
+    .click();
   await page.getByRole('button', { name: 'Start abonnement' }).click();
 
   await expect(page).toHaveURL(/checkout\.stripe\.com\/c\/pay\/cs_test_mocked/);
   await expect(page.getByText('Mocked Stripe TEST Checkout')).toBeVisible();
-  expect(requests.find((request) => request.pathname === '/api/stripe/create-checkout-session'))
-    .toMatchObject({ method: 'POST', body: { planId: plusPlan._id } });
+  expect(
+    requests.find((request) => request.pathname === '/api/stripe/create-checkout-session')
+  ).toMatchObject({ method: 'POST', body: { planId: plusPlan._id } });
   expect(unexpectedRequests).toEqual([]);
 });

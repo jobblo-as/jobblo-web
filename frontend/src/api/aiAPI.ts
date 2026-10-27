@@ -102,14 +102,3 @@ export const generateFullJobListing = async (
   });
   return response.data;
 };
-
-// Inline-form helpers used by CreateJobForm/BasicInformation. Payloads are passed through as-is.
-export const generateJobInfo = async (payload: Record<string, unknown>) => {
-  const response = await mainLink.post('/api/ai/generate-job-info', payload);
-  return response.data;
-};
-
-export const generateJobTitle = async (payload: Record<string, unknown>) => {
-  const response = await mainLink.post('/api/ai/generate-title', payload);
-  return response.data;
-};

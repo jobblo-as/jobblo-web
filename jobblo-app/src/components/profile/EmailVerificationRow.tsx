@@ -6,8 +6,14 @@ import { TC, tc } from '@/theme/colors';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 
 function errorText(error: unknown, fallback: string): string {
-  const data = (error as { response?: { data?: { error?: unknown; message?: unknown } } })?.response?.data;
-  const text = typeof data?.error === 'string' ? data.error : typeof data?.message === 'string' ? data.message : '';
+  const data = (error as { response?: { data?: { error?: unknown; message?: unknown } } })?.response
+    ?.data;
+  const text =
+    typeof data?.error === 'string'
+      ? data.error
+      : typeof data?.message === 'string'
+        ? data.message
+        : '';
   return text.trim() || fallback;
 }
 
@@ -89,7 +95,8 @@ export function EmailVerificationRow({
         <Text className="text-[1.0625rem] font-semibold text-ink">E-post</Text>
       </View>
       <Text className="mt-1.5 text-[0.9375rem] leading-6 text-muted">
-        E-posten din er ikke bekreftet. Bekreft den, så kan du få tilbake kontoen hvis du mister tilgangen.
+        E-posten din er ikke bekreftet. Bekreft den, så kan du få tilbake kontoen hvis du mister
+        tilgangen.
       </Text>
       <Pressable
         onPress={openSheet}
@@ -99,9 +106,16 @@ export function EmailVerificationRow({
         <Text className="text-[1.0625rem] font-semibold text-white">Bekreft e-post</Text>
       </Pressable>
 
-      <BottomSheet visible={open} onClose={() => setOpen(false)} title="Bekreft e-post" dismissable={!confirming}>
+      <BottomSheet
+        visible={open}
+        onClose={() => setOpen(false)}
+        title="Bekreft e-post"
+        dismissable={!confirming}
+      >
         <Text accessibilityLiveRegion="polite" className="text-[0.9375rem] leading-6 text-muted">
-          {sending && !sent ? 'Sender kode …' : sent || `Vi sender en kode til ${email ?? 'e-posten din'}.`}
+          {sending && !sent
+            ? 'Sender kode …'
+            : sent || `Vi sender en kode til ${email ?? 'e-posten din'}.`}
         </Text>
         <TextInput
           value={code}
@@ -121,7 +135,10 @@ export function EmailVerificationRow({
           className="mt-4 h-12 rounded-xl border border-line bg-surface px-4 text-center text-[1.125rem] tracking-[0.3em] text-ink"
         />
         {error ? (
-          <Text accessibilityRole="alert" className="mt-3 text-[0.875rem] text-[#B0453B] dark:text-danger">
+          <Text
+            accessibilityRole="alert"
+            className="mt-3 text-[0.875rem] text-[#B0453B] dark:text-danger"
+          >
             {error}
           </Text>
         ) : null}
@@ -132,7 +149,9 @@ export function EmailVerificationRow({
           accessibilityState={{ disabled: code.length !== 6 || confirming, busy: confirming }}
           className={`mt-4 h-12 items-center justify-center rounded-full bg-brand ${code.length !== 6 || confirming ? 'opacity-60' : 'active:opacity-90'}`}
         >
-          <Text className="text-[1.0625rem] font-semibold text-white">{confirming ? 'Bekrefter…' : 'Bekreft'}</Text>
+          <Text className="text-[1.0625rem] font-semibold text-white">
+            {confirming ? 'Bekrefter…' : 'Bekreft'}
+          </Text>
         </Pressable>
         <Pressable
           onPress={() => void send()}
@@ -141,7 +160,9 @@ export function EmailVerificationRow({
           accessibilityState={{ disabled: sending, busy: sending }}
           className={`mt-3 h-12 items-center justify-center rounded-full border border-line bg-surface ${sending ? 'opacity-60' : 'active:opacity-90'}`}
         >
-          <Text className="text-[1.0625rem] font-semibold text-ink">{sending ? 'Sender…' : 'Send ny kode'}</Text>
+          <Text className="text-[1.0625rem] font-semibold text-ink">
+            {sending ? 'Sender…' : 'Send ny kode'}
+          </Text>
         </Pressable>
       </BottomSheet>
     </View>

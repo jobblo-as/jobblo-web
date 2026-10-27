@@ -93,8 +93,8 @@ export default function DeleteAccountRequestPage() {
                 Slett Jobblo-kontoen din
               </h1>
               <p className="text-base leading-relaxed text-[#4a4d46]">
-                Du kan be om å få Jobblo-kontoen din og tilknyttede personopplysninger slettet,
-                også dersom du ikke lenger har tilgang til appen.
+                Du kan be om å få Jobblo-kontoen din og tilknyttede personopplysninger slettet, også
+                dersom du ikke lenger har tilgang til appen.
               </p>
             </div>
 
@@ -126,7 +126,10 @@ export default function DeleteAccountRequestPage() {
               </div>
 
               <div>
-                <label htmlFor="comment" className="mb-2 block text-sm font-semibold text-[#1c1d1a]">
+                <label
+                  htmlFor="comment"
+                  className="mb-2 block text-sm font-semibold text-[#1c1d1a]"
+                >
                   Kommentar (valgfritt)
                 </label>
                 <textarea
@@ -150,9 +153,7 @@ export default function DeleteAccountRequestPage() {
                   onChange={(event) => setConfirmed(event.target.checked)}
                   className="mt-1 h-4 w-4 rounded border-[#c7c9c3] text-[#2e6641] focus:ring-[#2e6641]"
                 />
-                <span>
-                  Jeg ber om at Jobblo-kontoen knyttet til denne e-postadressen slettes.
-                </span>
+                <span>Jeg ber om at Jobblo-kontoen knyttet til denne e-postadressen slettes.</span>
               </label>
 
               {fieldError ? (
@@ -194,7 +195,10 @@ export default function DeleteAccountRequestPage() {
               installert for å få dette behandlet.
             </p>
             <div className="mt-6">
-              <Link to="/support" className="inline-block rounded-xl border border-[#dfe1db] px-4 py-2 text-sm font-semibold text-[#1a3a1a] transition hover:border-[#2e6641] hover:bg-[#f5faf7]">
+              <Link
+                to="/support"
+                className="inline-block rounded-xl border border-[#dfe1db] px-4 py-2 text-sm font-semibold text-[#1a3a1a] transition hover:border-[#2e6641] hover:bg-[#f5faf7]"
+              >
                 Tilbake til kundesenter
               </Link>
             </div>

@@ -91,7 +91,10 @@ describe('mode-scoped storage', () => {
     expect(stripe.customers.retrieve).not.toHaveBeenCalled();
     expect(stripe.customers.create).toHaveBeenCalledTimes(1);
     expect(id).toBe('cus_new_1');
-    expect(db.get('user_1')).toMatchObject({ stripeCustomerIdTest: 'cus_new_1', stripeCustomerId: 'cus_live_only' });
+    expect(db.get('user_1')).toMatchObject({
+      stripeCustomerIdTest: 'cus_new_1',
+      stripeCustomerId: 'cus_live_only',
+    });
   });
 });
 
@@ -206,13 +209,18 @@ describe('concurrent creation (double-clicked checkout)', () => {
     const liveId = await resolveStripeCustomer(stripe, { ...db.get('user_1') });
 
     expect(testId).not.toBe(liveId);
-    expect(db.get('user_1')).toMatchObject({ stripeCustomerIdTest: testId, stripeCustomerId: liveId });
+    expect(db.get('user_1')).toMatchObject({
+      stripeCustomerIdTest: testId,
+      stripeCustomerId: liveId,
+    });
   });
 
   it('a failed create stores nothing, and a retry reuses the same idempotency key', async () => {
     const stripe = makeStripe();
     const u = user();
-    stripe.customers.create.mockRejectedValueOnce(Object.assign(new Error('timeout'), { code: 'ETIMEDOUT' }));
+    stripe.customers.create.mockRejectedValueOnce(
+      Object.assign(new Error('timeout'), { code: 'ETIMEDOUT' })
+    );
 
     await expect(resolveStripeCustomer(stripe, u)).rejects.toThrow('timeout');
     expect(db.get('user_1').stripeCustomerId).toBeUndefined();
@@ -229,6 +237,8 @@ describe('concurrent creation (double-clicked checkout)', () => {
     User.findOneAndUpdate.mockReturnValueOnce(chain(null));
     User.findById.mockReturnValueOnce(chain(null));
 
-    await expect(resolveStripeCustomer(stripe, u)).rejects.toThrow('stripe_customer_persistence_failed');
+    await expect(resolveStripeCustomer(stripe, u)).rejects.toThrow(
+      'stripe_customer_persistence_failed'
+    );
   });
 });

@@ -56,12 +56,16 @@ describe('abandoned SafePay checkout reconciliation', () => {
   it('does not cancel an open Stripe Checkout Session', async () => {
     setupOrder();
     const stripe = {
-      checkout: { sessions: { retrieve: jest.fn().mockResolvedValue({
-        id: 'cs_test_1',
-        livemode: false,
-        status: 'open',
-        payment_status: 'unpaid',
-      }) } },
+      checkout: {
+        sessions: {
+          retrieve: jest.fn().mockResolvedValue({
+            id: 'cs_test_1',
+            livemode: false,
+            status: 'open',
+            payment_status: 'unpaid',
+          }),
+        },
+      },
     };
     getStripeForMode.mockResolvedValue(stripe);
 
@@ -73,12 +77,16 @@ describe('abandoned SafePay checkout reconciliation', () => {
   it('reconciles a paid session and never cancels it', async () => {
     setupOrder();
     getStripeForMode.mockResolvedValue({
-      checkout: { sessions: { retrieve: jest.fn().mockResolvedValue({
-        id: 'cs_test_1',
-        livemode: false,
-        status: 'complete',
-        payment_status: 'paid',
-      }) } },
+      checkout: {
+        sessions: {
+          retrieve: jest.fn().mockResolvedValue({
+            id: 'cs_test_1',
+            livemode: false,
+            status: 'complete',
+            payment_status: 'paid',
+          }),
+        },
+      },
     });
     confirmPaidSession.mockResolvedValue({ ok: true });
 
@@ -91,12 +99,16 @@ describe('abandoned SafePay checkout reconciliation', () => {
   it('cancels only after Stripe confirms the matching session expired and unpaid', async () => {
     setupOrder();
     const stripe = {
-      checkout: { sessions: { retrieve: jest.fn().mockResolvedValue({
-        id: 'cs_test_1',
-        livemode: false,
-        status: 'expired',
-        payment_status: 'unpaid',
-      }) } },
+      checkout: {
+        sessions: {
+          retrieve: jest.fn().mockResolvedValue({
+            id: 'cs_test_1',
+            livemode: false,
+            status: 'expired',
+            payment_status: 'unpaid',
+          }),
+        },
+      },
     };
     getStripeForMode.mockResolvedValue(stripe);
     Order.findOneAndUpdate.mockResolvedValue({ ...checkoutOrder, chatId: null });

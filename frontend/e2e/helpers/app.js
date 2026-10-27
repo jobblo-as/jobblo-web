@@ -11,10 +11,34 @@ export const expect = baseExpect.configure({ timeout: 25_000 });
 export const API = 'http://127.0.0.1:5017';
 
 export const USERS = {
-  user: { _id: '64a000000000000000000001', name: 'TEST Customer', email: 'customer@example.test', role: 'user', subscription: 'Standard', accountType: 'private' },
-  provider: { _id: '64a000000000000000000002', name: 'TEST Provider', email: 'provider@example.test', role: 'user', subscription: 'Standard', accountType: 'business' },
-  superAdmin: { _id: '64a000000000000000000003', name: 'TEST Admin', email: 'admin@example.test', role: 'superAdmin' },
-  developer: { _id: '64a000000000000000000004', name: 'TEST Developer', email: 'dev@example.test', role: 'developer' },
+  user: {
+    _id: '64a000000000000000000001',
+    name: 'TEST Customer',
+    email: 'customer@example.test',
+    role: 'user',
+    subscription: 'Standard',
+    accountType: 'private',
+  },
+  provider: {
+    _id: '64a000000000000000000002',
+    name: 'TEST Provider',
+    email: 'provider@example.test',
+    role: 'user',
+    subscription: 'Standard',
+    accountType: 'business',
+  },
+  superAdmin: {
+    _id: '64a000000000000000000003',
+    name: 'TEST Admin',
+    email: 'admin@example.test',
+    role: 'superAdmin',
+  },
+  developer: {
+    _id: '64a000000000000000000004',
+    name: 'TEST Developer',
+    email: 'dev@example.test',
+    role: 'developer',
+  },
 };
 
 export const SERVICE = {
@@ -36,19 +60,30 @@ export const SERVICE = {
  * `routes` = extra handlers `{ 'GET /api/x': (ctx) => body | {status, json} }` (exact path,
  * or `'~METHOD regex'`). `fallback: 'down'` answers everything else with 503. Returns { calls, state } so tests can assert and switch user.
  */
-export async function mockApi(page, { as = null, routes = {}, mfaVerified = true, fallback = 'empty' } = {}) {
+export async function mockApi(
+  page,
+  { as = null, routes = {}, mfaVerified = true, fallback = 'empty' } = {}
+) {
   const calls = [];
-  const state = { session: as ? USERS[as] || as : null, mfa: { required: true, enabled: true, verified: mfaVerified } };
+  const state = {
+    session: as ? USERS[as] || as : null,
+    mfa: { required: true, enabled: true, verified: mfaVerified },
+  };
   await page.route(`${API}/**`, async (route) => {
     const request = route.request();
     const url = new URL(request.url());
     const { pathname } = url;
     const method = request.method();
     let body = null;
-    try { body = request.postDataJSON(); } catch { body = request.postData(); }
+    try {
+      body = request.postDataJSON();
+    } catch {
+      body = request.postData();
+    }
     calls.push({ method, pathname, search: url.search, body });
     const reply = (res) => {
-      if (res && typeof res === 'object' && 'status' in res && 'json' in res) return route.fulfill(res);
+      if (res && typeof res === 'object' && 'status' in res && 'json' in res)
+        return route.fulfill(res);
       return route.fulfill({ json: res });
     };
 
@@ -57,36 +92,63 @@ export async function mockApi(page, { as = null, routes = {}, mfaVerified = true
     for (const [key, fn] of Object.entries(routes)) {
       if (key.startsWith('~')) {
         const [m, re] = key.slice(1).split(' ');
-        if ((m === '*' || m === method) && new RegExp(re).test(pathname)) return reply(await fn({ request, body, url, state, calls }));
+        if ((m === '*' || m === method) && new RegExp(re).test(pathname))
+          return reply(await fn({ request, body, url, state, calls }));
       }
     }
 
     if (pathname === '/api/auth/refresh-token') {
-      if (!state.session) return route.fulfill({ status: 401, json: { error: 'Refresh token missing' } });
+      if (!state.session)
+        return route.fulfill({ status: 401, json: { error: 'Refresh token missing' } });
       return route.fulfill({ json: { accessToken: `at-${state.session._id}` } });
     }
     if (pathname === '/api/auth/profile') {
       if (!state.session) return route.fulfill({ status: 401, json: { error: 'Invalid token' } });
       return route.fulfill({ json: state.session });
     }
-    if (pathname === '/api/auth/logout') { state.session = null; return route.fulfill({ json: { message: 'ok' } }); }
+    if (pathname === '/api/auth/logout') {
+      state.session = null;
+      return route.fulfill({ json: { message: 'ok' } });
+    }
     if (pathname === '/api/auth/mfa' && method === 'GET') return route.fulfill({ json: state.mfa });
     if (pathname === '/api/developer/me' && state.session) {
-      return route.fulfill({ json: { success: true, data: { ...state.session, environment: 'test', access: 'operations', can: { triage: true, request: true, execute: true, approve: true } } } });
+      return route.fulfill({
+        json: {
+          success: true,
+          data: {
+            ...state.session,
+            environment: 'test',
+            access: 'operations',
+            can: { triage: true, request: true, execute: true, approve: true },
+          },
+        },
+      });
     }
     if (pathname.startsWith('/socket.io')) return route.abort();
     // Public profile of a known fixture user.
-    const known = method === 'GET' && Object.values(USERS).find((u) => pathname === `/api/users/${u._id}`);
-    if (known) return route.fulfill({ json: state.session?._id === known._id ? state.session : known });
-    if (fallback === 'down') return route.fulfill({ status: 503, json: { success: false, message: 'Service unavailable (e2e)' } });
+    const known =
+      method === 'GET' && Object.values(USERS).find((u) => pathname === `/api/users/${u._id}`);
+    if (known)
+      return route.fulfill({ json: state.session?._id === known._id ? state.session : known });
+    if (fallback === 'down')
+      return route.fulfill({
+        status: 503,
+        json: { success: false, message: 'Service unavailable (e2e)' },
+      });
     // Anything else: an empty, successful answer in the envelope that area uses
     // (admin/developer controllers wrap in { success, data }; the rest mostly return bare lists).
-    if (pathname.startsWith('/api/developer/')) return route.fulfill({ json: { success: true, data: {} } });
-    if (pathname.startsWith('/api/admin/')) return route.fulfill({ json: { success: true, data: [] } });
+    if (pathname.startsWith('/api/developer/'))
+      return route.fulfill({ json: { success: true, data: {} } });
+    if (pathname.startsWith('/api/admin/'))
+      return route.fulfill({ json: { success: true, data: [] } });
     return route.fulfill({ json: [] });
   });
   await page.addInitScript(() => {
-    try { localStorage.setItem('cookie-consent', 'rejected'); } catch { /* storage blocked */ }
+    try {
+      localStorage.setItem('cookie-consent', 'rejected');
+    } catch {
+      /* storage blocked */
+    }
   });
   return { calls, state };
 }
@@ -99,7 +161,12 @@ export function watchErrors(page) {
     if (msg.type() !== 'error') return;
     const text = msg.text();
     // Network noise from the mocked/aborted origin, not app bugs.
-    if (/Failed to load resource|net::ERR_|WebSocket|[Ss]ocket connection error|socket\.io|status of 4\d\d/.test(text)) return;
+    if (
+      /Failed to load resource|net::ERR_|WebSocket|[Ss]ocket connection error|socket\.io|status of 4\d\d/.test(
+        text
+      )
+    )
+      return;
     // React Query's dev warning when the generic empty mock lacks the field a query unwraps.
     if (/^Query data cannot be undefined/.test(text)) return;
     // Known, reported: Header logs React Query's CancelledError as a failure when a page refetches chats.

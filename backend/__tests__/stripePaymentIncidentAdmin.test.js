@@ -9,7 +9,11 @@ jest.mock('../models/StripeTransferRecord', () => ({
 jest.mock('../models/StripePaymentIncident', () => ({
   findById: jest.fn(),
   // Sibling incidents of the same Stripe dispute (one per charge.dispute.* event).
-  find: jest.fn(() => ({ select: () => ({ lean: async () => [{ _id: '507f1f77bcf86cd799439011' }, { _id: 'sibling_incident' }] }) })),
+  find: jest.fn(() => ({
+    select: () => ({
+      lean: async () => [{ _id: '507f1f77bcf86cd799439011' }, { _id: 'sibling_incident' }],
+    }),
+  })),
   countDocuments: jest.fn(),
   updateMany: jest.fn().mockResolvedValue({}),
   findOneAndUpdate: jest.fn(async () => ({})), // recovery lease lock
@@ -32,7 +36,9 @@ const StripePaymentIncident = require('../models/StripePaymentIncident');
 const StripeFinancialOperation = require('../models/StripeFinancialOperation');
 const { getStripeForMode } = require('../config/stripe');
 const { executeTransferReversal } = require('../services/stripe/financialOperations');
-const { reverseChargebackTransfer } = require('../controllers/admin/stripePaymentIncidentController');
+const {
+  reverseChargebackTransfer,
+} = require('../controllers/admin/stripePaymentIncidentController');
 
 const incidentId = '507f1f77bcf86cd799439011';
 
@@ -40,8 +46,14 @@ function response() {
   return {
     statusCode: 200,
     body: null,
-    status(code) { this.statusCode = code; return this; },
-    json(body) { this.body = body; return this; },
+    status(code) {
+      this.statusCode = code;
+      return this;
+    },
+    json(body) {
+      this.body = body;
+      return this;
+    },
   };
 }
 
@@ -153,7 +165,8 @@ beforeEach(() => {
       }),
     },
     transfers: {
-      retrieve: jest.fn()
+      retrieve: jest
+        .fn()
         .mockResolvedValueOnce({
           id: 'tr_test_1',
           livemode: false,
@@ -234,11 +247,14 @@ describe('cumulative recovery cap', () => {
     await reverseChargebackTransfer(request(), res); // asks for 50000 more; incident is 50000
 
     expect(res.statusCode).toBe(409);
-    expect(res.body).toMatchObject({ code: 'chargeback_recovery_exceeds_incident', alreadyRecovered: 30000 });
+    expect(res.body).toMatchObject({
+      code: 'chargeback_recovery_exceeds_incident',
+      alreadyRecovered: 30000,
+    });
     expect(executeTransferReversal).not.toHaveBeenCalled();
   });
 
-  it('counts only this incident\'s other recoveries and lets an idempotent retry through', async () => {
+  it("counts only this incident's other recoveries and lets an idempotent retry through", async () => {
     priorOps([]);
     const res = response();
     await reverseChargebackTransfer(request(), res);
@@ -266,17 +282,41 @@ describe('cumulative recovery cap', () => {
 });
 
 describe('final review: chargeback close paths', () => {
-  beforeEach(() => StripeFinancialOperation.find.mockReturnValue({ select: () => ({ lean: async () => [] }) }));
+  beforeEach(() =>
+    StripeFinancialOperation.find.mockReturnValue({ select: () => ({ lean: async () => [] }) })
+  );
   const fullChargeback = () => {
     incident.amount = 103000; // the whole charge, fee included
-    stripe.disputes.retrieve.mockResolvedValue({ id: 'dp_test_1', status: 'lost', livemode: false, charge: 'ch_test_1', payment_intent: 'pi_test_1', amount: 103000, currency: 'nok' });
+    stripe.disputes.retrieve.mockResolvedValue({
+      id: 'dp_test_1',
+      status: 'lost',
+      livemode: false,
+      charge: 'ch_test_1',
+      payment_intent: 'pi_test_1',
+      amount: 103000,
+      currency: 'nok',
+    });
   };
 
   it('F5: recovering the whole (net) transfer reconciles a full-charge chargeback', async () => {
     fullChargeback();
-    stripe.transfers.retrieve.mockReset()
-      .mockResolvedValueOnce({ id: 'tr_test_1', livemode: false, source_transaction: 'ch_test_1', destination: 'acct_test_1', amount: 97000, amount_reversed: 0, currency: 'nok' })
-      .mockResolvedValueOnce({ id: 'tr_test_1', livemode: false, source_transaction: 'ch_test_1', amount_reversed: 97000 });
+    stripe.transfers.retrieve
+      .mockReset()
+      .mockResolvedValueOnce({
+        id: 'tr_test_1',
+        livemode: false,
+        source_transaction: 'ch_test_1',
+        destination: 'acct_test_1',
+        amount: 97000,
+        amount_reversed: 0,
+        currency: 'nok',
+      })
+      .mockResolvedValueOnce({
+        id: 'tr_test_1',
+        livemode: false,
+        source_transaction: 'ch_test_1',
+        amount_reversed: 97000,
+      });
     const res = response();
     await reverseChargebackTransfer(request(97000), res);
     expect(res.statusCode).toBe(200);
@@ -293,16 +333,25 @@ describe('final review: chargeback close paths', () => {
   });
 
   it('F6: the lock is taken before the cap is read and released afterwards, even on refusal', async () => {
-    StripeFinancialOperation.find.mockReturnValue({ select: () => ({ lean: async () => [{ amount: 50000 }] }) });
+    StripeFinancialOperation.find.mockReturnValue({
+      select: () => ({ lean: async () => [{ amount: 50000 }] }),
+    });
     await reverseChargebackTransfer(request(), response());
-    expect(StripePaymentIncident.findOneAndUpdate.mock.invocationCallOrder[0]).toBeLessThan(StripeFinancialOperation.find.mock.invocationCallOrder[0]);
+    expect(StripePaymentIncident.findOneAndUpdate.mock.invocationCallOrder[0]).toBeLessThan(
+      StripeFinancialOperation.find.mock.invocationCallOrder[0]
+    );
     const [lockFilter, lockUpdate] = StripePaymentIncident.findOneAndUpdate.mock.calls[0];
     expect(lockFilter._id).toBe(incidentId);
-    expect(StripePaymentIncident.updateOne).toHaveBeenCalledWith({ _id: incidentId, recoveryLockedAt: lockUpdate.$set.recoveryLockedAt }, { $set: { recoveryLockedAt: null } });
+    expect(StripePaymentIncident.updateOne).toHaveBeenCalledWith(
+      { _id: incidentId, recoveryLockedAt: lockUpdate.$set.recoveryLockedAt },
+      { $set: { recoveryLockedAt: null } }
+    );
   });
 
   describe('F5: a chargeback lost before any payout can be closed', () => {
-    const { closeLostChargebackWithoutTransfer } = require('../controllers/admin/stripePaymentIncidentController');
+    const {
+      closeLostChargebackWithoutTransfer,
+    } = require('../controllers/admin/stripePaymentIncidentController');
     const Order = require('../models/Order');
     let payout;
     beforeEach(() => {
@@ -313,29 +362,92 @@ describe('final review: chargeback close paths', () => {
       Payout.updateOne = jest.fn().mockResolvedValue({ matchedCount: 1 });
       Payment.updateOne = jest.fn().mockResolvedValue({});
       Order.updateOne = jest.fn().mockResolvedValue({});
-      stripe.charges.retrieve.mockResolvedValue({ id: 'ch_test_1', payment_intent: 'pi_test_1', amount: 103000, amount_refunded: 0 });
+      stripe.charges.retrieve.mockResolvedValue({
+        id: 'ch_test_1',
+        payment_intent: 'pi_test_1',
+        amount: 103000,
+        amount_refunded: 0,
+      });
     });
     const close = async () => {
       const res = response();
-      await closeLostChargebackWithoutTransfer({ params: { id: incidentId }, body: { reason: 'Lost at the bank, never paid out' }, user: { _id: 'admin_1' } }, res);
+      await closeLostChargebackWithoutTransfer(
+        {
+          params: { id: incidentId },
+          body: { reason: 'Lost at the bank, never paid out' },
+          user: { _id: 'admin_1' },
+        },
+        res
+      );
       return res;
     };
 
     it('cancels the payout, refunds the payment, cancels the order and reconciles every incident of the dispute', async () => {
       const res = await close();
       expect(res.statusCode).toBe(200);
-      expect(Payout.updateOne).toHaveBeenCalledWith(expect.objectContaining({ _id: 'payout_1', stripeTransferId: null }), expect.objectContaining({ $set: expect.objectContaining({ status: 'cancelled' }) }));
-      expect(Payment.updateOne).toHaveBeenCalledWith({ _id: 'payment_1' }, { $set: { status: 'refunded' } });
-      expect(Order.updateOne.mock.calls[0][1].$set).toEqual({ status: 'cancelled', paymentStatus: 'refunded' });
-      expect(StripePaymentIncident.updateMany).toHaveBeenCalledWith({ stripeDisputeId: 'dp_test_1', status: 'manual_review' }, expect.objectContaining({ $set: expect.objectContaining({ status: 'reconciled' }) }));
-      expect(Payout.updateOne.mock.invocationCallOrder[0]).toBeLessThan(StripePaymentIncident.updateMany.mock.invocationCallOrder[0]);
+      expect(Payout.updateOne).toHaveBeenCalledWith(
+        expect.objectContaining({ _id: 'payout_1', stripeTransferId: null }),
+        expect.objectContaining({ $set: expect.objectContaining({ status: 'cancelled' }) })
+      );
+      expect(Payment.updateOne).toHaveBeenCalledWith(
+        { _id: 'payment_1' },
+        { $set: { status: 'refunded' } }
+      );
+      expect(Order.updateOne.mock.calls[0][1].$set).toEqual({
+        status: 'cancelled',
+        paymentStatus: 'refunded',
+      });
+      expect(StripePaymentIncident.updateMany).toHaveBeenCalledWith(
+        { stripeDisputeId: 'dp_test_1', status: 'manual_review' },
+        expect.objectContaining({ $set: expect.objectContaining({ status: 'reconciled' }) })
+      );
+      expect(Payout.updateOne.mock.invocationCallOrder[0]).toBeLessThan(
+        StripePaymentIncident.updateMany.mock.invocationCallOrder[0]
+      );
     });
 
     it.each([
-      ['a transfer exists', () => { payout.stripeTransferId = 'tr_1'; payout.status = 'transferred'; }, 'chargeback_transfer_exists'],
-      ['the transfer outcome is unknown', () => { payout.status = 'reconciliation_required'; }, 'chargeback_transfer_exists'],
-      ['the chargeback is not lost', () => stripe.disputes.retrieve.mockResolvedValue({ id: 'dp_test_1', status: 'under_review', livemode: false, charge: 'ch_test_1', payment_intent: 'pi_test_1', amount: 103000 }), 'chargeback_not_final_or_partial'],
-      ['only part of the charge was charged back', () => stripe.disputes.retrieve.mockResolvedValue({ id: 'dp_test_1', status: 'lost', livemode: false, charge: 'ch_test_1', payment_intent: 'pi_test_1', amount: 50000 }), 'chargeback_not_final_or_partial'],
+      [
+        'a transfer exists',
+        () => {
+          payout.stripeTransferId = 'tr_1';
+          payout.status = 'transferred';
+        },
+        'chargeback_transfer_exists',
+      ],
+      [
+        'the transfer outcome is unknown',
+        () => {
+          payout.status = 'reconciliation_required';
+        },
+        'chargeback_transfer_exists',
+      ],
+      [
+        'the chargeback is not lost',
+        () =>
+          stripe.disputes.retrieve.mockResolvedValue({
+            id: 'dp_test_1',
+            status: 'under_review',
+            livemode: false,
+            charge: 'ch_test_1',
+            payment_intent: 'pi_test_1',
+            amount: 103000,
+          }),
+        'chargeback_not_final_or_partial',
+      ],
+      [
+        'only part of the charge was charged back',
+        () =>
+          stripe.disputes.retrieve.mockResolvedValue({
+            id: 'dp_test_1',
+            status: 'lost',
+            livemode: false,
+            charge: 'ch_test_1',
+            payment_intent: 'pi_test_1',
+            amount: 50000,
+          }),
+        'chargeback_not_final_or_partial',
+      ],
     ])('is refused when %s', async (_name, setup, code) => {
       setup();
       const res = await close();

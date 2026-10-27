@@ -160,15 +160,21 @@ describe('SafePay provider Connect timeout processor', () => {
       status: 'succeeded',
     });
 
-    await expect(processOrder({ ...order, providerConnectTimeout: { status: 'provider_ready' } }, now))
-      .resolves.toBe('refunded');
+    await expect(
+      processOrder({ ...order, providerConnectTimeout: { status: 'provider_ready' } }, now)
+    ).resolves.toBe('refunded');
 
     expect(stripe.accounts.retrieve).not.toHaveBeenCalled();
-    expect(executeRefund).toHaveBeenCalledWith(expect.any(Object), expect.objectContaining({ amount: 103000 }));
+    expect(executeRefund).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ amount: 103000 })
+    );
     // An order already marked provider_ready is still claimable; only a started job is excluded.
     const claimFilter = Order.findOneAndUpdate.mock.calls[0][0];
     expect(claimFilter).toMatchObject({ startedAt: null });
-    expect(claimFilter.$or).toContainEqual({ 'providerConnectTimeout.status': { $in: [null, 'provider_ready'] } });
+    expect(claimFilter.$or).toContainEqual({
+      'providerConnectTimeout.status': { $in: [null, 'provider_ready'] },
+    });
   });
 
   it('stops the countdown when Stripe confirms readiness before the deadline', async () => {
@@ -308,10 +314,12 @@ describe('SafePay provider Connect timeout processor', () => {
       refundedAmountMinor: 0,
     });
     expect(paymentUpdate.status).toBeUndefined();
-    expect(notify).toHaveBeenCalledWith(expect.objectContaining({
-      userId: order.providerId,
-      event: 'provider_connect_refund_failed',
-    }));
+    expect(notify).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: order.providerId,
+        event: 'provider_connect_refund_failed',
+      })
+    );
   });
 
   it('cancels and flags an ambiguous refund for reconciliation without claiming success', async () => {
@@ -324,9 +332,7 @@ describe('SafePay provider Connect timeout processor', () => {
       currency: 'NOK',
       status: 'reconciliation_required',
     };
-    StripeFinancialOperation.findOne
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(operation);
+    StripeFinancialOperation.findOne.mockResolvedValueOnce(null).mockResolvedValueOnce(operation);
     executeRefund.mockRejectedValue({
       code: 'STRIPE_REFUND_RECONCILIATION_REQUIRED',
       message: 'Stripe outcome is uncertain',
@@ -374,9 +380,7 @@ describe('SafePay provider Connect timeout processor', () => {
 
   it('finalizes a succeeded refund webhook only once', async () => {
     configure();
-    Order.findOneAndUpdate
-      .mockResolvedValueOnce({})
-      .mockResolvedValueOnce(null);
+    Order.findOneAndUpdate.mockResolvedValueOnce({}).mockResolvedValueOnce(null);
     const operation = {
       operationKey: `safepay-connect-timeout:${order._id}:${payment.stripePaymentIntentId}`,
       orderId: order._id,
@@ -395,14 +399,20 @@ describe('SafePay provider Connect timeout processor', () => {
       metadata: { jobbloOperationKey: operation.operationKey },
     };
 
-    await expect(applyTimeoutRefundResult(order, payment, operation, refund, 'succeeded'))
-      .resolves.toBe(true);
+    await expect(
+      applyTimeoutRefundResult(order, payment, operation, refund, 'succeeded')
+    ).resolves.toBe(true);
     // The second finalizer (scheduler vs webhook) sees the same refund already recorded.
     Order.findById.mockReturnValueOnce({
-      select: () => ({ lean: async () => ({ providerConnectTimeout: { status: 'succeeded', stripeRefundId: 're_test_1' } }) }),
+      select: () => ({
+        lean: async () => ({
+          providerConnectTimeout: { status: 'succeeded', stripeRefundId: 're_test_1' },
+        }),
+      }),
     });
-    await expect(applyTimeoutRefundResult(order, payment, operation, refund, 'succeeded'))
-      .resolves.toBe(false);
+    await expect(
+      applyTimeoutRefundResult(order, payment, operation, refund, 'succeeded')
+    ).resolves.toBe(false);
 
     expect(notify).toHaveBeenCalledTimes(2);
     expect(Payment.updateOne).toHaveBeenCalledTimes(1);
@@ -418,12 +428,20 @@ describe('SafePay provider Connect timeout processor', () => {
       paymentIntentId: payment.stripePaymentIntentId,
       amount: 103000,
     };
-    const refund = { id: 're_test_2', status: 'succeeded', metadata: { jobbloOperationKey: operation.operationKey } };
+    const refund = {
+      id: 're_test_2',
+      status: 'succeeded',
+      metadata: { jobbloOperationKey: operation.operationKey },
+    };
 
-    await expect(applyTimeoutRefundResult(order, payment, operation, refund, 'succeeded')).resolves.toBe(false);
-    expect(logApplicationError).toHaveBeenCalledWith(expect.objectContaining({
-      errorCode: 'SAFEPAY_CONNECT_TIMEOUT_FINALIZATION_CONFLICT',
-    }));
+    await expect(
+      applyTimeoutRefundResult(order, payment, operation, refund, 'succeeded')
+    ).resolves.toBe(false);
+    expect(logApplicationError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        errorCode: 'SAFEPAY_CONNECT_TIMEOUT_FINALIZATION_CONFLICT',
+      })
+    );
   });
 });
 
@@ -431,15 +449,32 @@ it('F2: a chargeback the platform WON no longer blocks the timeout refund; an op
   const stripe = configure({ stripe: makeStripe({ payoutReady: true }) });
   const base = await stripe.charges.retrieve();
   executeRefund.mockResolvedValue({
-    operation: { operationKey: `safepay-connect-timeout:${order._id}:${payment.stripePaymentIntentId}`, orderId: order._id, paymentIntentId: payment.stripePaymentIntentId, amount: order.checkoutAmountMinor },
+    operation: {
+      operationKey: `safepay-connect-timeout:${order._id}:${payment.stripePaymentIntentId}`,
+      orderId: order._id,
+      paymentIntentId: payment.stripePaymentIntentId,
+      amount: order.checkoutAmountMinor,
+    },
     refund: { id: 're_test_won', status: 'succeeded' },
     status: 'succeeded',
   });
-  stripe.charges.retrieve.mockImplementation(async (_id, opts) => ({ ...base, disputed: true, dispute: opts?.expand?.includes('dispute') ? { status: 'won' } : 'dp_1' }));
-  await expect(processOrder({ ...order, providerConnectTimeout: { status: 'provider_ready' } }, now)).resolves.toBe('refunded');
+  stripe.charges.retrieve.mockImplementation(async (_id, opts) => ({
+    ...base,
+    disputed: true,
+    dispute: opts?.expand?.includes('dispute') ? { status: 'won' } : 'dp_1',
+  }));
+  await expect(
+    processOrder({ ...order, providerConnectTimeout: { status: 'provider_ready' } }, now)
+  ).resolves.toBe('refunded');
 
   executeRefund.mockClear();
-  stripe.charges.retrieve.mockImplementation(async () => ({ ...base, disputed: true, dispute: { status: 'needs_response' } }));
-  await processOrder({ ...order, providerConnectTimeout: { status: 'provider_ready' } }, now).catch(() => {});
+  stripe.charges.retrieve.mockImplementation(async () => ({
+    ...base,
+    disputed: true,
+    dispute: { status: 'needs_response' },
+  }));
+  await processOrder({ ...order, providerConnectTimeout: { status: 'provider_ready' } }, now).catch(
+    () => {}
+  );
   expect(executeRefund).not.toHaveBeenCalled();
 });

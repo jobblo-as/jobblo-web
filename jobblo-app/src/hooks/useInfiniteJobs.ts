@@ -87,10 +87,7 @@ export const useInfiniteJobs = ({
       }),
     getNextPageParam: (lastPage: JobsResponse) => {
       // Return next page number if there are more pages
-      if (
-        lastPage.pagination &&
-        lastPage.pagination.page < lastPage.pagination.totalPages
-      ) {
+      if (lastPage.pagination && lastPage.pagination.page < lastPage.pagination.totalPages) {
         return lastPage.pagination.page + 1;
       }
       // Return undefined to signal no more pages

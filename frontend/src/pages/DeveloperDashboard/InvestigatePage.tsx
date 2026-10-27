@@ -4,7 +4,15 @@ import { ArrowUpRight, ScanSearch, Search } from 'lucide-react';
 import { ago } from '@/lib/devFormat';
 import type { InvestigateKind, InvestigateMatch } from '../../api/developer';
 import { useDevInvestigate, useUrlFilters } from '../../features/developer/hooks';
-import { EmptyState, ErrorState, IssueList, PageHeader, Section, StatusBadge, Timeline } from '../../components/developer/kit';
+import {
+  EmptyState,
+  ErrorState,
+  IssueList,
+  PageHeader,
+  Section,
+  StatusBadge,
+  Timeline,
+} from '../../components/developer/kit';
 import { Badge } from '../../components/developer/ui/badge';
 import { Button } from '../../components/developer/ui/button';
 import { Input } from '../../components/developer/ui/input';
@@ -71,7 +79,14 @@ export default function InvestigatePage() {
       >
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input autoFocus value={input} onChange={(ev) => setInput(ev.target.value)} placeholder="6a98… · pi_… · ERR-… · name@example.no · 203.0.113.7" className="bg-card pl-8 font-mono text-xs" aria-label="Investigate" />
+          <Input
+            autoFocus
+            value={input}
+            onChange={(ev) => setInput(ev.target.value)}
+            placeholder="6a98… · pi_… · ERR-… · name@example.no · 203.0.113.7"
+            className="bg-card pl-8 font-mono text-xs"
+            aria-label="Investigate"
+          />
         </div>
         <Button type="submit" disabled={!input.trim()}>
           Investigate
@@ -79,14 +94,28 @@ export default function InvestigatePage() {
       </form>
 
       {error && <ErrorState error={error} onRetry={() => refetch()} />}
-      {!f.q && <EmptyState icon={<ScanSearch />} title="Start with any identifier" description="Results link to the page where each record is inspected in full." />}
+      {!f.q && (
+        <EmptyState
+          icon={<ScanSearch />}
+          title="Start with any identifier"
+          description="Results link to the page where each record is inspected in full."
+        />
+      )}
       {f.q && isFetching && !data && <Skeleton className="h-40 w-full" />}
       {data && (
         <p className="text-xs text-muted-foreground">
-          Read as <Badge variant="outline">{KIND_LABEL[data.kind]}</Badge> · {data.matches.length} linked record{data.matches.length === 1 ? '' : 's'} · {data.orders.length + data.moreOrders} order{data.orders.length + data.moreOrders === 1 ? '' : 's'}
+          Read as <Badge variant="outline">{KIND_LABEL[data.kind]}</Badge> · {data.matches.length}{' '}
+          linked record{data.matches.length === 1 ? '' : 's'} ·{' '}
+          {data.orders.length + data.moreOrders} order
+          {data.orders.length + data.moreOrders === 1 ? '' : 's'}
         </p>
       )}
-      {nothing && <EmptyState title="Nothing found" description="No record in this database references that value. Stripe objects from another account or mode will not appear here." />}
+      {nothing && (
+        <EmptyState
+          title="Nothing found"
+          description="No record in this database references that value. Stripe objects from another account or mode will not appear here."
+        />
+      )}
 
       {data?.matches.length ? (
         <Section title="Linked records">
@@ -106,14 +135,19 @@ export default function InvestigatePage() {
                     </div>
                   </div>
                   {m.status && <StatusBadge status={m.status} />}
-                  <span className="hidden w-20 text-right text-xs text-muted-foreground sm:block">{m.at ? ago(m.at) : ''}</span>
+                  <span className="hidden w-20 text-right text-xs text-muted-foreground sm:block">
+                    {m.at ? ago(m.at) : ''}
+                  </span>
                   {href && <ArrowUpRight className="size-4 text-muted-foreground" />}
                 </>
               );
               return (
                 <li key={`${m.type}-${m.id}`}>
                   {href ? (
-                    <Link to={href} className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50">
+                    <Link
+                      to={href}
+                      className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50"
+                    >
                       {body}
                     </Link>
                   ) : (
@@ -147,10 +181,18 @@ export default function InvestigatePage() {
           }
         >
           <div className="mb-4 flex flex-wrap gap-2 text-xs">
-            <span className="flex items-center gap-1">Order <StatusBadge status={o.status} /></span>
-            <span className="flex items-center gap-1">Payment <StatusBadge status={o.paymentStatus} /></span>
-            <span className="flex items-center gap-1">SafePay <StatusBadge status={o.safePay || 'none'} /></span>
-            <span className="flex items-center gap-1">Payout <StatusBadge status={o.payout || 'none'} /></span>
+            <span className="flex items-center gap-1">
+              Order <StatusBadge status={o.status} />
+            </span>
+            <span className="flex items-center gap-1">
+              Payment <StatusBadge status={o.paymentStatus} />
+            </span>
+            <span className="flex items-center gap-1">
+              SafePay <StatusBadge status={o.safePay || 'none'} />
+            </span>
+            <span className="flex items-center gap-1">
+              Payout <StatusBadge status={o.payout || 'none'} />
+            </span>
           </div>
           <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
             <div>
@@ -164,7 +206,11 @@ export default function InvestigatePage() {
           </div>
         </Section>
       ))}
-      {data?.moreOrders ? <p className="text-xs text-muted-foreground">+{data.moreOrders} more orders match — open Job Diagnostics to see them all.</p> : null}
+      {data?.moreOrders ? (
+        <p className="text-xs text-muted-foreground">
+          +{data.moreOrders} more orders match — open Job Diagnostics to see them all.
+        </p>
+      ) : null}
     </div>
   );
 }

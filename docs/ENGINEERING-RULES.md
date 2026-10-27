@@ -45,8 +45,8 @@ and the per-task checklist. The running log of what was done is in `docs/WORKLOG
 
 ## Budgets (local dev box, single instance)
 
-| Path | p95 under 50 concurrent users | Errors |
-|---|---|---|
-| Public reads (`/api/services`, `/api/categories`, filters) | < 300 ms | 0 % |
-| Authenticated reads | < 400 ms | 0 % |
-| Writes | < 800 ms | 0 % (429s from rate limits are expected, not errors) |
+| Path                                                       | p95 under 50 concurrent users | Errors                                               |
+| ---------------------------------------------------------- | ----------------------------- | ---------------------------------------------------- |
+| Public reads (`/api/services`, `/api/categories`, filters) | < 300 ms                      | 0 %                                                  |
+| Authenticated reads                                        | < 400 ms                      | 0 %                                                  |
+| Writes                                                     | < 800 ms                      | 0 % (429s from rate limits are expected, not errors) |

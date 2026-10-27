@@ -142,7 +142,17 @@ const PUBLIC_FIELDS = [
 ];
 
 /** Response-only values endpoints add next to the stored fields. */
-const PUBLIC_COMPUTED = ['id', 'counts', 'nearby', 'postedJobsCount', 'averageResponseTimeMinutes', 'totalJobRequests', 'completionRate', 'jobsThisMonth', 'reviews'];
+const PUBLIC_COMPUTED = [
+  'id',
+  'counts',
+  'nearby',
+  'postedJobsCount',
+  'averageResponseTimeMinutes',
+  'totalJobRequests',
+  'completionRate',
+  'jobsThisMonth',
+  'reviews',
+];
 
 /** Safe for: public / other-user endpoints. Always prefer this over a hand-rolled select. */
 const PUBLIC_USER_SELECT = PUBLIC_FIELDS.join(' ');
@@ -153,7 +163,13 @@ const PUBLIC_USER_SELECT = PUBLIC_FIELDS.join(' ');
  * stored with select:false and the UI should use Stripe Connect instead of
  * raw credentials; but if needed for admin audit, fetch explicitly.
  */
-const OWN_USER_SELECT = [...SAFE_BASE, 'phone', 'email', 'stripeCustomerId', 'emailVerifiedAt'].join(' ');
+const OWN_USER_SELECT = [
+  ...SAFE_BASE,
+  'phone',
+  'email',
+  'stripeCustomerId',
+  'emailVerifiedAt',
+].join(' ');
 
 // ── E-mail verification ───────────────────────────────────────────────────────
 // Accounts created before this date predate verification at sign-up and count as

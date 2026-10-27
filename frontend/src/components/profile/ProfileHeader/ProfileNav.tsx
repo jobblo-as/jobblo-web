@@ -40,10 +40,7 @@ export function ProfileNav({
         : posterTabs;
 
   return (
-    <div
-      role="tablist"
-      className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1 py-1"
-    >
+    <div role="tablist" className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1 py-1">
       {tabs.map((tab) => {
         const isActive = activeTab === tab;
         return (

@@ -99,7 +99,13 @@ export const getSafePayHistory = async (userId: string) => {
   return response.data;
 };
 
-export const deleteUserAccount = async (userId: string, feedback?: string, currentPassword?: string) => {
-  const response = await mainLink.delete(`/api/users/${userId}`, { data: { feedback, currentPassword } });
+export const deleteUserAccount = async (
+  userId: string,
+  feedback?: string,
+  currentPassword?: string
+) => {
+  const response = await mainLink.delete(`/api/users/${userId}`, {
+    data: { feedback, currentPassword },
+  });
   return response.data;
 };

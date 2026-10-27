@@ -119,10 +119,15 @@ const mfaVerifyLimiter = require('../middleware/rateLimiter').makeLimiter('mfa-v
   skipSuccessfulRequests: true,
   passOnStoreError: false, // fail closed if Redis is down (middleware/rateLimiter.js)
   // Per signed-in user; IPv6 addresses grouped by /56 (express-rate-limit's ipKeyGenerator).
-  keyGenerator: (req) => (req.user?._id ? `u:${req.user._id}` : require('express-rate-limit').ipKeyGenerator(req.ip)),
+  keyGenerator: (req) =>
+    req.user?._id ? `u:${req.user._id}` : require('express-rate-limit').ipKeyGenerator(req.ip),
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Too many attempts', message: 'For mange forsøk. Vent 15 minutter og prøv igjen.', code: 'MFA_LOCKED' },
+  message: {
+    error: 'Too many attempts',
+    message: 'For mange forsøk. Vent 15 minutter og prøv igjen.',
+    code: 'MFA_LOCKED',
+  },
 });
 router.get('/mfa', authenticate, mfaController.status);
 router.post('/mfa/setup/send-code', authenticate, mfaController.sendSetupCode);
@@ -179,7 +184,11 @@ const appleLimiter = require('../middleware/rateLimiter').makeLimiter('apple-nat
   legacyHeaders: false,
   message: { code: 'rate_limited', message: 'For mange forsøk. Vent litt og prøv igjen.' },
 });
-router.post('/apple/native', appleLimiter, require('../controllers/appleAuthController').appleNativeSignIn);
+router.post(
+  '/apple/native',
+  appleLimiter,
+  require('../controllers/appleAuthController').appleNativeSignIn
+);
 
 // Google OAuth Routes
 //

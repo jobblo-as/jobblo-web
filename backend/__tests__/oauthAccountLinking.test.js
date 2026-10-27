@@ -39,7 +39,11 @@ jest.mock('../models/User', () => ({
 }));
 
 const User = require('../models/User');
-const { resolveOAuthLogin, linkProviderToUser, isUsableProviderId } = require('../utils/oauthLinking');
+const {
+  resolveOAuthLogin,
+  linkProviderToUser,
+  isUsableProviderId,
+} = require('../utils/oauthLinking');
 
 let nextId = 0;
 function seedUser(overrides = {}) {
@@ -410,7 +414,10 @@ describe('14. OAuth placeholder passwords cannot authenticate', () => {
 
   it('login refuses any stored value that is not a bcrypt hash', () => {
     const source = stripComments(
-      fs.readdirSync(path.join(__dirname, '..', 'controllers', 'auth')).map((f) => fs.readFileSync(path.join(__dirname, '..', 'controllers', 'auth', f), 'utf8')).join('\n') // the controller is split into controllers/auth
+      fs
+        .readdirSync(path.join(__dirname, '..', 'controllers', 'auth'))
+        .map((f) => fs.readFileSync(path.join(__dirname, '..', 'controllers', 'auth', f), 'utf8'))
+        .join('\n') // the controller is split into controllers/auth
     );
 
     // A non-hash is never compared (a dummy hash is, for constant timing) and never passes.

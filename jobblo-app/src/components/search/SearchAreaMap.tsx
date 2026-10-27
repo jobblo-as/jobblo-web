@@ -6,15 +6,33 @@ import { MapUnavailable } from '@/components/ui/MapUnavailable';
 import { TC } from '../../theme/colors';
 
 export const NORWAY_SEARCH_CENTERS: Record<string, [number, number]> = {
-  '03': [10.7522, 59.9139], '11': [5.7331, 58.97], '15': [6.3648, 62.472],
-  '18': [14.3747, 67.2804], '31': [11.395, 59.52], '32': [10.2052, 60.7945],
-  '33': [9.0568, 60.2729], '34': [10.808, 61.1155], '39': [10.2323, 59.2816],
-  '40': [8.7277, 59.4358], '42': [7.9964, 58.1599], '46': [5.3329, 60.3913],
-  '50': [10.3951, 63.4305], '55': [18.9551, 69.6492], '56': [23.2594, 70.0712],
-  '0301': [10.7522, 59.9139], '1103': [5.7331, 58.97], '1201': [5.322, 60.3913],
-  '1601': [10.3951, 63.4305], '0101': [11.3883, 59.2836], '0106': [11.067, 59.1286],
-  '4204': [7.9964, 58.1599], '1001': [7.9964, 58.1599], '1004': [7.5945, 58.0788],
-  '1014': [7.1699, 58.1], '4601': [5.322, 60.3913], '5001': [10.3951, 63.4305],
+  '03': [10.7522, 59.9139],
+  '11': [5.7331, 58.97],
+  '15': [6.3648, 62.472],
+  '18': [14.3747, 67.2804],
+  '31': [11.395, 59.52],
+  '32': [10.2052, 60.7945],
+  '33': [9.0568, 60.2729],
+  '34': [10.808, 61.1155],
+  '39': [10.2323, 59.2816],
+  '40': [8.7277, 59.4358],
+  '42': [7.9964, 58.1599],
+  '46': [5.3329, 60.3913],
+  '50': [10.3951, 63.4305],
+  '55': [18.9551, 69.6492],
+  '56': [23.2594, 70.0712],
+  '0301': [10.7522, 59.9139],
+  '1103': [5.7331, 58.97],
+  '1201': [5.322, 60.3913],
+  '1601': [10.3951, 63.4305],
+  '0101': [11.3883, 59.2836],
+  '0106': [11.067, 59.1286],
+  '4204': [7.9964, 58.1599],
+  '1001': [7.9964, 58.1599],
+  '1004': [7.5945, 58.0788],
+  '1014': [7.1699, 58.1],
+  '4601': [5.322, 60.3913],
+  '5001': [10.3951, 63.4305],
   '0401': [11.0688, 60.7945],
 };
 
@@ -36,26 +54,30 @@ export function SearchAreaMap({ center, radius }: { center: [number, number]; ra
 
   return (
     <View className="relative h-52 overflow-hidden rounded-2xl bg-surface-2">
-      {MAPS_AVAILABLE ? <MapView
-        ref={mapRef}
-        provider={MAP_PROVIDER}
-        style={{ flex: 1 }}
-        initialRegion={regionFor(DEFAULT_CENTER, 5000)}
-        showsCompass
-        showsUserLocation={false}
-        showsMyLocationButton={false}
-        rotateEnabled={false}
-        pitchEnabled={false}
-        toolbarEnabled={false}
-      >
-        <Circle
-          center={coordinate}
-          radius={radius}
-          strokeColor={TC.brandText}
-          strokeWidth={2}
-          fillColor={TC.brandText}
-        />
-      </MapView> : <MapUnavailable />}
+      {MAPS_AVAILABLE ? (
+        <MapView
+          ref={mapRef}
+          provider={MAP_PROVIDER}
+          style={{ flex: 1 }}
+          initialRegion={regionFor(DEFAULT_CENTER, 5000)}
+          showsCompass
+          showsUserLocation={false}
+          showsMyLocationButton={false}
+          rotateEnabled={false}
+          pitchEnabled={false}
+          toolbarEnabled={false}
+        >
+          <Circle
+            center={coordinate}
+            radius={radius}
+            strokeColor={TC.brandText}
+            strokeWidth={2}
+            fillColor={TC.brandText}
+          />
+        </MapView>
+      ) : (
+        <MapUnavailable />
+      )}
       <View className="absolute bottom-2 left-2 rounded-full bg-white/95 px-2.5 py-1">
         <Text className="text-[0.8125rem] font-semibold text-muted">Oppdrag nær deg</Text>
       </View>

@@ -8,6 +8,7 @@ import { StepIndicator } from './StepIndicator';
 import { ContactInformation } from './ContactInformation';
 import { FormActions } from './FormActions';
 import { JobPreviewModal } from './JobPreviewModal';
+import { AiDraftReviewDialog } from './AiDraftReviewDialog';
 import { ChecklistStep } from './ChecklistStep';
 import { useCreateJobForm } from '../../hooks/useCreateJobForm';
 import { CARD } from '../../theme/brand';
@@ -25,6 +26,7 @@ interface InitialData {
   countyCode?: string;
   municipalityCode?: string;
   areaCode?: string;
+  postalCode?: string;
   latitude?: number;
   longitude?: number;
   categories?: string | string[];
@@ -72,6 +74,8 @@ export default function CreateJobForm({
     setMunicipalityCode,
     areaCode,
     setAreaCode,
+    postalCode,
+    setPostalCode,
     coordinates,
     setCoordinates,
     categories,
@@ -92,7 +96,6 @@ export default function CreateJobForm({
     setUrgent,
     maxApplicants,
     setMaxApplicants,
-    equipment,
     fromDate,
     setFromDate,
     toDate,
@@ -114,6 +117,8 @@ export default function CreateJobForm({
     smartFillPrompt,
     setSmartFillPrompt,
     handleAiSmartFill,
+    aiDraftRows,
+    applyAiDraft,
     smartFillPricingNote,
     setSmartFillPricingNote,
     isGeneratingFullListing,
@@ -212,8 +217,8 @@ export default function CreateJobForm({
                             {showSmartFillInput ? 'Beskriv oppdraget' : 'Smart-utfylling'}
                           </h2>
                           <p className="mt-1 max-w-md text-[0.8125rem] leading-relaxed text-[#63665F]">
-                            Fortell kort hva som skal gjøres — ta gjerne med størrelse,
-                            tilstand og tidspunkt, så fyller vi ut resten av skjemaet for deg.
+                            Fortell kort hva som skal gjøres — ta gjerne med størrelse, tilstand og
+                            tidspunkt, så lager vi et utkast du kan se over før noe fylles inn.
                           </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-1">
@@ -244,7 +249,7 @@ export default function CreateJobForm({
                             className="inline-flex h-11 items-center gap-2 rounded-full border border-[#E6E7E1] bg-white px-5 text-[0.9375rem] font-semibold text-[#0B0B0B] transition-colors hover:border-[#2E6641]/45 hover:text-[#2E6641] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15"
                           >
                             <Sparkles size={16} strokeWidth={2} className="text-[#2E6641]" />
-                            Prøv smart-utfylling
+                            Foreslå utkast med AI
                           </button>
                         ) : (
                           <div className="space-y-3">
@@ -264,7 +269,7 @@ export default function CreateJobForm({
                                 {isGeneratingFullListing && (
                                   <Loader2 size={15} className="animate-spin" />
                                 )}
-                                {isGeneratingFullListing ? 'Fyller ut…' : 'Fyll ut nå'}
+                                {isGeneratingFullListing ? 'Lager forslag…' : 'Foreslå utkast'}
                               </button>
                               <button
                                 type="button"
@@ -305,8 +310,9 @@ export default function CreateJobForm({
                   scrolled into view. */}
               <div
                 data-invalid={errors?.images ? 'true' : undefined}
-                className={`box-card-custom p-5 md:p-6 transition-colors ${errors?.images ? 'border-[#B4453A]' : ''
-                  }`}
+                className={`box-card-custom p-5 md:p-6 transition-colors ${
+                  errors?.images ? 'border-[#B4453A]' : ''
+                }`}
               >
                 <div className="mb-5 flex items-start gap-3">
                   <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#EAF1E9] text-[#2E6641]">
@@ -314,7 +320,7 @@ export default function CreateJobForm({
                   </span>
                   <div>
                     <h2 className="text-[0.9375rem] font-semibold tracking-[-0.02em] text-[#0B0B0B]">
-                      Bilder <span className="font-normal text-[#9B9E96]">· påkrevd</span>
+                      Bilder <span className="font-normal text-[#9B9E96]">· valgfritt</span>
                     </h2>
                     <p className="mt-0.5 text-[0.8125rem] text-[#63665F]">
                       Vis frem oppdraget med inntil 6 bilder
@@ -328,16 +334,17 @@ export default function CreateJobForm({
                   initialFiles={selectedImages}
                 />
                 {/* AI analyse button — shown when at least one image is ready */}
-                {(selectedImages.length > 0 || currentImages.length > 0) && imageAnalysis.status !== 'loading' && (
-                  <button
-                    type="button"
-                    onClick={() => void triggerImageAnalysis()}
-                    className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#2E6641] bg-[#EAF1E9] px-4 py-2 text-[0.8125rem] font-semibold text-[#2E6641] transition-colors hover:bg-[#d6eadc] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E6641]/25"
-                  >
-                    <Sparkles size={15} strokeWidth={2} />
-                    Analyser bilde med AI
-                  </button>
-                )}
+                {(selectedImages.length > 0 || currentImages.length > 0) &&
+                  imageAnalysis.status !== 'loading' && (
+                    <button
+                      type="button"
+                      onClick={() => void triggerImageAnalysis()}
+                      className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#2E6641] bg-[#EAF1E9] px-4 py-2 text-[0.8125rem] font-semibold text-[#2E6641] transition-colors hover:bg-[#d6eadc] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E6641]/25"
+                    >
+                      <Sparkles size={15} strokeWidth={2} />
+                      Analyser bilde med AI
+                    </button>
+                  )}
                 {imageAnalysis.status === 'loading' && (
                   <span className="mt-3 inline-flex items-center gap-2 text-[0.8125rem] text-[#63665F]">
                     <Loader2 size={15} className="animate-spin text-[#2E6641]" />
@@ -346,8 +353,15 @@ export default function CreateJobForm({
                 )}
                 {imageAnalysis.status === 'success' && imageAnalysis.durationRange && (
                   <p className="mt-2 text-xs text-[#63665F]">
-                    Estimert tid: {imageAnalysis.durationRange.min}–{imageAnalysis.durationRange.max}{' '}
-                    {imageAnalysis.durationRange.unit === 'hours' ? 'timer' : imageAnalysis.durationRange.unit}. Pris og tid er estimater.
+                    Estimert tid: {imageAnalysis.durationRange.min}–
+                    {imageAnalysis.durationRange.max}{' '}
+                    {(
+                      { minutes: 'minutter', hours: 'timer', days: 'dager' } as Record<
+                        string,
+                        string
+                      >
+                    )[imageAnalysis.durationRange.unit] ?? 'timer'}
+                    . Pris og tid er estimater.
                   </p>
                 )}
                 {errors?.images && (
@@ -365,23 +379,11 @@ export default function CreateJobForm({
                 // Edit mode can seed an array; BasicInformation only ever selects one, so it reads a string.
                 categories={categories as string}
                 setCategories={setCategories}
-                price={price}
-                setPrice={setPrice}
                 tags={tags}
                 setTags={setTags}
-                setDurationValue={setDurationValue}
-                setDurationUnit={setDurationUnit}
-                setHourlyRate={setHourlyRate}
                 maxApplicants={maxApplicants}
                 setMaxApplicants={setMaxApplicants}
                 errors={errors}
-                durationValue={durationValue}
-                durationUnit={durationUnit}
-                city={city}
-                countyCode={countyCode}
-                paymentType={paymentType}
-                equipment={equipment}
-                urgent={urgent}
                 aiPricingNote={smartFillPricingNote}
                 onDismissAiPricingNote={() => setSmartFillPricingNote('')}
               />
@@ -401,6 +403,8 @@ export default function CreateJobForm({
                 setMunicipalityCode={setMunicipalityCode}
                 areaCode={areaCode}
                 setAreaCode={setAreaCode}
+                postalCode={postalCode}
+                setPostalCode={setPostalCode}
                 coordinates={coordinates}
                 setCoordinates={setCoordinates}
                 durationValue={durationValue}
@@ -425,33 +429,19 @@ export default function CreateJobForm({
                 subscription={currentUser?.subscription || 'Standard'}
                 errors={errors}
               />
+              <ChecklistStep
+                checklistItems={checklistItems}
+                setChecklistItems={setChecklistItems}
+                currentCategory={Array.isArray(categories) ? categories[0] : categories}
+              />
+              <ContactInformation
+                phone={phone}
+                setPhone={setPhone}
+                email={email}
+                setEmail={setEmail}
+                errors={errors}
+              />
             </div>
-          )}
-
-          {currentStep === 3 && (
-            <ChecklistStep
-              checklistItems={checklistItems}
-              setChecklistItems={setChecklistItems}
-              currentCategory={Array.isArray(categories) ? categories[0] : categories}
-            />
-          )}
-
-          {currentStep === 4 && (
-            <ContactInformation
-              phone={phone}
-              setPhone={setPhone}
-              email={email}
-              setEmail={setEmail}
-              summary={{
-                title,
-                categories,
-                address,
-                city,
-                price,
-                paymentType,
-              }}
-              errors={errors}
-            />
           )}
         </div>
 
@@ -465,6 +455,8 @@ export default function CreateJobForm({
           isSubmitting={isSubmitting}
         />
       </form>
+
+      <AiDraftReviewDialog rows={aiDraftRows} onApply={applyAiDraft} />
 
       <JobPreviewModal
         showPreview={showPreview}

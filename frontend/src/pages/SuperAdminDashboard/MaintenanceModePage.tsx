@@ -32,7 +32,9 @@ export default function MaintenanceModePage() {
     setSaving(true);
     try {
       await toggleMutation.mutateAsync({ enabled, message: enabled ? message : undefined });
-      toast.success(enabled ? 'Vedlikeholdsmodus er aktivert.' : 'Vedlikeholdsmodus er deaktivert.');
+      toast.success(
+        enabled ? 'Vedlikeholdsmodus er aktivert.' : 'Vedlikeholdsmodus er deaktivert.'
+      );
     } catch {
       toast.error('Kunne ikke oppdatere vedlikeholdsmodus.');
     } finally {
@@ -43,7 +45,10 @@ export default function MaintenanceModePage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <AdminPageHeader title="Vedlikeholdsmodus" description="Sett plattformen i vedlikeholdsmodus" />
+        <AdminPageHeader
+          title="Vedlikeholdsmodus"
+          description="Sett plattformen i vedlikeholdsmodus"
+        />
         <AdminLoadingSkeleton rows={4} />
       </div>
     );
@@ -52,7 +57,10 @@ export default function MaintenanceModePage() {
   if (isError) {
     return (
       <div className="space-y-6">
-        <AdminPageHeader title="Vedlikeholdsmodus" description="Sett plattformen i vedlikeholdsmodus" />
+        <AdminPageHeader
+          title="Vedlikeholdsmodus"
+          description="Sett plattformen i vedlikeholdsmodus"
+        />
         <AdminErrorState onRetry={refetch} />
       </div>
     );
@@ -80,7 +88,8 @@ export default function MaintenanceModePage() {
           <div>
             <p className="font-semibold">Vedlikeholdsmodus er aktiv</p>
             <p className="text-red-500 mt-0.5">
-              Plattformen er utilgjengelig for vanlige brukere. Den angitte meldingen vises på allmenningssiden.
+              Plattformen er utilgjengelig for vanlige brukere. Den angitte meldingen vises på
+              allmenningssiden.
             </p>
           </div>
         </div>

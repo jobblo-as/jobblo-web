@@ -1,6 +1,10 @@
 jest.mock('mongoose', () => ({
   connection: { db: { collection: jest.fn() } },
-  Types: { ObjectId: jest.fn(function ObjectId(value) { return `object-id:${value}`; }) },
+  Types: {
+    ObjectId: jest.fn(function ObjectId(value) {
+      return `object-id:${value}`;
+    }),
+  },
 }));
 jest.mock('../services/stripe/customers', () => ({
   isResourceMissing: jest.fn((error) => error?.code === 'resource_missing'),
@@ -32,9 +36,11 @@ test('account deletion guard verifies the V2 subscription in its recorded Stripe
     stripeMode: 'test',
     status: 'active',
   };
-  const testStripe = { subscriptions: { retrieve: jest.fn().mockResolvedValue({ status: 'past_due' }) } };
+  const testStripe = {
+    subscriptions: { retrieve: jest.fn().mockResolvedValue({ status: 'past_due' }) },
+  };
   const config = {
-    getStripeForMode: jest.fn(async (testMode) => testMode ? testStripe : stripe),
+    getStripeForMode: jest.fn(async (testMode) => (testMode ? testStripe : stripe)),
   };
 
   await expect(findBillingCapableSubscription(config, 'user-1')).resolves.toMatchObject({

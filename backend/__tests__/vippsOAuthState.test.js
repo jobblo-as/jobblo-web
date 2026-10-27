@@ -257,7 +257,14 @@ describe('the identity decision reaches the user as a distinguishable outcome', 
     primeVipps({ sub: 'attacker-sub' });
     const req = makeReq({
       query: { code: 'c', state: 'abc' },
-      session: { vippsAuth: { state: 'abc', createdAt: Date.now(), linkUserId: 'user_1', linkSessionId: 'sess_1' } },
+      session: {
+        vippsAuth: {
+          state: 'abc',
+          createdAt: Date.now(),
+          linkUserId: 'user_1',
+          linkSessionId: 'sess_1',
+        },
+      },
       ...who,
     });
     const res = makeRes();

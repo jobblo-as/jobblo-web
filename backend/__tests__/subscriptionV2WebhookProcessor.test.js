@@ -10,7 +10,9 @@ const periodEnd = Math.floor(new Date('2026-10-01T00:00:00Z').getTime() / 1000);
 function query(value) {
   return {
     lean: async () => value,
-    sort() { return this; },
+    sort() {
+      return this;
+    },
     then: (resolve, reject) => Promise.resolve(value).then(resolve, reject),
   };
 }
@@ -45,15 +47,17 @@ function fixture({ existingSubscription = null, invoiceStatus = 'paid' } = {}) {
     metadata,
     latest_invoice: invoice,
     items: {
-      data: [{
-        current_period_start: periodStart,
-        current_period_end: periodEnd,
-        price: {
-          id: 'price_test',
-          currency: 'nok',
-          recurring: { interval: 'month', interval_count: 1 },
+      data: [
+        {
+          current_period_start: periodStart,
+          current_period_end: periodEnd,
+          price: {
+            id: 'price_test',
+            currency: 'nok',
+            recurring: { interval: 'month', interval_count: 1 },
+          },
         },
-      }],
+      ],
     },
   };
   const eventDoc = { _id: new mongoose.Types.ObjectId(), status: 'processing' };
@@ -96,12 +100,14 @@ function fixture({ existingSubscription = null, invoiceStatus = 'paid' } = {}) {
   };
   const planModel = { findById: jest.fn(() => ({ lean: async () => plan })) };
   const usageModel = {
-    findOne: jest.fn(() => query({
-      _id: new mongoose.Types.ObjectId(),
-      billingPeriodStart: new Date(periodStart * 1000),
-      billingPeriodEnd: new Date(periodEnd * 1000),
-      periodType: 'paid',
-    })),
+    findOne: jest.fn(() =>
+      query({
+        _id: new mongoose.Types.ObjectId(),
+        billingPeriodStart: new Date(periodStart * 1000),
+        billingPeriodEnd: new Date(periodEnd * 1000),
+        periodType: 'paid',
+      })
+    ),
     findOneAndUpdate: jest.fn(async () => ({ _id: new mongoose.Types.ObjectId() })),
     updateOne: jest.fn(async () => ({ modifiedCount: 1 })),
   };
@@ -147,12 +153,19 @@ test('does not retry a failed webhook event after it has been explicitly reconci
     reconciliationOperationId: operationId,
   });
 
-  await expect(processVerifiedEvent({
-    id: 'evt_checkout_v2',
-    type: 'checkout.session.completed',
-    livemode: false,
-    data: { object: {} },
-  }, 'test', f.stripe, f.overrides)).resolves.toEqual({
+  await expect(
+    processVerifiedEvent(
+      {
+        id: 'evt_checkout_v2',
+        type: 'checkout.session.completed',
+        livemode: false,
+        data: { object: {} },
+      },
+      'test',
+      f.stripe,
+      f.overrides
+    )
+  ).resolves.toEqual({
     handled: 'subscription_duplicate_event',
   });
   expect(f.stripe.subscriptions.retrieve).not.toHaveBeenCalled();
@@ -292,9 +305,9 @@ describe('Subscription V2 webhook processor', () => {
       data: { object: f.invoice },
     };
 
-    await expect(
-      processVerifiedEvent(event, 'test', f.stripe, f.overrides)
-    ).resolves.toEqual({ handled: 'subscription_state_updated' });
+    await expect(processVerifiedEvent(event, 'test', f.stripe, f.overrides)).resolves.toEqual({
+      handled: 'subscription_state_updated',
+    });
     expect(f.subscriptionModel.updateOne).toHaveBeenCalledWith(
       { _id: expect.any(mongoose.Types.ObjectId) },
       {
@@ -321,9 +334,9 @@ describe('Subscription V2 webhook processor', () => {
       data: { object: f.invoice },
     };
 
-    await expect(
-      processVerifiedEvent(event, 'test', f.stripe, f.overrides)
-    ).resolves.toEqual({ handled: 'subscription_initial_payment_failed' });
+    await expect(processVerifiedEvent(event, 'test', f.stripe, f.overrides)).resolves.toEqual({
+      handled: 'subscription_initial_payment_failed',
+    });
     expect(f.operationModel.updateOne).toHaveBeenCalledWith(
       { _id: f.operation._id, status: 'pending' },
       expect.objectContaining({
@@ -356,9 +369,9 @@ describe('Subscription V2 webhook processor', () => {
       data: { object: f.invoice },
     };
 
-    await expect(
-      processVerifiedEvent(event, 'test', f.stripe, f.overrides)
-    ).resolves.toEqual({ handled: 'subscription_duplicate_invoice' });
+    await expect(processVerifiedEvent(event, 'test', f.stripe, f.overrides)).resolves.toEqual({
+      handled: 'subscription_duplicate_invoice',
+    });
     expect(f.subscriptionModel.updateOne).not.toHaveBeenCalled();
   });
 
@@ -383,9 +396,9 @@ describe('Subscription V2 webhook processor', () => {
       data: { object: f.invoice },
     };
 
-    await expect(
-      processVerifiedEvent(event, 'test', f.stripe, f.overrides)
-    ).resolves.toEqual({ handled: 'subscription_state_updated' });
+    await expect(processVerifiedEvent(event, 'test', f.stripe, f.overrides)).resolves.toEqual({
+      handled: 'subscription_state_updated',
+    });
     expect(f.subscriptionModel.updateOne).toHaveBeenCalledWith(
       { _id: expect.any(mongoose.Types.ObjectId) },
       {
@@ -429,19 +442,26 @@ describe('Subscription V2 webhook processor', () => {
       query(filter.recoveryInvoiceId ? null : record)
     );
 
-    await expect(processVerifiedEvent({
-      id: 'evt_renewal_payment_failed',
-      type: 'invoice.payment_failed',
-      livemode: false,
-      created: periodEnd,
-      data: { object: f.invoice },
-    }, 'test', f.stripe, {
-      ...f.overrides,
-      env: {
-        SUBSCRIPTION_V2_GRACE_PERIOD_ENABLED: 'true',
-        SUBSCRIPTION_V2_RECOVERY_EMAILS_ENABLED: 'true',
-      },
-    })).resolves.toEqual({ handled: 'subscription_payment_failed' });
+    await expect(
+      processVerifiedEvent(
+        {
+          id: 'evt_renewal_payment_failed',
+          type: 'invoice.payment_failed',
+          livemode: false,
+          created: periodEnd,
+          data: { object: f.invoice },
+        },
+        'test',
+        f.stripe,
+        {
+          ...f.overrides,
+          env: {
+            SUBSCRIPTION_V2_GRACE_PERIOD_ENABLED: 'true',
+            SUBSCRIPTION_V2_RECOVERY_EMAILS_ENABLED: 'true',
+          },
+        }
+      )
+    ).resolves.toEqual({ handled: 'subscription_payment_failed' });
 
     expect(f.subscriptionModel.findOneAndUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -501,24 +521,32 @@ describe('Subscription V2 webhook processor', () => {
     f.usageModel.findOne.mockImplementation((filter) => {
       const s = filter.billingPeriodStart;
       const e = filter.billingPeriodEnd;
-      const startOk = s instanceof Date ? +s === +oldPaid.billingPeriodStart : +oldPaid.billingPeriodStart <= +s.$lte;
+      const startOk =
+        s instanceof Date
+          ? +s === +oldPaid.billingPeriodStart
+          : +oldPaid.billingPeriodStart <= +s.$lte;
       const endOk = !e || +oldPaid.billingPeriodEnd >= +e.$gte;
       return query(filter.periodType === 'paid' && startOk && endOk ? oldPaid : null);
     });
 
-    await processVerifiedEvent({
-      id: 'evt_rollover_payment_failed',
-      type: 'invoice.payment_failed',
-      livemode: false,
-      created: newStart + 3600,
-      data: { object: f.invoice },
-    }, 'test', f.stripe, {
-      ...f.overrides,
-      env: {
-        SUBSCRIPTION_V2_GRACE_PERIOD_ENABLED: 'true',
-        SUBSCRIPTION_V2_RECOVERY_EMAILS_ENABLED: 'true',
+    await processVerifiedEvent(
+      {
+        id: 'evt_rollover_payment_failed',
+        type: 'invoice.payment_failed',
+        livemode: false,
+        created: newStart + 3600,
+        data: { object: f.invoice },
       },
-    });
+      'test',
+      f.stripe,
+      {
+        ...f.overrides,
+        env: {
+          SUBSCRIPTION_V2_GRACE_PERIOD_ENABLED: 'true',
+          SUBSCRIPTION_V2_RECOVERY_EMAILS_ENABLED: 'true',
+        },
+      }
+    );
 
     expect(f.subscriptionModel.findOneAndUpdate).toHaveBeenCalledWith(
       expect.objectContaining({ _id: record._id }),
@@ -562,39 +590,56 @@ describe('Subscription V2 webhook processor', () => {
     f.subscription.items.data[0].current_period_start = newStart;
     f.subscription.items.data[0].current_period_end = newEnd;
     f.stripe.invoices.retrieve.mockResolvedValue(f.invoice);
-    f.planModel.findById.mockReturnValue({ lean: async () => ({ _id: planId, entitlements: { freeContact: 15 } }) });
+    f.planModel.findById.mockReturnValue({
+      lean: async () => ({ _id: planId, entitlements: { freeContact: 15 } }),
+    });
 
-    await processVerifiedEvent({
-      id: 'evt_renewal_paid',
-      type: 'invoice.paid',
-      livemode: false,
-      created: newStart + 3600,
-      data: { object: f.invoice },
-    }, 'test', f.stripe, f.overrides);
+    await processVerifiedEvent(
+      {
+        id: 'evt_renewal_paid',
+        type: 'invoice.paid',
+        livemode: false,
+        created: newStart + 3600,
+        data: { object: f.invoice },
+      },
+      'test',
+      f.stripe,
+      f.overrides
+    );
 
     expect(f.subscriptionModel.updateOne).toHaveBeenCalledWith(
       { _id: record._id },
-      { $set: expect.objectContaining({
-        status: 'active',
-        currentPeriodStart: new Date(newStart * 1000),
-        currentPeriodEnd: new Date(newEnd * 1000),
-        nextRenewalAt: new Date(newEnd * 1000),
-      }) }
+      {
+        $set: expect.objectContaining({
+          status: 'active',
+          currentPeriodStart: new Date(newStart * 1000),
+          currentPeriodEnd: new Date(newEnd * 1000),
+          nextRenewalAt: new Date(newEnd * 1000),
+        }),
+      }
     );
     expect(f.usageModel.findOneAndUpdate).toHaveBeenCalledWith(
       { userId, billingPeriodStart: new Date(newStart * 1000) },
-      { $setOnInsert: expect.objectContaining({
-        periodType: 'paid',
-        billingPeriodEnd: new Date(newEnd * 1000),
-        includedContacts: 15,
-        consumedIncludedContacts: 0,
-      }) },
+      {
+        $setOnInsert: expect.objectContaining({
+          periodType: 'paid',
+          billingPeriodEnd: new Date(newEnd * 1000),
+          includedContacts: 15,
+          consumedIncludedContacts: 0,
+        }),
+      },
       expect.objectContaining({ upsert: true })
     );
     // The invoice operation succeeds with no stale error left from earlier failed attempts.
     expect(f.operationModel.updateOne).toHaveBeenCalledWith(
       { _id: f.operation._id, status: 'pending' },
-      { $set: expect.objectContaining({ status: 'succeeded', lastErrorCode: null, lastErrorMessage: null }) }
+      {
+        $set: expect.objectContaining({
+          status: 'succeeded',
+          lastErrorCode: null,
+          lastErrorMessage: null,
+        }),
+      }
     );
   });
 
@@ -619,18 +664,28 @@ describe('Subscription V2 webhook processor', () => {
     f.subscription.status = 'past_due';
     f.stripe.invoices.retrieve.mockResolvedValue(f.invoice);
     f.subscriptionModel.findOne.mockReturnValue(query(record));
-    f.usageModel.findOne.mockReturnValue(query({ periodType: 'paid', billingPeriodStart: new Date(periodStart * 1000) }));
+    f.usageModel.findOne.mockReturnValue(
+      query({ periodType: 'paid', billingPeriodStart: new Date(periodStart * 1000) })
+    );
 
-    await processVerifiedEvent({
-      id: 'evt_retry_failed_day_3',
-      type: 'invoice.payment_failed',
-      livemode: false,
-      created: periodEnd + 3 * 86400,
-      data: { object: f.invoice },
-    }, 'test', f.stripe, {
-      ...f.overrides,
-      env: { SUBSCRIPTION_V2_GRACE_PERIOD_ENABLED: 'true', SUBSCRIPTION_V2_RECOVERY_EMAILS_ENABLED: 'true' },
-    });
+    await processVerifiedEvent(
+      {
+        id: 'evt_retry_failed_day_3',
+        type: 'invoice.payment_failed',
+        livemode: false,
+        created: periodEnd + 3 * 86400,
+        data: { object: f.invoice },
+      },
+      'test',
+      f.stripe,
+      {
+        ...f.overrides,
+        env: {
+          SUBSCRIPTION_V2_GRACE_PERIOD_ENABLED: 'true',
+          SUBSCRIPTION_V2_RECOVERY_EMAILS_ENABLED: 'true',
+        },
+      }
+    );
 
     expect(f.subscriptionModel.findOneAndUpdate).not.toHaveBeenCalled(); // deadline untouched
     // Emails are only upserted with $setOnInsert, keyed by invoice + kind, and anchored
@@ -639,7 +694,9 @@ describe('Subscription V2 webhook processor', () => {
       expect(filter).toEqual(expect.objectContaining({ invoiceId: 'in_v2' }));
       expect(Object.keys(update)).toEqual(['$setOnInsert']);
     }
-    expect(f.recoveryEmailModel.updateOne.mock.calls[0][1].$setOnInsert.scheduledAt).toEqual(firstFailure);
+    expect(f.recoveryEmailModel.updateOne.mock.calls[0][1].$setOnInsert.scheduledAt).toEqual(
+      firstFailure
+    );
   });
 
   test('does not anchor grace to an old paid period that ended before the current one', async () => {
@@ -666,13 +723,18 @@ describe('Subscription V2 webhook processor', () => {
       query(filter.billingPeriodEnd && periodEnd * 1000 < +filter.billingPeriodEnd.$gte ? null : {})
     );
 
-    await processVerifiedEvent({
-      id: 'evt_stale_paid_period',
-      type: 'invoice.payment_failed',
-      livemode: false,
-      created: periodEnd + 61 * 86400,
-      data: { object: f.invoice },
-    }, 'test', f.stripe, { ...f.overrides, env: { SUBSCRIPTION_V2_GRACE_PERIOD_ENABLED: 'true' } });
+    await processVerifiedEvent(
+      {
+        id: 'evt_stale_paid_period',
+        type: 'invoice.payment_failed',
+        livemode: false,
+        created: periodEnd + 61 * 86400,
+        data: { object: f.invoice },
+      },
+      'test',
+      f.stripe,
+      { ...f.overrides, env: { SUBSCRIPTION_V2_GRACE_PERIOD_ENABLED: 'true' } }
+    );
 
     expect(f.subscriptionModel.findOneAndUpdate).not.toHaveBeenCalled();
   });
@@ -697,28 +759,38 @@ describe('Subscription V2 webhook processor', () => {
     f.subscription.latest_invoice = f.invoice;
     f.stripe.invoices.retrieve.mockResolvedValue(f.invoice);
 
-    await expect(processVerifiedEvent({
-      id: 'evt_late_recovery_payment',
-      type: 'invoice.paid',
-      livemode: false,
-      data: { object: f.invoice },
-    }, 'test', f.stripe, f.overrides)).resolves.toEqual({
+    await expect(
+      processVerifiedEvent(
+        {
+          id: 'evt_late_recovery_payment',
+          type: 'invoice.paid',
+          livemode: false,
+          data: { object: f.invoice },
+        },
+        'test',
+        f.stripe,
+        f.overrides
+      )
+    ).resolves.toEqual({
       handled: 'subscription_late_payment_reconciliation_required',
     });
 
     expect(f.subscriptionModel.updateOne).toHaveBeenCalledWith(
       { _id: record._id, paymentRecoveryStatus: 'retrying', recoveryInvoiceId: f.invoice.id },
       expect.objectContaining({
-        $push: { recoveryHistory: expect.objectContaining({
-          action: 'late_payment_reconciliation_required',
-          invoiceId: f.invoice.id,
-        }) },
+        $push: {
+          recoveryHistory: expect.objectContaining({
+            action: 'late_payment_reconciliation_required',
+            invoiceId: f.invoice.id,
+          }),
+        },
         // Parked for a day so the grace worker does not re-select it every minute.
         $set: { recoveryLeaseUntil: expect.any(Date) },
       })
     );
-    const parkedUntil = f.subscriptionModel.updateOne.mock.calls
-      .find(([filter]) => filter.paymentRecoveryStatus === 'retrying')[1].$set.recoveryLeaseUntil;
+    const parkedUntil = f.subscriptionModel.updateOne.mock.calls.find(
+      ([filter]) => filter.paymentRecoveryStatus === 'retrying'
+    )[1].$set.recoveryLeaseUntil;
     expect(parkedUntil.getTime() - Date.now()).toBeGreaterThan(23 * 60 * 60 * 1000);
     expect(f.usageModel.findOneAndUpdate).not.toHaveBeenCalled();
   });
@@ -737,24 +809,38 @@ describe('Subscription V2 webhook processor', () => {
       gracePeriodEndsAt: new Date('2026-10-01T00:00:00Z'),
     };
     const f = fixture({ existingSubscription: record });
-    f.invoice.status_transitions = { paid_at: Math.floor(new Date('2026-10-02T00:00:00Z').getTime() / 1000) };
+    f.invoice.status_transitions = {
+      paid_at: Math.floor(new Date('2026-10-02T00:00:00Z').getTime() / 1000),
+    };
     f.subscription.status = 'canceled';
     f.stripe.invoices.retrieve.mockResolvedValue(f.invoice);
 
-    await expect(processVerifiedEvent({
-      id: 'evt_paid_after_cancel',
-      type: 'invoice.paid',
-      livemode: false,
-      data: { object: f.invoice },
-    }, 'test', f.stripe, f.overrides)).resolves.toEqual({
+    await expect(
+      processVerifiedEvent(
+        {
+          id: 'evt_paid_after_cancel',
+          type: 'invoice.paid',
+          livemode: false,
+          data: { object: f.invoice },
+        },
+        'test',
+        f.stripe,
+        f.overrides
+      )
+    ).resolves.toEqual({
       handled: 'subscription_paid_after_cancellation_reconciliation_required',
     });
 
     expect(f.usageModel.findOneAndUpdate).not.toHaveBeenCalled();
-    expect(f.subscriptionModel.updateOne).not.toHaveBeenCalledWith({ _id: record._id }, expect.anything());
+    expect(f.subscriptionModel.updateOne).not.toHaveBeenCalledWith(
+      { _id: record._id },
+      expect.anything()
+    );
     expect(f.operationModel.findOneAndUpdate).toHaveBeenCalledWith(
       { stripeMode: 'test', operationId: 'invoice:in_v2' },
-      expect.objectContaining({ $set: expect.objectContaining({ status: 'reconciliation_required' }) }),
+      expect.objectContaining({
+        $set: expect.objectContaining({ status: 'reconciliation_required' }),
+      }),
       expect.anything()
     );
   });
@@ -778,9 +864,9 @@ describe('Subscription V2 webhook processor', () => {
       data: { object: f.invoice },
     };
 
-    await expect(
-      processVerifiedEvent(event, 'test', f.stripe, f.overrides)
-    ).rejects.toThrow('subscription_record_owner_mismatch');
+    await expect(processVerifiedEvent(event, 'test', f.stripe, f.overrides)).rejects.toThrow(
+      'subscription_record_owner_mismatch'
+    );
     expect(f.subscriptionModel.updateOne).not.toHaveBeenCalled();
   });
 

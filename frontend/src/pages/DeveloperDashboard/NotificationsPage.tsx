@@ -2,10 +2,27 @@ import { Bell, Mail, MailX, Smartphone, Timer } from 'lucide-react';
 import { ago, ms, num, pct } from '@/lib/devFormat';
 import { useDevNotifications, useUrlFilters } from '../../features/developer/hooks';
 import type { DeliveryRow } from '../../api/developer';
-import { CountBars, ErrorState, KeyValue, NotConfigured, PageHeader, RangeSelect, RefreshButton, Section, StatCard, StatusBadge } from '../../components/developer/kit';
+import {
+  CountBars,
+  ErrorState,
+  KeyValue,
+  NotConfigured,
+  PageHeader,
+  RangeSelect,
+  RefreshButton,
+  Section,
+  StatCard,
+  StatusBadge,
+} from '../../components/developer/kit';
 import { DataTable, type Column } from '../../components/developer/DataTable';
 import { TimeSeriesChart } from '../../components/developer/TimeSeriesChart';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/developer/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/developer/ui/select';
 
 export default function NotificationsPage() {
   const [f, setF] = useUrlFilters({ range: '7d', channel: 'all', status: 'all' });
@@ -19,13 +36,46 @@ export default function NotificationsPage() {
   const failed = (t.email?.failed || 0) + (t.push?.failed || 0);
 
   const columns: Column<DeliveryRow>[] = [
-    { key: 'at', header: 'Time', cell: (r) => <span className="text-xs text-muted-foreground">{ago(r.at)}</span> },
-    { key: 'channel', header: 'Channel', cell: (r) => <StatusBadge status={r.channel} tone="info" /> },
-    { key: 'template', header: 'Template / title', className: 'max-w-[320px]', cell: (r) => <span className="block truncate">{r.template || '—'}</span> },
-    { key: 'status', header: 'Status', cell: (r) => <StatusBadge status={r.status === 'sent' ? 'ok' : r.status} label={r.status} /> },
-    { key: 'to', header: 'Recipient', cell: (r) => <span className="text-xs text-muted-foreground">{r.to || '—'}</span> },
-    { key: 'lat', header: 'Latency', align: 'right', cell: (r) => <span className="tabular-nums">{ms(r.latencyMs)}</span> },
-    { key: 'err', header: 'Error', className: 'max-w-[260px]', cell: (r) => <span className="block truncate text-xs text-red-600">{r.errorCode || r.error || ''}</span> },
+    {
+      key: 'at',
+      header: 'Time',
+      cell: (r) => <span className="text-xs text-muted-foreground">{ago(r.at)}</span>,
+    },
+    {
+      key: 'channel',
+      header: 'Channel',
+      cell: (r) => <StatusBadge status={r.channel} tone="info" />,
+    },
+    {
+      key: 'template',
+      header: 'Template / title',
+      className: 'max-w-[320px]',
+      cell: (r) => <span className="block truncate">{r.template || '—'}</span>,
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      cell: (r) => <StatusBadge status={r.status === 'sent' ? 'ok' : r.status} label={r.status} />,
+    },
+    {
+      key: 'to',
+      header: 'Recipient',
+      cell: (r) => <span className="text-xs text-muted-foreground">{r.to || '—'}</span>,
+    },
+    {
+      key: 'lat',
+      header: 'Latency',
+      align: 'right',
+      cell: (r) => <span className="tabular-nums">{ms(r.latencyMs)}</span>,
+    },
+    {
+      key: 'err',
+      header: 'Error',
+      className: 'max-w-[260px]',
+      cell: (r) => (
+        <span className="block truncate text-xs text-red-600">{r.errorCode || r.error || ''}</span>
+      ),
+    },
   ];
 
   return (
@@ -43,27 +93,83 @@ export default function NotificationsPage() {
       {error && <ErrorState error={error} onRetry={() => refetch()} />}
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-        <StatCard label="Emails sent" icon={<Mail />} loading={isLoading} value={num(sent('email'))} hint={`${num(t.email?.failed || 0)} failed`} />
-        <StatCard label="Push sent" icon={<Smartphone />} loading={isLoading} value={num(sent('push'))} hint={`${num(t.push?.skipped || 0)} skipped (no device)`} />
-        <StatCard label="Failed" icon={<MailX />} tone={failed ? 'danger' : 'success'} loading={isLoading} value={num(failed)} />
-        <StatCard label="Email latency" icon={<Timer />} loading={isLoading} value={ms(data?.latency.email?.avg)} hint={`P95 ${ms(data?.latency.email?.p95)}`} />
-        <StatCard label="Push latency" icon={<Timer />} loading={isLoading} value={ms(data?.latency.push?.avg)} hint={`P95 ${ms(data?.latency.push?.p95)}`} />
-        <StatCard label="In-app" icon={<Bell />} loading={isLoading} value={num(data?.inApp.total)} hint={`read rate ${pct(data?.inApp.readRate)}`} />
+        <StatCard
+          label="Emails sent"
+          icon={<Mail />}
+          loading={isLoading}
+          value={num(sent('email'))}
+          hint={`${num(t.email?.failed || 0)} failed`}
+        />
+        <StatCard
+          label="Push sent"
+          icon={<Smartphone />}
+          loading={isLoading}
+          value={num(sent('push'))}
+          hint={`${num(t.push?.skipped || 0)} skipped (no device)`}
+        />
+        <StatCard
+          label="Failed"
+          icon={<MailX />}
+          tone={failed ? 'danger' : 'success'}
+          loading={isLoading}
+          value={num(failed)}
+        />
+        <StatCard
+          label="Email latency"
+          icon={<Timer />}
+          loading={isLoading}
+          value={ms(data?.latency.email?.avg)}
+          hint={`P95 ${ms(data?.latency.email?.p95)}`}
+        />
+        <StatCard
+          label="Push latency"
+          icon={<Timer />}
+          loading={isLoading}
+          value={ms(data?.latency.push?.avg)}
+          hint={`P95 ${ms(data?.latency.push?.p95)}`}
+        />
+        <StatCard
+          label="In-app"
+          icon={<Bell />}
+          loading={isLoading}
+          value={num(data?.inApp.total)}
+          hint={`read rate ${pct(data?.inApp.readRate)}`}
+        />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Section title="Deliveries over time" className="lg:col-span-2">
-          <TimeSeriesChart data={data?.series} bucketMs={data?.range.bucketMs} variant="bar" series={[{ key: 'sent', label: 'Sent', color: 'var(--chart-2)' }, { key: 'failed', label: 'Failed', color: 'var(--chart-5)' }]} />
+          <TimeSeriesChart
+            data={data?.series}
+            bucketMs={data?.range.bucketMs}
+            variant="bar"
+            series={[
+              { key: 'sent', label: 'Sent', color: 'var(--chart-2)' },
+              { key: 'failed', label: 'Failed', color: 'var(--chart-5)' },
+            ]}
+          />
         </Section>
         <Section title="Provider health" description="Latest outcome per channel">
           <div className="space-y-4">
             {(data?.health || []).map((h) => (
               <div key={h.channel} className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium capitalize">{h.channel === 'email' ? 'Email (SMTP)' : 'Push (FCM)'}</span>
+                  <span className="text-sm font-medium capitalize">
+                    {h.channel === 'email' ? 'Email (SMTP)' : 'Push (FCM)'}
+                  </span>
                   <StatusBadge status={h.status} />
                 </div>
-                <KeyValue items={[['Last success', ago(h.lastSuccess)], ['Last failure', h.lastFailure ? `${ago(h.lastFailure)}${h.lastError ? ` · ${h.lastError}` : ''}` : '—']]} />
+                <KeyValue
+                  items={[
+                    ['Last success', ago(h.lastSuccess)],
+                    [
+                      'Last failure',
+                      h.lastFailure
+                        ? `${ago(h.lastFailure)}${h.lastError ? ` · ${h.lastError}` : ''}`
+                        : '—',
+                    ],
+                  ]}
+                />
               </div>
             ))}
             <KeyValue items={[['Active push devices', num(data?.pushTokens)]]} />
@@ -77,16 +183,22 @@ export default function NotificationsPage() {
             {(data?.templates || []).map((tpl, i) => (
               <li key={i} className="flex items-center justify-between gap-2">
                 <span className="min-w-0 truncate">
-                  <span className="mr-1.5 rounded-sm bg-muted px-1 font-mono text-[10px] uppercase">{tpl.channel}</span>
+                  <span className="mr-1.5 rounded-sm bg-muted px-1 font-mono text-[10px] uppercase">
+                    {tpl.channel}
+                  </span>
                   {tpl.template || '—'}
                 </span>
                 <span className="shrink-0 tabular-nums text-muted-foreground">
                   {num(tpl.count)}
-                  {tpl.failed ? <span className="ml-1 text-red-600">({tpl.failed} failed)</span> : null}
+                  {tpl.failed ? (
+                    <span className="ml-1 text-red-600">({tpl.failed} failed)</span>
+                  ) : null}
                 </span>
               </li>
             ))}
-            {!data?.templates.length && <li className="text-muted-foreground">No sends recorded yet.</li>}
+            {!data?.templates.length && (
+              <li className="text-muted-foreground">No sends recorded yet.</li>
+            )}
           </ul>
         </Section>
         <Section title="Failure reasons">
@@ -144,7 +256,14 @@ export default function NotificationsPage() {
           </div>
         }
       >
-        <DataTable columns={columns} rows={data?.recent} loading={isLoading} rowKey={(r) => r._id} emptyTitle="No deliveries recorded" emptyDescription="Sends are recorded from this release onward." />
+        <DataTable
+          columns={columns}
+          rows={data?.recent}
+          loading={isLoading}
+          rowKey={(r) => r._id}
+          emptyTitle="No deliveries recorded"
+          emptyDescription="Sends are recorded from this release onward."
+        />
       </Section>
 
       <div className="grid gap-4 md:grid-cols-3">

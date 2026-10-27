@@ -59,76 +59,111 @@ describe('Stripe financial history webhook records', () => {
     [{ amount: 1000, amount_reversed: 250, reversed: false }, 'partially_reversed'],
     [{ amount: 1000, amount_reversed: 1000, reversed: true }, 'fully_reversed'],
   ])('derives transfer status from Stripe reversal data', async (overrides, status) => {
-    await recordStripeTransfer({
-      id: 'tr_1',
-      amount: 1000,
-      currency: 'nok',
-      destination: 'acct_test_1',
-      ...overrides,
-    }, { livemode: false });
+    await recordStripeTransfer(
+      {
+        id: 'tr_1',
+        amount: 1000,
+        currency: 'nok',
+        destination: 'acct_test_1',
+        ...overrides,
+      },
+      { livemode: false }
+    );
 
     expect(TransferRecord.findOneAndUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ stripeObjectId: 'tr_1', stripeAccountId: 'acct_test_1', livemode: false }),
-      expect.objectContaining({ $set: expect.objectContaining({ normalizedStatus: status, currency: 'NOK' }) }),
+      expect.objectContaining({
+        stripeObjectId: 'tr_1',
+        stripeAccountId: 'acct_test_1',
+        livemode: false,
+      }),
+      expect.objectContaining({
+        $set: expect.objectContaining({ normalizedStatus: status, currency: 'NOK' }),
+      }),
       expect.any(Object)
     );
   });
 
   it('rejects a local transfer whose account or mode does not match the Stripe event', async () => {
-    Payout.findOne.mockReturnValue({ lean: jest.fn().mockResolvedValue({
-      _id: 'payout_1',
-      stripeConnectAccountId: 'acct_live_1',
-      stripeLivemode: true,
-    }) });
+    Payout.findOne.mockReturnValue({
+      lean: jest.fn().mockResolvedValue({
+        _id: 'payout_1',
+        stripeConnectAccountId: 'acct_live_1',
+        stripeLivemode: true,
+      }),
+    });
 
-    await expect(recordStripeTransfer({
-      id: 'tr_wrong',
-      amount: 1000,
-      currency: 'nok',
-      destination: 'acct_test_1',
-    }, { livemode: false })).rejects.toThrow('destination does not match');
+    await expect(
+      recordStripeTransfer(
+        {
+          id: 'tr_wrong',
+          amount: 1000,
+          currency: 'nok',
+          destination: 'acct_test_1',
+        },
+        { livemode: false }
+      )
+    ).rejects.toThrow('destination does not match');
     expect(TransferRecord.findOneAndUpdate).not.toHaveBeenCalled();
   });
 
   it.each(['pending', 'in_transit', 'paid', 'failed', 'canceled'])(
     'records connected-account bank payout status %s without exposing bank details',
     async (status) => {
-      await recordStripeBankPayout({
-        id: 'po_1',
-        amount: 12345,
-        currency: 'nok',
-        status,
-        type: 'automatic',
-        destination: { last4: '1234', bank_name: 'Example Bank', account_number: 'secret' },
-        failure_code: status === 'failed' ? 'account_closed' : null,
-      }, { stripeAccountId: 'acct_test_1', livemode: false });
+      await recordStripeBankPayout(
+        {
+          id: 'po_1',
+          amount: 12345,
+          currency: 'nok',
+          status,
+          type: 'automatic',
+          destination: { last4: '1234', bank_name: 'Example Bank', account_number: 'secret' },
+          failure_code: status === 'failed' ? 'account_closed' : null,
+        },
+        { stripeAccountId: 'acct_test_1', livemode: false }
+      );
 
       const update = BankPayoutRecord.findOneAndUpdate.mock.calls[0][1].$set;
-      expect(update).toEqual(expect.objectContaining({
-        status,
-        currency: 'NOK',
-        destinationLast4: '1234',
-        destinationBankName: 'Example Bank',
-      }));
+      expect(update).toEqual(
+        expect.objectContaining({
+          status,
+          currency: 'NOK',
+          destinationLast4: '1234',
+          destinationBankName: 'Example Bank',
+        })
+      );
       expect(JSON.stringify(update)).not.toContain('secret');
       if (status === 'failed') expect(update.failureMessage).not.toContain('account_closed');
     }
   );
 
   it('rejects unsupported payout status and ignores older events', async () => {
-    await expect(recordStripeBankPayout({
-      id: 'po_bad', amount: 1, currency: 'nok', status: 'unknown',
-    }, { stripeAccountId: 'acct_test_1', livemode: false })).rejects.toThrow('unsupported status');
+    await expect(
+      recordStripeBankPayout(
+        {
+          id: 'po_bad',
+          amount: 1,
+          currency: 'nok',
+          status: 'unknown',
+        },
+        { stripeAccountId: 'acct_test_1', livemode: false }
+      )
+    ).rejects.toThrow('unsupported status');
 
     const latest = { _id: 'record_1', lastEventCreatedAt: new Date(2000) };
     TransferRecord.findOne.mockReturnValue(queryResult(latest));
     TransferRecord.findById.mockReturnValue(queryResult(latest));
-    const result = await recordStripeTransfer({
-      id: 'tr_1', amount: 1000, currency: 'nok', destination: 'acct_test_1',
-    }, {
-      livemode: false,
-      event: { id: 'evt_old', type: 'transfer.created', created: 1 },
-    });
+    const result = await recordStripeTransfer(
+      {
+        id: 'tr_1',
+        amount: 1000,
+        currency: 'nok',
+        destination: 'acct_test_1',
+      },
+      {
+        livemode: false,
+        event: { id: 'evt_old', type: 'transfer.created', created: 1 },
+      }
+    );
     expect(result).toEqual(latest);
     expect(TransferRecord.findOneAndUpdate).not.toHaveBeenCalled();
   });
@@ -159,8 +194,10 @@ describe('read-only Stripe history reconciliation', () => {
     SyncState.findOneAndUpdate.mockResolvedValue(null);
     const stripe = { transfers: { list: jest.fn() } };
 
-    await expect(syncTransfersPage(stripe, { id: 'acct_test_1' }, false))
-      .resolves.toEqual({ skipped: true, reason: 'sync_in_progress' });
+    await expect(syncTransfersPage(stripe, { id: 'acct_test_1' }, false)).resolves.toEqual({
+      skipped: true,
+      reason: 'sync_in_progress',
+    });
     expect(stripe.transfers.list).not.toHaveBeenCalled();
   });
 });

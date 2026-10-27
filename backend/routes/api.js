@@ -14,6 +14,7 @@ const ROUTES = [
   ['/api/auth/mobile', './mobileOAuth'],
   ['/api/users', './users'],
   ['/api/services', './service'],
+  ['/api/job-drafts', './jobDrafts'],
   ['/api/favorites', './favorites'],
   ['/api/messages', './messages'],
   ['/api/upload', './upload'],

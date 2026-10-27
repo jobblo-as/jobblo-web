@@ -129,7 +129,11 @@ export function isOAuthReturnUrl(url: string | null | undefined): boolean {
  * correct callback destination without accepting a caller-controlled return URL. The PKCE
  * challenge makes the server answer with a one-time code instead of a token (P6).
  */
-export function oauthStartUrl(provider: OAuthProvider, apiBase: string, codeChallenge: string): string {
+export function oauthStartUrl(
+  provider: OAuthProvider,
+  apiBase: string,
+  codeChallenge: string
+): string {
   return `${apiBase.replace(/\/$/, '')}/auth/mobile/${provider}?code_challenge=${codeChallenge}&code_challenge_method=S256`;
 }
 
@@ -146,7 +150,7 @@ const DISMISS_GRACE_MS = 1500;
 
 const BROWSER_OPTIONS: WebBrowserOpenOptions = {
   /**
-    * Keep the Android Custom Tab in its own task and route it through `BrowserProxyActivity` — the
+   * Keep the Android Custom Tab in its own task and route it through `BrowserProxyActivity` — the
    * translucent trampoline expo-web-browser 57 declares with `taskAffinity=".webContainer"`,
    * which puts the tab in a task of its own. SafePay passes `createTask: false`, which
    * launches the tab directly into Jobblo's task, stacked on top of the very activity the
@@ -157,8 +161,8 @@ const BROWSER_OPTIONS: WebBrowserOpenOptions = {
    * itself back over the signed-in app. That is precisely the reported symptom: sign-in
    * completed, the app appeared, and then Google's account chooser was back on screen.
    *
-    * The proxy activity is therefore the only lifecycle management available: once the tab is
-    * left it finishes itself and re-launches Jobblo with `FLAG_ACTIVITY_CLEAR_TOP`.
+   * The proxy activity is therefore the only lifecycle management available: once the tab is
+   * left it finishes itself and re-launches Jobblo with `FLAG_ACTIVITY_CLEAR_TOP`.
    */
   createTask: true,
   useProxyActivity: true,
@@ -276,4 +280,3 @@ export async function runOAuthSession(
     deepLink.remove();
   }
 }
-

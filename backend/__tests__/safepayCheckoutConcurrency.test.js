@@ -77,8 +77,8 @@ beforeEach(() => {
     keyModeValid: true,
     webhookSecretValid: true,
     fingerprint: 'test-fingerprint',
-    });
-    getStripeWebhookReadiness.mockResolvedValue({
+  });
+  getStripeWebhookReadiness.mockResolvedValue({
     ready: true,
     status: 'endpoint_unverified',
     mode: 'test',
@@ -155,17 +155,16 @@ describe('SafePay checkout reservations', () => {
   });
 
   it('status polling reads database confirmation only and cannot confirm from a browser redirect', async () => {
-    Order.findOne.mockResolvedValue(makeOrder({
-      checkoutSessionId: 'cs_test_status',
-      checkoutSessionStatus: 'complete',
-      paymentStatus: 'unpaid',
-    }));
+    Order.findOne.mockResolvedValue(
+      makeOrder({
+        checkoutSessionId: 'cs_test_status',
+        checkoutSessionStatus: 'complete',
+        paymentStatus: 'unpaid',
+      })
+    );
 
     const res = makeRes();
-    await checkoutSessionStatus(
-      { params: { sessionId: 'cs_test_status' }, userId: USER_ID },
-      res
-    );
+    await checkoutSessionStatus({ params: { sessionId: 'cs_test_status' }, userId: USER_ID }, res);
 
     expect(res.statusCode).toBe(200);
     expect(res.payload).toMatchObject({ payment_status: 'unpaid', status: 'complete' });
@@ -215,9 +214,11 @@ describe('SafePay checkout reservations', () => {
     getStripeForMode.mockResolvedValue(stripe);
 
     Order.findById.mockReturnValueOnce({
-      populate: jest.fn().mockResolvedValue(
-        makeOrder({ checkoutSessionStatus: 'pending', checkoutSessionId: 'PENDING_123' })
-      ),
+      populate: jest
+        .fn()
+        .mockResolvedValue(
+          makeOrder({ checkoutSessionStatus: 'pending', checkoutSessionId: 'PENDING_123' })
+        ),
     });
 
     const req = {
@@ -269,8 +270,18 @@ describe('SafePay checkout reservations', () => {
       });
       return () => doc;
     }
-    const req = () => ({ userId: USER_ID, body: { orderId: ORDER_ID }, protocol: 'https', get: () => 'example.com' });
-    const sessionsList = (sessions) => jest.fn(() => (async function* list() { yield* sessions; })());
+    const req = () => ({
+      userId: USER_ID,
+      body: { orderId: ORDER_ID },
+      protocol: 'https',
+      get: () => 'example.com',
+    });
+    const sessionsList = (sessions) =>
+      jest.fn(() =>
+        (async function* list() {
+          yield* sessions;
+        })()
+      );
 
     it('releases it when Stripe has no session for that attempt, then starts a fresh attempt', async () => {
       jest.spyOn(crypto, 'randomUUID').mockReturnValue('attempt_new');
@@ -278,9 +289,18 @@ describe('SafePay checkout reservations', () => {
       const stripe = {
         checkout: {
           sessions: {
-            list: sessionsList([{ id: 'cs_other', metadata: { checkoutAttemptId: 'someone_else', orderId: ORDER_ID } }]),
+            list: sessionsList([
+              {
+                id: 'cs_other',
+                metadata: { checkoutAttemptId: 'someone_else', orderId: ORDER_ID },
+              },
+            ]),
             retrieve: jest.fn(),
-            create: jest.fn(async () => ({ id: 'cs_fresh', status: 'open', url: 'https://checkout.stripe.com/fresh' })),
+            create: jest.fn(async () => ({
+              id: 'cs_fresh',
+              status: 'open',
+              url: 'https://checkout.stripe.com/fresh',
+            })),
           },
         },
       };
@@ -289,13 +309,21 @@ describe('SafePay checkout reservations', () => {
       const res = makeRes();
       await createSafePaySession(req(), res);
 
-      expect(stripe.checkout.sessions.list).toHaveBeenCalledWith({ customer: 'cus_test_123', limit: 100 });
+      expect(stripe.checkout.sessions.list).toHaveBeenCalledWith({
+        customer: 'cus_test_123',
+        limit: 100,
+      });
       expect(res.statusCode).toBe(200);
       expect(res.payload).toEqual({ url: 'https://checkout.stripe.com/fresh' });
       expect(stripe.checkout.sessions.create).toHaveBeenCalledTimes(1);
       // New attempt => new idempotency key; the stale key is never replayed.
-      expect(stripe.checkout.sessions.create.mock.calls[0][1]).toEqual({ idempotencyKey: `safepay:${ORDER_ID}:attempt_new` });
-      expect(current()).toMatchObject({ checkoutSessionId: 'cs_fresh', checkoutAttemptId: 'attempt_new' });
+      expect(stripe.checkout.sessions.create.mock.calls[0][1]).toEqual({
+        idempotencyKey: `safepay:${ORDER_ID}:attempt_new`,
+      });
+      expect(current()).toMatchObject({
+        checkoutSessionId: 'cs_fresh',
+        checkoutAttemptId: 'attempt_new',
+      });
     });
 
     it('adopts the session Stripe did create for that attempt instead of creating a second one', async () => {
@@ -325,7 +353,10 @@ describe('SafePay checkout reservations', () => {
       await createSafePaySession(req(), res);
 
       expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
-      expect(current()).toMatchObject({ checkoutSessionId: 'cs_lost', checkoutSessionStatus: 'open' });
+      expect(current()).toMatchObject({
+        checkoutSessionId: 'cs_lost',
+        checkoutSessionStatus: 'open',
+      });
       expect(res.payload).toEqual({ url: 'https://checkout.stripe.com/lost', reused: true });
     });
 
@@ -334,7 +365,9 @@ describe('SafePay checkout reservations', () => {
       const stripe = {
         checkout: {
           sessions: {
-            list: jest.fn(() => { throw Object.assign(new Error('timeout'), { code: 'ETIMEDOUT' }); }),
+            list: jest.fn(() => {
+              throw Object.assign(new Error('timeout'), { code: 'ETIMEDOUT' });
+            }),
             retrieve: jest.fn(),
             create: jest.fn(),
           },
@@ -349,7 +382,10 @@ describe('SafePay checkout reservations', () => {
       expect(res.statusCode).toBe(409);
       expect(res.payload).toMatchObject({ code: 'checkout_review_required' });
       expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
-      expect(current()).toMatchObject({ checkoutSessionId: 'PENDING_attempt_old', checkoutSessionStatus: 'pending' });
+      expect(current()).toMatchObject({
+        checkoutSessionId: 'PENDING_attempt_old',
+        checkoutSessionStatus: 'pending',
+      });
     });
   });
 
@@ -394,7 +430,11 @@ describe('SafePay checkout reservations', () => {
     const first = createSafePaySession(req, firstRes);
     const second = createSafePaySession(req, secondRes);
     await new Promise((resolve) => setTimeout(resolve, 10));
-    finishCreate({ id: 'cs_test_winner', status: 'open', url: 'https://checkout.stripe.com/winner' });
+    finishCreate({
+      id: 'cs_test_winner',
+      status: 'open',
+      url: 'https://checkout.stripe.com/winner',
+    });
     await Promise.all([first, second]);
 
     expect([firstRes.statusCode, secondRes.statusCode].sort()).toEqual([200, 409]);
@@ -405,16 +445,20 @@ describe('SafePay checkout reservations', () => {
     const stripe = {
       checkout: {
         sessions: {
-          retrieve: jest.fn().mockRejectedValue({ type: 'StripeConnectionError', code: 'ETIMEDOUT' }),
+          retrieve: jest
+            .fn()
+            .mockRejectedValue({ type: 'StripeConnectionError', code: 'ETIMEDOUT' }),
           create: jest.fn(),
         },
       },
     };
     getStripeForMode.mockResolvedValue(stripe);
     Order.findById.mockReturnValue({
-      populate: jest.fn().mockResolvedValue(
-        makeOrder({ checkoutSessionId: 'cs_test_unknown', checkoutSessionStatus: 'open' })
-      ),
+      populate: jest
+        .fn()
+        .mockResolvedValue(
+          makeOrder({ checkoutSessionId: 'cs_test_unknown', checkoutSessionStatus: 'open' })
+        ),
     });
 
     const res = makeRes();
@@ -438,7 +482,8 @@ describe('SafePay checkout reservations', () => {
       currency: 'nok',
       livemode: false,
       metadata: { orderId: ORDER_ID, userId: USER_ID },
-      success_url: 'https://example.com/safepay/success?session_id={CHECKOUT_SESSION_ID}&orderId=507f1f77bcf86cd799439011',
+      success_url:
+        'https://example.com/safepay/success?session_id={CHECKOUT_SESSION_ID}&orderId=507f1f77bcf86cd799439011',
       url: 'https://checkout.stripe.com/test_123',
     };
     const stripe = {
@@ -452,12 +497,16 @@ describe('SafePay checkout reservations', () => {
     getStripeForMode.mockResolvedValue(stripe);
 
     Order.findById.mockReturnValue({
-      populate: jest.fn().mockResolvedValue(
-        makeOrder({ checkoutSessionId: existingSession.id, checkoutSessionStatus: 'open' })
-      ),
-      select: jest.fn().mockResolvedValue(
-        makeOrder({ checkoutSessionId: existingSession.id, checkoutSessionStatus: 'open' })
-      ),
+      populate: jest
+        .fn()
+        .mockResolvedValue(
+          makeOrder({ checkoutSessionId: existingSession.id, checkoutSessionStatus: 'open' })
+        ),
+      select: jest
+        .fn()
+        .mockResolvedValue(
+          makeOrder({ checkoutSessionId: existingSession.id, checkoutSessionStatus: 'open' })
+        ),
     });
     Order.findOneAndUpdate.mockResolvedValue(null);
 
@@ -496,23 +545,25 @@ describe('SafePay checkout reservations', () => {
       populate: jest.fn().mockResolvedValue(makeOrder({ checkoutSessionStatus: 'expired' })),
       select: jest.fn().mockResolvedValue(makeOrder({ checkoutSessionStatus: 'expired' })),
     });
-    Order.findOneAndUpdate.mockResolvedValueOnce({
-      _id: ORDER_ID,
-      checkoutSessionId: 'PENDING_attempt_123',
-      checkoutAttemptId: 'attempt_123',
-      checkoutAmountMinor: 103000,
-      checkoutCurrency: 'nok',
-      checkoutMode: 'test',
-      checkoutCustomerId: 'cus_test_123',
-      checkoutSuccessUrl: expect.any(String),
-      checkoutCancelUrl: expect.any(String),
-      checkoutProductName: 'SafePay: Design mockup',
-    }).mockResolvedValueOnce({
-      _id: ORDER_ID,
-      checkoutSessionId: 'cs_test_new',
-      checkoutAttemptId: 'attempt_123',
-      checkoutSessionStatus: 'open',
-    });
+    Order.findOneAndUpdate
+      .mockResolvedValueOnce({
+        _id: ORDER_ID,
+        checkoutSessionId: 'PENDING_attempt_123',
+        checkoutAttemptId: 'attempt_123',
+        checkoutAmountMinor: 103000,
+        checkoutCurrency: 'nok',
+        checkoutMode: 'test',
+        checkoutCustomerId: 'cus_test_123',
+        checkoutSuccessUrl: expect.any(String),
+        checkoutCancelUrl: expect.any(String),
+        checkoutProductName: 'SafePay: Design mockup',
+      })
+      .mockResolvedValueOnce({
+        _id: ORDER_ID,
+        checkoutSessionId: 'cs_test_new',
+        checkoutAttemptId: 'attempt_123',
+        checkoutSessionStatus: 'open',
+      });
     User.findById.mockResolvedValue({ _id: USER_ID });
     resolveStripeCustomer.mockResolvedValue('cus_test_123');
 
@@ -580,22 +631,24 @@ describe('SafePay checkout reservations', () => {
         })
       ),
     });
-    Order.findOneAndUpdate.mockResolvedValueOnce({
-      _id: ORDER_ID,
-      checkoutSessionId: 'PENDING_attempt_long_title',
-      checkoutAttemptId: 'attempt_long_title',
-      checkoutAmountMinor: 103000,
-      checkoutCurrency: 'nok',
-      checkoutMode: 'test',
-      checkoutCustomerId: 'cus_test_123',
-      checkoutSuccessUrl: 'https://example.com/success',
-      checkoutCancelUrl: 'https://example.com/cancel',
-      checkoutProductName: 'SafePay: House Cleaning',
-    }).mockResolvedValueOnce({
-      _id: ORDER_ID,
-      checkoutSessionId: 'cs_test_long_title',
-      checkoutSessionStatus: 'open',
-    });
+    Order.findOneAndUpdate
+      .mockResolvedValueOnce({
+        _id: ORDER_ID,
+        checkoutSessionId: 'PENDING_attempt_long_title',
+        checkoutAttemptId: 'attempt_long_title',
+        checkoutAmountMinor: 103000,
+        checkoutCurrency: 'nok',
+        checkoutMode: 'test',
+        checkoutCustomerId: 'cus_test_123',
+        checkoutSuccessUrl: 'https://example.com/success',
+        checkoutCancelUrl: 'https://example.com/cancel',
+        checkoutProductName: 'SafePay: House Cleaning',
+      })
+      .mockResolvedValueOnce({
+        _id: ORDER_ID,
+        checkoutSessionId: 'cs_test_long_title',
+        checkoutSessionStatus: 'open',
+      });
 
     const res = makeRes();
     await createSafePaySession(
@@ -613,10 +666,10 @@ describe('SafePay checkout reservations', () => {
     expect(params.payment_intent_data.metadata.jobTitle).toHaveLength(500);
     expect(params.payment_intent_data.description).toHaveLength(500);
     expect(params.line_items[0].price_data.product_data.name.length).toBeLessThanOrEqual(250);
-    expect(params.line_items[0].price_data.product_data.description.length).toBeLessThanOrEqual(500);
-    expect(params.payment_intent_data.description).toContain(
-      '| Job ID: 507f1f77bcf86cd799439014'
+    expect(params.line_items[0].price_data.product_data.description.length).toBeLessThanOrEqual(
+      500
     );
+    expect(params.payment_intent_data.description).toContain('| Job ID: 507f1f77bcf86cd799439014');
   });
 
   it('rejects checkout safely when the job service record is missing', async () => {

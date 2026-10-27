@@ -47,7 +47,9 @@ export async function getTopUsers(params: {
 }
 
 export async function getBlockedUsers(page = 1, limit = 10): Promise<BlockedUsersResponse> {
-  const response = await apiClient.get<BlockedUsersResponse>('/users/blocked', { params: { page, limit } });
+  const response = await apiClient.get<BlockedUsersResponse>('/users/blocked', {
+    params: { page, limit },
+  });
   return response.data;
 }
 

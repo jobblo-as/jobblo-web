@@ -31,7 +31,12 @@ interface JobCardProps {
  *
  * Reused across Home, Search, and other job listing contexts.
  */
-export const JobCard: React.FC<JobCardProps> = ({ job, showDescription = false, compact = false, onSavePress }) => {
+export const JobCard: React.FC<JobCardProps> = ({
+  job,
+  showDescription = false,
+  compact = false,
+  onSavePress,
+}) => {
   const router = useRouter();
   const { isSaved, isLoading: savedLoading } = useIsServiceSaved(job._id);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -44,7 +49,10 @@ export const JobCard: React.FC<JobCardProps> = ({ job, showDescription = false, 
   // (a broken upload used to leave an empty white frame in the feed).
   const imageUrl = job.images?.[0];
   const [imageFailed, setImageFailed] = useState(false);
-  const imageSource = imageUrl && !imageFailed ? { uri: imageUrl } : categoryImage(job.categories, job._id.charCodeAt(job._id.length - 1) || 0);
+  const imageSource =
+    imageUrl && !imageFailed
+      ? { uri: imageUrl }
+      : categoryImage(job.categories, job._id.charCodeAt(job._id.length - 1) || 0);
 
   // Format price as Norwegian locale
   const priceFormatted = job.price ? job.price.toLocaleString('nb-NO') : 'Variabelt';
@@ -111,7 +119,12 @@ export const JobCard: React.FC<JobCardProps> = ({ job, showDescription = false, 
               {savedLoading ? (
                 <View className="h-5 w-5" />
               ) : (
-                <Heart size={24} color="#FFFFFF" strokeWidth={2} fill={isSaved ? '#E5484D' : 'none'} />
+                <Heart
+                  size={24}
+                  color="#FFFFFF"
+                  strokeWidth={2}
+                  fill={isSaved ? '#E5484D' : 'none'}
+                />
               )}
             </Pressable>
           </View>
@@ -121,10 +134,7 @@ export const JobCard: React.FC<JobCardProps> = ({ job, showDescription = false, 
       {/* Text content below photo — sits directly on page, no card bg */}
       <View className="mt-2.5">
         {/* Title — 2 line clamp */}
-        <Text
-          className="text-[0.875rem] font-semibold text-ink leading-tight"
-          numberOfLines={2}
-        >
+        <Text className="text-[0.875rem] font-semibold text-ink leading-tight" numberOfLines={2}>
           {job.title}
         </Text>
 
@@ -143,10 +153,18 @@ export const JobCard: React.FC<JobCardProps> = ({ job, showDescription = false, 
 
         {/* Price and location row */}
         <View className="flex-row items-center justify-between mt-2">
-          <Text className={['text-[0.875rem] font-semibold text-ink tabular-nums', compact && 'flex-shrink'].join(' ')} numberOfLines={1}>
+          <Text
+            className={[
+              'text-[0.875rem] font-semibold text-ink tabular-nums',
+              compact && 'flex-shrink',
+            ].join(' ')}
+            numberOfLines={1}
+          >
             {priceFormatted} kr
           </Text>
-          <View className={['flex-row items-center gap-1', compact && 'ml-2 flex-1 min-w-0'].join(' ')}>
+          <View
+            className={['flex-row items-center gap-1', compact && 'ml-2 flex-1 min-w-0'].join(' ')}
+          >
             <MapPin size={13} color={tc('#63665F', 'muted')} strokeWidth={2} />
             <Text className="text-[0.8125rem] text-muted" numberOfLines={1}>
               {location}

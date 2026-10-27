@@ -56,14 +56,49 @@ import { AlertsSkeleton } from '../../src/components/skeletons/ScreenSkeletons';
 type Meta = { label: string; Icon: LucideIcon; tint: string; color: [string, string] };
 
 const META: Record<string, Meta> = {
-  order: { label: 'Bestilling', Icon: Banknote, tint: 'bg-tint', color: [LIGHT.brandText, DARK.brandText] },
-  payment: { label: 'Betaling', Icon: Banknote, tint: 'bg-tint', color: [LIGHT.brandText, DARK.brandText] },
-  application: { label: 'Søknad', Icon: Briefcase, tint: 'bg-[#EAF0FA] dark:bg-[#1E2836]', color: ['#2F5D9E', '#8FB3E8'] },
-  message: { label: 'Melding', Icon: MessageSquare, tint: 'bg-[#F2EEF9] dark:bg-[#29233A]', color: ['#6B4FA0', '#BBA6E3'] },
-  review: { label: 'Anmeldelse', Icon: Star, tint: 'bg-[#FBF4E3] dark:bg-[#2E2716]', color: ['#96752A', '#E0C27A'] },
-  job_update: { label: 'Jobboppdatering', Icon: ClipboardCheck, tint: 'bg-surface-2', color: ['#63665F', DARK.muted] },
+  order: {
+    label: 'Bestilling',
+    Icon: Banknote,
+    tint: 'bg-tint',
+    color: [LIGHT.brandText, DARK.brandText],
+  },
+  payment: {
+    label: 'Betaling',
+    Icon: Banknote,
+    tint: 'bg-tint',
+    color: [LIGHT.brandText, DARK.brandText],
+  },
+  application: {
+    label: 'Søknad',
+    Icon: Briefcase,
+    tint: 'bg-[#EAF0FA] dark:bg-[#1E2836]',
+    color: ['#2F5D9E', '#8FB3E8'],
+  },
+  message: {
+    label: 'Melding',
+    Icon: MessageSquare,
+    tint: 'bg-[#F2EEF9] dark:bg-[#29233A]',
+    color: ['#6B4FA0', '#BBA6E3'],
+  },
+  review: {
+    label: 'Anmeldelse',
+    Icon: Star,
+    tint: 'bg-[#FBF4E3] dark:bg-[#2E2716]',
+    color: ['#96752A', '#E0C27A'],
+  },
+  job_update: {
+    label: 'Jobboppdatering',
+    Icon: ClipboardCheck,
+    tint: 'bg-surface-2',
+    color: ['#63665F', DARK.muted],
+  },
 };
-const FALLBACK: Meta = { label: 'Varsel', Icon: Bell, tint: 'bg-surface-2', color: ['#63665F', DARK.muted] };
+const FALLBACK: Meta = {
+  label: 'Varsel',
+  Icon: Bell,
+  tint: 'bg-surface-2',
+  color: ['#63665F', DARK.muted],
+};
 
 const notificationMeta = (type: string) => {
   const meta = META[type] || FALLBACK;
@@ -136,14 +171,22 @@ function NotificationRow({
       <GlassFill radius={16} />
       <View>
         {item.senderId?.avatarUrl ? (
-          <Image source={{ uri: item.senderId.avatarUrl }} className="h-11 w-11 rounded-full bg-tint" />
+          <Image
+            source={{ uri: item.senderId.avatarUrl }}
+            className="h-11 w-11 rounded-full bg-tint"
+          />
         ) : (
           <View className={cn('h-11 w-11 items-center justify-center rounded-full', tint)}>
             <Icon size={18} color={color} />
           </View>
         )}
         {item.senderId?.avatarUrl ? (
-          <View className={cn('absolute -bottom-0.5 -right-0.5 h-5 w-5 items-center justify-center rounded-full border-2 border-surface', tint)}>
+          <View
+            className={cn(
+              'absolute -bottom-0.5 -right-0.5 h-5 w-5 items-center justify-center rounded-full border-2 border-surface',
+              tint
+            )}
+          >
             <Icon size={10} color={color} />
           </View>
         ) : null}
@@ -154,11 +197,18 @@ function NotificationRow({
           <Text className="flex-1 text-[0.8125rem] font-semibold text-muted" numberOfLines={1}>
             {sender ? `${label} · ${sender}` : label}
           </Text>
-          <Text className="text-[0.8125rem] tabular-nums text-muted">{formatNotificationTime(item.createdAt)}</Text>
-          {isUnread ? <View className="h-2 w-2 rounded-full bg-brand" accessibilityLabel="Ulest" /> : null}
+          <Text className="text-[0.8125rem] tabular-nums text-muted">
+            {formatNotificationTime(item.createdAt)}
+          </Text>
+          {isUnread ? (
+            <View className="h-2 w-2 rounded-full bg-brand" accessibilityLabel="Ulest" />
+          ) : null}
         </View>
         <Text
-          className={cn('mt-1 text-[0.875rem] leading-5', isUnread ? 'font-semibold text-ink' : 'text-ink-2')}
+          className={cn(
+            'mt-1 text-[0.875rem] leading-5',
+            isUnread ? 'font-semibold text-ink' : 'text-ink-2'
+          )}
           numberOfLines={3}
         >
           {item.content}
@@ -188,7 +238,9 @@ function NotificationRow({
 export default function AlertsScreen() {
   const tabBarSpace = useTabBarSpace();
   const router = useRouter();
-  const userId = useAuthStore((s) => s.user && typeof s.user._id === 'string' ? (s.user._id as string) : null);
+  const userId = useAuthStore((s) =>
+    s.user && typeof s.user._id === 'string' ? (s.user._id as string) : null
+  );
 
   const [activeCategory, setActiveCategory] = useState('all');
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
@@ -209,7 +261,11 @@ export default function AlertsScreen() {
   const unreadCount = unreadCountData?.count ?? 0;
   const handleRefresh = async () => {
     setRefreshing(true);
-    try { await Promise.all([refetch(), refetchUnreadCount()]); } finally { setRefreshing(false); }
+    try {
+      await Promise.all([refetch(), refetchUnreadCount()]);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const allNotifications: Notification[] = useMemo(
@@ -279,7 +335,8 @@ export default function AlertsScreen() {
 
       if (n.requestId) {
         const request = n.requestId as { serviceId?: string | { _id?: string } };
-        const serviceId = typeof request.serviceId === 'object' ? request.serviceId?._id : request.serviceId;
+        const serviceId =
+          typeof request.serviceId === 'object' ? request.serviceId?._id : request.serviceId;
         if (serviceId) {
           router.push({ pathname: '/(app)/job-applicants/[serviceId]', params: { serviceId } });
         }
@@ -308,7 +365,9 @@ export default function AlertsScreen() {
         <View className="flex-1">
           <Text className="text-[1.75rem] font-bold tracking-[-0.03em] text-ink">Varsler</Text>
           <Text className="mt-0.5 text-[0.875rem] text-muted">
-            {unreadCount > 0 ? `Du har ${unreadCount} ${unreadCount === 1 ? 'ulest varsel' : 'uleste varsler'}` : 'Du er oppdatert'}
+            {unreadCount > 0
+              ? `Du har ${unreadCount} ${unreadCount === 1 ? 'ulest varsel' : 'uleste varsler'}`
+              : 'Du er oppdatert'}
           </Text>
         </View>
         <Pressable
@@ -356,9 +415,16 @@ export default function AlertsScreen() {
               onPress={handleMarkAll}
               icon={<CheckCheck size={15} color={TC.ink} style={{ marginRight: 6 }} />}
             />
-          ) : <View />}
+          ) : (
+            <View />
+          )}
           {allNotifications.length > 0 ? (
-            <Button label="Slett alle" variant="ghost" small onPress={() => setDeleteAllVisible(true)} />
+            <Button
+              label="Slett alle"
+              variant="ghost"
+              small
+              onPress={() => setDeleteAllVisible(true)}
+            />
           ) : null}
         </View>
       )}
@@ -371,7 +437,11 @@ export default function AlertsScreen() {
     <EmptyState
       icon={
         <View className="h-14 w-14 items-center justify-center rounded-full bg-tint">
-          {hasFilter ? <BellOff size={24} color={TC.brandText} /> : <Bell size={24} color={TC.brandText} />}
+          {hasFilter ? (
+            <BellOff size={24} color={TC.brandText} />
+          ) : (
+            <Bell size={24} color={TC.brandText} />
+          )}
         </View>
       }
       title={hasFilter ? 'Ingen treff' : 'Ingen varsler ennå'}
@@ -380,7 +450,11 @@ export default function AlertsScreen() {
           ? 'Ingen varsler passer filteret ditt.'
           : 'Du får beskjed her når det skjer noe med oppdragene, søknadene eller betalingene dine.'
       }
-      action={hasFilter ? <Button label="Nullstill filter" variant="secondary" small onPress={resetFilters} /> : undefined}
+      action={
+        hasFilter ? (
+          <Button label="Nullstill filter" variant="secondary" small onPress={resetFilters} />
+        ) : undefined
+      }
     />
   );
 
@@ -390,7 +464,7 @@ export default function AlertsScreen() {
     <View className="items-center py-4">
       <Button label="Vis flere" variant="secondary" small onPress={() => fetchNextPage()} />
     </View>
-  ) :undefined;
+  ) : undefined;
 
   return (
     <SafeAreaView className="flex-1 bg-page" edges={['top']}>
