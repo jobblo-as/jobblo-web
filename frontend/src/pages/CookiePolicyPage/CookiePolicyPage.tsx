@@ -70,18 +70,42 @@ export default function CookiePolicyPage() {
     },
     {
       id: 12,
+      title: 'KUNSTIG INTELLIGENS (AI) N\u00C5R DU LEGGER UT ET OPPDRAG',
+      content:
+        'N\u00E5r du legger ut eller redigerer et oppdrag, kan Jobblo bruke kunstig intelligens (AI) for \u00E5 hjelpe deg:\n\n\u2022 Bilder du tar eller laster opp i \u00ABLegg ut\u00BB-flyten sendes til AI-tjenesten, som gir tips om hvilke bilder som mangler og om et bilde er uskarpt eller m\u00F8rkt.\n\u2022 Bildene og svarene dine (kategori, detaljer og kort beskrivelse) brukes til \u00E5 foresl\u00E5 kategori, tittel, beskrivelse og pris.\n\nAI-tjenesten leveres av OpenAI, som behandler dataene som v\u00E5r databehandler. If\u00F8lge OpenAIs vilk\u00E5r for API-tjenesten brukes dataene ikke til \u00E5 trene OpenAIs modeller, og de lagres hos OpenAI i inntil 30 dager for \u00E5 avdekke misbruk f\u00F8r de slettes. OpenAI kan behandle data utenfor EU/E\u00D8S; overf\u00F8ringen skjer i henhold til EU-kommisjonens standard kontraktsklausuler (se \u00ABOverf\u00F8ring av data utenfor EU/E\u00D8S\u00BB).\n\nForslagene fra AI er bare forslag: du ser over og kan endre alt f\u00F8r annonsen publiseres. Ikke ta bilder av personer, bilskilt eller dokumenter med personopplysninger. Du kan legge ut et oppdrag uten bilder ved \u00E5 trykke \u00ABHopp over\u00BB i kameraet og skrive teksten selv.',
+    },
+    {
+      id: 13,
+      title: 'POSISJON, ADRESSE OG KART',
+      content:
+        'N\u00E5r du legger ut et oppdrag, oppgir du hvor jobben skal gj\u00F8res \u2013 ved \u00E5 s\u00F8ke etter adressen, trykke p\u00E5 kartet eller bruke telefonens posisjon.\n\n\u2022 Telefonens posisjon hentes bare n\u00E5r du selv trykker \u00ABBruk min posisjon\u00BB, og bare mens appen er i bruk. Du kan n\u00E5r som helst sl\u00E5 av tilgangen i telefonens innstillinger.\n\u2022 Adresses\u00F8k og oppslag av adresse fra et punkt p\u00E5 kartet gj\u00F8res mot Kartverkets \u00E5pne adresseregister (Geonorge). Da sendes s\u00F8keteksten eller koordinatene dit, ikke navnet ditt.\n\u2022 Adressen (gateadresse, postnummer, sted, fylke og kommune) og punktet p\u00E5 kartet lagres sammen med oppdraget.\n\u2022 Stedet vises med en n\u00E5l p\u00E5 kartet i annonsen og kan ses av alle som ser annonsen. Vil du ikke vise hjemmeadressen din, kan du sette n\u00E5len p\u00E5 et punkt i n\u00E6rheten.\n\nKartene i appen vises med Apple Maps eller Google Maps, som mottar tekniske data (som IP-adresse og kartomr\u00E5det som vises) for \u00E5 levere kartbildene.',
+    },
+    {
+      id: 14,
+      title: 'BETALING MED SAFEPAY OG UTBETALINGER',
+      content:
+        'Betaling for oppdrag skjer med SafePay: oppdragsgiveren betaler n\u00E5r avtalen inng\u00E5s, bel\u00F8pet holdes til arbeidet er godkjent, og utbetales deretter til den som utf\u00F8rte oppdraget.\n\n\u2022 Betalingene behandles av Stripe. Kortopplysninger registreres direkte hos Stripe; Jobblo lagrer aldri kortnummeret ditt.\n\u2022 For \u00E5 motta utbetalinger oppretter du en konto hos Stripe (Stripe Connect). Stripe innhenter da opplysninger som navn, f\u00F8dselsdato, adresse, bankkonto og eventuelt legitimasjon, slik loven om hvitvasking krever. Stripe er selvstendig behandlingsansvarlig for disse opplysningene.\n\u2022 Jobblo lagrer bel\u00F8p, status, tidspunkter og Stripes referanser for hver betaling og utbetaling, for \u00E5 kunne vise historikk, h\u00E5ndtere reklamasjoner og tvister og oppfylle bokf\u00F8ringsloven (normalt 5 \u00E5r).',
+    },
+    {
+      id: 15,
+      title: 'PUSHVARSLER OG ENHETSDATA',
+      content:
+        'Hvis du tillater varsler, lagrer vi en varslingsn\u00F8kkel (push-token) for enheten din sammen med kontoen, slik at vi kan varsle deg om meldinger, s\u00F8knader og endringer i oppdragene dine. Varslene leveres via Google Firebase Cloud Messaging (Android) og via Expos push-tjeneste og Apples varslingstjeneste (iOS).\n\nDu kan n\u00E5r som helst sl\u00E5 av varsler i telefonens innstillinger. Varslingsn\u00F8kkelen lagres s\u00E5 lenge kontoen din er aktiv og varsler er sl\u00E5tt p\u00E5 for enheten.',
+    },
+    {
+      id: 16,
       title: 'V\u00C5R BRUK AV INFORMASJONSKAPSLER',
       content:
         'N\u00E5r du bes\u00F8ker jobblo.no kan vi og v\u00E5re partnere bruke informasjonskapsler og lignende teknologier for \u00E5 lagre informasjon for analyse, statistikk, ytelsesm\u00E5ling, personalisering og eventuell annonsevisning.\n\nKategorier av informasjonskapsler vi bruker:\n\u2022 Strengt n\u00F8dvendige \u2014 n\u00F8dvendige for at nettstedet og innloggingen skal fungere.\n\u2022 Analyse og produktutvikling \u2014 for \u00E5 forst\u00E5 hvordan bes\u00F8kende bruker jobblo.no.\n\u2022 Personalisering \u2014 for \u00E5 huske dine preferanser.\n\u2022 Annonsering \u2014 dersom vi viser annonser via tredjepartsnettverk.\n\nVi innhenter samtykke til informasjonskapsler ved ditt f\u00F8rste bes\u00F8k. Du kan n\u00E5r som helst endre preferansene dine under innstillinger for informasjonskapsler.',
     },
     {
-      id: 13,
+      id: 17,
       title: 'KONTAKT OG KLAGE',
       content:
         'Jobblo tar personvernet til v\u00E5re brukere p\u00E5 alvor. Hvis du har et sp\u00F8rsm\u00E5l eller \u00F8nsker \u00E5 klage p\u00E5 hvordan vi behandler dine personopplysninger, kan du kontakte oss p\u00E5 personvern@jobblo.no.\n\nVi forplikter oss til \u00E5 svare p\u00E5 henvendelser s\u00E5 raskt som mulig, og senest innen 30 dager.\n\nHvis du fortsatt ikke er forn\u00F8yd med v\u00E5r behandling av personopplysninger, kan du n\u00E5r som helst henvende deg til Datatilsynet i Norge.',
     },
     {
-      id: 14,
+      id: 18,
       title: 'KONTAKTINFORMASJON',
       content:
         'Jobblo AS\nOrg. nr 931 684 930\nMartin Johansens veg 60\n2070 R\u00E5holt\nNorge\n\nE-post: personvern@jobblo.no',
@@ -93,7 +117,7 @@ export default function CookiePolicyPage() {
       <div style={styles.content}>
         <h1 style={styles.mainTitle}>Personvernerkl\u00E6ring og Cookie-innstillinger \u2013 Jobblo</h1>
 
-        <p style={styles.lastUpdated}>Sist oppdatert: 2026-01-08</p>
+        <p style={styles.lastUpdated}>Sist oppdatert: 2026-10-27</p>
 
         <div style={styles.introText}>
           <p style={styles.paragraph}>

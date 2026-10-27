@@ -20,8 +20,8 @@ export type PrivacySection = {
 
 export const privacyPolicy = {
     title: 'Personvern og informasjonskapsler',
-    lastUpdated: '2026-01-08',
-    lastUpdatedDisplay: '8. januar 2026',
+    lastUpdated: '2026-10-27',
+    lastUpdatedDisplay: '27. oktober 2026',
     intro:
         'Dette dokumentet gir et sammendrag av hvilke data vi samler inn, hvorfor vi samler dem inn, hvem de kan deles med, og hvordan du får tilgang til dine rettigheter knyttet til dine personopplysninger.',
     sections: [
@@ -93,18 +93,42 @@ export const privacyPolicy = {
         },
         {
             id: 12,
+            title: 'KUNSTIG INTELLIGENS (AI) NÅR DU LEGGER UT ET OPPDRAG',
+            content:
+              'Når du legger ut eller redigerer et oppdrag, kan Jobblo bruke kunstig intelligens (AI) for å hjelpe deg:\n\n• Bilder du tar eller laster opp i «Legg ut»-flyten sendes til AI-tjenesten, som gir tips om hvilke bilder som mangler og om et bilde er uskarpt eller mørkt.\n• Bildene og svarene dine (kategori, detaljer og kort beskrivelse) brukes til å foreslå kategori, tittel, beskrivelse og pris.\n\nAI-tjenesten leveres av OpenAI, som behandler dataene som vår databehandler. Ifølge OpenAIs vilkår for API-tjenesten brukes dataene ikke til å trene OpenAIs modeller, og de lagres hos OpenAI i inntil 30 dager for å avdekke misbruk før de slettes. OpenAI kan behandle data utenfor EU/EØS; overføringen skjer i henhold til EU-kommisjonens standard kontraktsklausuler (se «Overføring av data utenfor EU/EØS»).\n\nForslagene fra AI er bare forslag: du ser over og kan endre alt før annonsen publiseres. Ikke ta bilder av personer, bilskilt eller dokumenter med personopplysninger. Du kan legge ut et oppdrag uten bilder ved å trykke «Hopp over» i kameraet og skrive teksten selv.',
+        },
+        {
+            id: 13,
+            title: 'POSISJON, ADRESSE OG KART',
+            content:
+              'Når du legger ut et oppdrag, oppgir du hvor jobben skal gjøres – ved å søke etter adressen, trykke på kartet eller bruke telefonens posisjon.\n\n• Telefonens posisjon hentes bare når du selv trykker «Bruk min posisjon», og bare mens appen er i bruk. Du kan når som helst slå av tilgangen i telefonens innstillinger.\n• Adressesøk og oppslag av adresse fra et punkt på kartet gjøres mot Kartverkets åpne adresseregister (Geonorge). Da sendes søketeksten eller koordinatene dit, ikke navnet ditt.\n• Adressen (gateadresse, postnummer, sted, fylke og kommune) og punktet på kartet lagres sammen med oppdraget.\n• Stedet vises med en nål på kartet i annonsen og kan ses av alle som ser annonsen. Vil du ikke vise hjemmeadressen din, kan du sette nålen på et punkt i nærheten.\n\nKartene i appen vises med Apple Maps eller Google Maps, som mottar tekniske data (som IP-adresse og kartområdet som vises) for å levere kartbildene.',
+        },
+        {
+            id: 14,
+            title: 'BETALING MED SAFEPAY OG UTBETALINGER',
+            content:
+              'Betaling for oppdrag skjer med SafePay: oppdragsgiveren betaler når avtalen inngås, beløpet holdes til arbeidet er godkjent, og utbetales deretter til den som utførte oppdraget.\n\n• Betalingene behandles av Stripe. Kortopplysninger registreres direkte hos Stripe; Jobblo lagrer aldri kortnummeret ditt.\n• For å motta utbetalinger oppretter du en konto hos Stripe (Stripe Connect). Stripe innhenter da opplysninger som navn, fødselsdato, adresse, bankkonto og eventuelt legitimasjon, slik loven om hvitvasking krever. Stripe er selvstendig behandlingsansvarlig for disse opplysningene.\n• Jobblo lagrer beløp, status, tidspunkter og Stripes referanser for hver betaling og utbetaling, for å kunne vise historikk, håndtere reklamasjoner og tvister og oppfylle bokføringsloven (normalt 5 år).',
+        },
+        {
+            id: 15,
+            title: 'PUSHVARSLER OG ENHETSDATA',
+            content:
+              'Hvis du tillater varsler, lagrer vi en varslingsnøkkel (push-token) for enheten din sammen med kontoen, slik at vi kan varsle deg om meldinger, søknader og endringer i oppdragene dine. Varslene leveres via Google Firebase Cloud Messaging (Android) og via Expos push-tjeneste og Apples varslingstjeneste (iOS).\n\nDu kan når som helst slå av varsler i telefonens innstillinger. Varslingsnøkkelen lagres så lenge kontoen din er aktiv og varsler er slått på for enheten.',
+        },
+        {
+            id: 16,
             title: 'VÅR BRUK AV INFORMASJONSKAPSLER',
             content:
                 'Når du besøker jobblo.no kan vi og våre partnere bruke informasjonskapsler og lignende teknologier for å lagre informasjon for analyse, statistikk, ytelsesmåling, personalisering og eventuell annonsevisning.\n\nKategorier av informasjonskapsler vi bruker:\n• Strengt nødvendige — nødvendige for at nettstedet og innloggingen skal fungere.\n• Analyse og produktutvikling — for å forstå hvordan besøkende bruker jobblo.no.\n• Personalisering — for å huske dine preferanser.\n• Annonsering — dersom vi viser annonser via tredjepartsnettverk.\n\nVi innhenter samtykke til informasjonskapsler ved ditt første besøk. Du kan når som helst endre preferansene dine under innstillinger for informasjonskapsler.',
         },
         {
-            id: 13,
+            id: 17,
             title: 'KONTAKT OG KLAGE',
             content:
                 'Jobblo tar personvernet til våre brukere på alvor. Hvis du har et spørsmål eller ønsker å klage på hvordan vi behandler dine personopplysninger, kan du kontakte oss på personvern@jobblo.no.\n\nVi forplikter oss til å svare på henvendelser så raskt som mulig, og senest innen 30 dager.\n\nHvis du fortsatt ikke er fornøyd med vår behandling av personopplysninger, kan du når som helst henvende deg til Datatilsynet i Norge.',
         },
         {
-            id: 14,
+            id: 18,
             title: 'KONTAKTINFORMASJON',
             content:
                 'Jobblo AS\nOrg. nr 931 684 930\nMartin Johansens veg 60\n2070 Råholt\nNorge\n\nE-post: personvern@jobblo.no',
@@ -155,24 +179,11 @@ export const privacyPolicy = {
  * This claim is currently only partially true on web and not functional
  * on mobile.
  *
- * SAFEPAY / STRIPE POLICY GAPS
- * ────────────────────────────
- * Current product uses SafePay (escrow) and Stripe Connect for provider
- * payouts. The policy references "Stripe" only as a payment processor for
- * ad purchases. SafePay escrow, Stripe Connect onboarding, and payout
- * flows are not described. Policy appears incomplete for these data flows.
- *
- * PUSH / DEVICE DATA GAPS
- * ───────────────────────
- * Mobile stores push tokens on the backend (pushNotifications.service.ts,
- * backend User model). Policy does not explicitly mention push notification
- * tokens or device registration data. "Atferdsmessige og tekniske data —
- * IP-adresse, enhetsinformasjon" may partially cover this but push tokens
- * are not named. Gap for legal review.
- *
- * LOCATION / GOOGLE MAPS GAPS
- * ───────────────────────────
- * Addresses screen uses expo-location (foreground device location) and
- * Google Maps for reverse geocoding. Policy mentions no location data
- * processing, no Google as a third-party processor. Gap for legal review.
+ * ADDED 2026-10-27 (App Store review, guideline 5.1.1 / 5.1.2(i))
+ * ──────────────────────────────────────────────────────────────────
+ * Sections 12–15 were added (same text on the web page, CookiePolicyPage.tsx):
+ * AI / OpenAI for the post-job flow, location / Kartverket / map pin,
+ * SafePay + Stripe Connect, push tokens (Firebase / APNs). They close the
+ * former SafePay, push and location gaps. Not yet reviewed by legal; the
+ * older sections above are unchanged.
  */
