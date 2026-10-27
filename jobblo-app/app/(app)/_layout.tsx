@@ -7,6 +7,7 @@ import { useUnreadConversations } from '@/hooks/useUnreadConversations';
 import { userTerms } from '@/content/userTerms';
 import { GlassTabBar, useTabBarSpace } from '@/components/GlassTabBar';
 import { TC } from '../../src/theme/colors';
+import MfaGate from '@/components/auth/MfaGate';
 
 // Feed screens scroll under the glass bar (they pad their own lists); every other screen
 // ends above it, so no fixed button or last row is ever hidden behind the bar.
@@ -93,9 +94,11 @@ export default function AppLayout() {
     return <Redirect href="/(auth)/terms-acceptance" />;
   }
 
+  // Superadmin/developer accounts enter their authenticator code first (backend 403 MFA_REQUIRED).
   return (
+    <MfaGate>
     <Tabs
-      // Most screens in this group are hidden tab routes (`href: null`), so cross-section
+      // Most screens in this group are tab routes without a tab button (see below), so cross-section
       // navigation like SafePay -> "Mine søkere" is a tab switch, not a stack push. With the
       // default `firstRoute`, `changeIndex` rewrites the tab history to [index, target], so
       // every back action out of those hidden screens lands on Hjem instead of the screen the
@@ -151,19 +154,22 @@ export default function AppLayout() {
           },
         })}
       />
-      {/* Hidden flat screens */}
-      <Tabs.Screen name="explore" options={{ href: null }} />
-      <Tabs.Screen name="recommended-taskers" options={{ href: null }} />
-      <Tabs.Screen name="my-applications" options={{ href: null }} />
-      <Tabs.Screen name="my-jobs" options={{ href: null }} />
-      {/* Folder-based sections each have their own _layout.tsx (Stack).
-                Registering the folder name here hides it from the tab bar. */}
-      <Tabs.Screen name="jobs" options={{ href: null }} />
-      <Tabs.Screen name="favorites" options={{ href: null }} />
-      <Tabs.Screen name="job-applicants" options={{ href: null }} />
-      <Tabs.Screen name="provider" options={{ href: null }} />
-      <Tabs.Screen name="safepay" options={{ href: null }} />
-      <Tabs.Screen name="disputes" options={{ href: null }} />
+      {/* Screens without a tab button. Declared but NOT `href: null`: expo-router 58 turns
+          `href: null` into `hidden: true`, and its tabs redirect a focused hidden route to the
+          first tab (useVisibleTabsWithRedirect), so every push to these screens bounced back to
+          Hjem. GlassTabBar only draws VISIBLE_TABS, so declaring them adds no tab button. */}
+      <Tabs.Screen name="explore" />
+      <Tabs.Screen name="recommended-taskers" />
+      <Tabs.Screen name="my-applications" />
+      <Tabs.Screen name="my-jobs" />
+      {/* Folder-based sections each have their own _layout.tsx (Stack). */}
+      <Tabs.Screen name="jobs" />
+      <Tabs.Screen name="favorites" />
+      <Tabs.Screen name="job-applicants" />
+      <Tabs.Screen name="provider" />
+      <Tabs.Screen name="safepay" />
+      <Tabs.Screen name="disputes" />
     </Tabs>
+    </MfaGate>
   );
 }
