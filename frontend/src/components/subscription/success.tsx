@@ -96,27 +96,30 @@ const SuccessPage = () => {
 
   const sessionId = searchParams.get('session_id');
 
-  const check = useCallback(async (quiet = false) => {
-    if (!sessionId) {
-      setStatus('no-session');
-      return;
-    }
-    try {
-      // ponytail: bounded post-checkout poll kept as a state machine (retry resets the attempt count);
-      // a useQuery+refetchInterval port is the upgrade path if this screen grows.
-      const data = await getCheckoutSession<SessionResult>(sessionId);
-      setResult(data);
-      const isPaid = ['paid', 'no_payment_required'].includes(data.payment_status);
-      if (isPaid && data.provisioning_status !== 'complete') {
-        setStatus('processing');
-        setPollAttempt((attempt) => attempt + 1);
-      } else {
-        setStatus(isPaid ? 'success' : 'failed');
+  const check = useCallback(
+    async (quiet = false) => {
+      if (!sessionId) {
+        setStatus('no-session');
+        return;
       }
-    } catch {
-      if (!quiet) setStatus('error');
-    }
-  }, [sessionId]);
+      try {
+        // ponytail: bounded post-checkout poll kept as a state machine (retry resets the attempt count);
+        // a useQuery+refetchInterval port is the upgrade path if this screen grows.
+        const data = await getCheckoutSession<SessionResult>(sessionId);
+        setResult(data);
+        const isPaid = ['paid', 'no_payment_required'].includes(data.payment_status);
+        if (isPaid && data.provisioning_status !== 'complete') {
+          setStatus('processing');
+          setPollAttempt((attempt) => attempt + 1);
+        } else {
+          setStatus(isPaid ? 'success' : 'failed');
+        }
+      } catch {
+        if (!quiet) setStatus('error');
+      }
+    },
+    [sessionId]
+  );
 
   useEffect(() => {
     check();
@@ -177,7 +180,8 @@ const SuccessPage = () => {
           Betalingen er mottatt
         </h1>
         <p className="mt-2 text-[0.9375rem] leading-relaxed text-[#63665F]">
-          Stripe bekrefter betalingen. Vi venter på at medlemskapet skal aktiveres, og sjekker automatisk.
+          Stripe bekrefter betalingen. Vi venter på at medlemskapet skal aktiveres, og sjekker
+          automatisk.
         </p>
         <button type="button" onClick={retry} disabled={isRetrying} className={`${SOLID} mt-6`}>
           <RefreshCw size={16} strokeWidth={2.4} className={isRetrying ? 'animate-spin' : ''} />
@@ -235,7 +239,11 @@ const SuccessPage = () => {
           </dl>
         )}
 
-        <button type="button" onClick={() => navigate('/membership', { replace: true })} className={`${SOLID} mt-6`}>
+        <button
+          type="button"
+          onClick={() => navigate('/membership', { replace: true })}
+          className={`${SOLID} mt-6`}
+        >
           Til medlemskapet
           <ArrowRight size={16} strokeWidth={2.4} />
         </button>

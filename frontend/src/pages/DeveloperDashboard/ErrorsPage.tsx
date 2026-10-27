@@ -2,9 +2,28 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { Download, FileCode2, MessageSquarePlus, Search, Users } from 'lucide-react';
 import { ago, dateTime, downloadCsv, num } from '@/lib/devFormat';
-import { useDevDevelopers, useDevErrorDetail, useDevErrors, useDevMe, useDevUpdateError, useUrlFilters } from '../../features/developer/hooks';
+import {
+  useDevDevelopers,
+  useDevErrorDetail,
+  useDevErrors,
+  useDevMe,
+  useDevUpdateError,
+  useUrlFilters,
+} from '../../features/developer/hooks';
 import type { ErrorGroup, ErrorStatus } from '../../api/developer';
-import { EmptyState, ErrorState, JsonView, KeyValue, MethodBadge, Mono, PageHeader, RangeSelect, RefreshButton, Section, StatusBadge } from '../../components/developer/kit';
+import {
+  EmptyState,
+  ErrorState,
+  JsonView,
+  KeyValue,
+  MethodBadge,
+  Mono,
+  PageHeader,
+  RangeSelect,
+  RefreshButton,
+  Section,
+  StatusBadge,
+} from '../../components/developer/kit';
 import { DataTable, type Column } from '../../components/developer/DataTable';
 import { TimeSeriesChart } from '../../components/developer/TimeSeriesChart';
 import { Button } from '../../components/developer/ui/button';
@@ -13,8 +32,20 @@ import { Label } from '../../components/developer/ui/label';
 import { Textarea } from '../../components/developer/ui/textarea';
 import { Separator } from '../../components/developer/ui/separator';
 import { Skeleton } from '../../components/developer/ui/skeleton';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/developer/ui/select';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '../../components/developer/ui/sheet';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/developer/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '../../components/developer/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/developer/ui/tabs';
 
 const STATUS_TABS: { value: string; label: string }[] = [
@@ -42,7 +73,10 @@ function ErrorSheet({ id, onClose }: { id: string | null; onClose: () => void })
   const [note, setNote] = useState('');
   const e = data?.error;
 
-  const save = (body: { status?: ErrorStatus; assignee?: string | null; note?: string }, done: string) =>
+  const save = (
+    body: { status?: ErrorStatus; assignee?: string | null; note?: string },
+    done: string
+  ) =>
     update.mutate(
       { id: id!, ...body },
       {
@@ -80,7 +114,11 @@ function ErrorSheet({ id, onClose }: { id: string | null; onClose: () => void })
             <div className="grid gap-3 rounded-md border bg-muted/30 p-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">Status</Label>
-                <Select value={e.status} disabled={!canTriage} onValueChange={(v) => save({ status: v as ErrorStatus }, 'Status updated')}>
+                <Select
+                  value={e.status}
+                  disabled={!canTriage}
+                  onValueChange={(v) => save({ status: v as ErrorStatus }, 'Status updated')}
+                >
                   <SelectTrigger size="sm" className="w-full bg-card">
                     <SelectValue />
                   </SelectTrigger>
@@ -98,7 +136,9 @@ function ErrorSheet({ id, onClose }: { id: string | null; onClose: () => void })
                 <Select
                   value={e.assignee?._id || UNASSIGNED}
                   disabled={!canTriage}
-                  onValueChange={(v) => save({ assignee: v === UNASSIGNED ? null : v }, 'Assignee updated')}
+                  onValueChange={(v) =>
+                    save({ assignee: v === UNASSIGNED ? null : v }, 'Assignee updated')
+                  }
                 >
                   <SelectTrigger size="sm" className="w-full bg-card">
                     <SelectValue />
@@ -119,7 +159,9 @@ function ErrorSheet({ id, onClose }: { id: string | null; onClose: () => void })
               <TabsList>
                 <TabsTrigger value="details">Details</TabsTrigger>
                 <TabsTrigger value="stack">Stack trace</TabsTrigger>
-                <TabsTrigger value="occurrences">Occurrences ({data.occurrences.length})</TabsTrigger>
+                <TabsTrigger value="occurrences">
+                  Occurrences ({data.occurrences.length})
+                </TabsTrigger>
                 <TabsTrigger value="notes">Notes ({data.notes.length})</TabsTrigger>
               </TabsList>
 
@@ -136,29 +178,56 @@ function ErrorSheet({ id, onClose }: { id: string | null; onClose: () => void })
                 )}
                 <KeyValue
                   items={[
-                    ['Endpoint', e.route ? <span className="flex items-center gap-2"><MethodBadge method={e.httpMethod} /><span className="font-mono text-xs">{e.route}</span></span> : '—'],
+                    [
+                      'Endpoint',
+                      e.route ? (
+                        <span className="flex items-center gap-2">
+                          <MethodBadge method={e.httpMethod} />
+                          <span className="font-mono text-xs">{e.route}</span>
+                        </span>
+                      ) : (
+                        '—'
+                      ),
+                    ],
                     ['HTTP status', e.statusCode ?? '—'],
                     ['Source', e.source || 'request'],
                     ['Environment', e.environment],
                     ['Latest reference', <Mono key="r">{e.referenceId}</Mono>],
                     ['Request ID', e.requestId ? <Mono key="q">{e.requestId}</Mono> : '—'],
                     ['Last seen', dateTime(e.createdAt)],
-                    ['Resolved', e.resolvedAt ? `${dateTime(e.resolvedAt)} by ${e.resolvedBy?.name || '—'}` : '—'],
+                    [
+                      'Resolved',
+                      e.resolvedAt
+                        ? `${dateTime(e.resolvedAt)} by ${e.resolvedBy?.name || '—'}`
+                        : '—',
+                    ],
                   ]}
                 />
                 <div>
-                  <h4 className="mb-2 text-xs font-medium text-muted-foreground uppercase">Occurrences, last 14 days</h4>
-                  <TimeSeriesChart data={data.timeline} bucketMs={86_400_000} height={120} variant="bar" series={[{ key: 'count', label: 'Occurrences', color: 'var(--chart-5)' }]} />
+                  <h4 className="mb-2 text-xs font-medium text-muted-foreground uppercase">
+                    Occurrences, last 14 days
+                  </h4>
+                  <TimeSeriesChart
+                    data={data.timeline}
+                    bucketMs={86_400_000}
+                    height={120}
+                    variant="bar"
+                    series={[{ key: 'count', label: 'Occurrences', color: 'var(--chart-5)' }]}
+                  />
                 </div>
                 <div>
-                  <h4 className="mb-2 text-xs font-medium text-muted-foreground uppercase">Metadata (redacted)</h4>
+                  <h4 className="mb-2 text-xs font-medium text-muted-foreground uppercase">
+                    Metadata (redacted)
+                  </h4>
                   <JsonView value={e.metadata} />
                 </div>
               </TabsContent>
 
               <TabsContent value="stack" className="pt-3">
                 {e.stack ? (
-                  <pre className="max-h-[60vh] overflow-auto rounded-md border bg-muted/40 p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap text-foreground">{e.stack}</pre>
+                  <pre className="max-h-[60vh] overflow-auto rounded-md border bg-muted/40 p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap text-foreground">
+                    {e.stack}
+                  </pre>
                 ) : (
                   <EmptyState title="No stack trace captured" />
                 )}
@@ -181,8 +250,18 @@ function ErrorSheet({ id, onClose }: { id: string | null; onClose: () => void })
 
               <TabsContent value="notes" className="space-y-3 pt-3">
                 <div className={canTriage ? 'space-y-2' : 'hidden'}>
-                  <Textarea value={note} onChange={(ev) => setNote(ev.target.value)} placeholder="Add an investigation note…" maxLength={2000} rows={3} />
-                  <Button size="sm" disabled={!note.trim() || update.isPending} onClick={() => save({ note }, 'Note added')}>
+                  <Textarea
+                    value={note}
+                    onChange={(ev) => setNote(ev.target.value)}
+                    placeholder="Add an investigation note…"
+                    maxLength={2000}
+                    rows={3}
+                  />
+                  <Button
+                    size="sm"
+                    disabled={!note.trim() || update.isPending}
+                    onClick={() => save({ note }, 'Note added')}
+                  >
                     <MessageSquarePlus /> Add note
                   </Button>
                 </div>
@@ -192,7 +271,9 @@ function ErrorSheet({ id, onClose }: { id: string | null; onClose: () => void })
                     {[...data.notes].reverse().map((n, i) => (
                       <li key={i} className="rounded-md border bg-card p-3 text-sm">
                         <div className="mb-1 flex justify-between text-xs text-muted-foreground">
-                          <span className="font-medium text-foreground">{n.by?.name || 'Developer'}</span>
+                          <span className="font-medium text-foreground">
+                            {n.by?.name || 'Developer'}
+                          </span>
                           {ago(n.at)}
                         </div>
                         <p className="whitespace-pre-wrap">{n.text}</p>
@@ -212,7 +293,13 @@ function ErrorSheet({ id, onClose }: { id: string | null; onClose: () => void })
 }
 
 export default function ErrorsPage() {
-  const [f, setF] = useUrlFilters({ range: '7d', status: 'all', severity: 'all', q: '', page: '1' });
+  const [f, setF] = useUrlFilters({
+    range: '7d',
+    status: 'all',
+    severity: 'all',
+    q: '',
+    page: '1',
+  });
   const [search, setSearch] = useState(f.q);
   const [selected, setSelected] = useState<string | null>(null);
   const { data, isLoading, isFetching, error, refetch } = useDevErrors({
@@ -224,7 +311,9 @@ export default function ErrorsPage() {
   });
 
   const countFor = (status: string) =>
-    (data?.summary || []).filter((s) => status === 'all' || s.status === status).reduce((a, s) => a + s.count, 0);
+    (data?.summary || [])
+      .filter((s) => status === 'all' || s.status === status)
+      .reduce((a, s) => a + s.count, 0);
 
   const columns: Column<ErrorGroup>[] = [
     {
@@ -238,7 +327,10 @@ export default function ErrorsPage() {
             <span className="font-mono">{g.errorCode}</span>
             {g.route && (
               <>
-                · <span className="font-mono">{g.httpMethod} {g.route}</span>
+                ·{' '}
+                <span className="font-mono">
+                  {g.httpMethod} {g.route}
+                </span>
               </>
             )}
           </p>
@@ -247,9 +339,25 @@ export default function ErrorsPage() {
     },
     { key: 'severity', header: 'Severity', cell: (g) => <StatusBadge status={g.severity} /> },
     { key: 'status', header: 'Status', cell: (g) => <StatusBadge status={g.status} /> },
-    { key: 'count', header: 'Events', align: 'right', cell: (g) => <span className="tabular-nums">{num(g.count)}</span> },
-    { key: 'users', header: 'Users', align: 'right', cell: (g) => <span className="tabular-nums text-muted-foreground">{num(g.affectedUsers)}</span> },
-    { key: 'assignee', header: 'Assignee', cell: (g) => <span className="text-xs text-muted-foreground">{g.assignee?.name || '—'}</span> },
+    {
+      key: 'count',
+      header: 'Events',
+      align: 'right',
+      cell: (g) => <span className="tabular-nums">{num(g.count)}</span>,
+    },
+    {
+      key: 'users',
+      header: 'Users',
+      align: 'right',
+      cell: (g) => (
+        <span className="tabular-nums text-muted-foreground">{num(g.affectedUsers)}</span>
+      ),
+    },
+    {
+      key: 'assignee',
+      header: 'Assignee',
+      cell: (g) => <span className="text-xs text-muted-foreground">{g.assignee?.name || '—'}</span>,
+    },
     {
       key: 'seen',
       header: 'Last / first seen',
@@ -276,7 +384,15 @@ export default function ErrorsPage() {
               size="sm"
               className="bg-card"
               disabled={!data?.groups.length}
-              onClick={() => downloadCsv(`errors-${f.range}.csv`, (data?.groups || []).map(({ assignee, ...g }) => ({ ...g, assignee: assignee?.name || '' })))}
+              onClick={() =>
+                downloadCsv(
+                  `errors-${f.range}.csv`,
+                  (data?.groups || []).map(({ assignee, ...g }) => ({
+                    ...g,
+                    assignee: assignee?.name || '',
+                  }))
+                )
+              }
             >
               <Download /> Export
             </Button>
@@ -293,7 +409,9 @@ export default function ErrorsPage() {
               {STATUS_TABS.map((t) => (
                 <TabsTrigger key={t.value} value={t.value} className="gap-1.5">
                   {t.label}
-                  <span className="rounded-sm bg-muted px-1 text-[10px] tabular-nums text-muted-foreground">{countFor(t.value)}</span>
+                  <span className="rounded-sm bg-muted px-1 text-[10px] tabular-nums text-muted-foreground">
+                    {countFor(t.value)}
+                  </span>
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -309,7 +427,13 @@ export default function ErrorsPage() {
               }}
             >
               <Search className="pointer-events-none absolute top-1/2 left-2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-              <Input value={search} onChange={(ev) => setSearch(ev.target.value)} placeholder="Message, route, ID…" className="h-7 w-52 pl-7 text-xs" aria-label="Search errors" />
+              <Input
+                value={search}
+                onChange={(ev) => setSearch(ev.target.value)}
+                placeholder="Message, route, ID…"
+                className="h-7 w-52 pl-7 text-xs"
+                aria-label="Search errors"
+              />
             </form>
             <Select value={f.severity} onValueChange={(severity) => setF({ severity })}>
               <SelectTrigger size="sm" className="w-32 capitalize" aria-label="Severity">

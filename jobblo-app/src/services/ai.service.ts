@@ -1,11 +1,18 @@
 import apiClient from '../api/client';
 
 /** Up to 3 active category names, best first, from up to 3 photos and/or a short text. */
-export async function suggestCategories(photos: { uri: string; name: string; type: string }[], text = ''): Promise<string[]> {
+export async function suggestCategories(
+  photos: { uri: string; name: string; type: string }[],
+  text = ''
+): Promise<string[]> {
   const formData = new FormData();
   for (const photo of photos.slice(0, 3)) formData.append('images', photo as unknown as Blob);
   if (text.trim()) formData.append('text', text.trim());
-  const response = await apiClient.post<{ success: boolean; suggestions?: string[]; error?: string }>('/ai/suggest-categories', formData);
+  const response = await apiClient.post<{
+    success: boolean;
+    suggestions?: string[];
+    error?: string;
+  }>('/ai/suggest-categories', formData);
   if (!response.data.success) throw new Error(response.data.error ?? 'Kunne ikke foreslå kategori');
   return response.data.suggestions ?? [];
 }
@@ -29,7 +36,13 @@ export interface ListingDraft {
 export async function writeListing(
   photos: { uri: string; name: string; type: string }[],
   prompt: string,
-  context: { category?: string; equipment?: string; urgent?: boolean; duration?: { value: string; unit: string }; lang?: 'no' | 'en' }
+  context: {
+    category?: string;
+    equipment?: string;
+    urgent?: boolean;
+    duration?: { value: string; unit: string };
+    lang?: 'no' | 'en';
+  }
 ): Promise<ListingDraft> {
   const body = new FormData();
   for (const photo of photos.slice(0, 3)) body.append('images', photo as unknown as Blob);
@@ -39,8 +52,12 @@ export async function writeListing(
   if (context.equipment) body.append('existingEquipment', context.equipment);
   if (context.urgent) body.append('existingUrgent', 'true');
   if (context.duration?.value) body.append('existingDuration', JSON.stringify(context.duration));
-  const response = await apiClient.post<{ success: boolean; data?: ListingDraft; error?: string }>('/ai/generate-full-listing', body);
-  if (!response.data.success || !response.data.data) throw new Error(response.data.error ?? 'Kunne ikke skrive annonsen');
+  const response = await apiClient.post<{ success: boolean; data?: ListingDraft; error?: string }>(
+    '/ai/generate-full-listing',
+    body
+  );
+  if (!response.data.success || !response.data.data)
+    throw new Error(response.data.error ?? 'Kunne ikke skrive annonsen');
   return response.data.data;
 }
 
@@ -54,7 +71,9 @@ export interface PriceStats {
 
 /** What similar jobs were agreed for (10th / 50th / 90th percentile). */
 export async function getPriceStats(category: string, countyCode?: string): Promise<PriceStats> {
-  const response = await apiClient.get<PriceStats>('/services/price-stats', { params: { category, countyCode: countyCode || undefined } });
+  const response = await apiClient.get<PriceStats>('/services/price-stats', {
+    params: { category, countyCode: countyCode || undefined },
+  });
   return response.data;
 }
 
@@ -80,7 +99,18 @@ export async function getPhotoHint(
   body.append('lang', lang);
   if (earlier.seen.length) body.append('previousSeen', JSON.stringify(earlier.seen));
   if (earlier.hints.length) body.append('previousHints', JSON.stringify(earlier.hints));
-  const response = await apiClient.post<{ success: boolean; hint?: string; seen?: string; quality?: PhotoHint['quality']; error?: string }>('/ai/photo-hint', body, { timeout: 20_000 });
-  if (!response.data.success || !response.data.hint) throw new Error(response.data.error ?? 'No hint');
-  return { hint: response.data.hint, seen: response.data.seen ?? '', quality: response.data.quality ?? 'ok' };
+  const response = await apiClient.post<{
+    success: boolean;
+    hint?: string;
+    seen?: string;
+    quality?: PhotoHint['quality'];
+    error?: string;
+  }>('/ai/photo-hint', body, { timeout: 20_000 });
+  if (!response.data.success || !response.data.hint)
+    throw new Error(response.data.error ?? 'No hint');
+  return {
+    hint: response.data.hint,
+    seen: response.data.seen ?? '',
+    quality: response.data.quality ?? 'ok',
+  };
 }

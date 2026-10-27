@@ -42,8 +42,7 @@ export function ActiveFiltersDisplay({
     });
 
     // Price
-    const hasPriceFilter =
-      filters.minPrice !== 0 || filters.maxPrice !== 100000;
+    const hasPriceFilter = filters.minPrice !== 0 || filters.maxPrice !== 100000;
     if (hasPriceFilter) {
       const formatPrice = (value: number): string => {
         return new Intl.NumberFormat('nb-NO', {
@@ -83,9 +82,7 @@ export function ActiveFiltersDisplay({
 
     // Municipalities
     filters.selectedMunicipalityCodes.forEach((code) => {
-      const mun = locationTree
-        ?.flatMap((c) => c.children ?? [])
-        .find((m) => m.code === code);
+      const mun = locationTree?.flatMap((c) => c.children ?? []).find((m) => m.code === code);
       if (mun) {
         items.push({
           key: `mun-${code}`,
@@ -129,11 +126,7 @@ export function ActiveFiltersDisplay({
   return (
     <View className="mb-4 flex-row flex-wrap items-center gap-2 px-4">
       {chips.map((chip) => (
-        <ActiveFilterChip
-          key={chip.key}
-          label={chip.label}
-          onRemove={chip.onRemove}
-        />
+        <ActiveFilterChip key={chip.key} label={chip.label} onRemove={chip.onRemove} />
       ))}
     </View>
   );

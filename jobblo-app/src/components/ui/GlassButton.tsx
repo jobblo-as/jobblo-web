@@ -20,21 +20,61 @@ export function useGlass(radius: number) {
         borderWidth: 1,
         borderColor: dark ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.6)',
         backgroundColor: dark
-          ? Platform.OS === 'ios' ? 'rgba(28,31,27,0.35)' : 'rgba(28,31,27,0.92)'
-          : Platform.OS === 'ios' ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.92)',
+          ? Platform.OS === 'ios'
+            ? 'rgba(28,31,27,0.35)'
+            : 'rgba(28,31,27,0.92)'
+          : Platform.OS === 'ios'
+            ? 'rgba(255,255,255,0.35)'
+            : 'rgba(255,255,255,0.92)',
       };
   return style;
 }
 
-export function GlassFill({ radius, interactive, tint }: { radius: number; interactive?: boolean; tint?: string }) {
-  const fill = { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: radius } as const;
-  if (LIQUID_GLASS) return <GlassView glassEffectStyle="regular" isInteractive={interactive} tintColor={tint} colorScheme="auto" style={fill} pointerEvents="none" />;
-  if (Platform.OS === 'ios') return <BlurView intensity={60} tint="systemChromeMaterial" style={fill} pointerEvents="none" />;
+export function GlassFill({
+  radius,
+  interactive,
+  tint,
+}: {
+  radius: number;
+  interactive?: boolean;
+  tint?: string;
+}) {
+  const fill = {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: radius,
+  } as const;
+  if (LIQUID_GLASS)
+    return (
+      <GlassView
+        glassEffectStyle="regular"
+        isInteractive={interactive}
+        tintColor={tint}
+        colorScheme="auto"
+        style={fill}
+        pointerEvents="none"
+      />
+    );
+  if (Platform.OS === 'ios')
+    return (
+      <BlurView intensity={60} tint="systemChromeMaterial" style={fill} pointerEvents="none" />
+    );
   return null;
 }
 
 /** Round glass button (job page over the photo, post-job header). */
-export function GlassButton({ label, onPress, children }: { label: string; onPress: () => void; children: React.ReactNode }) {
+export function GlassButton({
+  label,
+  onPress,
+  children,
+}: {
+  label: string;
+  onPress: () => void;
+  children: React.ReactNode;
+}) {
   const glass = useGlass(20);
   return (
     <Pressable

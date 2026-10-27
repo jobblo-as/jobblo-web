@@ -297,7 +297,11 @@ function MobileReleases() {
                     (byT[s.t] ||= { t: s.t })[platform as 'ios' | 'android'] = s.share;
                 // A day without sessions on one platform keeps that platform's last known share.
                 const rows = Object.values(byT).sort((a, b) => a.t.localeCompare(b.t));
-                rows.forEach((r, j) => (['ios', 'android'] as const).forEach((k) => r[k] === undefined && j > 0 && (r[k] = rows[j - 1][k])));
+                rows.forEach((r, j) =>
+                  (['ios', 'android'] as const).forEach(
+                    (k) => r[k] === undefined && j > 0 && (r[k] = rows[j - 1][k])
+                  )
+                );
                 return rows;
               })()}
               bucketMs={data?.bucketMs}

@@ -19,9 +19,7 @@ export function ActiveFilterChip({ label, onRemove }: ActiveFilterChipProps) {
       onPress={onRemove}
       className="flex-row items-center gap-1.5 rounded-full border border-brand-text/30 bg-tint px-3 py-1.5"
     >
-      <Text className="text-[0.8125rem] font-medium text-brand-text">
-        {label}
-      </Text>
+      <Text className="text-[0.8125rem] font-medium text-brand-text">{label}</Text>
       <X size={13} color={TC.brandText} strokeWidth={2.5} />
     </Pressable>
   );

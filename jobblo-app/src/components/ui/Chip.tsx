@@ -26,10 +26,22 @@ export function Chip({ label, selected = false, onPress, count, icon, className 
       )}
     >
       {icon}
-      <Text className={cn('text-[0.8125rem] font-medium', selected ? 'text-white' : 'text-ink-2')}>{label}</Text>
+      <Text className={cn('text-[0.8125rem] font-medium', selected ? 'text-white' : 'text-ink-2')}>
+        {label}
+      </Text>
       {count ? (
-        <View className={cn('min-w-5 items-center rounded-full px-1.5 py-0.5', selected ? 'bg-white/20' : 'bg-tint')}>
-          <Text className={cn('text-[0.8125rem] font-semibold tabular-nums', selected ? 'text-white' : 'text-brand-text')}>
+        <View
+          className={cn(
+            'min-w-5 items-center rounded-full px-1.5 py-0.5',
+            selected ? 'bg-white/20' : 'bg-tint'
+          )}
+        >
+          <Text
+            className={cn(
+              'text-[0.8125rem] font-semibold tabular-nums',
+              selected ? 'text-white' : 'text-brand-text'
+            )}
+          >
             {count > 99 ? '99+' : count}
           </Text>
         </View>

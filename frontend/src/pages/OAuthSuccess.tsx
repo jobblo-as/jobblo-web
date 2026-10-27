@@ -99,7 +99,8 @@ export default function OAuthSuccess() {
             <p className="text-gray-500 text-sm leading-relaxed">
               {status === 'loading' && 'Vi henter profilen din.'}
               {status === 'success' && 'Kontoen er bekreftet. Sender deg videre.'}
-              {status === 'error' && 'Vi fikk ikke bekreftet kontoen din. Sender deg tilbake til innlogging.'}
+              {status === 'error' &&
+                'Vi fikk ikke bekreftet kontoen din. Sender deg tilbake til innlogging.'}
             </p>
 
             {/* Progress indicator */}

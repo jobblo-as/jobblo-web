@@ -50,8 +50,7 @@ export const OAUTH_ERROR_MESSAGES: Record<string, string> = {
   google_failed: 'Google-innloggingen mislyktes. Prøv igjen.',
 
   // The account exists but is closed or deactivated.
-  account_deactivated:
-    'Denne kontoen er deaktivert. Kontakt support hvis du vil åpne den igjen.',
+  account_deactivated: 'Denne kontoen er deaktivert. Kontakt support hvis du vil åpne den igjen.',
 
   // Sign in with Apple, web flow (Android). Native iOS gets the same copy as JSON messages.
   apple_account_exists:

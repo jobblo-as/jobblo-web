@@ -52,22 +52,24 @@ export function ConfirmDialog({
 
         {errorMessage ? (
           <View className="mt-4 rounded-2xl border border-[#E7CFCB] dark:border-danger-line bg-[#FBF1F0] dark:bg-danger-tint px-3.5 py-3">
-            <Text className="text-[0.8125rem] font-medium text-[#B4544A] dark:text-danger">{errorMessage}</Text>
+            <Text className="text-[0.8125rem] font-medium text-[#B4544A] dark:text-danger">
+              {errorMessage}
+            </Text>
           </View>
         ) : null}
 
         <View className="mt-6 flex-row gap-3">
           {hideCancel ? null : (
-          <Pressable
-            onPress={onClose}
-            disabled={isPending}
-            className={`flex-1 items-center justify-center rounded-full border border-line bg-surface px-4 py-3.5 ${
-              isPending ? 'opacity-60' : ''
-            }`}
-            accessibilityRole="button"
-          >
-            <Text className="text-[0.9375rem] font-semibold text-ink">{cancelLabel}</Text>
-          </Pressable>
+            <Pressable
+              onPress={onClose}
+              disabled={isPending}
+              className={`flex-1 items-center justify-center rounded-full border border-line bg-surface px-4 py-3.5 ${
+                isPending ? 'opacity-60' : ''
+              }`}
+              accessibilityRole="button"
+            >
+              <Text className="text-[0.9375rem] font-semibold text-ink">{cancelLabel}</Text>
+            </Pressable>
           )}
 
           <Pressable

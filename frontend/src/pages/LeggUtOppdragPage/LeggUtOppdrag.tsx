@@ -146,16 +146,30 @@ function DraftsList() {
   if (drafts.length === 0) return null;
 
   return (
-    <section aria-labelledby="drafts-heading" className="mb-8 rounded-3xl border border-[#E6E7E1] bg-white p-5">
-      <h2 id="drafts-heading" className="text-[0.9375rem] font-bold tracking-[-0.02em] text-[#0B0B0B]">Dine utkast</h2>
+    <section
+      aria-labelledby="drafts-heading"
+      className="mb-8 rounded-3xl border border-[#E6E7E1] bg-white p-5"
+    >
+      <h2
+        id="drafts-heading"
+        className="text-[0.9375rem] font-bold tracking-[-0.02em] text-[#0B0B0B]"
+      >
+        Dine utkast
+      </h2>
       <ul className="mt-3 divide-y divide-[#E6E7E1]">
         {drafts.map((d) => (
           <li key={d._id} className="flex items-center gap-3 py-2.5">
             <FileText size={16} className="shrink-0 text-[#2E6641]" />
             <Link to={`/Publish-job?utkast=${d._id}`} className="min-w-0 flex-1 hover:underline">
-              <span className="block truncate text-[0.875rem] font-semibold text-[#0B0B0B]">{d.title || 'Uten tittel'}</span>
+              <span className="block truncate text-[0.875rem] font-semibold text-[#0B0B0B]">
+                {d.title || 'Uten tittel'}
+              </span>
               <span className="block text-[0.75rem] text-[#63665F]">
-                Sist endret {new Date(d.updatedAt).toLocaleString('nb-NO', { dateStyle: 'medium', timeStyle: 'short' })}
+                Sist endret{' '}
+                {new Date(d.updatedAt).toLocaleString('nb-NO', {
+                  dateStyle: 'medium',
+                  timeStyle: 'short',
+                })}
               </span>
             </Link>
             <button

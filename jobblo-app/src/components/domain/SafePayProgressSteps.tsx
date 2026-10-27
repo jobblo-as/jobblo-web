@@ -6,7 +6,9 @@ import { TC } from '../../theme/colors';
 
 const STEPS = ['Velg søker', 'Kontrakt og betaling', 'Jobb utføres', 'Godkjenn og utbetal'];
 
-export function SafePayProgressSteps({ currentStep = 1 }: { currentStep?: number; orderId?: string; serviceId?: string } = {}) {
+export function SafePayProgressSteps({
+  currentStep = 1,
+}: { currentStep?: number; orderId?: string; serviceId?: string } = {}) {
   return (
     <View className="mb-6 flex-row items-start">
       {STEPS.map((label, index) => {
@@ -15,11 +17,47 @@ export function SafePayProgressSteps({ currentStep = 1 }: { currentStep?: number
         const done = step < currentStep;
         return (
           <View key={label} className="relative flex-1 items-center gap-2">
-            {index > 0 ? <View className={['absolute right-1/2 top-3.5 h-px w-full', done || current ? 'bg-brand' : 'bg-line'].join(' ')} /> : null}
-            <View className={['z-10 h-7 w-7 items-center justify-center rounded-full', current ? 'bg-brand-deep' : done ? 'bg-brand' : 'border border-line bg-surface'].join(' ')}>
-              {done ? <Check size={13} color="#FFFFFF" strokeWidth={3} /> : <Text className={current ? 'text-[0.8125rem] font-bold text-white' : 'text-[0.8125rem] text-muted'}>{step}</Text>}
+            {index > 0 ? (
+              <View
+                className={[
+                  'absolute right-1/2 top-3.5 h-px w-full',
+                  done || current ? 'bg-brand' : 'bg-line',
+                ].join(' ')}
+              />
+            ) : null}
+            <View
+              className={[
+                'z-10 h-7 w-7 items-center justify-center rounded-full',
+                current ? 'bg-brand-deep' : done ? 'bg-brand' : 'border border-line bg-surface',
+              ].join(' ')}
+            >
+              {done ? (
+                <Check size={13} color="#FFFFFF" strokeWidth={3} />
+              ) : (
+                <Text
+                  className={
+                    current
+                      ? 'text-[0.8125rem] font-bold text-white'
+                      : 'text-[0.8125rem] text-muted'
+                  }
+                >
+                  {step}
+                </Text>
+              )}
             </View>
-            <Text className={['text-center text-[0.8125rem] leading-tight', current ? 'font-semibold text-ink' : done ? 'font-medium text-brand-text' : 'text-muted'].join(' ')} numberOfLines={2}>{label}</Text>
+            <Text
+              className={[
+                'text-center text-[0.8125rem] leading-tight',
+                current
+                  ? 'font-semibold text-ink'
+                  : done
+                    ? 'font-medium text-brand-text'
+                    : 'text-muted',
+              ].join(' ')}
+              numberOfLines={2}
+            >
+              {label}
+            </Text>
           </View>
         );
       })}
@@ -34,7 +72,15 @@ export function getApplicantProgressStep(status?: string) {
   return 1;
 }
 
-export function ApplicantNextSteps({ activeOrderStatus, jobDate, payout }: { activeOrderStatus?: string; jobDate: string; payout: string }) {
+export function ApplicantNextSteps({
+  activeOrderStatus,
+  jobDate,
+  payout,
+}: {
+  activeOrderStatus?: string;
+  jobDate: string;
+  payout: string;
+}) {
   const progressStep = getApplicantProgressStep(activeOrderStatus);
   const steps = [
     ['Velg en søker', 'Søker valgt'],
@@ -56,12 +102,34 @@ export function ApplicantNextSteps({ activeOrderStatus, jobDate, payout }: { act
         return (
           <View key={label} className="flex-row gap-3">
             <View className="items-center">
-              <View className={['h-2.5 w-2.5 rounded-full', current ? 'bg-brand-deep' : done ? 'bg-brand' : 'bg-line'].join(' ')} />
-              {step < steps.length ? <View className="my-1 min-h-[30px] w-px flex-1 bg-line" /> : null}
+              <View
+                className={[
+                  'h-2.5 w-2.5 rounded-full',
+                  current ? 'bg-brand-deep' : done ? 'bg-brand' : 'bg-line',
+                ].join(' ')}
+              />
+              {step < steps.length ? (
+                <View className="my-1 min-h-[30px] w-px flex-1 bg-line" />
+              ) : null}
             </View>
             <View className={step < steps.length ? 'pb-5' : ''}>
-              <Text className={current ? 'text-[0.8125rem] font-bold text-ink' : 'text-[0.8125rem] font-semibold text-muted'}>{step}. {label}</Text>
-              <Text className={['mt-0.5 text-[0.8125rem]', current || done ? 'text-brand-text' : 'text-muted'].join(' ')}>{current ? 'Du er her nå' : done ? 'Fullført' : description}</Text>
+              <Text
+                className={
+                  current
+                    ? 'text-[0.8125rem] font-bold text-ink'
+                    : 'text-[0.8125rem] font-semibold text-muted'
+                }
+              >
+                {step}. {label}
+              </Text>
+              <Text
+                className={[
+                  'mt-0.5 text-[0.8125rem]',
+                  current || done ? 'text-brand-text' : 'text-muted',
+                ].join(' ')}
+              >
+                {current ? 'Du er her nå' : done ? 'Fullført' : description}
+              </Text>
             </View>
           </View>
         );
@@ -76,12 +144,25 @@ export function SafePayInfoCard({ price }: { price: number }) {
       <Text className="text-[0.8125rem] font-medium text-ink">SafePay beskytter deg</Text>
       <View className="mt-4 rounded-xl bg-tint p-3">
         <Text className="text-[0.8125rem] font-semibold text-brand-text">Slik fungerer det</Text>
-        <Text className="mt-1 text-[0.8125rem] leading-relaxed text-brand-text">Pengene holdes trygt til du godkjenner jobben. Ingen betaling før du er fornøyd.</Text>
+        <Text className="mt-1 text-[0.8125rem] leading-relaxed text-brand-text">
+          Pengene holdes trygt til du godkjenner jobben. Ingen betaling før du er fornøyd.
+        </Text>
       </View>
       <View className="mt-3 gap-1">
-        <View className="flex-row justify-between"><Text className="text-[0.8125rem] text-muted">Oppdragsbeløp:</Text><Text className="text-[0.8125rem] font-semibold text-ink">{price} kr</Text></View>
-        <View className="flex-row justify-between"><Text className="text-[0.8125rem] text-muted">SafePay-gebyr (3%):</Text><Text className="text-[0.8125rem] font-semibold text-ink">{safePayFee(price)} kr</Text></View>
-        <View className="flex-row justify-between"><Text className="text-[0.8125rem] text-muted">Utbetalt til søker:</Text><Text className="text-[0.8125rem] font-semibold text-brand-text">{safePayNetToProvider(price)} kr</Text></View>
+        <View className="flex-row justify-between">
+          <Text className="text-[0.8125rem] text-muted">Oppdragsbeløp:</Text>
+          <Text className="text-[0.8125rem] font-semibold text-ink">{price} kr</Text>
+        </View>
+        <View className="flex-row justify-between">
+          <Text className="text-[0.8125rem] text-muted">SafePay-gebyr (3%):</Text>
+          <Text className="text-[0.8125rem] font-semibold text-ink">{safePayFee(price)} kr</Text>
+        </View>
+        <View className="flex-row justify-between">
+          <Text className="text-[0.8125rem] text-muted">Utbetalt til søker:</Text>
+          <Text className="text-[0.8125rem] font-semibold text-brand-text">
+            {safePayNetToProvider(price)} kr
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -92,8 +173,17 @@ export function ApplicantSelectionGuide() {
     <View className="rounded-2xl bg-surface p-5">
       <Text className="text-[0.8125rem] font-medium text-ink">Hva bør du se etter?</Text>
       <View className="mt-3 gap-2">
-        {['Høy rating (over 4.5)', 'Mange fullførte oppdrag', 'BankID eller ID verifisert', 'God og detaljert melding', 'Rask svartid'].map((item) => (
-          <View key={item} className="flex-row items-center gap-2"><Check size={14} color={TC.brandText} /><Text className="text-[0.8125rem] text-muted">{item}</Text></View>
+        {[
+          'Høy rating (over 4.5)',
+          'Mange fullførte oppdrag',
+          'BankID eller ID verifisert',
+          'God og detaljert melding',
+          'Rask svartid',
+        ].map((item) => (
+          <View key={item} className="flex-row items-center gap-2">
+            <Check size={14} color={TC.brandText} />
+            <Text className="text-[0.8125rem] text-muted">{item}</Text>
+          </View>
         ))}
       </View>
     </View>

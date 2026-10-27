@@ -1,9 +1,21 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Alert, AppState, Linking, Pressable, ScrollView, Text, View } from 'react-native';
-import { AlertCircle, CheckCircle2, Clock3, ExternalLink, Info, Loader2, ShieldCheck } from 'lucide-react-native';
+import {
+  AlertCircle,
+  CheckCircle2,
+  Clock3,
+  ExternalLink,
+  Info,
+  Loader2,
+  ShieldCheck,
+} from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { useConnectStatus, useCreateAccountLinkMutation, useRefreshStatusMutation } from '../../../../src/hooks/usePayout';
+import {
+  useConnectStatus,
+  useCreateAccountLinkMutation,
+  useRefreshStatusMutation,
+} from '../../../../src/hooks/usePayout';
 import type { ConnectStatusResponse } from '../../../../src/services/payout.service';
 import { ErrorState } from '../../../../src/components/ui/ErrorState';
 import { ScreenHeader } from '../../../../src/components/ui/ScreenHeader';
@@ -22,7 +34,9 @@ function deriveStatus(s: ConnectStatusResponse): StatusKind {
 }
 
 function getErrorInfo(error: unknown) {
-  const err = error as { response?: { status?: number; data?: { error?: string; message?: string; code?: string } } };
+  const err = error as {
+    response?: { status?: number; data?: { error?: string; message?: string; code?: string } };
+  };
   const status = err?.response?.status;
   const message = err?.response?.data?.error || err?.response?.data?.message;
   return { status, message, code: err?.response?.data?.code };
@@ -65,7 +79,10 @@ export default function PayoutSettingsScreen() {
     accountLinkMutation.mutate(undefined, {
       onSuccess: async (response) => {
         if (typeof response.url !== 'string' || !response.url.trim()) {
-          Alert.alert('Kunne ikke åpne Stripe', 'Fikk ingen onboarding-lenke fra serveren. Prøv igjen.');
+          Alert.alert(
+            'Kunne ikke åpne Stripe',
+            'Fikk ingen onboarding-lenke fra serveren. Prøv igjen.'
+          );
           return;
         }
         onboardingLaunchedRef.current = true;
@@ -137,7 +154,9 @@ export default function PayoutSettingsScreen() {
           </View>
           <View className="ml-3 flex-1">
             <View className="flex-row items-center flex-wrap">
-              <Text className="text-[0.9375rem] font-bold text-[#173A24] dark:text-brand-text">Klar for utbetalinger</Text>
+              <Text className="text-[0.9375rem] font-bold text-[#173A24] dark:text-brand-text">
+                Klar for utbetalinger
+              </Text>
               <View className="ml-2 mt-0.5 rounded-full bg-[#C9E6D2] px-2 py-0.5">
                 <Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.14em] text-[#173A24] dark:text-brand-text">
                   Verifisert
@@ -195,7 +214,8 @@ export default function PayoutSettingsScreen() {
               </View>
             </View>
             <Text className="mt-2 text-[0.8125rem] leading-5 text-warn">
-              Fullfør Stripe Connect-oppsettet for å kunne sende forespørsler, starte oppdrag og motta utbetalinger.
+              Fullfør Stripe Connect-oppsettet for å kunne sende forespørsler, starte oppdrag og
+              motta utbetalinger.
             </Text>
           </View>
         </View>
@@ -238,7 +258,8 @@ export default function PayoutSettingsScreen() {
           <View className="ml-3 flex-1">
             <Text className="text-[0.9375rem] font-bold text-ink">Handling kreves</Text>
             <Text className="mt-2 text-[0.8125rem] leading-5 text-muted">
-              Stripe trenger flere opplysninger eller verifisering. Åpne kontoen din hos Stripe for å se hva som mangler.
+              Stripe trenger flere opplysninger eller verifisering. Åpne kontoen din hos Stripe for
+              å se hva som mangler.
             </Text>
           </View>
         </View>
@@ -250,8 +271,14 @@ export default function PayoutSettingsScreen() {
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, paddingBottom: 36 }}>
-        <ScreenHeader title="Utbetalinger" subtitle="Administrer Stripe Connect-kontoen din og se status for utbetalinger." />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ padding: 16, paddingBottom: 36 }}
+      >
+        <ScreenHeader
+          title="Utbetalinger"
+          subtitle="Administrer Stripe Connect-kontoen din og se status for utbetalinger."
+        />
 
         {status.mode === 'test' ? (
           <View className="mb-4 rounded-2xl bg-surface p-4">
@@ -263,10 +290,16 @@ export default function PayoutSettingsScreen() {
         ) : null}
 
         {platformSetupRequired ? (
-          <View accessibilityRole="alert" className="mb-4 rounded-2xl border border-warn-line bg-warn-tint p-4">
-            <Text className="text-sm font-semibold text-warn">Stripe Connect-oppsett avventer administrator</Text>
+          <View
+            accessibilityRole="alert"
+            className="mb-4 rounded-2xl border border-warn-line bg-warn-tint p-4"
+          >
+            <Text className="text-sm font-semibold text-warn">
+              Stripe Connect-oppsett avventer administrator
+            </Text>
             <Text className="mt-1 text-[0.8125rem] leading-5 text-warn">
-              Plattformadministratoren må fullføre Stripe-oppsettet. Du trenger ikke prøve å koble til på nytt nå.
+              Plattformadministratoren må fullføre Stripe-oppsettet. Du trenger ikke prøve å koble
+              til på nytt nå.
             </Text>
           </View>
         ) : null}
@@ -279,17 +312,48 @@ export default function PayoutSettingsScreen() {
             <Text className="text-[0.8125rem] text-[#85887F]">Status fra Stripe</Text>
           </View>
           {[
-            ['Tilkoblingsstatus', kind === 'ready' ? 'Klar for utbetalinger' : kind === 'pending_verification' ? 'Venter på verifisering' : kind === 'restricted' ? 'Handling kreves' : kind === 'not_configured' ? 'Ikke tilkoblet' : 'Oppsett ikke fullført'],
-            ['Identitetsverifisering', kind === 'ready' ? 'Fullført' : kind === 'pending_verification' ? 'Under behandling' : status.detailsSubmitted ? 'Opplysninger sendt' : 'Ikke fullført'],
-            ['Klar for overføringer', status.transfersEnabled ? 'Ja' : status.hasAccount ? 'Nei' : 'Ikke tilkoblet'],
-            ['Bankutbetalinger aktivert', status.payoutEnabled ? 'Ja' : status.hasAccount ? 'Nei' : 'Ikke tilkoblet'],
+            [
+              'Tilkoblingsstatus',
+              kind === 'ready'
+                ? 'Klar for utbetalinger'
+                : kind === 'pending_verification'
+                  ? 'Venter på verifisering'
+                  : kind === 'restricted'
+                    ? 'Handling kreves'
+                    : kind === 'not_configured'
+                      ? 'Ikke tilkoblet'
+                      : 'Oppsett ikke fullført',
+            ],
+            [
+              'Identitetsverifisering',
+              kind === 'ready'
+                ? 'Fullført'
+                : kind === 'pending_verification'
+                  ? 'Under behandling'
+                  : status.detailsSubmitted
+                    ? 'Opplysninger sendt'
+                    : 'Ikke fullført',
+            ],
+            [
+              'Klar for overføringer',
+              status.transfersEnabled ? 'Ja' : status.hasAccount ? 'Nei' : 'Ikke tilkoblet',
+            ],
+            [
+              'Bankutbetalinger aktivert',
+              status.payoutEnabled ? 'Ja' : status.hasAccount ? 'Nei' : 'Ikke tilkoblet',
+            ],
             ...(status.connectedAt
               ? [['Tilkoblet siden', new Date(status.connectedAt).toLocaleDateString('nb-NO')]]
               : []),
           ].map(([label, value]) => (
-            <View key={label} className="min-h-12 flex-row items-center justify-between gap-4 border-t border-[#F0F1EC] py-3">
+            <View
+              key={label}
+              className="min-h-12 flex-row items-center justify-between gap-4 border-t border-[#F0F1EC] py-3"
+            >
               <Text className="flex-1 text-[0.8125rem] text-muted">{label}</Text>
-              <Text className="text-right text-[0.8125rem] font-medium text-[#30332F]">{value}</Text>
+              <Text className="text-right text-[0.8125rem] font-medium text-[#30332F]">
+                {value}
+              </Text>
             </View>
           ))}
           {status.accountId ? (
@@ -302,23 +366,30 @@ export default function PayoutSettingsScreen() {
           ) : null}
           {kind !== 'ready' ? (
             <Text className="mt-3 rounded-xl bg-surface-2 p-3 text-[0.8125rem] leading-5 text-muted">
-              Fullfør Stripe Connect-oppsettet for å kunne sende forespørsler, starte oppdrag og motta utbetalinger.
+              Fullfør Stripe Connect-oppsettet for å kunne sende forespørsler, starte oppdrag og
+              motta utbetalinger.
             </Text>
           ) : null}
         </View>
 
         {kind === 'pending_verification' ? (
           <Pressable
-            onPress={() => refreshMutation.mutate(undefined, {
-              onError: (error) => {
-                const info = getErrorInfo(error);
-                Alert.alert('Kunne ikke oppdatere status', info.message || 'Prøv igjen senere.');
-              },
-            })}
+            onPress={() =>
+              refreshMutation.mutate(undefined, {
+                onError: (error) => {
+                  const info = getErrorInfo(error);
+                  Alert.alert('Kunne ikke oppdatere status', info.message || 'Prøv igjen senere.');
+                },
+              })
+            }
             disabled={pending}
             className="mt-3 min-h-11 flex-row items-center justify-center gap-2 rounded-xl border border-line bg-surface px-4"
           >
-            {refreshMutation.isPending ? <Loader2 size={16} color={TC.brandText} /> : <Clock3 size={16} color={TC.brandText} />}
+            {refreshMutation.isPending ? (
+              <Loader2 size={16} color={TC.brandText} />
+            ) : (
+              <Clock3 size={16} color={TC.brandText} />
+            )}
             <Text className="text-sm font-semibold text-brand-text">
               {refreshMutation.isPending ? 'Sjekker status...' : 'Sjekk status'}
             </Text>
@@ -354,13 +425,31 @@ export default function PayoutSettingsScreen() {
         <View className="mt-5 rounded-2xl bg-surface p-5">
           <View className="flex-row items-center">
             <Info size={16} color={tc('#63665F', 'muted')} />
-            <Text className="ml-2 text-[0.9375rem] font-semibold text-ink">Slik fungerer utbetalinger</Text>
+            <Text className="ml-2 text-[0.9375rem] font-semibold text-ink">
+              Slik fungerer utbetalinger
+            </Text>
           </View>
           {[
-            { number: '1', title: 'Kunden betaler', description: 'Kunden fullfører betalingen gjennom SafePay.' },
-            { number: '2', title: 'Oppdraget godkjennes', description: 'Du fullfører jobben, og kunden godkjenner arbeidet.' },
-            { number: '3', title: 'Overføring til Stripe Connect', description: 'Jobblo overfører tilgjengelige midler til Stripe-kontoen din.' },
-            { number: '4', title: 'Utbetaling til bankkonto', description: 'Stripe utbetaler etter kontoens utbetalingsplan.' },
+            {
+              number: '1',
+              title: 'Kunden betaler',
+              description: 'Kunden fullfører betalingen gjennom SafePay.',
+            },
+            {
+              number: '2',
+              title: 'Oppdraget godkjennes',
+              description: 'Du fullfører jobben, og kunden godkjenner arbeidet.',
+            },
+            {
+              number: '3',
+              title: 'Overføring til Stripe Connect',
+              description: 'Jobblo overfører tilgjengelige midler til Stripe-kontoen din.',
+            },
+            {
+              number: '4',
+              title: 'Utbetaling til bankkonto',
+              description: 'Stripe utbetaler etter kontoens utbetalingsplan.',
+            },
           ].map((step) => (
             <View key={step.number} className="mt-4 flex-row gap-3">
               <View className="h-7 w-7 items-center justify-center rounded-full bg-surface-2">
@@ -368,15 +457,23 @@ export default function PayoutSettingsScreen() {
               </View>
               <View className="flex-1">
                 <Text className="text-[0.8125rem] font-semibold text-[#30332F]">{step.title}</Text>
-                <Text className="mt-1 text-[0.8125rem] leading-5 text-muted">{step.description}</Text>
+                <Text className="mt-1 text-[0.8125rem] leading-5 text-muted">
+                  {step.description}
+                </Text>
               </View>
             </View>
           ))}
           <Text className="mt-4 border-t border-[#F0F1EC] pt-3 text-[0.8125rem] leading-5 text-muted">
-            En overføring til Stripe Connect betyr ikke at beløpet allerede er utbetalt til bankkontoen.
+            En overføring til Stripe Connect betyr ikke at beløpet allerede er utbetalt til
+            bankkontoen.
           </Text>
-          <Pressable onPress={() => router.push('/profile/settings/safepay')} className="mt-4 self-start py-2">
-            <Text className="text-sm font-semibold text-brand-text">Se transaksjonshistorikk →</Text>
+          <Pressable
+            onPress={() => router.push('/profile/settings/safepay')}
+            className="mt-4 self-start py-2"
+          >
+            <Text className="text-sm font-semibold text-brand-text">
+              Se transaksjonshistorikk →
+            </Text>
           </Pressable>
         </View>
       </ScrollView>

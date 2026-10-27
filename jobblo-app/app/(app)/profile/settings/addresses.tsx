@@ -330,7 +330,12 @@ export default function AddressesSettingsScreen() {
     <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
       {/* Top bar: Avbryt · title · Lagre, same as Rediger profil. */}
       <View className="h-14 flex-row items-center justify-between border-b border-line bg-page px-2">
-        <Pressable onPress={leave} hitSlop={8} accessibilityRole="button" className="min-w-[72px] px-2 py-2">
+        <Pressable
+          onPress={leave}
+          hitSlop={8}
+          accessibilityRole="button"
+          className="min-w-[72px] px-2 py-2"
+        >
           <Text className="text-[1.0625rem] text-ink-2">Avbryt</Text>
         </Pressable>
         <Text className="text-[1.0625rem] font-semibold text-ink">Adresse</Text>
@@ -345,12 +350,19 @@ export default function AddressesSettingsScreen() {
           {update.isPending ? (
             <ActivityIndicator size="small" color={TC.brandText} />
           ) : (
-            <Text className={`text-[1.0625rem] font-semibold ${canSave ? 'text-brand-text' : 'text-[#B5B8B0]'}`}>Lagre</Text>
+            <Text
+              className={`text-[1.0625rem] font-semibold ${canSave ? 'text-brand-text' : 'text-[#B5B8B0]'}`}
+            >
+              Lagre
+            </Text>
           )}
         </Pressable>
       </View>
 
-      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
         <ScrollView
           keyboardShouldPersistTaps="handled"
           nestedScrollEnabled
@@ -364,40 +376,52 @@ export default function AddressesSettingsScreen() {
           <SectionLabel>Velg på kartet</SectionLabel>
           <Card className="mb-6 overflow-hidden">
             <View style={{ height: 260 }} className="w-full bg-surface-2">
-              {MAPS_AVAILABLE ? <MapView
-                ref={mapRef}
-                provider={MAP_PROVIDER}
-                style={StyleSheet.absoluteFill}
-                mapType="standard"
-                // Uncontrolled: a `region` prop re-centred the map on every render, so it
-                // snapped back whenever the user panned. animateTo() moves it on purpose.
-                initialRegion={
-                  selectedCoordinate
-                    ? { ...selectedCoordinate, latitudeDelta: 0.02, longitudeDelta: 0.02 }
-                    : DEFAULT_REGION
-                }
-                showsUserLocation={permission.status === 'granted'}
-                showsMyLocationButton={false}
-                showsCompass
-                rotateEnabled={false}
-                pitchEnabled={false}
-                moveOnMarkerPress={false}
-                onPress={handleMapPress}
-              >
-                {selectedCoordinate ? (
-                  <Marker coordinate={selectedCoordinate} draggable onDragEnd={handleMarkerDragEnd} tracksViewChanges={false}>
-                    <View className="items-center">
-                      <View className="h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-brand">
-                        <MapPinHouse size={18} color="#FFFFFF" />
+              {MAPS_AVAILABLE ? (
+                <MapView
+                  ref={mapRef}
+                  provider={MAP_PROVIDER}
+                  style={StyleSheet.absoluteFill}
+                  mapType="standard"
+                  // Uncontrolled: a `region` prop re-centred the map on every render, so it
+                  // snapped back whenever the user panned. animateTo() moves it on purpose.
+                  initialRegion={
+                    selectedCoordinate
+                      ? { ...selectedCoordinate, latitudeDelta: 0.02, longitudeDelta: 0.02 }
+                      : DEFAULT_REGION
+                  }
+                  showsUserLocation={permission.status === 'granted'}
+                  showsMyLocationButton={false}
+                  showsCompass
+                  rotateEnabled={false}
+                  pitchEnabled={false}
+                  moveOnMarkerPress={false}
+                  onPress={handleMapPress}
+                >
+                  {selectedCoordinate ? (
+                    <Marker
+                      coordinate={selectedCoordinate}
+                      draggable
+                      onDragEnd={handleMarkerDragEnd}
+                      tracksViewChanges={false}
+                    >
+                      <View className="items-center">
+                        <View className="h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-brand">
+                          <MapPinHouse size={18} color="#FFFFFF" />
+                        </View>
+                        <View className="h-2 w-2 rounded-full bg-brand" />
                       </View>
-                      <View className="h-2 w-2 rounded-full bg-brand" />
-                    </View>
-                  </Marker>
-                ) : null}
-              </MapView> : <MapUnavailable />}
+                    </Marker>
+                  ) : null}
+                </MapView>
+              ) : (
+                <MapUnavailable />
+              )}
 
               {isGeocoding ? (
-                <View className="absolute left-3 top-3 flex-row items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5" pointerEvents="none">
+                <View
+                  className="absolute left-3 top-3 flex-row items-center gap-1.5 rounded-full bg-white/95 px-3 py-1.5"
+                  pointerEvents="none"
+                >
                   <ActivityIndicator size="small" color={TC.brandText} />
                   <Text className="text-[0.8125rem] font-medium text-ink-2">Finner adresse…</Text>
                 </View>
@@ -415,7 +439,11 @@ export default function AddressesSettingsScreen() {
                 accessibilityLabel="Bruk min posisjon"
                 className="flex-row items-center gap-1.5 rounded-full bg-tint px-3.5 py-2"
               >
-                {isLocating ? <ActivityIndicator size="small" color={TC.brandText} /> : <Crosshair size={15} color={TC.brandText} />}
+                {isLocating ? (
+                  <ActivityIndicator size="small" color={TC.brandText} />
+                ) : (
+                  <Crosshair size={15} color={TC.brandText} />
+                )}
                 <Text className="text-[0.8125rem] font-semibold text-brand-text">
                   {isLocating ? 'Henter…' : 'Min posisjon'}
                 </Text>
@@ -454,8 +482,8 @@ export default function AddressesSettingsScreen() {
           </Card>
 
           <Text className="mt-4 px-1 text-[0.8125rem] leading-5 text-muted">
-            Alle feltene er valgfrie, og tomme felt lagres som tomme. Landet på profilen endrer du under
-            Innstillinger → Lokasjon.
+            Alle feltene er valgfrie, og tomme felt lagres som tomme. Landet på profilen endrer du
+            under Innstillinger → Lokasjon.
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>

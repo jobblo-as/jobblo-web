@@ -13,7 +13,11 @@ import {
   RefreshCw,
   ShieldCheck,
 } from 'lucide-react';
-import { createConnectAccountLink, getConnectStatus, refreshConnectStatus } from '../../../api/stripeAPI';
+import {
+  createConnectAccountLink,
+  getConnectStatus,
+  refreshConnectStatus,
+} from '../../../api/stripeAPI';
 import { toast } from 'react-hot-toast';
 
 type OnboardingStatus = 'none' | 'started' | 'restricted' | 'enabled' | 'pending_verification';
@@ -44,7 +48,8 @@ function getAccountState(status: ConnectStatus): AccountState {
 
 function getErrorMessage(error: unknown) {
   if (typeof error === 'object' && error !== null && 'response' in error) {
-    const response = (error as { response?: { data?: { error?: string; message?: string } } }).response;
+    const response = (error as { response?: { data?: { error?: string; message?: string } } })
+      .response;
     if (response?.data?.error || response?.data?.message) {
       return response.data.error || response.data.message || 'Ukjent feil';
     }
@@ -69,22 +74,26 @@ const STATUS_COPY: Record<AccountState, { title: string; label: string; descript
   pending: {
     title: 'Stripe gjennomgår opplysningene',
     label: 'Venter på verifisering',
-    description: 'Stripe gjennomgår opplysningene dine. Vi oppdaterer statusen når kontoen er klar.',
+    description:
+      'Stripe gjennomgår opplysningene dine. Vi oppdaterer statusen når kontoen er klar.',
   },
   incomplete: {
     title: 'Oppsett ikke fullført',
     label: 'Handling kreves',
-    description: 'Fullfør Stripe Connect-oppsettet for å kunne sende forespørsler, starte oppdrag og motta utbetalinger.',
+    description:
+      'Fullfør Stripe Connect-oppsettet for å kunne sende forespørsler, starte oppdrag og motta utbetalinger.',
   },
   restricted: {
     title: 'Stripe trenger mer informasjon',
     label: 'Handling kreves',
-    description: 'Stripe har begrenset kontoen. Åpne Stripe for å se hvilke opplysninger eller verifiseringer som mangler.',
+    description:
+      'Stripe har begrenset kontoen. Åpne Stripe for å se hvilke opplysninger eller verifiseringer som mangler.',
   },
   none: {
     title: 'Koble til Stripe Connect',
     label: 'Ikke tilkoblet',
-    description: 'Koble til Stripe Connect for å kunne sende forespørsler og motta betaling for oppdrag.',
+    description:
+      'Koble til Stripe Connect for å kunne sende forespørsler og motta betaling for oppdrag.',
   },
 };
 
@@ -133,25 +142,29 @@ export const PayoutSettingsView = () => {
   const linkMutation = useMutation({ mutationFn: createConnectAccountLink });
 
   const connectStatus = statusQuery.data ?? null;
-  const statusError = refreshError ?? (statusQuery.error ? getErrorMessage(statusQuery.error) : null);
+  const statusError =
+    refreshError ?? (statusQuery.error ? getErrorMessage(statusQuery.error) : null);
   const loading = statusQuery.isPending && !statusError;
   const refreshing = refreshMutation.isPending;
   const linking = linkMutation.isPending;
   const { mutateAsync: refreshAsync } = refreshMutation;
 
-  const refreshStatus = useCallback(async (showToast = true) => {
-    setRefreshError(null);
-    try {
-      const status = await refreshAsync();
-      if (showToast) {
-        if (status.payoutReady) toast.success('Stripe Connect er klar for utbetalinger.');
-        else toast('Stripe-statusen er oppdatert.');
+  const refreshStatus = useCallback(
+    async (showToast = true) => {
+      setRefreshError(null);
+      try {
+        const status = await refreshAsync();
+        if (showToast) {
+          if (status.payoutReady) toast.success('Stripe Connect er klar for utbetalinger.');
+          else toast('Stripe-statusen er oppdatert.');
+        }
+      } catch (error) {
+        setRefreshError(getErrorMessage(error));
+        if (showToast) toast.error(getErrorMessage(error));
       }
-    } catch (error) {
-      setRefreshError(getErrorMessage(error));
-      if (showToast) toast.error(getErrorMessage(error));
-    }
-  }, [refreshAsync]);
+    },
+    [refreshAsync]
+  );
 
   useEffect(() => {
     if (!returnedFromStripe) return;
@@ -184,7 +197,8 @@ export const PayoutSettingsView = () => {
       }
       window.location.assign(data.url);
     } catch (error) {
-      const code = (error as { response?: { data?: { code?: string } } } | null)?.response?.data?.code;
+      const code = (error as { response?: { data?: { code?: string } } } | null)?.response?.data
+        ?.code;
       if (code === 'STRIPE_CONNECT_PLATFORM_SETUP_REQUIRED') setPlatformSetupRequired(true);
       toast.error(getErrorMessage(error));
     }
@@ -213,34 +227,44 @@ export const PayoutSettingsView = () => {
             ? 'Oppdater Stripe-opplysninger'
             : 'Fullfør Stripe Connect-oppsett';
 
-  const detailRows = connectStatus && state
-    ? [
-        {
-          label: 'Tilkoblingsstatus',
-          value: STATUS_COPY[state].label,
-        },
-        {
-          label: 'Identitetsverifisering',
-          value: state === 'ready'
-            ? 'Fullført'
-            : state === 'pending'
-              ? 'Under behandling'
-              : connectStatus.detailsSubmitted
-                ? 'Opplysninger sendt'
-                : state === 'none'
-                  ? 'Ikke tilkoblet'
-                  : 'Ikke fullført',
-        },
-        {
-          label: 'Klar for overføringer',
-          value: connectStatus.transfersEnabled ? 'Ja' : connectStatus.hasAccount ? 'Nei' : 'Ikke tilkoblet',
-        },
-        {
-          label: 'Bankutbetalinger aktivert',
-          value: connectStatus.payoutEnabled ? 'Ja' : connectStatus.hasAccount ? 'Nei' : 'Ikke tilkoblet',
-        },
-      ]
-    : [];
+  const detailRows =
+    connectStatus && state
+      ? [
+          {
+            label: 'Tilkoblingsstatus',
+            value: STATUS_COPY[state].label,
+          },
+          {
+            label: 'Identitetsverifisering',
+            value:
+              state === 'ready'
+                ? 'Fullført'
+                : state === 'pending'
+                  ? 'Under behandling'
+                  : connectStatus.detailsSubmitted
+                    ? 'Opplysninger sendt'
+                    : state === 'none'
+                      ? 'Ikke tilkoblet'
+                      : 'Ikke fullført',
+          },
+          {
+            label: 'Klar for overføringer',
+            value: connectStatus.transfersEnabled
+              ? 'Ja'
+              : connectStatus.hasAccount
+                ? 'Nei'
+                : 'Ikke tilkoblet',
+          },
+          {
+            label: 'Bankutbetalinger aktivert',
+            value: connectStatus.payoutEnabled
+              ? 'Ja'
+              : connectStatus.hasAccount
+                ? 'Nei'
+                : 'Ikke tilkoblet',
+          },
+        ]
+      : [];
 
   return (
     <section className="w-full space-y-6" aria-busy={loading}>
@@ -283,8 +307,12 @@ export const PayoutSettingsView = () => {
       )}
 
       {platformSetupRequired && (
-        <div role="alert" className="rounded-xl border border-[#F1E1C4] bg-[#FBF5E9] px-4 py-3 text-sm leading-5 text-[#614109]">
-          Stripe Connect-oppsettet må fullføres av plattformadministratoren. Du trenger ikke gjøre flere forsøk nå.
+        <div
+          role="alert"
+          className="rounded-xl border border-[#F1E1C4] bg-[#FBF5E9] px-4 py-3 text-sm leading-5 text-[#614109]"
+        >
+          Stripe Connect-oppsettet må fullføres av plattformadministratoren. Du trenger ikke gjøre
+          flere forsøk nå.
         </div>
       )}
 
@@ -304,17 +332,32 @@ export const PayoutSettingsView = () => {
               <div className="flex items-start gap-3.5">
                 <span
                   className={`mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl ${
-                    state === 'ready' ? 'bg-[#EAF1E9] text-[#2E6641]' : 'bg-[#F4F6F0] text-[#63665F]'
+                    state === 'ready'
+                      ? 'bg-[#EAF1E9] text-[#2E6641]'
+                      : 'bg-[#F4F6F0] text-[#63665F]'
                   }`}
                 >
-                  {state === 'ready' ? <ShieldCheck size={20} /> : state === 'pending' ? <Clock3 size={20} /> : <AlertCircle size={20} />}
+                  {state === 'ready' ? (
+                    <ShieldCheck size={20} />
+                  ) : state === 'pending' ? (
+                    <Clock3 size={20} />
+                  ) : (
+                    <AlertCircle size={20} />
+                  )}
                 </span>
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#85887F]">Stripe Connect</p>
-                  <h3 id="connect-status-heading" className="mt-1 text-lg font-semibold tracking-[-0.02em] text-[#0B0B0B]">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#85887F]">
+                    Stripe Connect
+                  </p>
+                  <h3
+                    id="connect-status-heading"
+                    className="mt-1 text-lg font-semibold tracking-[-0.02em] text-[#0B0B0B]"
+                  >
                     {copy.title}
                   </h3>
-                  <p className="mt-1.5 max-w-xl text-sm leading-6 text-[#63665F]">{copy.description}</p>
+                  <p className="mt-1.5 max-w-xl text-sm leading-6 text-[#63665F]">
+                    {copy.description}
+                  </p>
                   <span
                     className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
                       state === 'ready'
@@ -334,8 +377,16 @@ export const PayoutSettingsView = () => {
                   disabled={linking || refreshing || platformSetupRequired}
                   className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#2E6641] px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[#245536] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/20 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {linking ? <Loader2 size={16} className="animate-spin" /> : <ExternalLink size={16} />}
-                  {linking ? 'Åpner Stripe...' : platformSetupRequired ? 'Venter på plattformadministrator' : actionLabel}
+                  {linking ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <ExternalLink size={16} />
+                  )}
+                  {linking
+                    ? 'Åpner Stripe...'
+                    : platformSetupRequired
+                      ? 'Venter på plattformadministrator'
+                      : actionLabel}
                 </button>
                 {state === 'pending' && (
                   <button
@@ -344,7 +395,11 @@ export const PayoutSettingsView = () => {
                     disabled={refreshing || linking}
                     className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold text-[#2E6641] transition-colors hover:bg-[#F4F6F0] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {refreshing ? <Loader2 size={15} className="animate-spin" /> : <RefreshCw size={15} />}
+                    {refreshing ? (
+                      <Loader2 size={15} className="animate-spin" />
+                    ) : (
+                      <RefreshCw size={15} />
+                    )}
                     Sjekk status
                   </button>
                 )}
@@ -352,10 +407,16 @@ export const PayoutSettingsView = () => {
             </div>
           </section>
 
-          <section aria-labelledby="account-info-heading" className="rounded-2xl border border-[#E6E7E1] bg-white p-5 sm:p-6">
+          <section
+            aria-labelledby="account-info-heading"
+            className="rounded-2xl border border-[#E6E7E1] bg-white p-5 sm:p-6"
+          >
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
-                <h3 id="account-info-heading" className="text-base font-semibold tracking-[-0.015em] text-[#0B0B0B]">
+                <h3
+                  id="account-info-heading"
+                  className="text-base font-semibold tracking-[-0.015em] text-[#0B0B0B]"
+                >
                   Kontoinformasjon
                 </h3>
                 <p className="mt-1 text-xs text-[#85887F]">Status hentet fra Stripe</p>
@@ -368,9 +429,14 @@ export const PayoutSettingsView = () => {
             </div>
             <dl className="grid gap-x-8 sm:grid-cols-2">
               {detailRows.map((row) => (
-                <div key={row.label} className="flex min-h-14 items-center justify-between gap-4 border-t border-[#F0F1EC] py-3">
+                <div
+                  key={row.label}
+                  className="flex min-h-14 items-center justify-between gap-4 border-t border-[#F0F1EC] py-3"
+                >
                   <dt className="text-sm text-[#63665F]">{row.label}</dt>
-                  <dd className={`text-right text-sm font-medium ${row.value === 'Ja' || row.value === 'Fullført' ? 'text-[#245536]' : 'text-[#30332F]'}`}>
+                  <dd
+                    className={`text-right text-sm font-medium ${row.value === 'Ja' || row.value === 'Fullført' ? 'text-[#245536]' : 'text-[#30332F]'}`}
+                  >
                     {row.value}
                   </dd>
                 </div>
@@ -379,7 +445,10 @@ export const PayoutSettingsView = () => {
                 <div className="flex min-h-14 items-center justify-between gap-4 border-t border-[#F0F1EC] py-3">
                   <dt className="text-sm text-[#63665F]">Stripe-konto</dt>
                   <dd className="flex min-w-0 items-center gap-2">
-                    <span className="truncate font-mono text-xs text-[#30332F]" title={connectStatus.accountId}>
+                    <span
+                      className="truncate font-mono text-xs text-[#30332F]"
+                      title={connectStatus.accountId}
+                    >
                       {connectStatus.accountId.slice(0, 9)}…{connectStatus.accountId.slice(-4)}
                     </span>
                     <button
@@ -396,26 +465,37 @@ export const PayoutSettingsView = () => {
               {connectStatus.connectedAt && (
                 <div className="flex min-h-14 items-center justify-between gap-4 border-t border-[#F0F1EC] py-3">
                   <dt className="text-sm text-[#63665F]">Tilkoblet siden</dt>
-                  <dd className="text-sm font-medium text-[#30332F]">{dateLabel(connectStatus.connectedAt)}</dd>
+                  <dd className="text-sm font-medium text-[#30332F]">
+                    {dateLabel(connectStatus.connectedAt)}
+                  </dd>
                 </div>
               )}
             </dl>
             {state !== 'ready' && (
               <p className="mt-4 rounded-xl bg-[#F7F8F4] px-4 py-3 text-xs leading-5 text-[#63665F]">
-                Fullfør Stripe Connect-oppsettet for å kunne sende forespørsler, starte oppdrag og motta utbetalinger.
+                Fullfør Stripe Connect-oppsettet for å kunne sende forespørsler, starte oppdrag og
+                motta utbetalinger.
               </p>
             )}
           </section>
         </>
       ) : null}
 
-      <section aria-labelledby="payout-process-heading" className="rounded-2xl border border-[#E6E7E1] bg-white p-5 sm:p-6">
+      <section
+        aria-labelledby="payout-process-heading"
+        className="rounded-2xl border border-[#E6E7E1] bg-white p-5 sm:p-6"
+      >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 id="payout-process-heading" className="text-base font-semibold tracking-[-0.015em] text-[#0B0B0B]">
+            <h3
+              id="payout-process-heading"
+              className="text-base font-semibold tracking-[-0.015em] text-[#0B0B0B]"
+            >
               Slik fungerer utbetalinger
             </h3>
-            <p className="mt-1 text-sm text-[#63665F]">Fire steg fra kundebetaling til bankutbetaling.</p>
+            <p className="mt-1 text-sm text-[#63665F]">
+              Fire steg fra kundebetaling til bankutbetaling.
+            </p>
           </div>
           <Info size={17} className="mt-0.5 shrink-0 text-[#85887F]" aria-hidden="true" />
         </div>
@@ -433,7 +513,8 @@ export const PayoutSettingsView = () => {
           ))}
         </ol>
         <p className="mt-5 border-t border-[#F0F1EC] pt-4 text-xs leading-5 text-[#63665F]">
-          En overføring til Stripe Connect betyr ikke at beløpet allerede er utbetalt til bankkontoen. Bankutbetaling følger Stripes utbetalingsplan.
+          En overføring til Stripe Connect betyr ikke at beløpet allerede er utbetalt til
+          bankkontoen. Bankutbetaling følger Stripes utbetalingsplan.
         </p>
         <button
           type="button"

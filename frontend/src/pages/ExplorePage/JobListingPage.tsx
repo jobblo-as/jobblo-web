@@ -330,7 +330,12 @@ export default function JobListingPage() {
               className="pointer-events-none absolute inset-y-0 right-0 w-2/3"
             >
               {/* The page's largest element (LCP): fetch it before the job thumbnails. */}
-              <img src={season.photo} alt="" fetchPriority="high" className="size-full object-cover opacity-25" />
+              <img
+                src={season.photo}
+                alt=""
+                fetchPriority="high"
+                className="size-full object-cover opacity-25"
+              />
               <div className="absolute inset-0 bg-linear-to-r from-[#2E6641] via-[#2E6641]/85 to-[#2E6641]/45" />
             </div>
           )}
@@ -399,60 +404,71 @@ export default function JobListingPage() {
                 ponytail: 11 = today's category count; a different count still shifts by a row. */}
             {categoriesLoading &&
               Array.from({ length: 12 }).map((_, i) => (
-                <div key={i} aria-hidden="true" className="flex flex-col items-center gap-2.5 rounded-2xl border border-[#E6E7E1] bg-white p-4">
+                <div
+                  key={i}
+                  aria-hidden="true"
+                  className="flex flex-col items-center gap-2.5 rounded-2xl border border-[#E6E7E1] bg-white p-4"
+                >
                   <div className="jb-skeleton size-[22px] rounded-md" />
                   <div className="jb-skeleton h-4 w-12 rounded" />
                 </div>
               ))}
-            {!categoriesLoading && [{ _id: 'all', name: 'Alle', icon: null } as any, ...categories].map((cat) => {
-              const isAll = cat._id === 'all';
-              const isSelected = isAll
-                ? selectedCategories.length === 0
-                : selectedCategories.includes(cat.name);
+            {!categoriesLoading &&
+              [{ _id: 'all', name: 'Alle', icon: null } as any, ...categories].map((cat) => {
+                const isAll = cat._id === 'all';
+                const isSelected = isAll
+                  ? selectedCategories.length === 0
+                  : selectedCategories.includes(cat.name);
 
-              return (
-                <button
-                  key={cat._id}
-                  type="button"
-                  aria-pressed={isSelected}
-                  onClick={() => {
-                    if (isAll) {
-                      // Clear category state AND remove the ?category= query param.
-                      // All other query params (search, sort, etc.) are preserved.
-                      setSelectedCategories([]);
-                      if (searchParams.has('category')) {
-                        const next = new URLSearchParams(
-                          Array.from(searchParams.entries()).filter(([k]) => k !== 'category')
-                        );
-                        setSearchParams(next, { replace: true });
+                return (
+                  <button
+                    key={cat._id}
+                    type="button"
+                    aria-pressed={isSelected}
+                    onClick={() => {
+                      if (isAll) {
+                        // Clear category state AND remove the ?category= query param.
+                        // All other query params (search, sort, etc.) are preserved.
+                        setSelectedCategories([]);
+                        if (searchParams.has('category')) {
+                          const next = new URLSearchParams(
+                            Array.from(searchParams.entries()).filter(([k]) => k !== 'category')
+                          );
+                          setSearchParams(next, { replace: true });
+                        }
+                        return;
                       }
-                      return;
-                    }
-                    setSelectedCategories([cat.name]);
-                    // Persist the selection into the ?category= query param so a
-                    // browser refresh keeps the same category active. Preserve
-                    // every other existing param.
-                    const next = new URLSearchParams(searchParams);
-                    next.set('category', cat.name);
-                    setSearchParams(next, { replace: false });
-                  }}
-                  className={`flex cursor-pointer flex-col items-center gap-2.5 rounded-2xl border p-4 text-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15 ${
-                    isSelected
-                      ? 'border-[#2E6641] bg-[#EAF1E9]'
-                      : 'border-[#E6E7E1] bg-white hover:border-[#2E6641]/45'
-                  }`}
-                >
-                  {isAll ? (
-                    <LayoutGrid size={22} strokeWidth={1.8} className="text-[#2E6641]" />
-                  ) : (
-                    <CategoryIcon name={cat.icon} fallback={guessCategoryIcon(cat.name)} size={22} strokeWidth={1.8} className="text-[#2E6641]" />
-                  )}
-                  <span className="line-clamp-2 text-[0.75rem] font-medium text-[#0B0B0B]">
-                    {cat.name}
-                  </span>
-                </button>
-              );
-            })}
+                      setSelectedCategories([cat.name]);
+                      // Persist the selection into the ?category= query param so a
+                      // browser refresh keeps the same category active. Preserve
+                      // every other existing param.
+                      const next = new URLSearchParams(searchParams);
+                      next.set('category', cat.name);
+                      setSearchParams(next, { replace: false });
+                    }}
+                    className={`flex cursor-pointer flex-col items-center gap-2.5 rounded-2xl border p-4 text-center transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15 ${
+                      isSelected
+                        ? 'border-[#2E6641] bg-[#EAF1E9]'
+                        : 'border-[#E6E7E1] bg-white hover:border-[#2E6641]/45'
+                    }`}
+                  >
+                    {isAll ? (
+                      <LayoutGrid size={22} strokeWidth={1.8} className="text-[#2E6641]" />
+                    ) : (
+                      <CategoryIcon
+                        name={cat.icon}
+                        fallback={guessCategoryIcon(cat.name)}
+                        size={22}
+                        strokeWidth={1.8}
+                        className="text-[#2E6641]"
+                      />
+                    )}
+                    <span className="line-clamp-2 text-[0.75rem] font-medium text-[#0B0B0B]">
+                      {cat.name}
+                    </span>
+                  </button>
+                );
+              })}
           </div>
         </div>
 
@@ -466,10 +482,7 @@ export default function JobListingPage() {
           />
 
           <div className="mb-5 flex items-center justify-end gap-2.5">
-            <label
-              htmlFor="explore-sort"
-              className="text-[0.8125rem] font-medium text-[#63665F]"
-            >
+            <label htmlFor="explore-sort" className="text-[0.8125rem] font-medium text-[#63665F]">
               Sorter
             </label>
             <select

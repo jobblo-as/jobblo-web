@@ -2,22 +2,61 @@ import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, CloudCog, Search } from 'lucide-react';
 import { ago, dateTime, money } from '@/lib/devFormat';
-import { useDevJob, useDevJobs, useDevStripeState, useUrlFilters } from '../../features/developer/hooks';
+import {
+  useDevJob,
+  useDevJobs,
+  useDevStripeState,
+  useUrlFilters,
+} from '../../features/developer/hooks';
 import type { Doc, JobRow } from '../../api/developer';
-import { EmptyState, ErrorState, IssueList, JsonView, KeyValue, Mono, PageHeader, Section, StatusBadge, Timeline } from '../../components/developer/kit';
+import {
+  EmptyState,
+  ErrorState,
+  IssueList,
+  JsonView,
+  KeyValue,
+  Mono,
+  PageHeader,
+  Section,
+  StatusBadge,
+  Timeline,
+} from '../../components/developer/kit';
 import { DataTable, type Column } from '../../components/developer/DataTable';
 import { Button } from '../../components/developer/ui/button';
 import { Input } from '../../components/developer/ui/input';
 import { Skeleton } from '../../components/developer/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/developer/ui/tabs';
 
-const v = (d: Doc | null | undefined, k: string) => (d?.[k] as string | number | boolean | null | undefined) ?? null;
+const v = (d: Doc | null | undefined, k: string) =>
+  (d?.[k] as string | number | boolean | null | undefined) ?? null;
 
-function DocCard({ title, doc, fields }: { title: string; doc: Doc | null; fields: [string, string, ((x: unknown) => ReactNode)?][] }) {
+function DocCard({
+  title,
+  doc,
+  fields,
+}: {
+  title: string;
+  doc: Doc | null;
+  fields: [string, string, ((x: unknown) => ReactNode)?][];
+}) {
   return (
-    <Section title={title} action={doc ? <StatusBadge status={String(v(doc, 'status') ?? 'n/a')} /> : <StatusBadge status="n/a" label="None" />}>
+    <Section
+      title={title}
+      action={
+        doc ? (
+          <StatusBadge status={String(v(doc, 'status') ?? 'n/a')} />
+        ) : (
+          <StatusBadge status="n/a" label="None" />
+        )
+      }
+    >
       {doc ? (
-        <KeyValue items={fields.map(([label, key, fmt]) => [label, fmt ? fmt(doc[key]) : (doc[key] as ReactNode) ?? '—'])} />
+        <KeyValue
+          items={fields.map(([label, key, fmt]) => [
+            label,
+            fmt ? fmt(doc[key]) : ((doc[key] as ReactNode) ?? '—'),
+          ])}
+        />
       ) : (
         <p className="text-sm text-muted-foreground">No record.</p>
       )}
@@ -33,7 +72,12 @@ function StripeCheck({ id }: { id: string }) {
       title="Stripe vs database"
       description="Live, read-only PaymentIntent lookup. Each check is written to the audit log."
       action={
-        <Button size="sm" variant="outline" disabled={isFetching} onClick={() => (run ? refetch() : setRun(true))}>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={isFetching}
+          onClick={() => (run ? refetch() : setRun(true))}
+        >
           <CloudCog /> {isFetching ? 'Checking…' : 'Check Stripe'}
         </Button>
       }
@@ -52,7 +96,9 @@ function StripeCheck({ id }: { id: string }) {
             </div>
           ) : (
             <ul className="space-y-1 rounded-md border border-red-200/70 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {data.diffs?.map((d) => <li key={d}>• {d}</li>)}
+              {data.diffs?.map((d) => (
+                <li key={d}>• {d}</li>
+              ))}
             </ul>
           )}
           <div className="grid gap-3 md:grid-cols-2">
@@ -61,7 +107,9 @@ function StripeCheck({ id }: { id: string }) {
               <JsonView value={data.stripe} />
             </div>
             <div>
-              <h4 className="mb-1.5 text-xs font-medium text-muted-foreground uppercase">Database</h4>
+              <h4 className="mb-1.5 text-xs font-medium text-muted-foreground uppercase">
+                Database
+              </h4>
               <JsonView value={data.db} />
             </div>
           </div>
@@ -91,16 +139,55 @@ function JobDetailView({ id }: { id: string }) {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <Section title="Detected issues" description="Stuck and inconsistent-state rules" className="lg:col-span-2">
+        <Section
+          title="Detected issues"
+          description="Stuck and inconsistent-state rules"
+          className="lg:col-span-2"
+        >
           <IssueList issues={data.issues} />
         </Section>
         <Section title="Parties & amount">
           <KeyValue
             items={[
               ['Job', o.service?.title || '—'],
-              ['Customer', o.customer ? <Link key="c" className="text-primary hover:underline" to={`/developer/users?id=${o.customer._id}`}>{o.customer.name}</Link> : '—'],
-              ['Provider', o.provider ? <Link key="p" className="text-primary hover:underline" to={`/developer/users?id=${o.provider._id}`}>{o.provider.name}</Link> : '—'],
-              ['Provider payouts', o.provider ? (o.provider.payoutEnabled ? 'enabled' : o.provider.connectAccount ? 'connect not ready' : 'no connect account') : '—'],
+              [
+                'Customer',
+                o.customer ? (
+                  <Link
+                    key="c"
+                    className="text-primary hover:underline"
+                    to={`/developer/users?id=${o.customer._id}`}
+                  >
+                    {o.customer.name}
+                  </Link>
+                ) : (
+                  '—'
+                ),
+              ],
+              [
+                'Provider',
+                o.provider ? (
+                  <Link
+                    key="p"
+                    className="text-primary hover:underline"
+                    to={`/developer/users?id=${o.provider._id}`}
+                  >
+                    {o.provider.name}
+                  </Link>
+                ) : (
+                  '—'
+                ),
+              ],
+              [
+                'Provider payouts',
+                o.provider
+                  ? o.provider.payoutEnabled
+                    ? 'enabled'
+                    : o.provider.connectAccount
+                      ? 'connect not ready'
+                      : 'no connect account'
+                  : '—',
+              ],
               ['Agreed price', money(o.agreedPrice)],
               ['Checkout amount', money(o.checkoutAmountMinor, true)],
               ['Connect deadline', when(o.providerConnectDeadlineAt)],
@@ -116,13 +203,18 @@ function JobDetailView({ id }: { id: string }) {
           <TabsTrigger value="money">Money</TabsTrigger>
           <TabsTrigger value="stripe">Stripe check</TabsTrigger>
           <TabsTrigger value="disputes">Disputes ({data.disputes.length})</TabsTrigger>
-          <TabsTrigger value="notifications">Notifications ({data.notifications.length})</TabsTrigger>
+          <TabsTrigger value="notifications">
+            Notifications ({data.notifications.length})
+          </TabsTrigger>
           <TabsTrigger value="errors">Errors ({data.errors.length})</TabsTrigger>
           <TabsTrigger value="raw">Raw</TabsTrigger>
         </TabsList>
 
         <TabsContent value="timeline" className="pt-3">
-          <Section title="Audit timeline" description="Order history, payments, refunds, payouts, disputes, audit entries and errors merged">
+          <Section
+            title="Audit timeline"
+            description="Order history, payments, refunds, payouts, disputes, audit entries and errors merged"
+          >
             <Timeline events={data.timeline} />
           </Section>
         </TabsContent>
@@ -136,9 +228,17 @@ function JobDetailView({ id }: { id: string }) {
               ['Captured', 'capturedAmountMinor', minor],
               ['Refund status', 'refundStatus'],
               ['Refunded', 'refundedAmountMinor', minor],
-              ['PaymentIntent', 'stripePaymentIntentId', (x) => (x ? <Mono>{String(x)}</Mono> : '—')],
+              [
+                'PaymentIntent',
+                'stripePaymentIntentId',
+                (x) => (x ? <Mono>{String(x)}</Mono> : '—'),
+              ],
               ['Refund ID', 'stripeRefundId', (x) => (x ? <Mono>{String(x)}</Mono> : '—')],
-              ['Mode', 'stripeLivemode', (x) => (x === null || x === undefined ? '—' : x ? 'live' : 'test')],
+              [
+                'Mode',
+                'stripeLivemode',
+                (x) => (x === null || x === undefined ? '—' : x ? 'live' : 'test'),
+              ],
             ]}
           />
           <DocCard
@@ -171,7 +271,10 @@ function JobDetailView({ id }: { id: string }) {
             {data.operations.length ? (
               <ul className="divide-y rounded-md border text-sm">
                 {data.operations.map((op) => (
-                  <li key={op._id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+                  <li
+                    key={op._id}
+                    className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"
+                  >
                     <span className="flex items-center gap-2">
                       <StatusBadge status={op.status} />
                       <span className="font-medium">{op.type}</span>
@@ -185,7 +288,9 @@ function JobDetailView({ id }: { id: string }) {
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-muted-foreground">No refunds or reversals were attempted.</p>
+              <p className="text-sm text-muted-foreground">
+                No refunds or reversals were attempted.
+              </p>
             )}
           </Section>
         </TabsContent>
@@ -195,7 +300,13 @@ function JobDetailView({ id }: { id: string }) {
         </TabsContent>
 
         <TabsContent value="disputes" className="pt-3">
-          <Section title="Disputes">{data.disputes.length ? <JsonView value={data.disputes} className="max-h-[60vh]" /> : <p className="text-sm text-muted-foreground">No disputes.</p>}</Section>
+          <Section title="Disputes">
+            {data.disputes.length ? (
+              <JsonView value={data.disputes} className="max-h-[60vh]" />
+            ) : (
+              <p className="text-sm text-muted-foreground">No disputes.</p>
+            )}
+          </Section>
         </TabsContent>
 
         <TabsContent value="notifications" className="pt-3">
@@ -208,7 +319,9 @@ function JobDetailView({ id }: { id: string }) {
                       <StatusBadge status={n.type} tone="info" />
                       <span className="truncate">{n.content}</span>
                     </span>
-                    <span className="shrink-0 text-xs text-muted-foreground">{ago(n.createdAt)}</span>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {ago(n.createdAt)}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -243,7 +356,10 @@ function JobDetailView({ id }: { id: string }) {
             <JsonView value={o} className="max-h-[60vh]" />
           </Section>
           <Section title="Incidents & transfers">
-            <JsonView value={{ incidents: data.incidents, transfers: data.transfers }} className="max-h-[60vh]" />
+            <JsonView
+              value={{ incidents: data.incidents, transfers: data.transfers }}
+              className="max-h-[60vh]"
+            />
           </Section>
         </TabsContent>
       </Tabs>
@@ -258,11 +374,28 @@ export default function JobDiagnosticsPage() {
 
   const columns: Column<JobRow>[] = [
     { key: 'id', header: 'Order', cell: (r) => <span className="font-mono text-xs">{r._id}</span> },
-    { key: 'job', header: 'Job', cell: (r) => <span className="truncate">{r.serviceId?.title || '—'}</span> },
+    {
+      key: 'job',
+      header: 'Job',
+      cell: (r) => <span className="truncate">{r.serviceId?.title || '—'}</span>,
+    },
     { key: 'status', header: 'Status', cell: (r) => <StatusBadge status={r.status} /> },
     { key: 'pay', header: 'Payment', cell: (r) => <StatusBadge status={r.paymentStatus} /> },
-    { key: 'issues', header: 'Issues', cell: (r) => <span className="text-xs text-muted-foreground">{r.issues?.map((i) => i.code.replace(/_/g, ' ')).join(', ') || '—'}</span> },
-    { key: 'updated', header: 'Updated', align: 'right', cell: (r) => <span className="text-xs text-muted-foreground">{ago(r.updatedAt)}</span> },
+    {
+      key: 'issues',
+      header: 'Issues',
+      cell: (r) => (
+        <span className="text-xs text-muted-foreground">
+          {r.issues?.map((i) => i.code.replace(/_/g, ' ')).join(', ') || '—'}
+        </span>
+      ),
+    },
+    {
+      key: 'updated',
+      header: 'Updated',
+      align: 'right',
+      cell: (r) => <span className="text-xs text-muted-foreground">{ago(r.updatedAt)}</span>,
+    },
   ];
 
   return (
@@ -272,7 +405,12 @@ export default function JobDiagnosticsPage() {
         description="Full technical lifecycle of a job: status history, SafePay, Stripe, payouts, disputes, notifications and errors."
         actions={
           f.id && (
-            <Button variant="outline" size="sm" className="bg-card" onClick={() => setF({ id: '' })}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-card"
+              onClick={() => setF({ id: '' })}
+            >
               <ArrowLeft /> All jobs
             </Button>
           )
@@ -291,21 +429,46 @@ export default function JobDiagnosticsPage() {
           >
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Order ID, job ID, user ID, pi_… or cs_…" className="bg-card pl-8 font-mono text-xs" aria-label="Search jobs" />
+              <Input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Order ID, job ID, user ID, pi_… or cs_…"
+                className="bg-card pl-8 font-mono text-xs"
+                aria-label="Search jobs"
+              />
             </div>
             <Button type="submit">Search</Button>
           </form>
           {error && <ErrorState error={error} onRetry={() => refetch()} />}
           {f.q ? (
             <Section title="Results">
-              <DataTable columns={columns} rows={data?.orders} loading={isLoading} rowKey={(r) => r._id} onRowClick={(r) => setF({ id: r._id })} emptyTitle="No matching orders" />
+              <DataTable
+                columns={columns}
+                rows={data?.orders}
+                loading={isLoading}
+                rowKey={(r) => r._id}
+                onRowClick={(r) => setF({ id: r._id })}
+                emptyTitle="No matching orders"
+              />
             </Section>
           ) : (
-            <Section title="Jobs needing attention" description="Orders that break a stuck or inconsistent-state rule">
+            <Section
+              title="Jobs needing attention"
+              description="Orders that break a stuck or inconsistent-state rule"
+            >
               {data && !data.stuck.length ? (
-                <EmptyState title="Nothing stuck" description="Every recent paid order passes the health rules." />
+                <EmptyState
+                  title="Nothing stuck"
+                  description="Every recent paid order passes the health rules."
+                />
               ) : (
-                <DataTable columns={columns} rows={data?.stuck} loading={isLoading} rowKey={(r) => r._id} onRowClick={(r) => setF({ id: r._id })} />
+                <DataTable
+                  columns={columns}
+                  rows={data?.stuck}
+                  loading={isLoading}
+                  rowKey={(r) => r._id}
+                  onRowClick={(r) => setF({ id: r._id })}
+                />
               )}
             </Section>
           )}

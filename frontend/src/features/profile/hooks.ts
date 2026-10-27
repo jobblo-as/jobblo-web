@@ -22,7 +22,6 @@ import { toast } from 'react-hot-toast';
 import { errorBody } from '../../utils/getErrorMessage';
 import type { ExperiencePayload, UserUpdatePayload } from './types/user';
 
-
 export const useUpdateUser = () => {
   const queryClient = useQueryClient();
   const { fetchProfile } = useUserStore((state) => state);

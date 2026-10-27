@@ -1,7 +1,12 @@
 import { useState } from 'react';
 import { Save, RefreshCw, Megaphone } from 'lucide-react';
 import { useAnnouncements, useUpdateAnnouncement } from '../../hooks/admin/content';
-import { AdminPageHeader, AdminLoadingSkeleton, AdminErrorState, AdminEmptyState } from '../../components/admin';
+import {
+  AdminPageHeader,
+  AdminLoadingSkeleton,
+  AdminErrorState,
+  AdminEmptyState,
+} from '../../components/admin';
 import { toast } from 'react-hot-toast';
 
 interface Announcement {
@@ -53,7 +58,10 @@ export default function AnnouncementsPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <AdminPageHeader title="Kunngjøringer" description="Administrer systemmeldinger og varsler" />
+        <AdminPageHeader
+          title="Kunngjøringer"
+          description="Administrer systemmeldinger og varsler"
+        />
         <AdminLoadingSkeleton rows={4} />
       </div>
     );
@@ -62,7 +70,10 @@ export default function AnnouncementsPage() {
   if (isError) {
     return (
       <div className="space-y-6">
-        <AdminPageHeader title="Kunngjøringer" description="Administrer systemmeldinger og varsler" />
+        <AdminPageHeader
+          title="Kunngjøringer"
+          description="Administrer systemmeldinger og varsler"
+        />
         <AdminErrorState onRetry={refetch} />
       </div>
     );
@@ -71,7 +82,10 @@ export default function AnnouncementsPage() {
   if (!announcementList.length) {
     return (
       <div className="space-y-6">
-        <AdminPageHeader title="Kunngjøringer" description="Administrer systemmeldinger og varsler" />
+        <AdminPageHeader
+          title="Kunngjøringer"
+          description="Administrer systemmeldinger og varsler"
+        />
         <AdminEmptyState
           title="Ingen kunngjøringer"
           description="Det er ingen kunngjøringer opprettet ennå."
@@ -109,10 +123,7 @@ export default function AnnouncementsPage() {
           const hasChanges = key in edits;
 
           return (
-            <div
-              key={key}
-              className="bg-card rounded-lg border border-border p-5 space-y-4"
-            >
+            <div key={key} className="bg-card rounded-lg border border-border p-5 space-y-4">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                   <Megaphone size={16} className="text-muted-foreground" />
@@ -122,7 +133,9 @@ export default function AnnouncementsPage() {
 
               <div className="grid gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-muted-foreground mb-1">Melding</label>
+                  <label className="block text-xs font-semibold text-muted-foreground mb-1">
+                    Melding
+                  </label>
                   <textarea
                     value={text as string}
                     onChange={(e) => handleChange(key, 'text', e.target.value)}
@@ -133,7 +146,9 @@ export default function AnnouncementsPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-muted-foreground mb-1">Type</label>
+                    <label className="block text-xs font-semibold text-muted-foreground mb-1">
+                      Type
+                    </label>
                     <select
                       value={type as string}
                       onChange={(e) => handleChange(key, 'type', e.target.value)}
@@ -147,7 +162,9 @@ export default function AnnouncementsPage() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-muted-foreground mb-1">Aktiv</label>
+                    <label className="block text-xs font-semibold text-muted-foreground mb-1">
+                      Aktiv
+                    </label>
                     <button
                       onClick={() => handleChange(key, 'active', !active)}
                       className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-ring/50 ${
@@ -166,7 +183,9 @@ export default function AnnouncementsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-muted-foreground mb-1">Lenke-URL</label>
+                  <label className="block text-xs font-semibold text-muted-foreground mb-1">
+                    Lenke-URL
+                  </label>
                   <input
                     type="text"
                     value={linkUrl as string}

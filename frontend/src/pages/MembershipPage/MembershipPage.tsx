@@ -163,8 +163,7 @@ export default function MembershipPage() {
       toast.success(data?.message || 'Abonnementet avsluttes ved periodens slutt');
       queryClient.invalidateQueries({ queryKey: ['my-subscription'] });
     },
-    onError: (err) =>
-      toast.error(errorBody(err)?.message || 'Kunne ikke si opp abonnementet'),
+    onError: (err) => toast.error(errorBody(err)?.message || 'Kunne ikke si opp abonnementet'),
   });
 
   const resumeMutation = useMutation({
@@ -173,8 +172,7 @@ export default function MembershipPage() {
       toast.success(data?.message || 'Abonnementet fortsetter');
       queryClient.invalidateQueries({ queryKey: ['my-subscription'] });
     },
-    onError: (err) =>
-      toast.error(errorBody(err)?.message || 'Kunne ikke gjenoppta abonnementet'),
+    onError: (err) => toast.error(errorBody(err)?.message || 'Kunne ikke gjenoppta abonnementet'),
   });
 
   const portalMutation = useMutation({
@@ -266,13 +264,16 @@ export default function MembershipPage() {
     !isCurrent &&
     hasPaidSubscription &&
     !mySub?.pendingPlan;
-  const { data: planChangePreview, isFetching: isPreviewFetching, isError: previewFailed } =
-    useQuery<PlanChangePreview>({
-      queryKey: ['subscription-plan-change-preview', mySub?.stripeSubscriptionId, selectedPlan?._id],
-      queryFn: () => previewSubscriptionChange(selectedPlan?._id),
-      enabled: canChangePlan,
-      retry: false,
-    });
+  const {
+    data: planChangePreview,
+    isFetching: isPreviewFetching,
+    isError: previewFailed,
+  } = useQuery<PlanChangePreview>({
+    queryKey: ['subscription-plan-change-preview', mySub?.stripeSubscriptionId, selectedPlan?._id],
+    queryFn: () => previewSubscriptionChange(selectedPlan?._id),
+    enabled: canChangePlan,
+    retry: false,
+  });
   const summaryPayment = isFree
     ? { label: 'Totalt', amount: '0 kr' }
     : canCheckout
@@ -305,8 +306,7 @@ export default function MembershipPage() {
       queryClient.invalidateQueries({ queryKey: ['subscription-billing-history'] });
       queryClient.invalidateQueries({ queryKey: ['subscription-plan-change-preview'] });
     },
-    onError: (err) =>
-      toast.error(errorBody(err)?.message || 'Kunne ikke endre abonnementet'),
+    onError: (err) => toast.error(errorBody(err)?.message || 'Kunne ikke endre abonnementet'),
   });
 
   const checkoutMutation = useMutation({ mutationFn: createCheckoutSession });
@@ -329,9 +329,7 @@ export default function MembershipPage() {
       // The endpoint returns a Norwegian `message` for the cases the user can act on —
       // an expired coupon, a plan that costs nothing. Swallowing it and always saying
       // "prøv igjen" sent people back into the same failure.
-      toast.error(
-        errorBody(err)?.message || 'Kunne ikke starte betalingen. Prøv igjen.'
-      );
+      toast.error(errorBody(err)?.message || 'Kunne ikke starte betalingen. Prøv igjen.');
       // 409 `active_subscription_exists` means the server found a subscription this page
       // did not know about — bought in another tab, or provisioned since the 30-second
       // cache was filled. Refetch so the CTA corrects itself instead of inviting a
@@ -385,14 +383,15 @@ export default function MembershipPage() {
                       setSelectedId(null);
                     }}
                     className={`h-10 rounded-full px-5 text-[0.875rem] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15 ${
-                      userType === type ? 'bg-[#2E6641] text-white' : 'text-[#63665F] hover:text-[#0B0B0B]'
+                      userType === type
+                        ? 'bg-[#2E6641] text-white'
+                        : 'text-[#63665F] hover:text-[#0B0B0B]'
                     }`}
                   >
                     {type === 'private' ? 'Privatperson' : 'Bedrift'}
                   </button>
                 ))}
               </div>
-
             </div>
 
             {isLoading ? (
@@ -523,7 +522,6 @@ export default function MembershipPage() {
                 })}
               </div>
             )}
-
           </div>
 
           {/* ══ RIGHT — subscription state + summary ═══════════════════════ */}
@@ -664,8 +662,10 @@ export default function MembershipPage() {
                     <p className="font-semibold text-[#0B0B0B]">Betalingsmåte</p>
                     {billingHistory?.paymentMethod?.last4 ? (
                       <p className="mt-1 capitalize">
-                        {billingHistory.paymentMethod.brand} •••• {billingHistory.paymentMethod.last4}
-                        {billingHistory.paymentMethod.expMonth && billingHistory.paymentMethod.expYear
+                        {billingHistory.paymentMethod.brand} ••••{' '}
+                        {billingHistory.paymentMethod.last4}
+                        {billingHistory.paymentMethod.expMonth &&
+                        billingHistory.paymentMethod.expYear
                           ? ` · utløper ${billingHistory.paymentMethod.expMonth}/${billingHistory.paymentMethod.expYear}`
                           : ''}
                       </p>
@@ -681,7 +681,10 @@ export default function MembershipPage() {
                     {billingHistory?.invoices?.length ? (
                       <ul className="mt-2 space-y-2">
                         {billingHistory.invoices.slice(0, 8).map((invoice) => (
-                          <li key={`${invoice.mode}-${invoice.id}`} className="flex items-center justify-between gap-2">
+                          <li
+                            key={`${invoice.mode}-${invoice.id}`}
+                            className="flex items-center justify-between gap-2"
+                          >
                             <span className="min-w-0 truncate">
                               {invoice.number || invoice.id} ·{' '}
                               {invoice.createdAt
@@ -698,7 +701,10 @@ export default function MembershipPage() {
                                 className="shrink-0 font-semibold text-[#2E6641] underline"
                                 onClick={async () => {
                                   try {
-                                    const response = await invoicePdfMutation.mutateAsync({ id: invoice.id, mode: invoice.mode });
+                                    const response = await invoicePdfMutation.mutateAsync({
+                                      id: invoice.id,
+                                      mode: invoice.mode,
+                                    });
                                     if (response?.url) window.location.assign(response.url);
                                   } catch {
                                     toast.error('Fakturaen kunne ikke åpnes.');
@@ -736,15 +742,21 @@ export default function MembershipPage() {
               <div className={`${CARD} p-5`}>
                 <h2 className={MICRO_LABEL}>Abonnementstidslinje</h2>
                 <ol className="mt-3 space-y-3">
-                  {mySub.timeline.slice(-5).reverse().map((item, index) => (
-                    <li key={`${item.plan}-${item.startDate || index}`} className="border-l-2 border-[#DDE8DB] pl-3">
-                      <p className="text-[0.8125rem] font-semibold text-[#0B0B0B]">{item.plan}</p>
-                      <p className="text-[0.75rem] text-[#63665F]">
-                        {item.startDate ? fullDate(item.startDate) : 'Dato ukjent'}
-                        {item.endDate ? ` – ${fullDate(item.endDate)}` : ' – nå'}
-                      </p>
-                    </li>
-                  ))}
+                  {mySub.timeline
+                    .slice(-5)
+                    .reverse()
+                    .map((item, index) => (
+                      <li
+                        key={`${item.plan}-${item.startDate || index}`}
+                        className="border-l-2 border-[#DDE8DB] pl-3"
+                      >
+                        <p className="text-[0.8125rem] font-semibold text-[#0B0B0B]">{item.plan}</p>
+                        <p className="text-[0.75rem] text-[#63665F]">
+                          {item.startDate ? fullDate(item.startDate) : 'Dato ukjent'}
+                          {item.endDate ? ` – ${fullDate(item.endDate)}` : ' – nå'}
+                        </p>
+                      </li>
+                    ))}
                 </ol>
               </div>
             ) : null}
@@ -812,15 +824,19 @@ export default function MembershipPage() {
                               : 'Oppgradering med forholdsmessig betaling'}
                           </p>
                           {isPreviewFetching ? (
-                            <p className="mt-2 text-[0.8125rem] text-[#63665F]">Beregner prisjustering…</p>
+                            <p className="mt-2 text-[0.8125rem] text-[#63665F]">
+                              Beregner prisjustering…
+                            </p>
                           ) : previewFailed ? (
                             <p className="mt-2 text-[0.8125rem] text-amber-800">
-                              Endringen kan ikke forhåndsvises akkurat nå. Oppdater betalingsmåten eller prøv igjen senere.
+                              Endringen kan ikke forhåndsvises akkurat nå. Oppdater betalingsmåten
+                              eller prøv igjen senere.
                             </p>
                           ) : planChangePreview?.strategy === 'period_end' ? (
                             <p className="mt-2 text-[0.8125rem] text-[#63665F]">
-                              Du beholder {mySub?.plan} til {fullDate(planChangePreview.effectiveAt)}.
-                              Ingen ny betaling trekkes i dag.
+                              Du beholder {mySub?.plan} til{' '}
+                              {fullDate(planChangePreview.effectiveAt)}. Ingen ny betaling trekkes i
+                              dag.
                             </p>
                           ) : planChangePreview ? (
                             <p className="mt-2 text-[0.8125rem] text-[#63665F]">
@@ -828,7 +844,8 @@ export default function MembershipPage() {
                               {new Intl.NumberFormat('nb-NO', {
                                 style: 'currency',
                                 currency: planChangePreview.currency.toUpperCase(),
-                              }).format(planChangePreview.amountDueNow / 100)}.
+                              }).format(planChangePreview.amountDueNow / 100)}
+                              .
                             </p>
                           ) : null}
                           <button

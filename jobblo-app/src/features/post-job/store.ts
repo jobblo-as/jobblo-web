@@ -1,6 +1,17 @@
 import { create } from 'zustand';
-import { emptyJobValues, type CreateJobFormValues, type CreateJobImage } from '../../services/createJob.service';
-import { addPhotos, movePhoto, nextStep, previousStep, type PhotoQuality, type PostJobStep } from './flow';
+import {
+  emptyJobValues,
+  type CreateJobFormValues,
+  type CreateJobImage,
+} from '../../services/createJob.service';
+import {
+  addPhotos,
+  movePhoto,
+  nextStep,
+  previousStep,
+  type PhotoQuality,
+  type PostJobStep,
+} from './flow';
 
 /** The AI's price/time estimate from the title step, shown on the price step when there is no market data. */
 export interface AiEstimate {
@@ -66,8 +77,12 @@ const fresh = () => ({
 });
 
 type Answers = ReturnType<typeof fresh>;
-const answersOf = (s: Answers): Answers => Object.fromEntries(Object.keys(fresh()).map((k) => [k, s[k as keyof Answers]])) as Answers;
-const started = (s: Answers) => Boolean(s.photos.length || s.values.categories.length || s.summary.trim() || s.values.title.trim());
+const answersOf = (s: Answers): Answers =>
+  Object.fromEntries(Object.keys(fresh()).map((k) => [k, s[k as keyof Answers]])) as Answers;
+const started = (s: Answers) =>
+  Boolean(
+    s.photos.length || s.values.categories.length || s.summary.trim() || s.values.title.trim()
+  );
 
 /** The answers so far. Kept while the user moves between tabs; reset after publish or discard. */
 export const usePostJobStore = create<PostJobState>((set, get) => ({
@@ -78,7 +93,8 @@ export const usePostJobStore = create<PostJobState>((set, get) => ({
   setAnswer: (key, value) => set((s) => ({ answers: { ...s.answers, [key]: value } })),
   setAi: (ai) => set({ ai }),
   setPhotoNote: (uri, note) => set((s) => ({ photoNotes: { ...s.photoNotes, [uri]: note } })),
-  setPhotoQuality: (uri, quality) => set((s) => ({ photoQuality: { ...s.photoQuality, [uri]: quality } })),
+  setPhotoQuality: (uri, quality) =>
+    set((s) => ({ photoQuality: { ...s.photoQuality, [uri]: quality } })),
   setPublished: (publishedId) => set({ publishedId }),
   addPhotos: (photos) => set((s) => ({ photos: addPhotos(s.photos, photos) })),
   removePhoto: (index) => set((s) => ({ photos: s.photos.filter((_, i) => i !== index) })),
@@ -98,7 +114,12 @@ export const usePostJobStore = create<PostJobState>((set, get) => ({
     return true;
   },
   // Leaving an edit brings back the new listing it put aside; otherwise a clean start.
-  reset: () => set((s) => (s.editId && s.stash ? { ...s.stash, stash: null } : { ...fresh(), stash: s.editId ? null : s.stash })),
+  reset: () =>
+    set((s) =>
+      s.editId && s.stash
+        ? { ...s.stash, stash: null }
+        : { ...fresh(), stash: s.editId ? null : s.stash }
+    ),
   startEdit: (editId, values, images) =>
     set((s) => ({
       ...fresh(),

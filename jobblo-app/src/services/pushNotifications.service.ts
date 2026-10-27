@@ -21,11 +21,14 @@ function loadNotifications(): NotificationModule | null {
   // module, and importing the JS package then throws during module init (a red error on every
   // start). Check first and switch push off with one clear warning: rebuild the app to fix.
   if (isExpoGo()) return null;
-  const { requireOptionalNativeModule } = require('expo-modules-core') as typeof import('expo-modules-core');
+  const { requireOptionalNativeModule } =
+    require('expo-modules-core') as typeof import('expo-modules-core');
   if (Platform.OS !== 'web' && !requireOptionalNativeModule('ExpoTopicSubscriptionModule')) {
     if (!staleBuildWarned) {
       staleBuildWarned = true;
-      console.warn('[push] This app build is older than its code (Expo SDK 58): push is off. Rebuild with `npx expo prebuild --clean` + `npx expo run:android` (or a new EAS build).');
+      console.warn(
+        '[push] This app build is older than its code (Expo SDK 58): push is off. Rebuild with `npx expo prebuild --clean` + `npx expo run:android` (or a new EAS build).'
+      );
     }
     return null;
   }
@@ -89,7 +92,9 @@ export function configurePushNotifications() {
   return notificationBootstrapPromise;
 }
 
-export async function getPushPermission(): Promise<'granted' | 'denied' | 'undetermined' | 'unavailable'> {
+export async function getPushPermission(): Promise<
+  'granted' | 'denied' | 'undetermined' | 'unavailable'
+> {
   if (pushUnsupported()) return 'unavailable';
   const notifications = loadNotifications();
   if (!notifications) return 'unavailable';
@@ -98,9 +103,12 @@ export async function getPushPermission(): Promise<'granted' | 'denied' | 'undet
 }
 
 /** `automatic`: the app-start registration, which respects an opt-out. The settings button does not. */
-export async function registerPushNotifications({ automatic = false }: { automatic?: boolean } = {}) {
+export async function registerPushNotifications({
+  automatic = false,
+}: { automatic?: boolean } = {}) {
   if (pushUnsupported()) return { status: 'unavailable' as const, registered: false };
-  if (automatic && (await AsyncStorage.getItem(OPTED_OUT_KEY))) return { status: 'undetermined' as const, registered: false };
+  if (automatic && (await AsyncStorage.getItem(OPTED_OUT_KEY)))
+    return { status: 'undetermined' as const, registered: false };
   if (!automatic) await AsyncStorage.removeItem(OPTED_OUT_KEY);
   const notifications = loadNotifications();
   if (!notifications) return { status: 'unavailable' as const, registered: false };
@@ -108,7 +116,8 @@ export async function registerPushNotifications({ automatic = false }: { automat
   await configurePushNotifications();
 
   let permission = await notifications.getPermissionsAsync();
-  if (permission.status === 'undetermined') permission = await notifications.requestPermissionsAsync();
+  if (permission.status === 'undetermined')
+    permission = await notifications.requestPermissionsAsync();
   if (permission.status !== 'granted') return { status: permission.status, registered: false };
 
   const registerNativeToken = async (token: string) => {
@@ -123,7 +132,10 @@ export async function registerPushNotifications({ automatic = false }: { automat
       await AsyncStorage.setItem(TOKEN_KEY, token);
       console.log('[push] backend token registration succeeded');
     } catch (error) {
-      console.error('[push] backend token registration failed:', error instanceof Error ? error.message : error);
+      console.error(
+        '[push] backend token registration failed:',
+        error instanceof Error ? error.message : error
+      );
       throw error;
     }
   };
@@ -132,7 +144,8 @@ export async function registerPushNotifications({ automatic = false }: { automat
   pushTokenSubscription?.remove();
   // A new native token: Android sends it as is; on iOS the Expo token is fetched again for it.
   pushTokenSubscription = notifications.addPushTokenListener(({ data }) => {
-    const next = Platform.OS === 'ios' ? fetchPushToken(notifications) : Promise.resolve(String(data));
+    const next =
+      Platform.OS === 'ios' ? fetchPushToken(notifications) : Promise.resolve(String(data));
     void next.then(registerNativeToken).catch(() => undefined);
   });
   return { status: 'granted' as const, registered: true };

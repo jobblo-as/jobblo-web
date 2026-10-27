@@ -17,12 +17,7 @@ export function Sheet({ visible, onClose, title, children, footer }: SheetProps)
   }, [visible]);
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="slide"
-      onRequestClose={onClose}
-    >
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable className="flex-1 bg-[#0B0B0B]/45" onPress={onClose} />
       <View className="absolute inset-y-0 left-0 w-[86%] max-w-[360px] border-r border-line bg-surface">
         <View className="h-16 flex-row items-center justify-between border-b border-line px-5">

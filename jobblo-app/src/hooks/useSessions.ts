@@ -1,10 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../queryKeys';
-import {
-  getActiveSessions,
-  revokeOtherSessions,
-  revokeSession,
-} from '../services/auth.service';
+import { getActiveSessions, revokeOtherSessions, revokeSession } from '../services/auth.service';
 
 /**
  * Active login sessions for the authenticated user.

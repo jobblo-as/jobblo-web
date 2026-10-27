@@ -104,10 +104,7 @@ const renameFor = (name: string, mimeType: string): string => {
  * file, no canvas, an encoder that produced something bigger — the original file is
  * returned, so a compression problem can never become an upload problem.
  */
-async function compressImage(
-  file: File,
-  options: CompressImageOptions = {}
-): Promise<File> {
+async function compressImage(file: File, options: CompressImageOptions = {}): Promise<File> {
   if (typeof document === 'undefined') return file;
   if (!file.type.startsWith('image/') || PASSTHROUGH_TYPES.has(file.type)) return file;
 

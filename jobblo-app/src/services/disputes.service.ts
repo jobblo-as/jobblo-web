@@ -15,7 +15,9 @@ function requireId(value: string, name: string) {
  */
 export async function getDisputeByOrder(orderId: string): Promise<Dispute | null> {
   try {
-    const response = await apiClient.get(`/safepay/contract/${requireId(orderId, 'orderId')}/dispute`);
+    const response = await apiClient.get(
+      `/safepay/contract/${requireId(orderId, 'orderId')}/dispute`
+    );
     const dispute = (response.data?.dispute ?? null) as Dispute | null;
     return dispute ? stripInternalMessages(dispute) : null;
   } catch (error) {
@@ -29,18 +31,27 @@ export async function getDisputeByOrder(orderId: string): Promise<Dispute | null
  * Body is exactly { reasonCategory, title, description } — the backend derives
  * customer/provider/openedBy from the order, so no participant IDs are sent.
  */
-export async function openDispute(orderId: string, payload: OpenDisputeInput): Promise<OpenDisputeResponse> {
-  const response = await apiClient.post(`/safepay/contract/${requireId(orderId, 'orderId')}/dispute`, {
-    reasonCategory: payload.reasonCategory,
-    title: payload.title,
-    description: payload.description,
-  });
+export async function openDispute(
+  orderId: string,
+  payload: OpenDisputeInput
+): Promise<OpenDisputeResponse> {
+  const response = await apiClient.post(
+    `/safepay/contract/${requireId(orderId, 'orderId')}/dispute`,
+    {
+      reasonCategory: payload.reasonCategory,
+      title: payload.title,
+      description: payload.description,
+    }
+  );
   return response.data ?? {};
 }
 
 /** POST /api/safepay/disputes/:disputeId/message — body is exactly { message }. */
 export async function addDisputeMessage(disputeId: string, message: string) {
-  const response = await apiClient.post(`/safepay/disputes/${requireId(disputeId, 'disputeId')}/message`, { message });
+  const response = await apiClient.post(
+    `/safepay/disputes/${requireId(disputeId, 'disputeId')}/message`,
+    { message }
+  );
   return response.data;
 }
 

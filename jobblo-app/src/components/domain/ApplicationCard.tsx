@@ -18,7 +18,10 @@ import { orderStatusLabel } from '../../constants/orderStatus';
 import { ApplicationStatusBadge } from './ApplicationStatusBadge';
 import { TC, tc } from '../../theme/colors';
 
-const ORDER_STATUS: Record<string, { label: string; tone: 'quiet' | 'moving' | 'action' | 'closed' }> = {
+const ORDER_STATUS: Record<
+  string,
+  { label: string; tone: 'quiet' | 'moving' | 'action' | 'closed' }
+> = {
   awaiting_payment: { label: 'Venter på betaling', tone: 'quiet' },
   paid: { label: 'Klar til å starte', tone: 'action' },
   in_progress: { label: 'Under arbeid', tone: 'moving' },
@@ -55,11 +58,11 @@ function getInitials(name?: string, lastName?: string) {
 }
 
 function getOrderStatusTone(value?: string | null) {
-  return value ? ORDER_STATUS[value]?.tone ?? 'quiet' : null;
+  return value ? (ORDER_STATUS[value]?.tone ?? 'quiet') : null;
 }
 
 function getOrderStatusLabel(value?: string | null) {
-  return value ? ORDER_STATUS[value]?.label ?? orderStatusLabel(value) : null;
+  return value ? (ORDER_STATUS[value]?.label ?? orderStatusLabel(value)) : null;
 }
 
 export function ApplicationCard({
@@ -81,14 +84,19 @@ export function ApplicationCard({
 }) {
   const service = application.service;
   const status = application.status;
-  const badgeStatus = status === 'pending' ? 'pending' : status === 'accepted' ? 'accepted' : 'declined';
+  const badgeStatus =
+    status === 'pending' ? 'pending' : status === 'accepted' ? 'accepted' : 'declined';
   const orderStatus = application.order?.status ?? null;
   const orderStatusLabel = getOrderStatusLabel(orderStatus);
   const orderStatusTone = getOrderStatusTone(orderStatus);
   const chatId = application.chat?._id ?? null;
-  const orderId = typeof application.order?._id === 'string' && application.order._id.trim() ? application.order._id.trim() : null;
+  const orderId =
+    typeof application.order?._id === 'string' && application.order._id.trim()
+      ? application.order._id.trim()
+      : null;
   const price = application.order?.agreedPrice ?? service?.price;
-  const showAgreedPrice = application.order?.agreedPrice != null && application.order.agreedPrice !== service?.price;
+  const showAgreedPrice =
+    application.order?.agreedPrice != null && application.order.agreedPrice !== service?.price;
   const hasOrder = !!orderId;
   const canWithdraw = status === 'pending' && !hasOrder;
 
@@ -109,8 +117,15 @@ export function ApplicationCard({
             <View className="mb-1.5 flex-row flex-wrap items-center gap-1.5">
               <ApplicationStatusBadge status={badgeStatus} />
               {orderStatusLabel && (
-                <View className={['self-start rounded-full px-2.5 py-1', STATUS_TONE[orderStatusTone ?? 'quiet']].join(' ')}>
-                  <Text className="text-[0.8125rem] font-semibold text-current">{orderStatusLabel}</Text>
+                <View
+                  className={[
+                    'self-start rounded-full px-2.5 py-1',
+                    STATUS_TONE[orderStatusTone ?? 'quiet'],
+                  ].join(' ')}
+                >
+                  <Text className="text-[0.8125rem] font-semibold text-current">
+                    {orderStatusLabel}
+                  </Text>
                 </View>
               )}
             </View>
@@ -149,7 +164,9 @@ export function ApplicationCard({
           </View>
 
           <View className="items-end">
-            <Text className="text-[1.0625rem] font-bold text-ink">{formatPrice(price as number)}</Text>
+            <Text className="text-[1.0625rem] font-bold text-ink">
+              {formatPrice(price as number)}
+            </Text>
             {showAgreedPrice && (
               <Text className="mt-0.5 text-[0.8125rem] text-muted">Avtalt pris</Text>
             )}
@@ -184,21 +201,32 @@ export function ApplicationCard({
 
       <View className="flex-row flex-wrap items-center gap-2 border-t border-line bg-surface-2 px-5 py-3.5">
         {application.order?.status === 'paid' && application.order?._id ? (
-          <Pressable onPress={() => onOrder?.(application.order?._id)} className={primaryActionClass}>
+          <Pressable
+            onPress={() => onOrder?.(application.order?._id)}
+            className={primaryActionClass}
+          >
             <Play size={13} color="#FFFFFF" />
             <Text className="text-[0.8125rem] font-semibold text-white">Start jobben</Text>
           </Pressable>
         ) : null}
 
         {application.order?.status === 'in_progress' && application.order?._id ? (
-          <Pressable onPress={() => onOrder?.(application.order?._id)} className={primaryActionClass}>
+          <Pressable
+            onPress={() => onOrder?.(application.order?._id)}
+            className={primaryActionClass}
+          >
             <Text className="text-[0.8125rem] font-semibold text-white">Fortsett arbeidet</Text>
             <ArrowRight size={13} color="#FFFFFF" />
           </Pressable>
         ) : null}
 
-        {(application.order?.status === 'ready_for_review' || application.order?.status === 'completed') && orderId ? (
-          <Pressable onPress={() => onOrder?.(application.order?._id)} className={primaryActionClass}>
+        {(application.order?.status === 'ready_for_review' ||
+          application.order?.status === 'completed') &&
+        orderId ? (
+          <Pressable
+            onPress={() => onOrder?.(application.order?._id)}
+            className={primaryActionClass}
+          >
             <CheckCircle2 size={13} color="#FFFFFF" />
             <Text className="text-[0.8125rem] font-semibold text-white">Se detaljer</Text>
           </Pressable>
@@ -229,7 +257,10 @@ export function ApplicationCard({
           <Pressable
             onPress={() => onWithdraw?.(application._id)}
             disabled={isWithdrawing}
-            className={['ml-auto flex-row items-center justify-center gap-1.5 rounded-full px-3 py-2', isWithdrawing ? 'opacity-60' : ''].join(' ')}
+            className={[
+              'ml-auto flex-row items-center justify-center gap-1.5 rounded-full px-3 py-2',
+              isWithdrawing ? 'opacity-60' : '',
+            ].join(' ')}
           >
             <X size={13} color={tc('#63665F', 'muted')} />
             <Text className="text-[0.8125rem] font-medium text-muted">

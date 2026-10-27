@@ -1,21 +1,39 @@
 import { useState, useEffect } from 'react';
 import { Save, RefreshCw, Link, Mail, Globe, Copyright } from 'lucide-react';
-import { useNavigation, useUpdateNavigation, useFooter, useUpdateFooter } from '../../hooks/admin/content';
+import {
+  useNavigation,
+  useUpdateNavigation,
+  useFooter,
+  useUpdateFooter,
+} from '../../hooks/admin/content';
 import { AdminPageHeader, AdminLoadingSkeleton, AdminErrorState } from '../../components/admin';
 import { toast } from 'react-hot-toast';
 
 const parseLines = (str: string): { label: string; url: string }[] =>
-  str.split('\n').filter(Boolean).map(line => {
-    const [label = '', url = ''] = line.split('|').map(s => s.trim());
-    return { label, url };
-  });
+  str
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => {
+      const [label = '', url = ''] = line.split('|').map((s) => s.trim());
+      return { label, url };
+    });
 
 const formatLines = (items: { label?: string; url?: string }[]): string =>
-  items?.map(i => `${i.label || ''} | ${i.url || ''}`).join('\n') || '';
+  items?.map((i) => `${i.label || ''} | ${i.url || ''}`).join('\n') || '';
 
 export default function NavigationFooterPage() {
-  const { data: navData, isLoading: navLoading, isError: navError, refetch: refetchNav } = useNavigation();
-  const { data: footerData, isLoading: footerLoading, isError: footerError, refetch: refetchFooter } = useFooter();
+  const {
+    data: navData,
+    isLoading: navLoading,
+    isError: navError,
+    refetch: refetchNav,
+  } = useNavigation();
+  const {
+    data: footerData,
+    isLoading: footerLoading,
+    isError: footerError,
+    refetch: refetchFooter,
+  } = useFooter();
   const updateNavMutation = useUpdateNavigation();
   const updateFooterMutation = useUpdateFooter();
 
@@ -57,9 +75,10 @@ export default function NavigationFooterPage() {
     setNavForm((prev) => ({ ...prev, [field]: e.target.value }));
   };
 
-  const handleFooterChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFooterForm((prev) => ({ ...prev, [field]: e.target.value }));
-  };
+  const handleFooterChange =
+    (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      setFooterForm((prev) => ({ ...prev, [field]: e.target.value }));
+    };
 
   const handleSaveNav = async () => {
     try {
@@ -93,7 +112,10 @@ export default function NavigationFooterPage() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <AdminPageHeader title="Navigasjon & Footer" description="Administrer navigasjonslenker og footer-innhold" />
+        <AdminPageHeader
+          title="Navigasjon & Footer"
+          description="Administrer navigasjonslenker og footer-innhold"
+        />
         <AdminLoadingSkeleton rows={8} />
       </div>
     );
@@ -102,8 +124,16 @@ export default function NavigationFooterPage() {
   if (navError || footerError) {
     return (
       <div className="space-y-6">
-        <AdminPageHeader title="Navigasjon & Footer" description="Administrer navigasjonslenker og footer-innhold" />
-        <AdminErrorState onRetry={() => { refetchNav(); refetchFooter(); }} />
+        <AdminPageHeader
+          title="Navigasjon & Footer"
+          description="Administrer navigasjonslenker og footer-innhold"
+        />
+        <AdminErrorState
+          onRetry={() => {
+            refetchNav();
+            refetchFooter();
+          }}
+        />
       </div>
     );
   }
@@ -115,7 +145,10 @@ export default function NavigationFooterPage() {
         description="Administrer navigasjonslenker og footer-innhold"
         actions={
           <button
-            onClick={() => { refetchNav(); refetchFooter(); }}
+            onClick={() => {
+              refetchNav();
+              refetchFooter();
+            }}
             className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-foreground bg-muted hover:bg-accent rounded-md transition-colors"
           >
             <RefreshCw size={16} />
@@ -142,7 +175,9 @@ export default function NavigationFooterPage() {
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm font-medium text-foreground">Header-lenker (én per linje: Tittel | /url)</label>
+          <label className="text-sm font-medium text-foreground">
+            Header-lenker (én per linje: Tittel | /url)
+          </label>
           <textarea
             value={navForm.headerLinks}
             onChange={handleNavChange('headerLinks')}
@@ -153,7 +188,9 @@ export default function NavigationFooterPage() {
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm font-medium text-foreground">Footer-lenker (én per linje: Tittel | /url)</label>
+          <label className="text-sm font-medium text-foreground">
+            Footer-lenker (én per linje: Tittel | /url)
+          </label>
           <textarea
             value={navForm.footerLinks}
             onChange={handleNavChange('footerLinks')}
@@ -164,7 +201,9 @@ export default function NavigationFooterPage() {
         </div>
 
         <div className="space-y-1">
-          <label className="text-sm font-medium text-foreground">Sosiale medier (én per linje: Platform | https://...)</label>
+          <label className="text-sm font-medium text-foreground">
+            Sosiale medier (én per linje: Platform | https://...)
+          </label>
           <textarea
             value={navForm.socialLinks}
             onChange={handleNavChange('socialLinks')}
@@ -195,7 +234,10 @@ export default function NavigationFooterPage() {
         <div className="space-y-1">
           <label className="text-sm font-medium text-foreground">Kontakt-e-post</label>
           <div className="relative">
-            <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Mail
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+            />
             <input
               value={footerForm.contactEmail}
               onChange={handleFooterChange('contactEmail')}
@@ -208,7 +250,10 @@ export default function NavigationFooterPage() {
         <div className="space-y-1">
           <label className="text-sm font-medium text-foreground">Support-e-post</label>
           <div className="relative">
-            <Mail size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Mail
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+            />
             <input
               value={footerForm.supportEmail}
               onChange={handleFooterChange('supportEmail')}
@@ -221,7 +266,10 @@ export default function NavigationFooterPage() {
         <div className="space-y-1">
           <label className="text-sm font-medium text-foreground">Copyright-tekst</label>
           <div className="relative">
-            <Copyright size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Copyright
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+            />
             <input
               value={footerForm.copyrightText}
               onChange={handleFooterChange('copyrightText')}

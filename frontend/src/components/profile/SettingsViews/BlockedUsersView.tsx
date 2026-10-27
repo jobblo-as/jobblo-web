@@ -65,10 +65,7 @@ export const BlockedUsersView = () => {
                     <div className="relative">
                       <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100 border border-gray-50 shadow-sm">
                         <img
-                          src={
-                            user.avatarUrl ||
-                            DEFAULT_AVATAR
-                          }
+                          src={user.avatarUrl || DEFAULT_AVATAR}
                           alt={user.name}
                           className="w-full h-full object-cover"
                         />
@@ -144,10 +141,7 @@ export const BlockedUsersView = () => {
               <div className="relative mb-8">
                 <div className="w-28 h-28 rounded-full overflow-hidden border-2 border-gray-50 shadow-sm bg-gray-100">
                   <img
-                    src={
-                      userToUnblock?.avatarUrl ||
-                      DEFAULT_AVATAR
-                    }
+                    src={userToUnblock?.avatarUrl || DEFAULT_AVATAR}
                     alt="Profil"
                     className="w-full h-full object-cover"
                   />

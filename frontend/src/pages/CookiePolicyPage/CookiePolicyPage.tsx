@@ -115,21 +115,25 @@ export default function CookiePolicyPage() {
   return (
     <div style={styles.container}>
       <div style={styles.content}>
-        <h1 style={styles.mainTitle}>Personvernerkl\u00E6ring og Cookie-innstillinger \u2013 Jobblo</h1>
+        <h1 style={styles.mainTitle}>
+          Personvernerkl\u00E6ring og Cookie-innstillinger \u2013 Jobblo
+        </h1>
 
         <p style={styles.lastUpdated}>Sist oppdatert: 2026-10-27</p>
 
         <div style={styles.introText}>
           <p style={styles.paragraph}>
             Dette dokumentet gir et sammendrag av hvilke data vi samler inn, hvorfor vi samler dem
-            inn, hvem de kan deles med, og hvordan du f\u00E5r tilgang til dine rettigheter knyttet til
-            dine personopplysninger.
-          </p>          <p style={styles.paragraph}>
+            inn, hvem de kan deles med, og hvordan du f\u00E5r tilgang til dine rettigheter knyttet
+            til dine personopplysninger.
+          </p>{' '}
+          <p style={styles.paragraph}>
             Du kan be om sletting av Jobblo-kontoen din her:{' '}
             <Link to="/delete-account" style={styles.inlineLink}>
               /delete-account
             </Link>
-          </p>        </div>
+          </p>{' '}
+        </div>
 
         {sections.map((section) => (
           <div key={section.id} id={`section-${section.id}`} style={{ marginBottom: '40px' }}>

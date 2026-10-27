@@ -17,11 +17,9 @@
  * Ordered by how specific the marker is. `aria-invalid` is the honest one — it is what a
  * screen reader announces — so it wins when a field carries both.
  */
-const INVALID_SELECTOR = [
-  '[aria-invalid="true"]',
-  '[data-invalid="true"]',
-  '.border-red-500',
-].join(', ');
+const INVALID_SELECTOR = ['[aria-invalid="true"]', '[data-invalid="true"]', '.border-red-500'].join(
+  ', '
+);
 
 const prefersReducedMotion = (): boolean =>
   typeof window !== 'undefined' &&

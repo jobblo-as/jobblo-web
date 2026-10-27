@@ -1,7 +1,18 @@
 import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronRight, Eye, MapPin, Megaphone, Pencil, Plus, Search, ShieldCheck, Trash2, Users } from 'lucide-react-native';
+import {
+  ChevronRight,
+  Eye,
+  MapPin,
+  Megaphone,
+  Pencil,
+  Plus,
+  Search,
+  ShieldCheck,
+  Trash2,
+  Users,
+} from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useDeleteMyJobMutation, useMyJobs } from '../../src/hooks/useMyJobs';
 import { useMyApplicantsOverview } from '../../src/hooks/useMyApplicantsOverview';
@@ -83,9 +94,23 @@ function formatPrice(job: MyJob) {
 
 function Stat({ value, label, highlight }: { value: number; label: string; highlight?: boolean }) {
   return (
-    <Card className={['flex-1 rounded-xl px-3.5 py-3', highlight ? 'border-brand-text bg-tint' : ''].join(' ')}>
-      <Text className={['text-[1.375rem] font-bold tabular-nums', highlight ? 'text-brand-text' : 'text-ink'].join(' ')}>{value}</Text>
-      <Text className="mt-0.5 text-[0.8125rem] text-muted" numberOfLines={1}>{label}</Text>
+    <Card
+      className={[
+        'flex-1 rounded-xl px-3.5 py-3',
+        highlight ? 'border-brand-text bg-tint' : '',
+      ].join(' ')}
+    >
+      <Text
+        className={[
+          'text-[1.375rem] font-bold tabular-nums',
+          highlight ? 'text-brand-text' : 'text-ink',
+        ].join(' ')}
+      >
+        {value}
+      </Text>
+      <Text className="mt-0.5 text-[0.8125rem] text-muted" numberOfLines={1}>
+        {label}
+      </Text>
     </Card>
   );
 }
@@ -140,7 +165,10 @@ function MyJobCard({
         </View>
 
         <View className="mt-2.5 flex-row items-center gap-2">
-          <Text className="flex-1 text-[1.0625rem] font-semibold tracking-[-0.02em] text-ink" numberOfLines={2}>
+          <Text
+            className="flex-1 text-[1.0625rem] font-semibold tracking-[-0.02em] text-ink"
+            numberOfLines={2}
+          >
             {job.title}
           </Text>
           <ChevronRight size={18} color={tc('#9B9E96', 'subtle')} />
@@ -188,9 +216,13 @@ function MyJobCard({
         {order ? (
           <View className="mt-3 flex-row items-center gap-2 rounded-lg bg-tint p-3">
             <ShieldCheck size={16} color={TC.brandText} />
-            <Text className="flex-1 text-[0.8125rem] font-medium text-brand-text">SafePay-ordre er opprettet</Text>
+            <Text className="flex-1 text-[0.8125rem] font-medium text-brand-text">
+              SafePay-ordre er opprettet
+            </Text>
             <Pressable onPress={onOrder} className="rounded-lg bg-brand px-3 py-2">
-              <Text className="text-[0.8125rem] font-semibold text-white">{orderActionLabel(order)}</Text>
+              <Text className="text-[0.8125rem] font-semibold text-white">
+                {orderActionLabel(order)}
+              </Text>
             </Pressable>
           </View>
         ) : null}
@@ -215,7 +247,13 @@ function MyJobCard({
           ].join(' ')}
         >
           <Pencil size={15} color={canEdit ? TC.ink : tc('#9B9E96', 'subtle')} />
-          <Text className={['text-[0.8125rem] font-semibold', canEdit ? 'text-ink' : 'text-muted'].join(' ')}>Rediger</Text>
+          <Text
+            className={['text-[0.8125rem] font-semibold', canEdit ? 'text-ink' : 'text-muted'].join(
+              ' '
+            )}
+          >
+            Rediger
+          </Text>
         </Pressable>
         <Pressable
           onPress={onDelete}
@@ -223,13 +261,18 @@ function MyJobCard({
           accessibilityLabel="Slett annonse"
           className={[
             'h-10 w-10 items-center justify-center rounded-lg border',
-            canDelete ? 'border-[#E7CFCB] dark:border-danger-line bg-surface' : 'border-line bg-surface-2 opacity-60',
+            canDelete
+              ? 'border-[#E7CFCB] dark:border-danger-line bg-surface'
+              : 'border-line bg-surface-2 opacity-60',
           ].join(' ')}
         >
           {deleting ? (
             <ActivityIndicator size="small" color={tc('#B4544A', 'danger')} />
           ) : (
-            <Trash2 size={16} color={canDelete ? tc('#B4544A', 'danger') : tc('#9B9E96', 'subtle')} />
+            <Trash2
+              size={16}
+              color={canDelete ? tc('#B4544A', 'danger') : tc('#9B9E96', 'subtle')}
+            />
           )}
         </Pressable>
       </View>
@@ -257,7 +300,11 @@ export default function MyJobsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const handleRefresh = async () => {
     setRefreshing(true);
-    try { await Promise.all([refetch(), refetchOverview()]); } finally { setRefreshing(false); }
+    try {
+      await Promise.all([refetch(), refetchOverview()]);
+    } finally {
+      setRefreshing(false);
+    }
   };
   const deleteMutation = useDeleteMyJobMutation();
 
@@ -280,7 +327,10 @@ export default function MyJobsScreen() {
     return result;
   }, [jobs]);
 
-  const totalApplicants = (overview ?? []).reduce((total, service) => total + service.applicantCount, 0);
+  const totalApplicants = (overview ?? []).reduce(
+    (total, service) => total + service.applicantCount,
+    0
+  );
 
   const visibleJobs = useMemo(() => {
     const query = searchText.trim().toLowerCase();
@@ -329,7 +379,11 @@ export default function MyJobsScreen() {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 120 }}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => void handleRefresh()} tintColor={TC.brandText} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => void handleRefresh()}
+            tintColor={TC.brandText}
+          />
         }
       >
         <ScreenHeader
@@ -362,7 +416,11 @@ export default function MyJobsScreen() {
             ) : null}
 
             <View className="flex-row gap-2">
-              <SearchInput value={searchText} onChange={setSearchText} placeholder="Søk i tittel, kategori eller ID" />
+              <SearchInput
+                value={searchText}
+                onChange={setSearchText}
+                placeholder="Søk i tittel, kategori eller ID"
+              />
               <Pressable
                 onPress={() => router.push('/(app)/create-job')}
                 accessibilityLabel="Legg ut ny annonse"
@@ -400,7 +458,11 @@ export default function MyJobsScreen() {
               <EmptyState
                 icon={
                   <View className="h-12 w-12 items-center justify-center rounded-full bg-tint">
-                    {searchText.trim() ? <Search size={22} color={TC.brandText} /> : <Megaphone size={22} color={TC.brandText} />}
+                    {searchText.trim() ? (
+                      <Search size={22} color={TC.brandText} />
+                    ) : (
+                      <Megaphone size={22} color={TC.brandText} />
+                    )}
                   </View>
                 }
                 title={
@@ -419,7 +481,11 @@ export default function MyJobsScreen() {
                 }
                 action={
                   jobs.length === 0 && !searchText.trim() ? (
-                    <Button label="Legg ut et oppdrag" icon={<Plus size={16} color="#FFFFFF" />} onPress={() => router.push('/(app)/create-job')} />
+                    <Button
+                      label="Legg ut et oppdrag"
+                      icon={<Plus size={16} color="#FFFFFF" />}
+                      onPress={() => router.push('/(app)/create-job')}
+                    />
                   ) : undefined
                 }
               />
@@ -434,11 +500,18 @@ export default function MyJobsScreen() {
                       applicantCount={overview ? (extra?.applicantCount ?? 0) : undefined}
                       order={extra?.order ?? null}
                       deleting={deleteMutation.isPending && pendingDelete?._id === job._id}
-                      onOpen={() => router.push({ pathname: '/(app)/jobs/[id]', params: { id: job._id } })}
-                      onApplicants={() =>
-                        router.push({ pathname: '/(app)/job-applicants/[serviceId]', params: { serviceId: job._id } })
+                      onOpen={() =>
+                        router.push({ pathname: '/(app)/jobs/[id]', params: { id: job._id } })
                       }
-                      onEdit={() => router.push({ pathname: '/(app)/create-job', params: { editId: job._id } })}
+                      onApplicants={() =>
+                        router.push({
+                          pathname: '/(app)/job-applicants/[serviceId]',
+                          params: { serviceId: job._id },
+                        })
+                      }
+                      onEdit={() =>
+                        router.push({ pathname: '/(app)/create-job', params: { editId: job._id } })
+                      }
                       onOrder={() => {
                         if (extra?.order) router.push(orderRouteFor(extra.order));
                       }}
@@ -458,7 +531,11 @@ export default function MyJobsScreen() {
       <ConfirmDialog
         visible={!!pendingDelete}
         title="Slette annonsen?"
-        message={pendingDelete ? `«${pendingDelete.title}» slettes. Denne handlingen kan ikke angres.` : undefined}
+        message={
+          pendingDelete
+            ? `«${pendingDelete.title}» slettes. Denne handlingen kan ikke angres.`
+            : undefined
+        }
         confirmLabel="Slett annonse"
         pendingLabel="Sletter…"
         destructive

@@ -104,7 +104,9 @@ export const ApplyModal = React.memo(
           {error && connectStatus === 'ready' ? (
             <View className="mb-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2">
               <Text className="text-sm font-medium text-red-700">
-                {typeof error === 'string' ? error : 'Kunne ikke sende forespørsel. Prøv igjen senere.'}
+                {typeof error === 'string'
+                  ? error
+                  : 'Kunne ikke sende forespørsel. Prøv igjen senere.'}
               </Text>
             </View>
           ) : null}
@@ -156,7 +158,7 @@ export const ApplyModal = React.memo(
                 disabled={!isValid || isLoading}
                 className={[
                   'flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-[#2F7E47] px-4 py-3',
-                  (!isValid || isLoading) ? 'opacity-60' : '',
+                  !isValid || isLoading ? 'opacity-60' : '',
                 ].join(' ')}
               >
                 {isLoading ? (

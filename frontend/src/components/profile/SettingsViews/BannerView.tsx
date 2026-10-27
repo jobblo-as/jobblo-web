@@ -59,10 +59,7 @@ export const BannerView = () => {
 
         <div className="relative w-full h-48 sm:h-64 rounded-2xl overflow-hidden bg-gray-100 border-2 border-dashed border-gray-300 group">
           <img
-            src={
-              user?.bannerUrl ||
-              DEFAULT_BANNER
-            }
+            src={user?.bannerUrl || DEFAULT_BANNER}
             alt="Banner"
             className="w-full h-full object-cover group-hover:opacity-75 transition-opacity"
           />

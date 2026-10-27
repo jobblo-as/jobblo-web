@@ -8,11 +8,11 @@ export const locales: SupportedLocale[] = ['no', 'en'];
 export const defaultLocale: SupportedLocale = 'no';
 
 export const TRANSLATIONS: Record<SupportedLocale, TranslationKeys> = {
-    no: no as TranslationKeys,
-    en: en as TranslationKeys,
+  no: no as TranslationKeys,
+  en: en as TranslationKeys,
 };
 
 export const localeLabels: Record<SupportedLocale, string> = {
-    no: 'Norsk',
-    en: 'English',
+  no: 'Norsk',
+  en: 'English',
 };

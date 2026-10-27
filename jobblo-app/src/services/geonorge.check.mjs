@@ -8,7 +8,11 @@ const borggata = await searchAddresses('Borggata 8');
 assert.ok(borggata.length > 0, 'Borggata 8 gives suggestions');
 for (const hit of borggata) {
   assert.match(hit.postalCode, /^\d{4}$/, 'postal code is 4 digits');
-  assert.match(hit.municipalityCode, /^\d{4}$/, 'kommunenummer is 4 digits (matches our location tree)');
+  assert.match(
+    hit.municipalityCode,
+    /^\d{4}$/,
+    'kommunenummer is 4 digits (matches our location tree)'
+  );
   assert.ok(hit.lat > 57 && hit.lat < 72 && hit.lng > 4 && hit.lng < 32, 'point is in Norway');
 }
 

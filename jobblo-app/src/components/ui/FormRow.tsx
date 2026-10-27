@@ -15,7 +15,16 @@ interface FormRowProps extends TextInputProps {
  * One field of a grouped form (iOS / Android settings style): small label on top, a
  * borderless input below, hairline dividers between rows. Put several inside a <Card>.
  */
-export function FormRow({ label, error, showCount, divider = false, multiline, maxLength, value, ...input }: FormRowProps) {
+export function FormRow({
+  label,
+  error,
+  showCount,
+  divider = false,
+  multiline,
+  maxLength,
+  value,
+  ...input
+}: FormRowProps) {
   return (
     <View className={divider ? 'border-t border-line-soft px-4 py-3' : 'px-4 py-3'}>
       <View className="flex-row items-center justify-between">
@@ -37,7 +46,9 @@ export function FormRow({ label, error, showCount, divider = false, multiline, m
         className="mt-0.5 text-[1.0625rem] text-ink"
         {...input}
       />
-      {error ? <Text className="mt-1 text-[0.8125rem] text-[#B4544A] dark:text-danger">{error}</Text> : null}
+      {error ? (
+        <Text className="mt-1 text-[0.8125rem] text-[#B4544A] dark:text-danger">{error}</Text>
+      ) : null}
     </View>
   );
 }

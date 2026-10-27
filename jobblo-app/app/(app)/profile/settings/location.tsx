@@ -1,6 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { CheckCircle2, Info, MapPin } from 'lucide-react-native';
 import { useProfile, useUpdateProfile } from '../../../../src/hooks/useProfile';
 import { useAuthStore } from '../../../../src/store/authStore';
@@ -71,7 +79,9 @@ export default function LocationSettingsScreen() {
   // the backend derives it from the access token (`authorizeUser` compares
   // `req.userId` with the :id in the path and answers 403 on a mismatch), so a
   // tampered id cannot edit another account.
-  const storedUserId = useAuthStore((state) => (typeof state.user?._id === 'string' ? state.user._id : undefined));
+  const storedUserId = useAuthStore((state) =>
+    typeof state.user?._id === 'string' ? state.user._id : undefined
+  );
   const userId = typeof profile?._id === 'string' ? profile._id : storedUserId;
 
   const serverCountry = countryOf(profile);
@@ -130,9 +140,19 @@ export default function LocationSettingsScreen() {
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
-      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-          <ScreenHeader title="Lokasjon" subtitle="Landet som vises på profilen din." icon={MapPin} />
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+        >
+          <ScreenHeader
+            title="Lokasjon"
+            subtitle="Landet som vises på profilen din."
+            icon={MapPin}
+          />
 
           <View className="rounded-3xl bg-surface p-5">
             <View className="mb-4">
@@ -154,14 +174,18 @@ export default function LocationSettingsScreen() {
                 accessibilityLabel="Land"
                 className={inputClass}
               />
-              <Text className="mt-1.5 text-[0.8125rem] leading-4 text-muted">Skriv landet slik du vil at det skal vises, for eksempel «Norge».</Text>
+              <Text className="mt-1.5 text-[0.8125rem] leading-4 text-muted">
+                Skriv landet slik du vil at det skal vises, for eksempel «Norge».
+              </Text>
             </View>
 
             {feedback ? (
               <View
                 className={[
                   'mb-4 flex-row items-start rounded-2xl border p-3',
-                  feedback.tone === 'success' ? 'border-line bg-tint' : 'border-[#B4544A] dark:border-danger bg-danger-tint',
+                  feedback.tone === 'success'
+                    ? 'border-line bg-tint'
+                    : 'border-[#B4544A] dark:border-danger bg-danger-tint',
                 ].join(' ')}
               >
                 {feedback.tone === 'success' ? (
@@ -172,7 +196,9 @@ export default function LocationSettingsScreen() {
                 <Text
                   className={[
                     'ml-2 min-w-0 flex-1 text-[0.8125rem] leading-4',
-                    feedback.tone === 'success' ? 'text-brand-text' : 'text-[#B4544A] dark:text-danger',
+                    feedback.tone === 'success'
+                      ? 'text-brand-text'
+                      : 'text-[#B4544A] dark:text-danger',
                   ].join(' ')}
                 >
                   {feedback.text}
@@ -196,7 +222,8 @@ export default function LocationSettingsScreen() {
           <View className="mt-4 flex-row items-start rounded-3xl bg-surface-2 p-4">
             <Info size={16} color={tc('#63665F', 'muted')} />
             <Text className="ml-2 min-w-0 flex-1 text-[0.8125rem] leading-4 text-muted">
-              Dette er landet på profilen din. Stedet for et oppdrag settes for hver enkelt jobb når du legger den ut, og endres ikke her.
+              Dette er landet på profilen din. Stedet for et oppdrag settes for hver enkelt jobb når
+              du legger den ut, og endres ikke her.
             </Text>
           </View>
         </ScrollView>

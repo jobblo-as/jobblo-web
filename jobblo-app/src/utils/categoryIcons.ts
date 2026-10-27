@@ -71,15 +71,11 @@ export function getCategoryIcon(
   // Fallback: match by category name
   const lowerName = (category.name || '').toLowerCase();
 
-  if (lowerName.includes('håndverk') || lowerName.includes('oppussing'))
-    return Wrench;
+  if (lowerName.includes('håndverk') || lowerName.includes('oppussing')) return Wrench;
   if (lowerName.includes('maling')) return Paintbrush;
-  if (lowerName.includes('rengjøring') || lowerName.includes('rense'))
-    return Home;
-  if (lowerName.includes('flytting') || lowerName.includes('flytt'))
-    return Truck;
-  if (lowerName.includes('hage') || lowerName.includes('hagearbeid'))
-    return Sprout;
+  if (lowerName.includes('rengjøring') || lowerName.includes('rense')) return Home;
+  if (lowerName.includes('flytting') || lowerName.includes('flytt')) return Truck;
+  if (lowerName.includes('hage') || lowerName.includes('hagearbeid')) return Sprout;
   if (lowerName.includes('it') || lowerName.includes('nettverk') || lowerName.includes('pc'))
     return Laptop;
   if (lowerName.includes('transport')) return Package;

@@ -143,7 +143,10 @@ export async function runStripeCheckout({
   };
 
   const poll = setInterval(() => void askServer(), POLL_MS);
-  const giveUp = setTimeout(() => finish({ outcome: 'unconfirmed', status: lastStatus }), GIVE_UP_MS);
+  const giveUp = setTimeout(
+    () => finish({ outcome: 'unconfirmed', status: lastStatus }),
+    GIVE_UP_MS
+  );
 
   /**
    * Android reports background → active when the customer leaves the Custom Tab, and that

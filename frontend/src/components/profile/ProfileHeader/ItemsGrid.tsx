@@ -247,7 +247,9 @@ export function ItemsGrid({
             <Panel
               title="Tilgjengelighet"
               icon={CalendarClock}
-              onEdit={isOwner && user?.availabilityText ? () => onEdit?.('availability') : undefined}
+              onEdit={
+                isOwner && user?.availabilityText ? () => onEdit?.('availability') : undefined
+              }
             >
               {user?.availabilityText ? (
                 <p className="text-[0.9375rem] leading-relaxed text-[#63665F]">

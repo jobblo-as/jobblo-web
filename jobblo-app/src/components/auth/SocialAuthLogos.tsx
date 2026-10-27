@@ -33,7 +33,13 @@ const VIPPS_WORDMARK_PATHS = [
  * sitting next to it, so the button reads "Fortsett med [Vipps]" and not
  * "Fortsett med Vipps Vipps".
  */
-export function VippsWordmark({ color = '#FFFFFF', height = 18 }: { color?: string; height?: number }) {
+export function VippsWordmark({
+  color = '#FFFFFF',
+  height = 18,
+}: {
+  color?: string;
+  height?: number;
+}) {
   // 121 × 28 viewBox, so the width follows from the height.
   const width = Math.round((height * 121) / 28);
   return (

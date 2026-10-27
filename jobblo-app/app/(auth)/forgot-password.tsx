@@ -41,7 +41,11 @@ export default function ForgotPasswordScreen() {
     mutationFn: (requestEmail: string) => forgotPassword(requestEmail),
     onError: (error: unknown) => {
       const err = error as { response?: { data?: { error?: string; message?: string } } };
-      setServerError(err.response?.data?.error ?? err.response?.data?.message ?? 'Kunne ikke sende koden. Prøv igjen.');
+      setServerError(
+        err.response?.data?.error ??
+          err.response?.data?.message ??
+          'Kunne ikke sende koden. Prøv igjen.'
+      );
     },
   });
 
@@ -66,7 +70,9 @@ export default function ForgotPasswordScreen() {
     },
     onError: (error: unknown) => {
       const err = error as { response?: { data?: { error?: string; message?: string } } };
-      setPasswordError(err.response?.data?.error ?? err.response?.data?.message ?? 'Noe gikk galt. Start på nytt.');
+      setPasswordError(
+        err.response?.data?.error ?? err.response?.data?.message ?? 'Noe gikk galt. Start på nytt.'
+      );
     },
   });
 
@@ -95,14 +101,19 @@ export default function ForgotPasswordScreen() {
     const digits = value.replace(/\D/g, '');
     setOtpError('');
     if (!digits) {
-      setOtp((current) => current.map((digit, currentIndex) => (currentIndex === index ? '' : digit)));
+      setOtp((current) =>
+        current.map((digit, currentIndex) => (currentIndex === index ? '' : digit))
+      );
       return;
     }
 
     const next = [...otp];
-    digits.slice(0, 6 - index).split('').forEach((digit, offset) => {
-      next[index + offset] = digit;
-    });
+    digits
+      .slice(0, 6 - index)
+      .split('')
+      .forEach((digit, offset) => {
+        next[index + offset] = digit;
+      });
     setOtp(next);
     const nextIndex = Math.min(index + digits.length, 5);
     otpInputRefs.current[nextIndex]?.focus();
@@ -111,7 +122,9 @@ export default function ForgotPasswordScreen() {
   const handleOtpKeyPress = (index: number, key: string) => {
     if (key !== 'Backspace' || otp[index] || index === 0) return;
     const previousIndex = index - 1;
-    setOtp((current) => current.map((digit, currentIndex) => (currentIndex === previousIndex ? '' : digit)));
+    setOtp((current) =>
+      current.map((digit, currentIndex) => (currentIndex === previousIndex ? '' : digit))
+    );
     setOtpError('');
     otpInputRefs.current[previousIndex]?.focus();
   };
@@ -130,7 +143,11 @@ export default function ForgotPasswordScreen() {
   };
 
   const submitOtp = (otpValue: string) => {
-    if (!/^\d{6}$/.test(otpValue) || verifyOtpMutation.isPending || lastSubmittedOtpRef.current === otpValue) {
+    if (
+      !/^\d{6}$/.test(otpValue) ||
+      verifyOtpMutation.isPending ||
+      lastSubmittedOtpRef.current === otpValue
+    ) {
       return;
     }
 
@@ -172,8 +189,15 @@ export default function ForgotPasswordScreen() {
       return;
     }
 
-    if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
-      setPasswordError('Passordet må være minst 8 tegn og inneholde stor bokstav, liten bokstav og tall');
+    if (
+      password.length < 8 ||
+      !/[A-Z]/.test(password) ||
+      !/[a-z]/.test(password) ||
+      !/[0-9]/.test(password)
+    ) {
+      setPasswordError(
+        'Passordet må være minst 8 tegn og inneholde stor bokstav, liten bokstav og tall'
+      );
       return;
     }
 
@@ -218,9 +242,14 @@ export default function ForgotPasswordScreen() {
                     <Text className="text-[13px] font-medium text-muted">Tilbake</Text>
                   </Pressable>
                 ) : (
-                  <Pressable onPress={() => router.back()} className="mb-6 flex-row items-center gap-2">
+                  <Pressable
+                    onPress={() => router.back()}
+                    className="mb-6 flex-row items-center gap-2"
+                  >
                     <ArrowLeft size={16} color={tc('#63665F', 'muted')} />
-                    <Text className="text-[13px] font-medium text-muted">Tilbake til innlogging</Text>
+                    <Text className="text-[13px] font-medium text-muted">
+                      Tilbake til innlogging
+                    </Text>
                   </Pressable>
                 )}
 
@@ -239,7 +268,9 @@ export default function ForgotPasswordScreen() {
                     <View className="mt-6 gap-4">
                       {serverError ? (
                         <View className="rounded-xl border border-danger-line bg-[#FCF5F4] dark:bg-danger-tint px-3 py-2.5">
-                          <Text className="text-[13px] leading-5 text-[#B0453B] dark:text-danger">{serverError}</Text>
+                          <Text className="text-[13px] leading-5 text-[#B0453B] dark:text-danger">
+                            {serverError}
+                          </Text>
                         </View>
                       ) : null}
 
@@ -258,10 +289,16 @@ export default function ForgotPasswordScreen() {
                             setServerError('');
                           }}
                           className={`h-[46px] rounded-xl border bg-[#F5F6F1] dark:bg-surface-2 px-3.5 text-[15px] text-ink ${
-                            emailError ? 'border-danger-line bg-[#FCF5F4] dark:bg-danger-tint' : 'border-transparent'
+                            emailError
+                              ? 'border-danger-line bg-[#FCF5F4] dark:bg-danger-tint'
+                              : 'border-transparent'
                           }`}
                         />
-                        {emailError ? <Text className="text-[0.8125rem] text-[#B0453B] dark:text-danger">{emailError}</Text> : null}
+                        {emailError ? (
+                          <Text className="text-[0.8125rem] text-[#B0453B] dark:text-danger">
+                            {emailError}
+                          </Text>
+                        ) : null}
                       </View>
 
                       <Pressable
@@ -298,8 +335,9 @@ export default function ForgotPasswordScreen() {
                       Sjekk e-posten din
                     </Text>
                     <Text className="mt-2 text-[15px] leading-6 text-muted">
-                      Hvis det finnes en konto for <Text className="font-semibold text-ink">{email}</Text>, har vi
-                      sendt en 6-sifret kode dit.
+                      Hvis det finnes en konto for{' '}
+                      <Text className="font-semibold text-ink">{email}</Text>, har vi sendt en
+                      6-sifret kode dit.
                     </Text>
 
                     <View className="mt-6 gap-4">
@@ -316,24 +354,34 @@ export default function ForgotPasswordScreen() {
                               maxLength={6 - index}
                               keyboardType="number-pad"
                               onChangeText={(value) => handleOtpChange(index, value)}
-                              onKeyPress={(event) => handleOtpKeyPress(index, event.nativeEvent.key)}
+                              onKeyPress={(event) =>
+                                handleOtpKeyPress(index, event.nativeEvent.key)
+                              }
                               textContentType={index === 0 ? 'oneTimeCode' : 'none'}
                               autoComplete={index === 0 ? 'one-time-code' : 'off'}
                               className={`h-[52px] flex-1 rounded-xl border bg-[#F5F6F1] dark:bg-surface-2 text-center text-[18px] font-semibold text-ink ${
-                                otpError ? 'border-danger-line bg-[#FCF5F4] dark:bg-danger-tint' : 'border-transparent'
+                                otpError
+                                  ? 'border-danger-line bg-[#FCF5F4] dark:bg-danger-tint'
+                                  : 'border-transparent'
                               }`}
                             />
                           );
                         })}
                       </View>
 
-                      {otpError ? <Text className="text-[0.8125rem] text-[#B0453B] dark:text-danger">{otpError}</Text> : null}
+                      {otpError ? (
+                        <Text className="text-[0.8125rem] text-[#B0453B] dark:text-danger">
+                          {otpError}
+                        </Text>
+                      ) : null}
 
                       <Pressable
                         onPress={handleVerifyOtp}
                         disabled={verifyOtpMutation.isPending || otp.join('').length !== 6}
                         className={`h-[46px] items-center justify-center rounded-xl bg-brand ${
-                          verifyOtpMutation.isPending || otp.join('').length !== 6 ? 'opacity-80' : ''
+                          verifyOtpMutation.isPending || otp.join('').length !== 6
+                            ? 'opacity-80'
+                            : ''
                         }`}
                       >
                         {verifyOtpMutation.isPending ? (
@@ -382,17 +430,27 @@ export default function ForgotPasswordScreen() {
                               setPasswordError('');
                             }}
                             className={`h-[46px] rounded-xl border bg-[#F5F6F1] dark:bg-surface-2 px-3.5 pr-12 text-[15px] text-ink ${
-                              passwordError ? 'border-danger-line bg-[#FCF5F4] dark:bg-danger-tint' : 'border-transparent'
+                              passwordError
+                                ? 'border-danger-line bg-[#FCF5F4] dark:bg-danger-tint'
+                                : 'border-transparent'
                             }`}
                           />
                           <Pressable
                             onPress={() => setShowPassword((current) => !current)}
                             className="absolute right-3 top-0 h-[46px] items-center justify-center"
                           >
-                            {showPassword ? <EyeOff size={18} color={tc('#63665F', 'muted')} /> : <Eye size={18} color={tc('#63665F', 'muted')} />}
+                            {showPassword ? (
+                              <EyeOff size={18} color={tc('#63665F', 'muted')} />
+                            ) : (
+                              <Eye size={18} color={tc('#63665F', 'muted')} />
+                            )}
                           </Pressable>
                         </View>
-                        {passwordError ? <Text className="text-[0.8125rem] text-[#B0453B] dark:text-danger">{passwordError}</Text> : null}
+                        {passwordError ? (
+                          <Text className="text-[0.8125rem] text-[#B0453B] dark:text-danger">
+                            {passwordError}
+                          </Text>
+                        ) : null}
                       </View>
 
                       <View className="gap-2">
@@ -408,7 +466,9 @@ export default function ForgotPasswordScreen() {
                               setConfirmPasswordError('');
                             }}
                             className={`h-[46px] rounded-xl border bg-[#F5F6F1] dark:bg-surface-2 px-3.5 pr-12 text-[15px] text-ink ${
-                              confirmPasswordError ? 'border-danger-line bg-[#FCF5F4] dark:bg-danger-tint' : 'border-transparent'
+                              confirmPasswordError
+                                ? 'border-danger-line bg-[#FCF5F4] dark:bg-danger-tint'
+                                : 'border-transparent'
                             }`}
                           />
                           <Pressable
@@ -423,7 +483,9 @@ export default function ForgotPasswordScreen() {
                           </Pressable>
                         </View>
                         {confirmPasswordError ? (
-                          <Text className="text-[0.8125rem] text-[#B0453B] dark:text-danger">{confirmPasswordError}</Text>
+                          <Text className="text-[0.8125rem] text-[#B0453B] dark:text-danger">
+                            {confirmPasswordError}
+                          </Text>
                         ) : null}
                       </View>
 
@@ -437,7 +499,9 @@ export default function ForgotPasswordScreen() {
                         {resetPasswordMutation.isPending ? (
                           <Loader2 size={16} color="#FFFFFF" />
                         ) : (
-                          <Text className="text-[15px] font-semibold text-white">Lagre nytt passord</Text>
+                          <Text className="text-[15px] font-semibold text-white">
+                            Lagre nytt passord
+                          </Text>
                         )}
                       </Pressable>
                     </View>

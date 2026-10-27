@@ -18,7 +18,9 @@ export function useApplicants(serviceId: string, sort = 'createdAt', filter = 'n
   });
 }
 
-function useApplicantActionMutation<TVariables>(mutationFn: (value: TVariables) => Promise<unknown>) {
+function useApplicantActionMutation<TVariables>(
+  mutationFn: (value: TVariables) => Promise<unknown>
+) {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -39,7 +41,7 @@ export function useToggleApplicantArchiveMutation() {
 
 export function useDeclineApplicantMutation() {
   return useApplicantActionMutation((value: { requestId: string; archive?: boolean }) =>
-    declineApplicant(value.requestId, value.archive),
+    declineApplicant(value.requestId, value.archive)
   );
 }
 
@@ -57,7 +59,11 @@ export function useCreateSafePayContractMutation() {
       ];
 
       if (typeof data.orderId === 'string' && data.orderId.trim()) {
-        invalidations.push(queryClient.invalidateQueries({ queryKey: queryKeys.safepay.checkout(data.orderId.trim()) }));
+        invalidations.push(
+          queryClient.invalidateQueries({
+            queryKey: queryKeys.safepay.checkout(data.orderId.trim()),
+          })
+        );
       }
 
       await Promise.all(invalidations);

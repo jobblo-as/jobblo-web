@@ -5,7 +5,11 @@ import { toast } from 'react-hot-toast';
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getMyChats, type ChatMessage } from '../../../api/chatAPI';
-import { applyIncomingMessage, applyMessagesRead, refreshChats } from '../../../features/chat/refreshChats';
+import {
+  applyIncomingMessage,
+  applyMessagesRead,
+  refreshChats,
+} from '../../../features/chat/refreshChats';
 import { initSocket } from '../../../socket/socket';
 import { Link, NavLink } from 'react-router-dom';
 import {
@@ -71,7 +75,16 @@ export default function Header() {
 
   // Join every chat room, so live messages reach the header on any page: again when the
   // list of chats changes or the socket reconnects (rooms do not survive a reconnect).
-  const chatIds = useMemo(() => (Array.isArray(chats) ? chats.map((c) => c._id).filter(Boolean).join(',') : ''), [chats]);
+  const chatIds = useMemo(
+    () =>
+      Array.isArray(chats)
+        ? chats
+            .map((c) => c._id)
+            .filter(Boolean)
+            .join(',')
+        : '',
+    [chats]
+  );
   useEffect(() => {
     if (!userId) return;
     const socket = initSocket();
@@ -90,9 +103,13 @@ export default function Header() {
     if (!userId) return;
     const socket = initSocket();
 
-    const handleReceiveMessage = (data?: { chatId?: string; message?: ChatMessage & { sender?: IdRef } }) => {
+    const handleReceiveMessage = (data?: {
+      chatId?: string;
+      message?: ChatMessage & { sender?: IdRef };
+    }) => {
       // Into the caches without a refetch; a chat the list does not have yet is fetched.
-      if (data?.chatId && !applyIncomingMessage(queryClient, data.chatId, data.message)) refreshChats(queryClient, data.chatId);
+      if (data?.chatId && !applyIncomingMessage(queryClient, data.chatId, data.message))
+        refreshChats(queryClient, data.chatId);
 
       // Play sound if message is from someone else
       const currentUserId = String(userId);
@@ -131,7 +148,8 @@ export default function Header() {
 
     // `new_notification` is deliberately NOT handled here: it belongs to NotificationRealtime,
     // which is mounted once in App. What stays here is chat, which is a different stream.
-    const handleMessagesRead = (data: { chatId: string; userId: string }) => applyMessagesRead(queryClient, data.chatId, data.userId);
+    const handleMessagesRead = (data: { chatId: string; userId: string }) =>
+      applyMessagesRead(queryClient, data.chatId, data.userId);
     socket.on('receive-message', handleReceiveMessage);
     socket.on('messages-read', handleMessagesRead);
 
@@ -377,11 +395,7 @@ export default function Header() {
                 }
               >
                 {user?.avatarUrl ? (
-                  <img
-                    src={user.avatarUrl}
-                    alt=""
-                    className="size-7 rounded-full object-cover"
-                  />
+                  <img src={user.avatarUrl} alt="" className="size-7 rounded-full object-cover" />
                 ) : (
                   <User size={19} strokeWidth={2} />
                 )}

@@ -10,26 +10,43 @@ import {
 } from '../services/subscription.service';
 
 export function useCurrentSubscription() {
-  return useQuery({ queryKey: queryKeys.subscription.current, queryFn: getCurrentSubscription, refetchOnMount: 'always' });
+  return useQuery({
+    queryKey: queryKeys.subscription.current,
+    queryFn: getCurrentSubscription,
+    refetchOnMount: 'always',
+  });
 }
 
 export function useSubscriptionHistory() {
-  return useQuery({ queryKey: queryKeys.subscription.history, queryFn: getPurchaseHistory, retry: false });
+  return useQuery({
+    queryKey: queryKeys.subscription.history,
+    queryFn: getPurchaseHistory,
+    retry: false,
+  });
 }
 
 export function useCancelSubscription() {
   const queryClient = useQueryClient();
-  return useMutation({ mutationFn: cancelCurrentSubscription, onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.subscription.current }) });
+  return useMutation({
+    mutationFn: cancelCurrentSubscription,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.subscription.current }),
+  });
 }
 
 export function useResumeSubscription() {
   const queryClient = useQueryClient();
-  return useMutation({ mutationFn: resumeCurrentSubscription, onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.subscription.current }) });
+  return useMutation({
+    mutationFn: resumeCurrentSubscription,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.subscription.current }),
+  });
 }
 
 export function useCancelPlanChange() {
   const queryClient = useQueryClient();
-  return useMutation({ mutationFn: cancelScheduledPlanChange, onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.subscription.current }) });
+  return useMutation({
+    mutationFn: cancelScheduledPlanChange,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.subscription.current }),
+  });
 }
 
 export function useBillingPortal() {

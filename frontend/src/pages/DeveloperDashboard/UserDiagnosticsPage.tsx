@@ -4,7 +4,17 @@ import { ArrowLeft, KeyRound, Lock, Monitor, Search } from 'lucide-react';
 import { ago, dateTime } from '@/lib/devFormat';
 import { useDevUser, useDevUsers, useUrlFilters } from '../../features/developer/hooks';
 import type { UserHit } from '../../api/developer';
-import { CountBars, EmptyState, ErrorState, KeyValue, Mono, PageHeader, Section, StatusBadge, Timeline } from '../../components/developer/kit';
+import {
+  CountBars,
+  EmptyState,
+  ErrorState,
+  KeyValue,
+  Mono,
+  PageHeader,
+  Section,
+  StatusBadge,
+  Timeline,
+} from '../../components/developer/kit';
 import { DataTable, type Column } from '../../components/developer/DataTable';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/developer/ui/avatar';
 import { Button } from '../../components/developer/ui/button';
@@ -25,14 +35,21 @@ function UserDetail({ id }: { id: string }) {
       <div className="flex flex-wrap items-center gap-3">
         <Avatar className="size-10 rounded-md">
           <AvatarImage src={u.avatarUrl} alt="" />
-          <AvatarFallback className="rounded-md">{u.name?.slice(0, 2).toUpperCase()}</AvatarFallback>
+          <AvatarFallback className="rounded-md">
+            {u.name?.slice(0, 2).toUpperCase()}
+          </AvatarFallback>
         </Avatar>
         <div>
-          <div className="font-semibold">{u.name} {String(u.lastName || '')}</div>
+          <div className="font-semibold">
+            {u.name} {String(u.lastName || '')}
+          </div>
           <div className="text-xs text-muted-foreground">{u.email}</div>
         </div>
         <StatusBadge status={u.role} tone="info" />
-        <StatusBadge status={status} tone={u.isDeleted ? 'danger' : status === 'inactive' ? 'warning' : 'success'} />
+        <StatusBadge
+          status={status}
+          tone={u.isDeleted ? 'danger' : status === 'inactive' ? 'warning' : 'success'}
+        />
         <Mono>{u._id}</Mono>
       </div>
 
@@ -43,9 +60,17 @@ function UserDetail({ id }: { id: string }) {
               ['Created', dateTime(u.createdAt)],
               ['Plan type', String(u.planType || '—')],
               ['Email verified', data.auth.emailVerified ? 'yes' : 'no'],
-              ['BankID', (u.identityVerification as { verifiedAt?: string } | undefined)?.verifiedAt ? `verified ${ago((u.identityVerification as { verifiedAt: string }).verifiedAt)}` : 'not verified'],
+              [
+                'BankID',
+                (u.identityVerification as { verifiedAt?: string } | undefined)?.verifiedAt
+                  ? `verified ${ago((u.identityVerification as { verifiedAt: string }).verifiedAt)}`
+                  : 'not verified',
+              ],
               ['Payout onboarding', String(u.payoutOnboardingStatus || '—')],
-              ['Payouts / charges', `${u.payoutEnabled ? 'on' : 'off'} / ${u.chargesEnabled ? 'on' : 'off'}`],
+              [
+                'Payouts / charges',
+                `${u.payoutEnabled ? 'on' : 'off'} / ${u.chargesEnabled ? 'on' : 'off'}`,
+              ],
               ['Deactivated', u.deactivatedAt ? dateTime(u.deactivatedAt as string) : '—'],
             ]}
           />
@@ -56,8 +81,18 @@ function UserDetail({ id }: { id: string }) {
               ['Last login', data.auth.lastLogin ? `${ago(data.auth.lastLogin)}` : 'never'],
               ['Active sessions', data.auth.activeSessions],
               ['Sign-in methods', ['password', ...data.auth.oauth].join(', ')],
-              ['MFA', <span key="m" className="text-muted-foreground">not available in Jobblo</span>],
-              ['Failed logins / lockout', <span key="f" className="text-muted-foreground">not tracked per user (IP rate limited)</span>],
+              [
+                'MFA',
+                <span key="m" className="text-muted-foreground">
+                  not available in Jobblo
+                </span>,
+              ],
+              [
+                'Failed logins / lockout',
+                <span key="f" className="text-muted-foreground">
+                  not tracked per user (IP rate limited)
+                </span>,
+              ],
             ]}
           />
           <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -89,7 +124,9 @@ function UserDetail({ id }: { id: string }) {
           <TabsTrigger value="money">Payment issues ({data.paymentIssues.length})</TabsTrigger>
           <TabsTrigger value="errors">API errors ({data.errors.length})</TabsTrigger>
           <TabsTrigger value="sessions">Sessions ({data.auth.sessions.length})</TabsTrigger>
-          <TabsTrigger value="support">Support ({data.tickets.length + data.disputes.length})</TabsTrigger>
+          <TabsTrigger value="support">
+            Support ({data.tickets.length + data.disputes.length})
+          </TabsTrigger>
           <TabsTrigger value="roles">Role history ({data.roleChanges.length})</TabsTrigger>
         </TabsList>
 
@@ -115,9 +152,14 @@ function UserDetail({ id }: { id: string }) {
                     <span className="flex items-center gap-2">
                       <StatusBadge status={p.status} />
                       <span>{p.kind}</span>
-                      {p.detail && <span className="text-xs text-muted-foreground">{p.detail}</span>}
+                      {p.detail && (
+                        <span className="text-xs text-muted-foreground">{p.detail}</span>
+                      )}
                     </span>
-                    <Link className="font-mono text-xs text-primary hover:underline" to={`/developer/jobs?id=${p.orderId}`}>
+                    <Link
+                      className="font-mono text-xs text-primary hover:underline"
+                      to={`/developer/jobs?id=${p.orderId}`}
+                    >
                       {p.orderId}
                     </Link>
                   </li>
@@ -156,10 +198,17 @@ function UserDetail({ id }: { id: string }) {
                 <li key={s._id} className="flex items-center justify-between gap-2 px-3 py-2">
                   <span className="flex items-center gap-2">
                     <Monitor className="size-4 text-muted-foreground" />
-                    {s.deviceName || [s.browser, s.os].filter(Boolean).join(' · ') || s.device || 'Unknown device'}
-                    {s.location && <span className="text-xs text-muted-foreground">{s.location}</span>}
+                    {s.deviceName ||
+                      [s.browser, s.os].filter(Boolean).join(' · ') ||
+                      s.device ||
+                      'Unknown device'}
+                    {s.location && (
+                      <span className="text-xs text-muted-foreground">{s.location}</span>
+                    )}
                   </span>
-                  <span className="text-xs text-muted-foreground">last used {ago(s.lastUsed || s.createdAt)}</span>
+                  <span className="text-xs text-muted-foreground">
+                    last used {ago(s.lastUsed || s.createdAt)}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -185,7 +234,10 @@ function UserDetail({ id }: { id: string }) {
               <ul className="space-y-2 text-sm">
                 {data.disputes.map((d) => (
                   <li key={d._id} className="flex justify-between gap-2">
-                    <Link className="truncate text-primary hover:underline" to={`/developer/jobs?id=${d.orderId}`}>
+                    <Link
+                      className="truncate text-primary hover:underline"
+                      to={`/developer/jobs?id=${d.orderId}`}
+                    >
                       {d.title}
                     </Link>
                     <StatusBadge status={d.status} />
@@ -200,7 +252,16 @@ function UserDetail({ id }: { id: string }) {
         <TabsContent value="roles" className="pt-3">
           <Section title="Role & permission history" description="From the audit log">
             {data.roleChanges.length ? (
-              <Timeline events={data.roleChanges.map((r) => ({ at: r.createdAt, source: 'audit', title: r.description, by: r.adminId?.name, tone: 'info' }))} reverse />
+              <Timeline
+                events={data.roleChanges.map((r) => ({
+                  at: r.createdAt,
+                  source: 'audit',
+                  title: r.description,
+                  by: r.adminId?.name,
+                  tone: 'info',
+                }))}
+                reverse
+              />
             ) : (
               <p className="text-sm text-muted-foreground">Role never changed.</p>
             )}
@@ -217,11 +278,42 @@ export default function UserDiagnosticsPage() {
   const { data, isFetching } = useDevUsers(f.q);
 
   const columns: Column<UserHit>[] = [
-    { key: 'name', header: 'User', cell: (u) => <div><div className="font-medium">{u.name}</div><div className="text-xs text-muted-foreground">{u.email}</div></div> },
+    {
+      key: 'name',
+      header: 'User',
+      cell: (u) => (
+        <div>
+          <div className="font-medium">{u.name}</div>
+          <div className="text-xs text-muted-foreground">{u.email}</div>
+        </div>
+      ),
+    },
     { key: 'role', header: 'Role', cell: (u) => <StatusBadge status={u.role} tone="info" /> },
-    { key: 'status', header: 'Status', cell: (u) => <StatusBadge status={u.isDeleted ? 'deleted' : u.accountStatus} tone={u.isDeleted ? 'danger' : 'success'} /> },
-    { key: 'login', header: 'Last login', cell: (u) => <span className="text-xs text-muted-foreground">{u.lastLogin ? ago(u.lastLogin) : 'never'}</span> },
-    { key: 'created', header: 'Created', align: 'right', cell: (u) => <span className="text-xs text-muted-foreground">{ago(u.createdAt)}</span> },
+    {
+      key: 'status',
+      header: 'Status',
+      cell: (u) => (
+        <StatusBadge
+          status={u.isDeleted ? 'deleted' : u.accountStatus}
+          tone={u.isDeleted ? 'danger' : 'success'}
+        />
+      ),
+    },
+    {
+      key: 'login',
+      header: 'Last login',
+      cell: (u) => (
+        <span className="text-xs text-muted-foreground">
+          {u.lastLogin ? ago(u.lastLogin) : 'never'}
+        </span>
+      ),
+    },
+    {
+      key: 'created',
+      header: 'Created',
+      align: 'right',
+      cell: (u) => <span className="text-xs text-muted-foreground">{ago(u.createdAt)}</span>,
+    },
   ];
 
   return (
@@ -231,7 +323,12 @@ export default function UserDiagnosticsPage() {
         description="Technical view of one account: auth, sessions, jobs, subscription, payment issues and errors. Read-only; account changes stay with Super Admin."
         actions={
           f.id && (
-            <Button variant="outline" size="sm" className="bg-card" onClick={() => setF({ id: '' })}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-card"
+              onClick={() => setF({ id: '' })}
+            >
               <ArrowLeft /> Search
             </Button>
           )
@@ -250,7 +347,13 @@ export default function UserDiagnosticsPage() {
           >
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="User ID, email or name prefix" className="bg-card pl-8" aria-label="Search users" />
+              <Input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="User ID, email or name prefix"
+                className="bg-card pl-8"
+                aria-label="Search users"
+              />
             </div>
             <Button type="submit" disabled={input.trim().length < 2}>
               Search
@@ -258,11 +361,22 @@ export default function UserDiagnosticsPage() {
           </form>
           {f.q ? (
             <Section title="Results">
-              <DataTable columns={columns} rows={data?.users} loading={isFetching} rowKey={(u) => u._id} onRowClick={(u) => setF({ id: u._id })} emptyTitle="No users found" />
+              <DataTable
+                columns={columns}
+                rows={data?.users}
+                loading={isFetching}
+                rowKey={(u) => u._id}
+                onRowClick={(u) => setF({ id: u._id })}
+                emptyTitle="No users found"
+              />
             </Section>
           ) : (
             <Section title="Find a user">
-              <EmptyState icon={<KeyRound />} title="Search by ID or email" description="Exact user ID, or the start of an email address or name." />
+              <EmptyState
+                icon={<KeyRound />}
+                title="Search by ID or email"
+                description="Exact user ID, or the start of an email address or name."
+              />
             </Section>
           )}
         </>

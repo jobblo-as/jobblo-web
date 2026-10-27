@@ -53,19 +53,36 @@ export default function BlockedUsersScreen() {
         {
           text: 'Opphev blokkering',
           style: 'destructive',
-          onPress: () => unblock.mutate(user._id, {
-            onSuccess: (result) => {
-              if (!result.isBlocked) Alert.alert('Blokkering opphevet');
-            },
-            onError: (error) => Alert.alert('Kunne ikke oppheve blokkeringen', errorMessage(error)),
-          }),
+          onPress: () =>
+            unblock.mutate(user._id, {
+              onSuccess: (result) => {
+                if (!result.isBlocked) Alert.alert('Blokkering opphevet');
+              },
+              onError: (error) =>
+                Alert.alert('Kunne ikke oppheve blokkeringen', errorMessage(error)),
+            }),
         },
       ]
     );
   };
 
-  if (query.isLoading) return <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page"><BlockedUsersSkeleton /></SafeAreaView>;
-  if (query.isError) return <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page"><ErrorState title="Kunne ikke laste blokkerte brukere" message="Sjekk internettforbindelsen din og prøv igjen." actionLabel="Prøv igjen" onAction={() => void query.refetch()} /></SafeAreaView>;
+  if (query.isLoading)
+    return (
+      <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
+        <BlockedUsersSkeleton />
+      </SafeAreaView>
+    );
+  if (query.isError)
+    return (
+      <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
+        <ErrorState
+          title="Kunne ikke laste blokkerte brukere"
+          message="Sjekk internettforbindelsen din og prøv igjen."
+          actionLabel="Prøv igjen"
+          onAction={() => void query.refetch()}
+        />
+      </SafeAreaView>
+    );
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
@@ -78,23 +95,75 @@ export default function BlockedUsersScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ padding: 16, paddingBottom: 48, flexGrow: 1 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} tintColor={TC.brandText} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => void refresh()}
+            tintColor={TC.brandText}
+          />
+        }
       >
-        {users.length ? users.map((user) => (
-          <View key={user._id} className="mb-3 flex-row items-center rounded-2xl bg-surface p-3">
-            <Pressable onPress={() => router.push(`/profile/${user._id}`)} className="flex-1 flex-row items-center gap-3">
-              <View className="relative h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-line bg-tint">
-                {user.avatarUrl ? <Image source={{ uri: user.avatarUrl }} className="h-full w-full" /> : <Text className="font-semibold text-brand-text">{initials(user)}</Text>}
-                <View className="absolute bottom-0 right-0 h-4 w-4 items-center justify-center rounded-full border-2 border-white bg-[#0B0B0B]"><Check size={9} color="#FFF" strokeWidth={4} /></View>
-              </View>
-              <Text className="flex-1 text-[0.9375rem] font-semibold text-ink" numberOfLines={2}>{displayName(user)}</Text>
+        {users.length ? (
+          users.map((user) => (
+            <View key={user._id} className="mb-3 flex-row items-center rounded-2xl bg-surface p-3">
+              <Pressable
+                onPress={() => router.push(`/profile/${user._id}`)}
+                className="flex-1 flex-row items-center gap-3"
+              >
+                <View className="relative h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-line bg-tint">
+                  {user.avatarUrl ? (
+                    <Image source={{ uri: user.avatarUrl }} className="h-full w-full" />
+                  ) : (
+                    <Text className="font-semibold text-brand-text">{initials(user)}</Text>
+                  )}
+                  <View className="absolute bottom-0 right-0 h-4 w-4 items-center justify-center rounded-full border-2 border-white bg-[#0B0B0B]">
+                    <Check size={9} color="#FFF" strokeWidth={4} />
+                  </View>
+                </View>
+                <Text className="flex-1 text-[0.9375rem] font-semibold text-ink" numberOfLines={2}>
+                  {displayName(user)}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => confirmUnblock(user)}
+                disabled={unblock.isPending}
+                className="ml-2 px-1 py-2 disabled:opacity-50"
+              >
+                <Text className="text-[0.8125rem] font-semibold text-[#B4544A] dark:text-danger">
+                  {unblock.isPending ? '...' : 'Opphev'}
+                </Text>
+              </Pressable>
+            </View>
+          ))
+        ) : (
+          <View className="flex-1 justify-center">
+            <EmptyState
+              title="Du har ikke blokkert noen brukere ennå"
+              message="Blokkerte brukere vises her."
+            />
+          </View>
+        )}
+        {totalPages > 1 ? (
+          <View className="mt-4 flex-row items-center justify-center border-t border-line pt-4">
+            <Pressable
+              onPress={() => setPage((current) => Math.max(1, current - 1))}
+              disabled={page === 1}
+              className="p-2 disabled:opacity-30"
+            >
+              <ChevronLeft size={20} color={TC.ink} />
             </Pressable>
-            <Pressable onPress={() => confirmUnblock(user)} disabled={unblock.isPending} className="ml-2 px-1 py-2 disabled:opacity-50">
-              <Text className="text-[0.8125rem] font-semibold text-[#B4544A] dark:text-danger">{unblock.isPending ? '...' : 'Opphev'}</Text>
+            <Text className="px-4 text-[0.8125rem] font-semibold text-muted">
+              Side {page} av {totalPages}
+            </Text>
+            <Pressable
+              onPress={() => setPage((current) => Math.min(totalPages, current + 1))}
+              disabled={page === totalPages}
+              className="p-2 disabled:opacity-30"
+            >
+              <ChevronRight size={20} color={TC.ink} />
             </Pressable>
           </View>
-        )) : <View className="flex-1 justify-center"><EmptyState title="Du har ikke blokkert noen brukere ennå" message="Blokkerte brukere vises her." /></View>}
-        {totalPages > 1 ? <View className="mt-4 flex-row items-center justify-center border-t border-line pt-4"><Pressable onPress={() => setPage((current) => Math.max(1, current - 1))} disabled={page === 1} className="p-2 disabled:opacity-30"><ChevronLeft size={20} color={TC.ink} /></Pressable><Text className="px-4 text-[0.8125rem] font-semibold text-muted">Side {page} av {totalPages}</Text><Pressable onPress={() => setPage((current) => Math.min(totalPages, current + 1))} disabled={page === totalPages} className="p-2 disabled:opacity-30"><ChevronRight size={20} color={TC.ink} /></Pressable></View> : null}
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );

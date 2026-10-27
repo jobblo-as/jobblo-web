@@ -8,14 +8,38 @@ import apiClient from '../../api/client';
 import { TC, tc } from '../../theme/colors';
 
 const SERVICE_SHOWCASE = [
-  { name: 'Maling', src: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=900&q=80' },
-  { name: 'Rengjøring', src: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=900&q=80' },
-  { name: 'Rørlegger', src: 'https://images.unsplash.com/photo-1621905251918-48416bd8575a?auto=format&fit=crop&w=900&q=80' },
-  { name: 'Flytting', src: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80' },
-  { name: 'Hagearbeid', src: 'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=900&q=80' },
-  { name: 'Montering', src: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=900&q=80' },
-  { name: 'Oppussing', src: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80' },
-  { name: 'Transport', src: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=900&q=80' },
+  {
+    name: 'Maling',
+    src: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    name: 'Rengjøring',
+    src: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    name: 'Rørlegger',
+    src: 'https://images.unsplash.com/photo-1621905251918-48416bd8575a?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    name: 'Flytting',
+    src: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    name: 'Hagearbeid',
+    src: 'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    name: 'Montering',
+    src: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    name: 'Oppussing',
+    src: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    name: 'Transport',
+    src: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=900&q=80',
+  },
 ];
 
 function getGreeting() {
@@ -33,7 +57,10 @@ export function HomeHero() {
   const categories = data?.categories ?? [];
 
   const words = useMemo(
-    () => (categories.length ? categories.slice(0, 6).map((cat: { name: string }) => cat.name.toLowerCase()) : ['maling', 'flytting', 'hagearbeid', 'rørlegger', 'rengjøring']),
+    () =>
+      categories.length
+        ? categories.slice(0, 6).map((cat: { name: string }) => cat.name.toLowerCase())
+        : ['maling', 'flytting', 'hagearbeid', 'rørlegger', 'rengjøring'],
     [categories]
   );
 
@@ -52,7 +79,14 @@ export function HomeHero() {
   return (
     <View style={{ backgroundColor: TC.page, paddingBottom: 10 }}>
       <View style={{ paddingHorizontal: 20, paddingTop: 16 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 18,
+          }}
+        >
           <View style={{ flex: 1 }} />
           <Pressable
             onPress={() => router.push('/(auth)/login')}
@@ -69,31 +103,89 @@ export function HomeHero() {
           </Pressable>
         </View>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
-          <Text style={{ color: tc('#63665F', 'muted'), fontSize: 13, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase' }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            marginBottom: 12,
+            flexWrap: 'wrap',
+          }}
+        >
+          <Text
+            style={{
+              color: tc('#63665F', 'muted'),
+              fontSize: 13,
+              fontWeight: '700',
+              letterSpacing: 1.5,
+              textTransform: 'uppercase',
+            }}
+          >
             Norges lokale jobbplattform
           </Text>
           {stats ? (
-            <Text style={{ color: tc('#63665F', 'muted'), fontSize: 13, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase' }}>
+            <Text
+              style={{
+                color: tc('#63665F', 'muted'),
+                fontSize: 13,
+                fontWeight: '700',
+                letterSpacing: 1.5,
+                textTransform: 'uppercase',
+              }}
+            >
               {stats.jobs ?? 0} aktive oppdrag · {stats.users ?? 0} brukere
             </Text>
           ) : null}
         </View>
 
-        <Text style={{ color: TC.ink, fontSize: 42, fontWeight: '800', lineHeight: 44, letterSpacing: -1.4 }}>
+        <Text
+          style={{
+            color: TC.ink,
+            fontSize: 42,
+            fontWeight: '800',
+            lineHeight: 44,
+            letterSpacing: -1.4,
+          }}
+        >
           Jeg trenger hjelp til
         </Text>
-        <Text style={{ color: TC.brandText, fontSize: 42, fontWeight: '800', lineHeight: 44, letterSpacing: -1.4 }}>
+        <Text
+          style={{
+            color: TC.brandText,
+            fontSize: 42,
+            fontWeight: '800',
+            lineHeight: 44,
+            letterSpacing: -1.4,
+          }}
+        >
           {words[wordIndex % words.length]}
         </Text>
 
-        <Text style={{ marginTop: 14, color: tc('#63665F', 'muted'), fontSize: 16, lineHeight: 24 }}>
+        <Text
+          style={{ marginTop: 14, color: tc('#63665F', 'muted'), fontSize: 16, lineHeight: 24 }}
+        >
           Beskriv oppdraget, få tilbud fra folk i nærheten, og betal først når jobben er godkjent.{' '}
           <Text style={{ color: TC.brandText, fontWeight: '700' }}>Gratis å legge ut</Text> —{' '}
-          <Text style={{ color: TC.brandText, fontWeight: '700' }}>3 % når jobben faktisk blir gjort</Text>.
+          <Text style={{ color: TC.brandText, fontWeight: '700' }}>
+            3 % når jobben faktisk blir gjort
+          </Text>
+          .
         </Text>
 
-        <View style={{ marginTop: 18, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: TC.line, backgroundColor: TC.surface, borderRadius: 999, paddingLeft: 14, paddingRight: 6, paddingVertical: 7 }}>
+        <View
+          style={{
+            marginTop: 18,
+            flexDirection: 'row',
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: TC.line,
+            backgroundColor: TC.surface,
+            borderRadius: 999,
+            paddingLeft: 14,
+            paddingRight: 6,
+            paddingVertical: 7,
+          }}
+        >
           <Search size={18} color={tc('#9B9E96', 'subtle')} style={{ marginRight: 8 }} />
           <TextInput
             value={query}
@@ -104,7 +196,15 @@ export function HomeHero() {
           />
           <Pressable
             onPress={() => router.push('/(auth)/register')}
-            style={{ backgroundColor: TC.brandDeep, borderRadius: 999, paddingHorizontal: 18, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8 }}
+            style={{
+              backgroundColor: TC.brandDeep,
+              borderRadius: 999,
+              paddingHorizontal: 18,
+              paddingVertical: 10,
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 8,
+            }}
           >
             <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Finn hjelp</Text>
             <ArrowRight size={16} color="#FFFFFF" />
@@ -112,12 +212,23 @@ export function HomeHero() {
         </View>
 
         {categoryShortcuts.length > 0 && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 16 }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 8, paddingVertical: 16 }}
+          >
             {categoryShortcuts.map((cat: { _id?: string; name: string }) => (
               <Pressable
                 key={cat._id}
                 onPress={() => router.push('/(auth)/register')}
-                style={{ borderWidth: 1, borderColor: TC.line, backgroundColor: TC.surface, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 10 }}
+                style={{
+                  borderWidth: 1,
+                  borderColor: TC.line,
+                  backgroundColor: TC.surface,
+                  borderRadius: 999,
+                  paddingHorizontal: 12,
+                  paddingVertical: 10,
+                }}
               >
                 <Text style={{ color: TC.ink, fontSize: 13, fontWeight: '600' }}>{cat.name}</Text>
               </Pressable>
@@ -127,21 +238,58 @@ export function HomeHero() {
 
         <View style={{ marginTop: 6, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <ShieldCheck size={15} color={TC.brandText} />
-          <Text style={{ color: TC.brandText, fontWeight: '700' }}>Betaling holdes trygt til du har godkjent</Text>
+          <Text style={{ color: TC.brandText, fontWeight: '700' }}>
+            Betaling holdes trygt til du har godkjent
+          </Text>
         </View>
       </View>
 
       <View style={{ marginTop: 18, paddingHorizontal: 20 }}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: 12 }}
+        >
           {SERVICE_SHOWCASE.map((service) => (
             <Pressable
               key={service.name}
               onPress={() => router.push('/(auth)/register')}
-              style={{ width: 150, height: 180, overflow: 'hidden', borderRadius: 22, borderWidth: 1, borderColor: TC.line, backgroundColor: TC.tint }}
+              style={{
+                width: 150,
+                height: 180,
+                overflow: 'hidden',
+                borderRadius: 22,
+                borderWidth: 1,
+                borderColor: TC.line,
+                backgroundColor: TC.tint,
+              }}
             >
-              <Image source={{ uri: service.src }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-              <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 60, backgroundColor: 'rgba(11,11,11,0.56)' }} />
-              <Text style={{ position: 'absolute', left: 12, bottom: 12, right: 12, color: '#FFFFFF', fontWeight: '700', fontSize: 14 }}>
+              <Image
+                source={{ uri: service.src }}
+                style={{ width: '100%', height: '100%' }}
+                resizeMode="cover"
+              />
+              <View
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: 60,
+                  backgroundColor: 'rgba(11,11,11,0.56)',
+                }}
+              />
+              <Text
+                style={{
+                  position: 'absolute',
+                  left: 12,
+                  bottom: 12,
+                  right: 12,
+                  color: '#FFFFFF',
+                  fontWeight: '700',
+                  fontSize: 14,
+                }}
+              >
                 {service.name}
               </Text>
             </Pressable>

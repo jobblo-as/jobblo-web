@@ -19,14 +19,18 @@ export type OrderStatus =
 
 export interface JobRequest {
   _id: string;
-  serviceId: string | {
-    _id: string;
-    title: string;
-  };
-  customerId: string | {
-    _id: string;
-    name: string;
-  };
+  serviceId:
+    | string
+    | {
+        _id: string;
+        title: string;
+      };
+  customerId:
+    | string
+    | {
+        _id: string;
+        name: string;
+      };
   providerId: string;
   status: ApplicationStatus;
   message?: string;
@@ -124,4 +128,3 @@ export interface MyApplicationsResponse {
   applications: MyApplication[];
   pagination: PaginationMeta;
 }
-

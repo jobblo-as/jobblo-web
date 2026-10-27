@@ -1,5 +1,14 @@
 import React, { useMemo, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronRight, MapPin, Search, Star, Users, X } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -53,13 +62,21 @@ export default function RecommendedTaskersScreen() {
     const term = search.trim().toLowerCase();
     if (!term) return users;
     return users.filter((worker) =>
-      [worker.name, worker.lastName, ...(worker.skills ?? [])].some((part) => String(part ?? '').toLowerCase().includes(term))
+      [worker.name, worker.lastName, ...(worker.skills ?? [])].some((part) =>
+        String(part ?? '')
+          .toLowerCase()
+          .includes(term)
+      )
     );
   }, [users, search]);
 
   const refresh = async () => {
     setRefreshing(true);
-    try { await query.refetch(); } finally { setRefreshing(false); }
+    try {
+      await query.refetch();
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   if (query.isLoading)
@@ -84,7 +101,14 @@ export default function RecommendedTaskersScreen() {
     <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
       <ScrollView
         keyboardShouldPersistTaps="handled"
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} tintColor={TC.brandText} colors={[TC.brandText]} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => void refresh()}
+            tintColor={TC.brandText}
+            colors={[TC.brandText]}
+          />
+        }
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
       >
         <ScreenHeader
@@ -132,18 +156,26 @@ export default function RecommendedTaskersScreen() {
             message="Vi fant ingen oppdragstakere i nærheten akkurat nå. Prøv igjen senere."
           />
         ) : visible.length === 0 ? (
-          <Text className="my-8 text-center text-[0.875rem] text-muted">Ingen treff på «{search.trim()}».</Text>
+          <Text className="my-8 text-center text-[0.875rem] text-muted">
+            Ingen treff på «{search.trim()}».
+          </Text>
         ) : (
           <View className="gap-3">
             {visible.map((worker) => {
-              const name = `${worker.name || ''} ${worker.lastName || ''}`.trim() || 'Oppdragstaker';
+              const name =
+                `${worker.name || ''} ${worker.lastName || ''}`.trim() || 'Oppdragstaker';
               const rating = Number(worker.averageRating || 0);
               const reviews = Number(worker.reviewCount || 0);
               const skills = (worker.skills ?? []).slice(0, 3);
               return (
                 <Pressable
                   key={worker._id}
-                  onPress={() => router.push({ pathname: '/(app)/profile/[userId]', params: { userId: worker._id } })}
+                  onPress={() =>
+                    router.push({
+                      pathname: '/(app)/profile/[userId]',
+                      params: { userId: worker._id },
+                    })
+                  }
                   accessibilityRole="button"
                   accessibilityLabel={`${name}, se profil`}
                   className="rounded-2xl border border-line bg-surface p-4 active:bg-[#FAFAF7] dark:bg-surface-2"
@@ -151,19 +183,25 @@ export default function RecommendedTaskersScreen() {
                   <View className="flex-row items-center gap-3">
                     <Avatar uri={worker.avatarUrl} label={initials(worker.name, worker.lastName)} />
                     <View className="min-w-0 flex-1">
-                      <Text className="text-[1.0625rem] font-semibold text-ink" numberOfLines={1}>{name}</Text>
+                      <Text className="text-[1.0625rem] font-semibold text-ink" numberOfLines={1}>
+                        {name}
+                      </Text>
                       <View className="mt-1 flex-row items-center gap-1">
                         {reviews > 0 ? (
                           <>
                             <Star size={13} color="#B7791F" fill="#B7791F" />
-                            <Text className="text-[0.8125rem] font-semibold text-ink">{rating.toFixed(1)}</Text>
+                            <Text className="text-[0.8125rem] font-semibold text-ink">
+                              {rating.toFixed(1)}
+                            </Text>
                             <Text className="text-[0.8125rem] text-muted">
                               ({reviews} {reviews === 1 ? 'anmeldelse' : 'anmeldelser'})
                             </Text>
                           </>
                         ) : (
                           <View className="rounded-full bg-tint px-2 py-0.5">
-                            <Text className="text-[0.8125rem] font-semibold text-brand-text">Ny på Jobblo</Text>
+                            <Text className="text-[0.8125rem] font-semibold text-brand-text">
+                              Ny på Jobblo
+                            </Text>
                           </View>
                         )}
                       </View>
@@ -172,7 +210,9 @@ export default function RecommendedTaskersScreen() {
                       <Text className="text-[0.9375rem] font-bold tabular-nums text-ink">
                         {worker.hourlyRate ? `${worker.hourlyRate} kr` : '—'}
                       </Text>
-                      <Text className="text-[0.8125rem] text-muted">{worker.hourlyRate ? 'per time' : 'pris avtales'}</Text>
+                      <Text className="text-[0.8125rem] text-muted">
+                        {worker.hourlyRate ? 'per time' : 'pris avtales'}
+                      </Text>
                     </View>
                   </View>
 
@@ -185,7 +225,9 @@ export default function RecommendedTaskersScreen() {
                       ))}
                       {(worker.skills?.length ?? 0) > 3 ? (
                         <View className="rounded-full bg-surface-2 px-2.5 py-1">
-                          <Text className="text-[0.8125rem] font-medium text-muted">+{(worker.skills?.length ?? 0) - 3}</Text>
+                          <Text className="text-[0.8125rem] font-medium text-muted">
+                            +{(worker.skills?.length ?? 0) - 3}
+                          </Text>
                         </View>
                       ) : null}
                     </View>
@@ -199,7 +241,9 @@ export default function RecommendedTaskersScreen() {
                       </Text>
                     </View>
                     <View className="flex-row items-center gap-0.5">
-                      <Text className="text-[0.8125rem] font-semibold text-brand-text">Se profil</Text>
+                      <Text className="text-[0.8125rem] font-semibold text-brand-text">
+                        Se profil
+                      </Text>
                       <ChevronRight size={15} color={TC.brandText} />
                     </View>
                   </View>
@@ -216,7 +260,9 @@ export default function RecommendedTaskersScreen() {
             className={`mt-5 h-11 flex-row items-center justify-center gap-2 self-center rounded-full bg-brand px-6 ${loadingMore ? 'opacity-70' : ''}`}
           >
             {loadingMore ? <ActivityIndicator size="small" color="#FFFFFF" /> : null}
-            <Text className="text-[0.875rem] font-semibold text-white">{loadingMore ? 'Laster…' : 'Last flere'}</Text>
+            <Text className="text-[0.875rem] font-semibold text-white">
+              {loadingMore ? 'Laster…' : 'Last flere'}
+            </Text>
           </Pressable>
         ) : null}
       </ScrollView>

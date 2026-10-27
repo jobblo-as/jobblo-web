@@ -7,7 +7,5 @@ import { Stack } from 'expo-router';
  * headerShown: false — each screen renders its own header.
  */
 export default function ProfileLayout() {
-    return (
-        <Stack screenOptions={{ headerShown: false }} />
-    );
+  return <Stack screenOptions={{ headerShown: false }} />;
 }

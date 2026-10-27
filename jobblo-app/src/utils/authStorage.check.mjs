@@ -4,11 +4,25 @@ import assert from 'node:assert/strict';
 
 const fakeStore = (initial = {}, { broken = false } = {}) => {
   const data = new Map(Object.entries(initial));
-  const op = (fn) => async (...args) => { if (broken) throw new Error('Native module is null'); return fn(...args); };
+  const op =
+    (fn) =>
+    async (...args) => {
+      if (broken) throw new Error('Native module is null');
+      return fn(...args);
+    };
   return {
     data,
-    plain: { getItem: op((k) => data.get(k) ?? null), setItem: op((k, v) => void data.set(k, v)), removeItem: op((k) => void data.delete(k)) },
-    secure: { AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY: 1, getItemAsync: op((k) => data.get(k) ?? null), setItemAsync: op((k, v) => void data.set(k, v)), deleteItemAsync: op((k) => void data.delete(k)) },
+    plain: {
+      getItem: op((k) => data.get(k) ?? null),
+      setItem: op((k, v) => void data.set(k, v)),
+      removeItem: op((k) => void data.delete(k)),
+    },
+    secure: {
+      AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY: 1,
+      getItemAsync: op((k) => data.get(k) ?? null),
+      setItemAsync: op((k, v) => void data.set(k, v)),
+      deleteItemAsync: op((k) => void data.delete(k)),
+    },
   };
 };
 

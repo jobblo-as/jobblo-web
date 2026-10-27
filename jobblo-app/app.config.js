@@ -8,7 +8,9 @@ const localGoogleServicesFile = './google-services.json';
 // Every EAS build except a development client talks to a real server, so over https only;
 // without this a preview build silently fell back to http://localhost.
 if (easProfile && easProfile !== 'development' && !/^https:\/\//i.test(apiUrl)) {
-  throw new Error(`EXPO_PUBLIC_API_URL must be an https:// URL for the ${easProfile} build profile`);
+  throw new Error(
+    `EXPO_PUBLIC_API_URL must be an https:// URL for the ${easProfile} build profile`
+  );
 }
 
 if (easProfile === 'production') {

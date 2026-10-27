@@ -2,7 +2,16 @@ import React, { useMemo, useState } from 'react';
 import { Linking, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, ChevronDown, CheckCircle2, Mail, Search, Send, ShieldCheck, MessageSquare } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  ChevronDown,
+  CheckCircle2,
+  Mail,
+  Search,
+  Send,
+  ShieldCheck,
+  MessageSquare,
+} from 'lucide-react-native';
 import { useCreateTicket, useMyTickets } from '../../../src/hooks/useSupport';
 import type { SupportTicket, SupportTicketStatus } from '../../../src/services/support.service';
 import { Button } from '../../../src/components/ui/Button';
@@ -15,12 +24,49 @@ const SUPPORT_EMAIL = 'support@jobblo.no';
 type FAQ = { id: number; question: string; answer: string; search: string };
 
 const FAQ_ITEMS: FAQ[] = [
-  { id: 1, question: 'Hvordan registrerer jeg meg?', answer: 'Klikk på «Registrer deg», fyll inn nødvendig informasjon og bekreft e-postadressen din. Deretter kan du fullføre profilen og begynne å bruke Jobblo.', search: 'registrere konto opprette bruker' },
-  { id: 2, question: 'Hvordan publiserer jeg et oppdrag?', answer: 'Trykk på «Legg ut oppdrag», velg oppdragstype og legg inn beskrivelse, budsjett og ønsket tidsplan før du publiserer.', search: 'publisere oppdrag legge ut jobb' },
-  { id: 3, question: 'Er det trygt å betale gjennom Jobblo?', answer: 'Ja. Betalinger håndteres via SafePay og Stripe. Pengene holdes i escrow til jobben er godkjent — du betaler aldri for noe du ikke er fornøyd med.', search: 'betaling trygt sikker safepay stripe' },
-  { id: 4, question: 'Hvordan fungerer vurderingssystemet?', answer: 'Etter et fullført oppdrag kan begge parter legge igjen en vurdering. Dette bidrar til trygghet og bedre valg for hele Jobblo-fellesskapet.', search: 'anmeldelser vurderinger review' },
-  { id: 5, question: 'Hva koster det å bruke Jobblo?', answer: MEMBERSHIP_ENABLED ? 'Det er gratis å komme i gang. Du kan oppgradere til et medlemskap for flere kontakter, bedre synlighet og ekstra funksjoner.' : 'Det er gratis å komme i gang. Ved betaling med SafePay legges det til et gebyr på 3 %.', search: 'pris koste medlemskap planer' },
-  { id: 6, question: 'Hvordan sier jeg opp abonnementet?', answer: 'Gå til Innstillinger → Abonnementer og velg å si opp. Tilgangen varer ut perioden du allerede har betalt for, og du blir ikke belastet igjen.', search: 'si opp abonnement kansellere' },
+  {
+    id: 1,
+    question: 'Hvordan registrerer jeg meg?',
+    answer:
+      'Klikk på «Registrer deg», fyll inn nødvendig informasjon og bekreft e-postadressen din. Deretter kan du fullføre profilen og begynne å bruke Jobblo.',
+    search: 'registrere konto opprette bruker',
+  },
+  {
+    id: 2,
+    question: 'Hvordan publiserer jeg et oppdrag?',
+    answer:
+      'Trykk på «Legg ut oppdrag», velg oppdragstype og legg inn beskrivelse, budsjett og ønsket tidsplan før du publiserer.',
+    search: 'publisere oppdrag legge ut jobb',
+  },
+  {
+    id: 3,
+    question: 'Er det trygt å betale gjennom Jobblo?',
+    answer:
+      'Ja. Betalinger håndteres via SafePay og Stripe. Pengene holdes i escrow til jobben er godkjent — du betaler aldri for noe du ikke er fornøyd med.',
+    search: 'betaling trygt sikker safepay stripe',
+  },
+  {
+    id: 4,
+    question: 'Hvordan fungerer vurderingssystemet?',
+    answer:
+      'Etter et fullført oppdrag kan begge parter legge igjen en vurdering. Dette bidrar til trygghet og bedre valg for hele Jobblo-fellesskapet.',
+    search: 'anmeldelser vurderinger review',
+  },
+  {
+    id: 5,
+    question: 'Hva koster det å bruke Jobblo?',
+    answer: MEMBERSHIP_ENABLED
+      ? 'Det er gratis å komme i gang. Du kan oppgradere til et medlemskap for flere kontakter, bedre synlighet og ekstra funksjoner.'
+      : 'Det er gratis å komme i gang. Ved betaling med SafePay legges det til et gebyr på 3 %.',
+    search: 'pris koste medlemskap planer',
+  },
+  {
+    id: 6,
+    question: 'Hvordan sier jeg opp abonnementet?',
+    answer:
+      'Gå til Innstillinger → Abonnementer og velg å si opp. Tilgangen varer ut perioden du allerede har betalt for, og du blir ikke belastet igjen.',
+    search: 'si opp abonnement kansellere',
+  },
 ];
 
 const STATUS_LABEL: Record<SupportTicketStatus, string> = {
@@ -46,7 +92,12 @@ function getErrorMessage(err: unknown, fallback: string): string {
 export default function SupportScreen() {
   const router = useRouter();
   const createTicket = useCreateTicket();
-  const { data: tickets, isLoading: ticketsLoading, isError: ticketsError, refetch: refetchTickets } = useMyTickets();
+  const {
+    data: tickets,
+    isLoading: ticketsLoading,
+    isError: ticketsError,
+    refetch: refetchTickets,
+  } = useMyTickets();
 
   const [openFaqId, setOpenFaqId] = useState<number | null>(null);
   const [faqSearch, setFaqSearch] = useState('');
@@ -59,11 +110,12 @@ export default function SupportScreen() {
     const q = faqSearch.trim().toLowerCase();
     if (!q) return FAQ_ITEMS;
     return FAQ_ITEMS.filter((f) =>
-      (f.question + ' ' + f.answer + ' ' + f.search).toLowerCase().includes(q),
+      (f.question + ' ' + f.answer + ' ' + f.search).toLowerCase().includes(q)
     );
   }, [faqSearch]);
 
-  const canSubmit = subject.trim().length > 0 && message.trim().length > 0 && !createTicket.isPending;
+  const canSubmit =
+    subject.trim().length > 0 && message.trim().length > 0 && !createTicket.isPending;
 
   const handleSubmit = async () => {
     if (!subject.trim() || !message.trim()) {
@@ -128,7 +180,9 @@ export default function SupportScreen() {
           <View className="border-t border-line px-5 py-3.5">
             <View className="flex-row items-center gap-1.5">
               <ShieldCheck size={12} color={TC.brandText} />
-              <Text className="text-[0.8125rem] text-muted">Vi svarer normalt innen 24 timer på hverdager</Text>
+              <Text className="text-[0.8125rem] text-muted">
+                Vi svarer normalt innen 24 timer på hverdager
+              </Text>
             </View>
           </View>
         </View>
@@ -216,7 +270,10 @@ export default function SupportScreen() {
                 <Text className="mb-1.5 text-[0.8125rem] font-bold text-[#4B4D47]">Emne</Text>
                 <TextInput
                   value={subject}
-                  onChangeText={(v) => { setSubject(v); setSubmitError(null); }}
+                  onChangeText={(v) => {
+                    setSubject(v);
+                    setSubmitError(null);
+                  }}
                   placeholder="Kort beskrivelse av problemet"
                   placeholderTextColor={TC.placeholder}
                   maxLength={200}
@@ -230,7 +287,10 @@ export default function SupportScreen() {
                 <Text className="mb-1.5 text-[0.8125rem] font-bold text-[#4B4D47]">Melding</Text>
                 <TextInput
                   value={message}
-                  onChangeText={(v) => { setMessage(v); setSubmitError(null); }}
+                  onChangeText={(v) => {
+                    setMessage(v);
+                    setSubmitError(null);
+                  }}
                   placeholder="Beskriv problemet ditt i detalj..."
                   placeholderTextColor={TC.placeholder}
                   multiline
@@ -245,7 +305,9 @@ export default function SupportScreen() {
               </View>
 
               {submitError ? (
-                <Text className="text-[0.8125rem] text-[#B4544A] dark:text-danger">{submitError}</Text>
+                <Text className="text-[0.8125rem] text-[#B4544A] dark:text-danger">
+                  {submitError}
+                </Text>
               ) : null}
 
               <Button
@@ -268,10 +330,15 @@ export default function SupportScreen() {
             <MessageSquare size={18} color={TC.brandText} />
             <View className="flex-1 min-w-0">
               <Text className="text-sm font-bold text-ink">Mine saker</Text>
-              <Text className="text-[0.8125rem] text-muted">Tidligere henvendelser du har sendt</Text>
+              <Text className="text-[0.8125rem] text-muted">
+                Tidligere henvendelser du har sendt
+              </Text>
             </View>
             {ticketsError ? (
-              <Pressable onPress={() => void refetchTickets()} className="shrink-0 rounded-full border border-line bg-surface px-3 py-1.5">
+              <Pressable
+                onPress={() => void refetchTickets()}
+                className="shrink-0 rounded-full border border-line bg-surface px-3 py-1.5"
+              >
                 <Text className="text-[0.8125rem] font-bold text-brand-text">Prøv igjen</Text>
               </Pressable>
             ) : null}
@@ -283,15 +350,11 @@ export default function SupportScreen() {
             </View>
           ) : ticketsError ? (
             <View className="px-5 py-6">
-              <Text className="text-sm text-muted">
-                Kunne ikke hente sakene dine akkurat nå.
-              </Text>
+              <Text className="text-sm text-muted">Kunne ikke hente sakene dine akkurat nå.</Text>
             </View>
           ) : !tickets || tickets.length === 0 ? (
             <View className="px-5 py-8">
-              <Text className="text-sm text-muted">
-                Du har ikke sendt noen saker ennå.
-              </Text>
+              <Text className="text-sm text-muted">Du har ikke sendt noen saker ennå.</Text>
             </View>
           ) : (
             tickets.map((ticket: SupportTicket, idx: number) => {
@@ -301,10 +364,16 @@ export default function SupportScreen() {
                   <View className="px-5 py-4">
                     <View className="flex-row items-start justify-between gap-3">
                       <View className="min-w-0 flex-1">
-                        <Text className="text-sm font-semibold text-ink leading-5" numberOfLines={2}>
+                        <Text
+                          className="text-sm font-semibold text-ink leading-5"
+                          numberOfLines={2}
+                        >
                           {ticket.subject}
                         </Text>
-                        <Text className="mt-2 text-[0.8125rem] text-muted leading-5" numberOfLines={2}>
+                        <Text
+                          className="mt-2 text-[0.8125rem] text-muted leading-5"
+                          numberOfLines={2}
+                        >
                           {ticket.message}
                         </Text>
                         <Text className="mt-2 text-[0.8125rem] text-muted">

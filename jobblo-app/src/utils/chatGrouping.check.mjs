@@ -19,7 +19,10 @@ assert.equal(out.length, 4);
 assert.equal(out[0]._id, '1');
 assert.ok(isStatusGroup(out[1]));
 // The duplicate upload line is kept once (the latest copy), order otherwise preserved.
-assert.deepEqual(out[1].items.map((m) => m._id), ['2', '4', '5']);
+assert.deepEqual(
+  out[1].items.map((m) => m._id),
+  ['2', '4', '5']
+);
 assert.equal(out[2]._id, '6');
 assert.ok(isStatusGroup(out[3]));
 assert.equal(out[3].items.length, 1);

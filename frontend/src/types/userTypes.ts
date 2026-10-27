@@ -87,7 +87,13 @@ export type User = {
     endDate?: string;
     description?: string;
   }[];
-  portfolio?: { _id: string; title?: string; description?: string; imageUrl?: string; link?: string }[];
+  portfolio?: {
+    _id: string;
+    title?: string;
+    description?: string;
+    imageUrl?: string;
+    link?: string;
+  }[];
   previousProjects?: {
     _id: string;
     title?: string;

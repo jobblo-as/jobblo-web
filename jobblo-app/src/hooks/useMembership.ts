@@ -1,10 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { queryKeys } from '../queryKeys';
 import { getPlans, type SubscriptionPlan } from '../services/plans.service';
-import {
-  createSubscriptionCheckoutSession,
-  validateCoupon,
-} from '../services/membership.service';
+import { createSubscriptionCheckoutSession, validateCoupon } from '../services/membership.service';
 
 /**
  * Plan catalogue for the Membership screen.

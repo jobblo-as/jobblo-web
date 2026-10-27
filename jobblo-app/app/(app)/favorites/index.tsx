@@ -1,15 +1,19 @@
 import React, { useMemo, useState } from 'react';
-import { Pressable, RefreshControl, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import {
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Plus } from 'lucide-react-native';
 import { ErrorState } from '../../../src/components/ui/ErrorState';
 import { FavoriteListCard } from '../../../src/components/domain/FavoriteListCard';
 import { FavoriteListFormDialog } from '../../../src/components/domain/FavoriteListFormDialog';
-import {
-  useCreateFavoriteList,
-  useFavoriteLists,
-} from '../../../src/hooks/useFavoriteLists';
+import { useCreateFavoriteList, useFavoriteLists } from '../../../src/hooks/useFavoriteLists';
 import { favoriteListErrorMessage } from '../../../src/utils/favoriteListErrors';
 import { TC } from '../../../src/theme/colors';
 
@@ -61,7 +65,11 @@ export default function FavoritesScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const handleRefresh = async () => {
     setRefreshing(true);
-    try { await refetch(); } finally { setRefreshing(false); }
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -126,7 +134,13 @@ export default function FavoritesScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: PAGE_PADDING, paddingBottom: 32 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void handleRefresh()} tintColor={TC.brandText} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => void handleRefresh()}
+            tintColor={TC.brandText}
+          />
+        }
       >
         <Text className="mb-1 text-[1.75rem] font-bold leading-tight tracking-[-0.04em] text-ink">
           Lagrede lister

@@ -10,7 +10,13 @@ import { JOB_LIMITS, jobValidationSchema, type JobFormValues } from '../validati
 import { saveFormData, loadFormData, clearFormData } from '../utils/indexedDB';
 import { deleteJobDraft, getJobDraft, saveJobDraft } from '../api/jobDraftsAPI';
 import { getErrorMessage, errorBody } from '../utils/getErrorMessage';
-import { summariseAiFill, clampMessage, draftRows, type AiDraft, type AiDraftKey } from '../utils/aiFillSummary';
+import {
+  summariseAiFill,
+  clampMessage,
+  draftRows,
+  type AiDraft,
+  type AiDraftKey,
+} from '../utils/aiFillSummary';
 import { scrollToFirstError } from '../utils/scrollToError';
 import { phoneDigits } from '../utils/norwegianFormat';
 
@@ -227,7 +233,8 @@ export const useCreateJobForm = (
     mutationFn: ({ file, lang }: { file: File; lang?: 'no' | 'en' }) => analyzeJobImage(file, lang),
   });
   const smartFillMutation = useMutation({
-    mutationFn: ({ prompt, ctx }: { prompt: string; ctx: AISmartFillContext }) => generateFullJobListing(prompt, ctx),
+    mutationFn: ({ prompt, ctx }: { prompt: string; ctx: AISmartFillContext }) =>
+      generateFullJobListing(prompt, ctx),
   });
   const [smartFillSuggestionFlags, setSmartFillSuggestionFlags] = useState<{
     title?: boolean;
@@ -360,25 +367,31 @@ export const useCreateJobForm = (
 
     setIsGeneratingFullListing(true);
     try {
-      const response = await smartFillMutation.mutateAsync({ prompt: smartFillPrompt, ctx: {
-        lang: locale,
-        existingTitle: values.title || undefined,
-        existingDescription: values.description || undefined,
-        existingCategory:
-          (typeof values.categories === 'string'
-            ? values.categories
-            : Array.isArray(values.categories)
-              ? values.categories[0]
-              : undefined) || undefined,
-        existingPaymentType: paymentType as 'Timepris' | 'Fastpris' | 'Anbud',
-        existingDuration: durationValue
-          ? { value: durationValue, unit: (durationUnit as 'minutes' | 'hours' | 'days') || 'minutes' }
-          : undefined,
-        existingCity: values.city || undefined,
-        existingCounty: countyCode || undefined,
-        existingEquipment: equipment || undefined,
-        existingUrgent: urgent,
-      } });
+      const response = await smartFillMutation.mutateAsync({
+        prompt: smartFillPrompt,
+        ctx: {
+          lang: locale,
+          existingTitle: values.title || undefined,
+          existingDescription: values.description || undefined,
+          existingCategory:
+            (typeof values.categories === 'string'
+              ? values.categories
+              : Array.isArray(values.categories)
+                ? values.categories[0]
+                : undefined) || undefined,
+          existingPaymentType: paymentType as 'Timepris' | 'Fastpris' | 'Anbud',
+          existingDuration: durationValue
+            ? {
+                value: durationValue,
+                unit: (durationUnit as 'minutes' | 'hours' | 'days') || 'minutes',
+              }
+            : undefined,
+          existingCity: values.city || undefined,
+          existingCounty: countyCode || undefined,
+          existingEquipment: equipment || undefined,
+          existingUrgent: urgent,
+        },
+      });
 
       if (response.success) {
         const d = response.data;
@@ -393,7 +406,10 @@ export const useCreateJobForm = (
           hourlyRate: d.hourlyRate,
           // Only offered while the type is still the untouched default.
           paymentType:
-            d.paymentType && d.paymentType !== 'Fastpris' && paymentType === 'Fastpris' && initialData?.paymentType == null
+            d.paymentType &&
+            d.paymentType !== 'Fastpris' &&
+            paymentType === 'Fastpris' &&
+            initialData?.paymentType == null
               ? d.paymentType
               : undefined,
           tags: Array.isArray(d.skills) && d.skills.length ? d.skills : undefined,
@@ -406,9 +422,7 @@ export const useCreateJobForm = (
     } catch (err) {
       console.error('SMART FILL ERROR:', err);
       const errorMessage =
-        errorBody(err)?.error ||
-        errorBody(err)?.message ||
-        'Kunne ikke generere jobbinformasjon.';
+        errorBody(err)?.error || errorBody(err)?.message || 'Kunne ikke generere jobbinformasjon.';
       const validationErrors = errorBody<{ validationErrors?: string[] }>(err)?.validationErrors;
       const details = validationErrors?.length
         ? ` (${validationErrors.slice(0, 2).join(', ')})`
@@ -420,16 +434,33 @@ export const useCreateJobForm = (
   };
 
   /** What the popup lists: one row per suggested field, `overwrites` when it replaces typed text. */
-  const aiDraftRows = useMemo(() => (aiDraft ? draftRows(aiDraft, {
-    title: values.title.trim().length > 0,
-    description: values.description.trim().length > 0,
-    categories: Array.isArray(values.categories) ? values.categories.length > 0 : !!String(values.categories ?? '').trim(),
-    duration: Number(durationValue) > 0,
-    price: Number(values.price) > 0,
-    hourlyRate: Number(hourlyRate) > 0,
-    paymentType: false,
-    tags: tags.length > 0,
-  }) : []), [aiDraft, values.title, values.description, values.categories, values.price, durationValue, hourlyRate, tags]);
+  const aiDraftRows = useMemo(
+    () =>
+      aiDraft
+        ? draftRows(aiDraft, {
+            title: values.title.trim().length > 0,
+            description: values.description.trim().length > 0,
+            categories: Array.isArray(values.categories)
+              ? values.categories.length > 0
+              : !!String(values.categories ?? '').trim(),
+            duration: Number(durationValue) > 0,
+            price: Number(values.price) > 0,
+            hourlyRate: Number(hourlyRate) > 0,
+            paymentType: false,
+            tags: tags.length > 0,
+          })
+        : [],
+    [
+      aiDraft,
+      values.title,
+      values.description,
+      values.categories,
+      values.price,
+      durationValue,
+      hourlyRate,
+      tags,
+    ]
+  );
 
   /** Writes only the ticked rows of the reviewed draft into the form. */
   const applyAiDraft = (keys: AiDraftKey[]) => {
@@ -438,9 +469,18 @@ export const useCreateJobForm = (
     if (!d || keys.length === 0) return;
     const pick = new Set(keys);
     const flags: typeof smartFillSuggestionFlags = { ...smartFillSuggestionFlags };
-    if (pick.has('title') && d.title) { setTitle(d.title); flags.title = true; }
-    if (pick.has('description') && d.description) { setDescription(d.description); flags.description = true; }
-    if (pick.has('categories') && d.categories) { setCategories(d.categories); flags.categories = true; }
+    if (pick.has('title') && d.title) {
+      setTitle(d.title);
+      flags.title = true;
+    }
+    if (pick.has('description') && d.description) {
+      setDescription(d.description);
+      flags.description = true;
+    }
+    if (pick.has('categories') && d.categories) {
+      setCategories(d.categories);
+      flags.categories = true;
+    }
     if (pick.has('duration') && d.duration) {
       setDurationValue(String(d.duration.value));
       setDurationUnit(d.duration.unit || 'minutes');
@@ -451,7 +491,10 @@ export const useCreateJobForm = (
       setSmartFillPricingNote(d.pricingReasoning || '');
       flags.price = true;
     }
-    if (pick.has('hourlyRate') && d.hourlyRate) { setHourlyRate(String(d.hourlyRate)); flags.hourlyRate = true; }
+    if (pick.has('hourlyRate') && d.hourlyRate) {
+      setHourlyRate(String(d.hourlyRate));
+      flags.hourlyRate = true;
+    }
     if (pick.has('paymentType') && d.paymentType) setPaymentType(d.paymentType);
     if (pick.has('tags') && d.tags) setTags(d.tags);
     if (d.remote && !values.city) setCity('Fjernarbeid / Remote');
@@ -472,10 +515,13 @@ export const useCreateJobForm = (
         // `?utkast=<id>` opens a server draft ("Dine utkast"); otherwise the local one.
         const utkast = new URLSearchParams(window.location.search).get('utkast');
         const { data, images } = utkast
-          ? { data: await getJobDraft<JobDraft>(utkast).catch(() => {
-              toast.error('Fant ikke utkastet.');
-              return null;
-            }), images: [] as File[] }
+          ? {
+              data: await getJobDraft<JobDraft>(utkast).catch(() => {
+                toast.error('Fant ikke utkastet.');
+                return null;
+              }),
+              images: [] as File[],
+            }
           : await loadFormData<JobDraft>(currentUser?._id);
         serverDraftId.current = (utkast && data ? utkast : data?.serverDraftId) || null;
         if (data) {
@@ -572,7 +618,11 @@ export const useCreateJobForm = (
           smartFillPrompt,
           checklistItems,
         };
-        await saveFormData({ ...dataToSave, serverDraftId: serverDraftId.current }, selectedImages, currentUser?._id);
+        await saveFormData(
+          { ...dataToSave, serverDraftId: serverDraftId.current },
+          selectedImages,
+          currentUser?._id
+        );
         // Nothing worth listing yet → no server draft. Photos not yet uploaded stay local.
         if (!values.title.trim() && !values.description.trim()) return;
         serverSyncTimer.current = setTimeout(() => {
@@ -584,7 +634,8 @@ export const useCreateJobForm = (
               if (created) queryClient.invalidateQueries({ queryKey: ['job-drafts'] });
             } catch (err) {
               // Deleted elsewhere: the next edit starts a new one. Anything else: try next edit.
-              if ((err as { response?: { status?: number } })?.response?.status === 404) serverDraftId.current = null;
+              if ((err as { response?: { status?: number } })?.response?.status === 404)
+                serverDraftId.current = null;
             }
           });
         }, 1500);
@@ -643,7 +694,6 @@ export const useCreateJobForm = (
           }
         }
       });
-
     } else if (step === 2) {
       // Validate Step 2 fields
       const fieldsToValidate: (keyof JobFormValues)[] = [
@@ -778,7 +828,8 @@ export const useCreateJobForm = (
     // Re-check fields with their validation rules to know exactly which ones failed.
     if (step === 1) {
       const titleLength = String(values.title ?? '').trim().length;
-      if (titleLength < JOB_LIMITS.TITLE_MIN || titleLength > JOB_LIMITS.TITLE_MAX) missing.push(labels.title);
+      if (titleLength < JOB_LIMITS.TITLE_MIN || titleLength > JOB_LIMITS.TITLE_MAX)
+        missing.push(labels.title);
       const descriptionLength = String(values.description ?? '').trim().length;
       if (
         descriptionLength < JOB_LIMITS.DESCRIPTION_MIN ||
@@ -820,10 +871,15 @@ export const useCreateJobForm = (
       )
         missing.push(labels.durationValue);
       // Dates are optional ("la feltene stå tomme"): only a malformed or reversed one is named.
-      if (values.fromDate && Number.isNaN(new Date(values.fromDate).getTime())) missing.push(labels.fromDate);
+      if (values.fromDate && Number.isNaN(new Date(values.fromDate).getTime()))
+        missing.push(labels.fromDate);
       if (values.toDate && Number.isNaN(new Date(values.toDate).getTime())) {
         missing.push(labels.toDate);
-      } else if (values.fromDate && values.toDate && new Date(values.toDate) < new Date(values.fromDate)) {
+      } else if (
+        values.fromDate &&
+        values.toDate &&
+        new Date(values.toDate) < new Date(values.fromDate)
+      ) {
         missing.push('gyldig sluttdato (kan ikke være før startdato)');
       }
       if (!countyCode) missing.push(labels.countyCode);
@@ -967,7 +1023,7 @@ export const useCreateJobForm = (
       // the Publish button stuck in a loading state forever.
       // Edit mode never loads the draft, so clearing it here would throw away an
       // unrelated half-written job the user has in progress.
-      if (!isEditMode) clearFormData().catch(() => { });
+      if (!isEditMode) clearFormData().catch(() => {});
       if (!isEditMode && serverDraftId.current) {
         clearTimeout(serverSyncTimer.current);
         const id = serverDraftId.current;

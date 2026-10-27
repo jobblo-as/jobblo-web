@@ -10,16 +10,18 @@ const config = getDefaultConfig(__dirname);
 const MAX_OPEN = 64;
 let active = 0;
 const waiting = [];
-const limited = (fn) => async (...args) => {
-  if (active >= MAX_OPEN) await new Promise((resolve) => waiting.push(resolve));
-  active += 1;
-  try {
-    return await fn(...args);
-  } finally {
-    active -= 1;
-    waiting.shift()?.();
-  }
-};
+const limited =
+  (fn) =>
+  async (...args) => {
+    if (active >= MAX_OPEN) await new Promise((resolve) => waiting.push(resolve));
+    active += 1;
+    try {
+      return await fn(...args);
+    } finally {
+      active -= 1;
+      waiting.shift()?.();
+    }
+  };
 config.cacheStores = (config.cacheStores || []).map((store) => {
   const get = store.get.bind(store);
   const set = store.set.bind(store);

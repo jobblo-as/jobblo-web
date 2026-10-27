@@ -20,7 +20,8 @@ initCookieConsent();
 // before render so it runs once even under StrictMode; route guards wait on authReady.
 void useUserStore.getState().bootstrap();
 // Dev server only (e2e tests read in-memory auth state); never in a production bundle.
-if (import.meta.env.DEV) Object.assign(window, { __jobbloUserStore: useUserStore, __jobbloQueryClient: queryClient });
+if (import.meta.env.DEV)
+  Object.assign(window, { __jobbloUserStore: useUserStore, __jobbloQueryClient: queryClient });
 
 const router = createBrowserRouter(routes);
 

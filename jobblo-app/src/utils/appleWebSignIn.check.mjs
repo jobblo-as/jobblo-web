@@ -5,20 +5,25 @@ import crypto from 'node:crypto';
 import { registerHooks } from 'node:module';
 
 const stubs = {
-  'react-native': 'export const Platform = { OS: "android" }; export const AppState = { addEventListener: () => ({ remove() {} }) }; export const Linking = { addEventListener: () => ({ remove() {} }) };',
-  'expo-web-browser': 'export const openAuthSessionAsync = async (url) => { globalThis.__startUrl = url; return { type: "cancel" }; }; export const dismissAuthSession = () => {};',
+  'react-native':
+    'export const Platform = { OS: "android" }; export const AppState = { addEventListener: () => ({ remove() {} }) }; export const Linking = { addEventListener: () => ({ remove() {} }) };',
+  'expo-web-browser':
+    'export const openAuthSessionAsync = async (url) => { globalThis.__startUrl = url; return { type: "cancel" }; }; export const dismissAuthSession = () => {};',
   'expo-linking': 'export const createURL = (p) => "jobblo://" + p;',
-  '@react-native-async-storage/async-storage': 'const m = new Map(); export default { getItem: async (k) => m.get(k) ?? null, multiSet: async (kv) => kv.forEach(([k, v]) => m.set(k, v)), multiRemove: async (ks) => ks.forEach((k) => m.delete(k)) };',
+  '@react-native-async-storage/async-storage':
+    'const m = new Map(); export default { getItem: async (k) => m.get(k) ?? null, multiSet: async (kv) => kv.forEach(([k, v]) => m.set(k, v)), multiRemove: async (ks) => ks.forEach((k) => m.delete(k)) };',
 };
 const here = new URL('.', import.meta.url);
 registerHooks({
   resolve(specifier, context, next) {
     if (specifier in stubs) return { url: `stub:${specifier}`, shortCircuit: true };
-    if (specifier === '@/utils/pkce') return { url: new URL('./pkce.ts', here).href, shortCircuit: true };
+    if (specifier === '@/utils/pkce')
+      return { url: new URL('./pkce.ts', here).href, shortCircuit: true };
     return next(specifier, context);
   },
   load(url, context, next) {
-    if (url.startsWith('stub:')) return { format: 'module', source: stubs[url.slice(5)], shortCircuit: true };
+    if (url.startsWith('stub:'))
+      return { format: 'module', source: stubs[url.slice(5)], shortCircuit: true };
     return next(url, context);
   },
 });
@@ -29,7 +34,11 @@ assert.equal(appleSignInMode('ios', undefined), 'native', 'iOS always gets the n
 assert.equal(appleSignInMode('ios', 'true'), 'native');
 assert.equal(appleSignInMode('android', undefined), null, 'Android: hidden by default');
 assert.equal(appleSignInMode('android', 'false'), null);
-assert.equal(appleSignInMode('android', 'true'), 'web', 'Android: web flow when the build enables it');
+assert.equal(
+  appleSignInMode('android', 'true'),
+  'web',
+  'Android: web flow when the build enables it'
+);
 assert.equal(appleSignInMode('web', 'true'), null);
 
 const { oauthStartUrl, runOAuthSession, getOAuthVerifier } = await import('./oauthAuthSession.ts');
@@ -46,7 +55,10 @@ verifier = await getOAuthVerifier();
 const start = new URL(globalThis.__startUrl);
 assert.equal(start.pathname, '/api/auth/mobile/apple');
 assert.equal(start.searchParams.get('code_challenge_method'), 'S256');
-assert.equal(start.searchParams.get('code_challenge'), crypto.createHash('sha256').update(verifier).digest('base64url'));
+assert.equal(
+  start.searchParams.get('code_challenge'),
+  crypto.createHash('sha256').update(verifier).digest('base64url')
+);
 assert.equal((await run).outcome, 'dismissed');
 
 console.log('appleWebSignIn: all checks passed');

@@ -18,9 +18,17 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '../../components/developer/ui/breadcrumb';
-import { SidebarInset, SidebarProvider, SidebarTrigger } from '../../components/developer/ui/sidebar';
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from '../../components/developer/ui/sidebar';
 
-const ENV = import.meta.env.PROD ? (window.location.hostname.includes('staging') ? 'staging' : 'production') : 'development';
+const ENV = import.meta.env.PROD
+  ? window.location.hostname.includes('staging')
+    ? 'staging'
+    : 'production'
+  : 'development';
 const ENV_CLASS: Record<string, string> = {
   production: 'border-red-200/70 bg-red-50 text-red-700',
   staging: 'border-amber-200/70 bg-amber-50 text-amber-700',
@@ -41,7 +49,9 @@ function AdminShell() {
   const items = useAdminNav().flatMap((group) => group.items);
   // Longest matching nav path wins, so /dashboard/safepay/123 shows "SafePay".
   const current = items
-    .filter((item) => (item.end ? pathname === item.to : pathname === item.to || pathname.startsWith(`${item.to}/`)))
+    .filter((item) =>
+      item.end ? pathname === item.to : pathname === item.to || pathname.startsWith(`${item.to}/`)
+    )
     .sort((a, b) => b.to.length - a.to.length)[0];
 
   return (
@@ -61,7 +71,9 @@ function AdminShell() {
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden sm:block" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage className="truncate">{current?.label || 'Dashboard'}</BreadcrumbPage>
+                  <BreadcrumbPage className="truncate">
+                    {current?.label || 'Dashboard'}
+                  </BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
@@ -73,13 +85,20 @@ function AdminShell() {
                 </Link>
               </Button>
               <LanguageSwitcher />
-              <Badge variant="outline" className={`hidden capitalize sm:inline-flex ${ENV_CLASS[ENV]}`}>
+              <Badge
+                variant="outline"
+                className={`hidden capitalize sm:inline-flex ${ENV_CLASS[ENV]}`}
+              >
                 {ENV}
               </Badge>
             </div>
           </header>
 
-          <main id="main-content" aria-label="Hovedinnhold" className="mx-auto w-full max-w-[1600px] flex-1 p-4 sm:p-6">
+          <main
+            id="main-content"
+            aria-label="Hovedinnhold"
+            className="mx-auto w-full max-w-[1600px] flex-1 p-4 sm:p-6"
+          >
             <Outlet />
           </main>
         </SidebarInset>
@@ -91,7 +110,10 @@ function AdminShell() {
 export default function DashboardLayout() {
   return (
     <LanguageProvider>
-      <Toaster position="bottom-right" toastOptions={{ style: { borderRadius: '8px', fontSize: '14px' } }} />
+      <Toaster
+        position="bottom-right"
+        toastOptions={{ style: { borderRadius: '8px', fontSize: '14px' } }}
+      />
       <AdminShell />
     </LanguageProvider>
   );

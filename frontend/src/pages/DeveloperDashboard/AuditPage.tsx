@@ -3,12 +3,34 @@ import { Download, Search } from 'lucide-react';
 import { ago, dateTime, downloadCsv } from '@/lib/devFormat';
 import { useDevAudit, useUrlFilters } from '../../features/developer/hooks';
 import type { AuditLog } from '../../api/developer';
-import { ErrorState, JsonView, KeyValue, Mono, PageHeader, RangeSelect, RefreshButton, Section, StatusBadge } from '../../components/developer/kit';
+import {
+  ErrorState,
+  JsonView,
+  KeyValue,
+  Mono,
+  PageHeader,
+  RangeSelect,
+  RefreshButton,
+  Section,
+  StatusBadge,
+} from '../../components/developer/kit';
 import { DataTable, type Column } from '../../components/developer/DataTable';
 import { Button } from '../../components/developer/ui/button';
 import { Input } from '../../components/developer/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/developer/ui/select';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '../../components/developer/ui/sheet';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/developer/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '../../components/developer/ui/sheet';
 
 export default function AuditPage() {
   const [f, setF] = useUrlFilters({ range: '30d', action: 'all', q: '', page: '1' });
@@ -23,7 +45,18 @@ export default function AuditPage() {
   });
 
   const columns: Column<AuditLog>[] = [
-    { key: 'at', header: 'Time', cell: (l) => <span className="text-xs whitespace-nowrap text-muted-foreground" title={dateTime(l.createdAt)}>{ago(l.createdAt)}</span> },
+    {
+      key: 'at',
+      header: 'Time',
+      cell: (l) => (
+        <span
+          className="text-xs whitespace-nowrap text-muted-foreground"
+          title={dateTime(l.createdAt)}
+        >
+          {ago(l.createdAt)}
+        </span>
+      ),
+    },
     {
       key: 'actor',
       header: 'Actor',
@@ -34,9 +67,28 @@ export default function AuditPage() {
         </div>
       ),
     },
-    { key: 'action', header: 'Action', cell: (l) => <StatusBadge status={l.action} tone={l.action === 'other' ? 'neutral' : 'info'} /> },
-    { key: 'desc', header: 'Description', className: 'max-w-[480px]', cell: (l) => <span className="block truncate">{l.description}</span> },
-    { key: 'target', header: 'Target', cell: (l) => <span className="text-xs text-muted-foreground">{l.targetModel !== 'other' ? l.targetModel : (l.metadata?.area as string) || '—'}</span> },
+    {
+      key: 'action',
+      header: 'Action',
+      cell: (l) => (
+        <StatusBadge status={l.action} tone={l.action === 'other' ? 'neutral' : 'info'} />
+      ),
+    },
+    {
+      key: 'desc',
+      header: 'Description',
+      className: 'max-w-[480px]',
+      cell: (l) => <span className="block truncate">{l.description}</span>,
+    },
+    {
+      key: 'target',
+      header: 'Target',
+      cell: (l) => (
+        <span className="text-xs text-muted-foreground">
+          {l.targetModel !== 'other' ? l.targetModel : (l.metadata?.area as string) || '—'}
+        </span>
+      ),
+    },
   ];
 
   return (
@@ -52,7 +104,21 @@ export default function AuditPage() {
               size="sm"
               className="bg-card"
               disabled={!data?.logs.length}
-              onClick={() => downloadCsv(`audit-${f.range}.csv`, (data?.logs || []).map((l) => ({ time: l.createdAt, actor: l.adminId?.name || 'System', role: l.adminId?.role || '', action: l.action, description: l.description, target: l.targetModel, targetId: l.targetId, ip: l.ip })))}
+              onClick={() =>
+                downloadCsv(
+                  `audit-${f.range}.csv`,
+                  (data?.logs || []).map((l) => ({
+                    time: l.createdAt,
+                    actor: l.adminId?.name || 'System',
+                    role: l.adminId?.role || '',
+                    action: l.action,
+                    description: l.description,
+                    target: l.targetModel,
+                    targetId: l.targetId,
+                    ip: l.ip,
+                  }))
+                )
+              }
             >
               <Download /> Export page
             </Button>
@@ -74,7 +140,13 @@ export default function AuditPage() {
               }}
             >
               <Search className="pointer-events-none absolute top-1/2 left-2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-              <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search description…" className="h-7 w-52 pl-7 text-xs" aria-label="Search audit log" />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search description…"
+                className="h-7 w-52 pl-7 text-xs"
+                aria-label="Search audit log"
+              />
             </form>
             <Select value={f.action} onValueChange={(action) => setF({ action })}>
               <SelectTrigger size="sm" className="w-44" aria-label="Action">
@@ -82,17 +154,28 @@ export default function AuditPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All actions</SelectItem>
-                {(data?.actions || []).filter((a) => !a.startsWith('error_')).map((a) => (
-                  <SelectItem key={a} value={a}>
-                    {a.replace(/_/g, ' ')}
-                  </SelectItem>
-                ))}
+                {(data?.actions || [])
+                  .filter((a) => !a.startsWith('error_'))
+                  .map((a) => (
+                    <SelectItem key={a} value={a}>
+                      {a.replace(/_/g, ' ')}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
         }
       >
-        <DataTable columns={columns} rows={data?.logs} loading={isLoading} rowKey={(l) => l._id} onRowClick={setLog} pagination={data?.pagination} onPageChange={(p) => setF({ page: String(p) })} emptyTitle="No audit events in range" />
+        <DataTable
+          columns={columns}
+          rows={data?.logs}
+          loading={isLoading}
+          rowKey={(l) => l._id}
+          onRowClick={setLog}
+          pagination={data?.pagination}
+          onPageChange={(p) => setF({ page: String(p) })}
+          emptyTitle="No audit events in range"
+        />
       </Section>
 
       <Sheet open={Boolean(log)} onOpenChange={(o) => !o && setLog(null)}>
@@ -106,7 +189,10 @@ export default function AuditPage() {
               <div className="space-y-4 overflow-y-auto p-4">
                 <KeyValue
                   items={[
-                    ['Actor', log.adminId ? `${log.adminId.name} (${log.adminId.role || '—'})` : 'System'],
+                    [
+                      'Actor',
+                      log.adminId ? `${log.adminId.name} (${log.adminId.role || '—'})` : 'System',
+                    ],
                     ['Action', log.action],
                     ['Severity', log.severity],
                     ['Target', log.targetModel],
@@ -116,7 +202,9 @@ export default function AuditPage() {
                   ]}
                 />
                 <div>
-                  <h4 className="mb-2 text-xs font-medium text-muted-foreground uppercase">Metadata</h4>
+                  <h4 className="mb-2 text-xs font-medium text-muted-foreground uppercase">
+                    Metadata
+                  </h4>
                   <JsonView value={log.metadata} />
                 </div>
               </div>

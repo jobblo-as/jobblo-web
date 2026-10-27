@@ -3,7 +3,18 @@
  * Used for home page job listings and discovery.
  */
 
-export type JobStatus = 'open' | 'closed' | 'awaiting_payment' | 'paid' | 'in_progress' | 'completed' | 'pending' | 'waiting_for_approval' | 'cancelled' | 'expired' | 'draft';
+export type JobStatus =
+  | 'open'
+  | 'closed'
+  | 'awaiting_payment'
+  | 'paid'
+  | 'in_progress'
+  | 'completed'
+  | 'pending'
+  | 'waiting_for_approval'
+  | 'cancelled'
+  | 'expired'
+  | 'draft';
 
 export type Equipment = 'utstyrfri' | 'delvis utstyr' | 'trengs utstyr';
 
@@ -76,7 +87,13 @@ export interface Job {
   isLimitReached?: boolean;
   equipment: Equipment;
   customerType?: 'private' | 'business';
-  checklist?: Array<{ id: string; text: string; checked: boolean; checkedBy?: { name?: string }; checkedAt?: string }>;
+  checklist?: Array<{
+    id: string;
+    text: string;
+    checked: boolean;
+    checkedBy?: { name?: string };
+    checkedAt?: string;
+  }>;
   createdAt: string;
   updatedAt: string;
   fromDate?: string;

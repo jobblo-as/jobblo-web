@@ -54,7 +54,10 @@ export function categoryImage(categories: string[] | undefined, index = 0): Imag
 }
 
 /** The job's own first photo, else its category photo. */
-export function jobImageSource(job: { images?: string[]; categories?: string[] }, index = 0): ImageSourcePropType {
+export function jobImageSource(
+  job: { images?: string[]; categories?: string[] },
+  index = 0
+): ImageSourcePropType {
   const own = job.images?.find(Boolean);
   return own ? { uri: own } : categoryImage(job.categories, index);
 }

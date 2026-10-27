@@ -35,7 +35,9 @@ function siteOrigin(): string {
   // `env` is undefined outside Vite (the node unit test).
   const importMetaEnv: Partial<ImportMetaEnv> =
     (typeof import.meta !== 'undefined' ? import.meta.env : undefined) ?? {};
-  const configured = importMetaEnv.VITE_PUBLIC_SITE_URL ?? (typeof process !== 'undefined' ? process.env?.VITE_PUBLIC_SITE_URL : undefined);
+  const configured =
+    importMetaEnv.VITE_PUBLIC_SITE_URL ??
+    (typeof process !== 'undefined' ? process.env?.VITE_PUBLIC_SITE_URL : undefined);
 
   if (typeof configured === 'string' && /^https?:\/\//i.test(configured.trim())) {
     return configured.trim().replace(/\/+$/, '');
@@ -133,7 +135,10 @@ async function copyToClipboard(text: string): Promise<boolean> {
 /**
  * @returns how the link was shared, so a caller can vary its own feedback if it needs to
  */
-export async function shareListing(serviceId: string, title?: string): Promise<'shared' | 'copied' | 'failed'> {
+export async function shareListing(
+  serviceId: string,
+  title?: string
+): Promise<'shared' | 'copied' | 'failed'> {
   const url = listingUrl(serviceId);
   const payload = buildSharePayload(serviceId, title);
 

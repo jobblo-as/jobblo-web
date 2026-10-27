@@ -1,6 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../queryKeys';
-import { createProviderReview, deleteProviderEvidence, getProviderOrder, getProviderOrderReviews, markProviderReadyForReview, startProviderJob, updateProviderChecklist, uploadProviderEvidence } from '../services/providerWork.service';
+import {
+  createProviderReview,
+  deleteProviderEvidence,
+  getProviderOrder,
+  getProviderOrderReviews,
+  markProviderReadyForReview,
+  startProviderJob,
+  updateProviderChecklist,
+  uploadProviderEvidence,
+} from '../services/providerWork.service';
 import type { ProviderOrderResponse } from '../types/ProviderOrder';
 
 export function useProviderOrder(orderId: string) {
@@ -12,7 +21,10 @@ export function useProviderOrder(orderId: string) {
   });
 }
 
-function invalidateProviderOrderQueries(queryClient: ReturnType<typeof useQueryClient>, orderId: string) {
+function invalidateProviderOrderQueries(
+  queryClient: ReturnType<typeof useQueryClient>,
+  orderId: string
+) {
   return Promise.all([
     queryClient.invalidateQueries({ queryKey: queryKeys.providerOrders.detail(orderId) }),
     queryClient.invalidateQueries({ queryKey: queryKeys.safepay.checkout(orderId) }),
@@ -22,7 +34,9 @@ function invalidateProviderOrderQueries(queryClient: ReturnType<typeof useQueryC
   ]);
 }
 
-function useProviderOrderMutation<TVariables>(mutationFn: (variables: TVariables) => Promise<unknown>) {
+function useProviderOrderMutation<TVariables>(
+  mutationFn: (variables: TVariables) => Promise<unknown>
+) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn,
@@ -42,7 +56,8 @@ export function useStartProviderJobMutation(orderId: string) {
 export function useProviderChecklistMutation(orderId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ itemId, providerCompleted }: { itemId: string; providerCompleted: boolean }) => updateProviderChecklist(orderId, itemId, providerCompleted),
+    mutationFn: ({ itemId, providerCompleted }: { itemId: string; providerCompleted: boolean }) =>
+      updateProviderChecklist(orderId, itemId, providerCompleted),
     onSuccess: () => invalidateProviderOrderQueries(queryClient, orderId),
     onError: () => invalidateProviderOrderQueries(queryClient, orderId),
   });
@@ -51,7 +66,11 @@ export function useProviderChecklistMutation(orderId: string) {
 export function useProviderEvidenceMutation(orderId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: { evidenceType: 'before' | 'after'; files: Array<{ uri: string; name: string; type: string }>; completionNote?: string }) => uploadProviderEvidence(orderId, input.evidenceType, input.files, input.completionNote),
+    mutationFn: (input: {
+      evidenceType: 'before' | 'after';
+      files: Array<{ uri: string; name: string; type: string }>;
+      completionNote?: string;
+    }) => uploadProviderEvidence(orderId, input.evidenceType, input.files, input.completionNote),
     onSuccess: () => invalidateProviderOrderQueries(queryClient, orderId),
     onError: () => invalidateProviderOrderQueries(queryClient, orderId),
   });
@@ -60,7 +79,8 @@ export function useProviderEvidenceMutation(orderId: string) {
 export function useDeleteProviderEvidenceMutation(orderId: string) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: { url: string; evidenceType: 'before' | 'after' }) => deleteProviderEvidence(orderId, input.url, input.evidenceType),
+    mutationFn: (input: { url: string; evidenceType: 'before' | 'after' }) =>
+      deleteProviderEvidence(orderId, input.url, input.evidenceType),
     onSuccess: () => invalidateProviderOrderQueries(queryClient, orderId),
     onError: () => invalidateProviderOrderQueries(queryClient, orderId),
   });
@@ -79,10 +99,18 @@ export function useMarkReadyForReviewMutation(orderId: string) {
 // shared the same `disputes.byOrder` cache key, so the two hook families fought over it.
 
 export function useProviderOrderReviews(orderId: string) {
-  return useQuery({ queryKey: queryKeys.providerOrders.reviews(orderId), queryFn: () => getProviderOrderReviews(orderId), enabled: !!orderId });
+  return useQuery({
+    queryKey: queryKeys.providerOrders.reviews(orderId),
+    queryFn: () => getProviderOrderReviews(orderId),
+    enabled: !!orderId,
+  });
 }
 
 export function useCreateProviderReviewMutation(orderId: string) {
   const queryClient = useQueryClient();
-  return useMutation({ mutationFn: createProviderReview, onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.providerOrders.reviews(orderId) }) });
+  return useMutation({
+    mutationFn: createProviderReview,
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.providerOrders.reviews(orderId) }),
+  });
 }

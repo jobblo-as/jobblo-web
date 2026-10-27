@@ -23,9 +23,21 @@ const LABEL: Record<OAuthProvider, string> = {
  * the button reads "Fortsett med [Vipps]". Because that leaves the label without the provider
  * name in text, the accessible name is spelled out on the Pressable.
  */
-function SocialButton({ provider, disabled, onPress }: { provider: OAuthProvider; disabled: boolean; onPress: () => void }) {
+function SocialButton({
+  provider,
+  disabled,
+  onPress,
+}: {
+  provider: OAuthProvider;
+  disabled: boolean;
+  onPress: () => void;
+}) {
   const look =
-    provider === 'vipps' ? 'bg-[#FF5B24]' : provider === 'apple' ? 'bg-black' : 'border border-line bg-surface';
+    provider === 'vipps'
+      ? 'bg-[#FF5B24]'
+      : provider === 'apple'
+        ? 'bg-black'
+        : 'border border-line bg-surface';
   return (
     <Pressable
       onPress={onPress}
@@ -98,7 +110,8 @@ export default function SocialSignInButtons({
   const browser = (provider: OAuthProvider) =>
     attempt(provider, async () => {
       const session = await runOAuthSession(provider, apiBaseUrl);
-      if (session.outcome === 'not_opened') return 'Vi klarte ikke å åpne innloggingsvinduet. Prøv igjen.';
+      if (session.outcome === 'not_opened')
+        return 'Vi klarte ikke å åpne innloggingsvinduet. Prøv igjen.';
       // The browser closed without a return URL. Never treat that as a sign-in.
       if (session.outcome === 'dismissed') return 'Innloggingen ble avbrutt.';
       const result = await completeOAuthSignIn(session.url);
@@ -115,8 +128,16 @@ export default function SocialSignInButtons({
     <>
       {appleOnly ? null : (
         <>
-          <SocialButton provider="vipps" disabled={busy !== null} onPress={() => void browser('vipps')} />
-          <SocialButton provider="google" disabled={busy !== null} onPress={() => void browser('google')} />
+          <SocialButton
+            provider="vipps"
+            disabled={busy !== null}
+            onPress={() => void browser('vipps')}
+          />
+          <SocialButton
+            provider="google"
+            disabled={busy !== null}
+            onPress={() => void browser('google')}
+          />
         </>
       )}
       {/* App Store guideline 4.8: Sign in with Apple wherever Google is offered on iOS. */}
@@ -133,7 +154,11 @@ export default function SocialSignInButtons({
           onPress={() => void nativeApple()}
         />
       ) : APPLE_SIGNIN_MODE === 'web' ? (
-        <SocialButton provider="apple" disabled={busy !== null} onPress={() => void browser('apple')} />
+        <SocialButton
+          provider="apple"
+          disabled={busy !== null}
+          onPress={() => void browser('apple')}
+        />
       ) : null}
     </>
   );

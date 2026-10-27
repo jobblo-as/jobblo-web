@@ -1,82 +1,106 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-    fetchAllConfigs, updateConfig,
-    fetchHomepageContent, updateHomepageContent,
-    fetchNavigation, updateNavigation,
-    fetchFooter, updateFooter,
-    fetchAnnouncements, updateAnnouncement,
-    fetchMaintenanceMode, toggleMaintenanceMode,
+  fetchAllConfigs,
+  updateConfig,
+  fetchHomepageContent,
+  updateHomepageContent,
+  fetchNavigation,
+  updateNavigation,
+  fetchFooter,
+  updateFooter,
+  fetchAnnouncements,
+  updateAnnouncement,
+  fetchMaintenanceMode,
+  toggleMaintenanceMode,
 } from '../../api/admin/content';
 import { toast } from 'react-hot-toast';
 
 export const useAllConfigs = () =>
-    useQuery({ queryKey: ['admin', 'config'], queryFn: fetchAllConfigs });
+  useQuery({ queryKey: ['admin', 'config'], queryFn: fetchAllConfigs });
 
 export const useUpdateConfig = () => {
-    const qc = useQueryClient();
-    return useMutation({
-        mutationFn: ({ key, value }: { key: string; value: unknown }) => updateConfig(key, value),
-        onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'config'] }); toast.success('Konfigurasjon oppdatert.'); },
-        onError: () => toast.error('Kunne ikke oppdatere konfigurasjon.'),
-    });
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ key, value }: { key: string; value: unknown }) => updateConfig(key, value),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'config'] });
+      toast.success('Konfigurasjon oppdatert.');
+    },
+    onError: () => toast.error('Kunne ikke oppdatere konfigurasjon.'),
+  });
 };
 
 export const useHomepageContent = () =>
-    useQuery({ queryKey: ['admin', 'content', 'homepage'], queryFn: fetchHomepageContent });
+  useQuery({ queryKey: ['admin', 'content', 'homepage'], queryFn: fetchHomepageContent });
 
 export const useUpdateHomepageContent = () => {
-    const qc = useQueryClient();
-    return useMutation({
-        mutationFn: (payload: Record<string, unknown>) => updateHomepageContent(payload),
-        onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'content', 'homepage'] }); toast.success('Hjemmeside oppdatert.'); },
-        onError: () => toast.error('Kunne ikke oppdatere hjemmeside.'),
-    });
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: Record<string, unknown>) => updateHomepageContent(payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'content', 'homepage'] });
+      toast.success('Hjemmeside oppdatert.');
+    },
+    onError: () => toast.error('Kunne ikke oppdatere hjemmeside.'),
+  });
 };
 
 export const useNavigation = () =>
-    useQuery({ queryKey: ['admin', 'content', 'navigation'], queryFn: fetchNavigation });
+  useQuery({ queryKey: ['admin', 'content', 'navigation'], queryFn: fetchNavigation });
 
 export const useUpdateNavigation = () => {
-    const qc = useQueryClient();
-    return useMutation({
-        mutationFn: (payload: Record<string, unknown>) => updateNavigation(payload),
-        onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'content', 'navigation'] }); toast.success('Navigasjon oppdatert.'); },
-        onError: () => toast.error('Kunne ikke oppdatere navigasjon.'),
-    });
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: Record<string, unknown>) => updateNavigation(payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'content', 'navigation'] });
+      toast.success('Navigasjon oppdatert.');
+    },
+    onError: () => toast.error('Kunne ikke oppdatere navigasjon.'),
+  });
 };
 
 export const useFooter = () =>
-    useQuery({ queryKey: ['admin', 'content', 'footer'], queryFn: fetchFooter });
+  useQuery({ queryKey: ['admin', 'content', 'footer'], queryFn: fetchFooter });
 
 export const useUpdateFooter = () => {
-    const qc = useQueryClient();
-    return useMutation({
-        mutationFn: (payload: Record<string, unknown>) => updateFooter(payload),
-        onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'content', 'footer'] }); toast.success('Footer oppdatert.'); },
-        onError: () => toast.error('Kunne ikke oppdatere footer.'),
-    });
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: Record<string, unknown>) => updateFooter(payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'content', 'footer'] });
+      toast.success('Footer oppdatert.');
+    },
+    onError: () => toast.error('Kunne ikke oppdatere footer.'),
+  });
 };
 
 export const useAnnouncements = () =>
-    useQuery({ queryKey: ['admin', 'content', 'announcements'], queryFn: fetchAnnouncements });
+  useQuery({ queryKey: ['admin', 'content', 'announcements'], queryFn: fetchAnnouncements });
 
 export const useUpdateAnnouncement = () => {
-    const qc = useQueryClient();
-    return useMutation({
-        mutationFn: (payload: Record<string, unknown>) => updateAnnouncement(payload),
-        onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'content', 'announcements'] }); toast.success('Kunngjøring oppdatert.'); },
-        onError: () => toast.error('Kunne ikke oppdatere kunngjøring.'),
-    });
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: Record<string, unknown>) => updateAnnouncement(payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'content', 'announcements'] });
+      toast.success('Kunngjøring oppdatert.');
+    },
+    onError: () => toast.error('Kunne ikke oppdatere kunngjøring.'),
+  });
 };
 
 export const useMaintenanceMode = () =>
-    useQuery({ queryKey: ['admin', 'maintenance'], queryFn: fetchMaintenanceMode });
+  useQuery({ queryKey: ['admin', 'maintenance'], queryFn: fetchMaintenanceMode });
 
 export const useToggleMaintenanceMode = () => {
-    const qc = useQueryClient();
-    return useMutation({
-        mutationFn: (payload: { enabled: boolean; message?: string }) => toggleMaintenanceMode(payload),
-        onSuccess: () => { qc.invalidateQueries({ queryKey: ['admin', 'maintenance'] }); toast.success('Vedlikeholdsmodus oppdatert.'); },
-        onError: () => toast.error('Kunne ikke oppdatere vedlikeholdsmodus.'),
-    });
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: { enabled: boolean; message?: string }) => toggleMaintenanceMode(payload),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['admin', 'maintenance'] });
+      toast.success('Vedlikeholdsmodus oppdatert.');
+    },
+    onError: () => toast.error('Kunne ikke oppdatere vedlikeholdsmodus.'),
+  });
 };

@@ -33,8 +33,7 @@ import { SingleFieldSkeleton } from '../../../../src/components/skeletons/Screen
  *     → GET /api/auth/profile  /  PUT /api/users/:id
  */
 
-const inputClass =
-  'rounded-2xl border border-line bg-surface px-4 py-3 text-[0.9375rem] text-ink';
+const inputClass = 'rounded-2xl border border-line bg-surface px-4 py-3 text-[0.9375rem] text-ink';
 
 type Feedback = { tone: 'success' | 'error'; text: string };
 
@@ -48,15 +47,11 @@ function statusOf(error: unknown): number | undefined {
 
 function saveErrorMessage(error: unknown): string {
   const status = statusOf(error);
-  if (status === undefined)
-    return 'Ingen nettforbindelse. Sjekk internett og prøv igjen.';
-  if (status === 400)
-    return 'Telefonnummeret ble ikke godtatt. Kontroller feltet og prøv igjen.';
+  if (status === undefined) return 'Ingen nettforbindelse. Sjekk internett og prøv igjen.';
+  if (status === 400) return 'Telefonnummeret ble ikke godtatt. Kontroller feltet og prøv igjen.';
   if (status === 401) return 'Økten din er ikke lenger gyldig. Logg inn på nytt.';
-  if (status === 403)
-    return 'Du har ikke tilgang til å endre dette telefonnummeret.';
-  if (status === 404)
-    return 'Fant ikke profilen din. Prøv å laste inn siden på nytt.';
+  if (status === 403) return 'Du har ikke tilgang til å endre dette telefonnummeret.';
+  if (status === 404) return 'Fant ikke profilen din. Prøv å laste inn siden på nytt.';
   if (status >= 500) return 'Serverfeil. Prøv igjen litt senere.';
   return 'Kunne ikke oppdatere telefonnummeret. Prøv igjen.';
 }
@@ -65,12 +60,10 @@ export default function PhoneSettingsScreen() {
   const { data: profile, isLoading, isError, refetch } = useProfile();
   const update = useUpdateProfile();
 
-  const storedUserId = useAuthStore(
-    (state) =>
-      typeof state.user?._id === 'string' ? state.user._id : undefined
+  const storedUserId = useAuthStore((state) =>
+    typeof state.user?._id === 'string' ? state.user._id : undefined
   );
-  const userId =
-    typeof profile?._id === 'string' ? profile._id : storedUserId;
+  const userId = typeof profile?._id === 'string' ? profile._id : storedUserId;
 
   const serverPhone = phoneOf(profile);
   const [draft, setDraft] = useState<string | null>(null);
@@ -109,9 +102,7 @@ export default function PhoneSettingsScreen() {
   const valid = trimmed === '' || hasDigits;
   const disabled = !changed || !valid || update.isPending || !userId;
   const validationHint =
-    changed && trimmed !== '' && !hasDigits
-      ? 'Skriv inn et gyldig telefonnummer.'
-      : '';
+    changed && trimmed !== '' && !hasDigits ? 'Skriv inn et gyldig telefonnummer.' : '';
 
   const save = () => {
     if (disabled || !userId) return;
@@ -128,8 +119,7 @@ export default function PhoneSettingsScreen() {
             text: 'Telefonnummeret er oppdatert.',
           });
         },
-        onError: (error) =>
-          setFeedback({ tone: 'error', text: saveErrorMessage(error) }),
+        onError: (error) => setFeedback({ tone: 'error', text: saveErrorMessage(error) }),
       }
     );
   };
@@ -144,13 +134,15 @@ export default function PhoneSettingsScreen() {
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
         >
-          <ScreenHeader title="Telefonnummer" subtitle="Kontaktinformasjon som vises på profilen din." icon={Phone} />
+          <ScreenHeader
+            title="Telefonnummer"
+            subtitle="Kontaktinformasjon som vises på profilen din."
+            icon={Phone}
+          />
 
           <View className="rounded-3xl bg-surface p-5">
             <View className="mb-4">
-              <Text className="mb-1.5 text-[0.8125rem] font-semibold text-ink">
-                Telefonnummer
-              </Text>
+              <Text className="mb-1.5 text-[0.8125rem] font-semibold text-ink">Telefonnummer</Text>
               <TextInput
                 value={draft}
                 onChangeText={(value) => {
@@ -222,9 +214,7 @@ export default function PhoneSettingsScreen() {
               className="items-center rounded-xl bg-brand py-3.5 disabled:opacity-50"
             >
               <Text className="text-sm font-semibold text-white">
-                {update.isPending
-                  ? 'Lagrer...'
-                  : 'Lagre telefonnummer'}
+                {update.isPending ? 'Lagrer...' : 'Lagre telefonnummer'}
               </Text>
             </Pressable>
           </View>
@@ -233,13 +223,10 @@ export default function PhoneSettingsScreen() {
             <View className="flex-row items-start">
               <Info size={16} color={tc('#63665F', 'muted')} />
               <View className="ml-2 min-w-0 flex-1">
-                <Text className="text-[0.8125rem] font-semibold text-ink">
-                  Om telefonnummeret
-                </Text>
+                <Text className="text-[0.8125rem] font-semibold text-ink">Om telefonnummeret</Text>
                 <Text className="mt-1.5 text-[0.8125rem] leading-4 text-muted">
-                  Nummeret lagres på profilen din og kan vises til andre brukere
-                  der det er relevant. Det brukes ikke til SMS-bekreftelse eller
-                  oppringing fra denne appen.
+                  Nummeret lagres på profilen din og kan vises til andre brukere der det er
+                  relevant. Det brukes ikke til SMS-bekreftelse eller oppringing fra denne appen.
                 </Text>
               </View>
             </View>

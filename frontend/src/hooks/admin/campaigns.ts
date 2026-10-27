@@ -40,7 +40,8 @@ export const useUpdateCampaign = () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'campaigns'] });
       toast.success('Kampanjen er lagret.');
     },
-    onError: () => toast.error('Kunne ikke lagre kampanjen. Kontroller datoer og kampanjeoverlapp.'),
+    onError: () =>
+      toast.error('Kunne ikke lagre kampanjen. Kontroller datoer og kampanjeoverlapp.'),
   });
 };
 

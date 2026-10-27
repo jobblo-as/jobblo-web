@@ -45,28 +45,28 @@ different greens; that is the failure mode to avoid.
 
 ### Brand
 
-| Token | Hex | Use |
-|---|---|---|
-| Ink | `#0B0B0B` | Headings, body text, the wordmark |
+| Token        | Hex       | Use                                                                                         |
+| ------------ | --------- | ------------------------------------------------------------------------------------------- |
+| Ink          | `#0B0B0B` | Headings, body text, the wordmark                                                           |
 | Green (stem) | `#2E6641` | **The** accent — primary buttons, links, focus rings, the one highlighted block per section |
-| Green dark | `#255335` | Hover state for the primary green only |
-| Leaf | `#347028` | Link hover; use sparingly |
+| Green dark   | `#255335` | Hover state for the primary green only                                                      |
+| Leaf         | `#347028` | Link hover; use sparingly                                                                   |
 
 ### Neutrals
 
-| Token | Hex | Use |
-|---|---|---|
-| Ink muted | `#63665F` | Body copy, secondary text |
-| Ink faint | `#9B9E96` | Placeholders, micro-labels, metadata |
-| Line | `#E6E7E1` | Every border and divider. One value, no alpha borders |
-| Field | `#F5F6F1` | Input resting surface |
-| Panel | `#F4F6F0` | Tinted blocks inside a white section |
-| Page | `#EFF0EA` | Page background |
-| Green tint | `#EAF1E9` | Icon plates, small green-on-light chips |
+| Token      | Hex       | Use                                                   |
+| ---------- | --------- | ----------------------------------------------------- |
+| Ink muted  | `#63665F` | Body copy, secondary text                             |
+| Ink faint  | `#9B9E96` | Placeholders, micro-labels, metadata                  |
+| Line       | `#E6E7E1` | Every border and divider. One value, no alpha borders |
+| Field      | `#F5F6F1` | Input resting surface                                 |
+| Panel      | `#F4F6F0` | Tinted blocks inside a white section                  |
+| Page       | `#EFF0EA` | Page background                                       |
+| Green tint | `#EAF1E9` | Icon plates, small green-on-light chips               |
 
 ### The one exception
 
-`#FF5B24` — **Vipps orange**, mandated by Vipps' brand guidelines, permitted *only* on the
+`#FF5B24` — **Vipps orange**, mandated by Vipps' brand guidelines, permitted _only_ on the
 Vipps sign-in button. It is the only saturated colour outside the logo palette and it must
 stay rare, which is what makes it read as "the fast way in".
 
@@ -87,13 +87,13 @@ used by older screens. Do not use it in new work.
 
 Typeface is **Inter Display**, already loaded globally. No new fonts.
 
-| Role | Spec |
-|---|---|
-| Display / hero | `2rem` → `3.5rem` clamp, weight 700, tracking `-0.035em`, leading `1.15` |
-| Section heading | `1.875rem` → `2.375rem`, weight 700, tracking `-0.035em` |
-| Card title | `0.9375rem`–`1.0625rem`, weight 600 |
-| Body | `0.875rem`–`0.9375rem`, weight 400, `leading-relaxed`, colour `#63665F` |
-| Micro-label | `0.6875rem`, weight 600, `uppercase`, tracking `0.16em`, colour `#9B9E96` |
+| Role            | Spec                                                                      |
+| --------------- | ------------------------------------------------------------------------- |
+| Display / hero  | `2rem` → `3.5rem` clamp, weight 700, tracking `-0.035em`, leading `1.15`  |
+| Section heading | `1.875rem` → `2.375rem`, weight 700, tracking `-0.035em`                  |
+| Card title      | `0.9375rem`–`1.0625rem`, weight 600                                       |
+| Body            | `0.875rem`–`0.9375rem`, weight 400, `leading-relaxed`, colour `#63665F`   |
+| Micro-label     | `0.6875rem`, weight 600, `uppercase`, tracking `0.16em`, colour `#9B9E96` |
 
 The uppercase micro-label above a block is a recurring device — keep using it.
 
@@ -126,7 +126,7 @@ Defined in `src/theme/brand.ts`. Import from there rather than restating values.
   Register is two steps so neither step overflows a phone.
 - **`/` (landing)** — question-led sections, in the order a visitor actually asks them:
   hero → "Hva trenger du hjelp til?" → "Er pengene mine trygge?" → "Hvordan fungerer det?"
-  → "Hva koster det?" → "Hvem trenger hjelp nå?" → CTA. The hero headline *is* the search
+  → "Hva koster det?" → "Hvem trenger hjelp nå?" → CTA. The hero headline _is_ the search
   form: you complete the sentence "Jeg trenger hjelp til [kategori]".
 - **Header** — sticky, translucent white, hairline bottom border, colour wordmark left,
   text nav centre, "Logg inn" text action and a green "Legg ut oppdrag" button right.

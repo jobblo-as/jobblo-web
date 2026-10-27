@@ -91,8 +91,8 @@ const Footer = () => {
             </NavLink>
 
             <p className="mt-5 max-w-80 text-[0.9375rem] leading-relaxed text-[#63665F]">
-              Norges lokale jobbplattform. Legg ut oppdraget, velg blant folk i nærheten, og
-              betal først når jobben er gjort.
+              Norges lokale jobbplattform. Legg ut oppdraget, velg blant folk i nærheten, og betal
+              først når jobben er gjort.
             </p>
 
             <span className="mt-6 inline-flex h-9 items-center gap-2 rounded-full border border-[#E6E7E1] bg-white px-3.5 text-[0.8125rem] font-medium text-[#0B0B0B]">

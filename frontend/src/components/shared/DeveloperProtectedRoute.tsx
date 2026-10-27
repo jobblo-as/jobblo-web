@@ -19,7 +19,8 @@ export const DeveloperProtectedRoute = ({ children }: { children: ReactElement }
   const authReady = useUserStore((state) => state.authReady);
 
   if (!authReady) return <AuthPending />;
-  if (!isAuthenticated || !user) return <Navigate to="/login" replace state={{ from: window.location.pathname }} />;
+  if (!isAuthenticated || !user)
+    return <Navigate to="/login" replace state={{ from: window.location.pathname }} />;
   if (!DEVELOPER_ROLES.includes(user.role || '')) return <Navigate to="/profile" replace />;
 
   // Authenticator-app code, required by the backend for this role.

@@ -20,7 +20,14 @@ interface StepFooterProps {
 }
 
 /** The one main action of a screen, pinned above the tab bar. */
-export function StepFooter({ label, onPress, disabled, secondaryLabel, onSecondary, glass }: StepFooterProps) {
+export function StepFooter({
+  label,
+  onPress,
+  disabled,
+  secondaryLabel,
+  onSecondary,
+  glass,
+}: StepFooterProps) {
   if (glass) {
     return (
       <View pointerEvents="box-none" className="absolute bottom-0 left-0 right-0 px-4 pb-3 pt-3">
@@ -34,7 +41,12 @@ export function StepFooter({ label, onPress, disabled, secondaryLabel, onSeconda
             LIQUID_GLASS
               ? undefined
               : Platform.OS === 'ios'
-                ? { overflow: 'hidden', backgroundColor: 'rgba(46,102,65,0.82)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.35)' }
+                ? {
+                    overflow: 'hidden',
+                    backgroundColor: 'rgba(46,102,65,0.82)',
+                    borderWidth: 1,
+                    borderColor: 'rgba(255,255,255,0.35)',
+                  }
                 : { backgroundColor: BRAND, elevation: 6 }
           }
         >
@@ -56,7 +68,11 @@ export function StepFooter({ label, onPress, disabled, secondaryLabel, onSeconda
         <Text className="text-[0.9375rem] font-semibold text-white">{label}</Text>
       </Pressable>
       {secondaryLabel && onSecondary ? (
-        <Pressable onPress={onSecondary} accessibilityRole="button" className="mt-2 h-10 items-center justify-center">
+        <Pressable
+          onPress={onSecondary}
+          accessibilityRole="button"
+          className="mt-2 h-10 items-center justify-center"
+        >
           <Text className="text-[0.875rem] font-semibold text-brand-text">{secondaryLabel}</Text>
         </Pressable>
       ) : null}

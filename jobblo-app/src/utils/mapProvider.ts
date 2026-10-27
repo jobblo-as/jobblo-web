@@ -14,7 +14,8 @@ const iosHasGoogleMaps =
   Constants.executionEnvironment !== ExecutionEnvironment.StoreClient &&
   Constants.expoConfig?.extra?.iosGoogleMaps === true;
 
-export const MAP_PROVIDER = Platform.OS === 'ios' && !iosHasGoogleMaps ? undefined : PROVIDER_GOOGLE;
+export const MAP_PROVIDER =
+  Platform.OS === 'ios' && !iosHasGoogleMaps ? undefined : PROVIDER_GOOGLE;
 
 /**
  * False on an Android build made without EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_KEY: there a

@@ -87,7 +87,9 @@ export function FavoriteListFormDialog({
 
         {errorMessage ? (
           <View className="mb-4 rounded-2xl border border-[#E7CFCB] dark:border-danger-line bg-[#FBF1F0] dark:bg-danger-tint px-3.5 py-3">
-            <Text className="text-[0.8125rem] font-medium text-[#B4544A] dark:text-danger">{errorMessage}</Text>
+            <Text className="text-[0.8125rem] font-medium text-[#B4544A] dark:text-danger">
+              {errorMessage}
+            </Text>
           </View>
         ) : null}
 

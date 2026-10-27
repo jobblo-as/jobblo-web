@@ -113,10 +113,6 @@ export const resetPasswordValidationSchema = {
   ],
   confirmPassword: [
     required<ResetPasswordFormValues>('confirmPassword', 'Vennligst bekreft passordet'),
-    matchField<ResetPasswordFormValues>(
-      'confirmPassword',
-      'password',
-      'Passordene matcher ikke'
-    ),
+    matchField<ResetPasswordFormValues>('confirmPassword', 'password', 'Passordene matcher ikke'),
   ],
 };

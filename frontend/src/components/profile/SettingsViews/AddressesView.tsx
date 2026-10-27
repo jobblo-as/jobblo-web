@@ -37,9 +37,7 @@ export const AddressesView = () => {
     if (postNumber) handleChange('postNumber', postNumber);
   };
 
-  const locationPicker = (
-    <LocationPickerMap onReverseGeocode={handleReverseGeocode} />
-  );
+  const locationPicker = <LocationPickerMap onReverseGeocode={handleReverseGeocode} />;
 
   return (
     <section className="flex flex-col gap-6 max-w-2xl">

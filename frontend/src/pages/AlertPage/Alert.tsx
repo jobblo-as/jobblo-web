@@ -57,7 +57,8 @@ const CATEGORIES = [
 const CHIP_BASE =
   'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[0.8125rem] font-medium transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15';
 const CHIP_ON = 'border-[#2E6641] bg-[#2E6641] text-white';
-const CHIP_OFF = 'border-[#E6E7E1] bg-white text-[#63665F] hover:border-[#2E6641]/45 hover:text-[#2E6641]';
+const CHIP_OFF =
+  'border-[#E6E7E1] bg-white text-[#63665F] hover:border-[#2E6641]/45 hover:text-[#2E6641]';
 
 const ROW_ACTION =
   'flex size-8 items-center justify-center rounded-full text-[#9B9E96] transition-colors hover:bg-white hover:text-[#0B0B0B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E6641]/25';
@@ -231,20 +232,26 @@ export default function Alert() {
                         openNotification(n);
                       }
                     }}
-                    className={`group flex cursor-pointer items-start gap-3 rounded-3xl border p-4 transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15 ${isUnread
-                      ? 'border-[#2E6641]/30 bg-white'
-                      : 'border-[#E6E7E1] bg-white hover:border-[#2E6641]/30'
-                      }`}
+                    className={`group flex cursor-pointer items-start gap-3 rounded-3xl border p-4 transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15 ${
+                      isUnread
+                        ? 'border-[#2E6641]/30 bg-white'
+                        : 'border-[#E6E7E1] bg-white hover:border-[#2E6641]/30'
+                    }`}
                   >
                     <span className="shrink-0">
                       {n.senderId?.avatarUrl ? (
                         <span className="flex size-10 items-center justify-center overflow-hidden rounded-full bg-[#EAF1E9]">
-                          <img src={n.senderId.avatarUrl} alt="" className="size-full object-cover" />
+                          <img
+                            src={n.senderId.avatarUrl}
+                            alt=""
+                            className="size-full object-cover"
+                          />
                         </span>
                       ) : (
                         <span
-                          className={`flex size-10 items-center justify-center rounded-xl ${isUnread ? 'bg-[#EAF1E9] text-[#2E6641]' : 'bg-[#F4F6F0] text-[#9B9E96]'
-                            }`}
+                          className={`flex size-10 items-center justify-center rounded-xl ${
+                            isUnread ? 'bg-[#EAF1E9] text-[#2E6641]' : 'bg-[#F4F6F0] text-[#9B9E96]'
+                          }`}
                         >
                           <Icon size={16} strokeWidth={2} />
                         </span>
@@ -261,8 +268,9 @@ export default function Alert() {
                         </span>
                       </div>
                       <p
-                        className={`mt-1 text-[0.875rem] leading-relaxed ${isUnread ? 'font-medium text-[#0B0B0B]' : 'text-[#63665F]'
-                          }`}
+                        className={`mt-1 text-[0.875rem] leading-relaxed ${
+                          isUnread ? 'font-medium text-[#0B0B0B]' : 'text-[#63665F]'
+                        }`}
                       >
                         {n.content}
                       </p>

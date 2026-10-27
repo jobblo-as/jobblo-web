@@ -101,12 +101,17 @@ export default function SubscriptionBillingAdminPage() {
           </button>
         </div>
         {mode === 'all' && (
-          <p className="mt-2 text-xs text-muted-foreground">Velg test eller live for å starte avstemming.</p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Velg test eller live for å starte avstemming.
+          </p>
         )}
       </section>
 
       {isError ? (
-        <div role="alert" className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+        <div
+          role="alert"
+          className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800"
+        >
           Kunne ikke hente abonnementsoversikten.
         </div>
       ) : (
@@ -116,8 +121,13 @@ export default function SubscriptionBillingAdminPage() {
               ['Abonnenter', data?.subscribers ?? 0],
               ...Object.entries(statusLabels).map(([key, label]) => [label, counts[key] || 0]),
             ].map(([label, count]) => (
-              <article key={String(label)} className="rounded-lg border border-border bg-card p-5 shadow-sm">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{label}</p>
+              <article
+                key={String(label)}
+                className="rounded-lg border border-border bg-card p-5 shadow-sm"
+              >
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {label}
+                </p>
                 <p className="mt-2 text-2xl font-black text-foreground">
                   {isLoading ? '…' : Number(count).toLocaleString('nb-NO')}
                 </p>
@@ -146,7 +156,9 @@ export default function SubscriptionBillingAdminPage() {
               <h2 className="font-bold text-foreground">Mislykkede abonnementsbetalinger</h2>
             </div>
             {!data?.failedInvoices.length ? (
-              <p className="p-5 text-sm text-muted-foreground">Ingen mislykkede betalinger registrert.</p>
+              <p className="p-5 text-sm text-muted-foreground">
+                Ingen mislykkede betalinger registrert.
+              </p>
             ) : (
               <ul className="divide-y divide-border">
                 {data.failedInvoices.map((invoice) => (
@@ -155,14 +167,20 @@ export default function SubscriptionBillingAdminPage() {
                     className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 text-sm"
                   >
                     <div>
-                      <p className="font-semibold text-foreground">{invoice.planName || 'Abonnement'}</p>
+                      <p className="font-semibold text-foreground">
+                        {invoice.planName || 'Abonnement'}
+                      </p>
                       <p className="mt-1 text-xs text-muted-foreground">
                         {invoice.userId} · {new Date(invoice.createdAt).toLocaleDateString('nb-NO')}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">
-                        {invoice.livemode === false ? 'TEST' : invoice.livemode === true ? 'LIVE' : 'UKJENT'}
+                        {invoice.livemode === false
+                          ? 'TEST'
+                          : invoice.livemode === true
+                            ? 'LIVE'
+                            : 'UKJENT'}
                       </span>
                       <span className="font-bold text-foreground">
                         {new Intl.NumberFormat('nb-NO', {

@@ -105,133 +105,238 @@ export function SearchFilterSheet({
     }
   };
 
-  const visibleCategories: CategoryWithCount[] = categories.filter((category) => !['alle', 'all', 'alle kategorier', 'all categories', 'ingen'].includes(category.name.trim().toLowerCase()));
-  const allCategoryCount = visibleCategories.reduce((sum, category) => sum + (Number(category.count) || 0), 0);
-  const categoryRows: CategoryWithCount[] = [{ _id: 'all', name: 'Alle', icon: '', count: allCategoryCount }, ...visibleCategories];
+  const visibleCategories: CategoryWithCount[] = categories.filter(
+    (category) =>
+      !['alle', 'all', 'alle kategorier', 'all categories', 'ingen'].includes(
+        category.name.trim().toLowerCase()
+      )
+  );
+  const allCategoryCount = visibleCategories.reduce(
+    (sum, category) => sum + (Number(category.count) || 0),
+    0
+  );
+  const categoryRows: CategoryWithCount[] = [
+    { _id: 'all', name: 'Alle', icon: '', count: allCategoryCount },
+    ...visibleCategories,
+  ];
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} statusBarTranslucent>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+      statusBarTranslucent
+    >
       <View className="flex-1 justify-end bg-[#0B0B0B]/45">
         <View className="h-[94%] overflow-hidden rounded-t-[28px] bg-surface">
           <View className="border-b border-line px-5 pb-3 pt-2">
             <View className="mb-2 h-1 w-10 self-center rounded-full bg-[#D4D6CD]" />
             <View className="flex-row items-center justify-between">
-              <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Lukk filter" className="h-10 w-10 items-center justify-center">
+              <Pressable
+                onPress={onClose}
+                accessibilityRole="button"
+                accessibilityLabel="Lukk filter"
+                className="h-10 w-10 items-center justify-center"
+              >
                 <X size={20} color={TC.ink} />
               </Pressable>
               <Text className="text-[1.0625rem] font-bold text-ink">Filtrer</Text>
-              {hasActiveFilters ? <Pressable onPress={onResetAllFilters} accessibilityRole="button" className="h-10 justify-center"><Text className="text-[0.8125rem] font-semibold text-brand-text">Nullstill</Text></Pressable> : <View className="h-10 w-10" />}
+              {hasActiveFilters ? (
+                <Pressable
+                  onPress={onResetAllFilters}
+                  accessibilityRole="button"
+                  className="h-10 justify-center"
+                >
+                  <Text className="text-[0.8125rem] font-semibold text-brand-text">Nullstill</Text>
+                </Pressable>
+              ) : (
+                <View className="h-10 w-10" />
+              )}
             </View>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 28 }}>
-        {/* Urgent */}
-        <Pressable onPress={() => onSetIsUrgent(!filters.isUrgent)} accessibilityRole="switch" accessibilityState={{ checked: filters.isUrgent }} className="flex-row items-center justify-between border-b border-line py-4">
-          <View className="flex-row items-center"><View className="h-9 w-9 items-center justify-center rounded-xl bg-tint"><Zap size={16} color={TC.brand} /></View><View className="ml-3"><Text className="text-[0.9375rem] font-semibold text-ink">Haster</Text><Text className="mt-0.5 text-[0.8125rem] text-muted">Vis kun hasteoppdrag</Text></View></View>
-          <Switch value={filters.isUrgent} onValueChange={onSetIsUrgent} trackColor={{ false: TC.line, true: TC.brandText }} thumbColor="#FFFFFF" />
-        </Pressable>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 28 }}
+          >
+            {/* Urgent */}
+            <Pressable
+              onPress={() => onSetIsUrgent(!filters.isUrgent)}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: filters.isUrgent }}
+              className="flex-row items-center justify-between border-b border-line py-4"
+            >
+              <View className="flex-row items-center">
+                <View className="h-9 w-9 items-center justify-center rounded-xl bg-tint">
+                  <Zap size={16} color={TC.brand} />
+                </View>
+                <View className="ml-3">
+                  <Text className="text-[0.9375rem] font-semibold text-ink">Haster</Text>
+                  <Text className="mt-0.5 text-[0.8125rem] text-muted">Vis kun hasteoppdrag</Text>
+                </View>
+              </View>
+              <Switch
+                value={filters.isUrgent}
+                onValueChange={onSetIsUrgent}
+                trackColor={{ false: TC.line, true: TC.brandText }}
+                thumbColor="#FFFFFF"
+              />
+            </Pressable>
 
-        {/* Categories */}
-        <View>
-          <Text className="mb-2 mt-5 text-[0.8125rem] font-semibold uppercase tracking-[0.14em] text-muted">Kategorier</Text>
-          {categoriesLoading ? (
-            <View className="py-3">
-              <ActivityIndicator color={TC.brandText} size="small" />
-            </View>
-          ) : (
-            <View className="gap-0.5">
-              {categoryRows.map((cat) => {
-                const selected = cat.name === 'Alle'
-                  ? filters.selectedCategories.length === 0
-                  : filters.selectedCategories.includes(cat.name);
-                const categoryClass = selected ? 'bg-tint' : '';
-                const textClass = selected ? 'font-semibold text-brand-text' : 'text-ink';
-                return (
-                  <View key={cat._id}>
-                    <View className="flex-row items-center gap-1">
-                      <Pressable
-                        onPress={() => onToggleCategory(cat.name === 'Alle' ? '' : cat.name)}
-                        className={`flex-1 flex-row items-center rounded-lg px-2.5 py-2 ${categoryClass}`}
-                      >
-                        {selected ? <Check size={14} color={TC.brandText} /> : null}<Text className={`flex-1 text-[0.875rem] ${textClass}`}>{cat.name}</Text>
-                        <Text className={`text-[0.8125rem] ${selected ? 'text-brand-text' : 'text-muted'}`}>
-                          {cat.count || 0}
-                        </Text>
-                      </Pressable>
-                      {cat.subcategories?.length ? (
-                        <Pressable
-                          onPress={() => setExpandedCategories((current) => current.includes(cat._id) ? current.filter((id) => id !== cat._id) : [...current, cat._id])}
-                          className="h-9 w-9 items-center justify-center"
-                        >
-                          {expandedCategories.includes(cat._id) ? <ChevronDown size={16} color={tc('#63665F', 'muted')} /> : <ChevronRight size={16} color={tc('#63665F', 'muted')} />}
-                        </Pressable>
-                      ) : <View className="h-9 w-9" />}
-                    </View>
-                    {expandedCategories.includes(cat._id) ? (
-                      <View className="ml-3 border-l border-line pl-2">
-                        {cat.subcategories?.map((sub) => (
+            {/* Categories */}
+            <View>
+              <Text className="mb-2 mt-5 text-[0.8125rem] font-semibold uppercase tracking-[0.14em] text-muted">
+                Kategorier
+              </Text>
+              {categoriesLoading ? (
+                <View className="py-3">
+                  <ActivityIndicator color={TC.brandText} size="small" />
+                </View>
+              ) : (
+                <View className="gap-0.5">
+                  {categoryRows.map((cat) => {
+                    const selected =
+                      cat.name === 'Alle'
+                        ? filters.selectedCategories.length === 0
+                        : filters.selectedCategories.includes(cat.name);
+                    const categoryClass = selected ? 'bg-tint' : '';
+                    const textClass = selected ? 'font-semibold text-brand-text' : 'text-ink';
+                    return (
+                      <View key={cat._id}>
+                        <View className="flex-row items-center gap-1">
                           <Pressable
-                            key={sub._id}
-                            onPress={() => onToggleCategory(sub.name)}
-                            className={`flex-row items-center rounded-lg px-2.5 py-1.5 ${filters.selectedCategories.includes(sub.name) ? 'bg-tint' : ''}`}
+                            onPress={() => onToggleCategory(cat.name === 'Alle' ? '' : cat.name)}
+                            className={`flex-1 flex-row items-center rounded-lg px-2.5 py-2 ${categoryClass}`}
                           >
-                            <Text className={`flex-1 text-[0.8125rem] ${filters.selectedCategories.includes(sub.name) ? 'font-semibold text-brand-text' : 'text-muted'}`}>
-                              {sub.name}
+                            {selected ? <Check size={14} color={TC.brandText} /> : null}
+                            <Text className={`flex-1 text-[0.875rem] ${textClass}`}>
+                              {cat.name}
                             </Text>
-                            <Text className="text-[0.8125rem] text-muted">{sub.count || 0}</Text>
+                            <Text
+                              className={`text-[0.8125rem] ${selected ? 'text-brand-text' : 'text-muted'}`}
+                            >
+                              {cat.count || 0}
+                            </Text>
                           </Pressable>
-                        ))}
+                          {cat.subcategories?.length ? (
+                            <Pressable
+                              onPress={() =>
+                                setExpandedCategories((current) =>
+                                  current.includes(cat._id)
+                                    ? current.filter((id) => id !== cat._id)
+                                    : [...current, cat._id]
+                                )
+                              }
+                              className="h-9 w-9 items-center justify-center"
+                            >
+                              {expandedCategories.includes(cat._id) ? (
+                                <ChevronDown size={16} color={tc('#63665F', 'muted')} />
+                              ) : (
+                                <ChevronRight size={16} color={tc('#63665F', 'muted')} />
+                              )}
+                            </Pressable>
+                          ) : (
+                            <View className="h-9 w-9" />
+                          )}
+                        </View>
+                        {expandedCategories.includes(cat._id) ? (
+                          <View className="ml-3 border-l border-line pl-2">
+                            {cat.subcategories?.map((sub) => (
+                              <Pressable
+                                key={sub._id}
+                                onPress={() => onToggleCategory(sub.name)}
+                                className={`flex-row items-center rounded-lg px-2.5 py-1.5 ${filters.selectedCategories.includes(sub.name) ? 'bg-tint' : ''}`}
+                              >
+                                <Text
+                                  className={`flex-1 text-[0.8125rem] ${filters.selectedCategories.includes(sub.name) ? 'font-semibold text-brand-text' : 'text-muted'}`}
+                                >
+                                  {sub.name}
+                                </Text>
+                                <Text className="text-[0.8125rem] text-muted">
+                                  {sub.count || 0}
+                                </Text>
+                              </Pressable>
+                            ))}
+                          </View>
+                        ) : null}
                       </View>
-                    ) : null}
-                  </View>
-                );
-              })}
+                    );
+                  })}
+                </View>
+              )}
             </View>
-          )}
-        </View>
 
-        {/* Location Filter */}
-        {locationTree && locationTree.length > 0 && (
-          <View className="mt-5"><LocationFilter
-            locationTree={locationTree}
-            selectedCountyCodes={filters.selectedCountyCodes}
-            selectedMunicipalityCodes={filters.selectedMunicipalityCodes}
-            selectedAreaCodes={filters.selectedAreaCodes}
-            expandedCounties={filters.expandedCounties}
-            expandedMunicipalities={filters.expandedMunicipalities}
-            onToggleCounty={onToggleCounty}
-            onToggleMunicipality={onToggleMunicipality}
-            onToggleArea={onToggleArea}
-            onToggleCountyExpand={onToggleCountyExpand}
-            onToggleMunicipalityExpand={onToggleMunicipalityExpand}
-            onReset={onResetLocation}
-          /></View>
-        )}
+            {/* Location Filter */}
+            {locationTree && locationTree.length > 0 && (
+              <View className="mt-5">
+                <LocationFilter
+                  locationTree={locationTree}
+                  selectedCountyCodes={filters.selectedCountyCodes}
+                  selectedMunicipalityCodes={filters.selectedMunicipalityCodes}
+                  selectedAreaCodes={filters.selectedAreaCodes}
+                  expandedCounties={filters.expandedCounties}
+                  expandedMunicipalities={filters.expandedMunicipalities}
+                  onToggleCounty={onToggleCounty}
+                  onToggleMunicipality={onToggleMunicipality}
+                  onToggleArea={onToggleArea}
+                  onToggleCountyExpand={onToggleCountyExpand}
+                  onToggleMunicipalityExpand={onToggleMunicipalityExpand}
+                  onReset={onResetLocation}
+                />
+              </View>
+            )}
 
-        {/* Current Location Button */}
-        <View className="mt-5 border-t border-b border-line py-4">
-          <Button
-            label={
-              filters.isLocating
-                ? 'Henter din posisjon…'
-                : filters.userLocation
-                  ? 'Bruk min posisjon (aktivt)'
-                  : 'Bruk min posisjon'
-            }
-            disabled={filters.isLocating}
-            variant={filters.userLocation ? 'primary' : 'secondary'}
-            icon={filters.userLocation ? <Check size={15} color="#FFFFFF" /> : <Locate size={15} color={TC.brandText} />}
-            onPress={handleUseCurrentLocation}
-          />
-          <Text className="mt-2 text-[0.8125rem] text-muted">
-            Viser oppdrag innen 5 km
-          </Text>
-          {locationError ? <Text className="mt-2 text-[0.8125rem] text-[#B4544A] dark:text-danger">{locationError}</Text> : null}
-        </View>
+            {/* Current Location Button */}
+            <View className="mt-5 border-t border-b border-line py-4">
+              <Button
+                label={
+                  filters.isLocating
+                    ? 'Henter din posisjon…'
+                    : filters.userLocation
+                      ? 'Bruk min posisjon (aktivt)'
+                      : 'Bruk min posisjon'
+                }
+                disabled={filters.isLocating}
+                variant={filters.userLocation ? 'primary' : 'secondary'}
+                icon={
+                  filters.userLocation ? (
+                    <Check size={15} color="#FFFFFF" />
+                  ) : (
+                    <Locate size={15} color={TC.brandText} />
+                  )
+                }
+                onPress={handleUseCurrentLocation}
+              />
+              <Text className="mt-2 text-[0.8125rem] text-muted">Viser oppdrag innen 5 km</Text>
+              {locationError ? (
+                <Text className="mt-2 text-[0.8125rem] text-[#B4544A] dark:text-danger">
+                  {locationError}
+                </Text>
+              ) : null}
+            </View>
 
-        <View className="mt-5 border-t border-line pt-5"><View className="mb-3 flex-row items-center justify-between"><View className="flex-row items-center gap-1.5"><MapPin size={13} color={TC.brandText} /><Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.14em] text-muted">Kart</Text></View><Text className="text-[0.8125rem] text-muted">{filters.userLocation ? 'Min posisjon' : 'Søkeområde'}</Text></View>{visible ? <SearchAreaMap center={mapCenter} radius={mapRadius} /> : null}</View>
-        <PriceRangeFilter minPrice={filters.minPrice} maxPrice={filters.maxPrice} onMinChange={onSetMinPrice} onMaxChange={onSetMaxPrice} onReset={onResetPrice} />
-
+            <View className="mt-5 border-t border-line pt-5">
+              <View className="mb-3 flex-row items-center justify-between">
+                <View className="flex-row items-center gap-1.5">
+                  <MapPin size={13} color={TC.brandText} />
+                  <Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.14em] text-muted">
+                    Kart
+                  </Text>
+                </View>
+                <Text className="text-[0.8125rem] text-muted">
+                  {filters.userLocation ? 'Min posisjon' : 'Søkeområde'}
+                </Text>
+              </View>
+              {visible ? <SearchAreaMap center={mapCenter} radius={mapRadius} /> : null}
+            </View>
+            <PriceRangeFilter
+              minPrice={filters.minPrice}
+              maxPrice={filters.maxPrice}
+              onMinChange={onSetMinPrice}
+              onMaxChange={onSetMaxPrice}
+              onReset={onResetPrice}
+            />
           </ScrollView>
           <View className="border-t border-line bg-surface px-5 py-4">
             <Button label={`Vis ${jobsCount}${hasNextPage ? '+' : ''} oppdrag`} onPress={onClose} />

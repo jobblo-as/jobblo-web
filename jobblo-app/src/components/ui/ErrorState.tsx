@@ -21,7 +21,9 @@ export function ErrorState({
 
       {onAction && (
         <TouchableOpacity onPress={onAction} className="mt-4 rounded-full bg-brand px-4 py-2.5">
-          <Text className="text-center text-[0.875rem] font-semibold text-white">{actionLabel}</Text>
+          <Text className="text-center text-[0.875rem] font-semibold text-white">
+            {actionLabel}
+          </Text>
         </TouchableOpacity>
       )}
     </View>

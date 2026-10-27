@@ -42,8 +42,7 @@ export function SearchResultsHeader({
           className="flex-row items-center gap-2 rounded-full border border-line bg-surface px-3 py-2"
         >
           <Text className="text-[0.8125rem] font-medium text-ink">
-            {SORT_OPTIONS.find((option) => option.value === sortValue)
-              ?.label ?? 'Sorter'}
+            {SORT_OPTIONS.find((option) => option.value === sortValue)?.label ?? 'Sorter'}
           </Text>
           <ChevronRight size={14} color={tc('#63665F', 'muted')} strokeWidth={2} />
         </TouchableOpacity>
@@ -59,9 +58,7 @@ export function SearchResultsHeader({
                 }}
                 className="flex-row items-center justify-between border-b border-line px-3 py-3 last:border-b-0"
               >
-                <Text className="text-[0.875rem] text-ink">
-                  {option.label}
-                </Text>
+                <Text className="text-[0.875rem] text-ink">{option.label}</Text>
                 {sortValue === option.value && (
                   <Check size={15} color={TC.brandText} strokeWidth={2} />
                 )}

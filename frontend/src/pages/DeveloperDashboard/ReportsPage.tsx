@@ -3,10 +3,24 @@ import { cn } from '@/lib/utils';
 import { dateTime, downloadCsv } from '@/lib/devFormat';
 import { useDevReport, useDevReportTypes, useUrlFilters } from '../../features/developer/hooks';
 import type { ReportSection } from '../../api/developer';
-import { EmptyState, ErrorState, NotConfigured, PageHeader, RangeSelect, Section } from '../../components/developer/kit';
+import {
+  EmptyState,
+  ErrorState,
+  NotConfigured,
+  PageHeader,
+  RangeSelect,
+  Section,
+} from '../../components/developer/kit';
 import { Button } from '../../components/developer/ui/button';
 import { Skeleton } from '../../components/developer/ui/skeleton';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/developer/ui/table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '../../components/developer/ui/table';
 
 const cell = (v: unknown) => {
   if (v === null || v === undefined || v === '') return '—';
@@ -16,14 +30,35 @@ const cell = (v: unknown) => {
 };
 
 function SectionView({ s }: { s: ReportSection }) {
-  if (!s.rows.length) return <Section title={s.title}><p className="text-sm text-muted-foreground">No data in range.</p></Section>;
+  if (!s.rows.length)
+    return (
+      <Section title={s.title}>
+        <p className="text-sm text-muted-foreground">No data in range.</p>
+      </Section>
+    );
   const cols = Object.keys(s.rows[0]);
   return (
-    <Section title={s.title} className="break-inside-avoid" action={<Button variant="ghost" size="xs" className="print:hidden" onClick={() => downloadCsv(`${s.title.toLowerCase().replace(/\W+/g, '-')}.csv`, s.rows)}><Download /> CSV</Button>}>
+    <Section
+      title={s.title}
+      className="break-inside-avoid"
+      action={
+        <Button
+          variant="ghost"
+          size="xs"
+          className="print:hidden"
+          onClick={() => downloadCsv(`${s.title.toLowerCase().replace(/\W+/g, '-')}.csv`, s.rows)}
+        >
+          <Download /> CSV
+        </Button>
+      }
+    >
       {s.kind === 'kv' ? (
         <dl className="grid gap-x-6 gap-y-1.5 text-sm sm:grid-cols-2">
           {s.rows.map((r) => (
-            <div key={String(r.metric)} className="flex justify-between gap-3 border-b border-dashed py-1">
+            <div
+              key={String(r.metric)}
+              className="flex justify-between gap-3 border-b border-dashed py-1"
+            >
               <dt className="text-muted-foreground">{String(r.metric)}</dt>
               <dd className="font-medium tabular-nums">{cell(r.value)}</dd>
             </div>
@@ -65,8 +100,13 @@ export default function ReportsPage() {
   const { data, isFetching, error, refetch } = useDevReport(f.type, { range: f.range as '7d' });
 
   const exportJson = () => {
-    const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
-    Object.assign(document.createElement('a'), { href: url, download: `${f.type}-report.json` }).click();
+    const url = URL.createObjectURL(
+      new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    );
+    Object.assign(document.createElement('a'), {
+      href: url,
+      download: `${f.type}-report.json`,
+    }).click();
     URL.revokeObjectURL(url);
   };
 
@@ -78,10 +118,22 @@ export default function ReportsPage() {
         actions={
           <>
             <RangeSelect value={f.range} onChange={(range) => setF({ range })} />
-            <Button variant="outline" size="sm" className="bg-card" disabled={!data} onClick={exportJson}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-card"
+              disabled={!data}
+              onClick={exportJson}
+            >
               <FileJson /> JSON
             </Button>
-            <Button variant="outline" size="sm" className="bg-card" disabled={!data} onClick={() => window.print()}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-card"
+              disabled={!data}
+              onClick={() => window.print()}
+            >
               <Printer /> Print / PDF
             </Button>
           </>
@@ -90,13 +142,19 @@ export default function ReportsPage() {
 
       <div className="grid gap-4 lg:grid-cols-[14rem_1fr]">
         <div className="space-y-4 print:hidden">
-          <nav className="flex flex-col gap-0.5 rounded-md border bg-card p-1.5" aria-label="Report types">
+          <nav
+            className="flex flex-col gap-0.5 rounded-md border bg-card p-1.5"
+            aria-label="Report types"
+          >
             {types?.types.map((t) => (
               <button
                 key={t.key}
                 type="button"
                 onClick={() => setF({ type: t.key })}
-                className={cn('flex items-center gap-2 rounded-sm px-2.5 py-1.5 text-left text-sm hover:bg-muted', f.type === t.key && 'bg-accent font-medium text-accent-foreground')}
+                className={cn(
+                  'flex items-center gap-2 rounded-sm px-2.5 py-1.5 text-left text-sm hover:bg-muted',
+                  f.type === t.key && 'bg-accent font-medium text-accent-foreground'
+                )}
               >
                 <FileText className="size-3.5 text-muted-foreground" />
                 {t.title}
@@ -104,7 +162,10 @@ export default function ReportsPage() {
             ))}
           </nav>
           <Section title="Scheduled reports">
-            <NotConfigured title="Not scheduled" description="Reports are generated on demand. Scheduled email delivery is not set up." />
+            <NotConfigured
+              title="Not scheduled"
+              description="Reports are generated on demand. Scheduled email delivery is not set up."
+            />
           </Section>
         </div>
 
@@ -118,7 +179,8 @@ export default function ReportsPage() {
                 <h2 className="text-lg font-semibold">{data.title} report</h2>
                 <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <CalendarClock className="size-3.5" />
-                  {dateTime(data.range.from)} – {dateTime(data.range.to)} · {data.environment} · generated {dateTime(data.generatedAt)}
+                  {dateTime(data.range.from)} – {dateTime(data.range.to)} · {data.environment} ·
+                  generated {dateTime(data.generatedAt)}
                 </p>
               </div>
               {data.sections.map((s) => (

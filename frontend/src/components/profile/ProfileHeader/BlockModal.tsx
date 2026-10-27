@@ -21,10 +21,7 @@ export function BlockModal({ user, isOpen, onClose, onConfirm, isPending, type }
           <div className="relative mb-8">
             <div className="w-28 h-28 rounded-full overflow-hidden border-2 border-gray-50 shadow-sm bg-gray-100">
               <img
-                src={
-                  user?.avatarUrl ||
-                  DEFAULT_AVATAR
-                }
+                src={user?.avatarUrl || DEFAULT_AVATAR}
                 alt="Profile"
                 className="w-full h-full object-cover"
               />

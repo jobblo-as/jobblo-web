@@ -18,8 +18,15 @@ export async function startProviderJob(orderId: string) {
   return response.data;
 }
 
-export async function updateProviderChecklist(orderId: string, itemId: string, providerCompleted: boolean) {
-  const response = await apiClient.patch(`/safepay/orders/${requireId(orderId, 'orderId')}/provider-checklist/${requireId(itemId, 'itemId')}`, { providerCompleted });
+export async function updateProviderChecklist(
+  orderId: string,
+  itemId: string,
+  providerCompleted: boolean
+) {
+  const response = await apiClient.patch(
+    `/safepay/orders/${requireId(orderId, 'orderId')}/provider-checklist/${requireId(itemId, 'itemId')}`,
+    { providerCompleted }
+  );
   return response.data;
 }
 
@@ -27,14 +34,18 @@ export async function uploadProviderEvidence(
   orderId: string,
   evidenceType: 'before' | 'after',
   files: Array<{ uri: string; name: string; type: string }>,
-  completionNote?: string,
+  completionNote?: string
 ) {
   const safeOrderId = requireId(orderId, 'orderId');
-  if (!files.length && !completionNote?.trim()) throw new Error('Minst én fil eller et notat kreves');
+  if (!files.length && !completionNote?.trim())
+    throw new Error('Minst én fil eller et notat kreves');
   const formData = new FormData();
   files.forEach((file) => {
     const part: ReactNativeFilePart = { uri: file.uri, name: file.name, type: file.type };
-    (formData as FormData & { append(name: string, value: ReactNativeFilePart): void }).append('files', part);
+    (formData as FormData & { append(name: string, value: ReactNativeFilePart): void }).append(
+      'files',
+      part
+    );
   });
   formData.append('evidenceType', evidenceType);
   if (completionNote?.trim()) formData.append('completionNote', completionNote.trim());
@@ -47,13 +58,22 @@ export async function uploadProviderEvidence(
   return response.data;
 }
 
-export async function deleteProviderEvidence(orderId: string, url: string, evidenceType: 'before' | 'after') {
-  const response = await apiClient.delete(`/safepay/orders/${requireId(orderId, 'orderId')}/evidence`, { data: { url, evidenceType } });
+export async function deleteProviderEvidence(
+  orderId: string,
+  url: string,
+  evidenceType: 'before' | 'after'
+) {
+  const response = await apiClient.delete(
+    `/safepay/orders/${requireId(orderId, 'orderId')}/evidence`,
+    { data: { url, evidenceType } }
+  );
   return response.data;
 }
 
 export async function markProviderReadyForReview(orderId: string) {
-  const response = await apiClient.post(`/safepay/orders/${requireId(orderId, 'orderId')}/ready-for-review`);
+  const response = await apiClient.post(
+    `/safepay/orders/${requireId(orderId, 'orderId')}/ready-for-review`
+  );
   return response.data;
 }
 
@@ -68,7 +88,10 @@ export async function getProviderDispute(orderId: string) {
   }
 }
 
-export async function openProviderDispute(orderId: string, payload: { reasonCategory: string; title: string; description: string }) {
+export async function openProviderDispute(
+  orderId: string,
+  payload: { reasonCategory: string; title: string; description: string }
+) {
   const response = await apiClient.post(`/safepay/contract/${orderId}/dispute`, payload);
   return response.data;
 }
@@ -78,7 +101,13 @@ export async function getProviderOrderReviews(orderId: string) {
   return Array.isArray(response.data) ? response.data : response.data ? [response.data] : [];
 }
 
-export async function createProviderReview(payload: { orderId: string; serviceId: string; revieweeId: string; rating: number; comment: string }) {
+export async function createProviderReview(payload: {
+  orderId: string;
+  serviceId: string;
+  revieweeId: string;
+  rating: number;
+  comment: string;
+}) {
   const response = await apiClient.post('/reviews', { ...payload, revieweeRole: 'seeker' });
   return response.data;
 }

@@ -12,13 +12,19 @@ const TYPES: { value: CustomerType; title: string; text: string; icon: LucideIco
   {
     value: 'private',
     title: t('Privat oppdrag', 'Private job'),
-    text: t('Hjelp hjemme – maling, flytting, rengjøring, hage og småjobber.', 'Help at home – painting, moving, cleaning, garden and small jobs.'),
+    text: t(
+      'Hjelp hjemme – maling, flytting, rengjøring, hage og småjobber.',
+      'Help at home – painting, moving, cleaning, garden and small jobs.'
+    ),
     icon: Home,
   },
   {
     value: 'business',
     title: t('Bedriftsoppdrag', 'Business job'),
-    text: t('For firmaet ditt – oppdrag i kontor, butikk eller andre lokaler.', 'For your company – jobs in an office, shop or other premises.'),
+    text: t(
+      'For firmaet ditt – oppdrag i kontor, butikk eller andre lokaler.',
+      'For your company – jobs in an office, shop or other premises.'
+    ),
     icon: Building2,
   },
 ];
@@ -34,8 +40,15 @@ interface NyAnnonseSheetProps {
 /** FINN-style "Ny annonse": pick the kind of job with two large cards before the form. */
 export function NyAnnonseSheet({ visible, suggested, onSelect, onClose }: NyAnnonseSheetProps) {
   return (
-    <BottomSheet visible={visible} onClose={onClose} title={t('Ny annonse', 'New listing')} hideClose>
-      <Text className="mb-4 text-[0.9375rem] leading-6 text-muted">{t('Hva slags oppdrag vil du legge ut?', 'What kind of job do you want to post?')}</Text>
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      title={t('Ny annonse', 'New listing')}
+      hideClose
+    >
+      <Text className="mb-4 text-[0.9375rem] leading-6 text-muted">
+        {t('Hva slags oppdrag vil du legge ut?', 'What kind of job do you want to post?')}
+      </Text>
       <View className="gap-3">
         {TYPES.map(({ value, title, text, icon: Icon }) => (
           <Pressable
@@ -56,7 +69,9 @@ export function NyAnnonseSheet({ visible, suggested, onSelect, onClose }: NyAnno
                 <Text className="text-[1.0625rem] font-semibold text-ink">{title}</Text>
                 {value === suggested ? (
                   <View className="rounded-full bg-tint px-2 py-0.5">
-                    <Text className="text-[0.8125rem] font-semibold text-brand-text">{t('Anbefalt', 'Recommended')}</Text>
+                    <Text className="text-[0.8125rem] font-semibold text-brand-text">
+                      {t('Anbefalt', 'Recommended')}
+                    </Text>
                   </View>
                 ) : null}
               </View>

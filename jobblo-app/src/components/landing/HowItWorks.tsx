@@ -29,15 +29,33 @@ export function HowItWorks() {
   return (
     <View style={{ paddingHorizontal: 20, paddingTop: 64, paddingBottom: 48 }}>
       <View style={{ marginBottom: 28, gap: 8 }}>
-        <Text style={{ color: tc('#63665F', 'muted'), fontSize: 13, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase' }}>
+        <Text
+          style={{
+            color: tc('#63665F', 'muted'),
+            fontSize: 13,
+            fontWeight: '700',
+            letterSpacing: 1.5,
+            textTransform: 'uppercase',
+          }}
+        >
           03 — Prosessen
         </Text>
-        <Text style={{ color: TC.ink, fontSize: 32, fontWeight: '700', lineHeight: 38, letterSpacing: -1.1 }}>
+        <Text
+          style={{
+            color: TC.ink,
+            fontSize: 32,
+            fontWeight: '700',
+            lineHeight: 38,
+            letterSpacing: -1.1,
+          }}
+        >
           Hvordan <Text style={{ color: TC.brandText }}>fungerer</Text> det?
         </Text>
       </View>
 
-      <Text style={{ color: tc('#63665F', 'muted'), fontSize: 15, lineHeight: 22, marginBottom: 24 }}>
+      <Text
+        style={{ color: tc('#63665F', 'muted'), fontSize: 15, lineHeight: 22, marginBottom: 24 }}
+      >
         Fire trinn fra du trenger hjelp til jobben er gjort og betalt.
       </Text>
 
@@ -55,14 +73,29 @@ export function HowItWorks() {
               justifyContent: 'space-between',
             }}
           >
-            <Text style={{ color: TC.tint, fontSize: 42, fontWeight: '700', letterSpacing: -1.7, lineHeight: 46 }}>
+            <Text
+              style={{
+                color: TC.tint,
+                fontSize: 42,
+                fontWeight: '700',
+                letterSpacing: -1.7,
+                lineHeight: 46,
+              }}
+            >
               {id}
             </Text>
             <View>
               <Text style={{ color: TC.ink, fontSize: 18, fontWeight: '700', letterSpacing: -0.5 }}>
                 {title}
               </Text>
-              <Text style={{ marginTop: 8, color: tc('#63665F', 'muted'), fontSize: 14, lineHeight: 20 }}>
+              <Text
+                style={{
+                  marginTop: 8,
+                  color: tc('#63665F', 'muted'),
+                  fontSize: 14,
+                  lineHeight: 20,
+                }}
+              >
                 {description}
               </Text>
             </View>

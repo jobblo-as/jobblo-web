@@ -225,7 +225,9 @@ export function SaveToListSheet({
             }`}
             accessibilityRole="button"
           >
-            {createAndSave.isPending ? <ActivityIndicator size="small" color={TC.brandText} /> : null}
+            {createAndSave.isPending ? (
+              <ActivityIndicator size="small" color={TC.brandText} />
+            ) : null}
             <Text
               className={`text-[0.9375rem] font-semibold ${
                 !trimmedName || isBusy ? 'text-muted' : 'text-white'
@@ -286,9 +288,7 @@ export function SaveToListSheet({
                 }`}
                 accessibilityRole="button"
                 accessibilityState={{ selected: saved }}
-                accessibilityLabel={
-                  saved ? `Fjern fra ${list.name}` : `Lagre i ${list.name}`
-                }
+                accessibilityLabel={saved ? `Fjern fra ${list.name}` : `Lagre i ${list.name}`}
               >
                 <View className="h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-tint">
                   {cover ? (

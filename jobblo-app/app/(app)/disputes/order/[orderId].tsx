@@ -1,5 +1,14 @@
 import React, { useMemo, useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Lock, Send } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -37,7 +46,13 @@ function dateLabel(value?: string | null) {
   if (!value) return '';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleDateString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleDateString('nb-NO', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 function roleLabel(role?: DisputeRole | string) {
@@ -54,9 +69,18 @@ export default function DisputeThreadScreen() {
   const params = useLocalSearchParams<{ orderId: string | string[] }>();
   const rawOrderId = Array.isArray(params.orderId) ? params.orderId[0] : params.orderId;
   const orderId = typeof rawOrderId === 'string' ? rawOrderId.trim() : '';
-  const viewerId = useAuthStore((s) => (s.user && typeof s.user._id === 'string' ? (s.user._id as string) : null));
+  const viewerId = useAuthStore((s) =>
+    s.user && typeof s.user._id === 'string' ? (s.user._id as string) : null
+  );
 
-  const { data: dispute, isLoading, isError, error, refetch, isRefetching } = useDisputeByOrder(orderId);
+  const {
+    data: dispute,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isRefetching,
+  } = useDisputeByOrder(orderId);
   const messageMutation = useAddDisputeMessageMutation(orderId);
   const [draft, setDraft] = useState('');
 
@@ -64,7 +88,7 @@ export default function DisputeThreadScreen() {
   // malformed payload must never put one on screen.
   const messages = useMemo(
     () => (dispute?.messages ?? []).filter((m) => m && m.isInternal !== true),
-    [dispute?.messages],
+    [dispute?.messages]
   );
 
   const trimmedDraft = draft.trim();
@@ -76,8 +100,9 @@ export default function DisputeThreadScreen() {
       { disputeId: dispute._id, message: trimmedDraft },
       {
         onSuccess: () => setDraft(''),
-        onError: (e) => Alert.alert('Kunne ikke sende melding', disputeErrorMessage(e, 'Prøv igjen.')),
-      },
+        onError: (e) =>
+          Alert.alert('Kunne ikke sende melding', disputeErrorMessage(e, 'Prøv igjen.')),
+      }
     );
   };
 
@@ -122,14 +147,19 @@ export default function DisputeThreadScreen() {
     return (
       <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
         <View className="mx-4 my-8 rounded-3xl bg-surface p-6">
-          <Text className="text-[0.9375rem] font-semibold text-ink">Ingen tvist på dette oppdraget</Text>
+          <Text className="text-[0.9375rem] font-semibold text-ink">
+            Ingen tvist på dette oppdraget
+          </Text>
           <Text className="mt-1.5 text-[0.875rem] leading-relaxed text-muted">
-            Det er ikke åpnet noen tvist her ennå. Du kan åpne en tvist hvis noe har gått galt med oppdraget.
+            Det er ikke åpnet noen tvist her ennå. Du kan åpne en tvist hvis noe har gått galt med
+            oppdraget.
           </Text>
           <View className="mt-4 gap-2">
             <Button
               label="Åpne tvist"
-              onPress={() => router.push({ pathname: '/(app)/disputes/create', params: { orderId } })}
+              onPress={() =>
+                router.push({ pathname: '/(app)/disputes/create', params: { orderId } })
+              }
               fullWidth
             />
             <Button label="Tilbake" variant="secondary" onPress={() => router.back()} fullWidth />
@@ -148,29 +178,45 @@ export default function DisputeThreadScreen() {
   return (
     <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
       <View className="flex-row items-center gap-3 border-b border-line bg-surface px-4 py-3">
-        <Pressable onPress={() => router.back()} hitSlop={8} accessibilityRole="button" accessibilityLabel="Tilbake">
+        <Pressable
+          onPress={() => router.back()}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Tilbake"
+        >
           <ArrowLeft size={18} color={tc('#63665F', 'muted')} />
         </Pressable>
-        <Text className="flex-1 text-[0.9375rem] font-semibold text-ink" numberOfLines={1}>Tvist</Text>
+        <Text className="flex-1 text-[0.9375rem] font-semibold text-ink" numberOfLines={1}>
+          Tvist
+        </Text>
         <View className={['rounded-full px-3 py-1', statusTone].join(' ')}>
           <Text className="text-[0.8125rem] font-semibold">{statusLabel}</Text>
         </View>
       </View>
 
-      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
           keyboardShouldPersistTaps="handled"
         >
           <View className="mb-4 rounded-2xl bg-surface p-5">
-            <Text className="mb-1 text-[0.9375rem] font-semibold text-ink" numberOfLines={3}>{dispute.title}</Text>
+            <Text className="mb-1 text-[0.9375rem] font-semibold text-ink" numberOfLines={3}>
+              {dispute.title}
+            </Text>
             <Text className="mb-3 text-[0.8125rem] text-muted">Kategori: {reasonLabel}</Text>
             <Text className="text-[0.8125rem] leading-relaxed text-ink">{dispute.description}</Text>
             <View className="mt-3 flex-row flex-wrap items-center gap-x-2">
-              {openedLabel ? <Text className="text-[0.8125rem] text-muted">Opprettet {openedLabel}</Text> : null}
+              {openedLabel ? (
+                <Text className="text-[0.8125rem] text-muted">Opprettet {openedLabel}</Text>
+              ) : null}
               {dispute.openedByRole ? (
-                <Text className="text-[0.8125rem] text-muted">· Åpnet av {roleLabel(dispute.openedByRole)}</Text>
+                <Text className="text-[0.8125rem] text-muted">
+                  · Åpnet av {roleLabel(dispute.openedByRole)}
+                </Text>
               ) : null}
             </View>
           </View>
@@ -178,12 +224,18 @@ export default function DisputeThreadScreen() {
           {dispute.resolution ? (
             <View className="mb-4 rounded-2xl border border-[#C6E2CE] bg-tint p-5">
               <Text className="mb-1 text-[0.875rem] font-semibold text-brand-text">Avgjørelse</Text>
-              <Text className="text-[0.8125rem] font-medium text-ink">{outcomeLabel(dispute.resolution.outcome)}</Text>
+              <Text className="text-[0.8125rem] font-medium text-ink">
+                {outcomeLabel(dispute.resolution.outcome)}
+              </Text>
               {dispute.resolution.reason ? (
-                <Text className="mt-2 text-[0.8125rem] leading-relaxed text-muted">{dispute.resolution.reason}</Text>
+                <Text className="mt-2 text-[0.8125rem] leading-relaxed text-muted">
+                  {dispute.resolution.reason}
+                </Text>
               ) : null}
               {dispute.resolution.resolvedAt ? (
-                <Text className="mt-2 text-[0.8125rem] text-muted">Avgjort {dateLabel(dispute.resolution.resolvedAt)}</Text>
+                <Text className="mt-2 text-[0.8125rem] text-muted">
+                  Avgjort {dateLabel(dispute.resolution.resolvedAt)}
+                </Text>
               ) : null}
             </View>
           ) : null}
@@ -213,13 +265,18 @@ export default function DisputeThreadScreen() {
                     <View className="rounded-full bg-line px-3 py-1.5">
                       <Text className="text-center text-[0.8125rem] text-muted">{msg.message}</Text>
                     </View>
-                    <Text className="mt-1 text-[0.8125rem] text-muted">{dateLabel(msg.createdAt)}</Text>
+                    <Text className="mt-1 text-[0.8125rem] text-muted">
+                      {dateLabel(msg.createdAt)}
+                    </Text>
                   </View>
                 );
               }
 
               return (
-                <View key={msg._id} className={['mb-3', isOwn ? 'items-end' : 'items-start'].join(' ')}>
+                <View
+                  key={msg._id}
+                  className={['mb-3', isOwn ? 'items-end' : 'items-start'].join(' ')}
+                >
                   <View
                     className={[
                       'max-w-[88%] rounded-2xl border p-3',
@@ -233,13 +290,19 @@ export default function DisputeThreadScreen() {
                     <Text
                       className={[
                         'mb-1 text-[0.8125rem] font-semibold',
-                        isAdmin ? 'text-[#8B6914] dark:text-warn' : isOwn ? 'text-brand-text' : 'text-muted',
+                        isAdmin
+                          ? 'text-[#8B6914] dark:text-warn'
+                          : isOwn
+                            ? 'text-brand-text'
+                            : 'text-muted',
                       ].join(' ')}
                     >
                       {isOwn ? 'Deg' : roleLabel(msg.senderRole)}
                     </Text>
                     <Text className="text-[0.8125rem] leading-relaxed text-ink">{msg.message}</Text>
-                    <Text className="mt-1 text-[0.8125rem] text-muted">{dateLabel(msg.createdAt)}</Text>
+                    <Text className="mt-1 text-[0.8125rem] text-muted">
+                      {dateLabel(msg.createdAt)}
+                    </Text>
                   </View>
                 </View>
               );
@@ -266,13 +329,18 @@ export default function DisputeThreadScreen() {
                 disabled={!canSend}
                 accessibilityRole="button"
                 accessibilityLabel="Send melding"
-                className={['h-11 w-11 items-center justify-center rounded-full', canSend ? 'bg-brand' : 'bg-line'].join(' ')}
+                className={[
+                  'h-11 w-11 items-center justify-center rounded-full',
+                  canSend ? 'bg-brand' : 'bg-line',
+                ].join(' ')}
               >
                 <Send size={16} color={canSend ? '#FFFFFF' : tc('#9B9E96', 'subtle')} />
               </Pressable>
             </View>
             <Text className="mt-1 text-right text-[0.8125rem] text-muted">
-              {messageMutation.isPending ? 'Sender...' : `${draft.length}/${DISPUTE_MESSAGE_MAX_LENGTH}`}
+              {messageMutation.isPending
+                ? 'Sender...'
+                : `${draft.length}/${DISPUTE_MESSAGE_MAX_LENGTH}`}
             </Text>
           </View>
         ) : (

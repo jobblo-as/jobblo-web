@@ -33,7 +33,11 @@ export const DeleteAccountView = () => {
     // The server asks for the current password (403 CURRENT_PASSWORD_REQUIRED), or for an
     // account with no password, a sign-in from the last 10 minutes (403 REAUTH_REQUIRED).
     mutationFn: () =>
-      deleteUserAccount(user!._id, form.feedback?.trim() || undefined, currentPassword || undefined),
+      deleteUserAccount(
+        user!._id,
+        form.feedback?.trim() || undefined,
+        currentPassword || undefined
+      ),
     onSuccess: async () => {
       toast.success('Profilen din er slettet.');
       try {
@@ -46,7 +50,8 @@ export const DeleteAccountView = () => {
     // tells the user exactly what to do — so surface it rather than a generic.
     onError: (err) =>
       toast.error(
-        (err as { response?: { data?: { code?: string } } })?.response?.data?.code === 'REAUTH_REQUIRED'
+        (err as { response?: { data?: { code?: string } } })?.response?.data?.code ===
+          'REAUTH_REQUIRED'
           ? 'Logg inn på nytt og prøv igjen.'
           : getErrorMessage(err, 'Kunne ikke slette profilen. Prøv igjen.')
       ),

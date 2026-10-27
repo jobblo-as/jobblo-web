@@ -1,7 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Toaster, toast } from 'sonner';
-import { ArrowLeft, ChevronsUpDown, Command as CommandIcon, LogOut, Search, ShieldCheck, Terminal } from 'lucide-react';
+import {
+  ArrowLeft,
+  ChevronsUpDown,
+  Command as CommandIcon,
+  LogOut,
+  Search,
+  ShieldCheck,
+  Terminal,
+} from 'lucide-react';
 import { useUserStore } from '../../stores/userStore';
 import { useDevPrefs } from '../../features/developer/hooks';
 import { DEV_NAV, DEV_NAV_ITEMS, activeNavPath } from './nav';
@@ -57,7 +65,11 @@ import {
   SidebarTrigger,
 } from '../../components/developer/ui/sidebar';
 
-const ENV = import.meta.env.PROD ? (window.location.hostname.includes('staging') ? 'staging' : 'production') : 'development';
+const ENV = import.meta.env.PROD
+  ? window.location.hostname.includes('staging')
+    ? 'staging'
+    : 'production'
+  : 'development';
 const ENV_CLASS: Record<string, string> = {
   production: 'border-red-200/70 bg-red-50 text-red-700',
   staging: 'border-amber-200/70 bg-amber-50 text-amber-700',
@@ -118,7 +130,9 @@ function DevSidebar() {
                       </NavLink>
                     </SidebarMenuButton>
                     {item.planned && (
-                      <SidebarMenuBadge className="rounded-sm border bg-muted px-1 text-[10px] font-normal text-muted-foreground">Planned</SidebarMenuBadge>
+                      <SidebarMenuBadge className="rounded-sm border bg-muted px-1 text-[10px] font-normal text-muted-foreground">
+                        Planned
+                      </SidebarMenuBadge>
                     )}
                   </SidebarMenuItem>
                 ))}
@@ -147,7 +161,8 @@ function DevSidebar() {
               </DropdownMenuTrigger>
               <DropdownMenuContent side="right" align="end" className="min-w-56">
                 <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-                  Signed in as <span className="font-medium text-foreground capitalize">{user?.role}</span>
+                  Signed in as{' '}
+                  <span className="font-medium text-foreground capitalize">{user?.role}</span>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate('/home')}>
@@ -187,14 +202,26 @@ function CommandPalette({ open, setOpen }: { open: boolean; setOpen: (v: boolean
     navigate(to);
   };
   return (
-    <CommandDialog open={open} onOpenChange={setOpen} title="Jump to" description="Search pages or investigate any ID">
-      <CommandInput placeholder="Search pages, or paste any ID, Stripe ref, email or IP…" value={query} onValueChange={setQuery} />
+    <CommandDialog
+      open={open}
+      onOpenChange={setOpen}
+      title="Jump to"
+      description="Search pages or investigate any ID"
+    >
+      <CommandInput
+        placeholder="Search pages, or paste any ID, Stripe ref, email or IP…"
+        value={query}
+        onValueChange={setQuery}
+      />
       <CommandList>
         <CommandEmpty>No matching page.</CommandEmpty>
         {query.trim().length >= 6 && (
           <>
             <CommandGroup heading="Lookup">
-              <CommandItem value={`investigate ${query}`} onSelect={() => go(`/developer/investigate?q=${encodeURIComponent(query.trim())}`)}>
+              <CommandItem
+                value={`investigate ${query}`}
+                onSelect={() => go(`/developer/investigate?q=${encodeURIComponent(query.trim())}`)}
+              >
                 <Search /> Investigate <span className="font-mono text-xs">{query.trim()}</span>
               </CommandItem>
             </CommandGroup>
@@ -204,10 +231,16 @@ function CommandPalette({ open, setOpen }: { open: boolean; setOpen: (v: boolean
         {DEV_NAV.map((g) => (
           <CommandGroup key={g.label} heading={g.label}>
             {g.items.map((i) => (
-              <CommandItem key={i.path} value={`${i.label} ${i.description}`} onSelect={() => go(`/developer/${i.path}`)}>
+              <CommandItem
+                key={i.path}
+                value={`${i.label} ${i.description}`}
+                onSelect={() => go(`/developer/${i.path}`)}
+              >
                 <i.icon />
                 <span>{i.label}</span>
-                {i.planned && <span className="ml-auto text-[10px] text-muted-foreground">Planned</span>}
+                {i.planned && (
+                  <span className="ml-auto text-[10px] text-muted-foreground">Planned</span>
+                )}
               </CommandItem>
             ))}
           </CommandGroup>
@@ -254,25 +287,41 @@ export default function DeveloperLayout() {
                   </BreadcrumbItem>
                   <BreadcrumbSeparator className="hidden sm:block" />
                   <BreadcrumbItem>
-                    <BreadcrumbPage className="truncate">{current?.label || 'Overview'}</BreadcrumbPage>
+                    <BreadcrumbPage className="truncate">
+                      {current?.label || 'Overview'}
+                    </BreadcrumbPage>
                   </BreadcrumbItem>
                 </BreadcrumbList>
               </Breadcrumb>
 
               <div className="ml-auto flex items-center gap-2">
-                <Button variant="outline" size="sm" className="hidden w-56 justify-start bg-card text-muted-foreground md:inline-flex" onClick={() => setPaletteOpen(true)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="hidden w-56 justify-start bg-card text-muted-foreground md:inline-flex"
+                  onClick={() => setPaletteOpen(true)}
+                >
                   <Search />
                   <span className="flex-1 text-left">Search or investigate…</span>
                   <kbd className="pointer-events-none inline-flex h-5 items-center gap-0.5 rounded-sm border bg-muted px-1 font-mono text-[10px]">
                     <CommandIcon className="size-3" />K
                   </kbd>
                 </Button>
-                <Button variant="ghost" size="icon-sm" className="md:hidden" onClick={() => setPaletteOpen(true)} aria-label="Search">
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="md:hidden"
+                  onClick={() => setPaletteOpen(true)}
+                  aria-label="Search"
+                >
                   <Search />
                 </Button>
                 <div className="flex items-center gap-2 rounded-md border bg-card px-2 py-1">
                   <LiveDot on={autoRefresh} />
-                  <Label htmlFor="dev-auto-refresh" className="hidden text-xs font-normal text-muted-foreground sm:inline">
+                  <Label
+                    htmlFor="dev-auto-refresh"
+                    className="hidden text-xs font-normal text-muted-foreground sm:inline"
+                  >
                     Auto-refresh
                   </Label>
                   <Switch
@@ -286,7 +335,10 @@ export default function DeveloperLayout() {
                     aria-label="Auto-refresh"
                   />
                 </div>
-                <Badge variant="outline" className={`hidden capitalize sm:inline-flex ${ENV_CLASS[ENV]}`}>
+                <Badge
+                  variant="outline"
+                  className={`hidden capitalize sm:inline-flex ${ENV_CLASS[ENV]}`}
+                >
                   {ENV}
                 </Badge>
               </div>

@@ -59,7 +59,9 @@ export type PurchaseHistoryItem = {
 };
 
 export async function getCurrentSubscription(): Promise<CurrentSubscription | null> {
-  const response = await apiClient.get<{ subscription: CurrentSubscription | null }>('/stripe/subscription');
+  const response = await apiClient.get<{ subscription: CurrentSubscription | null }>(
+    '/stripe/subscription'
+  );
   const subscription = response.data.subscription;
   if (!subscription) return null;
 
@@ -76,13 +78,19 @@ export async function getCurrentSubscription(): Promise<CurrentSubscription | nu
  * and is never surfaced.
  */
 export async function getPurchaseHistory(): Promise<PurchaseHistoryItem[]> {
-  const response = await apiClient.get<{ transactions?: PurchaseHistoryItem[] }>('/transactions/user');
+  const response = await apiClient.get<{ transactions?: PurchaseHistoryItem[] }>(
+    '/transactions/user'
+  );
   return response.data.transactions ?? [];
 }
 
 export async function cancelCurrentSubscription() {
   const response = await apiClient.post('/stripe/subscription/cancel');
-  return response.data as { message?: string; cancelAtPeriodEnd?: boolean; currentPeriodEnd?: string | null };
+  return response.data as {
+    message?: string;
+    cancelAtPeriodEnd?: boolean;
+    currentPeriodEnd?: string | null;
+  };
 }
 
 export async function resumeCurrentSubscription() {

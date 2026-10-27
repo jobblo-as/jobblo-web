@@ -2,7 +2,10 @@
 import type { CreateJobFormValues } from '../../services/createJob.service';
 import { t } from './i18n';
 
-type PriceValues = Pick<CreateJobFormValues, 'paymentType' | 'price' | 'hourlyRate' | 'durationValue' | 'durationUnit'>;
+type PriceValues = Pick<
+  CreateJobFormValues,
+  'paymentType' | 'price' | 'hourlyRate' | 'durationValue' | 'durationUnit'
+>;
 
 /** What applicants see: Timepris = rate × hours (a day = 8 h), as buildJobFormData sends it. */
 export function totalPrice(v: PriceValues): number {
@@ -22,7 +25,9 @@ export function priceProblem(v: PriceValues): string {
       : v.paymentType === 'Anbud'
         ? t('Oppgi et antatt budsjett over 0 kr.', 'Enter an estimated budget above 0 kr.')
         : t('Oppgi en pris over 0 kr.', 'Enter a price above 0 kr.');
-  if (amount > 1_000_000) return t('Beløpet kan ikke være over 1 000 000 kr.', 'The amount cannot be over 1 000 000 kr.');
-  if (!(Number(v.durationValue) > 0)) return t('Velg hvor lang tid du tror det tar.', 'Choose how long you think it will take.');
+  if (amount > 1_000_000)
+    return t('Beløpet kan ikke være over 1 000 000 kr.', 'The amount cannot be over 1 000 000 kr.');
+  if (!(Number(v.durationValue) > 0))
+    return t('Velg hvor lang tid du tror det tar.', 'Choose how long you think it will take.');
   return '';
 }

@@ -40,14 +40,11 @@ const OAUTH_ERROR_MESSAGES: Record<string, string> = {
   // issuer from a mismatched nonce for its own logs, but that distinction is
   // information for somebody probing the endpoint and useless to a person holding
   // a code device — so several backend reasons collapse into one message here.
-  bankid_verification_failed:
-    'BankID-verifiseringen kunne ikke fullføres. Prøv igjen.',
-  bankid_invalid_state:
-    'BankID-økten var utløpt eller ugyldig. Start verifiseringen på nytt.',
+  bankid_verification_failed: 'BankID-verifiseringen kunne ikke fullføres. Prøv igjen.',
+  bankid_invalid_state: 'BankID-økten var utløpt eller ugyldig. Start verifiseringen på nytt.',
   bankid_cancelled: 'Du avbrøt BankID-verifiseringen.',
   bankid_identity: 'Vi fikk ikke en gyldig identitet fra BankID. Prøv igjen.',
-  bankid_already_linked:
-    'Denne BankID-identiteten er allerede knyttet til en annen Jobblo-konto.',
+  bankid_already_linked: 'Denne BankID-identiteten er allerede knyttet til en annen Jobblo-konto.',
   bankid_account_exists:
     'Det finnes allerede en konto med denne e-postadressen. Logg inn først — så kan du verifisere med BankID fra profilen din.',
   bankid_no_email:

@@ -52,7 +52,15 @@ export type AiDraft = {
   remote?: boolean;
   pricingReasoning?: string;
 };
-export type AiDraftKey = 'title' | 'description' | 'categories' | 'duration' | 'price' | 'hourlyRate' | 'paymentType' | 'tags';
+export type AiDraftKey =
+  | 'title'
+  | 'description'
+  | 'categories'
+  | 'duration'
+  | 'price'
+  | 'hourlyRate'
+  | 'paymentType'
+  | 'tags';
 export type AiDraftRow = { key: AiDraftKey; label: string; value: string; overwrites: boolean };
 
 const UNIT: Record<string, string> = { minutes: 'minutter', hours: 'timer', days: 'dager' };
@@ -70,8 +78,14 @@ export const draftRows = (d: AiDraft, has: Record<AiDraftKey, boolean>): AiDraft
     ['paymentType', 'Pristype', d.paymentType],
     ['price', 'Pris (estimat)', d.price ? kr(d.price) : undefined],
     ['hourlyRate', 'Timepris (estimat)', d.hourlyRate ? `${kr(d.hourlyRate)}/t` : undefined],
-    ['duration', 'Varighet', d.duration ? `${d.duration.value} ${UNIT[d.duration.unit] ?? 'timer'}` : undefined],
+    [
+      'duration',
+      'Varighet',
+      d.duration ? `${d.duration.value} ${UNIT[d.duration.unit] ?? 'timer'}` : undefined,
+    ],
     ['tags', 'Ferdigheter', d.tags?.join(', ')],
   ];
-  return rows.filter(([, , value]) => value).map(([key, label, value]) => ({ key, label, value: value!, overwrites: has[key] }));
+  return rows
+    .filter(([, , value]) => value)
+    .map(([key, label, value]) => ({ key, label, value: value!, overwrites: has[key] }));
 };

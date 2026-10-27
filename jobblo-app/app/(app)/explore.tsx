@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  Pressable,
-  ActivityIndicator,
-  RefreshControl,
-} from 'react-native';
+import { View, Text, FlatList, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -31,7 +24,11 @@ import { TC } from '../../src/theme/colors';
 export default function ExploreScreen() {
   const tabBarSpace = useTabBarSpace();
   const router = useRouter();
-  const params = useLocalSearchParams<{ search?: string | string[]; lat?: string | string[]; lng?: string | string[] }>();
+  const params = useLocalSearchParams<{
+    search?: string | string[];
+    lat?: string | string[];
+    lng?: string | string[];
+  }>();
   const initialSearch = (Array.isArray(params.search) ? params.search[0] : params.search) ?? '';
 
   const filters = useSearchFilters(initialSearch);
@@ -42,7 +39,14 @@ export default function ExploreScreen() {
     if (seededLocation.current || !routeLat || !routeLng) return;
     const lat = Number(routeLat);
     const lng = Number(routeLng);
-    if (Number.isFinite(lat) && lat >= -90 && lat <= 90 && Number.isFinite(lng) && lng >= -180 && lng <= 180) {
+    if (
+      Number.isFinite(lat) &&
+      lat >= -90 &&
+      lat <= 90 &&
+      Number.isFinite(lng) &&
+      lng >= -180 &&
+      lng <= 180
+    ) {
       filters.setUserLocation({ lat, lng });
       seededLocation.current = true;
     }
@@ -83,13 +87,30 @@ export default function ExploreScreen() {
   const filterCategories = filterOptions?.categories ?? [];
   const mapCenter = React.useMemo<[number, number]>(() => {
     if (filters.userLocation) return [filters.userLocation.lng, filters.userLocation.lat];
-    const code = filters.selectedAreaCodes[0] || filters.selectedMunicipalityCodes[0] || filters.selectedCountyCodes[0];
+    const code =
+      filters.selectedAreaCodes[0] ||
+      filters.selectedMunicipalityCodes[0] ||
+      filters.selectedCountyCodes[0];
     const selected = code ? NORWAY_SEARCH_CENTERS[code] : undefined;
     if (selected) return selected;
     const coordinates = allJobs.find((job) => job.location?.coordinates)?.location.coordinates;
     return coordinates || [10.7522, 59.9139];
-  }, [allJobs, filters.selectedAreaCodes, filters.selectedMunicipalityCodes, filters.selectedCountyCodes, filters.userLocation]);
-  const mapRadius = filters.userLocation ? 5000 : filters.selectedAreaCodes.length ? 2000 : filters.selectedMunicipalityCodes.length ? 5000 : filters.selectedCountyCodes.length ? 20000 : 5000;
+  }, [
+    allJobs,
+    filters.selectedAreaCodes,
+    filters.selectedMunicipalityCodes,
+    filters.selectedCountyCodes,
+    filters.userLocation,
+  ]);
+  const mapRadius = filters.userLocation
+    ? 5000
+    : filters.selectedAreaCodes.length
+      ? 2000
+      : filters.selectedMunicipalityCodes.length
+        ? 5000
+        : filters.selectedCountyCodes.length
+          ? 20000
+          : 5000;
 
   const handleLoadMore = () => {
     if (!isFetchingNextPage && hasNextPage) {
@@ -138,24 +159,18 @@ export default function ExploreScreen() {
         filters={filters}
         locationTree={locationTree}
         onRemoveCategory={(cat) => {
-          filters.setSelectedCategories(
-            filters.selectedCategories.filter((c) => c !== cat)
-          );
+          filters.setSelectedCategories(filters.selectedCategories.filter((c) => c !== cat));
         }}
         onRemovePrice={filters.resetPrice}
         onRemoveUrgent={() => filters.setIsUrgent(false)}
         onRemoveCounty={(code) => {
-          filters.setSelectedCountyCodes(
-            filters.selectedCountyCodes.filter((c) => c !== code)
-          );
+          filters.setSelectedCountyCodes(filters.selectedCountyCodes.filter((c) => c !== code));
           if (locationTree) {
             const county = locationTree.find((c) => c.code === code);
             if (county?.children) {
               const munCodes = county.children.map((m) => m.code);
               filters.setSelectedMunicipalityCodes(
-                filters.selectedMunicipalityCodes.filter(
-                  (m) => !munCodes.includes(m)
-                )
+                filters.selectedMunicipalityCodes.filter((m) => !munCodes.includes(m))
               );
               const areaCodes = county.children.flatMap(
                 (m) => m.children?.map((a) => a.code) ?? []
@@ -171,12 +186,8 @@ export default function ExploreScreen() {
             filters.selectedMunicipalityCodes.filter((m) => m !== code)
           );
           if (locationTree) {
-            const parentCounty = locationTree.find((c) =>
-              c.children?.some((m) => m.code === code)
-            );
-            const municipality = parentCounty?.children?.find(
-              (m) => m.code === code
-            );
+            const parentCounty = locationTree.find((c) => c.children?.some((m) => m.code === code));
+            const municipality = parentCounty?.children?.find((m) => m.code === code);
             if (municipality?.children) {
               const areaCodes = municipality.children.map((a) => a.code);
               filters.setSelectedAreaCodes(
@@ -208,34 +219,25 @@ export default function ExploreScreen() {
         onToggleCounty={(code) => {
           const isSelected = filters.selectedCountyCodes.includes(code);
           if (isSelected) {
-            filters.setSelectedCountyCodes(
-              filters.selectedCountyCodes.filter((c) => c !== code)
-            );
+            filters.setSelectedCountyCodes(filters.selectedCountyCodes.filter((c) => c !== code));
             if (locationTree) {
               const county = locationTree.find((c) => c.code === code);
               if (county?.children) {
                 const munCodes = county.children.map((m) => m.code);
                 filters.setSelectedMunicipalityCodes(
-                  filters.selectedMunicipalityCodes.filter(
-                    (m) => !munCodes.includes(m)
-                  )
+                  filters.selectedMunicipalityCodes.filter((m) => !munCodes.includes(m))
                 );
                 const areaCodes = county.children.flatMap(
                   (m) => m.children?.map((a) => a.code) ?? []
                 );
                 filters.setSelectedAreaCodes(
-                  filters.selectedAreaCodes.filter(
-                    (a) => !areaCodes.includes(a)
-                  )
+                  filters.selectedAreaCodes.filter((a) => !areaCodes.includes(a))
                 );
               }
             }
             filters.toggleExpandCounty(code);
           } else {
-            filters.setSelectedCountyCodes([
-              ...filters.selectedCountyCodes,
-              code,
-            ]);
+            filters.setSelectedCountyCodes([...filters.selectedCountyCodes, code]);
             filters.toggleExpandCounty(code);
           }
         }}
@@ -250,30 +252,21 @@ export default function ExploreScreen() {
               const parentCounty = locationTree.find((c) =>
                 c.children?.some((m) => m.code === code)
               );
-              const municipality = parentCounty?.children?.find(
-                (m) => m.code === code
-              );
+              const municipality = parentCounty?.children?.find((m) => m.code === code);
               if (municipality?.children) {
                 const areaCodes = municipality.children.map((a) => a.code);
                 filters.setSelectedAreaCodes(
-                  filters.selectedAreaCodes.filter(
-                    (a) => !areaCodes.includes(a)
-                  )
+                  filters.selectedAreaCodes.filter((a) => !areaCodes.includes(a))
                 );
               }
             }
             filters.toggleExpandMunicipality(code);
           } else {
-            filters.setSelectedMunicipalityCodes([
-              ...filters.selectedMunicipalityCodes,
-              code,
-            ]);
+            filters.setSelectedMunicipalityCodes([...filters.selectedMunicipalityCodes, code]);
             const parentCounty = locationTree?.find((c) =>
               c.children?.some((m) => m.code === code)
             );
-            const municipality = parentCounty?.children?.find(
-              (m) => m.code === code
-            );
+            const municipality = parentCounty?.children?.find((m) => m.code === code);
             if (municipality?.children && municipality.children.length > 0) {
               filters.toggleExpandMunicipality(code);
             }
@@ -319,22 +312,26 @@ export default function ExploreScreen() {
         onEndReachedThreshold={0.5}
         contentContainerStyle={{ paddingBottom: 32 + tabBarSpace }}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={isRefetching && !isFetchingNextPage} onRefresh={() => void refetch()} tintColor={TC.brandText} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefetching && !isFetchingNextPage}
+            onRefresh={() => void refetch()}
+            tintColor={TC.brandText}
+          />
+        }
         ListEmptyComponent={
           !isLoading && !isError && allJobs.length === 0 ? (
             <View className="mx-4 rounded-[24px] bg-surface p-6">
-              <Text className="text-[1.0625rem] font-semibold text-ink">
-                Ingen oppdrag funnet
-              </Text>
+              <Text className="text-[1.0625rem] font-semibold text-ink">Ingen oppdrag funnet</Text>
               <Text className="mt-2 text-[0.875rem] leading-relaxed text-muted">
                 {filters.searchText ||
-                  filters.selectedCategories.length > 0 ||
-                  filters.minPrice !== 0 ||
-                  filters.maxPrice !== 100000 ||
-                  filters.isUrgent ||
-                  filters.selectedCountyCodes.length > 0 ||
-                  filters.selectedMunicipalityCodes.length > 0 ||
-                  filters.userLocation
+                filters.selectedCategories.length > 0 ||
+                filters.minPrice !== 0 ||
+                filters.maxPrice !== 100000 ||
+                filters.isUrgent ||
+                filters.selectedCountyCodes.length > 0 ||
+                filters.selectedMunicipalityCodes.length > 0 ||
+                filters.userLocation
                   ? 'Prøv et annet søkeord eller fjern noen filtrer.'
                   : 'Det finnes ingen tilgjengelige oppdrag akkurat nå.'}
               </Text>
@@ -346,13 +343,10 @@ export default function ExploreScreen() {
                 filters.selectedCountyCodes.length > 0 ||
                 filters.selectedMunicipalityCodes.length > 0 ||
                 filters.userLocation) && (
-                  <View className="mt-4">
-                    <Button
-                      label="Nullstill filtre"
-                      onPress={filters.resetAll}
-                    />
-                  </View>
-                )}
+                <View className="mt-4">
+                  <Button label="Nullstill filtre" onPress={filters.resetAll} />
+                </View>
+              )}
             </View>
           ) : undefined
         }
@@ -360,9 +354,7 @@ export default function ExploreScreen() {
 
       {isError && !isLoading && (
         <View className="absolute inset-x-4 top-24 rounded-[24px] bg-surface p-6">
-          <Text className="text-[0.9375rem] font-semibold text-ink">
-            Kunne ikke laste oppdrag
-          </Text>
+          <Text className="text-[0.9375rem] font-semibold text-ink">Kunne ikke laste oppdrag</Text>
           <Text className="mt-1 text-[0.875rem] text-muted">
             Sjekk tilkoblingen din og prøv igjen.
           </Text>

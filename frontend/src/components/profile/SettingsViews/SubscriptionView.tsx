@@ -72,10 +72,11 @@ export function SubscriptionView() {
     queryFn: () => getUserTransactions(page),
   });
 
-  const { data: currentSubscription, isLoading: isSubscriptionLoading } = useQuery<CurrentSubscription | null>({
-    queryKey: ['my-subscription'],
-    queryFn: getMySubscription,
-  });
+  const { data: currentSubscription, isLoading: isSubscriptionLoading } =
+    useQuery<CurrentSubscription | null>({
+      queryKey: ['my-subscription'],
+      queryFn: getMySubscription,
+    });
 
   const cancelMutation = useMutation({
     mutationFn: cancelSubscription,
@@ -91,7 +92,8 @@ export function SubscriptionView() {
       toast.success(result?.message || 'Abonnementet fortsetter');
       queryClient.invalidateQueries({ queryKey: ['my-subscription'] });
     },
-    onError: (error: unknown) => toast.error(errorMessage(error, 'Kunne ikke gjenoppta abonnementet')),
+    onError: (error: unknown) =>
+      toast.error(errorMessage(error, 'Kunne ikke gjenoppta abonnementet')),
   });
   const cancelPendingPlanMutation = useMutation({
     mutationFn: cancelSubscriptionChange,
@@ -115,9 +117,10 @@ export function SubscriptionView() {
   const transactions = data?.transactions || [];
   const totalPages = data?.totalPages || 1;
   const contacts = currentSubscription?.contacts;
-  const includedProgress = contacts && contacts.includedLimit > 0
-    ? Math.min(contacts.includedUsed / contacts.includedLimit, 1)
-    : 0;
+  const includedProgress =
+    contacts && contacts.includedLimit > 0
+      ? Math.min(contacts.includedUsed / contacts.includedLimit, 1)
+      : 0;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('no-NO', {
@@ -141,11 +144,15 @@ export function SubscriptionView() {
               <p className="text-white/70 text-sm font-medium uppercase tracking-wider mb-1">
                 Abonnementsstatus
               </p>
-              <h4 className="text-3xl font-black">{currentSubscription?.plan || 'Ingen aktivt abonnement'}</h4>
+              <h4 className="text-3xl font-black">
+                {currentSubscription?.plan || 'Ingen aktivt abonnement'}
+              </h4>
               <p className="text-white/60 text-xs mt-2">
                 Din kontotype er satt til{' '}
                 <span className="text-white font-bold">
-                  {currentSubscription?.planType === 'private' ? 'privat' : currentSubscription?.planType || 'privat'}
+                  {currentSubscription?.planType === 'private'
+                    ? 'privat'
+                    : currentSubscription?.planType || 'privat'}
                 </span>
               </p>
             </div>
@@ -160,7 +167,8 @@ export function SubscriptionView() {
             <div className="relative z-10 mt-5 border-t border-white/15 pt-4">
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 <span className="rounded-full bg-white/15 px-3 py-1 font-semibold">
-                  {currentSubscription.status === 'past_due' || currentSubscription.stripeStatus === 'unpaid'
+                  {currentSubscription.status === 'past_due' ||
+                  currentSubscription.stripeStatus === 'unpaid'
                     ? 'Betaling forfalt'
                     : currentSubscription.status === 'expired'
                       ? 'Utløpt'
@@ -179,12 +187,12 @@ export function SubscriptionView() {
                   <span className="flex items-center gap-1 text-white/75">
                     <CalendarDays size={14} />
                     {currentSubscription.cancelAtPeriodEnd
-                        ? 'Tilgang til'
-                        : currentSubscription.status === 'expired'
-                          ? 'Utløpt'
-                          : currentSubscription.status === 'past_due'
-                            ? 'Betalingsperiode slutt'
-                            : 'Neste betaling'}{' '}
+                      ? 'Tilgang til'
+                      : currentSubscription.status === 'expired'
+                        ? 'Utløpt'
+                        : currentSubscription.status === 'past_due'
+                          ? 'Betalingsperiode slutt'
+                          : 'Neste betaling'}{' '}
                     {formatDate(currentSubscription.currentPeriodEnd)}
                   </span>
                 )}
@@ -215,7 +223,11 @@ export function SubscriptionView() {
                   disabled={portalMutation.isPending}
                   className="inline-flex items-center gap-2 rounded-xl border border-white/30 px-4 py-2 text-sm font-bold text-white hover:bg-white/10 disabled:opacity-60"
                 >
-                  {portalMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <ExternalLink size={14} />}
+                  {portalMutation.isPending ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : (
+                    <ExternalLink size={14} />
+                  )}
                   Betalingsmåte og faktura
                 </button>
                 {currentSubscription.cancelAtPeriodEnd ? (
@@ -225,49 +237,55 @@ export function SubscriptionView() {
                     disabled={resumeMutation.isPending}
                     className="inline-flex items-center gap-2 rounded-xl border border-white/30 px-4 py-2 text-sm font-bold text-white hover:bg-white/10 disabled:opacity-60"
                   >
-                    {resumeMutation.isPending ? <Loader2 size={14} className="animate-spin" /> : <RotateCcw size={14} />}
+                    {resumeMutation.isPending ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <RotateCcw size={14} />
+                    )}
                     {currentSubscription.pendingPlan
                       ? 'Avbryt planlagt endring'
                       : 'Fortsett abonnement'}
                   </button>
                 ) : ['active', 'past_due'].includes(currentSubscription.status) ? (
                   <>
-                  {currentSubscription.pendingPlan && (
+                    {currentSubscription.pendingPlan && (
+                      <ConfirmDialog
+                        title="Avbryte planlagt nedgradering?"
+                        description={`Abonnementet fortsetter på ${currentSubscription.plan}. Planendringen til ${currentSubscription.pendingPlan.plan} ${formatDate(currentSubscription.pendingPlan.effectiveAt)} blir avbrutt.`}
+                        confirmText="Avbryt planlagt endring"
+                        cancelText="Behold endringen"
+                        onConfirm={() => cancelPendingPlanMutation.mutateAsync()}
+                        trigger={
+                          <button
+                            type="button"
+                            disabled={cancelPendingPlanMutation.isPending}
+                            className="inline-flex items-center gap-2 rounded-xl border border-white/30 px-4 py-2 text-sm font-bold text-white hover:bg-white/10 disabled:opacity-60"
+                          >
+                            {cancelPendingPlanMutation.isPending && (
+                              <Loader2 size={14} className="animate-spin" />
+                            )}
+                            Avbryt planlagt endring
+                          </button>
+                        }
+                      />
+                    )}
                     <ConfirmDialog
-                      title="Avbryte planlagt nedgradering?"
-                      description={`Abonnementet fortsetter på ${currentSubscription.plan}. Planendringen til ${currentSubscription.pendingPlan.plan} ${formatDate(currentSubscription.pendingPlan.effectiveAt)} blir avbrutt.`}
-                      confirmText="Avbryt planlagt endring"
-                      cancelText="Behold endringen"
-                      onConfirm={() => cancelPendingPlanMutation.mutateAsync()}
+                      title="Si opp abonnementet?"
+                      description={`Du beholder tilgangen til ${currentSubscription.currentPeriodEnd ? formatDate(currentSubscription.currentPeriodEnd) : 'ut den betalte perioden'}. Abonnementet fornyes ikke etter dette.`}
+                      confirmText="Si opp abonnementet"
+                      cancelText="Behold abonnementet"
+                      variant="destructive"
+                      onConfirm={() => cancelMutation.mutateAsync()}
                       trigger={
                         <button
                           type="button"
-                          disabled={cancelPendingPlanMutation.isPending}
-                          className="inline-flex items-center gap-2 rounded-xl border border-white/30 px-4 py-2 text-sm font-bold text-white hover:bg-white/10 disabled:opacity-60"
+                          disabled={cancelMutation.isPending}
+                          className="rounded-xl px-4 py-2 text-sm font-bold text-white/80 hover:bg-white/10 disabled:opacity-60"
                         >
-                          {cancelPendingPlanMutation.isPending && <Loader2 size={14} className="animate-spin" />}
-                          Avbryt planlagt endring
+                          Si opp abonnement
                         </button>
                       }
                     />
-                  )}
-                  <ConfirmDialog
-                    title="Si opp abonnementet?"
-                    description={`Du beholder tilgangen til ${currentSubscription.currentPeriodEnd ? formatDate(currentSubscription.currentPeriodEnd) : 'ut den betalte perioden'}. Abonnementet fornyes ikke etter dette.`}
-                    confirmText="Si opp abonnementet"
-                    cancelText="Behold abonnementet"
-                    variant="destructive"
-                    onConfirm={() => cancelMutation.mutateAsync()}
-                    trigger={
-                      <button
-                        type="button"
-                        disabled={cancelMutation.isPending}
-                        className="rounded-xl px-4 py-2 text-sm font-bold text-white/80 hover:bg-white/10 disabled:opacity-60"
-                      >
-                        Si opp abonnement
-                      </button>
-                    }
-                  />
                   </>
                 ) : null}
               </div>
@@ -305,21 +323,52 @@ export function SubscriptionView() {
               {contacts.includedUsed} / {contacts.includedLimit} brukt
             </p>
             <div className="mt-2 h-2 overflow-hidden rounded-full bg-gray-100">
-              <div className="h-full rounded-full bg-[#2E6641]" style={{ width: `${includedProgress * 100}%` }} />
+              <div
+                className="h-full rounded-full bg-[#2E6641]"
+                style={{ width: `${includedProgress * 100}%` }}
+              />
             </div>
 
             <div className="mt-6 grid grid-cols-1 gap-3 border-t border-gray-100 pt-5 sm:grid-cols-2">
-              <div className="flex justify-between gap-3 text-sm"><span className="text-gray-500">Ekstra kontakt</span><strong>{contacts.perContactPrice === null ? 'Abonnement kreves' : `${contacts.perContactPrice} NOK`}</strong></div>
-              {contacts.contactUnlockMinutes !== null ? <div className="flex justify-between gap-3 text-sm"><span className="text-gray-500">Tilgang til nye oppdrag</span><strong>{contacts.contactUnlockMinutes === 0 ? 'Tilgang i sanntid' : `Tilgang etter ${contacts.contactUnlockMinutes} min`}</strong></div> : null}
+              <div className="flex justify-between gap-3 text-sm">
+                <span className="text-gray-500">Ekstra kontakt</span>
+                <strong>
+                  {contacts.perContactPrice === null
+                    ? 'Abonnement kreves'
+                    : `${contacts.perContactPrice} NOK`}
+                </strong>
+              </div>
+              {contacts.contactUnlockMinutes !== null ? (
+                <div className="flex justify-between gap-3 text-sm">
+                  <span className="text-gray-500">Tilgang til nye oppdrag</span>
+                  <strong>
+                    {contacts.contactUnlockMinutes === 0
+                      ? 'Tilgang i sanntid'
+                      : `Tilgang etter ${contacts.contactUnlockMinutes} min`}
+                  </strong>
+                </div>
+              ) : null}
             </div>
 
             <div className="mt-6 border-t border-gray-100 pt-5">
               <h4 className="text-sm font-bold text-gray-900">Betalte ekstra kontakter</h4>
               <div className="mt-3 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
-                <div className="flex justify-between gap-3"><span className="text-gray-500">Kjøpt</span><strong>{contacts.paidPurchased}</strong></div>
-                <div className="flex justify-between gap-3"><span className="text-gray-500">Brukt</span><strong>{contacts.paidUsed}</strong></div>
-                <div className="flex justify-between gap-3"><span className="text-gray-500">Tilgjengelig</span><strong>{contacts.paidAvailable}</strong></div>
-                <div className="flex justify-between gap-3"><span className="text-gray-500">Betalt for ekstra kontakter</span><strong>{contacts.totalPaidForExtraContacts} NOK</strong></div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-gray-500">Kjøpt</span>
+                  <strong>{contacts.paidPurchased}</strong>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-gray-500">Brukt</span>
+                  <strong>{contacts.paidUsed}</strong>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-gray-500">Tilgjengelig</span>
+                  <strong>{contacts.paidAvailable}</strong>
+                </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-gray-500">Betalt for ekstra kontakter</span>
+                  <strong>{contacts.totalPaidForExtraContacts} NOK</strong>
+                </div>
               </div>
             </div>
           </div>

@@ -5,7 +5,11 @@ import { Navigate, useLocation } from 'react-router-dom';
 /** Shown while the page-load bootstrap asks the server who is signed in. */
 export function AuthPending() {
   return (
-    <div role="status" aria-live="polite" className="flex min-h-[50vh] items-center justify-center text-sm text-gray-500">
+    <div
+      role="status"
+      aria-live="polite"
+      className="flex min-h-[50vh] items-center justify-center text-sm text-gray-500"
+    >
       Laster …
     </div>
   );
@@ -28,9 +32,7 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
     //
     // `from` is read back by useAuth after login so the user lands where they were
     // actually going. Send the full path so query strings (?session_id=...) survive.
-    return (
-      <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />
-    );
+    return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
   }
 
   return <>{children}</>;

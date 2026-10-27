@@ -39,7 +39,8 @@ export const useChatSocket = (conversationId?: string) => {
     // Socket listeners. The Header applies the same events (it listens on every page);
     // applying one twice is harmless, the message is matched by _id.
     const handleReceiveMessage = (data: { chatId: string; message?: ChatMessage }) => {
-      if (!applyIncomingMessage(queryClient, data.chatId, data.message)) refreshChats(queryClient, data.chatId);
+      if (!applyIncomingMessage(queryClient, data.chatId, data.message))
+        refreshChats(queryClient, data.chatId);
 
       if (conversationId === data.chatId) {
         socket.emit('mark-as-read', { chatId: conversationId, userId });

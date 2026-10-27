@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft, Check, ShieldAlert } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -16,7 +25,11 @@ import {
   isDisputeReasonCategory,
   type DisputeReasonCategory,
 } from '../../../src/types/Dispute';
-import { disputeErrorMessage, httpStatus, isDuplicateDisputeError } from '../../../src/utils/disputeError';
+import {
+  disputeErrorMessage,
+  httpStatus,
+  isDuplicateDisputeError,
+} from '../../../src/utils/disputeError';
 import { Button } from '../../../src/components/ui/Button';
 import { ErrorState } from '../../../src/components/ui/ErrorState';
 import { TC, tc } from '../../../src/theme/colors';
@@ -52,9 +65,12 @@ export default function CreateDisputeScreen() {
     trimmedTitle.length >= DISPUTE_TITLE_MIN_LENGTH &&
     trimmedDescription.length >= DISPUTE_DESCRIPTION_MIN_LENGTH;
   // Only reasons that make sense for this side of the order (as on the web).
-  const reasons = disputeReasonsFor(data?.isProvider && !data?.isCustomer ? 'provider' : 'customer');
+  const reasons = disputeReasonsFor(
+    data?.isProvider && !data?.isCustomer ? 'provider' : 'customer'
+  );
 
-  const openThread = () => router.replace({ pathname: '/(app)/disputes/order/[orderId]', params: { orderId } });
+  const openThread = () =>
+    router.replace({ pathname: '/(app)/disputes/order/[orderId]', params: { orderId } });
 
   const submit = () => {
     // No orderId means no endpoint to call — bail before touching the API.
@@ -68,11 +84,17 @@ export default function CreateDisputeScreen() {
       return;
     }
     if (trimmedTitle.length < DISPUTE_TITLE_MIN_LENGTH) {
-      Alert.alert('Tittel mangler', `Skriv en kort tittel for tvisten (minst ${DISPUTE_TITLE_MIN_LENGTH} tegn).`);
+      Alert.alert(
+        'Tittel mangler',
+        `Skriv en kort tittel for tvisten (minst ${DISPUTE_TITLE_MIN_LENGTH} tegn).`
+      );
       return;
     }
     if (trimmedDescription.length < DISPUTE_DESCRIPTION_MIN_LENGTH) {
-      Alert.alert('Beskrivelse mangler', `Beskriv hva som har skjedd (minst ${DISPUTE_DESCRIPTION_MIN_LENGTH} tegn).`);
+      Alert.alert(
+        'Beskrivelse mangler',
+        `Beskriv hva som har skjedd (minst ${DISPUTE_DESCRIPTION_MIN_LENGTH} tegn).`
+      );
       return;
     }
     if (openDisputeMutation.isPending) return;
@@ -94,12 +116,15 @@ export default function CreateDisputeScreen() {
             } catch {
               // fall through to the message below
             }
-            Alert.alert('Tvist finnes allerede', 'Det finnes allerede en aktiv tvist for dette oppdraget.');
+            Alert.alert(
+              'Tvist finnes allerede',
+              'Det finnes allerede en aktiv tvist for dette oppdraget.'
+            );
             return;
           }
           Alert.alert('Kunne ikke opprette tvist', disputeErrorMessage(e, 'Prøv igjen om litt.'));
         },
-      },
+      }
     );
   };
 
@@ -140,7 +165,8 @@ export default function CreateDisputeScreen() {
 
   const { order, activeDispute } = data;
   const serviceTitle = order.serviceId?.title ?? 'Oppdrag';
-  const amount = typeof order.agreedPrice === 'number' ? order.agreedPrice.toLocaleString('nb-NO') : '—';
+  const amount =
+    typeof order.agreedPrice === 'number' ? order.agreedPrice.toLocaleString('nb-NO') : '—';
   const eligible = isDisputeEligibleOrderStatus(order.status);
 
   // The server carries the authoritative flag; the client only avoids offering a
@@ -151,7 +177,8 @@ export default function CreateDisputeScreen() {
         <View className="mx-4 my-8 rounded-3xl bg-surface p-6">
           <Text className="text-[0.9375rem] font-semibold text-ink">Tvist finnes allerede</Text>
           <Text className="mt-1.5 text-[0.875rem] leading-relaxed text-muted">
-            Det finnes allerede en aktiv tvist for dette oppdraget. Fortsett i den eksisterende tvisten.
+            Det finnes allerede en aktiv tvist for dette oppdraget. Fortsett i den eksisterende
+            tvisten.
           </Text>
           <View className="mt-4 gap-2">
             <Button label="Se tvist" onPress={openThread} fullWidth />
@@ -177,13 +204,20 @@ export default function CreateDisputeScreen() {
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
-      <KeyboardAvoidingView className="flex-1" behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
           keyboardShouldPersistTaps="handled"
         >
-          <Pressable onPress={() => router.back()} className="mb-5 flex-row items-center gap-2" hitSlop={8}>
+          <Pressable
+            onPress={() => router.back()}
+            className="mb-5 flex-row items-center gap-2"
+            hitSlop={8}
+          >
             <ArrowLeft size={16} color={tc('#63665F', 'muted')} />
             <Text className="text-[0.8125rem] text-muted">Tilbake</Text>
           </Pressable>
@@ -196,20 +230,27 @@ export default function CreateDisputeScreen() {
               <View className="flex-1">
                 <Text className="text-[0.9375rem] font-semibold text-danger">Åpne tvist</Text>
                 <Text className="text-[0.8125rem] leading-relaxed text-muted">
-                  Jobblo gjennomgår saken og kontakter begge parter. Betalingen holdes tilbake til tvisten er avgjort.
+                  Jobblo gjennomgår saken og kontakter begge parter. Betalingen holdes tilbake til
+                  tvisten er avgjort.
                 </Text>
               </View>
             </View>
           </View>
 
           <View className="mb-4 rounded-2xl bg-surface p-5">
-            <Text className="mb-1 text-[0.8125rem] font-medium text-ink" numberOfLines={2}>{serviceTitle}</Text>
+            <Text className="mb-1 text-[0.8125rem] font-medium text-ink" numberOfLines={2}>
+              {serviceTitle}
+            </Text>
             <Text className="text-[0.8125rem] text-muted">Avtalt beløp: {amount} kr</Text>
           </View>
 
           <View className="mb-4 rounded-2xl bg-surface p-5">
-            <Text className="mb-1 text-[0.9375rem] font-semibold text-ink">Hva handler tvisten om?</Text>
-            <Text className="mb-3 text-[0.8125rem] text-muted">Velg kategorien som passer best.</Text>
+            <Text className="mb-1 text-[0.9375rem] font-semibold text-ink">
+              Hva handler tvisten om?
+            </Text>
+            <Text className="mb-3 text-[0.8125rem] text-muted">
+              Velg kategorien som passer best.
+            </Text>
             {reasons.map((reason) => {
               const selected = reasonCategory === reason;
               return (
@@ -218,9 +259,17 @@ export default function CreateDisputeScreen() {
                   onPress={() => setReasonCategory(reason)}
                   accessibilityRole="radio"
                   accessibilityState={{ selected }}
-                  className={['mb-2 flex-row items-center justify-between rounded-xl border p-3', selected ? 'border-brand-text bg-tint' : 'border-line'].join(' ')}
+                  className={[
+                    'mb-2 flex-row items-center justify-between rounded-xl border p-3',
+                    selected ? 'border-brand-text bg-tint' : 'border-line',
+                  ].join(' ')}
                 >
-                  <Text className={['flex-1 text-[0.8125rem]', selected ? 'font-medium text-brand-text' : 'text-ink'].join(' ')}>
+                  <Text
+                    className={[
+                      'flex-1 text-[0.8125rem]',
+                      selected ? 'font-medium text-brand-text' : 'text-ink',
+                    ].join(' ')}
+                  >
                     {DISPUTE_REASON_LABELS[reason]}
                   </Text>
                   {selected ? <Check size={16} color={TC.brandText} /> : null}
@@ -241,7 +290,9 @@ export default function CreateDisputeScreen() {
               className="rounded-xl border border-line p-3 text-[0.8125rem] text-ink"
             />
             <Text className="mb-3 mt-1 text-right text-[0.8125rem] text-muted">
-              {trimmedTitle.length < DISPUTE_TITLE_MIN_LENGTH ? `Minst ${DISPUTE_TITLE_MIN_LENGTH} tegn · ` : ''}
+              {trimmedTitle.length < DISPUTE_TITLE_MIN_LENGTH
+                ? `Minst ${DISPUTE_TITLE_MIN_LENGTH} tegn · `
+                : ''}
               {title.length}/{DISPUTE_TITLE_MAX_LENGTH}
             </Text>
             <TextInput
@@ -256,7 +307,9 @@ export default function CreateDisputeScreen() {
               className="min-h-[120px] rounded-xl border border-line p-3 text-[0.8125rem] text-ink"
             />
             <Text className="mt-1 text-right text-[0.8125rem] text-muted">
-              {trimmedDescription.length < DISPUTE_DESCRIPTION_MIN_LENGTH ? `Minst ${DISPUTE_DESCRIPTION_MIN_LENGTH} tegn · ` : ''}
+              {trimmedDescription.length < DISPUTE_DESCRIPTION_MIN_LENGTH
+                ? `Minst ${DISPUTE_DESCRIPTION_MIN_LENGTH} tegn · `
+                : ''}
               {description.length}/{DISPUTE_DESCRIPTION_MAX_LENGTH}
             </Text>
           </View>

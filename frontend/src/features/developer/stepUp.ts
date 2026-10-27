@@ -13,7 +13,14 @@ export const RiskConfirmContext = createContext<ConfirmRisk | null>(null);
 
 /** The server answered 409 RISK_CONFIRM: the assessment it wants confirmed. */
 export const riskToConfirm = (e: unknown) => {
-  const d = (e as { response?: { status?: number; data?: { code?: string; data?: { risk: RiskAssessment; summary: string } } } })?.response;
+  const d = (
+    e as {
+      response?: {
+        status?: number;
+        data?: { code?: string; data?: { risk: RiskAssessment; summary: string } };
+      };
+    }
+  )?.response;
   return d?.status === 409 && d.data?.code === 'RISK_CONFIRM' ? d.data.data : null;
 };
 
@@ -21,7 +28,7 @@ export const riskToConfirm = (e: unknown) => {
 export function useRiskConfirm() {
   const confirm = useContext(RiskConfirmContext);
   if (!confirm) throw new Error('useRiskConfirm must be used inside <StepUpProvider>');
-  return async <T,>(fn: (acknowledgeRisk: boolean) => Promise<T>): Promise<T> => {
+  return async <T>(fn: (acknowledgeRisk: boolean) => Promise<T>): Promise<T> => {
     try {
       return await fn(false);
     } catch (e) {
@@ -40,7 +47,9 @@ export function useStepUp(): WithStepUp {
 }
 
 export const errMessage = (e: unknown, fallback = 'Request failed') =>
-  (e as { response?: { data?: { message?: string } } })?.response?.data?.message || (e as Error)?.message || fallback;
+  (e as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+  (e as Error)?.message ||
+  fallback;
 
 /**
  * Submit a sensitive action. A Super Admin executes it; an operations developer creates
@@ -52,8 +61,12 @@ export function useSensitiveAction(invalidate: string[] = []) {
   const qc = useQueryClient();
   return async (type: ActionType, input: Doc, reason: string) => {
     try {
-      const r = await withRisk((ack) => withStepUp((token) => devApi.action(type, input, reason, token, ack)));
-      toast.success(r.executed ? `Done: ${r.summary}` : `Sent for Super Admin approval: ${r.summary}`);
+      const r = await withRisk((ack) =>
+        withStepUp((token) => devApi.action(type, input, reason, token, ack))
+      );
+      toast.success(
+        r.executed ? `Done: ${r.summary}` : `Sent for Super Admin approval: ${r.summary}`
+      );
       [...invalidate, 'approvals'].forEach((k) => qc.invalidateQueries({ queryKey: ['dev', k] }));
       return r;
     } catch (e) {

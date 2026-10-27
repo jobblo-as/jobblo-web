@@ -5,13 +5,19 @@ const cf = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFraction
 
 export const num = (v?: number | null) => (v === null || v === undefined ? '—' : nf.format(v));
 export const compact = (v?: number | null) => (v === null || v === undefined ? '—' : cf.format(v));
-export const pct = (v?: number | null, digits = 1) => (v === null || v === undefined ? '—' : `${v.toFixed(digits)}%`);
+export const pct = (v?: number | null, digits = 1) =>
+  v === null || v === undefined ? '—' : `${v.toFixed(digits)}%`;
 /** Requests per second; tiny averages read as "<0.01" instead of a misleading 0. */
 export const rate = (v?: number | null) =>
   v === null || v === undefined ? '—' : v > 0 && v < 0.01 ? '<0.01/s' : `${Number(v.toFixed(2))}/s`;
-const nok = new Intl.NumberFormat('nb-NO', { style: 'currency', currency: 'NOK', maximumFractionDigits: 2 });
+const nok = new Intl.NumberFormat('nb-NO', {
+  style: 'currency',
+  currency: 'NOK',
+  maximumFractionDigits: 2,
+});
 /** NOK amounts; pass `minor` for øre fields (*Minor, Stripe operations/incidents). */
-export const money = (v?: number | null, minor = false) => (v === null || v === undefined ? '—' : nok.format(minor ? v / 100 : v));
+export const money = (v?: number | null, minor = false) =>
+  v === null || v === undefined ? '—' : nok.format(minor ? v / 100 : v);
 export const ms = (v?: number | null) => {
   if (v === null || v === undefined) return '—';
   if (v < 1000) return `${Math.round(v)} ms`;
@@ -48,19 +54,28 @@ export const every = (msValue: number) => duration(msValue / 1000).replace(/ 0[s
 export const ago = (d?: string | Date | null) =>
   d ? formatDistanceToNowStrict(new Date(d), { addSuffix: true }) : '—';
 export const until = (d?: string | Date | null) =>
-  d ? (new Date(d).getTime() <= Date.now() ? 'due now' : `in ${formatDistanceToNowStrict(new Date(d))}`) : '—';
-export const dateTime = (d?: string | Date | null) => (d ? format(new Date(d), 'dd MMM yyyy, HH:mm:ss') : '—');
+  d
+    ? new Date(d).getTime() <= Date.now()
+      ? 'due now'
+      : `in ${formatDistanceToNowStrict(new Date(d))}`
+    : '—';
+export const dateTime = (d?: string | Date | null) =>
+  d ? format(new Date(d), 'dd MMM yyyy, HH:mm:ss') : '—';
 
 /** X-axis tick label that fits the bucket size of the series. */
 export const tick = (bucketMs: number) => (d: string | number) =>
-  format(new Date(d), bucketMs < 3_600_000 ? 'HH:mm' : bucketMs < 86_400_000 ? 'dd MMM HH:mm' : 'dd MMM');
+  format(
+    new Date(d),
+    bucketMs < 3_600_000 ? 'HH:mm' : bucketMs < 86_400_000 ? 'dd MMM HH:mm' : 'dd MMM'
+  );
 
 /** Download rows as a CSV file (client-side, from data already on screen). */
 export function downloadCsv(filename: string, rows: Record<string, unknown>[]) {
   if (!rows.length) return;
   const cols = Object.keys(rows[0]);
   const esc = (v: unknown) => {
-    let s = v === null || v === undefined ? '' : typeof v === 'object' ? JSON.stringify(v) : String(v);
+    let s =
+      v === null || v === undefined ? '' : typeof v === 'object' ? JSON.stringify(v) : String(v);
     // Block spreadsheet formula injection from logged values.
     if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;

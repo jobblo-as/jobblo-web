@@ -120,9 +120,9 @@ const ApplicantsPage: React.FC = () => {
 
   const jobDateLabel = service.date
     ? new Date(service.date).toLocaleDateString('no-NO', {
-      day: 'numeric',
-      month: 'long',
-    })
+        day: 'numeric',
+        month: 'long',
+      })
     : 'Fullført oppdrag';
 
   // chatStartingFor is declared at the top of the component, above the early returns.
@@ -344,20 +344,20 @@ const ApplicantsPage: React.FC = () => {
               <div className="space-y-4">
                 {applicants.map((app: any, index: number) => {
                   const isContractedApplicant =
-                    activeOrder &&
-                    String(activeOrder.providerId) === String(app.applicant._id);
+                    activeOrder && String(activeOrder.providerId) === String(app.applicant._id);
 
                   return (
-                  <div
-                    key={app._id}
-                    className={`relative bg-white border rounded-2xl p-4 md:p-5 transition-all ${app.favorite
-                      ? 'border-2 border-yellow-300'
-                      : app.archived
-                        ? 'opacity-60'
-                        : 'border-black/5'
+                    <div
+                      key={app._id}
+                      className={`relative bg-white border rounded-2xl p-4 md:p-5 transition-all ${
+                        app.favorite
+                          ? 'border-2 border-yellow-300'
+                          : app.archived
+                            ? 'opacity-60'
+                            : 'border-black/5'
                       }`}
-                  >
-                    {/*
+                    >
+                      {/*
                       The four actions used to be `absolute top-4 right-4`, while the stats
                       below sat in normal flow on the same side of the same row. The row
                       reserved space for them on mobile (`pt-10`) but cancelled it on
@@ -366,154 +366,157 @@ const ApplicantsPage: React.FC = () => {
                       flow now — one right-hand column, actions above the numbers — so the
                       two cannot collide at any width.
                     */}
-                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                      <div className="flex min-w-0 flex-1 items-start gap-4">
-                        <div className="relative flex-shrink-0">
-                          <div className="w-12 h-12 rounded-full bg-[#EAF1E9] text-[#122A1C] font-medium flex items-center justify-center text-lg overflow-hidden">
-                            {app.applicant.avatarUrl ? (
-                              <img
-                                src={app.applicant.avatarUrl}
-                                alt={app.applicant.name}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              app.applicant.name
-                                .split(' ')
-                                .map((n: any) => n[0])
-                                .join('')
-                            )}
-                          </div>
-                          {index === 0 && (
-                            <span className="absolute -top-1 -right-1 bg-custom-green text-white text-[9px] font-medium rounded-full px-1.5 py-0.5 border-[1.5px] border-[#f5f0e8]">
-                              Topp
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-0.5">
-                            <span className="text-[15px] font-medium text-gray-900">
-                              {app.applicant.name}
-                            </span>
-                            {app.applicant.verified && (
-                              <span className="flex items-center gap-0.5 text-[11px] text-custom-green font-medium">
-                                <ShieldCheck size={12} /> Verifisert
+                      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                        <div className="flex min-w-0 flex-1 items-start gap-4">
+                          <div className="relative flex-shrink-0">
+                            <div className="w-12 h-12 rounded-full bg-[#EAF1E9] text-[#122A1C] font-medium flex items-center justify-center text-lg overflow-hidden">
+                              {app.applicant.avatarUrl ? (
+                                <img
+                                  src={app.applicant.avatarUrl}
+                                  alt={app.applicant.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                app.applicant.name
+                                  .split(' ')
+                                  .map((n: any) => n[0])
+                                  .join('')
+                              )}
+                            </div>
+                            {index === 0 && (
+                              <span className="absolute -top-1 -right-1 bg-custom-green text-white text-[9px] font-medium rounded-full px-1.5 py-0.5 border-[1.5px] border-[#f5f0e8]">
+                                Topp
                               </span>
                             )}
                           </div>
-                          <div className="text-[12px] text-gray-400 mb-1">
-                            {app.applicant.skills?.join(' · ') || 'Generell hjelp'}
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <div className="flex text-[#63665F]">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  size={11}
-                                  fill={
-                                    i < Math.floor(app.applicant.rating) ? 'currentColor' : 'none'
-                                  }
-                                />
-                              ))}
+
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className="text-[15px] font-medium text-gray-900">
+                                {app.applicant.name}
+                              </span>
+                              {app.applicant.verified && (
+                                <span className="flex items-center gap-0.5 text-[11px] text-custom-green font-medium">
+                                  <ShieldCheck size={12} /> Verifisert
+                                </span>
+                              )}
                             </div>
-                            <span className="text-[11px] text-gray-400">
-                              {app.applicant.rating} · {app.applicant.completedJobs} oppdrag
-                            </span>
+                            <div className="text-[12px] text-gray-400 mb-1">
+                              {app.applicant.skills?.join(' · ') || 'Generell hjelp'}
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <div className="flex text-[#63665F]">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    size={11}
+                                    fill={
+                                      i < Math.floor(app.applicant.rating) ? 'currentColor' : 'none'
+                                    }
+                                  />
+                                ))}
+                              </div>
+                              <span className="text-[11px] text-gray-400">
+                                {app.applicant.rating} · {app.applicant.completedJobs} oppdrag
+                              </span>
+                            </div>
                           </div>
+                        </div>
+
+                        {/* Side by side on a phone, stacked on the right on desktop. */}
+                        <div className="flex shrink-0 items-center justify-between gap-4 md:flex-col md:items-end md:gap-3">
+                          <div className="flex items-center gap-0.5">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleFavorite(app._id)}
+                              aria-pressed={!!app.favorite}
+                              aria-label="Marker som favoritt"
+                              title="Favoritt"
+                              className={`flex size-9 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15 ${
+                                app.favorite
+                                  ? 'bg-[#EAF1E9] text-[#2E6641]'
+                                  : 'text-[#9B9E96] hover:bg-[#F4F6F0] hover:text-[#2E6641]'
+                              }`}
+                            >
+                              <Heart size={17} fill={app.favorite ? 'currentColor' : 'none'} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => toggleCompare(app.applicant._id)}
+                              aria-pressed={comparedApplicants.includes(app.applicant._id)}
+                              aria-label="Legg til i sammenligning"
+                              title="Sammenlign"
+                              className={`flex size-9 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15 ${
+                                comparedApplicants.includes(app.applicant._id)
+                                  ? 'bg-[#EAF1E9] text-[#2E6641]'
+                                  : 'text-[#9B9E96] hover:bg-[#F4F6F0] hover:text-[#2E6641]'
+                              }`}
+                            >
+                              <Users size={17} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleArchive(app._id)}
+                              aria-pressed={!!app.archived}
+                              aria-label={app.archived ? 'Gjenopprett fra arkiv' : 'Arkiver søker'}
+                              title={app.archived ? 'Gjenopprett fra arkiv' : 'Arkiver'}
+                              className={`flex size-9 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15 ${
+                                app.archived
+                                  ? 'bg-[#EAF1E9] text-[#2E6641]'
+                                  : 'text-[#9B9E96] hover:bg-[#F4F6F0] hover:text-[#0B0B0B]'
+                              }`}
+                            >
+                              <Archive size={17} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDecline(app._id)}
+                              aria-label="Avslå søker"
+                              title="Avslå søker"
+                              className="flex size-9 items-center justify-center rounded-full text-[#9B9E96] transition-colors hover:bg-[#FBF4F2] hover:text-[#B4544A] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15"
+                            >
+                              <X size={17} />
+                            </button>
+                          </div>
+
+                          <dl className="flex shrink-0 items-start gap-5">
+                            <div className="text-center">
+                              <dd className="text-[0.9375rem] font-semibold tabular-nums text-[#0B0B0B]">
+                                {app.applicant.completedJobs}
+                              </dd>
+                              <dt className="mt-0.5 text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-[#9B9E96]">
+                                Fullførte
+                              </dt>
+                            </div>
+                            <div className="text-center">
+                              <dd className="text-[0.9375rem] font-semibold tabular-nums text-[#0B0B0B]">
+                                {app.applicant.rating}★
+                              </dd>
+                              <dt className="mt-0.5 text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-[#9B9E96]">
+                                Rating
+                              </dt>
+                            </div>
+                            <div className="text-center">
+                              <dd className="text-[0.9375rem] font-semibold tabular-nums text-[#0B0B0B]">
+                                {app.applicant.responseRate}
+                              </dd>
+                              <dt className="mt-0.5 text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-[#9B9E96]">
+                                Svar%
+                              </dt>
+                            </div>
+                            {/* "Svartid" removed — see the sidebar card above. */}
+                          </dl>
                         </div>
                       </div>
 
-                      {/* Side by side on a phone, stacked on the right on desktop. */}
-                      <div className="flex shrink-0 items-center justify-between gap-4 md:flex-col md:items-end md:gap-3">
-                        <div className="flex items-center gap-0.5">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleFavorite(app._id)}
-                            aria-pressed={!!app.favorite}
-                            aria-label="Marker som favoritt"
-                            title="Favoritt"
-                            className={`flex size-9 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15 ${app.favorite
-                              ? 'bg-[#EAF1E9] text-[#2E6641]'
-                              : 'text-[#9B9E96] hover:bg-[#F4F6F0] hover:text-[#2E6641]'
-                              }`}
-                          >
-                            <Heart size={17} fill={app.favorite ? 'currentColor' : 'none'} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => toggleCompare(app.applicant._id)}
-                            aria-pressed={comparedApplicants.includes(app.applicant._id)}
-                            aria-label="Legg til i sammenligning"
-                            title="Sammenlign"
-                            className={`flex size-9 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15 ${comparedApplicants.includes(app.applicant._id)
-                              ? 'bg-[#EAF1E9] text-[#2E6641]'
-                              : 'text-[#9B9E96] hover:bg-[#F4F6F0] hover:text-[#2E6641]'
-                              }`}
-                          >
-                            <Users size={17} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleToggleArchive(app._id)}
-                            aria-pressed={!!app.archived}
-                            aria-label={app.archived ? 'Gjenopprett fra arkiv' : 'Arkiver søker'}
-                            title={app.archived ? 'Gjenopprett fra arkiv' : 'Arkiver'}
-                            className={`flex size-9 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15 ${app.archived
-                              ? 'bg-[#EAF1E9] text-[#2E6641]'
-                              : 'text-[#9B9E96] hover:bg-[#F4F6F0] hover:text-[#0B0B0B]'
-                              }`}
-                          >
-                            <Archive size={17} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDecline(app._id)}
-                            aria-label="Avslå søker"
-                            title="Avslå søker"
-                            className="flex size-9 items-center justify-center rounded-full text-[#9B9E96] transition-colors hover:bg-[#FBF4F2] hover:text-[#B4544A] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15"
-                          >
-                            <X size={17} />
-                          </button>
+                      <div className="bg-[#F4F6F0] rounded-xl p-3 my-4 border-l-[3px] border-custom-green">
+                        <div className="flex items-center gap-1 text-[11px] text-gray-400 mb-1">
+                          <MessageCircle size={12} /> Melding fra søker
                         </div>
-
-                        <dl className="flex shrink-0 items-start gap-5">
-                          <div className="text-center">
-                            <dd className="text-[0.9375rem] font-semibold tabular-nums text-[#0B0B0B]">
-                              {app.applicant.completedJobs}
-                            </dd>
-                            <dt className="mt-0.5 text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-[#9B9E96]">
-                              Fullførte
-                            </dt>
-                          </div>
-                          <div className="text-center">
-                            <dd className="text-[0.9375rem] font-semibold tabular-nums text-[#0B0B0B]">
-                              {app.applicant.rating}★
-                            </dd>
-                            <dt className="mt-0.5 text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-[#9B9E96]">
-                              Rating
-                            </dt>
-                          </div>
-                          <div className="text-center">
-                            <dd className="text-[0.9375rem] font-semibold tabular-nums text-[#0B0B0B]">
-                              {app.applicant.responseRate}
-                            </dd>
-                            <dt className="mt-0.5 text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-[#9B9E96]">
-                              Svar%
-                            </dt>
-                          </div>
-                          {/* "Svartid" removed — see the sidebar card above. */}
-                        </dl>
+                        <p className="text-[13px] text-gray-600 leading-relaxed">{app.message}</p>
                       </div>
-                    </div>
 
-                    <div className="bg-[#F4F6F0] rounded-xl p-3 my-4 border-l-[3px] border-custom-green">
-                      <div className="flex items-center gap-1 text-[11px] text-gray-400 mb-1">
-                        <MessageCircle size={12} /> Melding fra søker
-                      </div>
-                      <p className="text-[13px] text-gray-600 leading-relaxed">{app.message}</p>
-                    </div>
-
-                    {/*
+                      {/*
                       One row from `sm` up, stacked below it.
 
                       These were already in a `flex flex-wrap` container, so the intent was
@@ -526,31 +529,31 @@ const ApplicantsPage: React.FC = () => {
                       label and the base sets `whitespace-nowrap` — side by side on a narrow
                       phone would overflow the card rather than wrap.
                     */}
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                      <Button
-                        onClick={() => handleSelectApplicant(app.applicant._id, app._id)}
-                        loading={createContractMutation.isPending}
-                        disabled={!!activeOrder && !isContractedApplicant}
-                        label={
-                          !activeOrder
-                            ? 'Velg og start SafePay'
-                            : !isContractedApplicant
-                              ? 'Ikke valgt'
-                              : isJobAlreadyPaid
-                                ? 'Betalt'
-                                : hasAwaitingPayment
-                                  ? 'Gå til betaling'
-                                  : 'Kontrakt inngått'
-                        }
-                        icon={<Check size={16} />}
-                        className={`w-auto rounded-full bg-custom-green px-5 py-2.5 text-[13px] font-medium text-white shadow-sm hover:bg-[#266b3c] sm:flex-1 sm:basis-0 ${activeOrder && !isContractedApplicant ? 'opacity-50' : ''}`}
-                      />
-                      {/* (F-35) "Velg uten SafePay" removed: it only fired
+                      <div className="flex flex-col gap-2 sm:flex-row">
+                        <Button
+                          onClick={() => handleSelectApplicant(app.applicant._id, app._id)}
+                          loading={createContractMutation.isPending}
+                          disabled={!!activeOrder && !isContractedApplicant}
+                          label={
+                            !activeOrder
+                              ? 'Velg og start SafePay'
+                              : !isContractedApplicant
+                                ? 'Ikke valgt'
+                                : isJobAlreadyPaid
+                                  ? 'Betalt'
+                                  : hasAwaitingPayment
+                                    ? 'Gå til betaling'
+                                    : 'Kontrakt inngått'
+                          }
+                          icon={<Check size={16} />}
+                          className={`w-auto rounded-full bg-custom-green px-5 py-2.5 text-[13px] font-medium text-white shadow-sm hover:bg-[#266b3c] sm:flex-1 sm:basis-0 ${activeOrder && !isContractedApplicant ? 'opacity-50' : ''}`}
+                        />
+                        {/* (F-35) "Velg uten SafePay" removed: it only fired
                           toast.success('Bruker valgt uten SafePay') — no API call, no
                           contract, no applicant selected and nobody notified, while the
                           poster believed they had hired someone. Hiring outside escrow
                           is not an implemented flow. */}
-                      {/*
+                        {/*
                         `sm:flex-1 sm:basis-0` on both, so the row splits down the middle.
                         `flex-1` alone would not: its basis is 0% but the labels differ in
                         length, and the base Button sets `whitespace-nowrap`, so the wider
@@ -559,17 +562,17 @@ const ApplicantsPage: React.FC = () => {
                         changes between "Velg og start SafePay", "Gå til betaling" and
                         "Betalt".
                       */}
-                      <Button
-                        variant="outline"
-                        label="Send melding"
-                        icon={<MessageCircle size={16} />}
-                        loading={chatStartingFor === app.applicant._id}
-                        disabled={!!chatStartingFor || (!!activeOrder && !isContractedApplicant)}
-                        className={`w-auto rounded-full border-black/20 px-5 py-2.5 text-[13px] font-medium hover:bg-gray-50 sm:flex-1 sm:basis-0 ${activeOrder && !isContractedApplicant ? 'opacity-50' : ''}`}
-                        onClick={() => handleStartChat(app.applicant._id)}
-                      />
+                        <Button
+                          variant="outline"
+                          label="Send melding"
+                          icon={<MessageCircle size={16} />}
+                          loading={chatStartingFor === app.applicant._id}
+                          disabled={!!chatStartingFor || (!!activeOrder && !isContractedApplicant)}
+                          className={`w-auto rounded-full border-black/20 px-5 py-2.5 text-[13px] font-medium hover:bg-gray-50 sm:flex-1 sm:basis-0 ${activeOrder && !isContractedApplicant ? 'opacity-50' : ''}`}
+                          onClick={() => handleStartChat(app.applicant._id)}
+                        />
+                      </div>
                     </div>
-                  </div>
                   );
                 })}
               </div>
@@ -618,12 +621,13 @@ const ApplicantsPage: React.FC = () => {
                     <div key={step.label} className="flex gap-4">
                       <div className="flex flex-col items-center">
                         <div
-                          className={`w-2.5 h-2.5 rounded-full mt-1 ${isCurrent
-                            ? 'bg-[#122A1C] ring-4 ring-[#122A1C]/15'
-                            : isDone
-                              ? 'bg-custom-green'
-                              : 'bg-gray-200'
-                            }`}
+                          className={`w-2.5 h-2.5 rounded-full mt-1 ${
+                            isCurrent
+                              ? 'bg-[#122A1C] ring-4 ring-[#122A1C]/15'
+                              : isDone
+                                ? 'bg-custom-green'
+                                : 'bg-gray-200'
+                          }`}
                         ></div>
                         {!isLast && (
                           <div className="w-[1px] flex-1 bg-black/10 my-1 min-h-[30px]"></div>
@@ -631,18 +635,20 @@ const ApplicantsPage: React.FC = () => {
                       </div>
                       <div className={isLast ? '' : 'pb-5'}>
                         <div
-                          className={`text-[13px] leading-tight ${isCurrent ? 'font-bold text-gray-900' : 'font-semibold text-gray-700'
-                            }`}
+                          className={`text-[13px] leading-tight ${
+                            isCurrent ? 'font-bold text-gray-900' : 'font-semibold text-gray-700'
+                          }`}
                         >
                           {stepNumber}. {step.label}
                         </div>
                         <div
-                          className={`text-[11px] mt-0.5 ${isCurrent
-                            ? 'text-custom-green font-bold'
-                            : isDone
-                              ? 'text-custom-green'
-                              : 'text-gray-400'
-                            }`}
+                          className={`text-[11px] mt-0.5 ${
+                            isCurrent
+                              ? 'text-custom-green font-bold'
+                              : isDone
+                                ? 'text-custom-green'
+                                : 'text-gray-400'
+                          }`}
                         >
                           {isCurrent ? 'Du er her nå' : isDone ? 'Fullført' : step.desc}
                         </div>

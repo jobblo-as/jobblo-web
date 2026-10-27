@@ -1,6 +1,18 @@
 import React from 'react';
 import { View } from 'react-native';
-import Svg, { Circle, Defs, Ellipse, G, LinearGradient, Path, RadialGradient, Rect, Stop, Symbol, Use } from 'react-native-svg';
+import Svg, {
+  Circle,
+  Defs,
+  Ellipse,
+  G,
+  LinearGradient,
+  Path,
+  RadialGradient,
+  Rect,
+  Stop,
+  Symbol,
+  Use,
+} from 'react-native-svg';
 
 /**
  * The band behind the profile, ported 1:1 from the website
@@ -76,8 +88,17 @@ export function ProfileCover({ seed, height = 168 }: { seed?: string; height?: n
   });
 
   return (
-    <View style={{ height, backgroundColor: '#122A1C', overflow: 'hidden' }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <Svg width="100%" height="100%" viewBox={`0 0 ${VIEW_W} ${VIEW_H}`} preserveAspectRatio="xMidYMid slice">
+    <View
+      style={{ height, backgroundColor: '#122A1C', overflow: 'hidden' }}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
+      <Svg
+        width="100%"
+        height="100%"
+        viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
+        preserveAspectRatio="xMidYMid slice"
+      >
         <Defs>
           <LinearGradient id="cover" gradientTransform={`rotate(${angle})`}>
             <Stop offset="0%" stopColor={from} />
@@ -102,7 +123,14 @@ export function ProfileCover({ seed, height = 168 }: { seed?: string; height?: n
         <Ellipse cx={cx} cy={cy} rx={VIEW_W * 0.45} ry={VIEW_H * 0.9} fill="url(#glow)" />
         <G fill="none" stroke="#FFFFFF">
           {arcs.map((arc, i) => (
-            <Circle key={i} cx={cx} cy={cy} r={arc.r} strokeOpacity={arc.opacity} strokeWidth={arc.width} />
+            <Circle
+              key={i}
+              cx={cx}
+              cy={cy}
+              r={arc.r}
+              strokeOpacity={arc.opacity}
+              strokeWidth={arc.width}
+            />
           ))}
         </G>
         {sprigs.map((sprig, i) => {

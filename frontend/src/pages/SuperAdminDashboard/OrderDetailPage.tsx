@@ -1,19 +1,52 @@
 import type { ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, ArrowUpRight, Banknote, CalendarClock, Mail, MessageSquare, Phone, ShieldCheck, Wallet } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  Banknote,
+  CalendarClock,
+  Mail,
+  MessageSquare,
+  Phone,
+  ShieldCheck,
+  Wallet,
+} from 'lucide-react';
 import { ago, dateTime, money } from '@/lib/devFormat';
 import { fetchOrderDetail } from '../../api/admin/details';
-import { ErrorState, EmptyState, IssueList, PageHeader, Section, StatCard, StatusBadge, Timeline } from '../../components/developer/kit';
+import {
+  ErrorState,
+  EmptyState,
+  IssueList,
+  PageHeader,
+  Section,
+  StatCard,
+  StatusBadge,
+  Timeline,
+} from '../../components/developer/kit';
 import { Avatar, AvatarFallback, AvatarImage } from '../../components/developer/ui/avatar';
 import { Badge } from '../../components/developer/ui/badge';
 import { Button } from '../../components/developer/ui/button';
 import { Skeleton } from '../../components/developer/ui/skeleton';
 
-const initials = (name?: string) => (name || '?').split(' ').map((p) => p[0]).join('').slice(0, 2).toUpperCase();
+const initials = (name?: string) =>
+  (name || '?')
+    .split(' ')
+    .map((p) => p[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 const str = (v: unknown) => (v === null || v === undefined || v === '' ? null : String(v));
 
-function Party({ label, person, extra }: { label: string; person: { _id: string; name: string; email?: string; phone?: string; avatarUrl?: string } | null; extra?: ReactNode }) {
+function Party({
+  label,
+  person,
+  extra,
+}: {
+  label: string;
+  person: { _id: string; name: string; email?: string; phone?: string; avatarUrl?: string } | null;
+  extra?: ReactNode;
+}) {
   return (
     <Section title={label}>
       {person ? (
@@ -23,12 +56,18 @@ function Party({ label, person, extra }: { label: string; person: { _id: string;
             <AvatarFallback>{initials(person.name)}</AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1 space-y-1 text-sm">
-            <Link to={`/dashboard/users/${person._id}`} className="font-medium text-primary hover:underline">
+            <Link
+              to={`/dashboard/users/${person._id}`}
+              className="font-medium text-primary hover:underline"
+            >
               {person.name}
             </Link>
             {person.email && (
               <div className="flex items-center gap-1.5 text-muted-foreground">
-                <Mail className="size-3.5" /> <a href={`mailto:${person.email}`} className="truncate hover:underline">{person.email}</a>
+                <Mail className="size-3.5" />{' '}
+                <a href={`mailto:${person.email}`} className="truncate hover:underline">
+                  {person.email}
+                </a>
               </div>
             )}
             {person.phone && (
@@ -64,14 +103,22 @@ function Facts({ rows }: { rows: [string, ReactNode][] }) {
 
 export default function OrderDetailPage() {
   const { id = '' } = useParams();
-  const { data, isLoading, error, refetch } = useQuery({ queryKey: ['admin', 'order-detail', id], queryFn: () => fetchOrderDetail(id), enabled: Boolean(id) });
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ['admin', 'order-detail', id],
+    queryFn: () => fetchOrderDetail(id),
+    enabled: Boolean(id),
+  });
 
   if (error) return <ErrorState error={error} onRetry={() => refetch()} />;
   if (isLoading || !data) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-16 w-full" />
-        <div className="grid gap-3 md:grid-cols-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-24" />)}</div>
+        <div className="grid gap-3 md:grid-cols-4">
+          {[0, 1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-24" />
+          ))}
+        </div>
         <Skeleton className="h-80 w-full" />
       </div>
     );
@@ -81,7 +128,9 @@ export default function OrderDetailPage() {
   const p = data.payment;
   const po = data.payout;
   const sp = data.safePay;
-  const critical = data.issues.filter((i) => i.severity === 'critical' || i.severity === 'high').length;
+  const critical = data.issues.filter(
+    (i) => i.severity === 'critical' || i.severity === 'high'
+  ).length;
 
   return (
     <div className="space-y-5">
@@ -117,15 +166,39 @@ export default function OrderDetailPage() {
       />
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard label="Ordrestatus" icon={<CalendarClock />} value={<StatusBadge status={o.status} />} hint={`oppdatert ${ago(str(o.updatedAt))}`} />
-        <StatCard label="Avtalt pris" icon={<Banknote />} value={money(o.agreedPrice)} hint={o.checkoutAmountMinor ? `kunden betalte ${money(o.checkoutAmountMinor, true)}` : undefined} />
-        <StatCard label="Betaling" icon={<Wallet />} tone={o.paymentStatus === 'paid' ? 'success' : 'neutral'} value={<StatusBadge status={o.paymentStatus} />} hint={sp ? `SafePay: ${String(sp.status).replace(/_/g, ' ')}` : 'Ingen SafePay-historikk'} />
+        <StatCard
+          label="Ordrestatus"
+          icon={<CalendarClock />}
+          value={<StatusBadge status={o.status} />}
+          hint={`oppdatert ${ago(str(o.updatedAt))}`}
+        />
+        <StatCard
+          label="Avtalt pris"
+          icon={<Banknote />}
+          value={money(o.agreedPrice)}
+          hint={
+            o.checkoutAmountMinor
+              ? `kunden betalte ${money(o.checkoutAmountMinor, true)}`
+              : undefined
+          }
+        />
+        <StatCard
+          label="Betaling"
+          icon={<Wallet />}
+          tone={o.paymentStatus === 'paid' ? 'success' : 'neutral'}
+          value={<StatusBadge status={o.paymentStatus} />}
+          hint={sp ? `SafePay: ${String(sp.status).replace(/_/g, ' ')}` : 'Ingen SafePay-historikk'}
+        />
         <StatCard
           label="Helse"
           icon={<ShieldCheck />}
           tone={critical ? 'danger' : data.issues.length ? 'warning' : 'success'}
           value={data.issues.length ? `${data.issues.length} funn` : 'OK'}
-          hint={data.issues.length ? data.issues.map((i) => i.code.replace(/_/g, ' ')).join(', ') : 'Ingen avvik funnet'}
+          hint={
+            data.issues.length
+              ? data.issues.map((i) => i.code.replace(/_/g, ' ')).join(', ')
+              : 'Ingen avvik funnet'
+          }
         />
       </div>
 
@@ -137,8 +210,12 @@ export default function OrderDetailPage() {
           extra={
             o.provider && (
               <div className="flex flex-wrap gap-1.5 pt-1">
-                <Badge variant="outline">{o.provider.connectAccount ? 'Stripe Connect' : 'Ingen Connect-konto'}</Badge>
-                <Badge variant="outline">{o.provider.payoutEnabled ? 'Utbetaling aktiv' : 'Utbetaling ikke aktiv'}</Badge>
+                <Badge variant="outline">
+                  {o.provider.connectAccount ? 'Stripe Connect' : 'Ingen Connect-konto'}
+                </Badge>
+                <Badge variant="outline">
+                  {o.provider.payoutEnabled ? 'Utbetaling aktiv' : 'Utbetaling ikke aktiv'}
+                </Badge>
               </div>
             )
           }
@@ -146,9 +223,19 @@ export default function OrderDetailPage() {
         <Section title="Oppdrag">
           <Facts
             rows={[
-              ['Tjeneste', o.service ? <span>{o.service.title} <StatusBadge status={o.service.status} /></span> : null],
+              [
+                'Tjeneste',
+                o.service ? (
+                  <span>
+                    {o.service.title} <StatusBadge status={o.service.status} />
+                  </span>
+                ) : null,
+              ],
               ['Startet', str(o.startedAt) && dateTime(str(o.startedAt))],
-              ['Klar for godkjenning', str(o.readyForReviewAt) && dateTime(str(o.readyForReviewAt))],
+              [
+                'Klar for godkjenning',
+                str(o.readyForReviewAt) && dateTime(str(o.readyForReviewAt)),
+              ],
               ['Fullført', str(o.completedAt) && dateTime(str(o.completedAt))],
               ['Kanselleringsårsak', o.cancellationReason || null],
             ]}
@@ -163,14 +250,32 @@ export default function OrderDetailPage() {
               rows={[
                 ['Status', <StatusBadge key="s" status={str(p.status)} />],
                 ['Beløp', money(Number(p.amount))],
-                ['Refusjon', str(p.refundStatus) && str(p.refundStatus) !== 'none' ? <StatusBadge key="r" status={str(p.refundStatus)} /> : null],
-                ['PaymentIntent', str(p.stripePaymentIntentId) && <span className="font-mono text-xs">{str(p.stripePaymentIntentId)}</span>],
-                ['Refusjons-ID', str(p.stripeRefundId) && <span className="font-mono text-xs">{str(p.stripeRefundId)}</span>],
+                [
+                  'Refusjon',
+                  str(p.refundStatus) && str(p.refundStatus) !== 'none' ? (
+                    <StatusBadge key="r" status={str(p.refundStatus)} />
+                  ) : null,
+                ],
+                [
+                  'PaymentIntent',
+                  str(p.stripePaymentIntentId) && (
+                    <span className="font-mono text-xs">{str(p.stripePaymentIntentId)}</span>
+                  ),
+                ],
+                [
+                  'Refusjons-ID',
+                  str(p.stripeRefundId) && (
+                    <span className="font-mono text-xs">{str(p.stripeRefundId)}</span>
+                  ),
+                ],
                 ['Registrert', dateTime(str(p.createdAt))],
               ]}
             />
           ) : (
-            <EmptyState title="Ingen betaling" description="Kunden har ikke betalt for denne ordren." />
+            <EmptyState
+              title="Ingen betaling"
+              description="Kunden har ikke betalt for denne ordren."
+            />
           )}
         </Section>
         <Section title="Utbetaling til tilbyder">
@@ -181,7 +286,12 @@ export default function OrderDetailPage() {
                 ['Brutto', money(Number(po.grossAmount))],
                 ['Netto til tilbyder', money(Number(po.netProviderAmount))],
                 ['Kilde', str(po.releaseSource)?.replace(/_/g, ' ') ?? null],
-                ['Overføring', str(po.stripeTransferId) && <span className="font-mono text-xs">{str(po.stripeTransferId)}</span>],
+                [
+                  'Overføring',
+                  str(po.stripeTransferId) && (
+                    <span className="font-mono text-xs">{str(po.stripeTransferId)}</span>
+                  ),
+                ],
                 ['Fullført', str(po.transferCompletedAt) && dateTime(str(po.transferCompletedAt))],
                 ['Feil', str(po.failureReason) || str(po.failureCode)],
               ]}
@@ -190,7 +300,10 @@ export default function OrderDetailPage() {
             <EmptyState title="Ingen utbetaling ennå" />
           )}
         </Section>
-        <Section title="Helsesjekk" description="Avvik mellom ordre, betaling, SafePay og utbetaling.">
+        <Section
+          title="Helsesjekk"
+          description="Avvik mellom ordre, betaling, SafePay og utbetaling."
+        >
           <IssueList issues={data.issues} empty="Ingen avvik — ordren er konsistent." />
         </Section>
       </div>
@@ -199,8 +312,14 @@ export default function OrderDetailPage() {
         <Section title="Tvister">
           <ul className="divide-y">
             {data.disputes.map((d) => (
-              <li key={String(d._id)} className="flex items-center justify-between gap-3 py-2 text-sm">
-                <Link to={`/dashboard/disputes/${String(d._id)}`} className="truncate font-medium text-primary hover:underline">
+              <li
+                key={String(d._id)}
+                className="flex items-center justify-between gap-3 py-2 text-sm"
+              >
+                <Link
+                  to={`/dashboard/disputes/${String(d._id)}`}
+                  className="truncate font-medium text-primary hover:underline"
+                >
                   {str(d.title) || 'Tvist'}
                 </Link>
                 <span className="flex shrink-0 items-center gap-2">

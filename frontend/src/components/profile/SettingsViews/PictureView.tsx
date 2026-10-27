@@ -17,10 +17,7 @@ export const PictureView = () => {
     <section className="flex flex-col items-center gap-6 py-10">
       <div className="relative">
         <img
-          src={
-            user?.avatarUrl ||
-            DEFAULT_AVATAR
-          }
+          src={user?.avatarUrl || DEFAULT_AVATAR}
           alt="Profile"
           className="w-48 h-48 rounded-full object-cover border-4 border-white shadow-md"
         />

@@ -13,12 +13,35 @@ import { API_BASE_URL } from '../config/env';
  */
 
 type ProblemKind = 'render' | 'not_found' | 'chunk' | 'api' | 'console';
-type Crumb = { at: string; type: 'view' | 'click' | 'api' | 'console' | 'error'; page: string; label?: string; status?: number; ms?: number };
+type Crumb = {
+  at: string;
+  type: 'view' | 'click' | 'api' | 'console' | 'error';
+  page: string;
+  label?: string;
+  status?: number;
+  ms?: number;
+};
 type RumEvent =
   | { type: 'view'; at: string; page: string; loadMs?: number }
-  | { type: 'vital'; at: string; page: string; metric: Metric['name']; value: number; rating: Metric['rating']; navigationType: string }
+  | {
+      type: 'vital';
+      at: string;
+      page: string;
+      metric: Metric['name'];
+      value: number;
+      rating: Metric['rating'];
+      navigationType: string;
+    }
   | { type: 'error'; at: string; page: string; message: string; source?: string; trail: Crumb[] }
-  | { type: 'problem'; at: string; page: string; kind: ProblemKind; message: string; status?: number; trail: Crumb[] };
+  | {
+      type: 'problem';
+      at: string;
+      page: string;
+      kind: ProblemKind;
+      message: string;
+      status?: number;
+      trail: Crumb[];
+    };
 
 const ENDPOINT = `${String(API_BASE_URL || '').replace(/\/$/, '')}/api/rum`;
 const sessionId = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;
@@ -32,7 +55,8 @@ const seenProblems = new Set<string>();
 
 const page = () => window.location.pathname;
 const internal = () => /^\/(developer|dashboard)(\/|$)/.test(page());
-const device = () => (window.innerWidth < 768 ? 'mobile' : window.innerWidth < 1100 ? 'tablet' : 'desktop');
+const device = () =>
+  window.innerWidth < 768 ? 'mobile' : window.innerWidth < 1100 ? 'tablet' : 'desktop';
 function browser() {
   const ua = navigator.userAgent;
   if (/Edg\//.test(ua)) return 'Edge';
@@ -54,7 +78,9 @@ const mask = (s: string, max = 80) =>
     .slice(0, max);
 const apiPath = (url: string) => {
   try {
-    return new URL(url, API_BASE_URL || window.location.origin).pathname.replace(/\/[0-9a-f]{24}(?=\/|$)/gi, '/:id').replace(/\/\d+(?=\/|$)/g, '/:id');
+    return new URL(url, API_BASE_URL || window.location.origin).pathname
+      .replace(/\/[0-9a-f]{24}(?=\/|$)/gi, '/:id')
+      .replace(/\/\d+(?=\/|$)/g, '/:id');
   } catch {
     return '(unknown)';
   }
@@ -62,17 +88,27 @@ const apiPath = (url: string) => {
 
 /** What was clicked, described by role and label only — never form values. */
 function describe(el: Element | null): string | null {
-  const target = el?.closest('button, a, [role="button"], [role="tab"], [role="menuitem"], input, select, textarea, label, summary');
+  const target = el?.closest(
+    'button, a, [role="button"], [role="tab"], [role="menuitem"], input, select, textarea, label, summary'
+  );
   if (!target) return null;
   const tag = target.tagName.toLowerCase();
   if (tag === 'input' || tag === 'select' || tag === 'textarea') {
     const type = (target as HTMLInputElement).type || tag;
-    const name = target.getAttribute('aria-label') || target.getAttribute('name') || target.getAttribute('placeholder') || '';
+    const name =
+      target.getAttribute('aria-label') ||
+      target.getAttribute('name') ||
+      target.getAttribute('placeholder') ||
+      '';
     return mask(`${tag}[${type}] ${name}`);
   }
   // No innerText fallback: a chat row's text is the other person's name and the start of
   // their last message, which then reached the developer console with any error trail.
-  const label = target.getAttribute('aria-label') || target.getAttribute('data-testid') || target.getAttribute('title') || '';
+  const label =
+    target.getAttribute('aria-label') ||
+    target.getAttribute('data-testid') ||
+    target.getAttribute('title') ||
+    '';
   return mask(`${target.getAttribute('role') || tag} "${mask(label, 40)}"`);
 }
 
@@ -88,14 +124,20 @@ function flush() {
     sessionId,
     device: device(),
     browser: browser(),
-    connection: (navigator as Navigator & { connection?: { effectiveType?: string } }).connection?.effectiveType,
+    connection: (navigator as Navigator & { connection?: { effectiveType?: string } }).connection
+      ?.effectiveType,
     release: import.meta.env.VITE_APP_VERSION,
     events: queue.splice(0, 30),
   });
   try {
     // text/plain keeps sendBeacon a "simple" request (no CORS preflight).
     if (!navigator.sendBeacon?.(ENDPOINT, new Blob([body], { type: 'text/plain' }))) {
-      void fetch(ENDPOINT, { method: 'POST', body, headers: { 'Content-Type': 'text/plain' }, keepalive: true }).catch(() => undefined);
+      void fetch(ENDPOINT, {
+        method: 'POST',
+        body,
+        headers: { 'Content-Type': 'text/plain' },
+        keepalive: true,
+      }).catch(() => undefined);
     }
   } catch {
     /* monitoring must never break the page */
@@ -109,13 +151,23 @@ const push = (e: RumEvent) => {
 };
 
 /** Send one problem with the trail so far. Max 20 per tab; the same problem once. */
-function problem(e: Omit<Extract<RumEvent, { type: 'error' }>, 'at' | 'page' | 'trail'> | Omit<Extract<RumEvent, { type: 'problem' }>, 'at' | 'page' | 'trail'>) {
+function problem(
+  e:
+    | Omit<Extract<RumEvent, { type: 'error' }>, 'at' | 'page' | 'trail'>
+    | Omit<Extract<RumEvent, { type: 'problem' }>, 'at' | 'page' | 'trail'>
+) {
   if (!started || problemsSent >= 20) return;
   const key = `${e.type}|${'kind' in e ? e.kind : ''}|${e.message}`;
   if (seenProblems.has(key)) return;
   seenProblems.add(key);
   problemsSent += 1;
-  push({ ...e, message: mask(e.message, 300), at: new Date().toISOString(), page: page(), trail: [...crumbs] } as RumEvent);
+  push({
+    ...e,
+    message: mask(e.message, 300),
+    at: new Date().toISOString(),
+    page: page(),
+    trail: [...crumbs],
+  } as RumEvent);
   flush(); // the tab may be about to close or reload
 }
 
@@ -125,14 +177,26 @@ export function reportProblem(kind: 'render' | 'not_found' | 'chunk', message: s
 }
 
 /** Called by the API client for every response (see api/mainURLs.ts). */
-export function trackApi(method: string | undefined, url: string | undefined, status: number, ms: number) {
+export function trackApi(
+  method: string | undefined,
+  url: string | undefined,
+  status: number,
+  ms: number
+) {
   if (!started) return;
   const label = `${String(method || 'get').toUpperCase()} ${apiPath(String(url || ''))}`;
   crumb({ type: 'api', label, status, ms });
-  if (status === 0 || status >= 500) problem({ type: 'problem', kind: 'api', status, message: `${label} → ${status || 'network error'}` });
+  if (status === 0 || status >= 500)
+    problem({
+      type: 'problem',
+      kind: 'api',
+      status,
+      message: `${label} → ${status || 'network error'}`,
+    });
 }
 
-const CHUNK = /dynamically imported module|Loading chunk|ChunkLoadError|Importing a module script failed/i;
+const CHUNK =
+  /dynamically imported module|Loading chunk|ChunkLoadError|Importing a module script failed/i;
 
 /** Call on every route change (react-router). The first call is the landing page. */
 export function trackView() {
@@ -141,8 +205,16 @@ export function trackView() {
   const at = new Date().toISOString();
   crumb({ type: 'view' });
   if (!lastViewAt) {
-    const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
-    push({ type: 'view', at, page: page(), loadMs: nav ? Math.round(nav.loadEventEnd || nav.domContentLoadedEventEnd || now) : Math.round(now) });
+    const nav = performance.getEntriesByType('navigation')[0] as
+      PerformanceNavigationTiming | undefined;
+    push({
+      type: 'view',
+      at,
+      page: page(),
+      loadMs: nav
+        ? Math.round(nav.loadEventEnd || nav.domContentLoadedEventEnd || now)
+        : Math.round(now),
+    });
   } else {
     push({ type: 'view', at, page: page() });
   }
@@ -154,7 +226,16 @@ export function startRum() {
   if (internal()) return; // internal tools are not user experience
   started = true;
   landingPage = page();
-  const report = (m: Metric) => push({ type: 'vital', at: new Date().toISOString(), page: landingPage, metric: m.name, value: m.name === 'CLS' ? Math.round(m.value * 1000) / 1000 : Math.round(m.value), rating: m.rating, navigationType: m.navigationType });
+  const report = (m: Metric) =>
+    push({
+      type: 'vital',
+      at: new Date().toISOString(),
+      page: landingPage,
+      metric: m.name,
+      value: m.name === 'CLS' ? Math.round(m.value * 1000) / 1000 : Math.round(m.value),
+      rating: m.rating,
+      navigationType: m.navigationType,
+    });
   onLCP(report);
   onINP(report);
   onCLS(report);
@@ -163,10 +244,18 @@ export function startRum() {
   const error = (message: string, source?: string) => {
     crumb({ type: 'error', label: mask(message) });
     if (CHUNK.test(message)) return reportProblem('chunk', message);
-    problem({ type: 'error', message: message.slice(0, 300), source: source?.split('?')[0].slice(0, 200) });
+    problem({
+      type: 'error',
+      message: message.slice(0, 300),
+      source: source?.split('?')[0].slice(0, 200),
+    });
   };
-  window.addEventListener('error', (e) => error(e.message || 'Script error', e.filename ? `${e.filename}:${e.lineno}` : undefined));
-  window.addEventListener('unhandledrejection', (e) => error(`Unhandled rejection: ${e.reason instanceof Error ? e.reason.message : String(e.reason)}`));
+  window.addEventListener('error', (e) =>
+    error(e.message || 'Script error', e.filename ? `${e.filename}:${e.lineno}` : undefined)
+  );
+  window.addEventListener('unhandledrejection', (e) =>
+    error(`Unhandled rejection: ${e.reason instanceof Error ? e.reason.message : String(e.reason)}`)
+  );
   document.addEventListener(
     'click',
     (e) => {
@@ -180,16 +269,27 @@ export function startRum() {
   console.error = (...args: unknown[]) => {
     original(...args);
     try {
-      const text = args.map((a) => (a instanceof Error ? a.message : typeof a === 'string' ? a : '')).filter(Boolean).join(' ');
+      const text = args
+        .map((a) => (a instanceof Error ? a.message : typeof a === 'string' ? a : ''))
+        .filter(Boolean)
+        .join(' ');
       if (!text) return;
       crumb({ type: 'console', label: mask(text) });
       // React logs a crash before the error screen reports it: wait, and skip what is already reported.
-      setTimeout(() => ![...seenProblems].some((k) => k.endsWith(`|${text}`)) && problem({ type: 'problem', kind: 'console', message: text }), 1000);
+      setTimeout(
+        () =>
+          ![...seenProblems].some((k) => k.endsWith(`|${text}`)) &&
+          problem({ type: 'problem', kind: 'console', message: text }),
+        1000
+      );
     } catch {
       /* never break logging */
     }
   };
   // The page may never be visited again: send on hide (covers tab close and mobile app switch).
-  document.addEventListener('visibilitychange', () => document.visibilityState === 'hidden' && flush());
+  document.addEventListener(
+    'visibilitychange',
+    () => document.visibilityState === 'hidden' && flush()
+  );
   setInterval(flush, 15_000);
 }

@@ -53,7 +53,11 @@ export const setupInterceptors = (instance: AxiosInstance) => {
       }
 
       // Admin / developer session that has not entered its authenticator code yet.
-      if (error.response?.status === 403 && (error.response?.data as { code?: string })?.code === 'MFA_REQUIRED' && !window.location.pathname.startsWith('/mfa')) {
+      if (
+        error.response?.status === 403 &&
+        (error.response?.data as { code?: string })?.code === 'MFA_REQUIRED' &&
+        !window.location.pathname.startsWith('/mfa')
+      ) {
         const here = window.location.pathname + window.location.search;
         window.location.assign(`/mfa?next=${encodeURIComponent(here)}`);
         return Promise.reject(error);
@@ -136,7 +140,10 @@ export const setupInterceptors = (instance: AxiosInstance) => {
 
       if (process.env.NODE_ENV === 'development') {
         const status = error.response?.status;
-        const message = (error as any).apiError?.message || (error.response?.data as any)?.message || error.message;
+        const message =
+          (error as any).apiError?.message ||
+          (error.response?.data as any)?.message ||
+          error.message;
         console.error(`[API Error] ${status || 'Network'}: ${message}`);
       }
 

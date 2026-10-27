@@ -3,7 +3,10 @@ import { ScrollView, RefreshControl, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ClipboardList, Plus, Search, Users } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useMyApplications, useWithdrawApplicationMutation } from '../../src/hooks/useMyApplications';
+import {
+  useMyApplications,
+  useWithdrawApplicationMutation,
+} from '../../src/hooks/useMyApplications';
 import { useMyApplicantsOverview } from '../../src/hooks/useMyApplicantsOverview';
 import { ApplicationCard } from '../../src/components/domain/ApplicationCard';
 import { ApplicantOverviewSkeleton } from '../../src/components/domain/ApplicantOverviewSkeleton';
@@ -30,9 +33,23 @@ const FILTERS = [
 
 function Stat({ value, label, highlight }: { value: number; label: string; highlight?: boolean }) {
   return (
-    <Card className={['flex-1 rounded-xl px-3.5 py-3', highlight ? 'border-brand-text bg-tint' : ''].join(' ')}>
-      <Text className={['text-[1.375rem] font-bold tabular-nums', highlight ? 'text-brand-text' : 'text-ink'].join(' ')}>{value}</Text>
-      <Text className="mt-0.5 text-[0.8125rem] text-muted" numberOfLines={1}>{label}</Text>
+    <Card
+      className={[
+        'flex-1 rounded-xl px-3.5 py-3',
+        highlight ? 'border-brand-text bg-tint' : '',
+      ].join(' ')}
+    >
+      <Text
+        className={[
+          'text-[1.375rem] font-bold tabular-nums',
+          highlight ? 'text-brand-text' : 'text-ink',
+        ].join(' ')}
+      >
+        {value}
+      </Text>
+      <Text className="mt-0.5 text-[0.8125rem] text-muted" numberOfLines={1}>
+        {label}
+      </Text>
     </Card>
   );
 }
@@ -54,7 +71,8 @@ export default function MyApplicationsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ tab?: string | string[] }>();
   const requestedTab = Array.isArray(params.tab) ? params.tab[0] : params.tab;
-  const initialTab: OverviewTabKey = requestedTab === 'mine-soknader' ? 'mine-soknader' : 'mine-sokere';
+  const initialTab: OverviewTabKey =
+    requestedTab === 'mine-soknader' ? 'mine-soknader' : 'mine-sokere';
   const [activeTab, setActiveTab] = useState<OverviewTabKey>(initialTab);
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [searchText, setSearchText] = useState('');
@@ -114,7 +132,10 @@ export default function MyApplicationsScreen() {
           service.categories?.some((category) => category.toLowerCase().includes(query))
         );
       })
-      .sort((first, second) => new Date(second.createdAt).getTime() - new Date(first.createdAt).getTime());
+      .sort(
+        (first, second) =>
+          new Date(second.createdAt).getTime() - new Date(first.createdAt).getTime()
+      );
   }, [ownerServices, searchText]);
 
   const filteredApplications = useMemo(() => {
@@ -125,7 +146,10 @@ export default function MyApplicationsScreen() {
 
     return apps.filter((application: MyApplication) => {
       const title = application.service?.title?.toLowerCase() ?? '';
-      const ownerName = `${application.service?.customer?.name ?? ''} ${application.service?.customer?.lastName ?? ''}`.trim().toLowerCase();
+      const ownerName =
+        `${application.service?.customer?.name ?? ''} ${application.service?.customer?.lastName ?? ''}`
+          .trim()
+          .toLowerCase();
       return title.includes(query) || ownerName.includes(query);
     });
   }, [data?.applications, searchText]);
@@ -141,12 +165,16 @@ export default function MyApplicationsScreen() {
   const onOwnerTab = activeTab === 'mine-sokere';
   const activeLoading = onOwnerTab ? ownerLoading : isLoading;
   const activeError = onOwnerTab ? ownerError : isError;
-  const totalApplicants = (ownerServices ?? []).reduce((total, service) => total + service.applicantCount, 0);
+  const totalApplicants = (ownerServices ?? []).reduce(
+    (total, service) => total + service.applicantCount,
+    0
+  );
   const needsAttention = (ownerServices ?? []).filter(
-    (service) => service.applicantCount > 0 && !service.selectedWorker,
+    (service) => service.applicantCount > 0 && !service.selectedWorker
   ).length;
   // "Venter på deg" first: services with applicants but no chosen worker are the owner's to-do.
-  const isAwaiting = (service: ApplicantOverviewService) => service.applicantCount > 0 && !service.selectedWorker;
+  const isAwaiting = (service: ApplicantOverviewService) =>
+    service.applicantCount > 0 && !service.selectedWorker;
   const awaitingServices = filteredServices.filter(isAwaiting);
   const otherServices = filteredServices.filter((service) => !isAwaiting(service));
   const openService = (serviceId: string) =>
@@ -158,11 +186,21 @@ export default function MyApplicationsScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: 120 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void handleRefresh()} tintColor={TC.brandText} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => void handleRefresh()}
+            tintColor={TC.brandText}
+          />
+        }
       >
         <View className="mb-5">
-          <Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.16em] text-muted">Oversikt</Text>
-          <Text className="mt-2 text-[1.9rem] font-bold leading-tight tracking-[-0.04em] text-ink">Søkere og søknader</Text>
+          <Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.16em] text-muted">
+            Oversikt
+          </Text>
+          <Text className="mt-2 text-[1.9rem] font-bold leading-tight tracking-[-0.04em] text-ink">
+            Søkere og søknader
+          </Text>
           <Text className="mt-2 text-[0.9375rem] leading-relaxed text-muted">
             Oppdragene du har lagt ut, og oppdragene du selv har søkt på — samlet på ett sted.
           </Text>
@@ -187,7 +225,9 @@ export default function MyApplicationsScreen() {
           <SearchInput
             value={searchText}
             onChange={setSearchText}
-            placeholder={onOwnerTab ? 'Søk i dine oppdrag' : 'Søk etter oppdrag eller oppdragsgiver'}
+            placeholder={
+              onOwnerTab ? 'Søk i dine oppdrag' : 'Søk etter oppdrag eller oppdragsgiver'
+            }
           />
         </View>
 
@@ -227,10 +267,20 @@ export default function MyApplicationsScreen() {
             <EmptyState
               icon={<EmptyIcon icon={searchText ? Search : Users} />}
               title={searchText ? 'Ingen treff' : 'Ingen søkere ennå'}
-              message={searchText ? 'Prøv et annet søkeord.' : 'Når noen søker på et av oppdragene dine, dukker det opp her.'}
-              action={searchText ? undefined : (
-                <Button label="Legg ut et oppdrag" icon={<Plus size={16} color="#FFFFFF" />} onPress={() => router.push('/(app)/create-job')} />
-              )}
+              message={
+                searchText
+                  ? 'Prøv et annet søkeord.'
+                  : 'Når noen søker på et av oppdragene dine, dukker det opp her.'
+              }
+              action={
+                searchText ? undefined : (
+                  <Button
+                    label="Legg ut et oppdrag"
+                    icon={<Plus size={16} color="#FFFFFF" />}
+                    onPress={() => router.push('/(app)/create-job')}
+                  />
+                )
+              }
             />
           ) : (
             <View className="gap-6">
@@ -239,17 +289,28 @@ export default function MyApplicationsScreen() {
                   <SectionLabel>Venter på at du velger · {awaitingServices.length}</SectionLabel>
                   <View className="gap-3">
                     {awaitingServices.map((service) => (
-                      <ApplicantServiceCard key={service._id} service={service} onPress={openService} />
+                      <ApplicantServiceCard
+                        key={service._id}
+                        service={service}
+                        onPress={openService}
+                      />
                     ))}
                   </View>
                 </View>
               ) : null}
               {otherServices.length ? (
                 <View>
-                  <SectionLabel>{awaitingServices.length ? 'Andre oppdrag' : 'Dine oppdrag'} · {otherServices.length}</SectionLabel>
+                  <SectionLabel>
+                    {awaitingServices.length ? 'Andre oppdrag' : 'Dine oppdrag'} ·{' '}
+                    {otherServices.length}
+                  </SectionLabel>
                   <View className="gap-3">
                     {otherServices.map((service) => (
-                      <ApplicantServiceCard key={service._id} service={service} onPress={openService} />
+                      <ApplicantServiceCard
+                        key={service._id}
+                        service={service}
+                        onPress={openService}
+                      />
                     ))}
                   </View>
                 </View>
@@ -265,9 +326,15 @@ export default function MyApplicationsScreen() {
                 ? 'Prøv et annet søkeord eller filter.'
                 : 'Finn et oppdrag som passer deg, og send en søknad — det tar under ett minutt.'
             }
-            action={searchText || statusFilter ? undefined : (
-              <Button label="Finn oppdrag" icon={<Search size={16} color="#FFFFFF" />} onPress={() => router.push('/(app)/explore')} />
-            )}
+            action={
+              searchText || statusFilter ? undefined : (
+                <Button
+                  label="Finn oppdrag"
+                  icon={<Search size={16} color="#FFFFFF" />}
+                  onPress={() => router.push('/(app)/explore')}
+                />
+              )
+            }
           />
         ) : (
           <View className="gap-3">
@@ -278,19 +345,23 @@ export default function MyApplicationsScreen() {
                 isWithdrawing={withdrawMutation.isPending && withdrawRequestId === application._id}
                 onWithdraw={(requestId: string) => setWithdrawRequestId(requestId)}
                 onViewJob={(serviceId) => {
-                  if (serviceId) router.push({ pathname: '/(app)/jobs/[id]', params: { id: serviceId } });
+                  if (serviceId)
+                    router.push({ pathname: '/(app)/jobs/[id]', params: { id: serviceId } });
                 }}
                 onChat={(chatId) => {
                   // The card only offers this when the application already has a chat.
-                  if (chatId) router.push({ pathname: '/(app)/messages/[chatId]', params: { chatId } });
+                  if (chatId)
+                    router.push({ pathname: '/(app)/messages/[chatId]', params: { chatId } });
                 }}
                 onOrder={(orderId) => {
                   // Applicants are the provider side, so orders and contracts open in their own
                   // order workspace rather than the customer-only checkout.
-                  if (typeof orderId === 'string' && orderId.trim()) router.push(providerOrderRoute(orderId));
+                  if (typeof orderId === 'string' && orderId.trim())
+                    router.push(providerOrderRoute(orderId));
                 }}
                 onContract={(orderId) => {
-                  if (typeof orderId === 'string' && orderId.trim()) router.push(providerOrderRoute(orderId));
+                  if (typeof orderId === 'string' && orderId.trim())
+                    router.push(providerOrderRoute(orderId));
                 }}
               />
             ))}

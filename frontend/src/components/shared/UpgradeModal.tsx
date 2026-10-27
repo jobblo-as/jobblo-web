@@ -17,7 +17,14 @@ import {
 /** Server answer to "can this user buy an extra contact for this job now?". */
 export interface ExtraContactOffer {
   available: boolean;
-  reason: 'no_period' | 'included_remaining' | 'disabled' | 'already_paid' | 'period_limit_reached' | 'cooldown' | null;
+  reason:
+    | 'no_period'
+    | 'included_remaining'
+    | 'disabled'
+    | 'already_paid'
+    | 'period_limit_reached'
+    | 'cooldown'
+    | null;
   priceNok: number;
   maxPerPeriod: number;
   usedThisPeriod: number;
@@ -106,7 +113,9 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({
           )}
 
           {extraNote && (
-            <p data-testid="extra-contact-note" className="text-sm text-zinc-300">{extraNote}</p>
+            <p data-testid="extra-contact-note" className="text-sm text-zinc-300">
+              {extraNote}
+            </p>
           )}
 
           <div className="space-y-3 text-sm text-zinc-300">

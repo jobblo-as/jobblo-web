@@ -11,9 +11,20 @@ export function Card({ className, ...props }: ViewProps & { className?: string }
 }
 
 /** Small uppercase heading above a Card or a group of rows. */
-export function SectionLabel({ children, className }: { children: React.ReactNode; className?: string }) {
+export function SectionLabel({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
-    <Text className={cn('mb-2 px-1 text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-muted', className)}>
+    <Text
+      className={cn(
+        'mb-2 px-1 text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-muted',
+        className
+      )}
+    >
       {children}
     </Text>
   );

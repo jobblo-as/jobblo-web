@@ -14,7 +14,6 @@ import { DARK, LIGHT } from './tokens';
  */
 // Values live in design-tokens/tokens.json (shared with the website).
 
-
 /**
  * Exact light colour, themed dark colour: `tc('#63665F', 'muted')`. Used where the original
  * light shade differs slightly from the token, so light mode stays pixel-identical.

@@ -29,9 +29,17 @@ export function DetailsStep() {
   const [open, setOpen] = useState<string | null>(null);
   const category = values.categories[0] ?? '';
 
-  const durationLabel = DURATION_OPTIONS.find((d) => d.value === values.durationValue && d.unit === values.durationUnit)?.label ?? '';
+  const durationLabel =
+    DURATION_OPTIONS.find((d) => d.value === values.durationValue && d.unit === values.durationUnit)
+      ?.label ?? '';
   const rows: Row[] = [
-    ...questionsFor(category).map((q) => ({ key: q.key, label: q.label, value: answers[q.key] ?? '', options: q.options, onPick: (o: string) => setAnswer(q.key, o) })),
+    ...questionsFor(category).map((q) => ({
+      key: q.key,
+      label: q.label,
+      value: answers[q.key] ?? '',
+      options: q.options,
+      onPick: (o: string) => setAnswer(q.key, o),
+    })),
     {
       key: 'duration',
       label: t('Hvor lang tid tror du det tar?', 'How long do you think it will take?'),
@@ -46,7 +54,9 @@ export function DetailsStep() {
       key: 'equipment',
       label: t('Utstyr', 'Equipment'),
       // A blank job defaults to "utstyrfri"; it counts as answered only once picked here.
-      value: answers.equipment ? (EQUIPMENT_OPTIONS.find((e) => e.value === values.equipment)?.label ?? '') : '',
+      value: answers.equipment
+        ? (EQUIPMENT_OPTIONS.find((e) => e.value === values.equipment)?.label ?? '')
+        : '',
       options: EQUIPMENT_OPTIONS.map((e) => e.label),
       onPick: (o) => {
         const e = EQUIPMENT_OPTIONS.find((x) => x.label === o);
@@ -63,8 +73,15 @@ export function DetailsStep() {
   return (
     <View className="flex-1">
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 24 }}>
-        <Text className="text-[1.625rem] font-bold leading-tight tracking-[-0.02em] text-ink">{t('Detaljer', 'Details')}</Text>
-        <Text className="mt-1 text-[0.9375rem] leading-6 text-muted">{t('Fyll ut det du vet – da får du raskere svar fra riktige folk.', 'Fill in what you know – you will get faster answers from the right people.')}</Text>
+        <Text className="text-[1.625rem] font-bold leading-tight tracking-[-0.02em] text-ink">
+          {t('Detaljer', 'Details')}
+        </Text>
+        <Text className="mt-1 text-[0.9375rem] leading-6 text-muted">
+          {t(
+            'Fyll ut det du vet – da får du raskere svar fra riktige folk.',
+            'Fill in what you know – you will get faster answers from the right people.'
+          )}
+        </Text>
 
         <View className="mt-5 gap-2">
           {rows.map((row) => (
@@ -76,8 +93,18 @@ export function DetailsStep() {
               className="min-h-[60px] flex-row items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3 active:bg-surface-2"
             >
               <View className="flex-1">
-                <Text className={row.value ? 'text-[0.8125rem] text-muted' : 'text-[1.0625rem] text-ink'}>{row.value ? row.label : `${t('Legg til', 'Add')}: ${row.label.replace(/\?$/, '').toLowerCase()}`}</Text>
-                {row.value ? <Text className="mt-0.5 text-[1.0625rem] font-medium text-ink">{row.value}</Text> : null}
+                <Text
+                  className={
+                    row.value ? 'text-[0.8125rem] text-muted' : 'text-[1.0625rem] text-ink'
+                  }
+                >
+                  {row.value
+                    ? row.label
+                    : `${t('Legg til', 'Add')}: ${row.label.replace(/\?$/, '').toLowerCase()}`}
+                </Text>
+                {row.value ? (
+                  <Text className="mt-0.5 text-[1.0625rem] font-medium text-ink">{row.value}</Text>
+                ) : null}
               </View>
               <ChevronRight size={18} color={tc('#9B9E96', 'subtle')} />
             </Pressable>
@@ -87,14 +114,23 @@ export function DetailsStep() {
         {allDone ? (
           <View className="mt-5 flex-row items-center gap-2 rounded-xl bg-tint px-4 py-3">
             <PartyPopper size={18} color={TC.brandText} />
-            <Text className="flex-1 text-[0.9375rem] font-medium text-brand-text">{t('Bra jobba – du har fylt ut alle detaljene!', 'Well done – you have filled in all the details!')}</Text>
+            <Text className="flex-1 text-[0.9375rem] font-medium text-brand-text">
+              {t(
+                'Bra jobba – du har fylt ut alle detaljene!',
+                'Well done – you have filled in all the details!'
+              )}
+            </Text>
           </View>
         ) : null}
       </ScrollView>
 
       <StepFooter label={t('Neste', 'Next')} onPress={next} />
 
-      <BottomSheet visible={Boolean(current)} onClose={() => setOpen(null)} title={current?.label ?? ''}>
+      <BottomSheet
+        visible={Boolean(current)}
+        onClose={() => setOpen(null)}
+        title={current?.label ?? ''}
+      >
         {current
           ? current.options.map((option) => (
               <Pressable

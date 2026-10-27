@@ -13,7 +13,10 @@ import { TC } from '../../src/theme/colors';
 export default function WelcomeScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: TC.page }}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 24 }}
+      >
         <View>
           <HomeHero />
           <TrustBar />

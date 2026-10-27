@@ -6,7 +6,5 @@ import { Stack } from 'expo-router';
  * headerShown: false — each screen renders its own header.
  */
 export default function MessagesLayout() {
-    return (
-        <Stack screenOptions={{ headerShown: false }} />
-    );
+  return <Stack screenOptions={{ headerShown: false }} />;
 }

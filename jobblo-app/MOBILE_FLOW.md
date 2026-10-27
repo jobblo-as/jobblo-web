@@ -35,66 +35,66 @@ Conventions:
 
 ### Entry and auth
 
-| URL | Purpose | Required params | Auth | Role restriction |
-| --- | --- | --- | --- | --- |
-| `/` | Entry gate. Waits for auth hydration, then redirects to `/(app)` or `/(auth)/login`. Renders no UI of its own. | — | Public | — |
-| `/(auth)/login` | Sign in. | — | Guest | — |
-| `/(auth)/register` | Two-step sign up. | — | Guest | — |
-| `/(auth)/forgot-password` | Request a reset code and set a new password. | — | Guest | — |
+| URL                       | Purpose                                                                                                        | Required params | Auth   | Role restriction |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------- | --------------- | ------ | ---------------- |
+| `/`                       | Entry gate. Waits for auth hydration, then redirects to `/(app)` or `/(auth)/login`. Renders no UI of its own. | —               | Public | —                |
+| `/(auth)/login`           | Sign in.                                                                                                       | —               | Guest  | —                |
+| `/(auth)/register`        | Two-step sign up.                                                                                              | —               | Guest  | —                |
+| `/(auth)/forgot-password` | Request a reset code and set a new password.                                                                   | —               | Guest  | —                |
 
 ### Bottom tabs
 
-| URL | Purpose | Required params | Auth | Role restriction |
-| --- | --- | --- | --- | --- |
-| `/(app)` | Home (`Hjem`). Seasonal greeting, category chips, nearby jobs, recommended workers. | — | Auth | — |
-| `/(app)/create-job` | Post a job (`Legg ut`), including smart fill. | — | Auth | — |
-| `/(app)/messages` | Chat list (`Meldinger`). | — | Auth | own chats (server-scoped) |
-| `/(app)/alerts` | Notification inbox (`Varsler`), with unread badge on the tab icon. | — | Auth | own notifications |
-| `/(app)/profile` | Own profile (`Profil`) and the hub for jobs, applications, saved lists and settings. | — | Auth | — |
+| URL                 | Purpose                                                                              | Required params | Auth | Role restriction          |
+| ------------------- | ------------------------------------------------------------------------------------ | --------------- | ---- | ------------------------- |
+| `/(app)`            | Home (`Hjem`). Seasonal greeting, category chips, nearby jobs, recommended workers.  | —               | Auth | —                         |
+| `/(app)/create-job` | Post a job (`Legg ut`), including smart fill.                                        | —               | Auth | —                         |
+| `/(app)/messages`   | Chat list (`Meldinger`).                                                             | —               | Auth | own chats (server-scoped) |
+| `/(app)/alerts`     | Notification inbox (`Varsler`), with unread badge on the tab icon.                   | —               | Auth | own notifications         |
+| `/(app)/profile`    | Own profile (`Profil`) and the hub for jobs, applications, saved lists and settings. | —               | Auth | —                         |
 
 ### Hidden screens in the tab group
 
 Registered in `app/(app)/_layout.tsx` with `href: null`, so they never appear in the tab bar and
 are only reached by an explicit push. Each renders its own in-content back control.
 
-| URL | Purpose | Required params | Auth | Role restriction |
-| --- | --- | --- | --- | --- |
-| `/(app)/explore` | Search and browse jobs with the full filter sheet. | — (optional `search` seeds the query) | Auth | — |
+| URL                      | Purpose                                                                                           | Required params                                      | Auth | Role restriction                        |
+| ------------------------ | ------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ---- | --------------------------------------- |
+| `/(app)/explore`         | Search and browse jobs with the full filter sheet.                                                | — (optional `search` seeds the query)                | Auth | —                                       |
 | `/(app)/my-applications` | Two-tab overview: `Mine søknader` (applications sent) and `Mine søkere` (applicants on own jobs). | — (optional `tab`: `mine-soknader` \| `mine-sokere`) | Auth | each tab is server-scoped to the viewer |
-| `/(app)/my-jobs` | Jobs the viewer posted, with their applicants and orders. | — | Auth | poster's own jobs (server-scoped) |
+| `/(app)/my-jobs`         | Jobs the viewer posted, with their applicants and orders.                                         | —                                                    | Auth | poster's own jobs (server-scoped)       |
 
 ### Job, chat, profile and favorites sections
 
 Folder sections with their own `_layout.tsx` `Stack`.
 
-| URL | Purpose | Required params | Auth | Role restriction |
-| --- | --- | --- | --- | --- |
-| `/(app)/jobs/[id]` | Job details and the apply flow. | `id` | Auth | owner sees a disabled CTA instead of apply |
-| `/(app)/messages/[chatId]` | Conversation, with order/contract shortcuts. | `chatId` | Auth | chat participants (server 403) |
-| `/(app)/job-applicants/[serviceId]` | Applicants on own job: accept, decline, chat, create the SafePay contract. | `serviceId` | Auth | job owner only (server 403 → `Ikke autorisert`) |
-| `/(app)/profile/[userId]` | Public profile of another user. Redirects to `/(app)/profile` when the id is the viewer. | `userId` | Auth | — |
-| `/(app)/favorites` | Saved lists overview. | — | Auth | own lists |
-| `/(app)/favorites/[listId]` | One saved list and its jobs. | `listId` | Auth | own list |
+| URL                                 | Purpose                                                                                  | Required params | Auth | Role restriction                                |
+| ----------------------------------- | ---------------------------------------------------------------------------------------- | --------------- | ---- | ----------------------------------------------- |
+| `/(app)/jobs/[id]`                  | Job details and the apply flow.                                                          | `id`            | Auth | owner sees a disabled CTA instead of apply      |
+| `/(app)/messages/[chatId]`          | Conversation, with order/contract shortcuts.                                             | `chatId`        | Auth | chat participants (server 403)                  |
+| `/(app)/job-applicants/[serviceId]` | Applicants on own job: accept, decline, chat, create the SafePay contract.               | `serviceId`     | Auth | job owner only (server 403 → `Ikke autorisert`) |
+| `/(app)/profile/[userId]`           | Public profile of another user. Redirects to `/(app)/profile` when the id is the viewer. | `userId`        | Auth | —                                               |
+| `/(app)/favorites`                  | Saved lists overview.                                                                    | —               | Auth | own lists                                       |
+| `/(app)/favorites/[listId]`         | One saved list and its jobs.                                                             | `listId`        | Auth | own list                                        |
 
 ### SafePay and order workspace
 
 All order destinations are resolved through one helper, `src/utils/orderRoute.ts`, so a CTA can
 never promise one screen and open another. No screen builds these URLs by hand.
 
-| URL | Purpose | Required params | Auth | Role restriction |
-| --- | --- | --- | --- | --- |
-| `/(app)/safepay/checkout/[orderId]` | Contract review and payment. | `orderId` | Auth | customer. A provider who lands here is sent to `/(app)/provider/orders/[orderId]` with `replace`, so the back gesture cannot bounce between the two. |
-| `/(app)/provider/orders/[orderId]` | Provider workspace: start work, checklist, evidence upload, mark ready, dispute. | `orderId` | Auth | order parties (server 403); every action is gated on the server-supplied `isProvider` |
-| `/(app)/safepay/approval/[orderId]` | Customer approves the finished work and releases payment. | `orderId` | Auth | customer only — non-customers get an `Ikke tilgang` panel |
-| `/(app)/safepay/success` | Post-payment confirmation. Verifies the Stripe session, then offers role-appropriate next steps. | — (reads `session_id` and/or `orderId` from the query) | Auth | customer and provider see different CTAs |
-| `/(app)/safepay/success/[orderId]` | Deep-link alias only. Redirects to `/(app)/safepay/success?orderId=…`. Kept because SafePay return links and older notifications use this shape. | `orderId` | Auth | — |
+| URL                                 | Purpose                                                                                                                                          | Required params                                        | Auth | Role restriction                                                                                                                                     |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------ | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/(app)/safepay/checkout/[orderId]` | Contract review and payment.                                                                                                                     | `orderId`                                              | Auth | customer. A provider who lands here is sent to `/(app)/provider/orders/[orderId]` with `replace`, so the back gesture cannot bounce between the two. |
+| `/(app)/provider/orders/[orderId]`  | Provider workspace: start work, checklist, evidence upload, mark ready, dispute.                                                                 | `orderId`                                              | Auth | order parties (server 403); every action is gated on the server-supplied `isProvider`                                                                |
+| `/(app)/safepay/approval/[orderId]` | Customer approves the finished work and releases payment.                                                                                        | `orderId`                                              | Auth | customer only — non-customers get an `Ikke tilgang` panel                                                                                            |
+| `/(app)/safepay/success`            | Post-payment confirmation. Verifies the Stripe session, then offers role-appropriate next steps.                                                 | — (reads `session_id` and/or `orderId` from the query) | Auth | customer and provider see different CTAs                                                                                                             |
+| `/(app)/safepay/success/[orderId]`  | Deep-link alias only. Redirects to `/(app)/safepay/success?orderId=…`. Kept because SafePay return links and older notifications use this shape. | `orderId`                                              | Auth | —                                                                                                                                                    |
 
 ### Disputes
 
-| URL | Purpose | Required params | Auth | Role restriction |
-| --- | --- | --- | --- | --- |
-| `/(app)/disputes/create` | Create a dispute for an order (reason, title, description). Both customer and provider. | `orderId` (query) | Auth | order participants only (server 403) |
-| `/(app)/disputes/order/[orderId]` | View the dispute thread for an order: details, messages, add message. | `orderId` | Auth | order participants only (server 403) |
+| URL                               | Purpose                                                                                 | Required params   | Auth | Role restriction                     |
+| --------------------------------- | --------------------------------------------------------------------------------------- | ----------------- | ---- | ------------------------------------ |
+| `/(app)/disputes/create`          | Create a dispute for an order (reason, title, description). Both customer and provider. | `orderId` (query) | Auth | order participants only (server 403) |
+| `/(app)/disputes/order/[orderId]` | View the dispute thread for an order: details, messages, add message.                   | `orderId`         | Auth | order participants only (server 403) |
 
 Both are hidden secondary routes reached from the SafePay order screens. There is no dispute tab and
 no standalone dispute list route, because the backend exposes no user-facing "list my disputes"
@@ -105,26 +105,26 @@ endpoint — see [Disputes](#disputes-1).
 All are pushed from `/(app)/profile` or `/(app)/profile/settings`, all require auth, and none has a
 role restriction.
 
-| URL | Purpose | Required params |
-| --- | --- | --- |
-| `/(app)/profile/edit` | Edit own profile, including avatar upload. | — |
-| `/(app)/profile/membership` | Plan selection and purchase. | — |
-| `/(app)/profile/support` | Kundesenter: FAQ, e-mail, case registration. | — |
-| `/(app)/profile/settings` | Settings overview (Profil, Konto, Betaling, Personvern, Annet). | — |
-| `/(app)/profile/settings/addresses` | Street address, postal code, place, map picker. | — |
-| `/(app)/profile/settings/seeker` | Jobseeker profile: availability, skills, experience, portfolio, certificates. | — |
-| `/(app)/profile/settings/email` | Change the sign-in e-mail address. | — |
-| `/(app)/profile/settings/password` | Change password. | — |
-| `/(app)/profile/settings/sessions` | Active sessions / signed-in devices. | — |
-| `/(app)/profile/settings/safepay` | SafePay transaction history. | — |
-| `/(app)/profile/settings/payout` | Stripe Connect payout setup. | — |
-| `/(app)/profile/settings/subscription` | Manage the active subscription (cancel / resume). | — |
-| `/(app)/profile/settings/notifications` | Push permission and current-device registration. | — |
-| `/(app)/profile/settings/privacy` | Privacy statement and cookie policy. | — |
-| `/(app)/profile/settings/location` | Country shown on the profile. | — |
-| `/(app)/profile/settings/about` | About Jobblo; links on to `settings/terms`. | — |
-| `/(app)/profile/settings/terms` | Terms of service. Reached from `settings/about`, not from the settings list. | — |
-| `/(app)/profile/settings/delete-account` | Irreversible account deletion, then `router.replace('/(auth)/login')`. | — |
+| URL                                      | Purpose                                                                       | Required params |
+| ---------------------------------------- | ----------------------------------------------------------------------------- | --------------- |
+| `/(app)/profile/edit`                    | Edit own profile, including avatar upload.                                    | —               |
+| `/(app)/profile/membership`              | Plan selection and purchase.                                                  | —               |
+| `/(app)/profile/support`                 | Kundesenter: FAQ, e-mail, case registration.                                  | —               |
+| `/(app)/profile/settings`                | Settings overview (Profil, Konto, Betaling, Personvern, Annet).               | —               |
+| `/(app)/profile/settings/addresses`      | Street address, postal code, place, map picker.                               | —               |
+| `/(app)/profile/settings/seeker`         | Jobseeker profile: availability, skills, experience, portfolio, certificates. | —               |
+| `/(app)/profile/settings/email`          | Change the sign-in e-mail address.                                            | —               |
+| `/(app)/profile/settings/password`       | Change password.                                                              | —               |
+| `/(app)/profile/settings/sessions`       | Active sessions / signed-in devices.                                          | —               |
+| `/(app)/profile/settings/safepay`        | SafePay transaction history.                                                  | —               |
+| `/(app)/profile/settings/payout`         | Stripe Connect payout setup.                                                  | —               |
+| `/(app)/profile/settings/subscription`   | Manage the active subscription (cancel / resume).                             | —               |
+| `/(app)/profile/settings/notifications`  | Push permission and current-device registration.                              | —               |
+| `/(app)/profile/settings/privacy`        | Privacy statement and cookie policy.                                          | —               |
+| `/(app)/profile/settings/location`       | Country shown on the profile.                                                 | —               |
+| `/(app)/profile/settings/about`          | About Jobblo; links on to `settings/terms`.                                   | —               |
+| `/(app)/profile/settings/terms`          | Terms of service. Reached from `settings/about`, not from the settings list.  | —               |
+| `/(app)/profile/settings/delete-account` | Irreversible account deletion, then `router.replace('/(auth)/login')`.        | —               |
 
 ### Deliberately absent
 
@@ -1288,25 +1288,25 @@ screen for the order they belong to, and the dispute routes are hidden secondary
 
 ### Status
 
-| Capability | State | Notes |
-| --- | --- | --- |
-| Create dispute | ✅ Implemented | `app/(app)/disputes/create.tsx` |
-| Dispute detail / thread | ✅ Implemented | `app/(app)/disputes/order/[orderId].tsx` |
-| Text replies in thread | ✅ Implemented | `POST /api/safepay/disputes/:disputeId/message` |
-| User dispute list | ⬜ **NOT IMPLEMENTED** | Backend endpoint absent |
-| Dispute attachments | ⬜ **NOT IMPLEMENTED** | Backend endpoint absent |
-| User cancel / close dispute | ⬜ **NOT IMPLEMENTED** | Admin only |
-| Runtime QA | ⏳ **Pending** | Static verification only so far (`npx tsc --noEmit` → exit 0) |
+| Capability                  | State                  | Notes                                                         |
+| --------------------------- | ---------------------- | ------------------------------------------------------------- |
+| Create dispute              | ✅ Implemented         | `app/(app)/disputes/create.tsx`                               |
+| Dispute detail / thread     | ✅ Implemented         | `app/(app)/disputes/order/[orderId].tsx`                      |
+| Text replies in thread      | ✅ Implemented         | `POST /api/safepay/disputes/:disputeId/message`               |
+| User dispute list           | ⬜ **NOT IMPLEMENTED** | Backend endpoint absent                                       |
+| Dispute attachments         | ⬜ **NOT IMPLEMENTED** | Backend endpoint absent                                       |
+| User cancel / close dispute | ⬜ **NOT IMPLEMENTED** | Admin only                                                    |
+| Runtime QA                  | ⏳ **Pending**         | Static verification only so far (`npx tsc --noEmit` → exit 0) |
 
 ### Backend contract
 
 **Endpoints used:**
 
-| Method | Path | Purpose |
-|--------|------|---------|
-| POST | `/api/safepay/contract/:orderId/dispute` | Create dispute (auth, customer or provider on the order) |
-| GET | `/api/safepay/contract/:orderId/dispute` | Newest dispute for that order (auth, participants only) |
-| POST | `/api/safepay/disputes/:disputeId/message` | Add a text message (auth, participants only) |
+| Method | Path                                       | Purpose                                                  |
+| ------ | ------------------------------------------ | -------------------------------------------------------- |
+| POST   | `/api/safepay/contract/:orderId/dispute`   | Create dispute (auth, customer or provider on the order) |
+| GET    | `/api/safepay/contract/:orderId/dispute`   | Newest dispute for that order (auth, participants only)  |
+| POST   | `/api/safepay/disputes/:disputeId/message` | Add a text message (auth, participants only)             |
 
 These three are the only dispute endpoints the mobile app calls. Admin dispute endpoints are never
 called from mobile.
@@ -1336,16 +1336,16 @@ value, never the translated label.
 
 **Dispute statuses (all 8 handled):**
 
-| Status | Norwegian label | Kind |
-| --- | --- | --- |
-| `open` | Åpen | active |
-| `under_review` | Under behandling | active |
-| `waiting_for_customer` | Venter på oppdragsgiver | active |
-| `waiting_for_provider` | Venter på utfører | active |
-| `evidence_submitted` | Dokumentasjon sendt inn | active |
-| `resolved` | Avgjort | terminal |
-| `closed` | Lukket | terminal |
-| `cancelled` | Kansellert | terminal |
+| Status                 | Norwegian label         | Kind     |
+| ---------------------- | ----------------------- | -------- |
+| `open`                 | Åpen                    | active   |
+| `under_review`         | Under behandling        | active   |
+| `waiting_for_customer` | Venter på oppdragsgiver | active   |
+| `waiting_for_provider` | Venter på utfører       | active   |
+| `evidence_submitted`   | Dokumentasjon sendt inn | active   |
+| `resolved`             | Avgjort                 | terminal |
+| `closed`               | Lukket                  | terminal |
+| `cancelled`            | Kansellert              | terminal |
 
 Active vs terminal is the client's only lifecycle rule, and it mirrors the backend's own definition:
 `safepayController.js` treats a dispute as blocking when its status is `$nin: ['resolved','closed','cancelled']`.
@@ -1387,10 +1387,10 @@ or a failed reply surfaces immediately instead of silently repeating a write.
 
 ### Routes
 
-| URL | Purpose | Required params | Auth |
-| --- | --- | --- | --- |
-| `/(app)/disputes/create` | Create a dispute: pick reason, write title + description | `orderId` (query string) | Auth (order participants) |
-| `/(app)/disputes/order/[orderId]` | Dispute thread: details, status, messages, reply | `orderId` (path) | Auth (order participants) |
+| URL                               | Purpose                                                  | Required params          | Auth                      |
+| --------------------------------- | -------------------------------------------------------- | ------------------------ | ------------------------- |
+| `/(app)/disputes/create`          | Create a dispute: pick reason, write title + description | `orderId` (query string) | Auth (order participants) |
+| `/(app)/disputes/order/[orderId]` | Dispute thread: details, status, messages, reply         | `orderId` (path)         | Auth (order participants) |
 
 `app/(app)/disputes/_layout.tsx` is a `Stack`, and `app/(app)/_layout.tsx` registers
 `<Tabs.Screen name="disputes" options={{ href: null }} />`, so neither screen appears in the tab bar.
@@ -1466,14 +1466,14 @@ Reads the dispute for the order and renders server data only.
 
 ### Error handling
 
-| Case | Behaviour |
-| --- | --- |
-| 400 | Server's Norwegian validation / ineligible / duplicate / closed message is shown |
-| 401 | Handled once, centrally, by the axios interceptor in `src/api/client.ts` (session teardown) |
-| 403 | `Du har ikke tilgang til denne tvisten.` — no logout |
-| 404 | `Tvisten ble ikke funnet.` — on the GET it degrades to "no dispute yet", no logout |
-| Network / no status | `Ingen nettverksforbindelse. Sjekk tilkoblingen og prøv igjen.` + retry, no logout |
-| 5xx | `Noe gikk galt hos oss. Prøv igjen om litt.` — no logout |
+| Case                | Behaviour                                                                                   |
+| ------------------- | ------------------------------------------------------------------------------------------- |
+| 400                 | Server's Norwegian validation / ineligible / duplicate / closed message is shown            |
+| 401                 | Handled once, centrally, by the axios interceptor in `src/api/client.ts` (session teardown) |
+| 403                 | `Du har ikke tilgang til denne tvisten.` — no logout                                        |
+| 404                 | `Tvisten ble ikke funnet.` — on the GET it degrades to "no dispute yet", no logout          |
+| Network / no status | `Ingen nettverksforbindelse. Sjekk tilkoblingen og prøv igjen.` + retry, no logout          |
+| 5xx                 | `Noe gikk galt hos oss. Prøv igjen om litt.` — no logout                                    |
 
 Copy lives in `src/utils/disputeError.ts` so screens never import the service layer for messages.
 401 is deliberately absent from that module: the interceptor owns it.
@@ -3708,16 +3708,16 @@ Classification: 4 public/guest routes, 5 visible tabs, 3 hidden flat screens, 6 
 `as never` on a navigation target is gone, and every template-string href is now an object-form
 href checked against the generated `.expo/types/router.d.ts` union:
 
-| File | Was | Now |
-| --- | --- | --- |
-| `app/(auth)/register.tsx` | `'/(auth)/login' as any` | plain literal |
-| `app/(auth)/login.tsx` | 2 × `as any` (forgot-password, register) | plain literals |
-| `app/(auth)/forgot-password.tsx` | 2 × `'/(auth)/login' as any` | plain literals |
-| `app/(app)/profile/index.tsx` | 2 × `as Href` + unused `type Href` import | plain literals, import trimmed |
-| `app/(app)/profile/membership.tsx` | 3 × `'/profile/settings/subscription' as any` | plain literals |
-| `app/(app)/profile/settings/index.tsx` | 14 × `as any` | plain literals |
-| `app/(app)/profile/settings/safepay.tsx` | `'/profile/settings/payout' as any` | plain literal |
-| `app/(app)/safepay/success/[orderId].tsx` | hand-built template string + `as Href` | two typed `<Redirect>` branches |
+| File                                      | Was                                           | Now                             |
+| ----------------------------------------- | --------------------------------------------- | ------------------------------- |
+| `app/(auth)/register.tsx`                 | `'/(auth)/login' as any`                      | plain literal                   |
+| `app/(auth)/login.tsx`                    | 2 × `as any` (forgot-password, register)      | plain literals                  |
+| `app/(auth)/forgot-password.tsx`          | 2 × `'/(auth)/login' as any`                  | plain literals                  |
+| `app/(app)/profile/index.tsx`             | 2 × `as Href` + unused `type Href` import     | plain literals, import trimmed  |
+| `app/(app)/profile/membership.tsx`        | 3 × `'/profile/settings/subscription' as any` | plain literals                  |
+| `app/(app)/profile/settings/index.tsx`    | 14 × `as any`                                 | plain literals                  |
+| `app/(app)/profile/settings/safepay.tsx`  | `'/profile/settings/payout' as any`           | plain literal                   |
+| `app/(app)/safepay/success/[orderId].tsx` | hand-built template string + `as Href`        | two typed `<Redirect>` branches |
 
 Non-route casts were left alone on purpose — `(user as any)._id` in `jobs/[id].tsx` and the
 `FormData` / `profile as any` casts in `settings/seeker.tsx` are payload shape problems, not
@@ -3780,34 +3780,33 @@ building an unshipped feature, making a product decision, or touching the backen
 - No backend file was changed, so no `node --check` run was required.
 - Expo was never started, restarted or re-pointed; no port changed. The running dev server was
   left untouched for the whole pass.
-- Grep sweep confirms zero remaining `router.push(\`…\`)`, `href={\`…\`}`, `as Href` or
-  `as never` in any `.ts`/`.tsx`, and that all `src/` navigation uses object-form hrefs.
+- Grep sweep confirms zero remaining `router.push(\`…\`)`, `href={\`…\`}`, `as Href`or`as never`in any`.ts`/`.tsx`, and that all `src/` navigation uses object-form hrefs.
 
 ### Manual navigation test matrix — MANUAL PENDING
 
 Runtime navigation is verified on device by the user. Nothing below has been executed, so nothing
 below is marked PASS. Status stays `⬜ PENDING` until a human runs it on a device.
 
-| # | Case | Expected | Status |
-| --- | --- | --- | --- |
-| 1 | Cold start, signed out | `/` gate holds until hydration, then login. No Home flash | ⬜ PENDING |
-| 2 | Cold start, signed in | `/` → Home tab. No login flash | ⬜ PENDING |
-| 3 | Deep link into an `(app)` URL before hydration | Target URL preserved, not swallowed by the gate | ⬜ PENDING |
-| 4 | Guest opens a protected URL directly | Redirect to `/(auth)/login` | ⬜ PENDING |
-| 5 | Login succeeds | Lands on Home; hardware back does not re-enter the auth group | ⬜ PENDING |
-| 6 | Auth cross-links | Register ↔ login and Forgot ↔ login both navigate and both come back | ⬜ PENDING |
-| 7 | Switch all 5 tabs | Hjem / Legg ut / Meldinger / Varsler / Profil all mount; no tab root draws a back control | ⬜ PENDING |
-| 8 | Alerts badge | Bell badge count matches unread; `99+` caps correctly | ⬜ PENDING |
-| 9 | Explore from a Home category chip | Opens `/(app)/explore`; back returns to Home | ⬜ PENDING |
-| 10 | Explore from search | Opens with the `search` param applied; back returns to origin | ⬜ PENDING |
-| 11 | Explore with the fetch failing | Error overlay shows **and** the back control is still reachable | ⬜ PENDING |
-| 12 | `jobs/[id]` from any list | Pushes detail; back returns to the originating list, not Home | ⬜ PENDING |
+| #   | Case                                           | Expected                                                                                  | Status     |
+| --- | ---------------------------------------------- | ----------------------------------------------------------------------------------------- | ---------- |
+| 1   | Cold start, signed out                         | `/` gate holds until hydration, then login. No Home flash                                 | ⬜ PENDING |
+| 2   | Cold start, signed in                          | `/` → Home tab. No login flash                                                            | ⬜ PENDING |
+| 3   | Deep link into an `(app)` URL before hydration | Target URL preserved, not swallowed by the gate                                           | ⬜ PENDING |
+| 4   | Guest opens a protected URL directly           | Redirect to `/(auth)/login`                                                               | ⬜ PENDING |
+| 5   | Login succeeds                                 | Lands on Home; hardware back does not re-enter the auth group                             | ⬜ PENDING |
+| 6   | Auth cross-links                               | Register ↔ login and Forgot ↔ login both navigate and both come back                      | ⬜ PENDING |
+| 7   | Switch all 5 tabs                              | Hjem / Legg ut / Meldinger / Varsler / Profil all mount; no tab root draws a back control | ⬜ PENDING |
+| 8   | Alerts badge                                   | Bell badge count matches unread; `99+` caps correctly                                     | ⬜ PENDING |
+| 9   | Explore from a Home category chip              | Opens `/(app)/explore`; back returns to Home                                              | ⬜ PENDING |
+| 10  | Explore from search                            | Opens with the `search` param applied; back returns to origin                             | ⬜ PENDING |
+| 11  | Explore with the fetch failing                 | Error overlay shows **and** the back control is still reachable                           | ⬜ PENDING |
+| 12  | `jobs/[id]` from any list                      | Pushes detail; back returns to the originating list, not Home                             | ⬜ PENDING |
 
 | 13 | `messages/[chatId]` | Opens the thread; back returns to Meldinger | ⬜ PENDING |
 | 14 | `job-applicants/[serviceId]` | Owner sees applicants; non-owner gets `Ikke autorisert` from the server 403 | ⬜ PENDING |
 | 15 | Public profile, all 3 entry points | Home worker card, alerts sender tap and job-poster card each open `/(app)/profile/[userId]` | ⬜ PENDING |
 | 16 | Public profile with your own id | Redirects to the Profil tab (watch for a one-frame public flash) | ⬜ PENDING |
-| 17 | `my-applications?tab=mine-sokere` | Opens on the *Mine søkere* tab, not the default | ⬜ PENDING |
+| 17 | `my-applications?tab=mine-sokere` | Opens on the _Mine søkere_ tab, not the default | ⬜ PENDING |
 | 18 | `my-jobs` SafePay CTA, all 3 states | `customerOrderRoute` resolves to approval / success / checkout and the label matches the resolved pathname | ⬜ PENDING |
 | 19 | Checkout as customer, then as provider | Customer sees checkout; provider is `replace`d to the provider order screen with no back loop | ⬜ PENDING |
 | 20 | Provider order workspace | `canStart` / `canUpload` / `canReady` / `canDispute` follow server `isProvider`, not the local role guess | ⬜ PENDING |
@@ -3823,8 +3822,3 @@ below is marked PASS. Status stays `⬜ PENDING` until a human runs it on a devi
 | 30 | Reply in an active thread | Message posts, thread refetches and shows it, own message is right-aligned as `Deg`, admin messages read `Jobblo / Support`, no internal note appears | ⬜ PENDING |
 | 31 | Terminal dispute | `resolved` / `closed` / `cancelled` hides the composer, shows `Tvisten er avsluttet.`, offers no reopen or cancel, and a resolved dispute no longer blocks approval | ⬜ PENDING |
 | 32 | Dispute error paths | Non-participant gets `Du har ikke tilgang til denne tvisten.`, an order with no dispute gets the neutral empty card, and airplane mode gets the retry state — none of them logs the user out | ⬜ PENDING |
-
-
-
-
-

@@ -36,7 +36,10 @@ function extractError(err: unknown): { message: string; code: DeleteErrorCode } 
   )?.response;
   const data = response?.data;
   if (data?.code === 'REAUTH_REQUIRED') {
-    return { message: 'Av sikkerhetshensyn må du logge inn på nytt og slette profilen innen 10 minutter.', code: 'REAUTH_REQUIRED' };
+    return {
+      message: 'Av sikkerhetshensyn må du logge inn på nytt og slette profilen innen 10 minutter.',
+      code: 'REAUTH_REQUIRED',
+    };
   }
   return {
     message: data?.error || data?.message || 'Kunne ikke slette profilen. Prøv igjen.',
@@ -87,7 +90,12 @@ export default function DeleteAccountScreen() {
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         >
-          <ScreenHeader title="Slett profil" subtitle="Denne handlingen kan ikke angres." icon={Trash2} destructive />
+          <ScreenHeader
+            title="Slett profil"
+            subtitle="Denne handlingen kan ikke angres."
+            icon={Trash2}
+            destructive
+          />
 
           <View className="rounded-3xl bg-surface p-5">
             <View className="flex flex-col gap-3 mb-5">
@@ -126,14 +134,16 @@ export default function DeleteAccountScreen() {
                     <Text className="mt-1 text-[0.8125rem] leading-relaxed text-[#8A3C32] dark:text-danger">
                       {errorInfo?.message}
                     </Text>
-                    {MEMBERSHIP_ENABLED ? <Pressable
-                      onPress={() => router.push('/profile/settings/subscription')}
-                      className="mt-3 rounded-full bg-danger-solid px-4 py-2.5 self-start"
-                    >
-                      <Text className="text-[0.8125rem] font-semibold text-white">
-                        Gå til abonnementer
-                      </Text>
-                    </Pressable> : null}
+                    {MEMBERSHIP_ENABLED ? (
+                      <Pressable
+                        onPress={() => router.push('/profile/settings/subscription')}
+                        className="mt-3 rounded-full bg-danger-solid px-4 py-2.5 self-start"
+                      >
+                        <Text className="text-[0.8125rem] font-semibold text-white">
+                          Gå til abonnementer
+                        </Text>
+                      </Pressable>
+                    ) : null}
                   </View>
                 </View>
               </View>
@@ -171,7 +181,8 @@ export default function DeleteAccountScreen() {
                 Bekreft sletting
               </Text>
               <Text className="mb-3 text-[0.8125rem] leading-relaxed text-muted">
-                Skriv ordet <Text className="font-bold text-[#B4544A] dark:text-danger">{CONFIRM_WORD}</Text>{' '}
+                Skriv ordet{' '}
+                <Text className="font-bold text-[#B4544A] dark:text-danger">{CONFIRM_WORD}</Text>{' '}
                 nedenfor for å bekrefte at du forstår at handlingen ikke kan angres.
               </Text>
               <TextInput
@@ -186,12 +197,18 @@ export default function DeleteAccountScreen() {
                 placeholder={CONFIRM_WORD}
                 placeholderTextColor="#BFBFBF"
                 maxLength={10}
-                className={[inputClass, canDelete ? 'border-[#B4544A] dark:border-danger bg-danger-tint' : ''].join(' ')}
+                className={[
+                  inputClass,
+                  canDelete ? 'border-[#B4544A] dark:border-danger bg-danger-tint' : '',
+                ].join(' ')}
               />
             </View>
 
             <View className="mb-3">
-              <Text nativeID="delete-password-label" className="mb-1.5 text-[0.8125rem] font-semibold text-ink">
+              <Text
+                nativeID="delete-password-label"
+                className="mb-1.5 text-[0.8125rem] font-semibold text-ink"
+              >
                 Nåværende passord
               </Text>
               <TextInput
@@ -237,9 +254,7 @@ export default function DeleteAccountScreen() {
               disabled={deleteMutation.isPending}
               className="mt-3 items-center py-2.5"
             >
-              <Text className="text-sm font-semibold text-muted">
-                Avbryt og behold profilen
-              </Text>
+              <Text className="text-sm font-semibold text-muted">Avbryt og behold profilen</Text>
             </Pressable>
           </View>
         </ScrollView>

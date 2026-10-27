@@ -25,10 +25,20 @@ function serverError(error: unknown) {
 }
 
 /** "Rapporter oppdraget" (FINN: "Rapporter svindel/regelbrudd"): reason + a short description. */
-export function ReportJobSheet({ visible, serviceId, onClose }: { visible: boolean; serviceId: string; onClose: () => void }) {
+export function ReportJobSheet({
+  visible,
+  serviceId,
+  onClose,
+}: {
+  visible: boolean;
+  serviceId: string;
+  onClose: () => void;
+}) {
   const [reason, setReason] = useState('');
   const [description, setDescription] = useState('');
-  const report = useMutation({ mutationFn: () => jobsService.reportJob(serviceId, reason, description.trim()) });
+  const report = useMutation({
+    mutationFn: () => jobsService.reportJob(serviceId, reason, description.trim()),
+  });
 
   const close = () => {
     onClose();
@@ -45,8 +55,12 @@ export function ReportJobSheet({ visible, serviceId, onClose }: { visible: boole
       {report.isSuccess ? (
         <View className="items-center py-6">
           <CheckCircle2 size={36} color={TC.brandText} />
-          <Text className="mt-3 text-center text-[1.0625rem] font-semibold text-ink">Takk – rapporten er sendt</Text>
-          <Text className="mt-1 text-center text-[0.9375rem] leading-6 text-muted">Jobblo ser på annonsen så snart som mulig.</Text>
+          <Text className="mt-3 text-center text-[1.0625rem] font-semibold text-ink">
+            Takk – rapporten er sendt
+          </Text>
+          <Text className="mt-1 text-center text-[0.9375rem] leading-6 text-muted">
+            Jobblo ser på annonsen så snart som mulig.
+          </Text>
         </View>
       ) : (
         <View>
@@ -62,7 +76,11 @@ export function ReportJobSheet({ visible, serviceId, onClose }: { visible: boole
                   accessibilityState={{ selected }}
                   className={`h-9 justify-center rounded-full border px-3 ${selected ? 'border-brand bg-tint' : 'border-line bg-surface'}`}
                 >
-                  <Text className={`text-[0.875rem] ${selected ? 'font-semibold text-brand-text' : 'text-ink'}`}>{r.label}</Text>
+                  <Text
+                    className={`text-[0.875rem] ${selected ? 'font-semibold text-brand-text' : 'text-ink'}`}
+                  >
+                    {r.label}
+                  </Text>
                 </Pressable>
               );
             })}
@@ -79,7 +97,9 @@ export function ReportJobSheet({ visible, serviceId, onClose }: { visible: boole
             style={{ textAlignVertical: 'top' }}
           />
           {report.isError ? (
-            <Text className="mt-2 text-[0.875rem] font-medium text-danger">{serverError(report.error) ?? 'Kunne ikke sende rapporten. Prøv igjen.'}</Text>
+            <Text className="mt-2 text-[0.875rem] font-medium text-danger">
+              {serverError(report.error) ?? 'Kunne ikke sende rapporten. Prøv igjen.'}
+            </Text>
           ) : null}
           <Pressable
             onPress={() => report.mutate()}
@@ -87,7 +107,11 @@ export function ReportJobSheet({ visible, serviceId, onClose }: { visible: boole
             accessibilityRole="button"
             className={`mt-4 h-12 items-center justify-center rounded-full bg-brand ${!reason || !description.trim() || report.isPending ? 'opacity-50' : ''}`}
           >
-            {report.isPending ? <ActivityIndicator color="#FFFFFF" /> : <Text className="text-[0.9375rem] font-semibold text-white">Send rapport</Text>}
+            {report.isPending ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text className="text-[0.9375rem] font-semibold text-white">Send rapport</Text>
+            )}
           </Pressable>
         </View>
       )}

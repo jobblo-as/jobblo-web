@@ -99,7 +99,10 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section id={`edit-${id}`} className="scroll-mt-4 border-t border-[#E6E7E1] px-5 py-6 first:border-t-0">
+    <section
+      id={`edit-${id}`}
+      className="scroll-mt-4 border-t border-[#E6E7E1] px-5 py-6 first:border-t-0"
+    >
       <h3 className="text-[0.9375rem] font-semibold tracking-[-0.01em] text-[#0B0B0B]">{title}</h3>
       {hint && <p className="mt-1 text-[0.8125rem] leading-relaxed text-[#63665F]">{hint}</p>}
       <div className="mt-4 space-y-4">{children}</div>
@@ -174,7 +177,10 @@ export function EditProfileSheet({
   };
 
   const removeSkill = (skill: string) =>
-    set('skills', draft.skills.filter((s) => s !== skill));
+    set(
+      'skills',
+      draft.skills.filter((s) => s !== skill)
+    );
 
   const uploadAvatar = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -218,7 +224,12 @@ export function EditProfileSheet({
   const avatar = user?.avatarUrl || DEFAULT_AVATAR;
 
   return (
-    <div className="fixed inset-0 z-1000" role="dialog" aria-modal="true" aria-label="Rediger profil">
+    <div
+      className="fixed inset-0 z-1000"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Rediger profil"
+    >
       <button
         type="button"
         aria-label="Lukk"

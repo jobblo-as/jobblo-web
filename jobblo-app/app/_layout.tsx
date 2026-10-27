@@ -5,7 +5,10 @@ import { useRouter, usePathname, type ErrorBoundaryProps } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 import { useCallback, useEffect, useRef } from 'react';
 import AppProviders from '../src/providers/AppProviders';
-import { subscribeToPushResponses, type PushNotificationData } from '../src/services/pushNotifications.service';
+import {
+  subscribeToPushResponses,
+  type PushNotificationData,
+} from '../src/services/pushNotifications.service';
 import { NotificationRealtime } from '../src/components/NotificationRealtime';
 import { useAuthStore } from '../src/store/authStore';
 import { loadThemePreference } from '../src/theme/themePreference';
@@ -21,10 +24,31 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
     captureError(error, { kind: 'render' });
   }, [error]);
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: '#F8FAFC' }}>
-      <Text style={{ fontSize: 18, fontWeight: '600', color: '#111827', marginBottom: 8 }}>Noe gikk galt</Text>
-      <Text style={{ fontSize: 14, color: '#6B7280', textAlign: 'center', marginBottom: 20 }}>Feilen er rapportert. Prøv igjen, eller start appen på nytt.</Text>
-      <Pressable accessibilityRole="button" onPress={retry} style={{ backgroundColor: '#2D4A3E', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 10 }}>
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+        backgroundColor: '#F8FAFC',
+      }}
+    >
+      <Text style={{ fontSize: 18, fontWeight: '600', color: '#111827', marginBottom: 8 }}>
+        Noe gikk galt
+      </Text>
+      <Text style={{ fontSize: 14, color: '#6B7280', textAlign: 'center', marginBottom: 20 }}>
+        Feilen er rapportert. Prøv igjen, eller start appen på nytt.
+      </Text>
+      <Pressable
+        accessibilityRole="button"
+        onPress={retry}
+        style={{
+          backgroundColor: '#2D4A3E',
+          paddingHorizontal: 20,
+          paddingVertical: 12,
+          borderRadius: 10,
+        }}
+      >
         <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>Prøv igjen</Text>
       </Pressable>
     </View>
@@ -34,7 +58,14 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
 // Dark mode only: light keeps React Navigation's default theme exactly as before.
 const JOBBLO_DARK = {
   ...DarkTheme,
-  colors: { ...DarkTheme.colors, background: '#121411', card: '#1C1F1B', border: '#2E322C', text: '#F2F3EE', primary: '#7DBE92' },
+  colors: {
+    ...DarkTheme.colors,
+    background: '#121411',
+    card: '#1C1F1B',
+    border: '#2E322C',
+    text: '#F2F3EE',
+    primary: '#7DBE92',
+  },
 };
 
 export default function RootLayout() {
@@ -51,28 +82,31 @@ export default function RootLayout() {
   hydratedRef.current = hydrated;
   authenticatedRef.current = isAuthenticated;
 
-  const routeNotification = useCallback((data: PushNotificationData) => {
-    const key = data.notificationId || JSON.stringify(data);
-    if (handledNotificationRef.current === key) return;
-    handledNotificationRef.current = key;
-    // Held only until the stored session is known. Tapped while signed out, it belonged to the
-    // previous account: replaying it after the next sign-in opened their chat for someone else.
-    if (!hydratedRef.current) {
-      pendingNotificationRef.current = data;
-      return;
-    }
-    if (!authenticatedRef.current) return;
+  const routeNotification = useCallback(
+    (data: PushNotificationData) => {
+      const key = data.notificationId || JSON.stringify(data);
+      if (handledNotificationRef.current === key) return;
+      handledNotificationRef.current = key;
+      // Held only until the stored session is known. Tapped while signed out, it belonged to the
+      // previous account: replaying it after the next sign-in opened their chat for someone else.
+      if (!hydratedRef.current) {
+        pendingNotificationRef.current = data;
+        return;
+      }
+      if (!authenticatedRef.current) return;
 
-    if (data.type === 'chat_message' && data.chatId) {
-      router.push({ pathname: '/(app)/messages/[chatId]', params: { chatId: data.chatId } });
-    } else if (data.type === 'job_request') {
-      const serviceId = data.serviceId || data.jobId;
-      if (!serviceId) return;
-      router.push({ pathname: '/(app)/job-applicants/[serviceId]', params: { serviceId } });
-    } else if (data.type === 'application_status') {
-      router.push('/(app)/my-applications');
-    }
-  }, [router]);
+      if (data.type === 'chat_message' && data.chatId) {
+        router.push({ pathname: '/(app)/messages/[chatId]', params: { chatId: data.chatId } });
+      } else if (data.type === 'job_request') {
+        const serviceId = data.serviceId || data.jobId;
+        if (!serviceId) return;
+        router.push({ pathname: '/(app)/job-applicants/[serviceId]', params: { serviceId } });
+      } else if (data.type === 'application_status') {
+        router.push('/(app)/my-applications');
+      }
+    },
+    [router]
+  );
 
   useEffect(() => {
     void loadThemePreference();

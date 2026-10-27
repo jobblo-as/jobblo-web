@@ -1,6 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Alert, AppState, Linking, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import {
+  Alert,
+  AppState,
+  Linking,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import {
   ArrowLeft,
   BadgeCheck,
@@ -16,10 +26,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../src/store/authStore';
 import { useCurrentSubscription } from '../../../src/hooks/useSubscription';
 import { queryKeys } from '../../../src/queryKeys';
-import {
-  useCreateCheckoutSessionMutation,
-  usePlans,
-} from '../../../src/hooks/useMembership';
+import { useCreateCheckoutSessionMutation, usePlans } from '../../../src/hooks/useMembership';
 import type { SubscriptionPlan } from '../../../src/services/plans.service';
 import { MEMBERSHIP_ENABLED } from '../../../src/config/features';
 import { ErrorState } from '../../../src/components/ui/ErrorState';
@@ -72,11 +79,16 @@ function getErrorInfo(error: unknown) {
  * `unpaid` is deliberately NOT settled: Stripe has stopped retrying, but the
  * subscription is not cancelled and its open invoice stays payable.
  */
-function hasPaidSubscription(sub: {
-  stripeSubscriptionId?: string | null;
-  status?: string;
-  stripeStatus?: string;
-} | null | undefined): boolean {
+function hasPaidSubscription(
+  sub:
+    | {
+        stripeSubscriptionId?: string | null;
+        status?: string;
+        stripeStatus?: string;
+      }
+    | null
+    | undefined
+): boolean {
   if (!sub?.stripeSubscriptionId) return false;
   const dead = ['canceled', 'cancelled', 'incomplete_expired', 'expired'];
   const stripeStatus = sub.stripeStatus?.toLowerCase();
@@ -86,75 +98,77 @@ function hasPaidSubscription(sub: {
   if (localStatus) return !dead.includes(localStatus);
   return true;
 }
-  function MembershipScreen() {
-    const router = useRouter();
-    const user = useAuthStore((state) => state.user);
-    const plansQuery = usePlans();
-    const subscriptionQuery = useCurrentSubscription();
-    const checkoutMutation = useCreateCheckoutSessionMutation();
-    const subscription = subscriptionQuery.data;
-    const role = typeof user?.role === 'string' ? user.role : undefined;
-    const allowedPlanType: PlanType = role === 'company' ? 'business' : 'private';
-    const defaultType: PlanType = allowedPlanType;
-    const [userType, setUserType] = useState<PlanType | null>(null);
-    const [selectedId, setSelectedId] = useState<string | null>(null);
-    const activeType = userType ?? defaultType;
-    const typePlans = useMemo(
-      () => (plansQuery.data ?? []).filter((plan) => plan.type === activeType),
-      [plansQuery.data, activeType]
-    );
-    const currentPlanId = useMemo(() => {
-      if (!subscription) return null;
-      if (subscription.planId) {
-        const byId = typePlans.find((plan) => plan._id === subscription.planId);
-        if (byId) return byId._id;
-      }
-      return typePlans.find((plan) => plan.name === subscription.plan)?._id ?? null;
-    }, [subscription, typePlans]);
+function MembershipScreen() {
+  const router = useRouter();
+  const user = useAuthStore((state) => state.user);
+  const plansQuery = usePlans();
+  const subscriptionQuery = useCurrentSubscription();
+  const checkoutMutation = useCreateCheckoutSessionMutation();
+  const subscription = subscriptionQuery.data;
+  const role = typeof user?.role === 'string' ? user.role : undefined;
+  const allowedPlanType: PlanType = role === 'company' ? 'business' : 'private';
+  const defaultType: PlanType = allowedPlanType;
+  const [userType, setUserType] = useState<PlanType | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const activeType = userType ?? defaultType;
+  const typePlans = useMemo(
+    () => (plansQuery.data ?? []).filter((plan) => plan.type === activeType),
+    [plansQuery.data, activeType]
+  );
+  const currentPlanId = useMemo(() => {
+    if (!subscription) return null;
+    if (subscription.planId) {
+      const byId = typePlans.find((plan) => plan._id === subscription.planId);
+      if (byId) return byId._id;
+    }
+    return typePlans.find((plan) => plan.name === subscription.plan)?._id ?? null;
+  }, [subscription, typePlans]);
 
-
-function planFeatures(plan: SubscriptionPlan): string[] {
-  if (plan.featuresText?.length) return plan.featuresText;
-  const features: string[] = [];
-  const freeContact = plan.entitlements?.freeContact;
-  if (typeof freeContact === 'number') {
-    features.push(freeContact > 0 ? `${freeContact} gratis kontakter` : 'Ingen gratis kontakter inkludert');
+  function planFeatures(plan: SubscriptionPlan): string[] {
+    if (plan.featuresText?.length) return plan.featuresText;
+    const features: string[] = [];
+    const freeContact = plan.entitlements?.freeContact;
+    if (typeof freeContact === 'number') {
+      features.push(
+        freeContact > 0 ? `${freeContact} gratis kontakter` : 'Ingen gratis kontakter inkludert'
+      );
+    }
+    const radius = plan.entitlements?.radius;
+    if (typeof radius === 'number' && radius > 0) features.push(`Søkeradius ${radius} km`);
+    const perContact = plan.entitlements?.perContactPrice;
+    if (typeof perContact === 'number' && perContact > 0)
+      features.push(`${money(perContact)} per ekstra kontakt`);
+    if (plan.entitlements?.hasBadge) features.push('Verifisert merke på profilen');
+    if (plan.entitlements?.hasAnalytics) features.push('Tilgang til statistikk');
+    return features;
   }
-  const radius = plan.entitlements?.radius;
-  if (typeof radius === 'number' && radius > 0) features.push(`Søkeradius ${radius} km`);
-  const perContact = plan.entitlements?.perContactPrice;
-  if (typeof perContact === 'number' && perContact > 0) features.push(`${money(perContact)} per ekstra kontakt`);
-  if (plan.entitlements?.hasBadge) features.push('Verifisert merke på profilen');
-  if (plan.entitlements?.hasAnalytics) features.push('Tilgang til statistikk');
-  return features;
-}
-    useEffect(() => {
-      if (selectedId || typePlans.length === 0) return;
-      const firstPaid = typePlans.find((plan) => plan.price > 0);
-      setSelectedId(currentPlanId ?? firstPaid?._id ?? typePlans[0]._id);
-    }, [selectedId, typePlans, currentPlanId]);
+  useEffect(() => {
+    if (selectedId || typePlans.length === 0) return;
+    const firstPaid = typePlans.find((plan) => plan.price > 0);
+    setSelectedId(currentPlanId ?? firstPaid?._id ?? typePlans[0]._id);
+  }, [selectedId, typePlans, currentPlanId]);
 
-    const selectedPlan = typePlans.find((plan) => plan._id === selectedId) ?? null;
-    const isAllowedForAccount = selectedPlan?.type === allowedPlanType;
-    const isFree = !!selectedPlan && selectedPlan.price <= 0;
-    const isCurrent = !!selectedPlan && selectedPlan._id === currentPlanId;
-    const alreadyPaid = hasPaidSubscription(subscription?.hasPlan ? subscription : null);
-    const canCheckout =
-      !!selectedPlan && isAllowedForAccount && !isFree && !isCurrent && !alreadyPaid;
+  const selectedPlan = typePlans.find((plan) => plan._id === selectedId) ?? null;
+  const isAllowedForAccount = selectedPlan?.type === allowedPlanType;
+  const isFree = !!selectedPlan && selectedPlan.price <= 0;
+  const isCurrent = !!selectedPlan && selectedPlan._id === currentPlanId;
+  const alreadyPaid = hasPaidSubscription(subscription?.hasPlan ? subscription : null);
+  const canCheckout =
+    !!selectedPlan && isAllowedForAccount && !isFree && !isCurrent && !alreadyPaid;
 
-    const selectPlan = (id: string) => {
-      if (id === selectedId) return;
-      setSelectedId(id);
-    };
+  const selectPlan = (id: string) => {
+    if (id === selectedId) return;
+    setSelectedId(id);
+  };
 
-    const switchType = (type: PlanType) => {
-      if (type === activeType) return;
-      setUserType(type);
-      setSelectedId(null);
-    };
+  const switchType = (type: PlanType) => {
+    if (type === activeType) return;
+    setUserType(type);
+    setSelectedId(null);
+  };
 
-    // Additional logic can be added here if needed
-    // ...
+  // Additional logic can be added here if needed
+  // ...
 
   // There is no mobile-aware return URL: the backend sends Stripe to the WEB
   // success/cancel pages (FRONTEND_URL), and no deep-link allow-list exists. So
@@ -196,7 +210,10 @@ function planFeatures(plan: SubscriptionPlan): string[] {
       {
         onSuccess: async (response) => {
           if (typeof response.url !== 'string' || !response.url.trim()) {
-            Alert.alert('Kunne ikke åpne betaling', 'Fikk ingen betalingslenke fra serveren. Prøv igjen.');
+            Alert.alert(
+              'Kunne ikke åpne betaling',
+              'Fikk ingen betalingslenke fra serveren. Prøv igjen.'
+            );
             return;
           }
           checkoutLaunchedRef.current = true;
@@ -314,8 +331,14 @@ function planFeatures(plan: SubscriptionPlan): string[] {
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
-        <Pressable onPress={() => router.back()} className="mb-5 flex-row items-center self-start py-2">
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+      >
+        <Pressable
+          onPress={() => router.back()}
+          className="mb-5 flex-row items-center self-start py-2"
+        >
           <ArrowLeft size={18} color={tc('#63665F', 'muted')} />
           <Text className="ml-2 text-sm font-medium text-muted">Innstillinger</Text>
         </Pressable>
@@ -369,7 +392,9 @@ function planFeatures(plan: SubscriptionPlan): string[] {
               <Pressable
                 key={type}
                 onPress={() => switchType(type)}
-                className={['rounded-full px-5 py-2.5', active ? '' : 'active:bg-surface-2'].join(' ')}
+                className={['rounded-full px-5 py-2.5', active ? '' : 'active:bg-surface-2'].join(
+                  ' '
+                )}
                 style={active ? { backgroundColor: TC.brand } : undefined}
               >
                 <Text
@@ -600,16 +625,18 @@ function planFeatures(plan: SubscriptionPlan): string[] {
           </Pressable>
         ) : null}
 
-        {canPurchaseMembershipInApp ? <View className="mt-5 flex-row items-start px-1">
-          <View className="mt-0.5">
-            <Info size={14} color={tc('#9B9E96', 'subtle')} />
+        {canPurchaseMembershipInApp ? (
+          <View className="mt-5 flex-row items-start px-1">
+            <View className="mt-0.5">
+              <Info size={14} color={tc('#9B9E96', 'subtle')} />
+            </View>
+            <Text className="ml-2 flex-1 text-[0.8125rem] leading-5 text-muted">
+              Betalingen skjer i Stripes sikre betalingsside i nettleseren. Medlemskapet aktiveres
+              når Stripe har bekreftet betalingen — det kan ta noen sekunder etter at du kommer
+              tilbake til appen.
+            </Text>
           </View>
-          <Text className="ml-2 flex-1 text-[0.8125rem] leading-5 text-muted">
-            Betalingen skjer i Stripes sikre betalingsside i nettleseren. Medlemskapet aktiveres når
-            Stripe har bekreftet betalingen — det kan ta noen sekunder etter at du kommer tilbake til
-            appen.
-          </Text>
-        </View> : null}
+        ) : null}
       </ScrollView>
     </SafeAreaView>
   );

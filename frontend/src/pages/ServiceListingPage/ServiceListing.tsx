@@ -1090,9 +1090,7 @@ const ServiceListing = () => {
                       }`}
                     >
                       <span>{option.label}</span>
-                      {selectedSort.value === option.value && (
-                        <Check size={15} strokeWidth={2.6} />
-                      )}
+                      {selectedSort.value === option.value && <Check size={15} strokeWidth={2.6} />}
                     </button>
                   ))}
                 </div>

@@ -5,17 +5,36 @@ import { cn } from '@/lib/utils';
 import { ago, compact, downloadCsv, num, pct } from '@/lib/devFormat';
 import { useDevIps, useDevMe, useUrlFilters } from '../../features/developer/hooks';
 import type { IpRow, RangeKey } from '../../api/developer';
-import { ErrorState, PageHeader, RangeSelect, RefreshButton, Section, StatCard, StatusBadge } from '../../components/developer/kit';
+import {
+  ErrorState,
+  PageHeader,
+  RangeSelect,
+  RefreshButton,
+  Section,
+  StatCard,
+  StatusBadge,
+} from '../../components/developer/kit';
 import { DataTable, type Column } from '../../components/developer/DataTable';
 import { IpSheet } from '../../components/developer/IpSheet';
 import { BlockIpDialog } from '../../components/developer/BlockIpDialog';
 import { BlockedIpsTable } from '../../components/developer/BlockedIpsTable';
 import { Button } from '../../components/developer/ui/button';
 import { Input } from '../../components/developer/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/developer/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/developer/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/developer/ui/tabs';
 
-const RISK_TONE = { normal: 'success', suspicious: 'warning', high: 'danger', blocked: 'danger' } as const;
+const RISK_TONE = {
+  normal: 'success',
+  suspicious: 'warning',
+  high: 'danger',
+  blocked: 'danger',
+} as const;
 const RISKS = [
   { value: 'all', label: 'All IPs' },
   { value: 'flagged', label: 'Flagged (suspicious + high)' },
@@ -33,7 +52,14 @@ const SORTS = [
 ];
 
 export default function IpsPage() {
-  const [f, setF] = useUrlFilters({ range: '24h', risk: 'all', sort: 'risk', q: '', page: '1', tab: 'ips' });
+  const [f, setF] = useUrlFilters({
+    range: '24h',
+    risk: 'all',
+    sort: 'risk',
+    q: '',
+    page: '1',
+    tab: 'ips',
+  });
   const [search, setSearch] = useState(f.q);
   const [selected, setSelected] = useState<string | null>(null);
   const [blockTarget, setBlockTarget] = useState<string | null>(null);
@@ -60,13 +86,78 @@ export default function IpsPage() {
         </div>
       ),
     },
-    { key: 'risk', header: 'Risk', cell: (r) => <StatusBadge status={r.risk} tone={RISK_TONE[r.risk]} label={r.risk === 'high' ? 'high risk' : r.risk} /> },
-    { key: 'reasons', header: 'Why', className: 'max-w-[280px]', cell: (r) => <span className="block truncate text-xs text-muted-foreground" title={r.reasons.join(' · ')}>{r.reasons.join(' · ') || '—'}</span> },
-    { key: 'requests', header: 'Requests', align: 'right', cell: (r) => <span className="tabular-nums">{num(r.requests)}</span> },
-    { key: 'failed', header: 'Failed', align: 'right', cell: (r) => <span className={cn('tabular-nums', r.requests && r.failed / r.requests > 0.3 ? 'text-amber-600' : 'text-muted-foreground')}>{num(r.failed)}{r.requests ? <span className="ml-1 text-[11px]">({pct((r.failed / r.requests) * 100, 0)})</span> : null}</span> },
-    { key: 'security', header: 'Security events', align: 'right', cell: (r) => <span className={cn('tabular-nums', r.securityTotal ? 'text-red-600' : 'text-muted-foreground')}>{num(r.securityTotal)}</span> },
-    { key: 'endpoints', header: 'APIs', align: 'right', cell: (r) => <span className="tabular-nums">{r.endpoints}</span> },
-    { key: 'last', header: 'Last seen', align: 'right', cell: (r) => <span className="text-xs text-muted-foreground">{ago(r.lastSeen)}</span> },
+    {
+      key: 'risk',
+      header: 'Risk',
+      cell: (r) => (
+        <StatusBadge
+          status={r.risk}
+          tone={RISK_TONE[r.risk]}
+          label={r.risk === 'high' ? 'high risk' : r.risk}
+        />
+      ),
+    },
+    {
+      key: 'reasons',
+      header: 'Why',
+      className: 'max-w-[280px]',
+      cell: (r) => (
+        <span
+          className="block truncate text-xs text-muted-foreground"
+          title={r.reasons.join(' · ')}
+        >
+          {r.reasons.join(' · ') || '—'}
+        </span>
+      ),
+    },
+    {
+      key: 'requests',
+      header: 'Requests',
+      align: 'right',
+      cell: (r) => <span className="tabular-nums">{num(r.requests)}</span>,
+    },
+    {
+      key: 'failed',
+      header: 'Failed',
+      align: 'right',
+      cell: (r) => (
+        <span
+          className={cn(
+            'tabular-nums',
+            r.requests && r.failed / r.requests > 0.3 ? 'text-amber-600' : 'text-muted-foreground'
+          )}
+        >
+          {num(r.failed)}
+          {r.requests ? (
+            <span className="ml-1 text-[11px]">({pct((r.failed / r.requests) * 100, 0)})</span>
+          ) : null}
+        </span>
+      ),
+    },
+    {
+      key: 'security',
+      header: 'Security events',
+      align: 'right',
+      cell: (r) => (
+        <span
+          className={cn('tabular-nums', r.securityTotal ? 'text-red-600' : 'text-muted-foreground')}
+        >
+          {num(r.securityTotal)}
+        </span>
+      ),
+    },
+    {
+      key: 'endpoints',
+      header: 'APIs',
+      align: 'right',
+      cell: (r) => <span className="tabular-nums">{r.endpoints}</span>,
+    },
+    {
+      key: 'last',
+      header: 'Last seen',
+      align: 'right',
+      cell: (r) => <span className="text-xs text-muted-foreground">{ago(r.lastSeen)}</span>,
+    },
     {
       key: 'act',
       header: '',
@@ -100,7 +191,16 @@ export default function IpsPage() {
               size="sm"
               className="bg-card"
               disabled={!data?.ips.length}
-              onClick={() => downloadCsv(`ips-${f.range}.csv`, (data?.ips || []).map(({ security, reasons, ...r }) => ({ ...r, ...security, reasons: reasons.join(' | ') })))}
+              onClick={() =>
+                downloadCsv(
+                  `ips-${f.range}.csv`,
+                  (data?.ips || []).map(({ security, reasons, ...r }) => ({
+                    ...r,
+                    ...security,
+                    reasons: reasons.join(' | '),
+                  }))
+                )
+              }
             >
               <Download /> Export
             </Button>
@@ -118,7 +218,8 @@ export default function IpsPage() {
         <div className="flex items-start gap-2 rounded-md border border-sky-200/70 bg-sky-50 px-3 py-2 text-sm text-sky-800">
           <ShieldAlert className="mt-0.5 size-4 shrink-0" />
           <span>
-            Your dashboard access is <b>read-only</b>, so Block / Unblock is hidden. A Super Admin can set you to <b>Operations</b> in{' '}
+            Your dashboard access is <b>read-only</b>, so Block / Unblock is hidden. A Super Admin
+            can set you to <b>Operations</b> in{' '}
             <Link to="/developer/settings" className="underline">
               Access &amp; Settings
             </Link>
@@ -128,11 +229,42 @@ export default function IpsPage() {
       )}
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-        <StatCard label="Unique IPs" icon={<Users />} loading={isLoading} value={num(s?.total)} hint={`${compact(s?.requests)} requests`} />
-        <StatCard label="High risk" icon={<ShieldAlert />} tone={s?.high ? 'danger' : 'success'} loading={isLoading} value={num(s?.high)} />
-        <StatCard label="Suspicious" icon={<AlertTriangle />} tone={s?.suspicious ? 'warning' : 'success'} loading={isLoading} value={num(s?.suspicious)} />
-        <StatCard label="Blocked & seen" icon={<Ban />} tone={s?.blocked ? 'warning' : 'neutral'} loading={isLoading} value={num(s?.blocked)} hint="still trying while blocked" />
-        <StatCard label="Active blocks" icon={<Ban />} loading={isLoading} value={num(s?.activeBlocks)} hint={data?.yourIp ? `your IP: ${data.yourIp}` : ''} />
+        <StatCard
+          label="Unique IPs"
+          icon={<Users />}
+          loading={isLoading}
+          value={num(s?.total)}
+          hint={`${compact(s?.requests)} requests`}
+        />
+        <StatCard
+          label="High risk"
+          icon={<ShieldAlert />}
+          tone={s?.high ? 'danger' : 'success'}
+          loading={isLoading}
+          value={num(s?.high)}
+        />
+        <StatCard
+          label="Suspicious"
+          icon={<AlertTriangle />}
+          tone={s?.suspicious ? 'warning' : 'success'}
+          loading={isLoading}
+          value={num(s?.suspicious)}
+        />
+        <StatCard
+          label="Blocked & seen"
+          icon={<Ban />}
+          tone={s?.blocked ? 'warning' : 'neutral'}
+          loading={isLoading}
+          value={num(s?.blocked)}
+          hint="still trying while blocked"
+        />
+        <StatCard
+          label="Active blocks"
+          icon={<Ban />}
+          loading={isLoading}
+          value={num(s?.activeBlocks)}
+          hint={data?.yourIp ? `your IP: ${data.yourIp}` : ''}
+        />
       </div>
 
       <Tabs value={f.tab} onValueChange={(tab) => setF({ tab })}>
@@ -155,7 +287,13 @@ export default function IpsPage() {
                   }}
                 >
                   <Search className="pointer-events-none absolute top-1/2 left-2 size-3.5 -translate-y-1/2 text-muted-foreground" />
-                  <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search IP…" className="h-7 w-44 pl-7 font-mono text-xs" aria-label="Search IP" />
+                  <Input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search IP…"
+                    className="h-7 w-44 pl-7 font-mono text-xs"
+                    aria-label="Search IP"
+                  />
                 </form>
                 <Select value={f.risk} onValueChange={(risk) => setF({ risk })}>
                   <SelectTrigger size="sm" className="w-52" aria-label="Risk filter">
@@ -199,14 +337,21 @@ export default function IpsPage() {
         </TabsContent>
 
         <TabsContent value="blocks" className="pt-3">
-          <Section title="Active blocks" description="Click a row to see what that IP did. Expired blocks are removed automatically; every change is audited.">
+          <Section
+            title="Active blocks"
+            description="Click a row to see what that IP did. Expired blocks are removed automatically; every change is audited."
+          >
             <BlockedIpsTable onPick={(target) => !target.includes('/') && setSelected(target)} />
           </Section>
         </TabsContent>
       </Tabs>
 
       <IpSheet ip={selected} range={f.range as RangeKey} onClose={() => setSelected(null)} />
-      <BlockIpDialog ip={blockTarget || ''} open={blockTarget !== null} onOpenChange={(o) => !o && setBlockTarget(null)} />
+      <BlockIpDialog
+        ip={blockTarget || ''}
+        open={blockTarget !== null}
+        onOpenChange={(o) => !o && setBlockTarget(null)}
+      />
     </div>
   );
 }

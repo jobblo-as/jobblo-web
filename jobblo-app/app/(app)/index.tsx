@@ -1,10 +1,31 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Image, Platform, View, Text, ScrollView, Pressable, ActivityIndicator, RefreshControl, Alert } from 'react-native';
+import {
+  Animated,
+  Image,
+  Platform,
+  View,
+  Text,
+  ScrollView,
+  Pressable,
+  ActivityIndicator,
+  RefreshControl,
+  Alert,
+} from 'react-native';
 import { BlurView } from 'expo-blur';
 import * as Location from 'expo-location';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Briefcase, ChevronRight, FileText, Locate, MapPin, Plus, Search, ShieldCheck, Star } from 'lucide-react-native';
+import {
+  Briefcase,
+  ChevronRight,
+  FileText,
+  Locate,
+  MapPin,
+  Plus,
+  Search,
+  ShieldCheck,
+  Star,
+} from 'lucide-react-native';
 import { Card } from '../../src/components/ui/Card';
 import { Button } from '../../src/components/ui/Button';
 import { useJobs } from '../../src/hooks/useJobs';
@@ -91,7 +112,11 @@ export default function HomeScreen() {
   const compactRef = useRef(false);
   const headerFade = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    Animated.timing(headerFade, { toValue: compact ? 1 : 0, duration: 180, useNativeDriver: true }).start();
+    Animated.timing(headerFade, {
+      toValue: compact ? 1 : 0,
+      duration: 180,
+      useNativeDriver: true,
+    }).start();
   }, [compact, headerFade]);
   const router = useRouter();
   const { user } = useAuthStore();
@@ -99,7 +124,11 @@ export default function HomeScreen() {
   const [sortValue, setSortValue] = useState('newest');
   const [saveSheetServiceId, setSaveSheetServiceId] = useState<string | null>(null);
 
-  const { data: filterOptions, isLoading: categoriesLoading, refetch: refetchCategories } = useCategories();
+  const {
+    data: filterOptions,
+    isLoading: categoriesLoading,
+    refetch: refetchCategories,
+  } = useCategories();
 
   const {
     data: jobsData,
@@ -132,15 +161,30 @@ export default function HomeScreen() {
     }
   };
 
-  const categories = (filterOptions?.categories ?? []).filter((cat) => !['alle', 'all', 'alle kategorier', 'all categories', 'ingen'].includes(cat.name.trim().toLowerCase()));
+  const categories = (filterOptions?.categories ?? []).filter(
+    (cat) =>
+      !['alle', 'all', 'alle kategorier', 'all categories', 'ingen'].includes(
+        cat.name.trim().toLowerCase()
+      )
+  );
   const season = useMemo(() => {
     const month = new Date().getMonth();
-    const seasonOptions: Array<{ months: number[]; label: string; line: string; category: string }> = SEASONS as any;
+    const seasonOptions: Array<{
+      months: number[];
+      label: string;
+      line: string;
+      category: string;
+    }> = SEASONS as any;
     return seasonOptions.find((option) => option.months.includes(month)) ?? seasonOptions[3];
   }, []);
 
   const userName = String(user?.name ?? 'der');
-  const userLocation = typeof user?.postSted === 'string' ? user.postSted : user?.postSted && typeof user.postSted === 'object' && 'city' in user.postSted ? String(user.postSted.city ?? 'Norge') : 'Norge';
+  const userLocation =
+    typeof user?.postSted === 'string'
+      ? user.postSted
+      : user?.postSted && typeof user.postSted === 'object' && 'city' in user.postSted
+        ? String(user.postSted.city ?? 'Norge')
+        : 'Norge';
   const greeting = getGreeting();
   const seasonalCategory = categories.find(
     (cat) => cat.name?.toLowerCase() === season.category.toLowerCase()
@@ -158,7 +202,8 @@ export default function HomeScreen() {
     avatarUrl?: string;
   }> = (recommendedWorkers.data?.data ?? []).slice(0, 4).map((worker) => ({
     _id: worker._id,
-    initials: `${String(worker.name ?? '').charAt(0)}${String(worker.lastName ?? '').charAt(0)}`.toUpperCase(),
+    initials:
+      `${String(worker.name ?? '').charAt(0)}${String(worker.lastName ?? '').charAt(0)}`.toUpperCase(),
     name: `${worker.name ?? ''} ${worker.lastName ?? ''}`.trim() || 'Oppdragstaker',
     role: Array.isArray(worker.skills) ? worker.skills.slice(0, 3).join(' · ') : 'Oppdragstaker',
     rating: Number(worker.averageRating ?? 0),
@@ -172,8 +217,13 @@ export default function HomeScreen() {
     try {
       const permission = await Location.requestForegroundPermissionsAsync();
       if (permission.granted) {
-        const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-        router.push({ pathname: '/(app)/explore', params: { lat: String(position.coords.latitude), lng: String(position.coords.longitude) } });
+        const position = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        router.push({
+          pathname: '/(app)/explore',
+          params: { lat: String(position.coords.latitude), lng: String(position.coords.longitude) },
+        });
         return;
       }
     } catch {
@@ -182,7 +232,14 @@ export default function HomeScreen() {
     router.push('/(app)/explore');
   };
 
-  const initials = userName.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || '?';
+  const initials =
+    userName
+      .split(' ')
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase() || '?';
   const avatarUrl = typeof user?.avatarUrl === 'string' ? user.avatarUrl : undefined;
 
   return (
@@ -191,20 +248,38 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={32}
         onScroll={(event) => {
-          const next = jobsTop.current > 0 && event.nativeEvent.contentOffset.y > jobsTop.current - insets.top - 110;
+          const next =
+            jobsTop.current > 0 &&
+            event.nativeEvent.contentOffset.y > jobsTop.current - insets.top - 110;
           if (next !== compactRef.current) {
             compactRef.current = next;
             setCompact(next);
           }
         }}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: insets.top + 12, paddingBottom: 28 + tabBarSpace }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void handleRefresh()} tintColor={TC.brandText} colors={[TC.brandText]} />}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingTop: insets.top + 12,
+          paddingBottom: 28 + tabBarSpace,
+        }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => void handleRefresh()}
+            tintColor={TC.brandText}
+            colors={[TC.brandText]}
+          />
+        }
       >
         {/* Greeting + avatar */}
         <View className="flex-row items-center justify-between">
           <View className="min-w-0 flex-1">
             <Text className="text-[0.8125rem] text-muted">{greeting},</Text>
-            <Text className="text-[1.375rem] font-bold tracking-[-0.02em] text-ink" numberOfLines={1}>{userName}</Text>
+            <Text
+              className="text-[1.375rem] font-bold tracking-[-0.02em] text-ink"
+              numberOfLines={1}
+            >
+              {userName}
+            </Text>
           </View>
           <Pressable
             onPress={() => router.push('/(app)/profile')}
@@ -228,10 +303,14 @@ export default function HomeScreen() {
           className="mt-4 h-12 flex-row items-center gap-2.5 rounded-full border border-line bg-surface px-4"
         >
           <Search size={18} color={tc('#63665F', 'muted')} />
-          <Text className="flex-1 text-[0.9375rem] text-muted">Søk etter oppdrag eller tjenester</Text>
+          <Text className="flex-1 text-[0.9375rem] text-muted">
+            Søk etter oppdrag eller tjenester
+          </Text>
           <View className="flex-row items-center gap-1">
             <MapPin size={14} color={TC.brandText} />
-            <Text className="text-[0.8125rem] font-medium text-brand-text" numberOfLines={1}>{userLocation}</Text>
+            <Text className="text-[0.8125rem] font-medium text-brand-text" numberOfLines={1}>
+              {userLocation}
+            </Text>
           </View>
         </Pressable>
 
@@ -244,7 +323,11 @@ export default function HomeScreen() {
         />
 
         {/* Categories */}
-        <SectionHeader title="Kategorier" actionLabel="Se alle" action={() => router.push('/(app)/explore')} />
+        <SectionHeader
+          title="Kategorier"
+          actionLabel="Se alle"
+          action={() => router.push('/(app)/explore')}
+        />
         {categoriesLoading ? (
           <View className="gap-4 py-2" accessibilityLabel="Laster kategorier">
             {[0, 1].map((row) => (
@@ -262,7 +345,13 @@ export default function HomeScreen() {
           <CategoryGrid
             // The seasonal category leads, as before.
             categories={[
-              ...(seasonalCategory ? [categories.find((cat) => cat.name === seasonalCategory) ?? { name: seasonalCategory }] : []),
+              ...(seasonalCategory
+                ? [
+                    categories.find((cat) => cat.name === seasonalCategory) ?? {
+                      name: seasonalCategory,
+                    },
+                  ]
+                : []),
               ...categories.filter((cat) => cat.name !== seasonalCategory),
             ]}
             selected={selectedCategory}
@@ -271,19 +360,35 @@ export default function HomeScreen() {
         )}
 
         {/* Jobs */}
-        <View onLayout={(event) => { jobsTop.current = event.nativeEvent.layout.y; }} />
+        <View
+          onLayout={(event) => {
+            jobsTop.current = event.nativeEvent.layout.y;
+          }}
+        />
         <SectionHeader
           title={selectedCategory ? `Oppdrag · ${selectedCategory}` : 'Oppdrag nær deg'}
           actionLabel="Se alle"
           action={() => router.push('/(app)/explore')}
         />
         <View className="mb-3 flex-row items-center justify-between">
-          <Text className="text-[0.8125rem] text-muted">{jobsLoading ? 'Laster…' : `${jobs.length} oppdrag`}</Text>
-          <Select value={sortValue} options={SORT_OPTIONS.map((option) => ({ ...option }))} onValueChange={setSortValue} placeholder="Sorter" />
+          <Text className="text-[0.8125rem] text-muted">
+            {jobsLoading ? 'Laster…' : `${jobs.length} oppdrag`}
+          </Text>
+          <Select
+            value={sortValue}
+            options={SORT_OPTIONS.map((option) => ({ ...option }))}
+            onValueChange={setSortValue}
+            placeholder="Sorter"
+          />
         </View>
 
         {jobsLoading ? (
-          <View className="flex-row flex-wrap justify-between gap-y-5" accessible accessibilityRole="progressbar" accessibilityLabel="Laster oppdrag">
+          <View
+            className="flex-row flex-wrap justify-between gap-y-5"
+            accessible
+            accessibilityRole="progressbar"
+            accessibilityLabel="Laster oppdrag"
+          >
             {Array.from({ length: 4 }).map((_, i) => (
               <View key={i} style={{ width: '48%' }} className="gap-2">
                 <Skeleton className="w-full rounded-2xl" style={{ aspectRatio: 4 / 5 }} />
@@ -294,8 +399,12 @@ export default function HomeScreen() {
           </View>
         ) : jobsError ? (
           <Card className="rounded-2xl p-5">
-            <Text className="text-[0.9375rem] font-semibold text-ink">Kunne ikke laste oppdrag</Text>
-            <Text className="mt-1 text-[0.875rem] text-muted">Sjekk internettforbindelsen din og prøv igjen.</Text>
+            <Text className="text-[0.9375rem] font-semibold text-ink">
+              Kunne ikke laste oppdrag
+            </Text>
+            <Text className="mt-1 text-[0.875rem] text-muted">
+              Sjekk internettforbindelsen din og prøv igjen.
+            </Text>
             <View className="mt-4">
               <Button label="Prøv igjen" onPress={() => void refetchJobs()} small />
             </View>
@@ -305,11 +414,24 @@ export default function HomeScreen() {
             <View className="h-12 w-12 items-center justify-center rounded-full bg-tint">
               <Briefcase size={22} color={TC.brandText} />
             </View>
-            <Text className="mt-3 text-center text-[0.9375rem] font-semibold text-ink">Ingen oppdrag å vise akkurat nå</Text>
-            <Text className="mt-1 text-center text-[0.875rem] text-muted">Prøv en annen kategori, eller legg ut ditt eget oppdrag.</Text>
+            <Text className="mt-3 text-center text-[0.9375rem] font-semibold text-ink">
+              Ingen oppdrag å vise akkurat nå
+            </Text>
+            <Text className="mt-1 text-center text-[0.875rem] text-muted">
+              Prøv en annen kategori, eller legg ut ditt eget oppdrag.
+            </Text>
             <View className="mt-4 flex-row gap-2">
-              <Button label="Se alle oppdrag" variant="secondary" small onPress={() => router.push('/(app)/explore')} />
-              <Button label="Legg ut oppdrag" small onPress={() => router.push('/(app)/create-job')} />
+              <Button
+                label="Se alle oppdrag"
+                variant="secondary"
+                small
+                onPress={() => router.push('/(app)/explore')}
+              />
+              <Button
+                label="Legg ut oppdrag"
+                small
+                onPress={() => router.push('/(app)/create-job')}
+              />
             </View>
           </Card>
         ) : (
@@ -325,30 +447,46 @@ export default function HomeScreen() {
         {/* Recommended taskers */}
         {workerCards.length > 0 ? (
           <>
-            <SectionHeader title="Anbefalte oppdragstakere" actionLabel="Se alle" action={() => router.push('/(app)/recommended-taskers')} />
+            <SectionHeader
+              title="Anbefalte oppdragstakere"
+              actionLabel="Se alle"
+              action={() => router.push('/(app)/recommended-taskers')}
+            />
             <Card className="overflow-hidden rounded-2xl">
               {workerCards.map((worker, index) => (
                 <Pressable
                   key={worker._id ?? worker.name}
                   disabled={!worker._id}
                   onPress={() => {
-                    if (worker._id) router.push({ pathname: '/(app)/profile/[userId]', params: { userId: worker._id } });
+                    if (worker._id)
+                      router.push({
+                        pathname: '/(app)/profile/[userId]',
+                        params: { userId: worker._id },
+                      });
                   }}
                   className={`flex-row items-center gap-3 px-4 py-3.5 active:bg-surface-2 ${index > 0 ? 'border-t border-line-soft' : ''}`}
                 >
                   <WorkerAvatar avatarUrl={worker.avatarUrl} initials={worker.initials} />
                   <View className="min-w-0 flex-1">
-                    <Text className="text-[0.9375rem] font-semibold text-ink" numberOfLines={1}>{worker.name}</Text>
-                    <Text className="mt-0.5 text-[0.8125rem] text-muted" numberOfLines={1}>{worker.role}</Text>
+                    <Text className="text-[0.9375rem] font-semibold text-ink" numberOfLines={1}>
+                      {worker.name}
+                    </Text>
+                    <Text className="mt-0.5 text-[0.8125rem] text-muted" numberOfLines={1}>
+                      {worker.role}
+                    </Text>
                     <View className="mt-1 flex-row items-center gap-1.5">
                       {worker.rating > 0 ? (
                         <>
                           <Star size={12} color="#B7791F" fill="#B7791F" />
-                          <Text className="text-[0.8125rem] font-semibold text-ink">{worker.rating.toFixed(1)}</Text>
+                          <Text className="text-[0.8125rem] font-semibold text-ink">
+                            {worker.rating.toFixed(1)}
+                          </Text>
                           <Text className="text-[0.8125rem] text-muted">({worker.count}) ·</Text>
                         </>
                       ) : null}
-                      <Text className="shrink text-[0.8125rem] text-muted" numberOfLines={1}>{worker.rate} · {worker.location}</Text>
+                      <Text className="shrink text-[0.8125rem] text-muted" numberOfLines={1}>
+                        {worker.rate} · {worker.location}
+                      </Text>
                     </View>
                   </View>
                   <ChevronRight size={18} color={tc('#9B9E96', 'subtle')} />
@@ -361,12 +499,25 @@ export default function HomeScreen() {
         {/* Trust */}
         <SectionHeader title="Tryggere sammen" />
         <Card className="overflow-hidden rounded-2xl">
-          {([
-            [ShieldCheck, 'Trygg betaling med SafePay', 'Pengene holdes sikkert til jobben er godkjent.'],
-            [FileText, 'Automatisk kontrakt', 'Hver avtale får en digital kontrakt som beskytter begge parter.'],
-            [Star, 'Verifiserte ratings', 'Alle anmeldelser er fra ekte, fullførte oppdrag.'],
-          ] as const).map(([Icon, title, body], index) => (
-            <View key={title} className={`flex-row items-start gap-3 px-4 py-3.5 ${index > 0 ? 'border-t border-line-soft' : ''}`}>
+          {(
+            [
+              [
+                ShieldCheck,
+                'Trygg betaling med SafePay',
+                'Pengene holdes sikkert til jobben er godkjent.',
+              ],
+              [
+                FileText,
+                'Automatisk kontrakt',
+                'Hver avtale får en digital kontrakt som beskytter begge parter.',
+              ],
+              [Star, 'Verifiserte ratings', 'Alle anmeldelser er fra ekte, fullførte oppdrag.'],
+            ] as const
+          ).map(([Icon, title, body], index) => (
+            <View
+              key={title}
+              className={`flex-row items-start gap-3 px-4 py-3.5 ${index > 0 ? 'border-t border-line-soft' : ''}`}
+            >
               <View className="h-9 w-9 items-center justify-center rounded-xl bg-tint">
                 <Icon size={17} color={TC.brandText} />
               </View>
@@ -381,7 +532,11 @@ export default function HomeScreen() {
 
       {/* Behind the status bar, so scrolled content never runs under the clock. */}
       {/* zIndex + elevation: Android draws elevated cards above later siblings otherwise. */}
-      <View pointerEvents="none" className="absolute left-0 right-0 top-0 bg-page" style={{ height: insets.top, zIndex: 30, elevation: 30, shadowColor: 'transparent' }} />
+      <View
+        pointerEvents="none"
+        className="absolute left-0 right-0 top-0 bg-page"
+        style={{ height: insets.top, zIndex: 30, elevation: 30, shadowColor: 'transparent' }}
+      />
 
       {/* Sticky FINN-style header: blurred, search + category chips. */}
       <Animated.View
@@ -396,15 +551,25 @@ export default function HomeScreen() {
           elevation: compact ? 40 : 0,
           // Keep Android's layering, drop its elevation shadow (it drew a dark band).
           shadowColor: 'transparent',
-          transform: [{ translateY: headerFade.interpolate({ inputRange: [0, 1], outputRange: [-12, 0] }) }],
+          transform: [
+            { translateY: headerFade.interpolate({ inputRange: [0, 1], outputRange: [-12, 0] }) },
+          ],
         }}
       >
         <View
-          className={Platform.OS === 'ios' ? 'overflow-hidden border-b border-line/70' : 'border-b border-line bg-page'}
+          className={
+            Platform.OS === 'ios'
+              ? 'overflow-hidden border-b border-line/70'
+              : 'border-b border-line bg-page'
+          }
           style={{ paddingTop: insets.top + 6 }}
         >
           {Platform.OS === 'ios' ? (
-            <BlurView intensity={80} tint="systemChromeMaterial" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
+            <BlurView
+              intensity={80}
+              tint="systemChromeMaterial"
+              style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+            />
           ) : null}
           <Pressable
             onPress={() => router.push('/(app)/explore')}
@@ -413,7 +578,9 @@ export default function HomeScreen() {
             className="mx-4 h-11 flex-row items-center gap-2.5 rounded-full border border-line bg-surface/90 px-4"
           >
             <Search size={17} color={tc('#63665F', 'muted')} />
-            <Text className="flex-1 text-[0.9375rem] text-muted">Søk etter oppdrag eller tjenester</Text>
+            <Text className="flex-1 text-[0.9375rem] text-muted">
+              Søk etter oppdrag eller tjenester
+            </Text>
           </Pressable>
           <ScrollView
             horizontal
@@ -430,7 +597,11 @@ export default function HomeScreen() {
                   accessibilityState={{ selected: active }}
                   className={`h-9 justify-center rounded-full border px-3.5 ${active ? 'border-brand bg-brand' : 'border-line bg-surface/90'}`}
                 >
-                  <Text className={`text-[0.875rem] font-medium ${active ? 'text-white' : 'text-ink'}`}>{name || 'Alle'}</Text>
+                  <Text
+                    className={`text-[0.875rem] font-medium ${active ? 'text-white' : 'text-ink'}`}
+                  >
+                    {name || 'Alle'}
+                  </Text>
                 </Pressable>
               );
             })}
@@ -447,7 +618,15 @@ export default function HomeScreen() {
   );
 }
 
-function SectionHeader({ title, actionLabel, action }: { title: string; actionLabel?: string; action?: () => void }) {
+function SectionHeader({
+  title,
+  actionLabel,
+  action,
+}: {
+  title: string;
+  actionLabel?: string;
+  action?: () => void;
+}) {
   return (
     <View className="mb-3 mt-8 flex-row items-center justify-between">
       <Text className="text-[1.125rem] font-bold tracking-[-0.01em] text-ink">{title}</Text>

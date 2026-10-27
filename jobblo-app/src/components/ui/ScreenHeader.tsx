@@ -46,13 +46,20 @@ export function ScreenHeader({
       ) : null}
       <View className="flex-row items-center gap-3">
         {Icon ? (
-          <View className={cn('h-11 w-11 items-center justify-center rounded-2xl', destructive ? 'bg-danger-tint' : 'bg-tint')}>
+          <View
+            className={cn(
+              'h-11 w-11 items-center justify-center rounded-2xl',
+              destructive ? 'bg-danger-tint' : 'bg-tint'
+            )}
+          >
             <Icon size={20} color={destructive ? tc('#B4544A', 'danger') : TC.brandText} />
           </View>
         ) : null}
         <View className="min-w-0 flex-1">
           <Text className="text-[1.5rem] font-bold tracking-[-0.02em] text-ink">{title}</Text>
-          {subtitle ? <Text className="mt-0.5 text-[0.875rem] leading-5 text-muted">{subtitle}</Text> : null}
+          {subtitle ? (
+            <Text className="mt-0.5 text-[0.875rem] leading-5 text-muted">{subtitle}</Text>
+          ) : null}
         </View>
       </View>
     </View>

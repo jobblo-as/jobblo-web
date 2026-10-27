@@ -1,8 +1,22 @@
 import { useState, useCallback, useRef } from 'react';
 import { Users, UserPlus, Calendar, Plus, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useAdminUsers, useCreateAdminUser, useChangeUserRole, useVerifyUser, useUpdateUserStatus } from '../../hooks/admin';
-import { AdminDataTable, AdminSearchInput, AdminFilterSelect, AdminStatusBadge, AdminConfirmDialog, AdminPageHeader, AdminStatCard } from '../../components/admin';
+import {
+  useAdminUsers,
+  useCreateAdminUser,
+  useChangeUserRole,
+  useVerifyUser,
+  useUpdateUserStatus,
+} from '../../hooks/admin';
+import {
+  AdminDataTable,
+  AdminSearchInput,
+  AdminFilterSelect,
+  AdminStatusBadge,
+  AdminConfirmDialog,
+  AdminPageHeader,
+  AdminStatCard,
+} from '../../components/admin';
 import type { AdminUser } from '../../types/admin';
 import type { ColumnDef } from '../../components/admin/AdminDataTable';
 import { useUserStore } from '../../stores/userStore';
@@ -88,7 +102,9 @@ export default function UsersPage() {
             className="w-8 h-8 rounded-full object-cover shrink-0"
           />
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-foreground group-hover:text-primary group-hover:underline">{u.name}</p>
+            <p className="truncate text-sm font-semibold text-foreground group-hover:text-primary group-hover:underline">
+              {u.name}
+            </p>
             <p className="text-xs text-muted-foreground truncate">{u.email}</p>
           </div>
         </Link>
@@ -108,7 +124,9 @@ export default function UsersPage() {
       key: 'verified',
       header: 'Verifisert',
       render: (u) => (
-        <span className={`text-xs font-medium ${u.verified ? 'text-green-600' : 'text-muted-foreground'}`}>
+        <span
+          className={`text-xs font-medium ${u.verified ? 'text-green-600' : 'text-muted-foreground'}`}
+        >
           {u.verified ? 'Ja' : 'Nei'}
         </span>
       ),
@@ -117,7 +135,11 @@ export default function UsersPage() {
       key: 'createdAt',
       header: 'Registrert',
       render: (u) =>
-        new Date(u.createdAt).toLocaleDateString('nb-NO', { day: '2-digit', month: 'short', year: 'numeric' }),
+        new Date(u.createdAt).toLocaleDateString('nb-NO', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        }),
     },
     {
       key: 'actions',
@@ -186,7 +208,8 @@ export default function UsersPage() {
   const validateForm = () => {
     const errors: Record<string, string> = {};
     if (!form.name.trim()) errors.name = 'Navn er påkrevd.';
-    if (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email)) errors.email = 'Gyldig e-post er påkrevd.';
+    if (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email))
+      errors.email = 'Gyldig e-post er påkrevd.';
     if (!form.password || form.password.length < 6) errors.password = 'Passord må ha minst 6 tegn.';
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -208,9 +231,9 @@ export default function UsersPage() {
 
   const stats = data?.pagination
     ? {
-      total: data.pagination.total,
-      thisPage: data.users.length,
-    }
+        total: data.pagination.total,
+        thisPage: data.users.length,
+      }
     : null;
 
   return (
@@ -232,11 +255,7 @@ export default function UsersPage() {
       {/* Stats row */}
       {stats && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <AdminStatCard
-            title="Totale brukere"
-            value={stats.total}
-            icon={<Users size={18} />}
-          />
+          <AdminStatCard title="Totale brukere" value={stats.total} icon={<Users size={18} />} />
           <AdminStatCard
             title="Søkeresultater"
             value={stats.thisPage}
@@ -272,13 +291,19 @@ export default function UsersPage() {
             />
             <AdminFilterSelect
               value={roleFilter}
-              onChange={(v) => { setRoleFilter(v); setPage(1); }}
+              onChange={(v) => {
+                setRoleFilter(v);
+                setPage(1);
+              }}
               options={ROLE_FILTER_OPTIONS}
               placeholder="Alle roller"
             />
             <AdminFilterSelect
               value={statusFilter}
-              onChange={(v) => { setStatusFilter(v); setPage(1); }}
+              onChange={(v) => {
+                setStatusFilter(v);
+                setPage(1);
+              }}
               options={STATUS_OPTIONS}
               placeholder="Alle statuser"
             />
@@ -301,8 +326,17 @@ export default function UsersPage() {
 
             {(['name', 'email', 'phone', 'password'] as const).map((field) => (
               <div key={field}>
-                <label htmlFor={`create-${field}`} className="block text-sm font-medium text-foreground mb-1 capitalize">
-                  {field === 'name' ? 'Navn *' : field === 'email' ? 'E-post *' : field === 'phone' ? 'Telefon' : 'Passord *'}
+                <label
+                  htmlFor={`create-${field}`}
+                  className="block text-sm font-medium text-foreground mb-1 capitalize"
+                >
+                  {field === 'name'
+                    ? 'Navn *'
+                    : field === 'email'
+                      ? 'E-post *'
+                      : field === 'phone'
+                        ? 'Telefon'
+                        : 'Passord *'}
                 </label>
                 <input
                   id={`create-${field}`}
@@ -314,13 +348,18 @@ export default function UsersPage() {
                   aria-invalid={!!formErrors[field]}
                 />
                 {formErrors[field] && (
-                  <p id={`err-${field}`} className="text-xs text-red-600 mt-1">{formErrors[field]}</p>
+                  <p id={`err-${field}`} className="text-xs text-red-600 mt-1">
+                    {formErrors[field]}
+                  </p>
                 )}
               </div>
             ))}
 
             <div>
-              <label htmlFor="create-role" className="block text-sm font-medium text-foreground mb-1">
+              <label
+                htmlFor="create-role"
+                className="block text-sm font-medium text-foreground mb-1"
+              >
                 Rolle *
               </label>
               <select
@@ -330,14 +369,19 @@ export default function UsersPage() {
                 className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
               >
                 {ROLE_OPTIONS.map((r) => (
-                  <option key={r.value} value={r.value}>{r.label}</option>
+                  <option key={r.value} value={r.value}>
+                    {r.label}
+                  </option>
                 ))}
               </select>
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
               <button
-                onClick={() => { setCreateOpen(false); setFormErrors({}); }}
+                onClick={() => {
+                  setCreateOpen(false);
+                  setFormErrors({});
+                }}
                 className="px-4 py-2.5 text-sm font-medium text-muted-foreground bg-muted hover:bg-accent rounded-md transition-colors"
               >
                 Avbryt
@@ -384,7 +428,6 @@ export default function UsersPage() {
           setRoleTarget(null);
         }}
       />
-
     </div>
   );
 }

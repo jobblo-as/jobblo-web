@@ -33,7 +33,6 @@ function jobFromListCache(client: QueryClient, jobId: string): Job | undefined {
   return undefined;
 }
 
-
 export function useJobDetails(jobId: string) {
   const client = useQueryClient();
   return useQuery({

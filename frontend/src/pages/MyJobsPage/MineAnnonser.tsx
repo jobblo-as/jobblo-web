@@ -160,10 +160,7 @@ export default function MineAnnonser() {
         </Select>
 
         <Select value={sortOption} onValueChange={(v) => setSortOption(v as typeof sortOption)}>
-          <SelectTrigger
-            className={`${FILTER_CONTROL} sm:w-[180px]`}
-            aria-label="Sorter annonsene"
-          >
+          <SelectTrigger className={`${FILTER_CONTROL} sm:w-[180px]`} aria-label="Sorter annonsene">
             <SelectValue placeholder="Sorter" />
           </SelectTrigger>
           <SelectContent className="rounded-2xl">

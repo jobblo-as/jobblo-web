@@ -12,7 +12,10 @@ export function usePhotoPicker() {
 
   const fromLibrary = async () => {
     if (room <= 0) {
-      Alert.alert(t('Maks 6 bilder', 'Max 6 photos'), t('Fjern et bilde for å legge til et nytt.', 'Remove a photo to add a new one.'));
+      Alert.alert(
+        t('Maks 6 bilder', 'Max 6 photos'),
+        t('Fjern et bilde for å legge til et nytt.', 'Remove a photo to add a new one.')
+      );
       return false;
     }
     const result = await ImagePicker.launchImageLibraryAsync({

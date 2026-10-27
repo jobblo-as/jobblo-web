@@ -6,11 +6,23 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ApplicantCard } from '../../../src/components/domain/ApplicantCard';
 import { ApplicantCompareSection } from '../../../src/components/domain/ApplicantCompareSection';
 import { ApplicantOverviewSkeleton } from '../../../src/components/domain/ApplicantOverviewSkeleton';
-import { ApplicantNextSteps, ApplicantSelectionGuide, SafePayInfoCard, SafePayProgressSteps, getApplicantProgressStep } from '../../../src/components/domain/SafePayProgressSteps';
+import {
+  ApplicantNextSteps,
+  ApplicantSelectionGuide,
+  SafePayInfoCard,
+  SafePayProgressSteps,
+  getApplicantProgressStep,
+} from '../../../src/components/domain/SafePayProgressSteps';
 import { Select } from '../../../src/components/ui/Select';
 import { EmptyState } from '../../../src/components/ui/EmptyState';
 import { ErrorState } from '../../../src/components/ui/ErrorState';
-import { useApplicants, useCreateSafePayContractMutation, useDeclineApplicantMutation, useToggleApplicantArchiveMutation, useToggleApplicantFavoriteMutation } from '../../../src/hooks/useApplicants';
+import {
+  useApplicants,
+  useCreateSafePayContractMutation,
+  useDeclineApplicantMutation,
+  useToggleApplicantArchiveMutation,
+  useToggleApplicantFavoriteMutation,
+} from '../../../src/hooks/useApplicants';
 import { useCreateOrGetChatMutation } from '../../../src/hooks/useCreateOrGetChat';
 import { orderStatusLabel } from '../../../src/constants/orderStatus';
 import { customerOrderRoute, type OrderRoute } from '../../../src/utils/orderRoute';
@@ -61,7 +73,14 @@ function formatPrice(value?: number) {
 
 function formatDuration(value?: { value?: number; unit?: string } | null) {
   if (!value?.value || value.value <= 0) return null;
-  const labels: Record<string, string> = { minutes: 'minutter', minutter: 'minutter', hours: 'timer', timer: 'timer', days: 'dager', dager: 'dager' };
+  const labels: Record<string, string> = {
+    minutes: 'minutter',
+    minutter: 'minutter',
+    hours: 'timer',
+    timer: 'timer',
+    days: 'dager',
+    dager: 'dager',
+  };
   return `${value.value} ${labels[value.unit ?? ''] ?? value.unit ?? ''}`.trim();
 }
 
@@ -139,18 +158,26 @@ export default function JobApplicantsScreen() {
   if (isError || !data?.service) {
     return (
       <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
-        <ErrorState title={errorCopy.title} message={errorCopy.message} onAction={() => refetch()} />
+        <ErrorState
+          title={errorCopy.title}
+          message={errorCopy.message}
+          onAction={() => refetch()}
+        />
       </SafeAreaView>
     );
   }
 
   const { service, applicants, activeOrder } = data;
   const duration = formatDuration(service.duration);
-  const compared = applicants.filter((application) => comparedApplicants.includes(application.applicant._id));
+  const compared = applicants.filter((application) =>
+    comparedApplicants.includes(application.applicant._id)
+  );
   // The backend 403s anyone but the job owner on this route, so the viewer is always the
   // customer side of the order. `null` when the id is unusable — never a Home fallback.
   const activeOrderRoute: OrderRoute | null =
-    activeOrder && validId(activeOrder._id) ? customerOrderRoute(activeOrder._id.trim(), activeOrder.status) : null;
+    activeOrder && validId(activeOrder._id)
+      ? customerOrderRoute(activeOrder._id.trim(), activeOrder.status)
+      : null;
 
   const handleMutationError = (action: string, mutationError: unknown) => {
     if (getErrorStatus(mutationError) === 409) {
@@ -159,7 +186,7 @@ export default function JobApplicantsScreen() {
     }
     Alert.alert(
       'Kunne ikke oppdatere',
-      getErrorMessage(mutationError) ?? `Kunne ikke ${action}. Prøv igjen.`,
+      getErrorMessage(mutationError) ?? `Kunne ikke ${action}. Prøv igjen.`
     );
   };
 
@@ -182,7 +209,11 @@ export default function JobApplicantsScreen() {
       return;
     }
     contractMutation.mutate(
-      { serviceId: serviceId.trim(), applicantId: application.applicant._id.trim(), requestId: application._id.trim() },
+      {
+        serviceId: serviceId.trim(),
+        applicantId: application.applicant._id.trim(),
+        requestId: application._id.trim(),
+      },
       {
         onSuccess: ({ orderId }) => {
           if (!validId(orderId)) {
@@ -193,7 +224,7 @@ export default function JobApplicantsScreen() {
           router.push(customerOrderRoute(orderId));
         },
         onError: (mutationError) => handleMutationError('velge søker', mutationError),
-      },
+      }
     );
   };
 
@@ -202,9 +233,10 @@ export default function JobApplicantsScreen() {
     chatMutation.mutate(
       { providerId: applicantId, serviceId },
       {
-        onSuccess: ({ _id: chatId }) => router.push({ pathname: '/(app)/messages/[chatId]', params: { chatId } }),
+        onSuccess: ({ _id: chatId }) =>
+          router.push({ pathname: '/(app)/messages/[chatId]', params: { chatId } }),
         onError: (mutationError) => handleMutationError('starte chat', mutationError),
-      },
+      }
     );
   };
 
@@ -214,7 +246,10 @@ export default function JobApplicantsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 18, paddingBottom: 120 }}
       >
-        <Pressable onPress={() => router.back()} className="mb-5 flex-row items-center gap-2 self-start">
+        <Pressable
+          onPress={() => router.back()}
+          className="mb-5 flex-row items-center gap-2 self-start"
+        >
           <ArrowLeft size={17} color={tc('#63665F', 'muted')} />
           <Text className="text-[0.8125rem] text-muted">Tilbake til oversikt</Text>
         </Pressable>
@@ -230,7 +265,9 @@ export default function JobApplicantsScreen() {
               <View className="mt-2 flex-row flex-wrap gap-x-3 gap-y-1">
                 <View className="flex-row items-center gap-1">
                   <MapPin size={12} color="#8FBF9A" />
-                  <Text className="text-[0.8125rem] text-white/70">{service.location?.city || 'Ikke angitt'}</Text>
+                  <Text className="text-[0.8125rem] text-white/70">
+                    {service.location?.city || 'Ikke angitt'}
+                  </Text>
                 </View>
                 <View className="flex-row items-center gap-1">
                   <CalendarDays size={12} color="#8FBF9A" />
@@ -245,15 +282,21 @@ export default function JobApplicantsScreen() {
               </View>
             </View>
             <View className="items-end">
-              <Text className="text-[1.25rem] font-semibold text-[#8FBF9A]">{formatPrice(service.price)}</Text>
-              <Text className="mt-0.5 text-[0.8125rem] uppercase tracking-[0.08em] text-white/50">Oppdragsbeløp</Text>
+              <Text className="text-[1.25rem] font-semibold text-[#8FBF9A]">
+                {formatPrice(service.price)}
+              </Text>
+              <Text className="mt-0.5 text-[0.8125rem] uppercase tracking-[0.08em] text-white/50">
+                Oppdragsbeløp
+              </Text>
             </View>
           </View>
           {activeOrder ? (
             <View className="mt-4 gap-2.5 rounded-xl bg-white/10 p-3">
               <View className="flex-row items-center gap-2">
                 <Text className="text-[0.8125rem] font-semibold text-white">Utfører valgt</Text>
-                <Text className="text-[0.8125rem] text-white/70">Aktiv kontrakt: {orderStatusLabel(activeOrder.status)}</Text>
+                <Text className="text-[0.8125rem] text-white/70">
+                  Aktiv kontrakt: {orderStatusLabel(activeOrder.status)}
+                </Text>
               </View>
               {/* The only other way into the contract was the per-applicant "Se godkjenning"
                   button, which disappears when the list is empty, archived or filtered — so the
@@ -273,19 +316,28 @@ export default function JobApplicantsScreen() {
           ) : null}
         </View>
 
-        <ApplicantCompareSection
-          applicants={compared}
-          onClear={() => setComparedApplicants([])}
-        />
+        <ApplicantCompareSection applicants={compared} onClear={() => setComparedApplicants([])} />
 
         <View className="mb-4 flex-row flex-wrap items-center justify-between gap-2">
           <View className="flex-row items-center gap-2">
             <Users size={16} color={TC.brandText} />
-            <Text className="text-[0.9375rem] font-semibold text-ink">{applicants.length} {applicants.length === 1 ? 'søker' : 'søkere'}</Text>
+            <Text className="text-[0.9375rem] font-semibold text-ink">
+              {applicants.length} {applicants.length === 1 ? 'søker' : 'søkere'}
+            </Text>
           </View>
           <View className="flex-row gap-2">
-            <Select value={filter} options={FILTER_OPTIONS} onValueChange={setFilter} placeholder="Filter" />
-            <Select value={sort} options={SORT_OPTIONS} onValueChange={setSort} placeholder="Sorter" />
+            <Select
+              value={filter}
+              options={FILTER_OPTIONS}
+              onValueChange={setFilter}
+              placeholder="Filter"
+            />
+            <Select
+              value={sort}
+              options={SORT_OPTIONS}
+              onValueChange={setSort}
+              placeholder="Sorter"
+            />
           </View>
         </View>
 
@@ -302,12 +354,14 @@ export default function JobApplicantsScreen() {
                 isStartingChat={chatMutation.isPending}
                 onFavorite={(requestId) => {
                   favoriteMutation.mutate(requestId, {
-                    onError: (mutationError) => handleMutationError('endre favoritt', mutationError),
+                    onError: (mutationError) =>
+                      handleMutationError('endre favoritt', mutationError),
                   });
                 }}
                 onArchive={(requestId) => {
                   archiveMutation.mutate(requestId, {
-                    onError: (mutationError) => handleMutationError('endre arkivstatus', mutationError),
+                    onError: (mutationError) =>
+                      handleMutationError('endre arkivstatus', mutationError),
                   });
                 }}
                 onDecline={(requestId) => {
@@ -315,21 +369,36 @@ export default function JobApplicantsScreen() {
                     { requestId, archive: true },
                     {
                       onError: (mutationError) => handleMutationError('avslå søker', mutationError),
-                    },
+                    }
                   );
                 }}
-                onCompare={(applicantId) => setComparedApplicants((current) => current.includes(applicantId) ? current.filter((id) => id !== applicantId) : current.length < 3 ? [...current, applicantId] : current)}
+                onCompare={(applicantId) =>
+                  setComparedApplicants((current) =>
+                    current.includes(applicantId)
+                      ? current.filter((id) => id !== applicantId)
+                      : current.length < 3
+                        ? [...current, applicantId]
+                        : current
+                  )
+                }
                 onSelect={handleSelect}
                 onChat={handleChat}
               />
             ))}
           </View>
         ) : (
-          <EmptyState title="Ingen søkere enda" message="Vent på at søkere skal søke om jobben din." />
+          <EmptyState
+            title="Ingen søkere enda"
+            message="Vent på at søkere skal søke om jobben din."
+          />
         )}
 
         <View className="mt-5 gap-3">
-          <ApplicantNextSteps activeOrderStatus={activeOrder?.status} jobDate={formatDate(service.date)} payout={String((service.price ?? 0) - Math.round((service.price ?? 0) * 0.03))} />
+          <ApplicantNextSteps
+            activeOrderStatus={activeOrder?.status}
+            jobDate={formatDate(service.date)}
+            payout={String((service.price ?? 0) - Math.round((service.price ?? 0) * 0.03))}
+          />
           <SafePayInfoCard price={service.price ?? 0} />
           <ApplicantSelectionGuide />
         </View>

@@ -8,7 +8,11 @@ const KEY = 'jobblo.ai-consent';
  * once, before the first photo, and changeable on the text step. Per device, kept across logout.
  * `null` = not asked yet; `loaded` = the saved answer has been read.
  */
-export const useAiConsent = create<{ value: boolean | null; loaded: boolean; set: (value: boolean) => void }>((set) => ({
+export const useAiConsent = create<{
+  value: boolean | null;
+  loaded: boolean;
+  set: (value: boolean) => void;
+}>((set) => ({
   value: null,
   loaded: false,
   set: (value) => {
@@ -18,5 +22,10 @@ export const useAiConsent = create<{ value: boolean | null; loaded: boolean; set
 }));
 
 void AsyncStorage.getItem(KEY)
-  .then((saved) => useAiConsent.setState({ value: saved === 'yes' ? true : saved === 'no' ? false : null, loaded: true }))
+  .then((saved) =>
+    useAiConsent.setState({
+      value: saved === 'yes' ? true : saved === 'no' ? false : null,
+      loaded: true,
+    })
+  )
   .catch(() => useAiConsent.setState({ loaded: true }));

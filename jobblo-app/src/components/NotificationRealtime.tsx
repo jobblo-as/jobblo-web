@@ -15,7 +15,9 @@ const MAX_SEEN = 200;
  * cache so the badge and inbox stay current without polling.
  */
 export function NotificationRealtime() {
-  const userId = useAuthStore((s) => s.user && typeof s.user._id === 'string' ? s.user._id : null);
+  const userId = useAuthStore((s) =>
+    s.user && typeof s.user._id === 'string' ? s.user._id : null
+  );
   const qc = useQueryClient();
   const seenRef = useRef<Set<string>>(new Set());
 
@@ -30,7 +32,9 @@ export function NotificationRealtime() {
     const socket = getChatSocket();
     const seen = seenRef.current;
 
-    const handleNotification = (payload: Notification & { urgent?: boolean; unreadCount?: number }) => {
+    const handleNotification = (
+      payload: Notification & { urgent?: boolean; unreadCount?: number }
+    ) => {
       const id = String(payload?._id || '');
       if (id) {
         if (seen.has(id)) return;

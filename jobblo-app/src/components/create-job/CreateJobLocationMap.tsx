@@ -34,7 +34,12 @@ interface CreateJobLocationMapProps {
  * The exact spot of the job: tap the map or drag the pin, or use the phone's position. Follows
  * the address picked in the search. The job page shows this same pin.
  */
-export function CreateJobLocationMap({ coordinates, onCoordinatesChange, busy, onTouchingChange }: CreateJobLocationMapProps) {
+export function CreateJobLocationMap({
+  coordinates,
+  onCoordinatesChange,
+  busy,
+  onTouchingChange,
+}: CreateJobLocationMapProps) {
   const mapRef = useRef<MapView | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState('');
@@ -42,7 +47,10 @@ export function CreateJobLocationMap({ coordinates, onCoordinatesChange, busy, o
   const hasMarker = confirmedCoordinate(coordinates);
 
   const animateTo = (coordinate: LatLng) => {
-    mapRef.current?.animateToRegion({ ...coordinate, latitudeDelta: 0.01, longitudeDelta: 0.01 }, 500);
+    mapRef.current?.animateToRegion(
+      { ...coordinate, latitudeDelta: 0.01, longitudeDelta: 0.01 },
+      500
+    );
   };
 
   const selectCoordinate = (coordinate: LatLng) => {
@@ -62,13 +70,26 @@ export function CreateJobLocationMap({ coordinates, onCoordinatesChange, busy, o
     setLocationError('');
     try {
       if (!(await Location.requestForegroundPermissionsAsync()).granted) {
-        setLocationError(t('Posisjon er ikke tillatt. Trykk på kartet eller søk etter adressen.', 'Location is not allowed. Tap the map or search for the address.'));
+        setLocationError(
+          t(
+            'Posisjon er ikke tillatt. Trykk på kartet eller søk etter adressen.',
+            'Location is not allowed. Tap the map or search for the address.'
+          )
+        );
         return;
       }
       const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-      selectCoordinate({ latitude: position.coords.latitude, longitude: position.coords.longitude });
+      selectCoordinate({
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+      });
     } catch {
-      setLocationError(t('Kunne ikke hente posisjonen. Trykk på kartet eller søk etter adressen.', 'Could not get your location. Tap the map or search for the address.'));
+      setLocationError(
+        t(
+          'Kunne ikke hente posisjonen. Trykk på kartet eller søk etter adressen.',
+          'Could not get your location. Tap the map or search for the address.'
+        )
+      );
     } finally {
       setIsLocating(false);
     }
@@ -89,7 +110,16 @@ export function CreateJobLocationMap({ coordinates, onCoordinatesChange, busy, o
             ref={mapRef}
             provider={MAP_PROVIDER}
             style={{ flex: 1 }}
-            initialRegion={hasMarker ? { latitude: coordinates[0], longitude: coordinates[1], latitudeDelta: 0.01, longitudeDelta: 0.01 } : DEFAULT_REGION}
+            initialRegion={
+              hasMarker
+                ? {
+                    latitude: coordinates[0],
+                    longitude: coordinates[1],
+                    latitudeDelta: 0.01,
+                    longitudeDelta: 0.01,
+                  }
+                : DEFAULT_REGION
+            }
             onPress={(event: MapPressEvent) => selectCoordinate(event.nativeEvent.coordinate)}
             // Satellite photos with road and place names on top.
             mapType={satellite ? 'hybrid' : 'standard'}
@@ -117,30 +147,48 @@ export function CreateJobLocationMap({ coordinates, onCoordinatesChange, busy, o
             className="absolute bottom-3 right-3 h-10 flex-row items-center gap-1.5 rounded-full bg-white/95 px-3.5 active:opacity-80"
           >
             <Layers size={16} color="#2E6641" />
-            <Text className="text-[0.8125rem] font-semibold text-[#2E6641]">{satellite ? t('Kart', 'Map') : t('Satellitt', 'Satellite')}</Text>
+            <Text className="text-[0.8125rem] font-semibold text-[#2E6641]">
+              {satellite ? t('Kart', 'Map') : t('Satellitt', 'Satellite')}
+            </Text>
           </Pressable>
         ) : null}
         {MAPS_AVAILABLE && (!hasMarker || busy) ? (
           <View className="absolute inset-x-0 top-3 items-center" pointerEvents="none">
             <View className="flex-row items-center gap-2 rounded-full bg-white/95 px-4 py-2">
-              {busy ? <ActivityIndicator size="small" color={TC.brandText} /> : <Crosshair size={15} color={TC.brandText} />}
+              {busy ? (
+                <ActivityIndicator size="small" color={TC.brandText} />
+              ) : (
+                <Crosshair size={15} color={TC.brandText} />
+              )}
               <Text className="text-[0.8125rem] font-semibold text-[#2E6641]">
-                {busy ? t('Finner adressen …', 'Finding the address …') : t('Trykk på kartet for å velge stedet', 'Tap the map to choose the place')}
+                {busy
+                  ? t('Finner adressen …', 'Finding the address …')
+                  : t('Trykk på kartet for å velge stedet', 'Tap the map to choose the place')}
               </Text>
             </View>
           </View>
         ) : null}
       </View>
 
-      {locationError ? <Text className="text-[0.8125rem] font-medium text-danger">{locationError}</Text> : null}
+      {locationError ? (
+        <Text className="text-[0.8125rem] font-medium text-danger">{locationError}</Text>
+      ) : null}
       <Pressable
         onPress={() => void useCurrentLocation()}
         disabled={isLocating}
         accessibilityRole="button"
         className="h-11 flex-row items-center justify-center gap-2 rounded-full border border-line bg-surface px-4 active:bg-surface-2"
       >
-        {isLocating ? <ActivityIndicator size="small" color={TC.brandText} /> : <Locate size={16} color={TC.brandText} />}
-        <Text className="text-[0.9375rem] font-semibold text-brand-text">{isLocating ? t('Henter posisjon …', 'Finding you …') : t('Bruk min posisjon', 'Use my location')}</Text>
+        {isLocating ? (
+          <ActivityIndicator size="small" color={TC.brandText} />
+        ) : (
+          <Locate size={16} color={TC.brandText} />
+        )}
+        <Text className="text-[0.9375rem] font-semibold text-brand-text">
+          {isLocating
+            ? t('Henter posisjon …', 'Finding you …')
+            : t('Bruk min posisjon', 'Use my location')}
+        </Text>
       </Pressable>
     </View>
   );
