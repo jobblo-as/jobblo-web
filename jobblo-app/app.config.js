@@ -1,5 +1,4 @@
-const appJson = require('./app.json');
-
+// Expo reads app.json first and passes it in as `config`; this file only adds build-time parts.
 const androidKey = String(process.env.EXPO_PUBLIC_GOOGLE_MAPS_ANDROID_KEY || '').trim();
 const iosKey = String(process.env.EXPO_PUBLIC_GOOGLE_MAPS_IOS_KEY || '').trim();
 const apiUrl = String(process.env.EXPO_PUBLIC_API_URL || '').trim();
@@ -21,33 +20,33 @@ if (easProfile === 'production') {
   }
 }
 
-const plugins = (appJson.expo.plugins || []).filter((plugin) => {
-  const name = Array.isArray(plugin) ? plugin[0] : plugin;
-  return name !== 'react-native-maps';
-});
+module.exports = ({ config }) => {
+  const plugins = (config.plugins || []).filter((plugin) => {
+    const name = Array.isArray(plugin) ? plugin[0] : plugin;
+    return name !== 'react-native-maps';
+  });
 
-// App Store / TestFlight builds deliver push through Apple's production APNs; the plugin's
-// default ('development') is only right for development builds.
-if (easProfile === 'production') {
-  const i = plugins.findIndex((p) => (Array.isArray(p) ? p[0] : p) === 'expo-notifications');
-  plugins[i] = ['expo-notifications', { mode: 'production' }];
-}
+  // App Store / TestFlight builds deliver push through Apple's production APNs; the plugin's
+  // default ('development') is only right for development builds.
+  if (easProfile === 'production') {
+    const i = plugins.findIndex((p) => (Array.isArray(p) ? p[0] : p) === 'expo-notifications');
+    plugins[i] = ['expo-notifications', { mode: 'production' }];
+  }
 
-if (androidKey || iosKey) {
-  plugins.push([
-    'react-native-maps',
-    {
-      ...(androidKey ? { androidGoogleMapsApiKey: androidKey } : {}),
-      ...(iosKey ? { iosGoogleMapsApiKey: iosKey } : {}),
-    },
-  ]);
-}
+  if (androidKey || iosKey) {
+    plugins.push([
+      'react-native-maps',
+      {
+        ...(androidKey ? { androidGoogleMapsApiKey: androidKey } : {}),
+        ...(iosKey ? { iosGoogleMapsApiKey: iosKey } : {}),
+      },
+    ]);
+  }
 
-module.exports = {
-  expo: {
-    ...appJson.expo,
+  return {
+    ...config,
     android: {
-      ...appJson.expo.android,
+      ...config.android,
       ...(process.env.GOOGLE_SERVICES_JSON
         ? { googleServicesFile: process.env.GOOGLE_SERVICES_JSON }
         : require('fs').existsSync(localGoogleServicesFile)
@@ -56,7 +55,7 @@ module.exports = {
     },
     plugins,
     extra: {
-      ...(appJson.expo.extra || {}),
+      ...(config.extra || {}),
       // Read by src/utils/mapProvider.ts: Google Maps on iOS only when the SDK is in the build.
       iosGoogleMaps: Boolean(iosKey),
       // Android has no fallback SDK: a MapView in a build without the key crashes the app.
@@ -65,5 +64,5 @@ module.exports = {
         projectId: '8f719d88-1d48-46f4-b74c-344ac749c875',
       },
     },
-  },
+  };
 };
