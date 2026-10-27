@@ -1,5 +1,6 @@
 import React from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { GlassFill, useGlass } from '../../../src/components/ui/GlassButton';
 import { Image, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useState } from 'react';
 import { MessagesSquare } from 'lucide-react-native';
@@ -44,8 +45,11 @@ function ConversationRow({ chat, userId, onPress }: { chat: MessageConversation;
   const unread = hasUnread(chat, userId);
   const latest = chat.messages?.[0];
   const photo = chat.serviceId?.images?.[0] || chat.serviceId?.image || undefined;
+  // ponytail: one glass/blur layer per row; fine for a chat list, a FlatList if it grows to hundreds.
+  const glass = useGlass(16);
   return (
-    <Pressable onPress={onPress} className="mb-3 flex-row items-center gap-3 rounded-2xl border border-line bg-surface p-4">
+    <Pressable onPress={onPress} className="mb-3 flex-row items-center gap-3 p-4 active:opacity-80" style={glass}>
+      <GlassFill radius={16} />
       <View className="relative shrink-0">
         <View className="h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-tint">
           {photo ? (
@@ -65,13 +69,13 @@ function ConversationRow({ chat, userId, onPress }: { chat: MessageConversation;
       <View className="min-w-0 flex-1">
         <View className="flex-row items-center justify-between gap-2">
           <Text className={['flex-1 text-[0.9375rem] text-ink', unread ? 'font-bold' : 'font-semibold'].join(' ')} numberOfLines={1}>{title}</Text>
-          <Text className="text-[0.8125rem] text-subtle">{formatTime(chat.updatedAt ?? latest?.createdAt)}</Text>
+          <Text className="text-[0.8125rem] text-muted">{formatTime(chat.updatedAt ?? latest?.createdAt)}</Text>
         </View>
         {serviceTitle && personName ? <Text className="mt-0.5 text-[0.8125rem] text-muted" numberOfLines={1}>{personName}</Text> : null}
         <View className="mt-1 flex-row items-center gap-2">
           <Text className={['flex-1 text-[0.8125rem]', unread ? 'font-medium text-ink' : 'text-muted'].join(' ')} numberOfLines={1}>{conversationPreview(chat)}</Text>
           {unread ? <View className="h-2 w-2 shrink-0 rounded-full bg-brand" /> : null}
-          {chat.serviceId?.isSold ? <Text className="rounded-full bg-surface-2 px-2 py-0.5 text-[0.6875rem] font-semibold text-muted">Solgt</Text> : null}
+          {chat.serviceId?.isSold ? <Text className="rounded-full bg-surface-2 px-2 py-0.5 text-[0.8125rem] font-semibold text-muted">Solgt</Text> : null}
         </View>
       </View>
     </Pressable>
