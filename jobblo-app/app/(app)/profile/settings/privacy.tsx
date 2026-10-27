@@ -97,7 +97,7 @@ export default function PrivacyScreen() {
                 showsVerticalScrollIndicator={false}
             >
                 {/* Title card */}
-                <View className="rounded-3xl border border-line bg-surface p-5">
+                <View className="rounded-3xl bg-surface p-5">
                     <View className="flex-row items-start gap-3">
                         <View className="h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-tint">
                             <ShieldCheck size={20} color={TC.brandText} />
@@ -133,7 +133,7 @@ export default function PrivacyScreen() {
                 ))}
 
                 {/* Footer */}
-                <View className="mt-5 rounded-3xl border border-line bg-surface p-5">
+                <View className="mt-5 rounded-3xl bg-surface p-5">
                     <Text className="text-[0.8125rem] italic leading-5 text-muted">
                         {privacyPolicy.footer}
                     </Text>

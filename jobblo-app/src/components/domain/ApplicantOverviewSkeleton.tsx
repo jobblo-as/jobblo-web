@@ -4,7 +4,7 @@ import { View } from 'react-native';
 
 export function ApplicantOverviewSkeleton() {
   return (
-    <View className="flex-row items-center gap-4 rounded-[20px] border border-line bg-surface p-5">
+    <View className="flex-row items-center gap-4 rounded-[20px] bg-surface p-5">
       <Skeleton className="h-11 w-11 rounded-xl" />
       <View className="flex-1 gap-2">
         <Skeleton className="h-3 w-24 rounded" />

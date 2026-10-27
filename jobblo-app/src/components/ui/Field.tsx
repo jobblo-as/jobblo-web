@@ -49,7 +49,7 @@ export function Field({
             </View>
           ) : null}
           {showCount && maxLength ? (
-            <Text className="text-[0.8125rem] tabular-nums text-subtle">
+            <Text className="text-[0.8125rem] tabular-nums text-muted">
               {(value ?? '').length}/{maxLength}
             </Text>
           ) : null}

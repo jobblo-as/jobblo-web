@@ -15,7 +15,7 @@ export function EmptyState({
   action?: React.ReactNode;
 }) {
   return (
-    <View className="mx-4 my-8 items-center rounded-3xl border border-line bg-surface p-8">
+    <View className="mx-4 my-8 items-center rounded-3xl bg-surface p-8">
       {icon ? <View className="mb-4">{icon}</View> : null}
       <Text className="text-center text-[1.0625rem] font-semibold text-ink">{title}</Text>
       <Text className="mt-2 text-center text-[0.875rem] leading-relaxed text-muted">{message}</Text>

@@ -21,7 +21,7 @@ export function FormRow({ label, error, showCount, divider = false, multiline, m
       <View className="flex-row items-center justify-between">
         <Text className="text-[0.8125rem] font-medium text-muted">{label}</Text>
         {showCount && maxLength ? (
-          <Text className="text-[0.8125rem] tabular-nums text-subtle">
+          <Text className="text-[0.8125rem] tabular-nums text-muted">
             {(value ?? '').length}/{maxLength}
           </Text>
         ) : null}
@@ -34,7 +34,7 @@ export function FormRow({ label, error, showCount, divider = false, multiline, m
         placeholderTextColor="#B5B8B0"
         textAlignVertical={multiline ? 'top' : 'center'}
         style={{ paddingVertical: 4, paddingHorizontal: 0, minHeight: multiline ? 96 : undefined }}
-        className="mt-0.5 text-[1rem] text-ink"
+        className="mt-0.5 text-[1.0625rem] text-ink"
         {...input}
       />
       {error ? <Text className="mt-1 text-[0.8125rem] text-[#B4544A] dark:text-danger">{error}</Text> : null}

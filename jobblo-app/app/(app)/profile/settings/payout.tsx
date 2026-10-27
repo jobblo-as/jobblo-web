@@ -232,7 +232,7 @@ export default function PayoutSettingsScreen() {
 
   if (kind === 'restricted') {
     statusCard = (
-      <View className="rounded-2xl border border-line bg-surface p-5">
+      <View className="rounded-2xl bg-surface p-5">
         <View className="flex-row items-start">
           <AlertCircle size={22} color={tc('#63665F', 'muted')} />
           <View className="ml-3 flex-1">
@@ -273,7 +273,7 @@ export default function PayoutSettingsScreen() {
 
         {statusCard}
 
-        <View className="mt-3 rounded-2xl border border-line bg-surface p-5">
+        <View className="mt-3 rounded-2xl bg-surface p-5">
           <View className="flex-row items-center justify-between gap-3">
             <Text className="text-[0.9375rem] font-semibold text-ink">Kontoinformasjon</Text>
             <Text className="text-[0.8125rem] text-[#85887F]">Status fra Stripe</Text>
@@ -351,7 +351,7 @@ export default function PayoutSettingsScreen() {
           )}
         </Pressable>
 
-        <View className="mt-5 rounded-2xl border border-line bg-surface p-5">
+        <View className="mt-5 rounded-2xl bg-surface p-5">
           <View className="flex-row items-center">
             <Info size={16} color={tc('#63665F', 'muted')} />
             <Text className="ml-2 text-[0.9375rem] font-semibold text-ink">Slik fungerer utbetalinger</Text>

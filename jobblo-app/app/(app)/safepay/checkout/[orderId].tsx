@@ -126,11 +126,11 @@ export default function SafePayCheckoutScreen() {
   if (isProvider && !isCustomer) {
     // `replace`, not `push`: this screen is a wall for providers, so it must not stay on the
     // stack for the back gesture to return to.
-    return <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page"><View className="flex-1 justify-center px-4"><View className="rounded-3xl border border-line bg-surface p-8"><View className="mx-auto h-11 w-11 items-center justify-center rounded-full bg-tint"><ShieldCheck size={20} color={TC.brand} /></View><Text className="mt-4 text-center text-[1.0625rem] font-semibold text-ink">Betaling håndteres av oppdragsgiver</Text><Text className="mt-2 text-center text-[0.875rem] leading-relaxed text-muted">Du kan følge oppdragets status og starte arbeidet fra din egen arbeidsside.</Text><Pressable onPress={() => router.replace(providerOrderRoute(order._id))} className="mt-6 rounded-full bg-brand px-6 py-3"><Text className="text-center text-[0.9375rem] font-semibold text-white">Gå til mitt oppdrag</Text></Pressable></View></View></SafeAreaView>;
+    return <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page"><View className="flex-1 justify-center px-4"><View className="rounded-3xl bg-surface p-8"><View className="mx-auto h-11 w-11 items-center justify-center rounded-full bg-tint"><ShieldCheck size={20} color={TC.brand} /></View><Text className="mt-4 text-center text-[1.0625rem] font-semibold text-ink">Betaling håndteres av oppdragsgiver</Text><Text className="mt-2 text-center text-[0.875rem] leading-relaxed text-muted">Du kan følge oppdragets status og starte arbeidet fra din egen arbeidsside.</Text><Pressable onPress={() => router.replace(providerOrderRoute(order._id))} className="mt-6 rounded-full bg-brand px-6 py-3"><Text className="text-center text-[0.9375rem] font-semibold text-white">Gå til mitt oppdrag</Text></Pressable></View></View></SafeAreaView>;
   }
 
   if (!isCustomer && !isProvider) {
-    return <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page"><View className="flex-1 justify-center px-4"><View className="rounded-3xl border border-line bg-surface p-8"><Text className="text-center text-[1.0625rem] font-semibold text-ink">Ikke tilgang</Text><Text className="mt-2 text-center text-[0.875rem] text-muted">Denne kontrakten tilhører andre parter.</Text></View></View></SafeAreaView>;
+    return <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page"><View className="flex-1 justify-center px-4"><View className="rounded-3xl bg-surface p-8"><Text className="text-center text-[1.0625rem] font-semibold text-ink">Ikke tilgang</Text><Text className="mt-2 text-center text-[0.875rem] text-muted">Denne kontrakten tilhører andre parter.</Text></View></View></SafeAreaView>;
   }
 
   const isPaid = order.paymentStatus === 'paid' || SETTLED_STATUSES.includes(order.status);
@@ -205,7 +205,7 @@ export default function SafePayCheckoutScreen() {
     <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: 120 }}>
         <Pressable onPress={() => router.push({ pathname: '/(app)/job-applicants/[serviceId]', params: { serviceId: service._id } })} className="mb-5 flex-row items-center gap-2 self-start"><ArrowLeft size={17} color={tc('#63665F', 'muted')} /><Text className="text-[0.8125rem] text-muted">Tilbake til søkere</Text></Pressable>
-        <View className="mb-6"><Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.16em] text-subtle">SafePay</Text><Text className="mt-2 text-[1.9rem] font-bold leading-tight text-ink">Kontrakt og betaling</Text><Text className="mt-2 text-[0.9375rem] leading-relaxed text-muted">Beløpet trekkes nå og holdes av Jobblo til du har godkjent arbeidet.</Text></View>
+        <View className="mb-6"><Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.16em] text-muted">SafePay</Text><Text className="mt-2 text-[1.9rem] font-bold leading-tight text-ink">Kontrakt og betaling</Text><Text className="mt-2 text-[0.9375rem] leading-relaxed text-muted">Beløpet trekkes nå og holdes av Jobblo til du har godkjent arbeidet.</Text></View>
         <SafePayProgressSteps currentStep={2} />
         <SafePayPartiesCard order={order} />
         <DigitalContractCard service={service} order={order} calculation={calculation} contractDate={contractDate} duration={duration} />
@@ -222,7 +222,7 @@ export default function SafePayCheckoutScreen() {
           }}
         />}
         {order.paymentStatus === 'failed' ? <Text className="mt-4 text-center text-[0.8125rem] font-medium text-danger">Forrige betalingsforsøk mislyktes. Du kan prøve igjen over.</Text> : null}
-        {order.status === 'cancelled' ? null : <Text className="mt-5 text-center text-[0.8125rem] leading-relaxed text-subtle">Ved å bekrefte godtar du Jobblos vilkår og SafePay-avtalen.</Text>}
+        {order.status === 'cancelled' ? null : <Text className="mt-5 text-center text-[0.8125rem] leading-relaxed text-muted">Ved å bekrefte godtar du Jobblos vilkår og SafePay-avtalen.</Text>}
       </ScrollView>
     </SafeAreaView>
   );

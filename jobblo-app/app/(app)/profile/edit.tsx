@@ -91,7 +91,7 @@ export default function EditProfileScreen() {
       {/* Top bar: Avbryt · title · Lagre (keeps Save reachable above the keyboard). */}
       <View className="h-14 flex-row items-center justify-between border-b border-line bg-page px-2">
         <Pressable onPress={leave} hitSlop={8} accessibilityRole="button" className="min-w-[72px] px-2 py-2">
-          <Text className="text-[1rem] text-ink-2">Avbryt</Text>
+          <Text className="text-[1.0625rem] text-ink-2">Avbryt</Text>
         </Pressable>
         <Text className="text-[1.0625rem] font-semibold text-ink">Rediger profil</Text>
         <Pressable
@@ -105,7 +105,7 @@ export default function EditProfileScreen() {
           {update.isPending ? (
             <ActivityIndicator size="small" color={TC.brandText} />
           ) : (
-            <Text className={`text-[1rem] font-semibold ${canSave ? 'text-brand-text' : 'text-[#B5B8B0]'}`}>Lagre</Text>
+            <Text className={`text-[1.0625rem] font-semibold ${canSave ? 'text-brand-text' : 'text-[#B5B8B0]'}`}>Lagre</Text>
           )}
         </Pressable>
       </View>
@@ -214,7 +214,7 @@ export default function EditProfileScreen() {
                 returnKeyType="done"
                 accessibilityLabel="Ny ferdighet"
                 style={{ paddingVertical: 6, paddingHorizontal: 0 }}
-                className="flex-1 text-[1rem] text-ink"
+                className="flex-1 text-[1.0625rem] text-ink"
               />
               <Pressable
                 onPress={addSkill}

@@ -140,7 +140,7 @@ export function AlertsSkeleton() {
     <View>
       <Skeleton className="mx-4 mb-2 mt-3 h-3 w-16" />
       {Array.from({ length: 6 }).map((_, i) => (
-        <View key={i} className="mx-4 mb-2 flex-row items-start gap-3 rounded-2xl border border-line bg-surface p-3.5">
+        <View key={i} className="mx-4 mb-2 flex-row items-start gap-3 rounded-2xl bg-surface p-3.5">
           <Skeleton className="h-11 w-11 rounded-full" />
           <View style={{ flex: 1 }}>
             <View className="flex-row justify-between gap-2">
@@ -165,7 +165,7 @@ export function MessagesSkeleton() {
         <Skeleton className="mt-3 h-8 w-44" />
       </View>
       {Array.from({ length: 6 }).map((_, i) => (
-        <View key={i} className="mb-3 flex-row items-center gap-3 rounded-2xl border border-line bg-surface p-4">
+        <View key={i} className="mb-3 flex-row items-center gap-3 rounded-2xl bg-surface p-4">
           <Skeleton className="h-12 w-12 rounded-xl" />
           <View style={{ flex: 1 }}>
             <View className="flex-row justify-between gap-2">
@@ -192,7 +192,7 @@ export function ChatSkeleton() {
         <Skeleton className="h-6 w-6 rounded-full" />
       </View>
       <View className="border-b border-line bg-page px-4 pt-3">
-        <View className="mb-3 flex-row items-center gap-3 rounded-2xl border border-line bg-surface p-3">
+        <View className="mb-3 flex-row items-center gap-3 rounded-2xl bg-surface p-3">
           <Skeleton className="h-12 w-12 rounded-xl" />
           <View style={{ flex: 1 }} className="gap-1.5">
             <Skeleton className="h-3.5 w-1/2" />
@@ -234,7 +234,7 @@ export function TaskersSkeleton() {
       <Skeleton className="mb-3 ml-1 h-3 w-24" />
       <View className="gap-3">
         {[0, 1, 2].map((i) => (
-          <View key={i} className="rounded-2xl border border-line bg-surface p-4">
+          <View key={i} className="rounded-2xl bg-surface p-4">
             <View className="flex-row gap-3">
               <Skeleton className="h-14 w-14 rounded-full" />
               <View style={{ flex: 1 }} className="gap-2 pt-1">
@@ -311,7 +311,7 @@ export function JobProfileSkeleton() {
     <View>
       <Skeleton className="h-[190px] w-full rounded-none" />
       <View className="px-4">
-        <View className="-mt-16 items-center rounded-3xl border border-line bg-surface px-5 pb-5">
+        <View className="-mt-16 items-center rounded-3xl bg-surface px-5 pb-5">
           <View className="-mt-12 rounded-full border-4 border-surface bg-surface">
             <Skeleton className="h-24 w-24 rounded-full" />
           </View>
@@ -328,7 +328,7 @@ export function JobProfileSkeleton() {
           </View>
         </View>
         <Skeleton className="mt-4 h-12 w-full rounded-full" />
-        <View className="mt-4 rounded-3xl border border-line bg-surface p-5">
+        <View className="mt-4 rounded-3xl bg-surface p-5">
           <Skeleton className="h-4 w-2/5" />
           <SkLines widths={['w-full', 'w-4/5']} className="mt-3" />
           <Skeleton className="mt-4 h-12 w-full rounded-full" />
@@ -338,7 +338,7 @@ export function JobProfileSkeleton() {
           <Skeleton className="h-10 w-24 rounded-full" />
           <Skeleton className="h-10 w-28 rounded-full" />
         </View>
-        <View className="mt-4 rounded-3xl border border-line bg-surface p-5">
+        <View className="mt-4 rounded-3xl bg-surface p-5">
           <Skeleton className="h-4 w-1/3" />
           <SkLines widths={['w-full', 'w-5/6', 'w-2/3']} className="mt-3" />
         </View>
@@ -373,7 +373,7 @@ export function PublicProfileSkeleton() {
       </View>
       <View className="gap-4 px-4 pt-5">
         {[0, 1].map((i) => (
-          <View key={i} className="rounded-3xl border border-line bg-surface p-5">
+          <View key={i} className="rounded-3xl bg-surface p-5">
             <Skeleton className="h-4 w-1/3" />
             <SkLines widths={['w-full', 'w-4/5']} className="mt-3" />
           </View>
@@ -445,7 +445,7 @@ export function MembershipSkeleton() {
       <Skeleton className="h-12 w-60 rounded-full" />
       <View className="mt-5 gap-3">
         {[0, 1].map((i) => (
-          <View key={i} className="rounded-3xl border border-line bg-surface p-5">
+          <View key={i} className="rounded-3xl bg-surface p-5">
             <View className="flex-row items-start justify-between">
               <View className="gap-2">
                 <Skeleton className="h-5 w-28" />
@@ -519,7 +519,7 @@ export function BlockedUsersSkeleton() {
       </View>
       <View className={pad}>
         {[0, 1, 2, 3].map((i) => (
-          <View key={i} className="mb-3 flex-row items-center gap-3 rounded-2xl border border-line bg-surface p-3">
+          <View key={i} className="mb-3 flex-row items-center gap-3 rounded-2xl bg-surface p-3">
             <Skeleton className="h-14 w-14 rounded-full" />
             <Grow className="h-4 w-1/2" />
             <Skeleton className="h-3 w-12" />
@@ -535,13 +535,13 @@ export function SingleFieldSkeleton() {
   return (
     <View className={pad}>
       <SkScreenHeader />
-      <View className="rounded-3xl border border-line bg-surface p-5">
+      <View className="rounded-3xl bg-surface p-5">
         <Skeleton className="mb-2 h-3 w-28" />
         <Skeleton className="h-12 w-full rounded-2xl" />
         <Skeleton className="mb-4 mt-2 h-3 w-2/3" />
         <Skeleton className="h-12 w-full rounded-xl" />
       </View>
-      <View className="mt-4 rounded-3xl border border-line bg-surface-2 p-4">
+      <View className="mt-4 rounded-3xl bg-surface-2 p-4">
         <Skeleton className="h-3.5 w-1/3" />
         <SkLines widths={['w-full', 'w-full', 'w-4/5']} h="h-3" gap="gap-1.5" className="mt-3" />
       </View>
@@ -554,7 +554,7 @@ export function PayoutSkeleton() {
   return (
     <View className={pad}>
       <SkScreenHeader icon={false} subLines={2} />
-      <View className="rounded-3xl border border-line bg-surface p-5">
+      <View className="rounded-3xl bg-surface p-5">
         <View className="flex-row items-center gap-3">
           <Skeleton className="h-9 w-9 rounded-lg" />
           <Skeleton className="h-4 w-36" />
@@ -562,7 +562,7 @@ export function PayoutSkeleton() {
         </View>
         <SkLines widths={['w-full', 'w-3/4']} h="h-3" className="mt-3" />
       </View>
-      <View className="mt-3 rounded-2xl border border-line bg-surface p-5">
+      <View className="mt-3 rounded-2xl bg-surface p-5">
         <Skeleton className="mb-2 h-4 w-40" />
         {[0, 1, 2, 3].map((i) => (
           <View key={i} className="flex-row justify-between border-t border-line py-3.5">
@@ -572,7 +572,7 @@ export function PayoutSkeleton() {
         ))}
       </View>
       <Skeleton className="mt-3 h-12 w-full rounded-xl" />
-      <View className="mt-5 rounded-2xl border border-line bg-surface p-5">
+      <View className="mt-5 rounded-2xl bg-surface p-5">
         <Skeleton className="h-4 w-1/2" />
         {[0, 1, 2].map((i) => (
           <View key={i} className="mt-4 flex-row gap-3">
@@ -607,7 +607,7 @@ export function SafePayHistorySkeleton() {
       <SkChips widths={['w-14', 'w-20', 'w-24']} className="mb-4" />
       <View className="gap-3">
         {[0, 1, 2].map((i) => (
-          <View key={i} className="flex-row items-start gap-3 rounded-2xl border border-line bg-surface p-4">
+          <View key={i} className="flex-row items-start gap-3 rounded-2xl bg-surface p-4">
             <Skeleton className="h-11 w-11 rounded-2xl" />
             <View style={{ flex: 1 }}>
               <View className="flex-row justify-between gap-2">
@@ -718,7 +718,7 @@ export function SubscriptionSkeleton() {
       <SkSectionLabel w="w-28" />
       <Skeleton className="mb-6 h-[200px] w-full rounded-2xl" />
       <SkSectionLabel w="w-20" />
-      <View className="mb-6 rounded-2xl border border-line bg-surface p-5">
+      <View className="mb-6 rounded-2xl bg-surface p-5">
         <View className="flex-row gap-2">
           <Grow className="h-16 rounded-xl" />
           <Grow className="h-16 rounded-xl" />
@@ -746,7 +746,7 @@ export function ProviderOrderSkeleton() {
     <View className={pad}>
       <Skeleton className="mb-5 h-4 w-20" />
       <Skeleton className="mb-4 h-[92px] w-full rounded-2xl" />
-      <View className="mb-4 rounded-2xl border border-line bg-surface p-5">
+      <View className="mb-4 rounded-2xl bg-surface p-5">
         <Skeleton className="h-7 w-32 rounded-full" />
         <SkLines widths={['w-full', 'w-2/3']} className="mt-3" />
       </View>
@@ -759,7 +759,7 @@ export function ProviderOrderSkeleton() {
           </View>
         ))}
       </View>
-      <View className="mb-4 rounded-2xl border border-line bg-surface p-5">
+      <View className="mb-4 rounded-2xl bg-surface p-5">
         <Skeleton className="mb-3 h-4 w-1/3" />
         {[0, 1, 2, 3].map((i) => (
           <View key={i} className={`py-2.5 ${i < 3 ? 'border-b border-line' : ''}`}>
@@ -810,7 +810,7 @@ export function CheckoutSkeleton() {
         <SkLines widths={['w-full', 'w-4/5']} className="mt-3" />
       </View>
       <SkProgressSteps />
-      <View className="mb-4 rounded-3xl border border-line bg-surface p-5">
+      <View className="mb-4 rounded-3xl bg-surface p-5">
         <Skeleton className="mb-4 h-4 w-28" />
         <View className="flex-row items-center gap-2">
           {[0, 1].map((i) => (
@@ -829,7 +829,7 @@ export function CheckoutSkeleton() {
           ))}
         </View>
       </View>
-      <View className="mb-4 rounded-3xl border border-line bg-surface p-5">
+      <View className="mb-4 rounded-3xl bg-surface p-5">
         <Skeleton className="mb-4 h-4 w-32" />
         <View className="rounded-2xl bg-surface-2 px-4">
           {[0, 1, 2, 3, 4].map((i) => (
@@ -840,7 +840,7 @@ export function CheckoutSkeleton() {
           ))}
         </View>
       </View>
-      <View className="rounded-3xl border border-line bg-surface p-5">
+      <View className="rounded-3xl bg-surface p-5">
         <Skeleton className="mb-4 h-4 w-24" />
         <View className="flex-row justify-between border-b border-line py-3">
           <Skeleton className="h-3 w-24" />
@@ -865,10 +865,10 @@ export function DisputeCreateSkeleton() {
         <Skeleton className="h-10 w-10 rounded-full" />
         <SkLines widths={['w-1/2', 'w-full', 'w-3/4']} h="h-3" className="flex-1" />
       </View>
-      <View className="mb-4 rounded-2xl border border-line bg-surface p-5">
+      <View className="mb-4 rounded-2xl bg-surface p-5">
         <SkLines widths={['w-2/3', 'w-1/4']} h="h-3" />
       </View>
-      <View className="mb-4 rounded-2xl border border-line bg-surface p-5">
+      <View className="mb-4 rounded-2xl bg-surface p-5">
         <Skeleton className="h-4 w-1/3" />
         <Skeleton className="mb-3 mt-2 h-3 w-1/2" />
         {[0, 1, 2, 3].map((i) => (
@@ -877,7 +877,7 @@ export function DisputeCreateSkeleton() {
           </View>
         ))}
       </View>
-      <View className="mb-4 rounded-2xl border border-line bg-surface p-5">
+      <View className="mb-4 rounded-2xl bg-surface p-5">
         <Skeleton className="mb-3 h-4 w-1/4" />
         <Skeleton className="h-11 w-full rounded-xl" />
         <Skeleton className="mt-3 h-28 w-full rounded-xl" />
@@ -897,7 +897,7 @@ export function DisputeOrderSkeleton() {
         <Skeleton className="h-6 w-20 rounded-full" />
       </View>
       <View style={{ flex: 1 }} className={pad}>
-        <View className="mb-4 rounded-2xl border border-line bg-surface p-5">
+        <View className="mb-4 rounded-2xl bg-surface p-5">
           <Skeleton className="h-4 w-3/4" />
           <Skeleton className="mb-3 mt-2 h-3 w-1/3" />
           <SkLines widths={['w-full', 'w-full', 'w-2/3']} h="h-3" gap="gap-1.5" />
@@ -939,7 +939,7 @@ export function CreateJobSkeleton() {
         <Skeleton className="h-3 w-28" />
         <Skeleton className="mt-2 h-7 w-3/4" />
         <Skeleton className="mb-5 mt-2 h-3.5 w-2/3" />
-        <View className="rounded-xl border border-line bg-surface p-4">
+        <View className="rounded-xl bg-surface p-4">
           <View className="flex-row gap-3">
             <Skeleton className="h-9 w-9 rounded-lg" />
             <SkLines widths={['w-1/3', 'w-full', 'w-4/5']} h="h-3" className="flex-1" />
@@ -978,7 +978,7 @@ export function MyJobCardsSkeleton({ count = 3 }: { count?: number }) {
   return (
     <View className="gap-3">
       {Array.from({ length: count }).map((_, i) => (
-        <View key={i} className="overflow-hidden rounded-xl border border-line bg-surface">
+        <View key={i} className="overflow-hidden rounded-xl bg-surface">
           <View className="p-4">
             <View className="flex-row justify-between">
               <Skeleton className="h-6 w-16 rounded-full" />

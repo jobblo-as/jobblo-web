@@ -60,7 +60,7 @@ export default function AboutScreen() {
         contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="rounded-3xl border border-line bg-surface p-5">
+        <View className="rounded-3xl bg-surface p-5">
           <View className="flex-row items-start gap-3">
             <View className="h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-tint">
               <Building2 size={22} color={TC.brandText} />
@@ -85,8 +85,8 @@ export default function AboutScreen() {
           </View>
         </View>
 
-        <View className="mt-5 overflow-hidden rounded-3xl border border-line bg-surface">
-          <Text className="border-b border-line px-4 pb-3 pt-4 text-[0.8125rem] font-semibold uppercase tracking-[0.14em] text-subtle">
+        <View className="mt-5 overflow-hidden rounded-3xl bg-surface">
+          <Text className="border-b border-line px-4 pb-3 pt-4 text-[0.8125rem] font-semibold uppercase tracking-[0.14em] text-muted">
             Juridisk
           </Text>
           <AboutRow
@@ -97,8 +97,8 @@ export default function AboutScreen() {
           />
         </View>
 
-        <View className="mt-5 overflow-hidden rounded-3xl border border-line bg-surface">
-          <Text className="border-b border-line px-4 pb-3 pt-4 text-[0.8125rem] font-semibold uppercase tracking-[0.14em] text-subtle">
+        <View className="mt-5 overflow-hidden rounded-3xl bg-surface">
+          <Text className="border-b border-line px-4 pb-3 pt-4 text-[0.8125rem] font-semibold uppercase tracking-[0.14em] text-muted">
             Personvern
           </Text>
           <AboutRow

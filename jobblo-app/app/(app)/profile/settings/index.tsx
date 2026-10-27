@@ -175,7 +175,7 @@ export default function SettingsOverviewScreen() {
               })}
             </View>
           </Card>
-          <Text className="mt-2 px-1 text-[0.8125rem] text-subtle">
+          <Text className="mt-2 px-1 text-[0.8125rem] text-muted">
             Automatisk følger innstillingen på telefonen.
           </Text>
         </View>
@@ -199,7 +199,7 @@ export default function SettingsOverviewScreen() {
           </View>
         ))}
 
-        <Text className="text-center text-[0.8125rem] text-subtle">
+        <Text className="text-center text-[0.8125rem] text-muted">
           Jobblo{version ? ` · versjon ${version}` : ''}
         </Text>
       </ScrollView>

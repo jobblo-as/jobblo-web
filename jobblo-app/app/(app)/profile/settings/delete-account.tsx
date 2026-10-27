@@ -89,7 +89,7 @@ export default function DeleteAccountScreen() {
         >
           <ScreenHeader title="Slett profil" subtitle="Denne handlingen kan ikke angres." icon={Trash2} destructive />
 
-          <View className="rounded-3xl border border-line bg-surface p-5">
+          <View className="rounded-3xl bg-surface p-5">
             <View className="flex flex-col gap-3 mb-5">
               <Text className="text-[0.875rem] leading-relaxed text-ink">
                 Det er trist å se deg dra! Sletting av profilen din er irreversibel. Alle
@@ -212,7 +212,7 @@ export default function DeleteAccountScreen() {
                 placeholderTextColor="#BFBFBF"
                 className="rounded-2xl border border-line bg-surface px-4 py-3.5 text-[0.9375rem] text-ink"
               />
-              <Text className="mt-1.5 text-[0.75rem] text-muted">
+              <Text className="mt-1.5 text-[0.8125rem] text-muted">
                 Logger du inn med Google, Apple eller Vipps, kan du la feltet stå tomt.
               </Text>
             </View>

@@ -134,7 +134,7 @@ export default function LocationSettingsScreen() {
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
           <ScreenHeader title="Lokasjon" subtitle="Landet som vises på profilen din." icon={MapPin} />
 
-          <View className="rounded-3xl border border-line bg-surface p-5">
+          <View className="rounded-3xl bg-surface p-5">
             <View className="mb-4">
               <Text className="mb-1.5 text-[0.8125rem] font-semibold text-ink">Land</Text>
               <TextInput
@@ -193,7 +193,7 @@ export default function LocationSettingsScreen() {
             </Pressable>
           </View>
 
-          <View className="mt-4 flex-row items-start rounded-3xl border border-line bg-surface-2 p-4">
+          <View className="mt-4 flex-row items-start rounded-3xl bg-surface-2 p-4">
             <Info size={16} color={tc('#63665F', 'muted')} />
             <Text className="ml-2 min-w-0 flex-1 text-[0.8125rem] leading-4 text-muted">
               Dette er landet på profilen din. Stedet for et oppdrag settes for hver enkelt jobb når du legger den ut, og endres ikke her.

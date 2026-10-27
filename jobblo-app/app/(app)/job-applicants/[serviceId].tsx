@@ -246,7 +246,7 @@ export default function JobApplicantsScreen() {
             </View>
             <View className="items-end">
               <Text className="text-[1.25rem] font-semibold text-[#8FBF9A]">{formatPrice(service.price)}</Text>
-              <Text className="mt-0.5 text-[0.6875rem] uppercase tracking-[0.08em] text-white/50">Oppdragsbeløp</Text>
+              <Text className="mt-0.5 text-[0.8125rem] uppercase tracking-[0.08em] text-white/50">Oppdragsbeløp</Text>
             </View>
           </View>
           {activeOrder ? (

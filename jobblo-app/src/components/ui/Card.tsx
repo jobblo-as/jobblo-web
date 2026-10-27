@@ -2,15 +2,18 @@ import React from 'react';
 import { Text, View, type ViewProps } from 'react-native';
 import { cn } from '@/lib/utils';
 
-/** shadcn-style Card: a white rounded surface. Pass `className` to adjust spacing. */
+/**
+ * A white rounded surface on the beige page. No outline (client review P2, "fewer boxes"): the
+ * colour difference separates it; inside a white sheet use a plain View instead.
+ */
 export function Card({ className, ...props }: ViewProps & { className?: string }) {
-  return <View className={cn('rounded-3xl border border-line bg-surface', className)} {...props} />;
+  return <View className={cn('rounded-3xl bg-surface', className)} {...props} />;
 }
 
 /** Small uppercase heading above a Card or a group of rows. */
 export function SectionLabel({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <Text className={cn('mb-2 px-1 text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-subtle', className)}>
+    <Text className={cn('mb-2 px-1 text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-muted', className)}>
       {children}
     </Text>
   );

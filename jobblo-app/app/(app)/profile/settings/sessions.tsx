@@ -293,7 +293,7 @@ export default function ActiveSessionsScreen() {
             </Text>
             {session.isCurrent ? (
               <View className="rounded-full bg-tint px-2 py-0.5">
-                <Text className="text-[0.6875rem] font-bold uppercase tracking-[0.08em] text-brand-text">Nåværende</Text>
+                <Text className="text-[0.8125rem] font-bold uppercase tracking-[0.08em] text-brand-text">Nåværende</Text>
               </View>
             ) : null}
           </View>
@@ -306,7 +306,7 @@ export default function ActiveSessionsScreen() {
             {locationLabel}
             {ip ? ` · ${ip}` : ''}
           </Text>
-          <Text className="mt-0.5 text-[0.8125rem] text-subtle" numberOfLines={1}>
+          <Text className="mt-0.5 text-[0.8125rem] text-muted" numberOfLines={1}>
             Sist aktiv {formatLastUsed(session.lastUsed)}
           </Text>
         </View>
@@ -384,7 +384,7 @@ export default function ActiveSessionsScreen() {
             ) : null}
 
             <View className="mb-2 flex-row items-center justify-between px-1">
-              <Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-subtle">
+              <Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-muted">
                 Andre enheter{others.length ? ` (${others.length})` : ''}
               </Text>
               {others.length > 0 ? (
@@ -431,7 +431,7 @@ export default function ActiveSessionsScreen() {
             onPress={() => router.push('/profile/settings/password')}
           />
         </Card>
-        <Text className="mt-4 px-1 text-[0.8125rem] leading-5 text-subtle">
+        <Text className="mt-4 px-1 text-[0.8125rem] leading-5 text-muted">
           Sted og IP er omtrentlige og utledet fra nettverket. En utlogget enhet mister tilgangen ved
           sitt neste kall mot Jobblo.
         </Text>

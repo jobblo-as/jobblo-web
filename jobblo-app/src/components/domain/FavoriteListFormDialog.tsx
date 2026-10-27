@@ -104,7 +104,7 @@ export function FavoriteListFormDialog({
           onSubmitEditing={showDescription ? undefined : handleSubmit}
           className="rounded-2xl border border-line bg-surface px-4 py-3 text-[0.9375rem] text-ink"
         />
-        <Text className="mt-1.5 text-right text-[0.8125rem] text-subtle">
+        <Text className="mt-1.5 text-right text-[0.8125rem] text-muted">
           {trimmedName.length}/{FAVORITE_LIST_NAME_MAX_LENGTH}
         </Text>
 

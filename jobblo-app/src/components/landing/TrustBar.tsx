@@ -23,7 +23,7 @@ function Track() {
             style={{ alignItems: 'center', justifyContent: 'center', minWidth: 94 }}
           >
             <Icon size={26} color={system.color} />
-            <Text style={{ color: system.color, fontSize: 11, fontWeight: '700', marginTop: 4 }}>
+            <Text style={{ color: system.color, fontSize: 13, fontWeight: '700', marginTop: 4 }}>
               {system.name}
             </Text>
           </View>

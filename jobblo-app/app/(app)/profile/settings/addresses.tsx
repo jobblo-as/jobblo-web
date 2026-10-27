@@ -331,7 +331,7 @@ export default function AddressesSettingsScreen() {
       {/* Top bar: Avbryt · title · Lagre, same as Rediger profil. */}
       <View className="h-14 flex-row items-center justify-between border-b border-line bg-page px-2">
         <Pressable onPress={leave} hitSlop={8} accessibilityRole="button" className="min-w-[72px] px-2 py-2">
-          <Text className="text-[1rem] text-ink-2">Avbryt</Text>
+          <Text className="text-[1.0625rem] text-ink-2">Avbryt</Text>
         </Pressable>
         <Text className="text-[1.0625rem] font-semibold text-ink">Adresse</Text>
         <Pressable
@@ -345,7 +345,7 @@ export default function AddressesSettingsScreen() {
           {update.isPending ? (
             <ActivityIndicator size="small" color={TC.brandText} />
           ) : (
-            <Text className={`text-[1rem] font-semibold ${canSave ? 'text-brand-text' : 'text-[#B5B8B0]'}`}>Lagre</Text>
+            <Text className={`text-[1.0625rem] font-semibold ${canSave ? 'text-brand-text' : 'text-[#B5B8B0]'}`}>Lagre</Text>
           )}
         </Pressable>
       </View>
@@ -453,7 +453,7 @@ export default function AddressesSettingsScreen() {
             />
           </Card>
 
-          <Text className="mt-4 px-1 text-[0.8125rem] leading-5 text-subtle">
+          <Text className="mt-4 px-1 text-[0.8125rem] leading-5 text-muted">
             Alle feltene er valgfrie, og tomme felt lagres som tomme. Landet på profilen endrer du under
             Innstillinger → Lokasjon.
           </Text>

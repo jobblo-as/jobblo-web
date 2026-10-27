@@ -33,7 +33,7 @@ const STATUS_TONE = {
   quiet: 'bg-surface-2 text-muted',
   moving: 'bg-tint text-brand-text',
   action: 'bg-brand-deep text-white',
-  closed: 'border border-line bg-surface text-subtle',
+  closed: 'border border-line bg-surface text-muted',
 } as const;
 
 function formatDateShort(value?: string) {
@@ -98,7 +98,7 @@ export function ApplicationCard({
     'flex-row items-center justify-center gap-1.5 rounded-full bg-brand px-3 py-2';
 
   return (
-    <View className="overflow-hidden rounded-xl border border-line bg-surface">
+    <View className="overflow-hidden rounded-xl bg-surface">
       <View className="p-5">
         <View className="flex-row items-start gap-4">
           <View className="flex h-11 w-11 items-center justify-center rounded-xl bg-tint">
@@ -115,7 +115,7 @@ export function ApplicationCard({
               )}
             </View>
 
-            <Text className="text-[1rem] font-semibold text-ink" numberOfLines={2}>
+            <Text className="text-[1.0625rem] font-semibold text-ink" numberOfLines={2}>
               {service?.title || 'Oppdrag'}
             </Text>
 
@@ -133,7 +133,7 @@ export function ApplicationCard({
                   </View>
                 ) : (
                   <View className="h-6 w-6 items-center justify-center rounded-full bg-tint">
-                    <Text className="text-[0.6875rem] font-semibold text-brand-text">
+                    <Text className="text-[0.8125rem] font-semibold text-brand-text">
                       {getInitials(service.customer.name, service.customer.lastName)}
                     </Text>
                   </View>
@@ -149,9 +149,9 @@ export function ApplicationCard({
           </View>
 
           <View className="items-end">
-            <Text className="text-[1rem] font-bold text-ink">{formatPrice(price as number)}</Text>
+            <Text className="text-[1.0625rem] font-bold text-ink">{formatPrice(price as number)}</Text>
             {showAgreedPrice && (
-              <Text className="mt-0.5 text-[0.8125rem] text-subtle">Avtalt pris</Text>
+              <Text className="mt-0.5 text-[0.8125rem] text-muted">Avtalt pris</Text>
             )}
           </View>
         </View>

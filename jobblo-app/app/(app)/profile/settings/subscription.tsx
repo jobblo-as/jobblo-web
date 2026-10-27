@@ -181,7 +181,7 @@ function SubscriptionScreen() {
         {/* ── Gjeldende abonnement ── */}
         <View className="mb-2 flex-row items-center gap-1.5 px-1">
           <Package size={15} color={TC.brandText} />
-          <Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-subtle">Gjeldende abonnement</Text>
+          <Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-muted">Gjeldende abonnement</Text>
         </View>
         <View className="mb-6 overflow-hidden rounded-2xl p-5" style={{ backgroundColor: HERO }}>
           {/* decorative glow, as on web */}
@@ -351,13 +351,13 @@ function SubscriptionScreen() {
                   <View className="min-w-0 flex-1">
                     <Text className="text-[0.9375rem] font-semibold text-ink" numberOfLines={1}>{title}</Text>
                     {formatDate(item.createdAt) ? (
-                      <Text className="mt-0.5 text-[0.8125rem] text-subtle">{formatDate(item.createdAt)}</Text>
+                      <Text className="mt-0.5 text-[0.8125rem] text-muted">{formatDate(item.createdAt)}</Text>
                     ) : null}
                   </View>
                   <View className="items-end gap-1">
                     <Text className="text-[0.875rem] font-bold tabular-nums text-ink">{historyAmount(item)}</Text>
                     <View className={`rounded-full px-2 py-0.5 ${s.bg}`}>
-                      <Text className="text-[0.6875rem] font-bold uppercase tracking-[0.06em]" style={{ color: s.color }}>{s.label}</Text>
+                      <Text className="text-[0.8125rem] font-bold uppercase tracking-[0.06em]" style={{ color: s.color }}>{s.label}</Text>
                     </View>
                   </View>
                 </View>

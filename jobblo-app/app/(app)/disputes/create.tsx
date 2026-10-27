@@ -148,7 +148,7 @@ export default function CreateDisputeScreen() {
   if (activeDispute) {
     return (
       <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
-        <View className="mx-4 my-8 rounded-3xl border border-line bg-surface p-6">
+        <View className="mx-4 my-8 rounded-3xl bg-surface p-6">
           <Text className="text-[0.9375rem] font-semibold text-ink">Tvist finnes allerede</Text>
           <Text className="mt-1.5 text-[0.875rem] leading-relaxed text-muted">
             Det finnes allerede en aktiv tvist for dette oppdraget. Fortsett i den eksisterende tvisten.
@@ -202,12 +202,12 @@ export default function CreateDisputeScreen() {
             </View>
           </View>
 
-          <View className="mb-4 rounded-2xl border border-line bg-surface p-5">
+          <View className="mb-4 rounded-2xl bg-surface p-5">
             <Text className="mb-1 text-[0.8125rem] font-medium text-ink" numberOfLines={2}>{serviceTitle}</Text>
             <Text className="text-[0.8125rem] text-muted">Avtalt beløp: {amount} kr</Text>
           </View>
 
-          <View className="mb-4 rounded-2xl border border-line bg-surface p-5">
+          <View className="mb-4 rounded-2xl bg-surface p-5">
             <Text className="mb-1 text-[0.9375rem] font-semibold text-ink">Hva handler tvisten om?</Text>
             <Text className="mb-3 text-[0.8125rem] text-muted">Velg kategorien som passer best.</Text>
             {reasons.map((reason) => {
@@ -229,7 +229,7 @@ export default function CreateDisputeScreen() {
             })}
           </View>
 
-          <View className="mb-4 rounded-2xl border border-line bg-surface p-5">
+          <View className="mb-4 rounded-2xl bg-surface p-5">
             <Text className="mb-3 text-[0.9375rem] font-semibold text-ink">Detaljer</Text>
             <TextInput
               value={title}
@@ -240,7 +240,7 @@ export default function CreateDisputeScreen() {
               editable={!openDisputeMutation.isPending}
               className="rounded-xl border border-line p-3 text-[0.8125rem] text-ink"
             />
-            <Text className="mb-3 mt-1 text-right text-[0.8125rem] text-subtle">
+            <Text className="mb-3 mt-1 text-right text-[0.8125rem] text-muted">
               {trimmedTitle.length < DISPUTE_TITLE_MIN_LENGTH ? `Minst ${DISPUTE_TITLE_MIN_LENGTH} tegn · ` : ''}
               {title.length}/{DISPUTE_TITLE_MAX_LENGTH}
             </Text>
@@ -255,7 +255,7 @@ export default function CreateDisputeScreen() {
               editable={!openDisputeMutation.isPending}
               className="min-h-[120px] rounded-xl border border-line p-3 text-[0.8125rem] text-ink"
             />
-            <Text className="mt-1 text-right text-[0.8125rem] text-subtle">
+            <Text className="mt-1 text-right text-[0.8125rem] text-muted">
               {trimmedDescription.length < DISPUTE_DESCRIPTION_MIN_LENGTH ? `Minst ${DISPUTE_DESCRIPTION_MIN_LENGTH} tegn · ` : ''}
               {description.length}/{DISPUTE_DESCRIPTION_MAX_LENGTH}
             </Text>

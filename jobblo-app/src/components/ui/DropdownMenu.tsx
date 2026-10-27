@@ -53,7 +53,7 @@ export function DropdownMenu({ visible, onClose, label, items, top }: DropdownMe
           onStartShouldSetResponder={() => true}
         >
           {label ? (
-            <Text className="px-2.5 pb-1.5 pt-2 text-[0.8125rem] font-semibold text-subtle" numberOfLines={1}>
+            <Text className="px-2.5 pb-1.5 pt-2 text-[0.8125rem] font-semibold text-muted" numberOfLines={1}>
               {label}
             </Text>
           ) : null}

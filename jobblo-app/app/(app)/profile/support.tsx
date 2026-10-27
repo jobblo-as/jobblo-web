@@ -34,7 +34,7 @@ const STATUS_CLASS: Record<SupportTicketStatus, string> = {
   open: 'bg-surface-2 text-muted',
   in_progress: 'bg-[#FFF6E8] text-[#A36A1C]',
   resolved: 'bg-tint text-brand-text',
-  closed: 'border border-line bg-surface text-subtle',
+  closed: 'border border-line bg-surface text-muted',
 };
 
 function getErrorMessage(err: unknown, fallback: string): string {
@@ -109,7 +109,7 @@ export default function SupportScreen() {
         <Text className="text-2xl font-bold text-ink">Kundesenter</Text>
         <Text className="mt-1 text-sm leading-5 text-muted">Hva kan vi hjelpe med?</Text>
 
-        <View className="mt-5 overflow-hidden rounded-3xl border border-line bg-surface">
+        <View className="mt-5 overflow-hidden rounded-3xl bg-surface">
           <View className="flex-row items-center gap-4 p-5">
             <View className="h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-tint">
               <Mail size={18} color={TC.brandText} />
@@ -128,12 +128,12 @@ export default function SupportScreen() {
           <View className="border-t border-line px-5 py-3.5">
             <View className="flex-row items-center gap-1.5">
               <ShieldCheck size={12} color={TC.brandText} />
-              <Text className="text-[11px] text-muted">Vi svarer normalt innen 24 timer på hverdager</Text>
+              <Text className="text-[0.8125rem] text-muted">Vi svarer normalt innen 24 timer på hverdager</Text>
             </View>
           </View>
         </View>
 
-        <View className="mt-5 overflow-hidden rounded-3xl border border-line bg-surface">
+        <View className="mt-5 overflow-hidden rounded-3xl bg-surface">
           <View className="px-5 pb-4 pt-5">
             <Text className="mb-3 text-sm font-bold text-ink">Ofte stilte spørsmål</Text>
             <View className="h-11 flex-row items-center rounded-full border border-line bg-page pl-3.5 pr-2">
@@ -188,13 +188,13 @@ export default function SupportScreen() {
           </View>
         </View>
 
-        <View className="mt-5 overflow-hidden rounded-3xl border border-line bg-surface p-5">
+        <View className="mt-5 overflow-hidden rounded-3xl bg-surface p-5">
           <Text className="text-sm font-bold uppercase tracking-[0.14em] text-brand-text">
             Send en sak
           </Text>
           <View className="mt-2 flex-row items-center gap-1.5">
             <ShieldCheck size={12} color={TC.brandText} />
-            <Text className="text-[11px] text-muted">
+            <Text className="text-[0.8125rem] text-muted">
               Vi svarer til e-postadressen på Jobblo-kontoen din.
             </Text>
           </View>
@@ -220,9 +220,9 @@ export default function SupportScreen() {
                   placeholder="Kort beskrivelse av problemet"
                   placeholderTextColor={TC.placeholder}
                   maxLength={200}
-                  className="rounded-xl border border-line bg-surface px-3.5 py-3 text-sm text-ink placeholder:text-subtle"
+                  className="rounded-xl border border-line bg-surface px-3.5 py-3 text-sm text-ink placeholder:text-muted"
                 />
-                <Text className="mt-1 text-[10px] text-right text-subtle">
+                <Text className="mt-1 text-[0.8125rem] text-right text-muted">
                   {subject.length}/200
                 </Text>
               </View>
@@ -237,9 +237,9 @@ export default function SupportScreen() {
                   maxLength={5000}
                   numberOfLines={6}
                   textAlignVertical="top"
-                  className="min-h-[140px] rounded-xl border border-line bg-surface px-3.5 py-3 text-sm leading-6 text-ink placeholder:text-subtle"
+                  className="min-h-[140px] rounded-xl border border-line bg-surface px-3.5 py-3 text-sm leading-6 text-ink placeholder:text-muted"
                 />
-                <Text className="mt-1 text-[10px] text-right text-subtle">
+                <Text className="mt-1 text-[0.8125rem] text-right text-muted">
                   {message.length}/5000
                 </Text>
               </View>
@@ -256,14 +256,14 @@ export default function SupportScreen() {
                 icon={createTicket.isPending ? null : <Send size={15} color="#FFFFFF" />}
                 onPress={handleSubmit}
               />
-              <Text className="text-center text-[11px] text-muted">
+              <Text className="text-center text-[0.8125rem] text-muted">
                 Vi svarer normalt innen 24 timer på hverdager.
               </Text>
             </View>
           )}
         </View>
 
-        <View className="mt-5 overflow-hidden rounded-3xl border border-line bg-surface">
+        <View className="mt-5 overflow-hidden rounded-3xl bg-surface">
           <View className="flex-row items-center gap-3 border-b border-line px-5 py-4">
             <MessageSquare size={18} color={TC.brandText} />
             <View className="flex-1 min-w-0">
@@ -307,7 +307,7 @@ export default function SupportScreen() {
                         <Text className="mt-2 text-[0.8125rem] text-muted leading-5" numberOfLines={2}>
                           {ticket.message}
                         </Text>
-                        <Text className="mt-2 text-[11px] text-subtle">
+                        <Text className="mt-2 text-[0.8125rem] text-muted">
                           {formatDate(ticket.createdAt)}
                         </Text>
                       </View>
@@ -317,7 +317,7 @@ export default function SupportScreen() {
                           STATUS_CLASS[ticket.status],
                         ].join(' ')}
                       >
-                        <Text className="text-[11px] font-semibold text-current">
+                        <Text className="text-[0.8125rem] font-semibold text-current">
                           {STATUS_LABEL[ticket.status]}
                         </Text>
                       </View>

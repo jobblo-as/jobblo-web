@@ -193,7 +193,7 @@ export default function SafePayApprovalScreen() {
         <Pressable onPress={() => router.back()} className="mb-5 flex-row items-center gap-2"><ArrowLeft size={16} color={tc('#63665F', 'muted')} /><Text className="text-sm text-muted">Tilbake</Text></Pressable>
         <SafePayProgressSteps currentStep={status.step} orderId={orderId} serviceId={order.serviceId?._id} />
         <View className="mb-4 rounded-2xl bg-surface p-5"><Text className="font-semibold">Jobbstatus</Text><View className="mt-3 rounded-xl bg-tint p-4"><Text className="font-bold text-brand-text">{status.title}</Text><Text className="mt-1 text-[0.8125rem] text-muted">{order.serviceId?.title ?? 'Oppdrag'}</Text></View></View>
-        <View className="mb-4 rounded-2xl bg-surface p-5"><View className="flex-row items-center gap-3"><View className="h-12 w-12 items-center justify-center rounded-full bg-tint"><Text className="font-bold text-brand-text">{order.providerId?.name?.[0] ?? '?'}</Text></View><View><Text className="text-[0.8125rem] uppercase text-subtle">Oppdragstaker</Text><Text className="font-bold">{order.providerId?.name} {order.providerId?.lastName}</Text><Text className="text-[0.8125rem] text-muted">{order.providerId?.averageRating ? `${order.providerId.averageRating.toFixed(1)} av 5 stjerner` : 'Ingen vurderinger enda'}</Text></View></View></View>
+        <View className="mb-4 rounded-2xl bg-surface p-5"><View className="flex-row items-center gap-3"><View className="h-12 w-12 items-center justify-center rounded-full bg-tint"><Text className="font-bold text-brand-text">{order.providerId?.name?.[0] ?? '?'}</Text></View><View><Text className="text-[0.8125rem] uppercase text-muted">Oppdragstaker</Text><Text className="font-bold">{order.providerId?.name} {order.providerId?.lastName}</Text><Text className="text-[0.8125rem] text-muted">{order.providerId?.averageRating ? `${order.providerId.averageRating.toFixed(1)} av 5 stjerner` : 'Ingen vurderinger enda'}</Text></View></View></View>
 
         <View className="mb-4 rounded-2xl bg-surface p-5">
           <View className="flex-row items-center gap-2"><Camera size={17} color={TC.brandText} /><Text className="font-semibold">Arbeidsbevis</Text></View>
@@ -201,21 +201,21 @@ export default function SafePayApprovalScreen() {
             <View className="mt-4 gap-4">
               {order.completionNote?.trim() ? (
                 <View className="rounded-xl bg-surface-2 p-4">
-                  <Text className="mb-2 text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-subtle">Ferdigstillingsnotat fra utfører</Text>
+                  <Text className="mb-2 text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-muted">Ferdigstillingsnotat fra utfører</Text>
                   <Text className="text-sm leading-relaxed text-muted">{order.completionNote}</Text>
                 </View>
               ) : null}
 
               {beforeImages.length > 0 ? (
                 <View>
-                  <Text className="mb-2 text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-subtle">Før arbeid</Text>
+                  <Text className="mb-2 text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-muted">Før arbeid</Text>
                   <View className="flex-row flex-wrap gap-2">
                     {beforeImages.map((asset, index) => (
                       <Pressable key={`before-${index}`} onPress={() => isPdfUrl(asset) ? void openDocument(asset) : setSelectedImage(asset)} className="h-24 w-[31%] overflow-hidden rounded-xl bg-surface-2">
                         {isPdfUrl(asset) ? (
                           <View className="h-full w-full items-center justify-center bg-tint">
                             <FileText size={24} color={TC.brandText} />
-                            <Text className="mt-1 text-[0.6875rem] text-brand-text">PDF #{index + 1}</Text>
+                            <Text className="mt-1 text-[0.8125rem] text-brand-text">PDF #{index + 1}</Text>
                           </View>
                         ) : (
                           <Image source={{ uri: asset }} className="h-full w-full" resizeMode="cover" />
@@ -228,14 +228,14 @@ export default function SafePayApprovalScreen() {
 
               {afterImages.length > 0 ? (
                 <View>
-                  <Text className="mb-2 text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-subtle">Etter arbeid</Text>
+                  <Text className="mb-2 text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-muted">Etter arbeid</Text>
                   <View className="flex-row flex-wrap gap-2">
                     {afterImages.map((asset, index) => (
                       <Pressable key={`after-${index}`} onPress={() => isPdfUrl(asset) ? void openDocument(asset) : setSelectedImage(asset)} className="h-24 w-[31%] overflow-hidden rounded-xl bg-surface-2">
                         {isPdfUrl(asset) ? (
                           <View className="h-full w-full items-center justify-center bg-tint">
                             <FileText size={24} color={TC.brandText} />
-                            <Text className="mt-1 text-[0.6875rem] text-brand-text">PDF #{index + 1}</Text>
+                            <Text className="mt-1 text-[0.8125rem] text-brand-text">PDF #{index + 1}</Text>
                           </View>
                         ) : (
                           <Image source={{ uri: asset }} className="h-full w-full" resizeMode="cover" />
@@ -300,7 +300,7 @@ export default function SafePayApprovalScreen() {
             </View>
 
             <TextInput value={comment} onChangeText={(value) => setComment(value.slice(0, 1000))} placeholder="Kommentar" multiline className="mt-4 min-h-[80px] rounded-xl border border-line p-3" />
-            <Text className="mt-1 text-right text-[0.8125rem] text-subtle">{comment.length}/1000</Text>
+            <Text className="mt-1 text-right text-[0.8125rem] text-muted">{comment.length}/1000</Text>
             <Button label="Velg egne bilder" onPress={() => void choosePhotos()} small />
             {photos.length ? <Button label="Last opp bilder" onPress={uploadPhotos} disabled={photoMutation.isPending} small variant="secondary" /> : null}
             <View className="mt-4 flex-row items-center justify-between rounded-xl bg-surface-2 p-3">

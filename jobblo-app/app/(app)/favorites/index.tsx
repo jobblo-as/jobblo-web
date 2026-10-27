@@ -145,7 +145,7 @@ export default function FavoritesScreen() {
             onAction={() => void refetch()}
           />
         ) : sortedLists.length === 0 ? (
-          <View className="rounded-[24px] border border-line bg-surface p-8">
+          <View className="rounded-[24px] bg-surface p-8">
             <Text className="text-center text-[1.0625rem] font-semibold text-ink">
               Du har ingen lister ennå
             </Text>

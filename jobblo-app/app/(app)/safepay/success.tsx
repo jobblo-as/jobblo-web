@@ -114,8 +114,8 @@ function PartyAvatar({ party }: { party?: SafePayParty | null }) {
 /** "Hva skjer nå": paid → work → approval. `current` is the step in progress (1-based). */
 function NextSteps({ steps, current }: { steps: Array<{ title: string; text: string }>; current: number }) {
   return (
-    <View className="rounded-3xl border border-line bg-surface p-5">
-      <Text className="mb-4 text-[1rem] font-bold text-ink">Hva skjer nå</Text>
+    <View className="rounded-3xl bg-surface p-5">
+      <Text className="mb-4 text-[1.0625rem] font-bold text-ink">Hva skjer nå</Text>
       {steps.map((step, i) => {
         const n = i + 1;
         const done = n < current;
@@ -124,7 +124,7 @@ function NextSteps({ steps, current }: { steps: Array<{ title: string; text: str
           <View key={step.title} className="flex-row gap-3.5">
             <View className="items-center">
               <View className={['h-7 w-7 items-center justify-center rounded-full', done ? 'bg-brand' : active ? 'border-2 border-brand bg-surface' : 'border border-line bg-surface'].join(' ')}>
-                {done ? <Check size={14} color="#FFFFFF" strokeWidth={3} /> : <Text className={active ? 'text-[0.8125rem] font-bold text-brand-text' : 'text-[0.8125rem] text-subtle'}>{n}</Text>}
+                {done ? <Check size={14} color="#FFFFFF" strokeWidth={3} /> : <Text className={active ? 'text-[0.8125rem] font-bold text-brand-text' : 'text-[0.8125rem] text-muted'}>{n}</Text>}
               </View>
               {n < steps.length ? <View className={['my-1 w-0.5 flex-1 rounded-full', done ? 'bg-brand' : 'bg-line'].join(' ')} style={{ minHeight: 22 }} /> : null}
             </View>
@@ -146,7 +146,7 @@ function SuccessSkeleton() {
       <Skeleton className="mt-6 h-7 w-56" />
       <Skeleton className="mt-3 h-10 w-36" />
       <Skeleton className="mt-3 h-4 w-64" />
-      <View className="mt-8 w-full rounded-3xl border border-line bg-surface p-5">
+      <View className="mt-8 w-full rounded-3xl bg-surface p-5">
         <View className="flex-row items-center gap-3">
           <Skeleton className="h-11 w-11 rounded-full" />
           <View style={{ flex: 1 }} className="gap-2">
@@ -322,12 +322,12 @@ export default function SafePaySuccessScreen() {
           </View>
         </View>
 
-        <View className="mt-7 rounded-3xl border border-line bg-surface p-5">
+        <View className="mt-7 rounded-3xl bg-surface p-5">
           <View className="flex-row items-center gap-3 border-b border-line-soft pb-4">
             <PartyAvatar party={otherParty} />
             <View className="min-w-0 flex-1">
               <Text className="text-[0.8125rem] text-muted">{isProvider ? 'Oppdragsgiver' : 'Oppdragstaker'}</Text>
-              <Text className="text-[1rem] font-semibold text-ink" numberOfLines={1}>{otherName}</Text>
+              <Text className="text-[1.0625rem] font-semibold text-ink" numberOfLines={1}>{otherName}</Text>
             </View>
           </View>
           <View className="pt-4">

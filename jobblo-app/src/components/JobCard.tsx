@@ -73,12 +73,12 @@ export const JobCard: React.FC<JobCardProps> = ({ job, showDescription = false, 
           <View className="absolute top-3 left-3 flex gap-2">
             {job.urgent && (
               <View className="bg-[#E8A8A0] px-2.5 py-1 rounded-full">
-                <Text className="text-[0.6875rem] font-semibold text-white">Haster</Text>
+                <Text className="text-[0.8125rem] font-semibold text-white">Haster</Text>
               </View>
             )}
             {job.promoted && (
               <View className="bg-brand px-2.5 py-1 rounded-full">
-                <Text className="text-[0.6875rem] font-semibold text-white">Sponset</Text>
+                <Text className="text-[0.8125rem] font-semibold text-white">Sponset</Text>
               </View>
             )}
           </View>

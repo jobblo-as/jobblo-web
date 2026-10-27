@@ -35,7 +35,7 @@ export function ApplicantAvatarStack({
       })}
       {applicantCount > 3 ? (
         <View className="-ml-1.5 h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-surface-2">
-          <Text className="text-[0.6875rem] font-semibold text-muted">+{applicantCount - 3}</Text>
+          <Text className="text-[0.8125rem] font-semibold text-muted">+{applicantCount - 3}</Text>
         </View>
       ) : null}
     </View>

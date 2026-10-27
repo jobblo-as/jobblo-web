@@ -20,7 +20,7 @@ function Party({ role, party, rating }: { role: string; party: SafePayOrder['cus
       <View className="mx-auto h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-tint">
         {party?.avatarUrl ? <Image source={{ uri: party.avatarUrl }} className="h-full w-full" /> : <Text className="text-[0.9375rem] font-semibold text-brand-text">{initials(name)}</Text>}
       </View>
-      <Text className="mt-2 text-center text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-subtle">{role}</Text>
+      <Text className="mt-2 text-center text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-muted">{role}</Text>
       <Text className="mt-1 text-center text-[0.875rem] font-semibold text-ink" numberOfLines={2}>{name}</Text>
       {rating !== undefined ? <Text className="mt-1 text-center text-[0.8125rem] text-muted">{rating > 0 ? `★ ${rating}` : 'Ingen vurderinger ennå'}</Text> : null}
     </View>
@@ -29,11 +29,11 @@ function Party({ role, party, rating }: { role: string; party: SafePayOrder['cus
 
 export function SafePayPartiesCard({ order }: { order: SafePayOrder }) {
   return (
-    <View className="mb-4 rounded-3xl border border-line bg-surface p-5">
+    <View className="mb-4 rounded-3xl bg-surface p-5">
       <View className="mb-4 flex-row items-center gap-2"><Users size={16} color={TC.brandText} /><Text className="text-[0.9375rem] font-semibold text-ink">Avtale mellom</Text></View>
       <View className="flex-row items-center gap-2">
         <Party role="Oppdragsgiver" party={order.customerId} />
-        <View className="w-12 items-center gap-1"><ShieldCheck size={18} color={TC.brandText} /><Text className="text-center text-[0.6875rem] font-bold uppercase tracking-[0.12em] text-brand-text">SafePay</Text></View>
+        <View className="w-12 items-center gap-1"><ShieldCheck size={18} color={TC.brandText} /><Text className="text-center text-[0.8125rem] font-bold uppercase tracking-[0.12em] text-brand-text">SafePay</Text></View>
         <Party role="Oppdragstaker" party={order.providerId} rating={order.providerId?.averageRating} />
       </View>
     </View>
@@ -46,7 +46,7 @@ function Row({ label, value, strong }: { label: string; value: string; strong?: 
 
 export function DigitalContractCard({ service, order, calculation, contractDate, duration }: { service: SafePayService; order: SafePayOrder; calculation: SafePayCalculation; contractDate?: string | null; duration?: string | null }) {
   return (
-    <View className="mb-4 rounded-3xl border border-line bg-surface p-5">
+    <View className="mb-4 rounded-3xl bg-surface p-5">
       <View className="mb-4 flex-row items-center gap-2"><FileText size={16} color={TC.brandText} /><Text className="text-[0.9375rem] font-semibold text-ink">Digital kontrakt</Text></View>
       <View className="rounded-2xl bg-surface-2 px-4">
         <Row label="Oppdrag" value={service.title} strong />
@@ -87,7 +87,7 @@ export function SafePayPaymentCard({
       : `${startDeadline.days} ${startDeadline.days === 1 ? 'dag' : 'dager'}`
     : null;
   return (
-    <View className="rounded-3xl border border-line bg-surface p-5">
+    <View className="rounded-3xl bg-surface p-5">
       <View className="mb-4 flex-row items-center gap-2"><CreditCard size={16} color={TC.brandText} /><Text className="text-[0.9375rem] font-semibold text-ink">Betaling</Text></View>
       <Row label="Oppdragsbeløp" value={`${calculation.basePrice.toLocaleString('nb-NO')} kr`} />
       <Row label="SafePay-gebyr (3 %)" value={`${calculation.fee.toLocaleString('nb-NO')} kr`} />
@@ -116,7 +116,7 @@ export function SafePayCancelledCard({ order, total }: { order: SafePayOrder; to
       <Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-danger">Kansellert</Text>
       <Text className="mt-2 text-[0.9375rem] font-semibold text-ink">{reason}</Text>
       {refund ? <Text className="mt-2 text-[0.8125rem] leading-relaxed text-muted">{refund}</Text> : null}
-      {order.providerConnectDeadlineAt ? <Text className="mt-2 text-[0.8125rem] text-subtle">Fristen utløp: {new Date(order.providerConnectDeadlineAt).toLocaleString('nb-NO')}</Text> : null}
+      {order.providerConnectDeadlineAt ? <Text className="mt-2 text-[0.8125rem] text-muted">Fristen utløp: {new Date(order.providerConnectDeadlineAt).toLocaleString('nb-NO')}</Text> : null}
     </View>
   );
 }

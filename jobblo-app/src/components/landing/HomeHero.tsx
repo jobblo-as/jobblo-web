@@ -70,11 +70,11 @@ export function HomeHero() {
         </View>
 
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
-          <Text style={{ color: tc('#9B9E96', 'subtle'), fontSize: 10, fontWeight: '700', letterSpacing: 2.5, textTransform: 'uppercase' }}>
+          <Text style={{ color: tc('#63665F', 'muted'), fontSize: 13, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase' }}>
             Norges lokale jobbplattform
           </Text>
           {stats ? (
-            <Text style={{ color: tc('#9B9E96', 'subtle'), fontSize: 10, fontWeight: '700', letterSpacing: 2.5, textTransform: 'uppercase' }}>
+            <Text style={{ color: tc('#63665F', 'muted'), fontSize: 13, fontWeight: '700', letterSpacing: 1.5, textTransform: 'uppercase' }}>
               {stats.jobs ?? 0} aktive oppdrag · {stats.users ?? 0} brukere
             </Text>
           ) : null}

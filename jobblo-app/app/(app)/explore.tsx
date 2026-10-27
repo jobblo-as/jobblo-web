@@ -322,8 +322,8 @@ export default function ExploreScreen() {
         refreshControl={<RefreshControl refreshing={isRefetching && !isFetchingNextPage} onRefresh={() => void refetch()} tintColor={TC.brandText} />}
         ListEmptyComponent={
           !isLoading && !isError && allJobs.length === 0 ? (
-            <View className="mx-4 rounded-[24px] border border-line bg-surface p-6">
-              <Text className="text-[1rem] font-semibold text-ink">
+            <View className="mx-4 rounded-[24px] bg-surface p-6">
+              <Text className="text-[1.0625rem] font-semibold text-ink">
                 Ingen oppdrag funnet
               </Text>
               <Text className="mt-2 text-[0.875rem] leading-relaxed text-muted">
@@ -359,7 +359,7 @@ export default function ExploreScreen() {
       />
 
       {isError && !isLoading && (
-        <View className="absolute inset-x-4 top-24 rounded-[24px] border border-line bg-surface p-6">
+        <View className="absolute inset-x-4 top-24 rounded-[24px] bg-surface p-6">
           <Text className="text-[0.9375rem] font-semibold text-ink">
             Kunne ikke laste oppdrag
           </Text>

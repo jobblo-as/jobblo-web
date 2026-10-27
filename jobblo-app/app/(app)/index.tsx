@@ -228,7 +228,7 @@ export default function HomeScreen() {
           className="mt-4 h-12 flex-row items-center gap-2.5 rounded-full border border-line bg-surface px-4"
         >
           <Search size={18} color={tc('#63665F', 'muted')} />
-          <Text className="flex-1 text-[0.9375rem] text-subtle">Søk etter oppdrag eller tjenester</Text>
+          <Text className="flex-1 text-[0.9375rem] text-muted">Søk etter oppdrag eller tjenester</Text>
           <View className="flex-row items-center gap-1">
             <MapPin size={14} color={TC.brandText} />
             <Text className="text-[0.8125rem] font-medium text-brand-text" numberOfLines={1}>{userLocation}</Text>
@@ -345,7 +345,7 @@ export default function HomeScreen() {
                         <>
                           <Star size={12} color="#B7791F" fill="#B7791F" />
                           <Text className="text-[0.8125rem] font-semibold text-ink">{worker.rating.toFixed(1)}</Text>
-                          <Text className="text-[0.8125rem] text-subtle">({worker.count}) ·</Text>
+                          <Text className="text-[0.8125rem] text-muted">({worker.count}) ·</Text>
                         </>
                       ) : null}
                       <Text className="shrink text-[0.8125rem] text-muted" numberOfLines={1}>{worker.rate} · {worker.location}</Text>
@@ -413,7 +413,7 @@ export default function HomeScreen() {
             className="mx-4 h-11 flex-row items-center gap-2.5 rounded-full border border-line bg-surface/90 px-4"
           >
             <Search size={17} color={tc('#63665F', 'muted')} />
-            <Text className="flex-1 text-[0.9375rem] text-subtle">Søk etter oppdrag eller tjenester</Text>
+            <Text className="flex-1 text-[0.9375rem] text-muted">Søk etter oppdrag eller tjenester</Text>
           </Pressable>
           <ScrollView
             horizontal

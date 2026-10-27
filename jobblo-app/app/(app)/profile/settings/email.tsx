@@ -173,7 +173,7 @@ export default function EmailSettingsScreen() {
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
           <ScreenHeader title="E-postadresse" subtitle="Adressen du logger inn med." icon={AtSign} />
 
-          <View className="rounded-3xl border border-line bg-surface p-5">
+          <View className="rounded-3xl bg-surface p-5">
             <View className="mb-4">
               <Text className="mb-1.5 text-[0.8125rem] font-semibold text-ink">E-postadresse</Text>
               <TextInput
@@ -274,7 +274,7 @@ export default function EmailSettingsScreen() {
               `User.findById(req.userId).select('email')` for authenticated users
             - no verification exists, so the absence is stated rather than hidden
           */}
-          <View className="mt-4 rounded-3xl border border-line bg-surface-2 p-4">
+          <View className="mt-4 rounded-3xl bg-surface-2 p-4">
             <View className="flex-row items-start">
               <Info size={16} color={tc('#63665F', 'muted')} />
               <View className="ml-2 min-w-0 flex-1">

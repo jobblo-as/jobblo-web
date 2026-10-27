@@ -49,7 +49,7 @@ export function SearchResultsHeader({
         </TouchableOpacity>
 
         {showSortMenu && (
-          <View className="absolute right-0 top-full z-20 mt-2 w-56 overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
+          <View className="absolute right-0 top-full z-20 mt-2 w-56 overflow-hidden rounded-2xl bg-surface shadow-sm">
             {SORT_OPTIONS.map((option) => (
               <TouchableOpacity
                 key={option.value}
