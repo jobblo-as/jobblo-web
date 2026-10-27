@@ -72,7 +72,7 @@ it('Redis slow, not down: a job that lands after the fallback is withdrawn, so i
   jest.useFakeTimers({ doNotFake: ['setImmediate', 'nextTick', 'queueMicrotask'] });
   let land;
   const remove = jest.fn().mockResolvedValue(undefined);
-  jest.doMock('bullmq', () => ({ Queue: jest.fn(() => ({ add: () => new Promise((r) => { land = r; }) })) }));
+  jest.doMock('bullmq', () => ({ Queue: jest.fn(() => ({ on: () => {}, add: () => new Promise((r) => { land = r; }) })) }));
   jest.doMock('../config/redis', () => ({ enabled: () => true, bullConnection: () => ({}), PREFIX: 't', closeRedis: async () => {} }));
   jest.spyOn(console, 'error').mockImplementation(() => {});
   try {
@@ -89,6 +89,21 @@ it('Redis slow, not down: a job that lands after the fallback is withdrawn, so i
     await until(() => deliverPush.mock.calls.length === 1);
   } finally {
     jest.useRealTimers();
+    jest.dontMock('bullmq');
+    jest.dontMock('../config/redis');
+  }
+});
+
+it('Redis down: queue errors are logged once per 30 s, not once per reconnect attempt', () => {
+  const listeners = {};
+  jest.doMock('bullmq', () => ({ Queue: jest.fn(() => ({ on: (ev, fn) => (listeners[ev] = fn) })) }));
+  jest.doMock('../config/redis', () => ({ enabled: () => true, bullConnection: () => ({}), PREFIX: 't', closeRedis: async () => {} }));
+  const log = jest.spyOn(console, 'error').mockImplementation(() => {});
+  try {
+    require('../services/queue').getQueue('email');
+    for (let i = 0; i < 5; i++) listeners.error(new Error('connect ECONNREFUSED 127.0.0.1:6379'));
+    expect(log.mock.calls.filter(([m]) => String(m).includes('queue email'))).toHaveLength(1);
+  } finally {
     jest.dontMock('bullmq');
     jest.dontMock('../config/redis');
   }
