@@ -9,8 +9,6 @@ import {
   forgotPassword,
   verifyOtp,
   resetPassword,
-  verifyEmail,
-  resendVerification,
 } from '../Api';
 import { useUserStore } from '../../../stores/userStore';
 import type { User } from '../../../types/userTypes';
@@ -18,10 +16,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { getErrorMessage } from '../../../utils/getErrorMessage';
 import { safeLocalPath } from '../../../utils/safeLocalPath';
-
-/** Login refused because the sign-up e-mail is not confirmed yet (a fresh code was mailed). */
-export const isEmailNotVerified = (error: unknown) =>
-  (error as { response?: { data?: { code?: string } } })?.response?.data?.code === 'EMAIL_NOT_VERIFIED';
 
 export const useAuth = () => {
   const queryClient = useQueryClient();
@@ -51,7 +45,6 @@ export const useAuth = () => {
       // getErrorMessage also handles the object-shaped envelope from the Express
       // error handler, which the old `data?.error` read would have passed to
       // toast.error as an object.
-      if (isEmailNotVerified(error)) return; // LoginForm shows the "Bekreft e-post" step instead
       toast.error(getErrorMessage(error, 'Innlogging mislyktes. Sjekk e-post og passord.'));
     },
   });
@@ -65,23 +58,11 @@ export const useAuth = () => {
 
   const registerMutation = useMutation({
     mutationFn: registerUser,
-    onSuccess: (data) => {
-      // The server mails a code and signs in only after POST /verify-email (RegisterForm).
-      if (data?.verificationRequired) return;
-      finishSignUp(data);
-    },
+    // Signed in straight away; the e-mail is confirmed later from the profile page.
+    onSuccess: finishSignUp,
     onError: (error: unknown) => {
       toast.error(getErrorMessage(error, 'Registreringen mislyktes. Prøv igjen.'));
     },
-  });
-
-  // Errors are shown inline by VerifyEmailStep.
-  const verifyEmailMutation = useMutation({ mutationFn: verifyEmail, onSuccess: finishSignUp });
-
-  const resendVerificationMutation = useMutation({
-    mutationFn: resendVerification,
-    onSuccess: () => toast.success('Vi har sendt en ny kode.'),
-    onError: (error: unknown) => toast.error(getErrorMessage(error, 'Kunne ikke sende koden. Prøv igjen.')),
   });
 
   const logoutMutation = useMutation({
@@ -189,10 +170,6 @@ export const useAuth = () => {
     register: registerMutation.mutate,
     isRegistering: registerMutation.isPending,
     registerError: registerMutation.error,
-    verifyEmail: verifyEmailMutation.mutate,
-    isVerifyingEmail: verifyEmailMutation.isPending,
-    resendVerification: resendVerificationMutation.mutate,
-    isResendingVerification: resendVerificationMutation.isPending,
     logout: logoutMutation.mutate,
     isLoggingOut: logoutMutation.isPending,
     sessions: sessionsQuery.data,

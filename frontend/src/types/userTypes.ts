@@ -24,6 +24,8 @@ export type User = {
   planType?: 'business' | 'private';
   monthlyContactUsage?: number;
   verified?: boolean;
+  /** E-mail confirmed (owner profile only). Not BankID: that is `identityVerified` below. */
+  emailVerified?: boolean;
 
   /**
    * BankID verification state, as the server chooses to expose it.

@@ -54,10 +54,17 @@ const OAUTH_ERROR_MESSAGES: Record<string, string> = {
     'BankID delte ingen e-postadresse. Opprett en konto med e-post først, og verifiser deretter med BankID fra profilen din.',
   bankid_auth_required: 'Du må være innlogget for å verifisere kontoen din med BankID.',
   bankid_unavailable: 'BankID er ikke tilgjengelig akkurat nå. Prøv igjen senere.',
-  bankid_email_not_verified:
-    'Bekreft e-postadressen din før du verifiserer med BankID. Logg ut og inn igjen for å få en kode, eller bruk «Glemt passord».',
 
   google_failed: 'Google-innloggingen mislyktes. Prøv igjen.',
+
+  // Sign in with Apple (web flow, POST /api/auth/apple/callback).
+  apple_account_exists:
+    'Det finnes allerede en konto med denne e-postadressen. Logg inn med e-post og passord først.',
+  apple_no_email: 'Apple delte ingen e-postadresse, og den trengs for å opprette en konto.',
+  apple_invalid_state: 'Innloggingen tok for lang tid eller ble avbrutt. Prøv igjen.',
+  apple_invalid_token: 'Apple-innloggingen mislyktes. Prøv igjen.',
+  apple_cancelled: 'Apple-innloggingen ble avbrutt.',
+  apple_failed: 'Apple-innloggingen mislyktes. Prøv igjen.',
 };
 
 /** The message for a `?error=` code, or null when the code is unknown/absent. */

@@ -19,14 +19,15 @@ export async function registerUser(userData: {
   return res.data;
 }
 
-/** Finishes sign-up with the mailed code; answers like login ({ user, accessToken }). */
-export async function verifyEmail(body: { email: string; code: string; password: string }) {
-  const res = await mainLink.post('/api/auth/verify-email', body);
+/** Signed in: mail a code to the account's own address (profile "E-post" row). */
+export async function sendEmailCode() {
+  const res = await mainLink.post<{ message: string }>('/api/auth/email/send-code');
   return res.data;
 }
 
-export async function resendVerification(email: string) {
-  const res = await mainLink.post('/api/auth/resend-verification', { email });
+/** Signed in: confirm the address with that code. Sets only emailVerifiedAt. */
+export async function confirmEmailCode(code: string) {
+  const res = await mainLink.post<{ emailVerified: boolean }>('/api/auth/email/verify', { code });
   return res.data;
 }
 

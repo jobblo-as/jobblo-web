@@ -10,23 +10,15 @@ const store = (page) => page.evaluate(() => {
   return { id: user?._id ?? null, isAuthenticated };
 });
 
-const VERIFICATION_SENT = { status: 202, json: { verificationRequired: true, message: 'Sjekk e-posten din.' } };
-const typeCode = async (page, code) => {
-  await page.getByLabel('OTP siffer 1').click();
-  await page.keyboard.type(code);
-};
-
-test('sign-up: two steps, validation, "Bekreft e-post", then signed in on /home', async ({ page }) => {
+test('sign-up: two steps, validation, then signed in on /home straight away (no e-mail step)', async ({ page }) => {
   const errors = watchErrors(page);
-  const newUser = { _id: '64a0000000000000000000aa', name: 'Kari', lastName: 'Nordmann', email: 'kari@example.test', role: 'user' };
+  const newUser = { _id: '64a0000000000000000000aa', name: 'Kari', lastName: 'Nordmann', email: 'kari@example.test', role: 'user', emailVerified: false };
   const { calls, state } = await mockApi(page, {
     routes: {
-      // Like the backend: registering signs nobody in; the mailed code does.
-      'POST /api/auth/register': () => VERIFICATION_SENT,
-      'POST /api/auth/verify-email': ({ body, state: s }) => {
-        if (body?.code !== '123456') return { status: 400, json: { error: 'Ugyldig eller utløpt kode' } };
+      // Like the backend: registering signs in at once; the e-mail is confirmed on the profile.
+      'POST /api/auth/register': ({ state: s }) => {
         s.session = newUser;
-        return { user: newUser, accessToken: `at-${newUser._id}` };
+        return { status: 201, json: { user: newUser, accessToken: `at-${newUser._id}` } };
       },
     },
   });
@@ -50,50 +42,33 @@ test('sign-up: two steps, validation, "Bekreft e-post", then signed in on /home'
   await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Opprett konto' }).click();
 
-  await expect(page.getByRole('heading', { name: 'Bekreft e-post' })).toBeVisible();
-  await expect(page).toHaveURL(/\/register$/);
-  expect((await store(page)).isAuthenticated).toBe(false);
-  await expect(page.getByRole('group', { name: 'Bekreftelseskode' })).toBeVisible();
-  await expect(page.getByText(/Send kode på nytt om/)).toBeVisible();
-  await typeCode(page, '000000');
-  await expect(page.getByRole('alert').filter({ hasText: 'Ugyldig eller utløpt kode' })).toBeVisible();
-  expect((await store(page)).isAuthenticated).toBe(false);
-
-  for (const [i, digit] of [...'123456'].entries()) await page.getByLabel(`OTP siffer ${i + 1}`).fill(digit);
   await expect(page).toHaveURL(/\/home$/);
   await expect.poll(async () => (await store(page)).id).toBe(newUser._id);
+  await expect(page.getByRole('heading', { name: 'Bekreft e-post' })).toHaveCount(0);
   expect(calls.find((c) => c.pathname === '/api/auth/register').body).toMatchObject({
     name: 'Kari', lastName: 'Nordmann', email: 'kari@example.test', password: 'Passord123', role: 'user', acceptedTerms: true,
   });
-  expect(calls.filter((c) => c.pathname === '/api/auth/verify-email').at(-1).body).toEqual({
-    email: 'kari@example.test', code: '123456', password: 'Passord123',
-  });
+  expect(calls.some((c) => c.pathname === '/api/auth/verify-email')).toBe(false);
   expect(state.session).toBe(newUser);
-  expect(errors.filter((e) => !e.includes('[API Error] 400'))).toEqual([]); // the wrong code's 400 is expected
-  expect(calls.filter((c) => c.pathname === '/api/auth/verify-email')).toHaveLength(2);
+  expect(errors).toEqual([]);
 });
 
-test('login on an unconfirmed account shows "Bekreft e-post" and signs in with the code', async ({ page }) => {
-  const newUser = { _id: '64a0000000000000000000ab', name: 'Ola', email: 'ola@example.test', role: 'user' };
+test('login on an unconfirmed account signs in normally (no e-mail step)', async ({ page }) => {
+  const newUser = { _id: '64a0000000000000000000ab', name: 'Ola', email: 'ola@example.test', role: 'user', emailVerified: false };
   const { calls } = await mockApi(page, {
     routes: {
-      'POST /api/auth/login': () => ({ status: 403, json: { error: 'Email not verified', message: 'Du må bekrefte e-postadressen din først.', code: 'EMAIL_NOT_VERIFIED' } }),
-      'POST /api/auth/resend-verification': () => ({ message: 'ok' }),
-      'POST /api/auth/verify-email': ({ state: s }) => { s.session = newUser; return { user: newUser, accessToken: `at-${newUser._id}` }; },
+      'POST /api/auth/login': ({ state: s }) => { s.session = newUser; return { user: newUser, accessToken: `at-${newUser._id}` }; },
     },
   });
   await page.goto('/login');
   await login(page, newUser.email);
-  await expect(page.getByRole('heading', { name: 'Bekreft e-post' })).toBeVisible();
-  await expect(page.getByText(newUser.email)).toBeVisible();
-  await typeCode(page, '654321');
   await expect(page).toHaveURL(/\/home$/);
   await expect.poll(async () => (await store(page)).id).toBe(newUser._id);
-  expect(calls.find((c) => c.pathname === '/api/auth/verify-email').body).toEqual({ email: newUser.email, code: '654321', password: 'Passord123' });
+  expect(calls.some((c) => c.pathname === '/api/auth/verify-email' || c.pathname === '/api/auth/resend-verification')).toBe(false);
 });
 
 test('sign-up shows the server error and stays on the form', async ({ page }) => {
-  await mockApi(page, { routes: { 'POST /api/auth/register': () => ({ status: 409, json: { error: 'E-postadressen er allerede i bruk' } }) } });
+  await mockApi(page, { routes: { 'POST /api/auth/register': () => ({ status: 400, json: { error: 'E-post er allerede registrert' } }) } });
   await page.goto('/register');
   await page.getByPlaceholder('Ola').fill('Kari');
   await page.getByPlaceholder('Nordmann', { exact: true }).fill('Nordmann');
@@ -103,7 +78,7 @@ test('sign-up shows the server error and stays on the form', async ({ page }) =>
   await page.getByPlaceholder('Skriv passordet på nytt').fill('Passord123');
   await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Opprett konto' }).click();
-  await expect(page.getByRole('alert').filter({ hasText: 'E-postadressen er allerede i bruk' })).toBeVisible();
+  await expect(page.getByRole('alert').filter({ hasText: 'E-post er allerede registrert' })).toBeVisible();
   await expect(page).toHaveURL(/\/register$/);
 });
 
