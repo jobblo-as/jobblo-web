@@ -26,6 +26,13 @@ const plugins = (appJson.expo.plugins || []).filter((plugin) => {
   return name !== 'react-native-maps';
 });
 
+// App Store / TestFlight builds deliver push through Apple's production APNs; the plugin's
+// default ('development') is only right for development builds.
+if (easProfile === 'production') {
+  const i = plugins.findIndex((p) => (Array.isArray(p) ? p[0] : p) === 'expo-notifications');
+  plugins[i] = ['expo-notifications', { mode: 'production' }];
+}
+
 if (androidKey || iosKey) {
   plugins.push([
     'react-native-maps',

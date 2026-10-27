@@ -20,6 +20,7 @@ function loadNotifications(): NotificationModule | null {
   // A native build made before the Expo SDK 58 upgrade lacks expo-notifications' newer native
   // module, and importing the JS package then throws during module init (a red error on every
   // start). Check first and switch push off with one clear warning: rebuild the app to fix.
+  if (isExpoGo()) return null;
   const { requireOptionalNativeModule } = require('expo-modules-core') as typeof import('expo-modules-core');
   if (Platform.OS !== 'web' && !requireOptionalNativeModule('ExpoTopicSubscriptionModule')) {
     if (!staleBuildWarned) {
@@ -35,19 +36,27 @@ function loadNotifications(): NotificationModule | null {
   }
 }
 
+// Expo Go has no remote push on Android (SDK 53+) and no FCM token at all: push stays off there.
+// `appOwnership` is no longer set on newer SDKs; `executionEnvironment` is the current field.
 function isExpoGo() {
-  return (Constants as unknown as { appOwnership?: string }).appOwnership === 'expo';
+  const c = Constants as unknown as { appOwnership?: string; executionEnvironment?: string };
+  return c.executionEnvironment === 'storeClient' || c.appOwnership === 'expo';
+}
+
+/** Web and Expo Go have no remote push for this app. */
+function pushUnsupported() {
+  return Platform.OS === 'web' || isExpoGo();
 }
 
 /**
- * The backend delivers through FCM only (backend/services/pushNotifications.js), and on iOS
- * `getDevicePushTokenAsync` returns a raw APNs token that FCM rejects. So iOS cannot be
- * registered yet, and asking for the permission there anyway (App Store 5.1.1) is worse than
- * not offering push. Remove the iOS clause once the build carries Firebase iOS messaging (FCM
- * token) or the backend sends to APNs.
+ * Android: the native FCM token (the backend sends through Firebase). iOS: an Expo push token,
+ * because the native one is a raw APNs token FCM rejects; the backend sends those through Expo's
+ * push service, which holds the APNs key EAS made for the app (backend/services/pushNotifications.js).
  */
-function pushUnsupported() {
-  return Platform.OS === 'web' || Platform.OS === 'ios' || isExpoGo();
+async function fetchPushToken(notifications: NotificationModule) {
+  if (Platform.OS !== 'ios') return String((await notifications.getDevicePushTokenAsync()).data);
+  const extra = Constants.expoConfig?.extra as { eas?: { projectId?: string } } | undefined;
+  return (await notifications.getExpoPushTokenAsync({ projectId: extra?.eas?.projectId })).data;
 }
 
 export function configurePushNotifications() {
@@ -104,7 +113,7 @@ export async function registerPushNotifications({ automatic = false }: { automat
 
   const registerNativeToken = async (token: string) => {
     const masked = token.length > 10 ? `${token.slice(0, 6)}...${token.slice(-4)}` : 'short';
-    console.log('[push] native FCM token obtained:', masked);
+    console.log('[push] token obtained:', masked);
     try {
       await apiClient.post('/push-tokens', {
         token,
@@ -119,11 +128,12 @@ export async function registerPushNotifications({ automatic = false }: { automat
     }
   };
 
-  const token = (await notifications.getDevicePushTokenAsync()).data;
-  await registerNativeToken(String(token));
+  await registerNativeToken(await fetchPushToken(notifications));
   pushTokenSubscription?.remove();
+  // A new native token: Android sends it as is; on iOS the Expo token is fetched again for it.
   pushTokenSubscription = notifications.addPushTokenListener(({ data }) => {
-    void registerNativeToken(String(data)).catch(() => undefined);
+    const next = Platform.OS === 'ios' ? fetchPushToken(notifications) : Promise.resolve(String(data));
+    void next.then(registerNativeToken).catch(() => undefined);
   });
   return { status: 'granted' as const, registered: true };
 }

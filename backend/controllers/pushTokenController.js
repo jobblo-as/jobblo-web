@@ -1,12 +1,17 @@
 const PushToken = require('../models/PushToken');
 
-function validToken(token) {
-  if (typeof token !== 'string') return false;
+// An Expo push token (the iOS app): ExponentPushToken[...] / ExpoPushToken[...].
+const EXPO_TOKEN = /^Expo(?:nent)?PushToken\[[A-Za-z0-9_-]{10,200}\]$/;
+
+/** 'fcm' | 'expo', or null for anything that is neither. */
+function providerOf(token) {
+  if (typeof token !== 'string') return null;
   const value = token.trim();
-  // FCM registration tokens are opaque strings. Keep a bounded, printable format check
-  // without assuming the ExpoPushToken/ExponentPushToken prefix.
-  return value.length >= 20 && value.length <= 4096 && /^[A-Za-z0-9:_-]+$/.test(value);
+  if (EXPO_TOKEN.test(value)) return 'expo';
+  // FCM registration tokens are opaque strings: a bounded, printable format check.
+  return value.length >= 20 && value.length <= 4096 && /^[A-Za-z0-9:_-]+$/.test(value) ? 'fcm' : null;
 }
+const validToken = (token) => providerOf(token) !== null;
 
 exports.register = async (req, res) => {
   const { token, platform, deviceId } = req.body || {};
@@ -18,7 +23,7 @@ exports.register = async (req, res) => {
     const pushToken = await PushToken.findOneAndUpdate(
       { token: token.trim() },
       {
-        provider: 'fcm',
+        provider: providerOf(token),
         userId: req.userId,
         platform,
         deviceId: typeof deviceId === 'string' ? deviceId : undefined,
@@ -34,6 +39,8 @@ exports.register = async (req, res) => {
     return res.status(500).json({ error: 'Kunne ikke registrere push-varsler' });
   }
 };
+
+exports.providerOf = providerOf;
 
 exports.deactivateCurrent = async (req, res) => {
   const token = req.body?.token;
