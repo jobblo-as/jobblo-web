@@ -39,8 +39,10 @@ if [ -n "$REDIS_URL" ]; then
     sudo apt-get update -qq && sudo apt-get install -y -qq redis-server
   fi
   sudo systemctl enable --now redis-server >/dev/null
-  [ "$(redis-cli -u "$REDIS_URL" --no-auth-warning ping 2>&1)" = "PONG" ] \
-    || die "Redis does not answer with REDIS_URL (password or port wrong? requirepass in /etc/redis/redis.conf?)"
+  # Redis's own error (WRONGPASS / NOAUTH / connection refused) never contains the password.
+  PING="$(redis-cli -u "$REDIS_URL" --no-auth-warning ping 2>&1 | tail -1)"
+  [ "$PING" = "PONG" ] \
+    || die "Redis does not answer with REDIS_URL: $PING (password must match requirepass in /etc/redis/redis.conf; user 'default': redis://default:PASSWORD@127.0.0.1:6379)"
   ok "Redis answers PONG"
 fi
 
