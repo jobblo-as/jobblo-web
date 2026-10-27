@@ -261,7 +261,7 @@ export default function ForgotPasswordScreen() {
                             emailError ? 'border-danger-line bg-[#FCF5F4] dark:bg-danger-tint' : 'border-transparent'
                           }`}
                         />
-                        {emailError ? <Text className="text-[12px] text-[#B0453B] dark:text-danger">{emailError}</Text> : null}
+                        {emailError ? <Text className="text-[0.8125rem] text-[#B0453B] dark:text-danger">{emailError}</Text> : null}
                       </View>
 
                       <Pressable
@@ -327,7 +327,7 @@ export default function ForgotPasswordScreen() {
                         })}
                       </View>
 
-                      {otpError ? <Text className="text-[12px] text-[#B0453B] dark:text-danger">{otpError}</Text> : null}
+                      {otpError ? <Text className="text-[0.8125rem] text-[#B0453B] dark:text-danger">{otpError}</Text> : null}
 
                       <Pressable
                         onPress={handleVerifyOtp}
@@ -392,7 +392,7 @@ export default function ForgotPasswordScreen() {
                             {showPassword ? <EyeOff size={18} color={tc('#63665F', 'muted')} /> : <Eye size={18} color={tc('#63665F', 'muted')} />}
                           </Pressable>
                         </View>
-                        {passwordError ? <Text className="text-[12px] text-[#B0453B] dark:text-danger">{passwordError}</Text> : null}
+                        {passwordError ? <Text className="text-[0.8125rem] text-[#B0453B] dark:text-danger">{passwordError}</Text> : null}
                       </View>
 
                       <View className="gap-2">
@@ -423,7 +423,7 @@ export default function ForgotPasswordScreen() {
                           </Pressable>
                         </View>
                         {confirmPasswordError ? (
-                          <Text className="text-[12px] text-[#B0453B] dark:text-danger">{confirmPasswordError}</Text>
+                          <Text className="text-[0.8125rem] text-[#B0453B] dark:text-danger">{confirmPasswordError}</Text>
                         ) : null}
                       </View>
 

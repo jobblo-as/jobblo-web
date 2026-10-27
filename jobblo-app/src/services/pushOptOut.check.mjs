@@ -5,7 +5,7 @@ import { registerHooks } from 'node:module';
 
 const stubs = {
   'react-native': 'export const Platform = { OS: "android" };',
-  'expo-constants': 'export default { appOwnership: "standalone", deviceId: "d1" };',
+  'expo-constants': 'export default globalThis.__constants;',
   '@react-native-async-storage/async-storage': 'export default globalThis.__storage;',
   '../api/client': 'export default globalThis.__api;',
 };
@@ -14,6 +14,7 @@ registerHooks({
   load: (url, context, next) => (url.startsWith('stub:') ? { format: 'module', source: stubs[url.slice(5)], shortCircuit: true } : next(url, context)),
 });
 
+globalThis.__constants = { appOwnership: null, executionEnvironment: 'bare', deviceId: 'd1' };
 const data = new Map();
 globalThis.__storage = { getItem: async (k) => data.get(k) ?? null, setItem: async (k, v) => void data.set(k, v), removeItem: async (k) => void data.delete(k) };
 let deleteFails = false;
@@ -58,6 +59,15 @@ const r = await push.registerPushNotifications({ automatic: true });
 console.warn = origWarn;
 assert.equal(r.registered, false, 'no registration on a stale native build');
 assert.ok(warnings.some((w) => w.includes('Rebuild')), 'one clear rebuild warning');
+
+// Expo Go (appOwnership is unset on SDK 58): push off quietly, no "rebuild" advice.
+globalThis.__constants.executionEnvironment = 'storeClient';
+warnings.length = 0;
+console.warn = (...a) => warnings.push(a.join(' '));
+const g = await push.registerPushNotifications();
+console.warn = origWarn;
+assert.equal(g.registered, false, 'no registration in Expo Go');
+assert.equal(warnings.length, 0, 'no rebuild warning in Expo Go');
 
 delete globalThis.require;
 console.log('pushOptOut: all checks passed');

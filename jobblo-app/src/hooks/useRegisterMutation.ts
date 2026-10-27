@@ -1,32 +1,20 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/authStore';
 import { useRegistrationStore } from '@/store/registrationStore';
-import {
-  registerUser,
-  verifyEmail,
-  type RegisterRequest,
-  type RegisterResponse,
-  type LoginResponse,
-} from '@/services/auth.service';
+import { registerUser, type RegisterRequest, type LoginResponse } from '@/services/auth.service';
 import { queryKeys } from '@/queryKeys';
 
 /**
- * Register mutation. Signs nobody in: the server mails a code, and useVerifyEmailMutation
- * finishes sign-up with it.
+ * Register mutation: signs in straight away (the e-mail is confirmed later on the profile).
  * Navigation after success is handled by the calling screen —
  * hooks must not call useRouter() and navigate themselves because the
  * hook may be instantiated before the navigation context is ready.
  */
 export function useRegisterMutation() {
-  return useMutation<RegisterResponse, Error, RegisterRequest>({ mutationFn: registerUser });
-}
-
-/** The mailed code (sign-up, or a login refused with EMAIL_NOT_VERIFIED): signs in like login. */
-export function useVerifyEmailMutation() {
   const queryClient = useQueryClient();
 
-  return useMutation<LoginResponse, Error, { email: string; code: string; password: string }>({
-    mutationFn: verifyEmail,
+  return useMutation<LoginResponse, Error, RegisterRequest>({
+    mutationFn: registerUser,
     onSuccess: async (data) => {
       // Awaited like login: the screen navigates into (app) right after, and the token must
       // already be in storage for the first authenticated request.

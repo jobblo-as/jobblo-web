@@ -36,28 +36,22 @@ export async function loginUser(credentials: LoginRequest): Promise<LoginRespons
   return response.data;
 }
 
-/** Registering signs nobody in: the server mails a code (same answer for a taken address). */
-export type RegisterResponse = { verificationRequired: true; message: string };
-
-export async function registerUser(payload: RegisterRequest): Promise<RegisterResponse> {
-  const response = await apiClient.post<RegisterResponse>('/auth/register', payload);
+/** Signs in straight away, like login; the e-mail is confirmed later from the profile. */
+export async function registerUser(payload: RegisterRequest): Promise<LoginResponse> {
+  const response = await apiClient.post<LoginResponse>('/auth/register', payload);
   return response.data;
 }
 
-/** POST /api/auth/verify-email — the mailed code finishes sign-up; answers like login. */
-export async function verifyEmail(body: { email: string; code: string; password: string }): Promise<LoginResponse> {
-  const response = await apiClient.post<LoginResponse>('/auth/verify-email', body);
+/** Signed in: mail a code to the account's own address (profile "E-post" row). */
+export async function sendEmailCode(): Promise<{ message: string }> {
+  const response = await apiClient.post<{ message: string }>('/auth/email/send-code');
   return response.data;
 }
 
-export async function resendVerification(email: string): Promise<{ message: string }> {
-  const response = await apiClient.post<{ message: string }>('/auth/resend-verification', { email });
+/** Signed in: confirm the address with that code. Sets only emailVerifiedAt (never BankID). */
+export async function confirmEmailCode(code: string): Promise<{ emailVerified: boolean }> {
+  const response = await apiClient.post<{ emailVerified: boolean }>('/auth/email/verify', { code });
   return response.data;
-}
-
-/** Login refused because the sign-up e-mail is not confirmed yet (the server mailed a fresh code). */
-export function isEmailNotVerified(error: unknown): boolean {
-  return (error as { response?: { data?: { code?: string } } })?.response?.data?.code === 'EMAIL_NOT_VERIFIED';
 }
 
 export async function acceptTerms(): Promise<{ user: AuthUser; acceptedTerms: boolean; termsVersion: string }> {

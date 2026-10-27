@@ -94,7 +94,8 @@ export async function clearOAuthPending(): Promise<void> {
 /** Matches `…/oauth-success`, whatever scheme or prefix carried it. */
 const OAUTH_RETURN_PATH = /(?:^|[/:])oauth-success(?:[/?#]|$)/i;
 
-export type OAuthProvider = 'google' | 'vipps';
+/** 'apple' is Apple's web flow, used on Android only (iOS signs in natively, utils/appleSignIn.ts). */
+export type OAuthProvider = 'google' | 'vipps' | 'apple';
 
 export type OAuthSessionOutcome =
   /** A return URL reached us. It carries either a token or an error code — parse, do not assume. */

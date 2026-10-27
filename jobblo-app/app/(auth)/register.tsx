@@ -14,13 +14,13 @@ import { useRouter } from 'expo-router';
 import { useRegisterMutation } from '@/hooks/useRegisterMutation';
 import { useRegistrationStore } from '@/store/registrationStore';
 import { userTerms } from '@/content/userTerms';
-import VerifyEmailStep from '@/components/auth/VerifyEmailStep';
+import SocialSignInButtons from '@/components/auth/SocialSignInButtons';
+import { APPLE_SIGNIN_MODE } from '@/config/features';
 import { TC, tc } from '../../src/theme/colors';
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** Then 'verify': the account signs in only with the mailed code. */
-type Step = 'identity' | 'credentials' | 'verify';
+type Step = 'identity' | 'credentials';
 
 function getErrorMessage(error: unknown, fallback: string): string {
   if (error && typeof error === 'object') {
@@ -43,6 +43,7 @@ export default function RegisterScreen() {
   const [showTerms, setShowTerms] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [serverMessage, setServerMessage] = useState('');
+  const [socialError, setSocialError] = useState('');
 
   const isCompany = formData.role === 'company';
 
@@ -126,7 +127,7 @@ export default function RegisterScreen() {
           orgNumber: formData.orgNumber,
         }),
       },
-      { onSuccess: () => setStep('verify') }
+      { onSuccess: () => router.replace('/(app)') }
     );
   };
 
@@ -180,15 +181,6 @@ export default function RegisterScreen() {
           <View className="flex-1 items-center justify-center px-5 py-6">
             <View className="w-full rounded-[28px] bg-surface shadow-sm">
               <View className="px-5 pb-7 pt-6">
-                {step === 'verify' ? (
-                  <VerifyEmailStep
-                    email={formData.email.trim().toLowerCase()}
-                    password={formData.password}
-                    onVerified={() => router.replace('/(app)')}
-                    onBack={() => setStep('credentials')}
-                  />
-                ) : (
-                <>
                 <Pressable onPress={goBack} className="mb-6 flex-row items-center gap-2">
                   <ArrowLeft size={16} color={tc('#63665F', 'muted')} />
                   <Text className="text-[13px] font-medium text-muted">
@@ -202,7 +194,7 @@ export default function RegisterScreen() {
                     className={`h-1.5 flex-1 rounded-full ${step === 'credentials' ? 'bg-brand' : 'bg-line'
                       }`}
                   />
-                  <Text className="ml-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-subtle">
+                  <Text className="ml-1 text-[0.8125rem] font-semibold uppercase tracking-[0.2em] text-muted">
                     Steg {step === 'identity' ? '1' : '2'} av 2
                   </Text>
                 </View>
@@ -215,6 +207,28 @@ export default function RegisterScreen() {
                     ? 'Gratis å opprette. Legg ut oppdrag eller tilby tjenestene dine.'
                     : 'Velg e-posten og passordet du logger inn med.'}
                 </Text>
+
+                {/* Apple creates (or signs in to) a personal account with Apple's verified e-mail,
+                    so it needs neither step 2 nor the e-mail code (backend stamps emailVerifiedAt). */}
+                {step === 'identity' && APPLE_SIGNIN_MODE ? (
+                  <>
+                    <View className="mt-6 gap-2.5">
+                      <SocialSignInButtons appleOnly onError={setSocialError} />
+                    </View>
+                    {socialError ? (
+                      <View className="mt-4 rounded-xl border border-danger-line bg-[#FCF5F4] dark:bg-danger-tint px-3 py-2.5">
+                        <Text className="text-[13px] leading-5 text-[#B0453B] dark:text-danger">{socialError}</Text>
+                      </View>
+                    ) : null}
+                    <View className="mt-6 flex-row items-center gap-3">
+                      <View className="h-px flex-1 bg-line" />
+                      <Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.2em] text-muted">
+                        eller
+                      </Text>
+                      <View className="h-px flex-1 bg-line" />
+                    </View>
+                  </>
+                ) : null}
 
                 {step === 'identity' ? (
                   <View className="mt-6 gap-4">
@@ -240,7 +254,7 @@ export default function RegisterScreen() {
                               }`}
                           />
                           {errors.companyName ? (
-                            <Text className="text-[12px] text-[#B0453B] dark:text-danger">{errors.companyName}</Text>
+                            <Text className="text-[0.8125rem] text-[#B0453B] dark:text-danger">{errors.companyName}</Text>
                           ) : null}
                         </View>
 
@@ -265,7 +279,7 @@ export default function RegisterScreen() {
                               }`}
                           />
                           {errors.orgNumber ? (
-                            <Text className="text-[12px] text-[#B0453B] dark:text-danger">{errors.orgNumber}</Text>
+                            <Text className="text-[0.8125rem] text-[#B0453B] dark:text-danger">{errors.orgNumber}</Text>
                           ) : null}
                         </View>
                       </View>
@@ -288,7 +302,7 @@ export default function RegisterScreen() {
                             className={`h-[46px] rounded-xl border bg-[#F5F6F1] dark:bg-surface-2 px-3.5 text-[15px] text-ink ${errors.name ? 'border-danger-line bg-[#FCF5F4] dark:bg-danger-tint' : 'border-transparent'
                               }`}
                           />
-                          {errors.name ? <Text className="text-[12px] text-[#B0453B] dark:text-danger">{errors.name}</Text> : null}
+                          {errors.name ? <Text className="text-[0.8125rem] text-[#B0453B] dark:text-danger">{errors.name}</Text> : null}
                         </View>
 
                         <View className="flex-1 gap-2">
@@ -309,7 +323,7 @@ export default function RegisterScreen() {
                               }`}
                           />
                           {errors.lastName ? (
-                            <Text className="text-[12px] text-[#B0453B] dark:text-danger">{errors.lastName}</Text>
+                            <Text className="text-[0.8125rem] text-[#B0453B] dark:text-danger">{errors.lastName}</Text>
                           ) : null}
                         </View>
                       </View>
@@ -351,7 +365,7 @@ export default function RegisterScreen() {
                         className={`h-[46px] rounded-xl border bg-[#F5F6F1] dark:bg-surface-2 px-3.5 text-[15px] text-ink ${errors.email ? 'border-danger-line bg-[#FCF5F4] dark:bg-danger-tint' : 'border-transparent'
                           }`}
                       />
-                      {errors.email ? <Text className="text-[12px] text-[#B0453B] dark:text-danger">{errors.email}</Text> : null}
+                      {errors.email ? <Text className="text-[0.8125rem] text-[#B0453B] dark:text-danger">{errors.email}</Text> : null}
                     </View>
 
                     <View className="gap-2">
@@ -383,7 +397,7 @@ export default function RegisterScreen() {
                         </Pressable>
                       </View>
                       {errors.password ? (
-                        <Text className="text-[12px] text-[#B0453B] dark:text-danger">{errors.password}</Text>
+                        <Text className="text-[0.8125rem] text-[#B0453B] dark:text-danger">{errors.password}</Text>
                       ) : null}
                     </View>
 
@@ -420,14 +434,14 @@ export default function RegisterScreen() {
                         </Pressable>
                       </View>
                       {errors.confirmPassword ? (
-                        <Text className="text-[12px] text-[#B0453B] dark:text-danger">{errors.confirmPassword}</Text>
+                        <Text className="text-[0.8125rem] text-[#B0453B] dark:text-danger">{errors.confirmPassword}</Text>
                       ) : null}
                     </View>
 
-                    <View className="rounded-xl border border-line bg-[#F5F6F1] dark:bg-surface-2 p-3">
+                    <View className="rounded-xl bg-[#F5F6F1] dark:bg-surface-2 p-3">
                       <Pressable onPress={() => setShowTerms((current) => !current)} className="flex-row items-center justify-between gap-3">
                         <Text className="flex-1 text-[13px] font-medium text-ink">Jeg godtar Brukervilkårene</Text>
-                        <Text className="text-[12px] font-semibold text-brand">{showTerms ? 'Skjul' : 'Vis'}</Text>
+                        <Text className="text-[0.8125rem] font-semibold text-brand">{showTerms ? 'Skjul' : 'Vis'}</Text>
                       </Pressable>
 
                       <Pressable
@@ -439,21 +453,21 @@ export default function RegisterScreen() {
                         >
                           {formData.acceptedTerms ? <Text className="text-[10px] font-bold text-white">✓</Text> : null}
                         </View>
-                        <Text className="flex-1 text-[12px] leading-5 text-muted">
+                        <Text className="flex-1 text-[0.8125rem] leading-5 text-muted">
                           Jeg godtar Brukervilkårene og bekrefter at jeg vil følge Jobblos regler for brukergenerert innhold.
                         </Text>
                       </Pressable>
 
                       {showTerms ? (
-                        <View className="mt-3 max-h-52 rounded-xl border border-line bg-surface p-3">
+                        <View className="mt-3 max-h-52 rounded-xl bg-surface p-3">
                           <ScrollView nestedScrollEnabled showsVerticalScrollIndicator={false} className="max-h-52">
-                            <Text className="text-[12px] font-semibold text-ink">{userTerms.title}</Text>
-                            <Text className="mt-2 text-[11px] text-muted">Sist oppdatert: {userTerms.lastUpdatedDisplay}</Text>
-                            <Text className="mt-3 text-[11px] leading-5 text-muted">{userTerms.intro}</Text>
+                            <Text className="text-[0.8125rem] font-semibold text-ink">{userTerms.title}</Text>
+                            <Text className="mt-2 text-[0.8125rem] text-muted">Sist oppdatert: {userTerms.lastUpdatedDisplay}</Text>
+                            <Text className="mt-3 text-[0.8125rem] leading-5 text-muted">{userTerms.intro}</Text>
                             {userTerms.sections.map((section) => (
                               <View key={section.id} className="mt-3">
-                                <Text className="text-[11px] font-semibold text-ink">{section.id}. {section.title}</Text>
-                                <Text className="mt-1 text-[11px] leading-5 text-muted">{section.content}</Text>
+                                <Text className="text-[0.8125rem] font-semibold text-ink">{section.id}. {section.title}</Text>
+                                <Text className="mt-1 text-[0.8125rem] leading-5 text-muted">{section.content}</Text>
                               </View>
                             ))}
                           </ScrollView>
@@ -461,25 +475,25 @@ export default function RegisterScreen() {
                       ) : null}
 
                       {errors.acceptedTerms ? (
-                        <Text className="mt-2 text-[12px] text-[#B0453B] dark:text-danger">{errors.acceptedTerms}</Text>
+                        <Text className="mt-2 text-[0.8125rem] text-[#B0453B] dark:text-danger">{errors.acceptedTerms}</Text>
                       ) : null}
                     </View>
 
-                    <View className="rounded-xl border border-line bg-[#F5F6F1] dark:bg-surface-2 p-3">
-                      <Text className="mb-2 text-[12px] font-semibold uppercase tracking-[0.18em] text-subtle">
+                    <View className="rounded-xl bg-[#F5F6F1] dark:bg-surface-2 p-3">
+                      <Text className="mb-2 text-[0.8125rem] font-semibold uppercase tracking-[0.18em] text-muted">
                         Passordkrav
                       </Text>
                       <View className="flex-row items-center gap-2">
                         <ShieldCheck size={14} color={formData.password.length >= 8 ? TC.brandText : tc('#9B9E96', 'subtle')} />
-                        <Text className="text-[12px] text-muted">Minst 8 tegn</Text>
+                        <Text className="text-[0.8125rem] text-muted">Minst 8 tegn</Text>
                       </View>
                       <View className="mt-2 flex-row items-center gap-2">
                         <ShieldCheck size={14} color={/[A-Z]/.test(formData.password) && /[a-z]/.test(formData.password) ? TC.brandText : tc('#9B9E96', 'subtle')} />
-                        <Text className="text-[12px] text-muted">Stor og liten bokstav</Text>
+                        <Text className="text-[0.8125rem] text-muted">Stor og liten bokstav</Text>
                       </View>
                       <View className="mt-2 flex-row items-center gap-2">
                         <ShieldCheck size={14} color={/[0-9]/.test(formData.password) ? TC.brandText : tc('#9B9E96', 'subtle')} />
-                        <Text className="text-[12px] text-muted">Minst ett tall</Text>
+                        <Text className="text-[0.8125rem] text-muted">Minst ett tall</Text>
                       </View>
                     </View>
 
@@ -503,8 +517,6 @@ export default function RegisterScreen() {
                   <Text className="text-[14px] text-muted">Har du allerede konto? </Text>
                   <Text className="text-[14px] font-semibold text-brand">Logg inn</Text>
                 </Pressable>
-                </>
-                )}
               </View>
             </View>
           </View>
