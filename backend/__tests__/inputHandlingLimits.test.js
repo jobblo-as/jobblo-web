@@ -110,6 +110,11 @@ describe('I7 page ceiling', () => {
 describe('I8 error log has no query string, path is redacted', () => {
   const AdminActivity = require('../models/AdminActivity');
   const ErrorLog = require('../models/ErrorLog');
+  // The logger only writes with a connected database (utils/errorLogger.js).
+  beforeEach(() => {
+    jest.replaceProperty(ErrorLog, 'db', { readyState: 1 });
+    jest.spyOn(ErrorLog, 'findOne').mockReturnValue({ sort: () => ({ select: () => ({ lean: async () => null }) }) });
+  });
   afterEach(() => jest.restoreAllMocks());
 
   it('serverError logs base+path only', async () => {

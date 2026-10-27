@@ -68,6 +68,13 @@ async function logApplicationError({
 
     const description = `${httpMethod} ${requestPath} → ${httpStatus}: ${errorMessage}`;
 
+    // MongoDB not connected: mongoose would buffer both writes for 10 s, and the error response
+    // waits on this, so a DB outage made every failing request hang 20 s. Log here and go.
+    if (ErrorLog.db?.readyState !== 1) {
+      console.error(`[ErrorLogger] database not connected, not stored: ${description}`);
+      return;
+    }
+
     // Create an ErrorLog record (best-effort)
     const referenceId = generateReference({ prefix: 'ERR' });
     try {
