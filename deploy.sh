@@ -25,8 +25,11 @@ RELEASES=.releases/frontend
 BRANCH="$(git branch --show-current)"
 # Detached HEAD: an empty branch would make `git fetch origin ""` fetch the default branch.
 [ -n "$BRANCH" ] || { echo "Detached HEAD: check out the branch to deploy first." >&2; exit 1; }
-echo "→ Fetching $BRANCH"
-git fetch origin "$BRANCH"
+# The remote this branch tracks: the server's may be named anything, not only "origin".
+REMOTE="$(git config "branch.$BRANCH.remote" || git remote | head -1)"
+[ -n "$REMOTE" ] || { echo "No git remote configured." >&2; exit 1; }
+echo "→ Fetching $BRANCH from $REMOTE"
+git fetch "$REMOTE" "$BRANCH"
 TARGET="$(git rev-parse FETCH_HEAD)"
 
 if [ "$SKIP_CI" = 0 ]; then
