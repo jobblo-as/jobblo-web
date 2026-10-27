@@ -35,6 +35,13 @@ if [ "$SKIP_CI" = 0 ]; then
   [ "$CI" = "completed success" ] || { echo "CI for ${TARGET:0:8} is '${CI:-no run}', not green. Wait, or pass --skip-ci-check." >&2; exit 1; }
 fi
 
+# The API reads only backend/.env.production in production (config/env.js); without it the
+# restart would come up with no database or secrets. Stop before touching anything.
+if [ ! -f backend/.env.production ]; then
+  echo "backend/.env.production is missing (backend/.env is no longer read). On this server: mv backend/.env backend/.env.production" >&2
+  exit 1
+fi
+
 PREV="$(git rev-parse HEAD)"
 PREV_RELEASE="$(readlink frontend/dist 2>/dev/null || true)"
 BACKEND_RESTARTED=0

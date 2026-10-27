@@ -10,7 +10,7 @@
  * with sampling noise, and the two arms would no longer be compared on the same
  * text. Rewrites each results file in place.
  */
-require('dotenv').config();
+require('../config/env'); // backend/.env.development (production: .env.production)
 const fs = require('fs');
 const path = require('path');
 const { OpenAI } = require('openai');

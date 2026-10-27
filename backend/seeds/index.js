@@ -1,15 +1,8 @@
-require('dotenv').config({ path: './.env' });
+require('../config/env'); // backend/.env.development (production: .env.production)
 const mongoose = require('mongoose');
 
 const seedUsers = require('./users.seed');
-const seedCategories = require('./categories.seed');
-const seedServices = require('./services.seed');
-const seedOrders = require('./orders.seed');
-const seedReviews = require('./reviews.seed');
-const seedNotifications = require('./notifications.seed');
 const seedPlans = require('./plan.seed');
-const seedConversations = require('./conversations.seed');
-const seedJobbloShop = require('./jobbloShop..seed');
 
 async function run() {
   try {
@@ -22,26 +15,8 @@ async function run() {
     const users = await seedUsers();
     console.log(`👤 Users: ${users.length}`);
 
-    const categories = await seedCategories();
-    console.log(`📂 Categories: ${categories.length}`);
-
-    const services = await seedServices(users, categories);
-    console.log(`🛠 Services: ${services.length}`);
-
-    const orders = await seedOrders(users, services);
-    console.log(`📦 Orders: ${orders.length}`);
-
     const plans = await seedPlans();
     console.log(`💳 Plans: ${plans.length}`);
-
-    const jobbloShop = await seedJobbloShop();
-    console.log(`💳 JobbloShop: ${jobbloShop.length}`);
-
-    await seedReviews(orders);
-    console.log('⭐ Reviews seeded');
-
-    await seedNotifications(users, orders);
-    console.log('🔔 Notifications seeded');
 
     console.log('🎉 Database seeded successfully');
     process.exit(0);

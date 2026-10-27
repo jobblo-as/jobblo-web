@@ -1,6 +1,6 @@
 /**
- * Every seed script empties collections (users, jobs, orders…) before inserting test data,
- * and they all read backend/.env — which on the server is the PRODUCTION database (its
+ * Every seed script empties collections (users, plans) before inserting test data, and an
+ * env file can point at the PRODUCTION database (its
  * MONGO_URI is a local 127.0.0.1 address too, so "local only" would not protect it).
  *
  * So a seed run must (1) never happen with NODE_ENV=production and (2) be confirmed by

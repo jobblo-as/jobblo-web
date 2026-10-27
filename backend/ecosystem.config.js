@@ -1,6 +1,6 @@
 // pm2 process file for the production API (deploy.sh: pm2 startOrReload ecosystem.config.js).
-// These env values beat backend/.env (dotenv never overrides an already-set variable), so a
-// .env copied from .env.example (NODE_ENV=development) cannot switch production safety off.
+// These env values beat backend/.env.production (dotenv never overrides an
+// already-set variable), so an env file with NODE_ENV=development cannot switch production safety off.
 module.exports = {
   apps: [
     {

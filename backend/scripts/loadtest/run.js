@@ -12,7 +12,7 @@
  *
  * Prints one row per endpoint: rps, p50/p99 latency (ms), non-2xx and socket errors.
  */
-require('dotenv').config({ path: require('path').join(__dirname, '../../.env'), quiet: true });
+require('../../config/env'); // backend/.env.development (production: .env.production)
 const autocannon = require('autocannon');
 
 const args = Object.fromEntries(

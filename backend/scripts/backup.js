@@ -8,7 +8,7 @@
  *
  * Exits non-zero on failure so cron / systemd can alert.
  */
-require('dotenv').config({ path: require('path').join(__dirname, '..', '.env'), quiet: true });
+require('../config/env'); // backend/.env.development (production: .env.production)
 const mongoose = require('mongoose');
 const backup = require('../services/backup');
 

@@ -1,5 +1,4 @@
-const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+require('../config/env'); // backend/.env.development (production: .env.production)
 const mongoose = require('mongoose');
 const seedPlans = require('./plan.seed');
 

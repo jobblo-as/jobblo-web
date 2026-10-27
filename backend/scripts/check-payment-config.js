@@ -7,7 +7,7 @@
  * which piece of configuration is missing on THIS machine. It touches Stripe only with
  * a balance read, writes nothing, and never prints a secret.
  */
-require('dotenv').config({ path: __dirname + '/../.env' });
+require('../config/env'); // backend/.env.development (production: .env.production)
 
 const mongoose = require('mongoose');
 const { parseBool, STRIPE_API_VERSION } = require('../config/stripe');

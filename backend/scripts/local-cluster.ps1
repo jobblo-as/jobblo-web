@@ -6,7 +6,7 @@
 # Developer console: http://localhost:5174/developer  (Nginx, PM2, Caching, API Workers, Dependency Map)
 # Stop: close the windows; nginx: C:\nginx\nginx.exe -p C:\nginx\ -s quit
 #
-# The scheduler is OFF: backend/.env holds the LIVE Stripe key, and auto-release/refund jobs must
+# The scheduler is OFF: backend/.env.development holds the LIVE Stripe key, and auto-release/refund jobs must
 # not run from a laptop. Redis: C:\redis, nginx: C:\nginx (portable Windows builds).
 param(
   [int]$Workers = 4,

@@ -17,9 +17,9 @@ services:
     ports:
       - "127.0.0.1:5001:5001"
 
-    # Load your secrets/settings from backend/.env
+    # Load your secrets/settings from backend/.env.development
     env_file:
-      - ./backend/.env
+      - ./backend/.env.development
 
     # Talk to the MongoDB running on YOUR Windows machine (where your real
     # "jobblo-dev" data lives). Inside a container, "localhost" means the

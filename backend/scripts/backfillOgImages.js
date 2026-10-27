@@ -13,7 +13,7 @@
 // Run:  node scripts/backfillOgImages.js          (real run)
 //       node scripts/backfillOgImages.js --dry     (report only, no writes)
 
-require('dotenv').config();
+require('../config/env'); // backend/.env.development (production: .env.production)
 const mongoose = require('mongoose');
 const connectDB = require('../db');
 const Service = require('../models/Service');

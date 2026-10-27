@@ -17,7 +17,7 @@
  *   This only drops the phone_1 index. No user data is modified.
  */
 
-require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
+require('../config/env'); // backend/.env.development (production: .env.production)
 const mongoose = require('mongoose');
 const User = require('../models/User');
 

@@ -20,7 +20,7 @@
  * Requires the API running on $API (default http://localhost:5001) and a Stripe *test*
  * secret key — it refuses to run against a live key.
  */
-require('dotenv').config({ path: __dirname + '//../.env' });
+require('../config/env'); // backend/.env.development (production: .env.production)
 
 const API = process.env.API || 'http://localhost:5001';
 const stamp = Date.now();

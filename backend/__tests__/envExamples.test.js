@@ -32,3 +32,38 @@ test('backend and frontend agree on the dev API port', () => {
   expect(vars('frontend/.env.development.example').VITE_MAIN_URL).toBe(`http://localhost:${port}`);
   expect(read('frontend/src/config/env.ts')).toContain(`'http://localhost:${port}'`);
 });
+
+test('config/env reads .env.<NODE_ENV> first, and a real environment variable beats it', () => {
+  const { execFileSync } = require('child_process');
+  const file = path.join(__dirname, '..', '.env.loadertest'); // ignored by .gitignore (.env*)
+  fs.writeFileSync(file, 'LOADER_PROBE=from-mode-file\nLOADER_REAL=from-file\n');
+  try {
+    const run = (extra) =>
+      execFileSync(process.execPath, ['-e', "require('./config/env'); console.log(process.env.LOADER_PROBE, process.env.LOADER_REAL)"], {
+        cwd: path.join(__dirname, '..'),
+        env: { PATH: process.env.PATH, SystemRoot: process.env.SystemRoot, NODE_ENV: 'loadertest', ...extra },
+      }).toString().trim();
+    expect(run({})).toBe('from-mode-file from-file');
+    expect(run({ LOADER_REAL: 'from-env' })).toBe('from-mode-file from-env');
+  } finally {
+    fs.unlinkSync(file);
+  }
+});
+
+test('production reads only .env.production (never .env.development or .env)', () => {
+  const { execFileSync } = require('child_process');
+  const root = path.join(__dirname, '..');
+  const prod = path.join(root, '.env.production');
+  if (fs.existsSync(prod)) return; // a real production file here: leave it alone
+  fs.writeFileSync(prod, 'LOADER_PROBE=from-production');
+  try {
+    const out = execFileSync(process.execPath, ['-e', "require('./config/env'); console.log(process.env.LOADER_PROBE, Boolean(process.env.JWT_SECRET))"], {
+      cwd: root,
+      env: { PATH: process.env.PATH, SystemRoot: process.env.SystemRoot, NODE_ENV: 'production' },
+    }).toString().trim();
+    // JWT_SECRET lives in the local .env.development; production must not pick it up.
+    expect(out).toBe('from-production false');
+  } finally {
+    fs.unlinkSync(prod);
+  }
+});

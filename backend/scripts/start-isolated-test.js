@@ -1,6 +1,5 @@
 const { spawn } = require('node:child_process');
 const path = require('node:path');
-const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const { parseBool } = require('../config/stripe');
 
@@ -13,7 +12,7 @@ function requireThat(condition, message) {
 }
 
 async function preflight() {
-  dotenv.config({ path: path.join(backendDir, '.env'), quiet: true });
+  require('../config/env'); // backend/.env.development (production: .env.production)
 
   let databaseUrl;
   try {

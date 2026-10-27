@@ -43,7 +43,7 @@ describe('seed entry points stop before connecting', () => {
       timeout: 15000,
     });
 
-  it.each(['seeds/index.js', 'seeds/run-categories.js', 'seedData.js'])('%s refuses on production', (script) => {
+  it.each(['seeds/index.js', 'seeds/run-plan.js'])('%s refuses on production', (script) => {
     const r = run(script, { NODE_ENV: 'production' }, ['--yes-wipe=jobblo-dev']);
     expect(r.status).toBe(1);
     expect(r.stderr).toMatch(/NODE_ENV=production/);
@@ -51,7 +51,7 @@ describe('seed entry points stop before connecting', () => {
   });
 
   it('refuses without --yes-wipe outside production', () => {
-    const r = run('seeds/run-categories.js', { NODE_ENV: 'development' });
+    const r = run('seeds/run-plan.js', { NODE_ENV: 'development' });
     expect(r.status).toBe(1);
     expect(r.stderr).toMatch(/--yes-wipe=jobblo-dev/);
   });
