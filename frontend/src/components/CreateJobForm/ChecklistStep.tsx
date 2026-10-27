@@ -1,4 +1,4 @@
-import { Plus, Trash2, ArrowUp, ArrowDown, ListChecks } from 'lucide-react';
+import { Plus, Trash2, ArrowUp, ArrowDown, ListChecks, ChevronDown } from 'lucide-react';
 import { useState } from 'react';
 
 interface ChecklistItem {
@@ -63,9 +63,9 @@ export const ChecklistStep = ({
   };
 
   return (
-    <div className="space-y-6 md:space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-      <div className={`box-card-custom rounded-[14px] p-4 md:p-6 border transition-colors`}>
-        <div className="flex items-center gap-3 mb-6">
+    // Folded by default: optional, and the second page should read as one short form.
+    <details className="group box-card-custom rounded-[14px] p-4 md:p-6 border transition-colors">
+        <summary className="flex cursor-pointer list-none items-center gap-3 group-open:mb-6 [&::-webkit-details-marker]:hidden">
           <div className="w-10 h-10 bg-[#2D7A4D]/10 rounded-full flex items-center justify-center text-[#2D7A4D]">
             <ListChecks size={22} />
           </div>
@@ -78,7 +78,8 @@ export const ChecklistStep = ({
               Opprett en dynamisk sjekkliste for jobben (1-10 elementer)
             </p>
           </div>
-        </div>
+          <ChevronDown size={18} className="ml-auto shrink-0 text-[#63665F] transition-transform group-open:rotate-180" />
+        </summary>
 
         {/* Add new item */}
         <div className="flex gap-2 mb-6">
@@ -144,7 +145,6 @@ export const ChecklistStep = ({
             Ingen sjekklisteelementer lagt til ennå
           </div>
         )}
-      </div>
-    </div>
+    </details>
   );
 };

@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, ChevronDown } from 'lucide-react';
 import { formatPhone, isValidPhone, phoneDigits } from '../../utils/norwegianFormat';
 
 interface ContactInformationProps {
@@ -7,14 +7,6 @@ interface ContactInformationProps {
   setPhone: (val: string) => void;
   email: string;
   setEmail: (val: string) => void;
-  summary: {
-    title: string;
-    categories: string | string[];
-    address: string;
-    city: string;
-    price: string | number;
-    paymentType: string;
-  };
   errors?: Partial<Record<string, string>>;
 }
 
@@ -23,7 +15,6 @@ export const ContactInformation: React.FC<ContactInformationProps> = ({
   setPhone,
   email,
   setEmail,
-  summary,
   errors,
 }) => {
   // The field is optional, so an empty one is not an error. Only complain once there is
@@ -31,9 +22,16 @@ export const ContactInformation: React.FC<ContactInformationProps> = ({
   const showPhoneError = phone.length >= 8 && !isValidPhone(phone);
 
   return (
-    <div className="space-y-6 md:space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-      <div className="box-card-custom p-4 md:p-6 rounded-[14px]">
-        <h2 className="font-bold text-lg md:text-xl mb-6">Kontaktinformasjon (Valgfritt)</h2>
+    // Folded: filled from the profile, so most people never need to open it. A bad e-mail
+    // opens it, or publish would point at a hidden field.
+    <details open={!!errors?.email || undefined} className="group box-card-custom p-4 md:p-6 rounded-[14px]">
+      <summary className="flex cursor-pointer list-none items-center gap-3 group-open:mb-6 [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0">
+          <h2 className="font-bold text-lg md:text-xl">Kontaktinformasjon (Valgfritt)</h2>
+          <span className="block truncate text-xs text-gray-500 md:text-sm">{[phone && formatPhone(phone), email].filter(Boolean).join(' · ') || 'Ikke oppgitt'}</span>
+        </span>
+        <ChevronDown size={18} className="ml-auto shrink-0 text-[#63665F] transition-transform group-open:rotate-180" />
+      </summary>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           <div className="space-y-2">
             <label htmlFor="job-phone" className="text-xs md:text-sm font-bold text-gray-700 uppercase tracking-wider">
@@ -96,37 +94,6 @@ export const ContactInformation: React.FC<ContactInformationProps> = ({
             )}
           </div>
         </div>
-      </div>
-
-      <div className="box-card-custom p-4 md:p-6 rounded-[14px]">
-        <h3 className="font-bold text-lg mb-4">Oppsummering</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4 text-sm">
-          <div className="flex justify-between sm:block">
-            <span className="text-gray-500">Tittel:</span>
-            <div className="font-semibold truncate sm:mt-1">{summary.title}</div>
-          </div>
-          <div className="flex justify-between sm:block">
-            <span className="text-gray-500">Kategori:</span>
-            <div className="font-semibold sm:mt-1">
-              {Array.isArray(summary.categories)
-                ? summary.categories.join(', ')
-                : summary.categories}
-            </div>
-          </div>
-          <div className="flex justify-between sm:block">
-            <span className="text-gray-500">Sted:</span>
-            <div className="font-semibold sm:mt-1">
-              {summary.address}, {summary.city}
-            </div>
-          </div>
-          <div className="flex justify-between sm:block">
-            <span className="text-gray-500">Pris:</span>
-            <div className="font-semibold sm:mt-1">
-              {summary.price} NOK ({summary.paymentType})
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    </details>
   );
 };

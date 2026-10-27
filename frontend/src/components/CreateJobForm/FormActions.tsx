@@ -64,7 +64,7 @@ export const FormActions: React.FC<FormActionsProps> = ({
           <span className="hidden min-[420px]:inline">Forhåndsvis</span>
         </button>
 
-        {currentStep < 4 ? (
+        {currentStep < 2 ? (
           <button type="button" onClick={handleNext} className={SOLID}>
             Neste
             <ChevronRight size={17} strokeWidth={2.4} />

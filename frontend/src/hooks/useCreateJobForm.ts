@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import toast from 'react-hot-toast';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { analyzeJobImage, generateFullJobListing, type AISmartFillContext } from '../api/aiAPI';
 import { useTranslate } from '../i18n/useTranslate';
 import { useUserStore } from '../stores/userStore';
@@ -8,9 +8,14 @@ import { usePaymentCalculation } from './usePaymentCalculation';
 import { useForm } from './useForm';
 import { JOB_LIMITS, jobValidationSchema, type JobFormValues } from '../validations/jobValidations';
 import { saveFormData, loadFormData, clearFormData } from '../utils/indexedDB';
+import { deleteJobDraft, getJobDraft, saveJobDraft } from '../api/jobDraftsAPI';
 import { getErrorMessage, errorBody } from '../utils/getErrorMessage';
-import { summariseAiFill, clampMessage } from '../utils/aiFillSummary';
+import { summariseAiFill, clampMessage, draftRows, type AiDraft, type AiDraftKey } from '../utils/aiFillSummary';
 import { scrollToFirstError } from '../utils/scrollToError';
+import { phoneDigits } from '../utils/norwegianFormat';
+
+/** Two pages: the job itself, then place, time and price (checklist and contact folded in). */
+const LAST_STEP = 2;
 
 /**
  * The four keys `validateStep` writes that are not fields of `JobFormValues` — they are held
@@ -35,6 +40,7 @@ type JobDraft = Partial<
     countyCode: string;
     municipalityCode: string;
     areaCode: string;
+    postalCode: string;
     latitude: number | null;
     longitude: number | null;
     durationUnit: string;
@@ -46,6 +52,8 @@ type JobDraft = Partial<
     imagesToDelete: string[];
     showSmartFillInput: boolean;
     smartFillPrompt: string;
+    /** The "Dine utkast" copy on the server this local draft mirrors. */
+    serverDraftId: string | null;
     checklistItems: { id: string; text: string }[];
   }
 >;
@@ -59,6 +67,7 @@ interface InitialData {
   countyCode?: string;
   municipalityCode?: string;
   areaCode?: string;
+  postalCode?: string;
   categories?: string | string[];
   urgent?: boolean;
   equipment?: string;
@@ -116,6 +125,7 @@ export const useCreateJobForm = (
     initialData?.municipalityCode || ''
   );
   const [areaCode, setAreaCode] = useState(initialData?.areaCode || '');
+  const [postalCode, setPostalCode] = useState(initialData?.postalCode || '');
   const [coordinates, setCoordinatesState] = useState<[number, number] | null>(() =>
     initialData?.latitude != null && initialData?.longitude != null
       ? [initialData.latitude, initialData.longitude]
@@ -233,6 +243,12 @@ export const useCreateJobForm = (
   /** Smart-fill's pricing rationale, rendered under the price field rather than in a toast. */
   const [smartFillPricingNote, setSmartFillPricingNote] = useState('');
   const [checklistItems, setChecklistItems] = useState<{ id: string; text: string }[]>([]);
+  const queryClient = useQueryClient();
+  const serverDraftId = useRef<string | null>(null);
+  const serverSync = useRef<Promise<unknown>>(Promise.resolve());
+  const serverSyncTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  /** An AI suggestion waiting in the review popup; nothing reaches the form until it is applied. */
+  const [aiDraft, setAiDraft] = useState<AiDraft | null>(null);
 
   // Flag to prevent save effect from running before load completes
   const [isLoaded, setIsLoaded] = useState(false);
@@ -315,14 +331,15 @@ export const useCreateJobForm = (
       const response = await analyzeImageMutation.mutateAsync({ file, lang: locale });
       if (!response.success || !response.data) throw new Error(response.message || response.error);
       const suggestion = response.data;
-      setTitle(suggestion.title);
-      setDescription(suggestion.description);
-      setCategories(suggestion.category);
-      setDurationValue(String(suggestion.duration.value));
-      setDurationUnit(suggestion.duration.unit);
-      setHourlyRate(String(suggestion.hourlyRate));
-      if (paymentType !== 'Timepris') setPrice(String(suggestion.suggestedPrice));
-      setSmartFillPricingNote(suggestion.pricingReasoning);
+      setAiDraft({
+        title: suggestion.title,
+        description: suggestion.description,
+        categories: suggestion.category,
+        duration: suggestion.duration,
+        hourlyRate: suggestion.hourlyRate,
+        price: paymentType !== 'Timepris' ? suggestion.suggestedPrice : undefined,
+        pricingReasoning: suggestion.pricingReasoning,
+      });
       setImageAnalysis({ status: 'success', durationRange: suggestion.durationRange });
     } catch (err) {
       setImageAnalysis({
@@ -341,22 +358,7 @@ export const useCreateJobForm = (
       return;
     }
 
-    // Sniff which fields the user has already edited with non-trivial values
-    // BEFORE running AI. We refuse to overwrite fields that are already
-    // meaningfully populated, unless the AI suggestion is clearly "better".
-    const userAlreadyHas = {
-      title: values.title.trim().length >= 5,
-      description: values.description.trim().length >= 20,
-      categories:
-        (Array.isArray(values.categories) && values.categories.length > 0) ||
-        (typeof values.categories === 'string' && values.categories.trim().length > 0),
-      price: !!values.price && String(values.price).length > 0 && Number(values.price) > 0,
-      hourlyRate: !!hourlyRate && String(hourlyRate).length > 0 && Number(hourlyRate) > 0,
-      duration: !!durationValue && String(durationValue).length > 0 && Number(durationValue) > 0,
-    };
-
     setIsGeneratingFullListing(true);
-    const newFlags: typeof smartFillSuggestionFlags = { ...smartFillSuggestionFlags };
     try {
       const response = await smartFillMutation.mutateAsync({ prompt: smartFillPrompt, ctx: {
         lang: locale,
@@ -379,95 +381,27 @@ export const useCreateJobForm = (
       } });
 
       if (response.success) {
-        const {
-          title: aiTitle,
-          description: aiDesc,
-          category: aiCategory,
-          duration: aiDuration,
-          priceRange,
-          locationRelevance,
-          skills: aiSkills,
-          hourlyRate: aiHourlyRate,
-          estimatedPrice: aiEstimatedPrice,
-          suggestedPrice: aiSuggestedPrice,
-          pricingReasoning,
-          paymentType: aiPaymentType,
-        } = response.data;
-
-        // Title — only overwrite if user didn't write a meaningful one already.
-        if (!userAlreadyHas.title && aiTitle) {
-          setTitle(aiTitle);
-          newFlags.title = true;
-        } else if (aiTitle && aiTitle !== values.title) {
-          // User already had a title — mention it in toast, don't clobber.
-        }
-
-        if (!userAlreadyHas.description && aiDesc) {
-          setDescription(aiDesc);
-          newFlags.description = true;
-        }
-
-        if (!userAlreadyHas.categories && aiCategory) {
-          setCategories(aiCategory.trim());
-          newFlags.categories = true;
-        } else {
-          setMultipleValues({
-            categories: values.categories,
-          });
-        }
-
-        if (!userAlreadyHas.duration && aiDuration && aiDuration.value) {
-          setDurationValue(aiDuration.value.toString());
-          setDurationUnit(aiDuration.unit || 'minutes');
-          newFlags.duration = true;
-        }
-
-        if (aiHourlyRate) {
-          setHourlyRate(aiHourlyRate.toString());
-          newFlags.hourlyRate = true;
-        }
-
-        // Price: prefer priceRange.min for Anbud (budget floor), prefer
-        // suggestedPrice for Fastpris. For Timepris the computed auto-price
-        // comes from usePaymentCalculation anyway, so still write the est.
-        const finalPrice = priceRange ? priceRange.min : (aiSuggestedPrice ?? aiEstimatedPrice);
-        if (!userAlreadyHas.price && typeof finalPrice === 'number' && finalPrice > 0) {
-          setPrice(finalPrice.toString());
-          newFlags.price = true;
-        }
-
-        if (aiSkills && Array.isArray(aiSkills)) {
-          setTags(aiSkills);
-        }
-
-        // If AI returned a payment type and user hasn't consciously chosen
-        // one yet (still 'Fastpris' default), switch to AI's suggestion if
-        // it differs AND AI picked Timepris/Anbud which fit category better.
-        if (
-          aiPaymentType &&
-          paymentType === 'Fastpris' &&
-          initialData?.paymentType == null &&
-          aiPaymentType !== 'Fastpris'
-        ) {
-          setPaymentType(aiPaymentType);
-        }
-
-        if (locationRelevance === 'remote') {
-          // Was setCity(prev => ...): setCity takes a string, so the updater itself was stored.
-          setCity(values.city || 'Fjernarbeid / Remote');
-        }
-
+        const d = response.data;
+        // Price: priceRange.min is the Anbud budget floor; otherwise the suggested price.
+        const price = d.priceRange ? d.priceRange.min : (d.suggestedPrice ?? d.estimatedPrice);
+        setAiDraft({
+          title: d.title,
+          description: d.description,
+          categories: d.category?.trim(),
+          duration: d.duration?.value ? d.duration : undefined,
+          price: typeof price === 'number' && price > 0 ? price : undefined,
+          hourlyRate: d.hourlyRate,
+          // Only offered while the type is still the untouched default.
+          paymentType:
+            d.paymentType && d.paymentType !== 'Fastpris' && paymentType === 'Fastpris' && initialData?.paymentType == null
+              ? d.paymentType
+              : undefined,
+          tags: Array.isArray(d.skills) && d.skills.length ? d.skills : undefined,
+          remote: d.locationRelevance === 'remote',
+          pricingReasoning: d.pricingReasoning,
+        });
         setShowSmartFillInput(false);
         setSmartFillPrompt('');
-
-        // This toast used to name every field, add "Priser er estimater — rediger fritt."
-        // and then append the model's whole pricing sentence in parentheses — five lines of
-        // rounded slab, for six seconds, over the form the person is trying to read. The
-        // rationale now renders under the price field in `BasicInformation`, where it sits
-        // next to the number it explains and stays until dismissed. The toast is left with
-        // the one thing it is good for: confirming that something happened.
-        setSmartFillPricingNote(pricingReasoning || '');
-        toast.success(summariseAiFill(newFlags), { duration: 3000 });
       }
     } catch (err) {
       console.error('SMART FILL ERROR:', err);
@@ -481,9 +415,48 @@ export const useCreateJobForm = (
         : '';
       toast.error(clampMessage(errorMessage + details));
     } finally {
-      setSmartFillSuggestionFlags(newFlags);
       setIsGeneratingFullListing(false);
     }
+  };
+
+  /** What the popup lists: one row per suggested field, `overwrites` when it replaces typed text. */
+  const aiDraftRows = useMemo(() => (aiDraft ? draftRows(aiDraft, {
+    title: values.title.trim().length > 0,
+    description: values.description.trim().length > 0,
+    categories: Array.isArray(values.categories) ? values.categories.length > 0 : !!String(values.categories ?? '').trim(),
+    duration: Number(durationValue) > 0,
+    price: Number(values.price) > 0,
+    hourlyRate: Number(hourlyRate) > 0,
+    paymentType: false,
+    tags: tags.length > 0,
+  }) : []), [aiDraft, values.title, values.description, values.categories, values.price, durationValue, hourlyRate, tags]);
+
+  /** Writes only the ticked rows of the reviewed draft into the form. */
+  const applyAiDraft = (keys: AiDraftKey[]) => {
+    const d = aiDraft;
+    setAiDraft(null);
+    if (!d || keys.length === 0) return;
+    const pick = new Set(keys);
+    const flags: typeof smartFillSuggestionFlags = { ...smartFillSuggestionFlags };
+    if (pick.has('title') && d.title) { setTitle(d.title); flags.title = true; }
+    if (pick.has('description') && d.description) { setDescription(d.description); flags.description = true; }
+    if (pick.has('categories') && d.categories) { setCategories(d.categories); flags.categories = true; }
+    if (pick.has('duration') && d.duration) {
+      setDurationValue(String(d.duration.value));
+      setDurationUnit(d.duration.unit || 'minutes');
+      flags.duration = true;
+    }
+    if (pick.has('price') && d.price) {
+      setPrice(String(d.price));
+      setSmartFillPricingNote(d.pricingReasoning || '');
+      flags.price = true;
+    }
+    if (pick.has('hourlyRate') && d.hourlyRate) { setHourlyRate(String(d.hourlyRate)); flags.hourlyRate = true; }
+    if (pick.has('paymentType') && d.paymentType) setPaymentType(d.paymentType);
+    if (pick.has('tags') && d.tags) setTags(d.tags);
+    if (d.remote && !values.city) setCity('Fjernarbeid / Remote');
+    setSmartFillSuggestionFlags(flags);
+    toast.success(summariseAiFill(flags), { duration: 3000 });
   };
 
   // Persistence - Load data on mount (run only once)
@@ -496,7 +469,15 @@ export const useCreateJobForm = (
       }
 
       try {
-        const { data, images } = await loadFormData<JobDraft>(currentUser?._id);
+        // `?utkast=<id>` opens a server draft ("Dine utkast"); otherwise the local one.
+        const utkast = new URLSearchParams(window.location.search).get('utkast');
+        const { data, images } = utkast
+          ? { data: await getJobDraft<JobDraft>(utkast).catch(() => {
+              toast.error('Fant ikke utkastet.');
+              return null;
+            }), images: [] as File[] }
+          : await loadFormData<JobDraft>(currentUser?._id);
+        serverDraftId.current = (utkast && data ? utkast : data?.serverDraftId) || null;
         if (data) {
           setValues({
             title: data.title || '',
@@ -517,6 +498,7 @@ export const useCreateJobForm = (
           setCountyCode(data.countyCode || '');
           setMunicipalityCode(data.municipalityCode || '');
           setAreaCode(data.areaCode || '');
+          setPostalCode(data.postalCode || '');
           if (data.latitude != null && data.longitude != null) {
             setCoordinates([data.latitude, data.longitude]);
           }
@@ -524,7 +506,7 @@ export const useCreateJobForm = (
           setHourlyRate(data.hourlyRate || '');
           setPaymentType(data.paymentType || 'Fastpris');
           setTags(data.tags || []);
-          setCurrentStep(data.currentStep || 1);
+          setCurrentStep(Math.min(data.currentStep || 1, LAST_STEP));
           setCurrentImages(data.currentImages || []);
           setImagesToDelete(data.imagesToDelete || []);
           setShowSmartFillInput(data.showSmartFillInput || false);
@@ -546,6 +528,18 @@ export const useCreateJobForm = (
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run only once on mount
 
+  // A new job starts with the profile's phone and e-mail (once, after the draft loaded), so
+  // nobody types them again; clearing a field afterwards keeps it empty.
+  const contactPrefilled = useRef(false);
+  useEffect(() => {
+    if (!isLoaded || isEditMode || contactPrefilled.current || !currentUser) return;
+    contactPrefilled.current = true;
+    const fill: Partial<JobFormValues> = {};
+    if (!values.phone && currentUser.phone) fill.phone = phoneDigits(currentUser.phone);
+    if (!values.email && currentUser.email) fill.email = currentUser.email;
+    if (Object.keys(fill).length) setMultipleValues(fill);
+  }, [isLoaded, isEditMode, currentUser, values.phone, values.email, setMultipleValues]);
+
   // Persistence - Save data whenever it changes (only after initial load)
   useEffect(() => {
     if (!isLoaded) return; // Don't save until draft has been loaded
@@ -561,6 +555,7 @@ export const useCreateJobForm = (
           countyCode,
           municipalityCode,
           areaCode,
+          postalCode,
           latitude: coordinates?.[0] ?? null,
           longitude: coordinates?.[1] ?? null,
           fromDate,
@@ -577,12 +572,28 @@ export const useCreateJobForm = (
           smartFillPrompt,
           checklistItems,
         };
-        await saveFormData(dataToSave, selectedImages, currentUser?._id);
+        await saveFormData({ ...dataToSave, serverDraftId: serverDraftId.current }, selectedImages, currentUser?._id);
+        // Nothing worth listing yet → no server draft. Photos not yet uploaded stay local.
+        if (!values.title.trim() && !values.description.trim()) return;
+        serverSyncTimer.current = setTimeout(() => {
+          // One request at a time, so two quick edits never create two drafts.
+          serverSync.current = serverSync.current.then(async () => {
+            try {
+              const created = !serverDraftId.current;
+              serverDraftId.current = await saveJobDraft(serverDraftId.current, dataToSave);
+              if (created) queryClient.invalidateQueries({ queryKey: ['job-drafts'] });
+            } catch (err) {
+              // Deleted elsewhere: the next edit starts a new one. Anything else: try next edit.
+              if ((err as { response?: { status?: number } })?.response?.status === 404) serverDraftId.current = null;
+            }
+          });
+        }, 1500);
       } catch (err) {
         console.error('Error saving form data:', err);
       }
     };
     saveData();
+    return () => clearTimeout(serverSyncTimer.current);
   }, [
     isLoaded,
     values,
@@ -591,6 +602,7 @@ export const useCreateJobForm = (
     countyCode,
     municipalityCode,
     areaCode,
+    postalCode,
     fromDate,
     toDate,
     durationValue,
@@ -632,11 +644,6 @@ export const useCreateJobForm = (
         }
       });
 
-      // Special check for images
-      if (selectedImages.length === 0 && currentImages.length === 0) {
-        extraErrors.images = 'Vennligst last opp minst ett bilde.';
-        isValid = false;
-      }
     } else if (step === 2) {
       // Validate Step 2 fields
       const fieldsToValidate: (keyof JobFormValues)[] = [
@@ -733,10 +740,14 @@ export const useCreateJobForm = (
 
   const handleNext = () => {
     if (validateStep(currentStep)) {
-      setCurrentStep((prev) => Math.min(prev + 1, 4));
+      setCurrentStep((prev) => Math.min(prev + 1, LAST_STEP));
       return;
     }
+    reportMissing(currentStep);
+  };
 
+  /** Toast naming what is missing on `step`, and scroll to it. */
+  const reportMissing = (step: number) => {
     // The toast names what is missing; this takes them to it. Without it the page sits
     // still, and on a step several screens tall the empty field is usually off screen.
     scrollToFirstError();
@@ -758,7 +769,6 @@ export const useCreateJobForm = (
       toDate: 'sluttdato',
       email: 'e-post',
       phone: 'telefon',
-      images: 'bilde',
       countyCode: 'fylke',
       municipalityCode: 'kommune',
     };
@@ -766,7 +776,7 @@ export const useCreateJobForm = (
     const missing: string[] = [];
 
     // Re-check fields with their validation rules to know exactly which ones failed.
-    if (currentStep === 1) {
+    if (step === 1) {
       const titleLength = String(values.title ?? '').trim().length;
       if (titleLength < JOB_LIMITS.TITLE_MIN || titleLength > JOB_LIMITS.TITLE_MAX) missing.push(labels.title);
       const descriptionLength = String(values.description ?? '').trim().length;
@@ -779,8 +789,7 @@ export const useCreateJobForm = (
         ? values.categories.length > 0
         : !!values.categories && String(values.categories).trim() !== '';
       if (!catOk) missing.push(labels.categories);
-      if (selectedImages.length === 0 && currentImages.length === 0) missing.push(labels.images);
-    } else if (currentStep === 2) {
+    } else if (step === 2) {
       if (!values.address) missing.push(labels.address);
       if (!values.city) missing.push(labels.city);
       const priceVal = values.price;
@@ -810,12 +819,11 @@ export const useCreateJobForm = (
         durationNumber > JOB_LIMITS.DURATION_MAX
       )
         missing.push(labels.durationValue);
-      if (!values.fromDate || Number.isNaN(new Date(values.fromDate).getTime())) missing.push(labels.fromDate);
-      if (!values.toDate) {
+      // Dates are optional ("la feltene stå tomme"): only a malformed or reversed one is named.
+      if (values.fromDate && Number.isNaN(new Date(values.fromDate).getTime())) missing.push(labels.fromDate);
+      if (values.toDate && Number.isNaN(new Date(values.toDate).getTime())) {
         missing.push(labels.toDate);
-      } else if (Number.isNaN(new Date(values.toDate).getTime())) {
-        missing.push(labels.toDate);
-      } else if (values.fromDate && new Date(values.toDate) < new Date(values.fromDate)) {
+      } else if (values.fromDate && values.toDate && new Date(values.toDate) < new Date(values.fromDate)) {
         missing.push('gyldig sluttdato (kan ikke være før startdato)');
       }
       if (!countyCode) missing.push(labels.countyCode);
@@ -832,9 +840,7 @@ export const useCreateJobForm = (
           missing.push('timepris');
       }
       if (!coordinates) missing.push('lokasjon på kartet');
-    } else if (currentStep === 4) {
-      // Phone and e-mail are optional here (the step is labelled "Valgfritt" and
-      // neither has a required-rule), so only a malformed e-mail can block.
+      // Contact is a folded section of this page: optional, only a malformed e-mail blocks.
       if (values.email) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(String(values.email).trim())) missing.push(labels.email);
@@ -866,25 +872,23 @@ export const useCreateJobForm = (
 
     // Publish validates the whole form, not just the step in front of you.
     //
-    // It used to check step 4 alone, plus a special case for the missing map pin. But
-    // `loadFormData` restores `currentStep`, so a draft saved on step 4 reopens there — and
-    // an empty title from step 1 then sailed past this guard and failed server-side, with
-    // nothing marked anywhere on the page for the person to be sent to. `find` stops at the
-    // first failing step, which is the one worth taking them to. Step 3 is the checklist and
-    // has no required fields.
-    const firstInvalidStep = [1, 2, 4].find((step) => !validateStep(step));
+    // `loadFormData` restores `currentStep`, so a draft can reopen on the last page with an
+    // empty title on the first. `find` stops at the first failing step, the one to go back to.
+    // validateStep(4) is the contact rules, which live on page 2 now.
+    const failed = [1, 2, 4].find((step) => !validateStep(step));
 
-    if (firstInvalidStep) {
-      if (currentStep !== firstInvalidStep) setCurrentStep(firstInvalidStep);
-      toast.error(
-        firstInvalidStep === 2 && !coordinates
-          ? 'Bekreft hvor oppdraget skal utføres på kartet før du publiserer.'
-          : 'Vennligst fyll ut alle påkrevde felt riktig.'
-      );
+    if (failed) {
+      const page = Math.min(failed, LAST_STEP);
+      if (currentStep !== page) setCurrentStep(page);
       // Sending them back a step is not enough on its own — the step opens at the top and the
       // field is usually below the fold, and on the frame this runs the new step has not
       // rendered yet. `scrollToFirstError` keeps looking across a few frames for exactly this.
-      scrollToFirstError();
+      if (page === 2 && !coordinates) {
+        toast.error('Bekreft hvor oppdraget skal utføres på kartet før du publiserer.');
+        scrollToFirstError();
+      } else {
+        reportMissing(page);
+      }
       return;
     }
 
@@ -927,6 +931,7 @@ export const useCreateJobForm = (
       if (countyCode) formData.append('countyCode', countyCode);
       if (municipalityCode) formData.append('municipalityCode', municipalityCode);
       if (areaCode) formData.append('areaCode', areaCode);
+      if (/^\d{4}$/.test(postalCode)) formData.append('location[postalCode]', postalCode);
 
       if (values.categories) {
         const catArray = Array.isArray(values.categories) ? values.categories : [values.categories];
@@ -963,6 +968,13 @@ export const useCreateJobForm = (
       // Edit mode never loads the draft, so clearing it here would throw away an
       // unrelated half-written job the user has in progress.
       if (!isEditMode) clearFormData().catch(() => { });
+      if (!isEditMode && serverDraftId.current) {
+        clearTimeout(serverSyncTimer.current);
+        const id = serverDraftId.current;
+        serverDraftId.current = null;
+        serverSync.current = serverSync.current.then(() => deleteJobDraft(id)).catch(() => {});
+        queryClient.invalidateQueries({ queryKey: ['job-drafts'] });
+      }
     } catch (error) {
       // The draft is deliberately left intact here — this catch is the failed
       // publish path, and it is the only copy of what the user typed.
@@ -1062,6 +1074,8 @@ export const useCreateJobForm = (
     setMunicipalityCode,
     areaCode,
     setAreaCode,
+    postalCode,
+    setPostalCode,
     coordinates,
     setCoordinates,
     categories: values.categories,
@@ -1113,6 +1127,8 @@ export const useCreateJobForm = (
     smartFillPricingNote,
     setSmartFillPricingNote,
     handleAiSmartFill,
+    aiDraftRows,
+    applyAiDraft,
     handleNext,
     handleBack,
     handleFinalSubmit,

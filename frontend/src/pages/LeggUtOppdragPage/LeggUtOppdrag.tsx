@@ -1,8 +1,10 @@
 import CreateJobForm from '../../components/CreateJobForm/CreateJobForm';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { saveServiceForm } from '../../features/services/api';
 import { useUserStore } from '../../stores/userStore';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { FileText, Trash2 } from 'lucide-react';
+import { deleteJobDraft, listJobDrafts } from '../../api/jobDraftsAPI';
 import toast from 'react-hot-toast';
 import { useJobDetailQuery } from '../../features/jobDetail/hook.ts';
 import { Spinner } from '../../components/Ui/Spinner';
@@ -13,6 +15,7 @@ export default function LeggUtOppdrag() {
   const { id } = useParams();
   const isEditMode = !!id;
   const navigate = useNavigate();
+  const { search } = useLocation();
   const user = useUserStore((state) => state.user);
 
   const { data: job, isLoading } = useJobDetailQuery(id || '');
@@ -82,6 +85,7 @@ export default function LeggUtOppdrag() {
         countyCode: job.countyCode,
         municipalityCode: job.municipalityCode,
         areaCode: job.areaCode,
+        postalCode: job.location?.postalCode,
         latitude: coordinates?.[1],
         longitude: coordinates?.[0],
         categories: job.categories,
@@ -111,17 +115,61 @@ export default function LeggUtOppdrag() {
           <p className="mt-2 max-w-lg text-[0.9375rem] leading-relaxed text-[#63665F]">
             {isEditMode
               ? 'Endringene blir synlige for alle som ser oppdraget.'
-              : 'Fire korte steg. Du kan forhåndsvise underveis, og utkastet lagres automatisk.'}
+              : 'To korte steg. Du kan forhåndsvise underveis, og utkastet lagres automatisk.'}
           </p>
         </header>
+
+        {!isEditMode && <DraftsList />}
       </div>
 
+      {/* A new `?utkast=` remounts the form, so the hook loads that draft. */}
       <CreateJobForm
+        key={search}
         onSubmit={handleFormSubmit}
         userId={userId}
         initialData={initialData}
         isEditMode={isEditMode}
       />
     </div>
+  );
+}
+
+/** "Dine utkast": server drafts, newest first. Opening one reloads the form with it. */
+function DraftsList() {
+  const queryClient = useQueryClient();
+  const { data: drafts = [] } = useQuery({ queryKey: ['job-drafts'], queryFn: listJobDrafts });
+  const remove = useMutation({
+    mutationFn: deleteJobDraft,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['job-drafts'] }),
+    onError: () => toast.error('Kunne ikke slette utkastet.'),
+  });
+  if (drafts.length === 0) return null;
+
+  return (
+    <section aria-labelledby="drafts-heading" className="mb-8 rounded-3xl border border-[#E6E7E1] bg-white p-5">
+      <h2 id="drafts-heading" className="text-[0.9375rem] font-bold tracking-[-0.02em] text-[#0B0B0B]">Dine utkast</h2>
+      <ul className="mt-3 divide-y divide-[#E6E7E1]">
+        {drafts.map((d) => (
+          <li key={d._id} className="flex items-center gap-3 py-2.5">
+            <FileText size={16} className="shrink-0 text-[#2E6641]" />
+            <Link to={`/Publish-job?utkast=${d._id}`} className="min-w-0 flex-1 hover:underline">
+              <span className="block truncate text-[0.875rem] font-semibold text-[#0B0B0B]">{d.title || 'Uten tittel'}</span>
+              <span className="block text-[0.75rem] text-[#63665F]">
+                Sist endret {new Date(d.updatedAt).toLocaleString('nb-NO', { dateStyle: 'medium', timeStyle: 'short' })}
+              </span>
+            </Link>
+            <button
+              type="button"
+              onClick={() => remove.mutate(d._id)}
+              disabled={remove.isPending}
+              aria-label={`Slett utkastet ${d.title || 'uten tittel'}`}
+              className="flex size-9 shrink-0 items-center justify-center rounded-full text-[#63665F] hover:bg-[#FCF4F3] hover:text-[#B0453B] disabled:opacity-50"
+            >
+              <Trash2 size={15} />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

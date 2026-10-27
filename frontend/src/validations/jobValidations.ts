@@ -104,14 +104,12 @@ export const jobValidationSchema = {
     },
   ],
   fromDate: [
-    required<JobFormValues>('fromDate', 'Vennligst velg startdato'),
     {
       test: (values: JobFormValues) => !values.fromDate || !Number.isNaN(new Date(values.fromDate).getTime()),
       message: 'Ugyldig fra-dato',
     },
   ],
   toDate: [
-    required<JobFormValues>('toDate', 'Vennligst velg sluttdato'),
     {
       test: (values: JobFormValues) => !values.toDate || !Number.isNaN(new Date(values.toDate).getTime()),
       message: 'Ugyldig sluttdato',

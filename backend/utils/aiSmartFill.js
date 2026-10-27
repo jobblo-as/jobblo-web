@@ -338,7 +338,7 @@ function validateSmartFillOutput(raw, ctx = {}) {
     reasoning = `Estimat (${ptText}) – ikke offisiell markedssats. Heuristisk anslag basert på kategori (${cleaned.category || 'småjobber'}) og anslått varighet i Norge 2025.`;
   } else if (!looksLikeEstimate) {
     // AI forgot to label as estimate — we inject the mandatory disclaimer
-    reasoning = `[ESTIMAT – ikke markedssats] ${reasoning}`;
+    reasoning = `Estimat, ikke markedssats: ${reasoning}`;
   }
   if (reasoning.length > 400) reasoning = reasoning.slice(0, 397) + '…';
   cleaned.pricingReasoning = reasoning;

@@ -6,7 +6,7 @@ interface StepIndicatorProps {
   setCurrentStep: (step: number) => void;
 }
 
-const STEPS = ['Grunnleggende', 'Tid & sted', 'Sjekkliste', 'Kontakt'];
+const STEPS = ['Oppdraget', 'Sted, tid og pris'];
 
 /**
  * Where you are in the four steps.

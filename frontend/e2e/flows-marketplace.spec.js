@@ -140,13 +140,154 @@ test('publish a job: step 1 validates, a complete draft (edit mode) is saved', a
   await page.goto('/Publish-job');
   await expect(page.getByRole('heading', { name: 'Legg ut et oppdrag' })).toBeVisible();
   await page.getByRole('button', { name: /Neste/ }).first().click();
-  await expect(page.getByText('Vennligst last opp minst ett bilde.')).toBeVisible();
+  // Photos are optional: the empty form names the title etc., never a missing photo.
+  await expect(page.getByText(/Vennligst fyll ut: .*tittel/)).toBeVisible();
+  await expect(page.getByText('Vennligst last opp minst ett bilde.')).toHaveCount(0);
 
   // Edit: the stored job is loaded and saved back.
   await page.goto(`/Publish-job/${SERVICE._id}`);
   await expect(page.getByRole('heading', { name: 'Rediger oppdraget' })).toBeVisible();
   await expect(page.locator(`input[value="${SERVICE.title}"]`)).toHaveCount(1);
   expect(calls.some((c) => c.pathname === `/api/services/${SERVICE._id}` && c.method === 'GET')).toBe(true);
+  // Two pages, not four: page 2 holds place/time/price with checklist and contact folded in.
+  await expect(page.getByText('Steg 1 av 2')).toBeVisible();
+  await page.getByRole('button', { name: /Neste/ }).first().click();
+  await expect(page.getByText('Steg 2 av 2')).toBeVisible();
+  await expect(page.getByRole('button', { name: /Publiser oppdrag/ })).toBeVisible();
+  await expect(page.getByText('Legg til sjekkliste')).toBeVisible();
+  await expect(page.locator('#job-email')).toBeHidden();
+  await page.getByText('Kontaktinformasjon (Valgfritt)').click();
+  await expect(page.locator('#job-email')).toBeVisible();
+  await page.getByRole('button', { name: /Publiser oppdrag/ }).click();
+  await expect.poll(() => calls.some((c) => c.pathname === `/api/services/${SERVICE._id}` && c.method === 'PUT')).toBe(true);
+  expect(errors).toEqual([]);
+});
+
+test('a new job starts with the profile e-mail as contact', async ({ page }) => {
+  await mockApi(page, { as: 'user' });
+  await page.goto('/Publish-job');
+  await expect(page.getByRole('heading', { name: 'Legg ut et oppdrag' })).toBeVisible();
+  // The autosaved draft (IndexedDB) carries the prefilled contact, no step-4 walk needed.
+  const draftEmail = () => page.evaluate(() => new Promise((resolve) => {
+    const open = indexedDB.open('jobblo-form-db');
+    open.onerror = () => resolve(null);
+    open.onsuccess = () => {
+      const req = open.result.transaction('job-form-data').objectStore('job-form-data').get('current-form');
+      req.onsuccess = () => resolve(req.result?.data?.email ?? null);
+      req.onerror = () => resolve(null);
+    };
+  }));
+  await expect.poll(draftEmail).toBe('customer@example.test');
+});
+
+test('AI draft is reviewed in a popup and never replaces typed text unless ticked', async ({ page }) => {
+  const errors = watchErrors(page);
+  const { calls } = await mockApi(page, {
+    as: 'user',
+    routes: {
+      'POST /api/ai/generate-full-listing': () => ({
+        success: true,
+        data: {
+          title: 'AI-tittel', description: 'AI skrev denne beskrivelsen av oppdraget.', category: 'Maling',
+          skills: [], duration: { value: 3, unit: 'hours' }, locationRelevance: 'on-site',
+          priceRange: null, suggestedPrice: 2500, pricingReasoning: 'Estimat basert på 3 timer.',
+          paymentType: 'Fastpris', isEstimate: true,
+        },
+      }),
+    },
+  });
+  await page.goto('/Publish-job');
+  await page.locator('#job-title').fill('Min egen tittel');
+  await page.getByRole('button', { name: 'Foreslå utkast med AI' }).click();
+  await page.getByPlaceholder(/Male en liten bod/).fill('Male boden min utvendig');
+  await page.getByRole('button', { name: 'Foreslå utkast', exact: true }).click();
+
+  const dialog = page.getByRole('dialog', { name: 'Forslag til utkast' });
+  await expect(dialog).toBeVisible();
+  // Nothing written yet; the typed title starts unticked, the empty description ticked.
+  await expect(page.locator('#job-title')).toHaveValue('Min egen tittel');
+  await expect(dialog.getByRole('checkbox', { name: /Tittel/ })).not.toBeChecked();
+  await expect(dialog.getByRole('checkbox', { name: /Beskrivelse/ })).toBeChecked();
+  await dialog.getByRole('button', { name: /Bruk valgte/ }).click();
+
+  await expect(dialog).toBeHidden();
+  await expect(page.locator('#job-title')).toHaveValue('Min egen tittel');
+  await expect(page.locator('#job-description')).toHaveValue('AI skrev denne beskrivelsen av oppdraget.');
+  expect(calls.some((c) => c.pathname === '/api/ai/generate-full-listing')).toBe(true);
+  expect(errors).toEqual([]);
+});
+
+test('"Dine utkast": typing saves a server draft, a listed draft opens, and can be deleted', async ({ page }) => {
+  const errors = watchErrors(page);
+  const { calls } = await mockApi(page, {
+    as: 'user',
+    routes: {
+      'GET /api/job-drafts': () => ({ drafts: [{ _id: 'd1', title: 'Utkast fra mobilen', updatedAt: '2026-10-20T10:00:00Z' }] }),
+      'GET /api/job-drafts/d1': () => ({ draft: { _id: 'd1', data: { title: 'Utkast fra mobilen', description: 'Skrevet på telefonen i går kveld.' } } }),
+      'POST /api/job-drafts': () => ({ status: 201, json: { draft: { _id: 'd2' } } }),
+      'PUT /api/job-drafts/d2': () => ({ draft: { _id: 'd2' } }),
+      'DELETE /api/job-drafts/d1': () => ({ ok: true }),
+    },
+  });
+  await page.goto('/Publish-job');
+  const list = page.getByRole('region', { name: 'Dine utkast' });
+  await expect(list.getByText('Utkast fra mobilen')).toBeVisible();
+
+  // Typing a title saves it on the server (debounced, once).
+  await page.locator('#job-title').fill('Vaske vinduer');
+  await expect.poll(() => calls.filter((c) => c.method === 'POST' && c.pathname === '/api/job-drafts').length).toBe(1);
+  expect(calls.find((c) => c.method === 'POST' && c.pathname === '/api/job-drafts').body.data.title).toBe('Vaske vinduer');
+
+  // A listed draft opens in the form.
+  await list.getByText('Utkast fra mobilen').click();
+  await expect(page).toHaveURL(/\?utkast=d1$/);
+  await expect(page.locator('#job-title')).toHaveValue('Utkast fra mobilen');
+
+  await list.getByRole('button', { name: /Slett utkastet Utkast fra mobilen/ }).click();
+  await expect.poll(() => calls.some((c) => c.method === 'DELETE' && c.pathname === '/api/job-drafts/d1')).toBe(true);
+  expect(errors).toEqual([]);
+});
+
+test('address: one Kartverket search fills postnummer, sted, fylke and kommune, and they are published', async ({ page }) => {
+  const errors = watchErrors(page);
+  const full = {
+    ...SERVICE, countyCode: '03', municipalityCode: '0301', images: ['https://example.test/a.jpg'],
+    fromDate: '2026-11-01', toDate: '2026-11-02', duration: { value: 2, unit: 'hours' },
+  };
+  const { calls } = await mockApi(page, {
+    as: 'user',
+    routes: {
+      [`GET /api/services/${SERVICE._id}`]: () => full,
+      [`PUT /api/services/${SERVICE._id}`]: () => full,
+      'GET /api/location-filter/tree': () => [
+        { code: '03', name: 'Oslo', children: [{ code: '0301', name: 'Oslo' }] },
+        { code: '46', name: 'Vestland', children: [{ code: '4601', name: 'Bergen' }] },
+      ],
+    },
+  });
+  // Kartverket's address register, answered locally.
+  await page.route('https://ws.geonorge.no/**', (route) => route.fulfill({
+    json: { adresser: [{ adressetekst: 'Bryggen 1', postnummer: '5003', poststed: 'BERGEN', kommunenummer: '4601', kommunenavn: 'BERGEN', representasjonspunkt: { lat: 60.397, lon: 5.324 } }] },
+  }));
+
+  await page.goto(`/Publish-job/${SERVICE._id}`);
+  await page.getByRole('button', { name: /Neste/ }).first().click();
+  await expect(page.getByText('Steg 2 av 2')).toBeVisible();
+  // No fylke/kommune dropdowns any more: the address decides them.
+  await expect(page.locator('#job-county')).toHaveCount(0);
+
+  await page.locator('#job-address').fill('Bryggen 1');
+  await page.getByRole('option').getByText('Bryggen 1').click();
+  await expect(page.getByText(/Lokasjon bekreftet · 5003 Bergen/)).toBeVisible();
+  await expect(page.locator('#job-postal-code')).toHaveValue('5003');
+  await expect(page.locator('#job-city')).toHaveValue('Bergen');
+
+  await page.getByRole('button', { name: /Publiser oppdrag/ }).click();
+  await expect.poll(() => calls.some((c) => c.method === 'PUT' && c.pathname === `/api/services/${SERVICE._id}`)).toBe(true);
+  const sent = String(calls.find((c) => c.method === 'PUT' && c.pathname === `/api/services/${SERVICE._id}`).body);
+  for (const [field, value] of [['location[postalCode]', '5003'], ['location[city]', 'Bergen'], ['countyCode', '46'], ['municipalityCode', '4601']]) {
+    expect(sent).toMatch(new RegExp(`name="${field.replace(/[[\]]/g, '\\$&')}"\\r?\\n\\r?\\n${value}\\r?\\n`));
+  }
   expect(errors).toEqual([]);
 });
 

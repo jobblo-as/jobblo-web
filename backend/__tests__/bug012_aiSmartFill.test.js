@@ -233,7 +233,8 @@ describe('BUG-012: aiSmartFill validator', () => {
       pricingReasoning: 'Dette er den offisielle markedsprisen i Norge.',
     });
     const { cleaned } = validateSmartFillOutput(raw, ctx());
-    expect(cleaned.pricingReasoning).toMatch(/ESTIMAT|estimat/);
+    expect(cleaned.pricingReasoning).toMatch(/^Estimat, ikke markedssats: /);
+    expect(cleaned.pricingReasoning).not.toContain('[');
   });
 
   test('estimate-labeled reasoning passes through unchanged (no double prefix)', () => {
