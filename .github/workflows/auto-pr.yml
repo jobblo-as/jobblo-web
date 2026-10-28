@@ -1,0 +1,55 @@
+name: Auto PR
+
+# Push any branch → a PR to main is opened (if none is open yet) with auto-merge on. It merges
+# itself once the required checks pass, and the merge to main runs CI → Deploy → release.
+# Branches starting with wip/ or draft/ are left alone (work that should not go live yet).
+#
+# Needs the secret AUTOMERGE_TOKEN: a fine-grained personal access token for this repository
+# with Contents + Pull requests: read & write. Not GITHUB_TOKEN: a merge made with that token
+# does not start other workflows, so main would get no CI and no deploy.
+
+on:
+  push:
+    branches-ignore:
+      - main
+      - 'wip/**'
+      - 'draft/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: auto-pr-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  pr:
+    name: Open PR with auto-merge
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: PR to main + auto-merge
+        env:
+          GH_TOKEN: ${{ secrets.AUTOMERGE_TOKEN }}
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::AUTOMERGE_TOKEN is not set: no PR opened."
+            exit 0
+          fi
+          git fetch -q origin main
+          # Nothing to merge (the branch is already in main): no PR.
+          if [ "$(git rev-list --count origin/main..HEAD)" = 0 ]; then
+            echo "Branch has no commits that main lacks."
+            exit 0
+          fi
+          PR="$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number // empty')"
+          if [ -z "$PR" ]; then
+            gh pr create --base main --head "$BRANCH" --fill
+            PR="$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number')"
+          fi
+          gh pr merge "$PR" --auto --merge
+          echo "### PR #$PR: auto-merge on" >> "$GITHUB_STEP_SUMMARY"
