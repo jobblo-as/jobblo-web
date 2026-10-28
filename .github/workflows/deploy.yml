@@ -46,8 +46,16 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p ~/.ssh && chmod 700 ~/.ssh
-          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key && chmod 600 ~/.ssh/deploy_key
-          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          # DEPLOY_SSH_KEY is the key file, or the same file as one base64 line (base64 -w0), which
+          # survives copy-paste. tr: a key pasted from Windows carries \r, which OpenSSH rejects.
+          if printf '%s' "$SSH_KEY" | grep -q 'PRIVATE KEY'; then
+            printf '%s\n' "$SSH_KEY" | tr -d '\r' > ~/.ssh/deploy_key
+          else
+            printf '%s' "$SSH_KEY" | tr -d '\r\n ' | base64 -d > ~/.ssh/deploy_key
+          fi
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null || { echo "DEPLOY_SSH_KEY is not a valid private key (paste the file, or base64 -w0 of it)." >&2; exit 1; }
+          printf '%s\n' "$KNOWN_HOSTS" | tr -d '\r' > ~/.ssh/known_hosts
           # The server's authorized_keys forces the deploy command; the sha is the only input.
           ssh -i ~/.ssh/deploy_key -o BatchMode=yes -o StrictHostKeyChecking=yes "$USER@$HOST" "$SHA" | tee deploy.log
           rm -f ~/.ssh/deploy_key
