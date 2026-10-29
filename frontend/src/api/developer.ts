@@ -144,6 +144,20 @@ export interface IpActivity {
   }[];
   series: { t: string; requests: number; failed: number }[];
   security: Record<string, number>;
+  /** Sign-ins and password resets from this IP, newest first (email masked). */
+  auth?: AuthEventRow[];
+}
+export type AuthEventType =
+  | 'login'
+  | 'login_failed'
+  | 'password_reset_requested'
+  | 'password_reset'
+  | 'password_reset_failed';
+export interface AuthEventRow {
+  type: AuthEventType;
+  email: string | null;
+  at: string;
+  userAgent: string | null;
 }
 export interface ApiMetrics {
   range: RangeInfo;
@@ -2334,6 +2348,22 @@ export interface IpRow {
   isYou: boolean;
   risk: 'normal' | 'suspicious' | 'high' | 'blocked';
   reasons: string[];
+  /** Where the IP is (ip-api lookup, cached), null when unknown. */
+  country?: string | null;
+  countryCode?: string | null;
+  city?: string | null;
+  /** Accounts with an active session from this IP, latest login first. */
+  users?: {
+    userId: string;
+    email: string;
+    name: string | null;
+    loginAt: string;
+    lastActive: string | null;
+    /** City, country saved when that session logged in (ip-api), null when unknown. */
+    location: string | null;
+  }[];
+  /** Sign-in / password-reset counts from this IP in range. */
+  auth?: Partial<Record<AuthEventType, number>>;
 }
 export interface IpsInfo {
   range: { from: string; to: string };

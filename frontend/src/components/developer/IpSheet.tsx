@@ -1,14 +1,51 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Ban, Globe, ShieldAlert } from 'lucide-react';
+import { Ban, Globe, KeyRound, ShieldAlert } from 'lucide-react';
 import { ago, num } from '@/lib/devFormat';
 import { useDevBlocks, useDevIpActivity, useDevMe } from '../../features/developer/hooks';
-import type { RangeKey } from '../../api/developer';
+import type { AuthEventType, RangeKey } from '../../api/developer';
 import { BlockIpDialog } from './BlockIpDialog';
 import { EmptyState, MethodBadge, StatusBadge } from './kit';
 import { TimeSeriesChart } from './TimeSeriesChart';
 import { Button } from './ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from './ui/sheet';
+
+const AUTH_LABEL: Record<AuthEventType, { text: string; tone: 'success' | 'danger' | 'warning' }> =
+  {
+    login: { text: 'Logged in', tone: 'success' },
+    login_failed: { text: 'Login failed', tone: 'danger' },
+    password_reset_requested: { text: 'Forgot password: code sent', tone: 'warning' },
+    password_reset: { text: 'Password changed', tone: 'success' },
+    password_reset_failed: { text: 'Password reset failed', tone: 'danger' },
+  };
+
+/** "Chrome · Windows" from a user agent; the raw string is in the tooltip. */
+const deviceOf = (ua: string | null) => {
+  if (!ua) return '';
+  const browser = /Edg\//.test(ua)
+    ? 'Edge'
+    : /Chrome\//.test(ua)
+      ? 'Chrome'
+      : /Firefox\//.test(ua)
+        ? 'Firefox'
+        : /Safari\//.test(ua)
+          ? 'Safari'
+          : /okhttp|Expo|Dalvik|CFNetwork/i.test(ua)
+            ? 'Jobblo app'
+            : 'Other';
+  const os = /Windows/.test(ua)
+    ? 'Windows'
+    : /Android/.test(ua)
+      ? 'Android'
+      : /iPhone|iPad|iOS|CFNetwork/.test(ua)
+        ? 'iOS'
+        : /Mac OS/.test(ua)
+          ? 'macOS'
+          : /Linux/.test(ua)
+            ? 'Linux'
+            : '';
+  return [browser, os].filter(Boolean).join(' · ');
+};
 
 /** Everything one IP did in a range, with a block action. Shared by API Monitoring, Security and IP Management. */
 export function IpSheet({
@@ -67,6 +104,40 @@ export function IpSheet({
               </div>
             </div>
           )}
+          <div>
+            <h4 className="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground uppercase">
+              <KeyRound className="size-3.5" /> Login &amp; password
+            </h4>
+            {data?.auth?.length ? (
+              <ul className="divide-y rounded-md border text-sm">
+                {data.auth.map((a, i) => (
+                  <li key={`${a.at}-${i}`} className="flex items-start gap-2 px-3 py-2">
+                    <div className="min-w-0 flex-1">
+                      <StatusBadge
+                        status={a.type}
+                        tone={AUTH_LABEL[a.type]?.tone ?? 'neutral'}
+                        label={AUTH_LABEL[a.type]?.text ?? a.type}
+                      />
+                      <div className="mt-1 truncate text-xs" title={a.userAgent || ''}>
+                        <span className="font-mono">{a.email || 'no email'}</span>
+                        {a.userAgent && (
+                          <span className="text-muted-foreground"> · {deviceOf(a.userAgent)}</span>
+                        )}
+                      </div>
+                    </div>
+                    <span
+                      className="shrink-0 text-right text-xs text-muted-foreground"
+                      title={new Date(a.at).toLocaleString('nb-NO')}
+                    >
+                      {ago(a.at)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <EmptyState title="No sign-ins or password resets from this IP in range" />
+            )}
+          </div>
           <div>
             <h4 className="mb-2 text-xs font-medium text-muted-foreground uppercase">
               Requests over time
