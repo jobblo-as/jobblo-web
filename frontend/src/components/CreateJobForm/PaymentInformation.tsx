@@ -1,6 +1,5 @@
 import React from 'react';
-import { Banknote, AlertCircle, Gavel, Clock, Zap, Lock } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { Banknote, AlertCircle, Gavel, Clock } from 'lucide-react';
 import { MICRO_LABEL } from '../../theme/brand';
 
 interface PaymentInformationProps {
@@ -10,9 +9,6 @@ interface PaymentInformationProps {
   setPrice: (val: string) => void;
   hourlyRate: string | number;
   setHourlyRate: (val: string) => void;
-  urgent: boolean;
-  setUrgent: (val: boolean) => void;
-  subscription?: string;
   errors?: Partial<Record<string, string>>;
 }
 
@@ -44,12 +40,8 @@ export const PaymentInformation: React.FC<PaymentInformationProps> = ({
   setPrice,
   hourlyRate,
   setHourlyRate,
-  urgent,
-  setUrgent,
-  subscription = 'Standard',
   errors,
 }) => {
-  const isPaidSubscriber = subscription !== 'Standard';
   const isHourly = paymentType === 'Timepris';
 
   const amountLabel = isHourly
@@ -183,61 +175,6 @@ export const PaymentInformation: React.FC<PaymentInformationProps> = ({
             Du binder deg ikke til beløpet.
           </p>
         )}
-      </div>
-
-      {/* ── Haster ──────────────────────────────────────────────────────── */}
-      <div className="box-card-custom p-5 md:p-6">
-        <button
-          type="button"
-          role="switch"
-          aria-checked={urgent && isPaidSubscriber}
-          onClick={() => {
-            if (!isPaidSubscriber) {
-              toast.error('Haster er kun tilgjengelig for betalte abonnementer');
-              return;
-            }
-            setUrgent(!urgent);
-          }}
-          className="flex w-full items-center justify-between gap-3 text-left focus-visible:outline-none"
-        >
-          <span className="flex min-w-0 items-center gap-3">
-            <span
-              className={`flex size-9 shrink-0 items-center justify-center rounded-xl transition-colors ${
-                urgent && isPaidSubscriber
-                  ? 'bg-[#122A1C] text-white'
-                  : 'bg-[#F4F6F0] text-[#63665F]'
-              }`}
-            >
-              <Zap size={16} strokeWidth={2.2} />
-            </span>
-            <span className="min-w-0">
-              <span className="flex items-center gap-2 text-[0.9375rem] font-semibold text-[#0B0B0B]">
-                Haster oppdraget?
-                {!isPaidSubscriber && (
-                  <span className="inline-flex h-5 items-center gap-1 rounded-full bg-[#F4F6F0] px-2 text-[0.625rem] font-bold uppercase tracking-wider text-[#63665F]">
-                    <Lock size={9} strokeWidth={2.6} />
-                    Betalt
-                  </span>
-                )}
-              </span>
-              <span className="mt-0.5 block text-[0.8125rem] leading-relaxed text-[#63665F]">
-                Merkes med «Haster» og løftes høyere i søket.
-              </span>
-            </span>
-          </span>
-
-          <span
-            className={`h-6 w-11 shrink-0 rounded-full p-0.75 transition-colors duration-200 ${
-              urgent && isPaidSubscriber ? 'bg-[#2E6641]' : 'bg-[#E6E7E1]'
-            }`}
-          >
-            <span
-              className={`block size-4.5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
-                urgent && isPaidSubscriber ? 'translate-x-5' : 'translate-x-0'
-              }`}
-            />
-          </span>
-        </button>
       </div>
     </div>
   );

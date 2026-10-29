@@ -7,10 +7,11 @@ const TransactionSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    // Null for Hast paid before its job is published (set when the job is).
     serviceId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Service',
-      required: true,
+      default: null,
     },
     planId: {
       type: String,
@@ -57,7 +58,7 @@ const TransactionSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['extra_contact', 'subscription'],
+      enum: ['extra_contact', 'subscription', 'urgent'],
       required: true,
     },
     refunded: {

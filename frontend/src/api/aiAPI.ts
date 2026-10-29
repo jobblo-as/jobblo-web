@@ -36,6 +36,8 @@ interface AIJobListingResponse {
      * user's input was already complete enough.
      */
     openQuestions?: string[];
+    /** Short steps for the job's checklist ("Sjekkliste"). */
+    checklist?: string[];
     duration: AIDuration;
     locationRelevance: 'on-site' | 'remote';
     priceRange: { min: number; max: number };
@@ -53,41 +55,17 @@ interface AIJobListingResponse {
   validationErrors?: string[];
 }
 
-interface AIImageJobResponse {
-  success: boolean;
-  data: {
-    title: string;
-    description: string;
-    category: string;
-    duration: AIDuration;
-    durationRange: { min: number; max: number; unit: AIDuration['unit'] };
-    suggestedPrice: number;
-    priceMin: number;
-    priceMax: number;
-    hourlyRate: number;
-    pricingReasoning: string;
-    isEstimate: true;
-  };
-  error?: string;
-  message?: string;
-}
-
-export const analyzeJobImage = async (
-  image: File,
-  lang?: 'no' | 'en'
-): Promise<AIImageJobResponse> => {
-  const formData = new FormData();
-  formData.append('image', image);
-  if (lang) formData.append('lang', lang);
-  const response = await mainLink.post('/api/ai/analyze-job-image', formData);
-  return response.data;
-};
-
+/**
+ * "Foreslå et utkast": text, up to 3 photos, or both. With photos the request is multipart
+ * (the server reads every field as text there).
+ */
 export const generateFullJobListing = async (
   prompt: string,
-  ctx: AISmartFillContext = {}
+  ctx: AISmartFillContext = {},
+  images: File[] = [],
+  signal?: AbortSignal
 ): Promise<AIJobListingResponse> => {
-  const response = await mainLink.post('/api/ai/generate-full-listing', {
+  const fields = {
     prompt,
     lang: ctx.lang,
     existingTitle: ctx.existingTitle,
@@ -99,6 +77,15 @@ export const generateFullJobListing = async (
     existingCounty: ctx.existingCounty ?? ctx.existingCountyCode,
     existingEquipment: ctx.existingEquipment,
     existingUrgent: ctx.existingUrgent,
-  });
-  return response.data;
+  };
+  if (!images.length) {
+    return (await mainLink.post('/api/ai/generate-full-listing', fields, { signal })).data;
+  }
+  const form = new FormData();
+  for (const [key, value] of Object.entries(fields)) {
+    if (value !== undefined && value !== '')
+      form.append(key, typeof value === 'object' ? JSON.stringify(value) : String(value));
+  }
+  images.slice(0, 3).forEach((file) => form.append('images', file));
+  return (await mainLink.post('/api/ai/generate-full-listing', form, { signal })).data;
 };

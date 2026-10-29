@@ -153,6 +153,12 @@ export async function mockApi(
   return { calls, state };
 }
 
+/** A full-page screenshot into $E2E_SHOTS (to show a reviewer the flow); a no-op without it. */
+export async function shot(page, name) {
+  if (process.env.E2E_SHOTS)
+    await page.screenshot({ path: `${process.env.E2E_SHOTS}/${name}.png`, fullPage: true });
+}
+
 /** Collect uncaught exceptions and console errors for a page. */
 export function watchErrors(page) {
   const errors = [];

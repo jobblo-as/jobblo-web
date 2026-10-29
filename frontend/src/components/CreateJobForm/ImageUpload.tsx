@@ -1,35 +1,38 @@
-import { Upload, Camera, Loader2, X } from 'lucide-react';
+import { Upload, Camera, Loader2, X, ArrowLeft, ArrowRight } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { compressImages } from '../../utils/compressImage';
 
-interface ImageUploadProps {
-  onImagesChange: (files: File[]) => void;
-  existingImages?: string[];
-  onExistingImageRemove?: (url: string) => void;
-  initialFiles?: File[];
+/** One photo in the form: saved (`file` undefined, id = URL) or new. */
+export interface ImageItem {
+  id: string;
+  url: string;
+  file?: File;
 }
 
+interface ImageUploadProps {
+  items: ImageItem[];
+  onAddFiles: (files: File[]) => void;
+  onRemove: (item: ImageItem) => void;
+  onMove: (id: string, step: -1 | 1) => void;
+}
+
+const ROUND_BUTTON =
+  'flex size-8 items-center justify-center rounded-full text-[#63665F] transition-colors hover:bg-[#F4F6F0] hover:text-[#0B0B0B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E6641]/30 disabled:opacity-30 disabled:hover:bg-transparent';
+
+/**
+ * Photos for a job: add (scaled down first), move left/right, delete. The order here is
+ * the order on the job page; the first photo is the main one. State lives in useCreateJobForm.
+ */
 export const ImageUpload: React.FC<ImageUploadProps> = ({
-  onImagesChange,
-  existingImages = [],
-  onExistingImageRemove,
-  initialFiles = [],
+  items,
+  onAddFiles,
+  onRemove,
+  onMove,
 }) => {
-  const [previews, setPreviews] = useState<string[]>([]);
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
-
-  // Handle initial files
-  useEffect(() => {
-    if (initialFiles.length > 0 && selectedFiles.length === 0) {
-      const newPreviews = initialFiles.map((file) => URL.createObjectURL(file));
-      setPreviews(newPreviews);
-      setSelectedFiles(initialFiles);
-    }
-  }, [initialFiles]);
 
   /**
    * The server's own cap is 8 MB per file (backend/middleware/upload.js). Nothing should
@@ -47,7 +50,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
     e.target.value = '';
     if (files.length === 0) return;
 
-    const room = MAX_IMAGES - (selectedFiles.length + existingImages.length);
+    const room = MAX_IMAGES - items.length;
     if (room <= 0) {
       toast.error(`Du kan laste opp inntil ${MAX_IMAGES} bilder.`);
       return;
@@ -74,26 +77,10 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       if (rejected.length > 0) {
         toast.error(`Disse filene er for store og ble ikke lagt til: ${rejected.join(', ')}`);
       }
-      if (validFiles.length === 0) return;
-
-      const updatedFiles = [...selectedFiles, ...validFiles];
-      setSelectedFiles(updatedFiles);
-      onImagesChange(updatedFiles);
-
-      const newPreviews = validFiles.map((file) => URL.createObjectURL(file));
-      setPreviews((prev) => [...prev, ...newPreviews]);
+      if (validFiles.length > 0) onAddFiles(validFiles);
     } finally {
       setIsProcessing(false);
     }
-  };
-
-  const removeImage = (index: number) => {
-    const updatedFiles = selectedFiles.filter((_, i) => i !== index);
-    const updatedPreviews = previews.filter((_, i) => i !== index);
-
-    setSelectedFiles(updatedFiles);
-    setPreviews(updatedPreviews);
-    onImagesChange(updatedFiles);
   };
 
   return (
@@ -151,64 +138,53 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
         </div>
       </div>
 
-      {/* Image Previews Grid */}
-      {(existingImages.length > 0 || previews.length > 0) && (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(100px,1fr))] gap-3 mt-4">
-          {/* Existing Images */}
-          {existingImages.map((url, index) => (
-            <div
-              key={`existing-${index}`}
-              className="relative pt-[100%] rounded-[8px] overflow-hidden border-2 border-[#4CAF50] group"
-            >
-              <img
-                src={url}
-                alt="existing"
-                className="absolute top-0 left-0 w-full h-full object-cover"
-              />
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onExistingImageRemove?.(url);
-                }}
-                aria-label="Slett bilde"
-                className="absolute top-1 right-1 z-10 bg-red-600/90 hover:bg-red-600 text-white border-none rounded-full w-7 h-7 flex items-center justify-center cursor-pointer shadow-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-              >
-                <X size={15} strokeWidth={2.5} />
-              </button>
-              <div className="absolute bottom-0 left-0 right-0 bg-black/40 text-white text-[10px] py-0.5 text-center">
-                Eksisterende
-              </div>
-            </div>
-          ))}
-
-          {/* New Previews */}
-          {previews.map((src, index) => (
-            <div
-              key={`new-${index}`}
-              className="relative pt-[100%] rounded-[8px] overflow-hidden border-2 border-[#e0e0e0] group"
-            >
-              <img
-                src={src}
-                alt="preview"
-                className="absolute top-0 left-0 w-full h-full object-cover"
-              />
-
-              {/* Delete Button */}
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  removeImage(index);
-                }}
-                aria-label="Slett bilde"
-                className="absolute top-1 right-1 z-10 bg-red-600/90 hover:bg-red-600 text-white border-none rounded-full w-7 h-7 flex items-center justify-center cursor-pointer shadow-sm transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-              >
-                <X size={15} strokeWidth={2.5} />
-              </button>
-            </div>
-          ))}
-        </div>
+      {items.length > 0 && (
+        // A row of tiles, like the job page's thumbnails: left/right sets the order.
+        <ol className="mt-4 flex flex-wrap gap-3" aria-label="Bilder i rekkefølge">
+          {items.map((item, index) => {
+            const n = index + 1;
+            return (
+              <li key={item.id} className="w-28 shrink-0">
+                <div className="relative size-28 overflow-hidden rounded-xl border border-[#E6E7E1] bg-white">
+                  <img src={item.url} alt={`Bilde ${n}`} className="size-full object-cover" />
+                  {index === 0 && (
+                    <span className="absolute inset-x-0 bottom-0 bg-black/55 py-0.5 text-center text-[0.6875rem] font-semibold text-white">
+                      Hovedbilde
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => onRemove(item)}
+                    aria-label={`Slett bilde ${n}`}
+                    className="absolute right-1 top-1 flex size-7 items-center justify-center rounded-full bg-white/95 text-[#0B0B0B] shadow-sm transition-colors hover:bg-[#FCF4F3] hover:text-[#B0453B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E6641]/30"
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+                <div className="mt-1 flex items-center justify-center gap-1">
+                  <button
+                    type="button"
+                    onClick={() => onMove(item.id, -1)}
+                    disabled={index === 0}
+                    aria-label={`Flytt bilde ${n} til venstre`}
+                    className={ROUND_BUTTON}
+                  >
+                    <ArrowLeft size={16} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onMove(item.id, 1)}
+                    disabled={index === items.length - 1}
+                    aria-label={`Flytt bilde ${n} til høyre`}
+                    className={ROUND_BUTTON}
+                  >
+                    <ArrowRight size={16} />
+                  </button>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
       )}
     </div>
   );

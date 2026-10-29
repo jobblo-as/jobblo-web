@@ -61,7 +61,8 @@ export default function LeggUtOppdrag() {
       }
 
       toast.success(isEditMode ? 'Oppdrag oppdatert!' : 'Oppdrag publisert!');
-      navigate('/');
+      // A job published with Hast opens on its own page, with the «Haster» mark showing.
+      navigate(response.data.urgent && response.data._id ? `/jobs/${response.data._id}` : '/');
     } catch (error) {
       // Re-thrown on purpose: useCreateJobForm only preserves the IndexedDB
       // draft if this promise rejects. Swallowing the error here made every
@@ -115,7 +116,7 @@ export default function LeggUtOppdrag() {
           <p className="mt-2 max-w-lg text-[0.9375rem] leading-relaxed text-[#63665F]">
             {isEditMode
               ? 'Endringene blir synlige for alle som ser oppdraget.'
-              : 'To korte steg. Du kan forhåndsvise underveis, og utkastet lagres automatisk.'}
+              : 'Tre korte steg. Du kan forhåndsvise underveis, og utkastet lagres automatisk.'}
           </p>
         </header>
 

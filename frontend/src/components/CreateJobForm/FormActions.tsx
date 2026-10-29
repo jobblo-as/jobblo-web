@@ -9,6 +9,10 @@ interface FormActionsProps {
   handleFinalSubmit: () => void;
   setShowPreview: (show: boolean) => void;
   isSubmitting?: boolean;
+  /** The last button's text when it does not publish yet (new job → "Nesten ferdig"). */
+  finalLabel?: string;
+  /** No publish button here (the page shows its own, e.g. Hast's pay button). */
+  hideFinal?: boolean;
 }
 
 const GHOST =
@@ -40,6 +44,8 @@ export const FormActions: React.FC<FormActionsProps> = ({
   handleFinalSubmit,
   setShowPreview,
   isSubmitting = false,
+  finalLabel,
+  hideFinal = false,
 }) => (
   <div className="sticky bottom-0 z-20 -mx-4 mt-8 border-t border-[#E6E7E1] bg-[#EFF0EA]/92 px-4 py-3 backdrop-blur-md sm:-mx-6 sm:px-6">
     <div className="flex items-center gap-2">
@@ -69,7 +75,7 @@ export const FormActions: React.FC<FormActionsProps> = ({
             Neste
             <ChevronRight size={17} strokeWidth={2.4} />
           </button>
-        ) : (
+        ) : hideFinal ? null : (
           <button
             type="button"
             onClick={handleFinalSubmit}
@@ -77,7 +83,8 @@ export const FormActions: React.FC<FormActionsProps> = ({
             className={SOLID}
           >
             {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-            {isSubmitting ? 'Publiserer…' : 'Publiser oppdrag'}
+            {isSubmitting ? 'Publiserer…' : (finalLabel ?? 'Publiser oppdrag')}
+            {finalLabel && !isSubmitting && <ChevronRight size={17} strokeWidth={2.4} />}
           </button>
         )}
       </div>

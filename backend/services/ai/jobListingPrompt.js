@@ -242,6 +242,7 @@ function buildSchema() {
         'category',
         'skills',
         'openQuestions',
+        'checklist',
         'paymentType',
         'hourlyRate',
         'suggestedPrice',
@@ -275,6 +276,12 @@ function buildSchema() {
           items: { type: 'string' },
           description:
             'What a provider would still need to know that the user did not say. Use this instead of guessing. Empty array only when the input is genuinely complete.',
+        },
+        checklist: {
+          type: 'array',
+          items: { type: 'string' },
+          description:
+            '3-8 short steps the provider ticks off while doing this job ("Dekke til gulvet", "Male to strøk"), each under 60 characters, in the output language. Only work the user asked for.',
         },
         paymentType: { type: 'string', enum: PAYMENT_TYPES },
         hourlyRate: { type: 'integer' },
@@ -412,7 +419,7 @@ function buildRequest(context, model) {
     // the shape out, then rely on the validator downstream.
     request.response_format = { type: 'json_object' };
     request.messages[1].content +=
-      '\n\nReturn one JSON object with exactly these keys: title, description, category, skills (array), openQuestions (array), paymentType, hourlyRate, suggestedPrice, priceMin, priceMax, duration {value, unit}, locationRelevance, pricingReasoning. No markdown, no text outside the object.';
+      '\n\nReturn one JSON object with exactly these keys: title, description, category, skills (array), openQuestions (array), checklist (array of short steps), paymentType, hourlyRate, suggestedPrice, priceMin, priceMax, duration {value, unit}, locationRelevance, pricingReasoning. No markdown, no text outside the object.';
   }
 
   return request;

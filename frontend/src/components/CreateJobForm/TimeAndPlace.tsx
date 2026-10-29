@@ -62,6 +62,8 @@ export const TimeAndPlace: React.FC<TimeAndPlaceProps> = ({
   const [lookupError, setLookupError] = useState('');
   const lookup = useRef(0);
   const confirmed = !!address && !!coordinates;
+  // Local YYYY-MM-DD (sv-SE formats that way), the date input's own format.
+  const today = new Date().toLocaleDateString('sv-SE');
 
   /** A Kartverket hit fills address, postnummer, sted, fylke, kommune and the point (as in the app). */
   const pickAddress = (hit: AddressHit) => {
@@ -299,6 +301,8 @@ export const TimeAndPlace: React.FC<TimeAndPlaceProps> = ({
               title="Velg fra dato"
               type="date"
               value={fromDate ? fromDate.split('T')[0] : ''}
+              // Same rule as the app: optional, and a chosen day is today or later.
+              min={today}
               onChange={(e) => setFromDate(e.target.value)}
               className={`w-full px-4 md:px-6 py-3 md:py-4 rounded-xl border bg-white text-sm md:text-base outline-none transition-all cursor-pointer
                 ${errors?.fromDate ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/5' : 'border-gray-200 focus:border-[#2D7A4D] focus:ring-4 focus:ring-[#2D7A4D]/5'}`}
@@ -321,6 +325,7 @@ export const TimeAndPlace: React.FC<TimeAndPlaceProps> = ({
               title="Velg til dato"
               type="date"
               value={toDate ? toDate.split('T')[0] : ''}
+              min={fromDate ? fromDate.split('T')[0] : today}
               onChange={(e) => setToDate(e.target.value)}
               className={`w-full px-4 md:px-6 py-3 md:py-4 rounded-xl border bg-white text-sm md:text-base outline-none transition-all cursor-pointer
                 ${errors?.toDate ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/5' : 'border-gray-200 focus:border-[#2D7A4D] focus:ring-4 focus:ring-[#2D7A4D]/5'}`}

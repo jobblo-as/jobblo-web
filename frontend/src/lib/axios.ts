@@ -138,7 +138,8 @@ export const setupInterceptors = (instance: AxiosInstance) => {
         };
       }
 
-      if (process.env.NODE_ENV === 'development') {
+      // A request the app cancelled on purpose (AbortController) is not an error.
+      if (process.env.NODE_ENV === 'development' && !axios.isCancel(error)) {
         const status = error.response?.status;
         const message =
           (error as any).apiError?.message ||

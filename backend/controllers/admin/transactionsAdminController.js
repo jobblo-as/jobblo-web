@@ -10,7 +10,7 @@ const { queryString } = require('../../utils/devQuery');
 
 const SORT_FIELDS = ['createdAt', 'amount', 'status'];
 const VALID_STATUSES = ['pending', 'succeeded', 'failed', 'refunded'];
-const VALID_TYPES = ['subscription', 'extra_contact'];
+const VALID_TYPES = ['subscription', 'extra_contact', 'urgent'];
 
 /**
  * GET /api/admin/transactions

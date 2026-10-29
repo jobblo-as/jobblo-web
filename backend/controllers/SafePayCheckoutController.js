@@ -1259,6 +1259,23 @@ exports.connectMobileReturnUrl = (req) => {
   return { url: `${origin.base}/api/safepay-checkout/mobile-return?state=connect` };
 };
 
+/**
+ * Hast (39 kr) paid from the app before publishing: the same bridge with `state=hast` /
+ * `state=hast-cancel`, which hands off to the app's "Legg ut" flow (it confirms the payment
+ * itself, as for SafePay).
+ */
+exports.hastMobileReturnUrls = (req) => {
+  const link = resolveAppLinkPrefix();
+  if (link.error) return { error: link.error };
+  const origin = resolveMobileReturnBase(req);
+  if (origin.error) return { error: origin.error };
+  const bridge = `${origin.base}/api/safepay-checkout/mobile-return`;
+  return {
+    success: `${bridge}?state=hast&session_id={CHECKOUT_SESSION_ID}`,
+    cancel: `${bridge}?state=hast-cancel`,
+  };
+};
+
 exports.mobileReturn = (req, res) => {
   res.set({
     'Content-Type': 'text/html; charset=utf-8',
@@ -1271,8 +1288,9 @@ exports.mobileReturn = (req, res) => {
 
   const query = req.query || {};
   const pick = (value) => (typeof value === 'string' ? value.trim() : '');
-  const cancelled = pick(query.state) === 'cancel';
+  const cancelled = pick(query.state) === 'cancel' || pick(query.state) === 'hast-cancel';
   const connect = pick(query.state) === 'connect';
+  const hast = pick(query.state) === 'hast' || pick(query.state) === 'hast-cancel';
   // Anything that is not exactly the expected shape becomes an empty string and is simply
   // left out of the deep link. Both id charsets are URL-safe by construction, so no
   // encoding step is needed — and `{CHECKOUT_SESSION_ID}` failing to substitute lands here
@@ -1284,6 +1302,9 @@ exports.mobileReturn = (req, res) => {
   let target = '';
   if (link.error) {
     console.error('mobileReturn: %s', link.error);
+  } else if (hast) {
+    // Back to "Legg ut" (app/(app)/create-job.tsx); the app asks the server about the payment.
+    target = `${link.prefix}create-job`;
   } else if (connect) {
     // Stripe Connect onboarding finished (or its link expired); the payout screen re-reads the status.
     target = `${link.prefix}profile/settings/payout`;

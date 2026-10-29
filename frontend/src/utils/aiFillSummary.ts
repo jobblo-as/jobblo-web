@@ -49,6 +49,7 @@ export type AiDraft = {
   hourlyRate?: number;
   paymentType?: 'Timepris' | 'Fastpris' | 'Anbud';
   tags?: string[];
+  checklist?: string[];
   remote?: boolean;
   pricingReasoning?: string;
 };
@@ -60,7 +61,8 @@ export type AiDraftKey =
   | 'price'
   | 'hourlyRate'
   | 'paymentType'
-  | 'tags';
+  | 'tags'
+  | 'checklist';
 export type AiDraftRow = { key: AiDraftKey; label: string; value: string; overwrites: boolean };
 
 const UNIT: Record<string, string> = { minutes: 'minutter', hours: 'timer', days: 'dager' };
@@ -84,6 +86,7 @@ export const draftRows = (d: AiDraft, has: Record<AiDraftKey, boolean>): AiDraft
       d.duration ? `${d.duration.value} ${UNIT[d.duration.unit] ?? 'timer'}` : undefined,
     ],
     ['tags', 'Ferdigheter', d.tags?.join(', ')],
+    ['checklist', 'Sjekkliste', d.checklist?.map((step) => `• ${step}`).join('\n')],
   ];
   return rows
     .filter(([, , value]) => value)
