@@ -15,6 +15,13 @@ export const saveJobDraft = async (id: string | null, data: object): Promise<str
     ? (await mainLink.put(`/api/job-drafts/${encodeURIComponent(id)}`, { data })).data.draft._id
     : (await mainLink.post('/api/job-drafts', { data })).data.draft._id;
 
+/** One photo for the draft, stored on the server; returns its URL. */
+export const uploadJobDraftImage = async (id: string, file: File): Promise<string> => {
+  const form = new FormData();
+  form.append('image', file);
+  return (await mainLink.post(`/api/job-drafts/${encodeURIComponent(id)}/images`, form)).data.url;
+};
+
 export const deleteJobDraft = async (id: string): Promise<void> => {
   await mainLink.delete(`/api/job-drafts/${encodeURIComponent(id)}`);
 };

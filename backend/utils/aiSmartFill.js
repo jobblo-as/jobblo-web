@@ -304,6 +304,18 @@ function validateSmartFillOutput(raw, ctx = {}) {
   ).slice(0, 5);
   cleaned.openQuestions = openQuestions;
 
+  // 7c. Checklist — steps for the job's checklist ("Sjekkliste"), at most the 10 the form takes.
+  let checklist = Array.isArray(raw && raw.checklist) ? raw.checklist.slice() : [];
+  checklist = Array.from(
+    new Set(
+      checklist
+        .map((s) => (s || '').toString().trim())
+        .filter(Boolean)
+        .map((s) => (s.length > 100 ? s.slice(0, 99) + '…' : s))
+    )
+  ).slice(0, 10);
+  cleaned.checklist = checklist;
+
   // 8. Category — if AI suggested one that is in the allowed list keep it,
   // else fall back to user's existing (don't let AI move jobs to unknown cats).
   const catAllowed = Array.isArray(ctx.categoryAllowList)

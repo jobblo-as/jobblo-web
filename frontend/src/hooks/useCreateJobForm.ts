@@ -1,14 +1,19 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import toast from 'react-hot-toast';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { analyzeJobImage, generateFullJobListing, type AISmartFillContext } from '../api/aiAPI';
+import { generateFullJobListing, type AISmartFillContext } from '../api/aiAPI';
 import { useTranslate } from '../i18n/useTranslate';
 import { useUserStore } from '../stores/userStore';
 import { usePaymentCalculation } from './usePaymentCalculation';
 import { useForm } from './useForm';
 import { JOB_LIMITS, jobValidationSchema, type JobFormValues } from '../validations/jobValidations';
 import { saveFormData, loadFormData, clearFormData } from '../utils/indexedDB';
-import { deleteJobDraft, getJobDraft, saveJobDraft } from '../api/jobDraftsAPI';
+import {
+  deleteJobDraft,
+  getJobDraft,
+  saveJobDraft,
+  uploadJobDraftImage,
+} from '../api/jobDraftsAPI';
 import { getErrorMessage, errorBody } from '../utils/getErrorMessage';
 import {
   summariseAiFill,
@@ -61,8 +66,13 @@ type JobDraft = Partial<
     /** The "Dine utkast" copy on the server this local draft mirrors. */
     serverDraftId: string | null;
     checklistItems: { id: string; text: string }[];
+    /** New photos already uploaded with the server draft: file signature → URL. */
+    draftImageUrls: Record<string, string>;
   }
 >;
+
+/** A photo's identity that survives the IndexedDB round trip (File objects do not). */
+const fileSig = (file: File) => `${file.name}:${file.size}:${file.lastModified}`;
 
 interface InitialData {
   title?: string;
@@ -220,22 +230,26 @@ export const useCreateJobForm = (
 
   const [tags, setTags] = useState<string[]>([]);
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
-  const [imageAnalysis, setImageAnalysis] = useState<{
-    status: 'idle' | 'loading' | 'success' | 'error';
-    message?: string;
-    durationRange?: { min: number; max: number; unit: string };
-  }>({ status: 'idle' });
   const [currentImages, setCurrentImages] = useState<string[]>(initialData?.images || []);
   const [imagesToDelete, setImagesToDelete] = useState<string[]>([]);
   const [showPreview, setShowPreview] = useState(false);
   const [isGeneratingFullListing, setIsGeneratingFullListing] = useState(false);
-  const analyzeImageMutation = useMutation({
-    mutationFn: ({ file, lang }: { file: File; lang?: 'no' | 'en' }) => analyzeJobImage(file, lang),
-  });
   const smartFillMutation = useMutation({
-    mutationFn: ({ prompt, ctx }: { prompt: string; ctx: AISmartFillContext }) =>
-      generateFullJobListing(prompt, ctx),
+    mutationFn: ({
+      prompt,
+      ctx,
+      images,
+    }: {
+      prompt: string;
+      ctx: AISmartFillContext;
+      images: File[];
+    }) => generateFullJobListing(prompt, ctx, images, aiAbort.current?.signal),
   });
+  // Hast paid on "Nesten ferdig" before publishing: sent with the job, the server checks it.
+  const [urgentPurchaseId, setUrgentPurchaseId] = useState<string | null>(null);
+  // "Avbryt" in the loading dialog: stops the request, so no late answer reaches the form.
+  const aiAbort = useRef<AbortController | null>(null);
+  const cancelAiSmartFill = () => aiAbort.current?.abort();
   const [smartFillSuggestionFlags, setSmartFillSuggestionFlags] = useState<{
     title?: boolean;
     description?: boolean;
@@ -323,52 +337,67 @@ export const useCreateJobForm = (
     [clearFieldError]
   );
 
-  const handleImageSelection = async (files: File[]) => {
-    handleImagesChange(files);
-    if (!files[0]) {
-      setImageAnalysis({ status: 'idle' });
+  const handleImageSelection = (files: File[]) => handleImagesChange(files);
+
+  // "Bilder": one list of saved photos (id = URL) and new files (id per File), in the order
+  // the owner chose. Kept here so it survives switching steps.
+  // ponytail: the order is not in the autosaved draft; a reload keeps the photos in upload
+  // order. Add it to the draft payload if that matters.
+  const fileKeys = useRef(new WeakMap<File, { id: string; url: string }>());
+  const fileKey = (file: File) => {
+    let key = fileKeys.current.get(file);
+    if (!key) {
+      key = { id: `new-${Math.random().toString(36).slice(2)}`, url: URL.createObjectURL(file) };
+      fileKeys.current.set(file, key);
     }
+    return key;
+  };
+  const [imageOrder, setImageOrder] = useState<string[]>([]);
+  // Photos already stored with the server draft ("Dine utkast"), so they follow the draft to
+  // other devices and are not uploaded twice when the job is published.
+  const [draftImageUrls, setDraftImageUrls] = useState<Record<string, string>>({});
+  // The same map, current inside the queued sync: a sync queued before an upload finished must
+  // not upload that photo a second time.
+  const draftUrlsRef = useRef<Record<string, string>>({});
+  draftUrlsRef.current = { ...draftUrlsRef.current, ...draftImageUrls };
+  const imageItems = useMemo(() => {
+    const all = [
+      ...currentImages.map((url) => ({ id: url, url, file: undefined as File | undefined })),
+      ...selectedImages.map((file) => ({ ...fileKey(file), file })),
+    ];
+    const rank = (id: string) => {
+      const i = imageOrder.indexOf(id);
+      return i < 0 ? Number.MAX_SAFE_INTEGER : i;
+    };
+    return all
+      .map((item, i) => ({ item, i }))
+      .sort((a, b) => rank(a.item.id) - rank(b.item.id) || a.i - b.i)
+      .map(({ item }) => item);
+  }, [currentImages, selectedImages, imageOrder]);
+  const moveImage = (id: string, step: -1 | 1) => {
+    const ids = imageItems.map((item) => item.id);
+    const i = ids.indexOf(id);
+    const j = i + step;
+    if (i < 0 || j < 0 || j >= ids.length) return;
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+    setImageOrder(ids);
   };
 
-  const triggerImageAnalysis = async () => {
-    const file = selectedImages[0];
-    if (!file) return;
-    setImageAnalysis({ status: 'loading' });
-    try {
-      const response = await analyzeImageMutation.mutateAsync({ file, lang: locale });
-      if (!response.success || !response.data) throw new Error(response.message || response.error);
-      const suggestion = response.data;
-      setAiDraft({
-        title: suggestion.title,
-        description: suggestion.description,
-        categories: suggestion.category,
-        duration: suggestion.duration,
-        hourlyRate: suggestion.hourlyRate,
-        price: paymentType !== 'Timepris' ? suggestion.suggestedPrice : undefined,
-        pricingReasoning: suggestion.pricingReasoning,
-      });
-      setImageAnalysis({ status: 'success', durationRange: suggestion.durationRange });
-    } catch (err) {
-      setImageAnalysis({
-        status: 'error',
-        message:
-          errorBody(err)?.message ||
-          errorBody(err)?.error ||
-          'Bildet kunne ikke analyseres. Fyll ut skjemaet manuelt.',
-      });
-    }
-  };
-
+  /** "Foreslå et utkast": the text, the first 3 new photos, or both, in one AI call. */
   const handleAiSmartFill = async () => {
-    if (!smartFillPrompt || smartFillPrompt.length < 5) {
-      toast.error('Vennligst beskriv hva du trenger hjelp med (min. 5 tegn)');
+    // The first 3 new photos as the owner ordered them.
+    const images = imageItems.flatMap((item) => (item.file ? [item.file] : [])).slice(0, 3);
+    if (!images.length && smartFillPrompt.trim().length < 5) {
+      toast.error('Legg til bilder eller beskriv oppdraget (min. 5 tegn).');
       return;
     }
 
     setIsGeneratingFullListing(true);
+    aiAbort.current = new AbortController();
     try {
       const response = await smartFillMutation.mutateAsync({
-        prompt: smartFillPrompt,
+        prompt: smartFillPrompt.trim(),
+        images,
         ctx: {
           lang: locale,
           existingTitle: values.title || undefined,
@@ -413,6 +442,7 @@ export const useCreateJobForm = (
               ? d.paymentType
               : undefined,
           tags: Array.isArray(d.skills) && d.skills.length ? d.skills : undefined,
+          checklist: d.checklist?.length ? d.checklist : undefined,
           remote: d.locationRelevance === 'remote',
           pricingReasoning: d.pricingReasoning,
         });
@@ -420,6 +450,7 @@ export const useCreateJobForm = (
         setSmartFillPrompt('');
       }
     } catch (err) {
+      if (aiAbort.current?.signal.aborted) return; // cancelled by the user: nothing to report
       console.error('SMART FILL ERROR:', err);
       const errorMessage =
         errorBody(err)?.error || errorBody(err)?.message || 'Kunne ikke generere jobbinformasjon.';
@@ -448,6 +479,16 @@ export const useCreateJobForm = (
             hourlyRate: Number(hourlyRate) > 0,
             paymentType: false,
             tags: tags.length > 0,
+            // The category's template is not the user's own text; anything else is.
+            checklist: checklistItems.some(
+              (item) =>
+                !getCategorySuggestions(
+                  String(
+                    (Array.isArray(values.categories) ? values.categories[0] : values.categories) ??
+                      ''
+                  )
+                ).includes(item.text)
+            ),
           })
         : [],
     [
@@ -459,6 +500,7 @@ export const useCreateJobForm = (
       durationValue,
       hourlyRate,
       tags,
+      checklistItems,
     ]
   );
 
@@ -497,6 +539,13 @@ export const useCreateJobForm = (
     }
     if (pick.has('paymentType') && d.paymentType) setPaymentType(d.paymentType);
     if (pick.has('tags') && d.tags) setTags(d.tags);
+    if (pick.has('checklist') && d.checklist)
+      setChecklistItems(
+        d.checklist.map((text) => ({
+          id: Date.now() + Math.random().toString(36).substr(2, 9),
+          text,
+        }))
+      );
     if (d.remote && !values.city) setCity('Fjernarbeid / Remote');
     setSmartFillSuggestionFlags(flags);
     toast.success(summariseAiFill(flags), { duration: 3000 });
@@ -553,7 +602,10 @@ export const useCreateJobForm = (
           setPaymentType(data.paymentType || 'Fastpris');
           setTags(data.tags || []);
           setCurrentStep(Math.min(data.currentStep || 1, LAST_STEP));
-          setCurrentImages(data.currentImages || []);
+          // Opened from "Dine utkast": the photos are the ones stored with that draft.
+          const stored = utkast ? Object.values(data.draftImageUrls || {}) : [];
+          setCurrentImages([...new Set([...(data.currentImages || []), ...stored])]);
+          setDraftImageUrls(data.draftImageUrls || {});
           setImagesToDelete(data.imagesToDelete || []);
           setShowSmartFillInput(data.showSmartFillInput || false);
           setSmartFillPrompt(data.smartFillPrompt || '');
@@ -617,6 +669,7 @@ export const useCreateJobForm = (
           showSmartFillInput,
           smartFillPrompt,
           checklistItems,
+          draftImageUrls,
         };
         await saveFormData(
           { ...dataToSave, serverDraftId: serverDraftId.current },
@@ -632,6 +685,14 @@ export const useCreateJobForm = (
               const created = !serverDraftId.current;
               serverDraftId.current = await saveJobDraft(serverDraftId.current, dataToSave);
               if (created) queryClient.invalidateQueries({ queryKey: ['job-drafts'] });
+              // New photos go up with the draft, once each; the saved map is the record.
+              for (const file of selectedImages) {
+                const sig = fileSig(file);
+                if (draftUrlsRef.current[sig]) continue;
+                const url = await uploadJobDraftImage(serverDraftId.current, file);
+                draftUrlsRef.current = { ...draftUrlsRef.current, [sig]: url };
+                setDraftImageUrls((prev) => ({ ...prev, [sig]: url }));
+              }
             } catch (err) {
               // Deleted elsewhere: the next edit starts a new one. Anything else: try next edit.
               if ((err as { response?: { status?: number } })?.response?.status === 404)
@@ -670,6 +731,7 @@ export const useCreateJobForm = (
     maxApplicants,
     checklistItems,
     coordinates,
+    draftImageUrls,
   ]);
   const validateStep = (step: number) => {
     const currentErrors: Partial<Record<keyof JobFormValues, string>> = {};
@@ -920,14 +982,8 @@ export const useCreateJobForm = (
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
-  const handleFinalSubmit = async () => {
-    // Defensive guard: if we're somehow already submitting, ignore the click
-    // (prevents double-submission and any "stuck loading" state from a previous
-    // failed run that didn't reach `finally`).
-    if (isSubmitting) return;
-
-    // Publish validates the whole form, not just the step in front of you.
-    //
+  /** The whole form, not just the step in front of you; sends the user to the first problem. */
+  const validateAll = () => {
     // `loadFormData` restores `currentStep`, so a draft can reopen on the last page with an
     // empty title on the first. `find` stops at the first failing step, the one to go back to.
     // validateStep(4) is the contact rules, which live on page 2 now.
@@ -945,8 +1001,17 @@ export const useCreateJobForm = (
       } else {
         reportMissing(page);
       }
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const handleFinalSubmit = async () => {
+    // Defensive guard: if we're somehow already submitting, ignore the click
+    // (prevents double-submission and any "stuck loading" state from a previous
+    // failed run that didn't reach `finally`).
+    if (isSubmitting) return;
+    if (!validateAll()) return;
 
     // Narrowing for TypeScript — step 2 above already refuses to pass without a pin, and
     // publishing without one used to fall back to Oslo city centre, putting the job in the
@@ -1001,9 +1066,19 @@ export const useCreateJobForm = (
         formData.append('duration[unit]', durationUnit);
       }
 
-      selectedImages.forEach((file) => {
-        formData.append('images', file);
+      // New files in the chosen order; `imageOrder` places them among the saved ones.
+      let added = 0;
+      const order = imageItems.map((item) => {
+        if (!item.file) return item.url;
+        // Already stored with the draft: the server takes it from there, no second upload.
+        const stored = !isEditMode && draftImageUrls[fileSig(item.file)];
+        if (stored) return stored;
+        formData.append('images', item.file);
+        return `new:${added++}`;
       });
+      formData.append('imageOrder', JSON.stringify(order));
+      if (!isEditMode && serverDraftId.current) formData.append('draftId', serverDraftId.current);
+      if (urgent && urgentPurchaseId) formData.append('urgentPurchaseId', urgentPurchaseId);
 
       imagesToDelete.forEach((url) => {
         formData.append('imagesToDelete', url);
@@ -1056,10 +1131,7 @@ export const useCreateJobForm = (
   };
 
   const previewJobData = useMemo(() => {
-    const previewImages = [
-      ...currentImages,
-      ...selectedImages.map((file) => URL.createObjectURL(file)),
-    ];
+    const previewImages = imageItems.map((item) => item.url);
 
     return {
       title: values.title,
@@ -1102,8 +1174,7 @@ export const useCreateJobForm = (
   }, [
     values,
     hourlyRate,
-    currentImages,
-    selectedImages,
+    imageItems,
     tags,
     durationValue,
     durationUnit,
@@ -1166,8 +1237,6 @@ export const useCreateJobForm = (
     // The wrapper, not the raw setter — it also clears the "last opp minst ett bilde" error.
     setSelectedImages: handleImagesChange,
     handleImageSelection,
-    triggerImageAnalysis,
-    imageAnalysis,
     currentImages,
     setCurrentImages,
     imagesToDelete,
@@ -1183,12 +1252,18 @@ export const useCreateJobForm = (
     smartFillPricingNote,
     setSmartFillPricingNote,
     handleAiSmartFill,
+    cancelAiSmartFill,
+    urgentPurchaseId,
+    setUrgentPurchaseId,
     aiDraftRows,
     applyAiDraft,
     handleNext,
     handleBack,
     handleFinalSubmit,
+    validateAll,
     handleExistingImageRemove,
+    imageItems,
+    moveImage,
     handleCancel,
     previewJobData,
     currentUser,

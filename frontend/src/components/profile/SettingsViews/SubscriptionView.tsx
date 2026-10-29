@@ -32,7 +32,7 @@ interface Transaction {
   amount: number;
   currency: string;
   status: string;
-  type: 'subscription' | 'extra_contact';
+  type: 'subscription' | 'extra_contact' | 'urgent';
   createdAt: string;
 }
 

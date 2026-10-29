@@ -116,7 +116,7 @@ const getApiClients = asyncHandler(async (req, res) => {
     .trim()
     .slice(0, 64);
   if (ip) {
-    const [endpoints, series, security] = await Promise.all([
+    const [endpoints, series, security, auth] = await Promise.all([
       ApiMetricMinute.aggregate([
         { $match: { ...match, 'ips.ip': ip } },
         { $unwind: '$ips' },
@@ -149,6 +149,13 @@ const getApiClients = asyncHandler(async (req, res) => {
         { $match: { ip, at: { $gte: from, $lte: to } } },
         { $group: { _id: '$type', n: { $sum: 1 } } },
       ]),
+      // Sign-ins and password resets from this IP: what happened, for which (masked) email.
+      require('../../models/AuthEvent')
+        .find({ ip, at: { $gte: from, $lte: to } })
+        .sort({ at: -1 })
+        .limit(50)
+        .select('-_id type email at userAgent')
+        .lean(),
     ]);
     return sendSuccess(res, {
       ip,
@@ -162,6 +169,7 @@ const getApiClients = asyncHandler(async (req, res) => {
       })),
       series: series.map((s) => ({ t: s._id, requests: s.requests, failed: s.failed })),
       security: Object.fromEntries(security.map((s) => [s._id, s.n])),
+      auth,
     });
   }
   if (!req.query.route) return sendError(res, 'ip or route is required.', 400);

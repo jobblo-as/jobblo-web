@@ -44,11 +44,12 @@ import { UpgradeModal, type ExtraContactOffer } from '../../components/shared/Up
 import OrderRequestModal from '../../components/job/OrderRequestModal';
 import ReportJobModal from '../../components/job/ReportJobModal';
 import { submitUserJobReport } from '../../api/admin/jobReports';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   getConnectStatus,
   getContactEntitlements,
   getExtraContactStatus,
+  getUrgentStatus,
 } from '../../api/stripeAPI';
 
 import { useConfigByKey, usePlans } from '../../features/plans/hooks';
@@ -263,6 +264,45 @@ const JobListingDetailPage = () => {
         await new Promise((resolve) => setTimeout(resolve, 2000));
       }
       if (!cancelled) toast('Betalingen bekreftes fortsatt. Prøv å sende forespørselen om litt.');
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuth]);
+
+  // Hast (39 kr) bought for a published job (the app's flow): back from Stripe, confirm with
+  // the server, never the redirect alone. The web pays on "Nesten ferdig" before publishing.
+  const queryClient = useQueryClient();
+  useEffect(() => {
+    const outcome = searchParams.get('urgent');
+    if (!outcome || !isAuth) return;
+    const sessionId = searchParams.get('session_id');
+    setSearchParams({}, { replace: true });
+    if (outcome !== 'success' || !sessionId) {
+      toast('Betalingen for Hast ble avbrutt. Oppdraget er publisert uten «Haster».');
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      for (let attempt = 0; attempt < 10 && !cancelled; attempt += 1) {
+        try {
+          const data = await getUrgentStatus(sessionId);
+          if (data.status === 'paid') {
+            toast.success('Betalt. Oppdraget er merket «Haster».');
+            queryClient.invalidateQueries({ queryKey: ['jobDetail', id] });
+            return;
+          }
+          if (data.status === 'expired') {
+            toast.error('Betalingen ble ikke fullført.');
+            return;
+          }
+        } catch {
+          // Retry below; the webhook may still be on its way.
+        }
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
+      if (!cancelled) toast('Betalingen bekreftes fortsatt. «Haster» vises når den er klar.');
     })();
     return () => {
       cancelled = true;
@@ -693,10 +733,15 @@ const JobListingDetailPage = () => {
                       type="button"
                       onClick={() => setSelectedImageIndex(idx)}
                       aria-label={`Vis bilde ${idx + 1}`}
-                      className={`size-16 shrink-0 overflow-hidden rounded-xl transition-all ${
+                      aria-current={idx === selectedImageIndex ? 'true' : undefined}
+                      // No fade on the others: a light photo at 65 % melted into the page and
+                      // looked like an empty box. A hairline border keeps every one visible.
+                      className={`size-16 shrink-0 overflow-hidden rounded-xl border bg-white transition-colors ${
+                        // The one in view: a darker grey border, no ring (the scroll strip
+                        // clipped the ring's offset, and green read as a second focus state).
                         idx === selectedImageIndex
-                          ? 'ring-2 ring-[#2E6641] ring-offset-2 ring-offset-[#EFF0EA]'
-                          : 'opacity-65 hover:opacity-100'
+                          ? 'border-[#63665F]'
+                          : 'border-[#E6E7E1] hover:border-[#9B9E96]'
                       }`}
                     >
                       <img src={img} className="size-full object-cover" alt="" />

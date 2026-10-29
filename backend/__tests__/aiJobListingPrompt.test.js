@@ -313,12 +313,27 @@ describe('validator hardening', () => {
     expect(Array.isArray(cleaned.openQuestions)).toBe(true);
   });
 
+  test('checklist: trimmed, no blanks or repeats, at most the 10 the form takes', () => {
+    const steps = Array.from({ length: 14 }, (_, i) => `Steg ${i}`);
+    const { cleaned } = validateSmartFillOutput(
+      { title: 'Vask av leilighet', checklist: [' Vaske vinduer ', 'Vaske vinduer', '', ...steps] },
+      vctx
+    );
+    expect(cleaned.checklist[0]).toBe('Vaske vinduer');
+    expect(cleaned.checklist).toHaveLength(10);
+    expect(new Set(cleaned.checklist).size).toBe(10);
+    expect(validateSmartFillOutput({ title: 'Vask av leilighet' }, vctx).cleaned.checklist).toEqual(
+      []
+    );
+  });
+
   test('post-processing invents no fields of its own', () => {
     const { cleaned } = validateSmartFillOutput({ title: 'Vask av leilighet' }, vctx);
     // Anything not in this list is a field we started fabricating downstream.
     expect(Object.keys(cleaned).sort()).toEqual(
       [
         'category',
+        'checklist',
         'description',
         'duration',
         'heuristicTotal',

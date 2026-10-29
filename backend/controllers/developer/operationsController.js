@@ -517,6 +517,74 @@ function ipRisk(r, blocked = false) {
  * ponytail: merges up to 2000 IPs in memory per call; move to a pre-aggregated
  * per-IP collection if traffic ever produces far more distinct IPs than that.
  */
+/**
+ * The rows on the page, with where the IP is (country, city) and who is signed in from it:
+ * the accounts with an active session on that IP, with when they logged in. Only the page in
+ * view is enriched, so a large range costs one session query and at most one geo lookup.
+ * ponytail: sessions end on logout, so an account that signed in and out is not listed; a
+ * `login_success` event in SecurityEvent would keep that history.
+ */
+async function withWhoAndWhere(rows, from, to) {
+  const ips = rows.map((r) => r.ip);
+  if (!ips.length) return rows;
+  const [geo, sessions, auth] = await Promise.all([
+    require('../../services/monitoring/ipGeo').geoFor(ips),
+    Session.find({ ip: { $in: [...ips, ...ips.map((ip) => `::ffff:${ip}`)] } })
+      .select('ip userId location createdAt lastUsed')
+      .populate('userId', 'email name')
+      .sort({ createdAt: -1 })
+      .limit(500)
+      .lean(),
+    // Sign-in / password-reset counts per IP in range (models/AuthEvent).
+    require('../../models/AuthEvent').aggregate([
+      { $match: { ip: { $in: ips }, at: { $gte: from, $lte: to } } },
+      { $group: { _id: { ip: '$ip', type: '$type' }, n: { $sum: 1 } } },
+    ]),
+  ]);
+  const authByIp = new Map();
+  for (const a of auth) {
+    const counts = authByIp.get(a._id.ip) || {};
+    counts[a._id.type] = a.n;
+    authByIp.set(a._id.ip, counts);
+  }
+  const usersByIp = new Map();
+  for (const s of sessions) {
+    if (!s.userId?.email) continue;
+    const ip = String(s.ip).replace(/^::ffff:/, '');
+    const list = usersByIp.get(ip) || [];
+    // One line per account: its latest login from this IP.
+    if (!list.some((u) => u.userId === String(s.userId._id)))
+      list.push({
+        userId: String(s.userId._id),
+        email: s.userId.email,
+        name: s.userId.name || null,
+        loginAt: s.createdAt,
+        lastActive: s.lastUsed || null,
+        location: s.location && s.location !== 'Unknown' ? s.location : null,
+      });
+    usersByIp.set(ip, list);
+  }
+  return rows.map((r) => {
+    const users = usersByIp.get(r.ip) || [];
+    const g = geo.get(r.ip) || {};
+    return {
+      ...r,
+      // The lookup first; else the city/country saved when one of its sessions logged in.
+      country:
+        g.country ||
+        users
+          .find((u) => u.location)
+          ?.location?.split(', ')
+          .pop() ||
+        null,
+      countryCode: g.countryCode || null,
+      city: g.city || null,
+      users,
+      auth: authByIp.get(r.ip) || {},
+    };
+  });
+}
+
 const getIps = asyncHandler(async (req, res) => {
   const { from, to } = parseRange({ range: req.query.range || '24h', ...req.query });
   const [traffic, security, blocks] = await Promise.all([
@@ -623,19 +691,15 @@ const getIps = asyncHandler(async (req, res) => {
   const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
   const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 200);
   const total = all.length;
-  return sendSuccess(
-    res,
-    { range: { from, to }, yourIp: own, summary, ips: all.slice((page - 1) * limit, page * limit) },
-    'IPs retrieved.',
-    {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-      hasNextPage: page * limit < total,
-      hasPreviousPage: page > 1,
-    }
-  );
+  const ips = await withWhoAndWhere(all.slice((page - 1) * limit, page * limit), from, to);
+  return sendSuccess(res, { range: { from, to }, yourIp: own, summary, ips }, 'IPs retrieved.', {
+    page,
+    limit,
+    total,
+    totalPages: Math.ceil(total / limit),
+    hasNextPage: page * limit < total,
+    hasPreviousPage: page > 1,
+  });
 });
 
 // ── 22. Feature flags (GlobalConfig feature_/flag_ keys) ────────────────────

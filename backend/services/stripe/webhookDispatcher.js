@@ -86,6 +86,11 @@ function isExtraContactSession(session) {
   return session?.metadata?.type === 'extra_contact';
 }
 
+/** "Hast" bought for a job (services/urgentPurchase.js). */
+function isUrgentSession(session) {
+  return session?.metadata?.type === 'urgent';
+}
+
 function isV2SubscriptionEvent(event) {
   const object = event?.data?.object;
   if (event?.type === 'subscription_schedule.created') return true;
@@ -163,6 +168,9 @@ async function handleEvent(event, { io, stripe } = {}) {
       if (isExtraContactSession(session)) {
         return require('../subscriptions/v2ExtraContacts').confirmExtraContactSession(session);
       }
+      if (isUrgentSession(session)) {
+        return require('../urgentPurchase').confirmUrgentSession(session);
+      }
       if (isLegacySubscriptionSession(session)) {
         return { handled: 'subscription_rebuild_in_progress' };
       }
@@ -183,6 +191,9 @@ async function handleEvent(event, { io, stripe } = {}) {
       if (isExtraContactSession(session)) {
         return require('../subscriptions/v2ExtraContacts').confirmExtraContactSession(session);
       }
+      if (isUrgentSession(session)) {
+        return require('../urgentPurchase').confirmUrgentSession(session);
+      }
       if (isLegacySubscriptionSession(session)) {
         return { handled: 'subscription_rebuild_in_progress' };
       }
@@ -199,6 +210,9 @@ async function handleEvent(event, { io, stripe } = {}) {
       }
       if (isExtraContactSession(session)) {
         return require('../subscriptions/v2ExtraContacts').expireExtraContactSession(session);
+      }
+      if (isUrgentSession(session)) {
+        return require('../urgentPurchase').expireUrgentSession(session);
       }
       if (isLegacySubscriptionSession(session)) {
         return { handled: 'subscription_rebuild_in_progress' };
@@ -218,6 +232,9 @@ async function handleEvent(event, { io, stripe } = {}) {
         return require('../subscriptions/v2ExtraContacts').expireExtraContactSession(
           event.data.object
         );
+      }
+      if (isUrgentSession(event.data.object)) {
+        return require('../urgentPurchase').expireUrgentSession(event.data.object);
       }
       if (isLegacySubscriptionSession(event.data.object)) {
         return { handled: 'subscription_rebuild_in_progress' };

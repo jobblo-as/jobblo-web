@@ -1,6 +1,15 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertTriangle, Ban, Download, Globe, Search, ShieldAlert, Users } from 'lucide-react';
+import {
+  AlertTriangle,
+  Ban,
+  Download,
+  Globe,
+  MapPin,
+  Search,
+  ShieldAlert,
+  Users,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ago, compact, downloadCsv, num, pct } from '@/lib/devFormat';
 import { useDevIps, useDevMe, useUrlFilters } from '../../features/developer/hooks';
@@ -43,6 +52,12 @@ const RISKS = [
   { value: 'blocked', label: 'Blocked' },
   { value: 'normal', label: 'Normal' },
 ];
+/** "NO" → 🇳🇴 (regional indicator letters). */
+const flag = (code?: string | null) =>
+  code && /^[A-Z]{2}$/i.test(code)
+    ? String.fromCodePoint(...[...code.toUpperCase()].map((c) => 0x1f1a5 + c.charCodeAt(0)))
+    : '';
+
 const SORTS = [
   { value: 'risk', label: 'Risk first' },
   { value: 'requests', label: 'Most requests' },
@@ -81,10 +96,64 @@ export default function IpsPage() {
       cell: (r) => (
         <div className="flex items-center gap-2">
           <Globe className="size-3.5 shrink-0 text-muted-foreground" />
-          <span className="font-mono text-xs">{r.ip}</span>
-          {r.isYou && <StatusBadge status="you" tone="info" label="you" />}
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-xs">{r.ip}</span>
+              {r.isYou && <StatusBadge status="you" tone="info" label="you" />}
+            </div>
+            {r.country && (
+              <div className="text-[11px] text-muted-foreground">
+                {flag(r.countryCode)} {[r.city, r.country].filter(Boolean).join(', ')}
+              </div>
+            )}
+          </div>
         </div>
       ),
+    },
+    {
+      key: 'users',
+      header: 'Signed in',
+      className: 'max-w-[240px]',
+      cell: (r) => {
+        const [first, ...more] = r.users || [];
+        const a = r.auth || {};
+        const activity = [
+          a.login && `${a.login} login${a.login > 1 ? 's' : ''}`,
+          a.login_failed && `${a.login_failed} failed`,
+          a.password_reset_requested && `${a.password_reset_requested} reset asked`,
+          a.password_reset && `${a.password_reset} password changed`,
+        ]
+          .filter(Boolean)
+          .join(' · ');
+        const activityLine = activity ? (
+          <div className="text-[11px] text-muted-foreground">{activity}</div>
+        ) : null;
+        if (!first) return activityLine || <span className="text-xs text-muted-foreground">—</span>;
+        return (
+          <div
+            className="min-w-0 text-xs"
+            title={(r.users || [])
+              .map(
+                (u) =>
+                  `${u.email} · ${u.location || 'location unknown'} · logged in ${new Date(u.loginAt).toLocaleString('nb-NO')}`
+              )
+              .join('\n')}
+          >
+            <div className="truncate font-medium">{first.email}</div>
+            {/* Where that login came from (saved with the session), not the IP lookup above. */}
+            {first.location && (
+              <div className="flex items-center gap-1 truncate text-[11px] text-muted-foreground">
+                <MapPin className="size-3 shrink-0" /> {first.location}
+              </div>
+            )}
+            <div className="text-[11px] text-muted-foreground">
+              logged in {ago(first.loginAt)}
+              {more.length ? ` · +${more.length} more` : ''}
+            </div>
+            {activityLine}
+          </div>
+        );
+      },
     },
     {
       key: 'risk',

@@ -70,7 +70,10 @@ export function AiDraftReviewDialog({
                         </span>
                       )}
                     </span>
-                    <span className="mt-0.5 block whitespace-pre-line break-words text-[0.875rem] leading-relaxed text-[#63665F] line-clamp-4">
+                    {/* The checklist is shown whole: a clipped list would hide steps that get added. */}
+                    <span
+                      className={`mt-0.5 block whitespace-pre-line break-words text-[0.875rem] leading-relaxed text-[#63665F] ${row.key === 'checklist' ? '' : 'line-clamp-4'}`}
+                    >
                       {row.value}
                     </span>
                   </span>

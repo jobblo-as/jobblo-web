@@ -156,6 +156,21 @@ test('generate-full-listing with photos: images ride along as low-detail parts; 
   });
 });
 
+test('"Foreslå et utkast": photos with no text still make a draft; no photos and no text is a 400', async () => {
+  const { generateFullJobListing } = require('../controllers/aiController');
+  mockCreate.mockClear();
+  const empty = res();
+  await generateFullJobListing({ body: { prompt: '' } }, empty);
+  expect(empty.status).toHaveBeenCalledWith(400);
+  expect(mockCreate).not.toHaveBeenCalled();
+
+  const r = res();
+  await generateFullJobListing({ body: { prompt: '' }, files: [JPEG] }, r);
+  expect(mockCreate).toHaveBeenCalledTimes(1);
+  const content = mockCreate.mock.calls[0][0].messages[1].content;
+  expect(content.some((c) => c.type === 'image_url')).toBe(true);
+});
+
 describe('photo-hint (camera helper)', () => {
   const { photoHint } = require('../controllers/aiController');
   const reply = (obj) => ({

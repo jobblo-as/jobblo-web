@@ -42,6 +42,60 @@ function parseChecklist(raw) {
 }
 exports.parseChecklist = parseChecklist;
 
+const jsonArray = (value) => {
+  try {
+    const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * "Bilder": the order the owner chose. `imageOrder` lists each photo as its URL, or `new:<i>`
+ * for the i-th file of this request.
+ * Only photos already on the listing are placed and none is dropped (unlisted ones keep their
+ * place at the end). Returns null when the client sent no order (older clients, the app).
+ */
+function imageLayout({ images = [], imageMetadata = [] }, body, newUrls) {
+  const order = jsonArray(body?.imageOrder);
+  if (!order) return null;
+  const known = new Set(images);
+  const placed = [];
+  order.forEach((token) => {
+    const url =
+      typeof token === 'string' && /^new:\d+$/.test(token)
+        ? newUrls[Number(token.slice(4))]
+        : token;
+    if (!known.has(url) || placed.includes(url)) return;
+    placed.push(url);
+  });
+  const ordered = [...placed, ...images.filter((url) => !placed.includes(url))];
+  const rank = (url) => ordered.indexOf(url);
+  return {
+    images: ordered,
+    // The share card takes the first entry's ogUrl: keep it on the first photo.
+    imageMetadata: [...imageMetadata].sort((a, b) => rank(a.url) - rank(b.url)),
+  };
+}
+exports.imageLayout = imageLayout;
+
+/**
+ * Photos already uploaded with the poster's own draft ("Dine utkast"), by the URLs the form
+ * placed in `imageOrder`: those are published as they are, not uploaded again. Only the
+ * draft's server-written list is trusted, never a URL from the body alone.
+ */
+async function draftImagesFor(userId, draftId, body) {
+  const order = jsonArray(body?.imageOrder);
+  if (!order || !mongoose.Types.ObjectId.isValid(String(draftId || ''))) return [];
+  const draft = await require('../../models/JobDraft')
+    .findOne({ _id: draftId, user: userId })
+    .select('images')
+    .lean();
+  return (draft?.images || []).filter((image) => order.includes(image.url));
+}
+exports.draftImagesFor = draftImagesFor;
+
 // ------------------- Create Service -------------------
 
 exports.createService = async (req, res) => {
@@ -132,6 +186,22 @@ exports.createService = async (req, res) => {
       if (imageError) return res.status(400).json({ error: imageError });
       if (images) serviceData.images = [].concat(images);
     }
+    const fromDraft = await draftImagesFor(userId, req.body.draftId, req.body);
+    if (fromDraft.length) {
+      serviceData.images = [...(serviceData.images || []), ...fromDraft.map((i) => i.url)];
+      serviceData.imageMetadata = [
+        ...(serviceData.imageMetadata || []),
+        ...fromDraft.map((i) => ({ ...i, uploadedAt: new Date() })),
+      ];
+      if (serviceData.images.length > MAX_IMAGES)
+        return res.status(400).json({ error: `Maks ${MAX_IMAGES} bilder per oppdrag.` });
+    }
+    const createLayout = imageLayout(
+      serviceData,
+      req.body,
+      (req.files || []).map((file) => file.path)
+    );
+    if (createLayout) Object.assign(serviceData, createLayout);
 
     // Parse checklist (frontend sends it as JSON string)
     // Swallowing a bad checklist created the job with an EMPTY one and returned 201, so
@@ -189,6 +259,20 @@ exports.createService = async (req, res) => {
       promoted: false,
       views: 0,
     });
+
+    // Hast paid on "Nesten ferdig" before publishing: urgent only if that payment is this
+    // user's, confirmed by Stripe and not used for another job.
+    if (
+      req.body.urgentPurchaseId &&
+      (await require('../../services/urgentPurchase').consumeUrgentPurchase({
+        userId,
+        purchaseId: req.body.urgentPurchaseId,
+        serviceId: service._id,
+      }))
+    ) {
+      service.urgent = true;
+      await service.save();
+    }
 
     res.status(201).json(service);
   } catch (err) {
@@ -297,6 +381,13 @@ exports.updateService = async (req, res) => {
       service.images = [...service.images, ...added];
     }
 
+    const editLayout = imageLayout(
+      service,
+      req.body,
+      (req.files || []).map((file) => file.path)
+    );
+    if (editLayout) Object.assign(service, editLayout);
+
     // ⭐ HANDLE CHECKLIST UPDATE
     // Same parser and caps as create: a non-array 500'd on .map, and errors were swallowed.
     if (req.body.checklist) {
@@ -347,10 +438,8 @@ exports.updateService = async (req, res) => {
     }
     Object.assign(service, pickContactUpdates(req.body));
 
-    // Urgent placement was a subscription entitlement and stays disabled until V2.
-    if (req.body.urgent !== undefined) {
-      service.urgent = false;
-    }
+    // `urgent` is bought ("Hast", services/urgentPurchase.js), never set by an edit: the
+    // body's value is ignored, so saving the edit form keeps a paid Haster mark.
 
     const { countyCode, municipalityCode, areaCode } = req.body;
     if (countyCode !== undefined) service.countyCode = countyCode;

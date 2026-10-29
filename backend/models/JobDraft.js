@@ -10,6 +10,9 @@ const jobDraftSchema = new mongoose.Schema(
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     title: { type: String, default: '', maxlength: 200 },
     data: { type: String, required: true, maxlength: 32000 },
+    // Photos uploaded for this draft (POST /api/job-drafts/:id/images), so the draft keeps its
+    // pictures on every device. Server-written only: publishing trusts these, never `data`.
+    images: [{ _id: false, url: String, blobName: String, ogUrl: String, ogBlobName: String }],
   },
   { timestamps: true }
 );

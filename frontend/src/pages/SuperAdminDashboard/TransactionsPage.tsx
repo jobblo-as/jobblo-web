@@ -20,6 +20,7 @@ const STATUS_OPTIONS = [
 const TYPE_OPTIONS = [
   { label: 'Abonnement', value: 'subscription' },
   { label: 'Ekstra kontakter', value: 'extra_contact' },
+  { label: 'Hast', value: 'urgent' },
 ];
 
 function StatusIcon({ status }: { status: string }) {
@@ -83,7 +84,11 @@ export default function TransactionsPage() {
       header: 'Type',
       render: (t) => (
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-          {t.type === 'subscription' ? 'Abonnement' : 'Ekstra kontakter'}
+          {t.type === 'subscription'
+            ? 'Abonnement'
+            : t.type === 'urgent'
+              ? 'Hast'
+              : 'Ekstra kontakter'}
         </span>
       ),
     },

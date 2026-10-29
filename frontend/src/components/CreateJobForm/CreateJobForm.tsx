@@ -1,14 +1,19 @@
 import { useState, useEffect } from 'react';
+import toast from 'react-hot-toast';
+import { createUrgentPayment, getUrgentStatus } from '../../api/stripeAPI';
+import { errorBody } from '../../utils/getErrorMessage';
 import { Image, Sparkles, Loader2, AlertCircle, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { ImageUpload } from './ImageUpload';
 import { BasicInformation } from './BasicInformation';
 import { TimeAndPlace } from './TimeAndPlace';
 import { PaymentInformation } from './PaymentInformation';
 import { StepIndicator } from './StepIndicator';
+import { PackageStep } from './PackageStep';
 import { ContactInformation } from './ContactInformation';
 import { FormActions } from './FormActions';
 import { JobPreviewModal } from './JobPreviewModal';
 import { AiDraftReviewDialog } from './AiDraftReviewDialog';
+import { AiDraftLoadingDialog } from './AiDraftLoadingDialog';
 import { ChecklistStep } from './ChecklistStep';
 import { useCreateJobForm } from '../../hooks/useCreateJobForm';
 import { CARD } from '../../theme/brand';
@@ -106,17 +111,17 @@ export default function CreateJobForm({
     setEmail,
     selectedImages,
     handleImageSelection,
-    triggerImageAnalysis,
-    imageAnalysis,
-    currentImages,
     handleExistingImageRemove,
+    imageItems,
+    moveImage,
     showPreview,
     setShowPreview,
-    showSmartFillInput,
-    setShowSmartFillInput,
     smartFillPrompt,
     setSmartFillPrompt,
     handleAiSmartFill,
+    cancelAiSmartFill,
+    urgentPurchaseId,
+    setUrgentPurchaseId,
     aiDraftRows,
     applyAiDraft,
     smartFillPricingNote,
@@ -126,13 +131,73 @@ export default function CreateJobForm({
     handleNext,
     handleBack,
     handleFinalSubmit,
+    validateAll,
     handleCancel,
     previewJobData,
-    currentUser,
     errors,
     checklistItems,
     setChecklistItems,
   } = useCreateJobForm(userId, initialData, isEditMode, onSubmit);
+
+  // "Nesten ferdig" (new jobs only): shown after page 2 validates, before publishing.
+  const [packageOpen, setPackageOpen] = useState(false);
+
+  // Hast is paid before publishing: Stripe sends the user back here with ?hast=paid or
+  // ?hast=cancelled; the saved draft refills the form, and the server confirms the payment.
+  const [hastBusy, setHastBusy] = useState(false);
+  const startHastPayment = async () => {
+    if (!validateAll()) {
+      setPackageOpen(false);
+      return;
+    }
+    setHastBusy(true);
+    try {
+      window.location.assign((await createUrgentPayment()).url);
+    } catch (err) {
+      setHastBusy(false);
+      toast.error(errorBody(err)?.message || 'Kunne ikke starte betalingen. Prøv igjen.');
+    }
+  };
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const outcome = params.get('hast');
+    if (!outcome || isEditMode) return;
+    const sessionId = params.get('session_id');
+    window.history.replaceState(null, '', window.location.pathname);
+    setPackageOpen(true);
+    setUrgent(true);
+    if (outcome !== 'paid' || !sessionId) {
+      toast('Betalingen ble avbrutt. Du kan prøve igjen eller velge Standard.');
+      return;
+    }
+    let cancelled = false;
+    setHastBusy(true);
+    (async () => {
+      // The webhook may still be on its way: ask a few times.
+      for (let attempt = 0; attempt < 10 && !cancelled; attempt += 1) {
+        try {
+          const data = await getUrgentStatus(sessionId);
+          if (data.status === 'paid') {
+            setUrgentPurchaseId(data.purchaseId);
+            setHastBusy(false);
+            return;
+          }
+          if (data.status !== 'pending') break;
+        } catch {
+          // retry below
+        }
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+      }
+      if (!cancelled) {
+        setHastBusy(false);
+        toast.error('Fant ingen fullført betaling. Prøv å betale på nytt.');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // AI panel state with localStorage
   const [isAiPanelHidden, setIsAiPanelHidden] = useState(() => {
@@ -154,12 +219,70 @@ export default function CreateJobForm({
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 pb-4 sm:px-6">
-      <StepIndicator currentStep={currentStep} setCurrentStep={setCurrentStep} />
+      <StepIndicator
+        currentStep={packageOpen ? 3 : currentStep}
+        setCurrentStep={(step) => {
+          setPackageOpen(false);
+          setCurrentStep(step);
+        }}
+        extraStep={isEditMode ? undefined : 'Nesten ferdig'}
+      />
 
       <form onSubmit={(e) => e.preventDefault()}>
         <div>
-          {currentStep === 1 && (
+          {packageOpen && (
+            <PackageStep
+              urgent={urgent}
+              setUrgent={setUrgent}
+              onPay={startHastPayment}
+              paying={hastBusy}
+              paid={!!urgentPurchaseId}
+            />
+          )}
+
+          {!packageOpen && currentStep === 1 && (
             <div className="animate-in fade-in slide-in-from-bottom-2 space-y-5 duration-300">
+              {/* `data-invalid` is what `scrollToFirstError` looks for. This card marks its
+                  error state with a bespoke `border-[#B4453A]` rather than the `border-red-500`
+                  the step components use, so it matched none of the utility's selectors:
+                  "Vennligst last opp minst ett bilde" was the one error on the form that never
+                  scrolled into view. */}
+              <div
+                data-invalid={errors?.images ? 'true' : undefined}
+                className={`box-card-custom p-5 md:p-6 transition-colors ${
+                  errors?.images ? 'border-[#B4453A]' : ''
+                }`}
+              >
+                <div className="mb-5 flex items-start gap-3">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#EAF1E9] text-[#2E6641]">
+                    <Image size={16} strokeWidth={2} />
+                  </span>
+                  <div>
+                    <h2 className="text-[0.9375rem] font-semibold tracking-[-0.02em] text-[#0B0B0B]">
+                      Bilder <span className="font-normal text-[#9B9E96]">· valgfritt</span>
+                    </h2>
+                    <p className="mt-0.5 text-[0.8125rem] text-[#63665F]">
+                      Vis frem oppdraget med inntil 6 bilder
+                    </p>
+                  </div>
+                </div>
+                <ImageUpload
+                  items={imageItems}
+                  onAddFiles={(files) => handleImageSelection([...selectedImages, ...files])}
+                  onRemove={(item) =>
+                    item.file
+                      ? handleImageSelection(selectedImages.filter((file) => file !== item.file))
+                      : handleExistingImageRemove(item.url)
+                  }
+                  onMove={moveImage}
+                />
+                {errors?.images && (
+                  <p className="mt-4 flex items-center gap-1.5 text-[0.8125rem] font-medium text-[#B4453A]">
+                    <AlertCircle size={14} /> {errors.images}
+                  </p>
+                )}
+              </div>
+
               {/* AI Assistant Integrated Section */}
               {/* Smart-fill. It was a dark green slab with an indigo (#4F46E5) button and
                   a yellow sparkle — three colours from outside the palette, on the loudest
@@ -180,7 +303,7 @@ export default function CreateJobForm({
                         </span>
                         <span className="min-w-0">
                           <span className="block text-[0.9375rem] font-semibold text-[#0B0B0B]">
-                            Smart-utfylling
+                            Foreslå et utkast
                           </span>
                           <span className="block truncate text-[0.8125rem] text-[#63665F]">
                             Klikk for å utvide
@@ -214,11 +337,11 @@ export default function CreateJobForm({
                         </span>
                         <div className="min-w-0 flex-1">
                           <h2 className="text-[0.9375rem] font-semibold tracking-[-0.02em] text-[#0B0B0B]">
-                            {showSmartFillInput ? 'Beskriv oppdraget' : 'Smart-utfylling'}
+                            Foreslå et utkast
                           </h2>
                           <p className="mt-1 max-w-md text-[0.8125rem] leading-relaxed text-[#63665F]">
-                            Fortell kort hva som skal gjøres — ta gjerne med størrelse, tilstand og
-                            tidspunkt, så lager vi et utkast du kan se over før noe fylles inn.
+                            Bruk bildene over, skriv kort hva som skal gjøres, eller begge deler. Vi
+                            lager et utkast du ser over før noe fylles inn.
                           </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-1">
@@ -241,47 +364,39 @@ export default function CreateJobForm({
                         </div>
                       </div>
 
-                      <div className="mt-4">
-                        {!showSmartFillInput ? (
+                      <div className="mt-4 space-y-3">
+                        <textarea
+                          value={smartFillPrompt}
+                          onChange={(e) => setSmartFillPrompt(e.target.value)}
+                          aria-label="Beskriv oppdraget (valgfritt)"
+                          placeholder="Valgfritt: f.eks. Male en liten bod på 8 m² utvendig, bør være ferdig i mai."
+                          className="min-h-25 w-full resize-none rounded-2xl border border-[#E6E7E1] bg-white px-4 py-3 text-[0.9375rem] leading-relaxed text-[#0B0B0B] outline-none transition-colors placeholder:text-[#9B9E96] focus:border-[#2E6641]/45 focus:ring-4 focus:ring-[#2E6641]/10"
+                        />
+                        <div className="flex flex-wrap items-center gap-3">
                           <button
                             type="button"
-                            onClick={() => setShowSmartFillInput(true)}
-                            className="inline-flex h-11 items-center gap-2 rounded-full border border-[#E6E7E1] bg-white px-5 text-[0.9375rem] font-semibold text-[#0B0B0B] transition-colors hover:border-[#2E6641]/45 hover:text-[#2E6641] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15"
+                            onClick={handleAiSmartFill}
+                            disabled={
+                              isGeneratingFullListing ||
+                              (selectedImages.length === 0 && smartFillPrompt.trim().length < 5)
+                            }
+                            className="inline-flex h-11 items-center gap-2 rounded-full bg-[#2E6641] px-6 text-[0.9375rem] font-semibold text-white transition-colors hover:bg-[#255335] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/25 disabled:cursor-not-allowed disabled:opacity-50"
                           >
-                            <Sparkles size={16} strokeWidth={2} className="text-[#2E6641]" />
-                            Foreslå utkast med AI
+                            {isGeneratingFullListing ? (
+                              <Loader2 size={15} className="animate-spin" />
+                            ) : (
+                              <Sparkles size={15} strokeWidth={2} />
+                            )}
+                            {isGeneratingFullListing ? 'Lager forslag…' : 'Foreslå et utkast'}
                           </button>
-                        ) : (
-                          <div className="space-y-3">
-                            <textarea
-                              value={smartFillPrompt}
-                              onChange={(e) => setSmartFillPrompt(e.target.value)}
-                              placeholder="F.eks. Male en liten bod på 8 m² utvendig, bør være ferdig i mai."
-                              className="min-h-25 w-full resize-none rounded-2xl border border-[#E6E7E1] bg-white px-4 py-3 text-[0.9375rem] leading-relaxed text-[#0B0B0B] outline-none transition-colors placeholder:text-[#9B9E96] focus:border-[#2E6641]/45 focus:ring-4 focus:ring-[#2E6641]/10"
-                            />
-                            <div className="flex gap-2">
-                              <button
-                                type="button"
-                                onClick={handleAiSmartFill}
-                                disabled={isGeneratingFullListing || !smartFillPrompt.trim()}
-                                className="inline-flex h-11 items-center gap-2 rounded-full bg-[#2E6641] px-6 text-[0.9375rem] font-semibold text-white transition-colors hover:bg-[#255335] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/25 disabled:cursor-not-allowed disabled:opacity-50"
-                              >
-                                {isGeneratingFullListing && (
-                                  <Loader2 size={15} className="animate-spin" />
-                                )}
-                                {isGeneratingFullListing ? 'Lager forslag…' : 'Foreslå utkast'}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setShowSmartFillInput(false)}
-                                disabled={isGeneratingFullListing}
-                                className="inline-flex h-11 items-center rounded-full px-4 text-[0.9375rem] font-medium text-[#63665F] transition-colors hover:text-[#0B0B0B] disabled:opacity-50"
-                              >
-                                Avbryt
-                              </button>
-                            </div>
-                          </div>
-                        )}
+                          <span className="text-[0.8125rem] text-[#63665F]">
+                            {selectedImages.length > 0
+                              ? `Bruker ${Math.min(selectedImages.length, 3)} ${
+                                  Math.min(selectedImages.length, 3) === 1 ? 'bilde' : 'bilder'
+                                }${smartFillPrompt.trim() ? ' og teksten' : ''}`
+                              : 'Legg til bilder eller skriv minst 5 tegn'}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -303,74 +418,6 @@ export default function CreateJobForm({
                 </button>
               )}
 
-              {/* `data-invalid` is what `scrollToFirstError` looks for. This card marks its
-                  error state with a bespoke `border-[#B4453A]` rather than the `border-red-500`
-                  the step components use, so it matched none of the utility's selectors:
-                  "Vennligst last opp minst ett bilde" was the one error on the form that never
-                  scrolled into view. */}
-              <div
-                data-invalid={errors?.images ? 'true' : undefined}
-                className={`box-card-custom p-5 md:p-6 transition-colors ${
-                  errors?.images ? 'border-[#B4453A]' : ''
-                }`}
-              >
-                <div className="mb-5 flex items-start gap-3">
-                  <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#EAF1E9] text-[#2E6641]">
-                    <Image size={16} strokeWidth={2} />
-                  </span>
-                  <div>
-                    <h2 className="text-[0.9375rem] font-semibold tracking-[-0.02em] text-[#0B0B0B]">
-                      Bilder <span className="font-normal text-[#9B9E96]">· valgfritt</span>
-                    </h2>
-                    <p className="mt-0.5 text-[0.8125rem] text-[#63665F]">
-                      Vis frem oppdraget med inntil 6 bilder
-                    </p>
-                  </div>
-                </div>
-                <ImageUpload
-                  onImagesChange={handleImageSelection}
-                  existingImages={currentImages}
-                  onExistingImageRemove={handleExistingImageRemove}
-                  initialFiles={selectedImages}
-                />
-                {/* AI analyse button — shown when at least one image is ready */}
-                {(selectedImages.length > 0 || currentImages.length > 0) &&
-                  imageAnalysis.status !== 'loading' && (
-                    <button
-                      type="button"
-                      onClick={() => void triggerImageAnalysis()}
-                      className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#2E6641] bg-[#EAF1E9] px-4 py-2 text-[0.8125rem] font-semibold text-[#2E6641] transition-colors hover:bg-[#d6eadc] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E6641]/25"
-                    >
-                      <Sparkles size={15} strokeWidth={2} />
-                      Analyser bilde med AI
-                    </button>
-                  )}
-                {imageAnalysis.status === 'loading' && (
-                  <span className="mt-3 inline-flex items-center gap-2 text-[0.8125rem] text-[#63665F]">
-                    <Loader2 size={15} className="animate-spin text-[#2E6641]" />
-                    Analyserer bildet…
-                  </span>
-                )}
-                {imageAnalysis.status === 'success' && imageAnalysis.durationRange && (
-                  <p className="mt-2 text-xs text-[#63665F]">
-                    Estimert tid: {imageAnalysis.durationRange.min}–
-                    {imageAnalysis.durationRange.max}{' '}
-                    {(
-                      { minutes: 'minutter', hours: 'timer', days: 'dager' } as Record<
-                        string,
-                        string
-                      >
-                    )[imageAnalysis.durationRange.unit] ?? 'timer'}
-                    . Pris og tid er estimater.
-                  </p>
-                )}
-                {errors?.images && (
-                  <p className="mt-4 flex items-center gap-1.5 text-[0.8125rem] font-medium text-[#B4453A]">
-                    <AlertCircle size={14} /> {errors.images}
-                  </p>
-                )}
-              </div>
-
               <BasicInformation
                 title={title}
                 setTitle={setTitle}
@@ -390,7 +437,7 @@ export default function CreateJobForm({
             </div>
           )}
 
-          {currentStep === 2 && (
+          {!packageOpen && currentStep === 2 && (
             <div className="animate-in fade-in slide-in-from-right-2 space-y-5 duration-300">
               <TimeAndPlace
                 address={address}
@@ -424,9 +471,6 @@ export default function CreateJobForm({
                 setPrice={setPrice}
                 hourlyRate={hourlyRate}
                 setHourlyRate={setHourlyRate}
-                urgent={urgent}
-                setUrgent={setUrgent}
-                subscription={currentUser?.subscription || 'Standard'}
                 errors={errors}
               />
               <ChecklistStep
@@ -447,15 +491,32 @@ export default function CreateJobForm({
 
         <FormActions
           currentStep={currentStep}
-          handleBack={handleBack}
+          handleBack={packageOpen ? () => setPackageOpen(false) : handleBack}
           handleCancel={handleCancel}
           handleNext={handleNext}
-          handleFinalSubmit={handleFinalSubmit}
+          handleFinalSubmit={
+            isEditMode || packageOpen
+              ? handleFinalSubmit
+              : () => {
+                  if (validateAll()) {
+                    setPackageOpen(true);
+                    window.scrollTo({ top: 0 });
+                  }
+                }
+          }
+          finalLabel={isEditMode || packageOpen ? undefined : 'Gå videre'}
+          // Hast: no publishing until its "Betal 39 kr" has gone through.
+          hideFinal={packageOpen && urgent && !urgentPurchaseId}
           setShowPreview={setShowPreview}
           isSubmitting={isSubmitting}
         />
       </form>
 
+      <AiDraftLoadingDialog
+        open={isGeneratingFullListing}
+        photos={selectedImages}
+        onCancel={cancelAiSmartFill}
+      />
       <AiDraftReviewDialog rows={aiDraftRows} onApply={applyAiDraft} />
 
       <JobPreviewModal

@@ -1,4 +1,5 @@
 import { expect as baseExpect, test } from '@playwright/test';
+import { shot } from './helpers/app.js';
 
 // The Vite dev server compiles the (large, lazy) developer-console chunk on first request;
 // with parallel workers that alone can take >5 s, the default expect timeout.
@@ -124,6 +125,82 @@ async function mockApi(
       state.failed = state.failed.filter((j) => j.id !== id);
       return ok({ id });
     }
+    if (pathname === '/api/developer/ips') {
+      const ipRow = (over) => ({
+        requests: 120,
+        failed: 3,
+        endpoints: 9,
+        firstSeen: '2026-10-29T08:00:00.000Z',
+        lastSeen: new Date().toISOString(),
+        security: {},
+        securityTotal: 0,
+        accounts: 0,
+        blocked: false,
+        isYou: false,
+        risk: 'normal',
+        reasons: [],
+        users: [],
+        ...over,
+      });
+      return ok({
+        range: { from: '2026-10-28T00:00:00.000Z', to: new Date().toISOString() },
+        yourIp: '84.210.1.2',
+        summary: { total: 2, requests: 240, blocked: 0, high: 0, suspicious: 0, activeBlocks: 0 },
+        ips: [
+          ipRow({
+            ip: '84.210.1.2',
+            isYou: true,
+            auth: { login: 2, login_failed: 1, password_reset_requested: 1 },
+            country: 'Norway',
+            countryCode: 'NO',
+            city: 'Oslo',
+            users: [
+              {
+                userId: 'u1',
+                email: 'kari@example.test',
+                name: 'Kari',
+                loginAt: new Date(Date.now() - 2 * 3600e3).toISOString(),
+                lastActive: new Date().toISOString(),
+                location: 'Bergen, Norway',
+              },
+              {
+                userId: 'u2',
+                email: 'ola@example.test',
+                name: 'Ola',
+                loginAt: new Date(Date.now() - 26 * 3600e3).toISOString(),
+                lastActive: null,
+              },
+            ],
+          }),
+          ipRow({ ip: '198.51.100.7', country: 'Pakistan', countryCode: 'PK', city: 'Lahore' }),
+        ],
+      });
+    }
+    if (pathname === '/api/developer/api-metrics/clients') {
+      const minutesAgo = (m) => new Date(Date.now() - m * 60e3).toISOString();
+      return ok({
+        ip: '84.210.1.2',
+        range: { from: minutesAgo(1440), to: minutesAgo(0), bucketMs: 3600e3 },
+        endpoints: [],
+        series: [],
+        security: {},
+        auth: [
+          {
+            type: 'login',
+            email: 'k***@example.test',
+            at: minutesAgo(5),
+            userAgent: 'Mozilla/5.0 (Windows NT 10.0) Chrome/130',
+          },
+          { type: 'login_failed', email: 'k***@example.test', at: minutesAgo(6), userAgent: null },
+          {
+            type: 'password_reset_requested',
+            email: 'o***@example.test',
+            at: minutesAgo(30),
+            userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0) Safari/605',
+          },
+        ],
+      });
+    }
     if (pathname === '/api/rum') return route.fulfill({ json: { ok: true } });
     // Anything else the layout asks for: an empty, successful answer.
     return ok({});
@@ -244,4 +321,32 @@ test('read-only developers see the dead letters but no buttons', async ({ page }
   await expect(page.getByText('Failed (dead letters)')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Retry', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Remove job' })).toHaveCount(0);
+});
+
+test('IP page: each IP shows its country, and who is signed in from it and since when', async ({
+  page,
+}) => {
+  await mockApi(page);
+  await page.goto('/developer/ips');
+  const row = page.getByRole('row', { name: /84\.210\.1\.2/ });
+  await expect(row.getByText('Oslo, Norway')).toBeVisible();
+  await expect(row.getByText('kari@example.test')).toBeVisible();
+  // The login's own location (saved with the session) sits under the account.
+  await expect(row.getByText('Bergen, Norway')).toBeVisible();
+  await expect(row.getByText(/logged in 2 hours ago · \+1 more/)).toBeVisible();
+  // No account signed in from this one: a dash, but still its country.
+  const other = page.getByRole('row', { name: /198\.51\.100\.7/ });
+  await expect(other.getByText('Lahore, Pakistan')).toBeVisible();
+  // Sign-ins and password resets from the IP: counted in the table…
+  await expect(row.getByText('2 logins · 1 failed · 1 reset asked')).toBeVisible();
+  await shot(page, 'developer-ips');
+  // …and listed, with what happened, for which email and when, in the IP's panel.
+  await row.click();
+  const panel = page.getByRole('dialog');
+  await expect(panel.getByText('Logged in')).toBeVisible();
+  await expect(panel.getByText('Login failed')).toBeVisible();
+  await expect(panel.getByText('Forgot password: code sent')).toBeVisible();
+  await expect(panel.getByText('o***@example.test')).toBeVisible();
+  await expect(panel.getByText('· Chrome · Windows')).toBeVisible();
+  await shot(page, 'developer-ip-login-activity');
 });

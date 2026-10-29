@@ -393,6 +393,7 @@ function _sharedPayload(c) {
   return {
     skills: c.skills,
     openQuestions: c.openQuestions,
+    checklist: c.checklist,
     hourlyRate: c.hourlyRate,
     suggestedPrice: c.suggestedPrice,
     priceMin: c.priceMin,
@@ -576,12 +577,13 @@ exports.generateFullJobListing = async (req, res) => {
     if (!process.env.OPENAI_API_KEY) {
       return res.status(500).json({ error: 'AI-tjeneste ikke konfigurert' });
     }
-    if (!prompt || prompt.trim().length < 5) {
-      return res.status(400).json({ error: 'Vennligst beskriv jobben (min. 5 tegn).' });
-    }
-
     // Multipart (with photos) sends every field as text.
     const images = (req.files || []).slice(0, 3);
+    // "Foreslå et utkast": photos, text, or both. Photos alone are enough to go on.
+    const text = typeof prompt === 'string' ? prompt.trim() : '';
+    if (!images.length && text.length < 5) {
+      return res.status(400).json({ error: 'Legg til bilder eller beskriv jobben (min. 5 tegn).' });
+    }
     let duration = existingDuration;
     if (typeof duration === 'string') {
       try {
@@ -600,7 +602,7 @@ exports.generateFullJobListing = async (req, res) => {
       {
         feature: 'full-listing',
         lang: _resolveLang(req.body),
-        task: prompt,
+        task: text,
         categoryAllowList: catNames,
         categoryName: catChosen,
         title: existingTitle,

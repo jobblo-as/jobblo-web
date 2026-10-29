@@ -493,6 +493,56 @@ exports.extraContactPaymentStatus = async (req, res) => {
   }
 };
 
+const urgent = require('../services/urgentPurchase');
+
+function sendUrgentError(res, err, fallbackCode) {
+  if (err instanceof urgent.UrgentPurchaseError) {
+    return res.status(err.status).json({ code: err.code, message: err.message });
+  }
+  console.error('[urgent] request failed:', err);
+  return res
+    .status(503)
+    .json({ code: fallbackCode, message: 'Hast er ikke tilgjengelig nå. Prøv igjen.' });
+}
+
+/** POST /api/stripe/create-urgent-payment { serviceId } */
+exports.createUrgentPayment = async (req, res) => {
+  try {
+    // The app (`platform: 'mobile'`) is sent back through the HTTPS bridge into the app.
+    let returnUrls;
+    if (req.body?.platform === 'mobile') {
+      returnUrls = require('./SafePayCheckoutController').hastMobileReturnUrls(req);
+      if (returnUrls.error) {
+        console.error('[urgent] mobile return:', returnUrls.error);
+        return res.status(503).json({
+          code: 'URGENT_RETURN_UNAVAILABLE',
+          message: 'Betaling er ikke tilgjengelig nå.',
+        });
+      }
+    }
+    return res.json(
+      await urgent.createUrgentCheckout({
+        userId: req.user?._id,
+        serviceId: req.body?.serviceId,
+        returnUrls,
+      })
+    );
+  } catch (err) {
+    return sendUrgentError(res, err, 'URGENT_CHECKOUT_UNAVAILABLE');
+  }
+};
+
+/** GET /api/stripe/urgent-status/:sessionId */
+exports.urgentPaymentStatus = async (req, res) => {
+  try {
+    return res.json(
+      await urgent.getUrgentStatus({ userId: req.user?._id, sessionId: req.params.sessionId })
+    );
+  } catch (err) {
+    return sendUrgentError(res, err, 'URGENT_STATUS_UNAVAILABLE');
+  }
+};
+
 exports.getEntitlements = async (req, res) => {
   try {
     const userId = req.user?._id;

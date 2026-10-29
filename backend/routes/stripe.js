@@ -49,6 +49,8 @@ router.get(
   authenticate,
   subscriptionV2Controller.extraContactPaymentStatus
 );
+router.post('/create-urgent-payment', authenticate, subscriptionV2Controller.createUrgentPayment);
+router.get('/urgent-status/:sessionId', authenticate, subscriptionV2Controller.urgentPaymentStatus);
 router.get('/subscription', authenticate, subscriptionV2Controller.getLegacySubscription);
 router.post(
   '/subscription/cancel',

@@ -1,5 +1,5 @@
 import { test } from '@playwright/test';
-import { expect, mockApi, watchErrors, SERVICE, USERS } from './helpers/app.js';
+import { expect, mockApi, shot, watchErrors, SERVICE, USERS } from './helpers/app.js';
 
 /**
  * The SafePay journey on a mocked API: pick an applicant (contract), chat, pay (Stripe
@@ -392,4 +392,44 @@ test('admin sees the dispute and resolves it', async ({ page }) => {
   );
   await expect(page.getByRole('button', { name: 'Gjenåpne' })).toBeVisible();
   expect(errors).toEqual([]);
+});
+
+test('admin Transactions: a Hast payment shows as "Hast", and the type filter finds it', async ({
+  page,
+}) => {
+  const hast = {
+    _id: 'tx-hast',
+    userId: { _id: 'u1', name: 'Kari Nordmann', email: 'kari@example.test' },
+    serviceId: null,
+    planName: 'Hast',
+    planType: 'urgent',
+    amount: 39,
+    currency: 'nok',
+    status: 'succeeded',
+    type: 'urgent',
+    createdAt: '2026-10-29T10:00:00.000Z',
+  };
+  const { calls } = await mockApi(page, {
+    as: 'superAdmin',
+    routes: {
+      'GET /api/admin/transactions': () => ({
+        success: true,
+        data: { transactions: [hast] },
+        pagination: { total: 1, page: 1, limit: 20, totalPages: 1 },
+      }),
+    },
+  });
+  await page.goto('/dashboard/transactions');
+  const row = page.getByRole('row', { name: /Kari Nordmann/ });
+  await expect(row.getByText('Hast', { exact: true }).first()).toBeVisible();
+  await expect(row.getByText(/39\s*NOK/)).toBeVisible();
+  await shot(page, 'admin-transaksjoner-hast');
+  // The filter asks the server for type=urgent.
+  await page.getByRole('combobox', { name: 'Alle typer' }).click();
+  await page.getByRole('option', { name: 'Hast' }).click();
+  await expect
+    .poll(() =>
+      calls.some((c) => c.pathname === '/api/admin/transactions' && /type=urgent/.test(c.search))
+    )
+    .toBe(true);
 });

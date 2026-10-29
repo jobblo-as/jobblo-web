@@ -9,6 +9,7 @@
 const BUFFER_CAP = 5000;
 const FLUSH_MS = 10 * 1000;
 let buffer = [];
+let authBuffer = [];
 let dropped = 0;
 
 const maskEmail = (email) => {
@@ -48,7 +49,40 @@ function classify({ status, path, code }) {
   return null;
 }
 
+/** Pure: sign-in / password-reset response → AuthEvent type, or null. */
+function classifyAuth({ status, path }) {
+  const ok = status >= 200 && status < 300;
+  if (path === '/api/auth/login')
+    return ok ? 'login' : status === 401 || status === 403 ? 'login_failed' : null;
+  if (path === '/api/auth/forgot-password') return ok ? 'password_reset_requested' : null;
+  if (path === '/api/auth/reset-password')
+    return ok
+      ? 'password_reset'
+      : status === 400 || status === 401
+        ? 'password_reset_failed'
+        : null;
+  return null;
+}
+
+/** "What happened" at sign-in and password reset (models/AuthEvent), from the same hook. */
+function recordAuth(req, res, path) {
+  const type = classifyAuth({ status: res.statusCode, path });
+  if (!type) return;
+  if (authBuffer.length >= BUFFER_CAP) {
+    dropped += 1;
+    return;
+  }
+  authBuffer.push({
+    at: new Date(),
+    type,
+    ip: clientIp(req),
+    email: maskEmail(req.body?.email),
+    userAgent: String(req.get('user-agent') || '').slice(0, 200) || null,
+  });
+}
+
 function record(req, res) {
+  recordAuth(req, res, req.originalUrl.split('?')[0]);
   const status = res.statusCode;
   if (status < 400 || status > 429) return;
   const path = req.originalUrl.split('?')[0];
@@ -80,11 +114,14 @@ function record(req, res) {
 }
 
 async function flush() {
-  if (!buffer.length) return;
   const batch = buffer;
+  const auth = authBuffer;
   buffer = [];
+  authBuffer = [];
   try {
-    await require('../../models/SecurityEvent').insertMany(batch, { ordered: false });
+    if (batch.length)
+      await require('../../models/SecurityEvent').insertMany(batch, { ordered: false });
+    if (auth.length) await require('../../models/AuthEvent').insertMany(auth, { ordered: false });
   } catch (err) {
     console.error('[securityEvents] flush failed:', err.message);
   }
@@ -101,10 +138,12 @@ const droppedCount = () => dropped;
 
 module.exports = {
   classify,
+  classifyAuth,
   maskEmail,
   emailHash,
   clientIp,
   record,
   startSecurityFlush,
+  flush,
   droppedCount,
 };
