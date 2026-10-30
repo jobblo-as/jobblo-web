@@ -1,9 +1,10 @@
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, type LucideIcon } from 'lucide-react-native';
+import { type LucideIcon } from 'lucide-react-native';
 import { cn } from '@/lib/utils';
 import { TC, tc } from '../../theme/colors';
+import { GlassBackButton } from './GlassButton';
 
 interface ScreenHeaderProps {
   title: string;
@@ -33,16 +34,9 @@ export function ScreenHeader({
   return (
     <View className={cn('mb-5', className)}>
       {backLabel !== null ? (
-        <Pressable
-          onPress={onBack ?? (() => router.back())}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={`Tilbake til ${backLabel}`}
-          className="mb-4 flex-row items-center self-start rounded-full border border-line bg-surface py-1.5 pl-2.5 pr-3.5 active:opacity-80"
-        >
-          <ArrowLeft size={16} color={TC.ink2} />
-          <Text className="ml-1.5 text-[0.8125rem] font-medium text-ink-2">{backLabel}</Text>
-        </Pressable>
+        <View className="mb-4">
+          <GlassBackButton label={backLabel} onPress={onBack ?? (() => router.back())} />
+        </View>
       ) : null}
       <View className="flex-row items-center gap-3">
         {Icon ? (

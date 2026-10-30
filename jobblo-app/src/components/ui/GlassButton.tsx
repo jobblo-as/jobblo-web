@@ -1,9 +1,11 @@
 import React from 'react';
-import { Platform, Pressable, type ViewStyle } from 'react-native';
+import { Platform, Pressable, Text, type ViewStyle } from 'react-native';
+import { ArrowLeft } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 import { GlassView } from 'expo-glass-effect';
 import { useColorScheme } from 'nativewind';
 import { LIQUID_GLASS } from '../GlassTabBar';
+import { TC } from '../../theme/colors';
 
 /**
  * The tab bar's glass, for any rounded box: Liquid Glass on iOS 26, blur on older iOS,
@@ -87,6 +89,25 @@ export function GlassButton({
     >
       <GlassFill radius={20} interactive />
       {children}
+    </Pressable>
+  );
+}
+
+/** "← Innstillinger": the back link of every sub-screen, in the tab bar's glass. */
+export function GlassBackButton({ label, onPress }: { label: string; onPress: () => void }) {
+  const glass = useGlass(18);
+  return (
+    <Pressable
+      onPress={onPress}
+      hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel={`Tilbake til ${label}`}
+      className="flex-row items-center self-start py-1.5 pl-2.5 pr-3.5 active:opacity-70"
+      style={[glass, { elevation: LIQUID_GLASS ? 0 : 2 }]}
+    >
+      <GlassFill radius={18} interactive />
+      <ArrowLeft size={16} color={TC.ink2} />
+      <Text className="ml-1.5 text-[0.8125rem] font-medium text-ink-2">{label}</Text>
     </Pressable>
   );
 }

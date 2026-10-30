@@ -13,7 +13,7 @@ import { ApplicantOverviewSkeleton } from '../../src/components/domain/Applicant
 import { ApplicantServiceCard } from '../../src/components/domain/ApplicantServiceCard';
 import { OverviewTabs, type OverviewTabKey } from '../../src/components/domain/OverviewTabs';
 import { Button } from '../../src/components/ui/Button';
-import { Card, SectionLabel } from '../../src/components/ui/Card';
+import { SectionLabel } from '../../src/components/ui/Card';
 import { Chip } from '../../src/components/ui/Chip';
 import { ConfirmDialog } from '../../src/components/ui/ConfirmDialog';
 import { EmptyState } from '../../src/components/ui/EmptyState';
@@ -23,6 +23,7 @@ import { providerOrderRoute } from '../../src/utils/orderRoute';
 import type { MyApplication } from '../../src/types/Application';
 import type { ApplicantOverviewService } from '../../src/types/Applicants';
 import { TC } from '../../src/theme/colors';
+import { GlassBackButton, GlassFill, useGlass } from '../../src/components/ui/GlassButton';
 
 const FILTERS = [
   { label: 'Alle', value: '' },
@@ -32,13 +33,14 @@ const FILTERS = [
 ] as const;
 
 function Stat({ value, label, highlight }: { value: number; label: string; highlight?: boolean }) {
+  const glass = useGlass(12);
   return (
-    <Card
-      className={[
-        'flex-1 rounded-xl px-3.5 py-3',
-        highlight ? 'border-brand-text bg-tint' : '',
-      ].join(' ')}
+    // Glass like the tab bar; "Venter på deg" keeps its green edge when it needs you.
+    <View
+      style={[glass, highlight ? { borderWidth: 1, borderColor: TC.brandText } : null]}
+      className="flex-1 px-3.5 py-3"
     >
+      <GlassFill radius={12} tint={highlight ? 'rgba(46,102,65,0.18)' : undefined} />
       <Text
         className={[
           'text-[1.375rem] font-bold tabular-nums',
@@ -50,7 +52,7 @@ function Stat({ value, label, highlight }: { value: number; label: string; highl
       <Text className="mt-0.5 text-[0.8125rem] text-muted" numberOfLines={1}>
         {label}
       </Text>
-    </Card>
+    </View>
   );
 }
 
@@ -194,6 +196,9 @@ export default function MyApplicationsScreen() {
           />
         }
       >
+        <View className="mb-4">
+          <GlassBackButton label="Profil" onPress={() => router.back()} />
+        </View>
         <View className="mb-5">
           <Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.16em] text-muted">
             Oversikt

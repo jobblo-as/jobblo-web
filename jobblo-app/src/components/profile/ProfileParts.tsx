@@ -13,6 +13,7 @@ import {
 } from 'lucide-react-native';
 import { ProfileCover } from './ProfileCover';
 import { TC, tc } from '../../theme/colors';
+import { GlassButton } from '../ui/GlassButton';
 import type { PublicUser, Review } from '../../types/UserProfile';
 
 /**
@@ -145,15 +146,11 @@ export function ProfileIdentity({
     <>
       <View>
         <ProfileCover seed={user._id} height={190} />
-        <Pressable
-          onPress={onBack}
-          accessibilityRole="button"
-          accessibilityLabel="Tilbake"
-          className="absolute left-4 h-10 w-10 items-center justify-center rounded-full bg-white/95 active:opacity-80"
-          style={{ top: topInset + 8 }}
-        >
-          <ArrowLeft size={19} color="#0B0B0B" />
-        </Pressable>
+        <View className="absolute left-4" style={{ top: topInset + 8 }}>
+          <GlassButton label="Tilbake" onPress={onBack}>
+            <ArrowLeft size={19} color={TC.ink} />
+          </GlassButton>
+        </View>
       </View>
       <View className="px-4">
         <View className="-mt-16 items-center rounded-3xl bg-surface px-5 pb-5 pt-0">
