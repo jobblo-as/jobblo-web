@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Heart, MapPin } from 'lucide-react-native';
+import { Heart, MapPin, Zap } from 'lucide-react-native';
 import type { Job } from '../types/Jobs';
 import { useIsServiceSaved } from '../hooks/useFavoriteLists';
 import { useAuthStore } from '../store/authStore';
@@ -80,7 +80,10 @@ export const JobCard: React.FC<JobCardProps> = ({
         {(job.promoted || job.urgent) && (
           <View className="absolute top-3 left-3 flex gap-2">
             {job.urgent && (
-              <View className="bg-[#E8A8A0] px-2.5 py-1 rounded-full">
+              // The job page's badge, exactly (jobs/[id].tsx). The pale coral (#E8A8A0)
+              // with white text was hard to read and used nowhere else.
+              <View className="flex-row items-center gap-1 rounded-full bg-brand-deep px-2.5 py-1.5">
+                <Zap size={12} color="#FFFFFF" fill="#FFFFFF" />
                 <Text className="text-[0.8125rem] font-semibold text-white">Haster</Text>
               </View>
             )}
