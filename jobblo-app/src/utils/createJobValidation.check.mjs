@@ -59,6 +59,7 @@ assert.ok(run(3, { address: '' }).address);
 assert.deepEqual(run(3, { countyCode: '', municipalityCode: '', city: '' }), {});
 assert.equal(run(3, { toDate: '2026-10-30' }).toDate, 'Sluttdato kan ikke være før startdato.');
 assert.equal(run(3, { toDate: '' }).toDate, undefined); // Til dato is optional
+assert.equal(run(3, { fromDate: '', toDate: '' }).fromDate, undefined); // so is Fra dato (web too)
 assert.equal(run(3, {}, { today: '2026-11-02' }).fromDate, 'Startdato kan ikke være i fortiden.');
 assert.equal(run(3, { fromDate: '2026-02-30' }).fromDate, 'Ugyldig fra-dato.');
 assert.equal(run(3, { durationValue: '' }).durationValue, 'Vennligst oppgi forventet varighet.');

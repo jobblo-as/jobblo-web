@@ -5,18 +5,27 @@ import {
   Modal,
   Pressable,
   ScrollView,
-  Switch,
   Text,
   useWindowDimensions,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import { ChevronRight, Eye, MapPin, X, Zap } from 'lucide-react-native';
+import {
+  Check,
+  CheckCircle2,
+  ChevronRight,
+  Eye,
+  MapPin,
+  ShieldCheck,
+  X,
+  Zap,
+} from 'lucide-react-native';
 import { TC, tc } from '../../../theme/colors';
-import { useAuthStore } from '../../../store/authStore';
-import { MEMBERSHIP_ENABLED } from '../../../config/features';
+import { HAST_ENABLED } from '../../../config/features';
 import { useCreateJobMutation, useUpdateJobMutation } from '../../../hooks/useCreateJob';
+import { createUrgentPayment, getUrgentStatus } from '../../../services/createJob.service';
+import { runStripeCheckout } from '../../../utils/safepayCheckoutSession';
 import { validateCreateJobStep } from '../../../utils/createJobValidation';
 import { DURATION_OPTIONS, EQUIPMENT_OPTIONS, questionsFor } from '../details';
 import { editChanges, type PostJobStep } from '../flow';
@@ -36,6 +45,9 @@ const PROBLEM_EN: Record<string, string> = {
   durationValue: 'Choose how long the job takes.',
   price: 'Enter a price above 0 kr.',
 };
+
+// ponytail: mirrors URGENT_PRICE_NOK in backend/services/urgentPurchase.js (label only).
+const URGENT_PRICE_NOK = 39;
 
 const kr = (n: number) => `${Math.round(n).toLocaleString('nb-NO')} kr`;
 const dateLabel = (v: string) => {
@@ -64,13 +76,57 @@ export function ReviewStep({ onSaved }: { onSaved: () => void }) {
   const insets = useSafeAreaInsets();
   const { values, photos, answers, update, goTo, setPublished, editId, existingImages } =
     usePostJobStore();
-  const user = useAuthStore((s) => s.user);
   const createMutation = useCreateJobMutation();
   const updateMutation = useUpdateJobMutation();
   const saving = createMutation.isPending || updateMutation.isPending;
   const [preview, setPreview] = useState(false);
   const { width } = useWindowDimensions();
-  const paid = typeof user?.subscription === 'string' && user.subscription !== 'Standard';
+  // Hast via Stripe on iOS and Android (see HAST_ENABLED for the App Store note). Not when editing.
+  const offerUrgent = HAST_ENABLED && !editId;
+  const urgent = values.urgent && offerUrgent;
+  const [paying, setPaying] = useState(false);
+  // Hast is paid BEFORE publishing (as on the web); the publish button waits for it.
+  const paid = urgent && Boolean(values.urgentPurchaseId);
+  const mustPay = urgent && !paid;
+
+  /** "Betal 39 kr": Stripe in the in-app browser; only the server's answer counts as paid. */
+  const payForUrgent = async () => {
+    if (problems.length || paying) return;
+    setPaying(true);
+    try {
+      const { url, sessionId, alreadyPaid, purchaseId } = await createUrgentPayment();
+      // Paid before and not used yet (e.g. the app reloaded): no second charge.
+      if (alreadyPaid && purchaseId) {
+        update({ urgentPurchaseId: purchaseId });
+        return;
+      }
+      if (!url) throw new Error('No checkout');
+      const result = await runStripeCheckout({
+        checkoutUrl: url,
+        sessionId: sessionId ?? null,
+        verify: async (id) => {
+          const status = await getUrgentStatus(id);
+          if (status.status === 'paid') update({ urgentPurchaseId: status.purchaseId });
+          return { payment_status: status.status === 'paid' ? 'paid' : 'unpaid' };
+        },
+      });
+      if (result.outcome !== 'paid')
+        Alert.alert(
+          t('Ikke betalt', 'Not paid'),
+          t(
+            'Fant ingen fullført betaling. Prøv igjen, eller velg Standard.',
+            'No completed payment found. Try again, or choose Standard.'
+          )
+        );
+    } catch (error) {
+      Alert.alert(
+        t('Kunne ikke starte betalingen', 'Could not start the payment'),
+        errorMessage(error) ?? t('Prøv igjen om litt.', 'Try again in a moment.')
+      );
+    } finally {
+      setPaying(false);
+    }
+  };
 
   const category = values.categories[0] ?? '';
   const detailTags = questionsFor(category)
@@ -123,7 +179,9 @@ export function ReviewStep({ onSaved }: { onSaved: () => void }) {
       label: t('Når', 'When'),
       value: values.fromDate
         ? `${dateLabel(values.fromDate)}${values.toDate ? ` – ${dateLabel(values.toDate)}` : t(' · fleksibel', ' · flexible')}`
-        : '',
+        : values.toDate
+          ? `${t('Innen', 'By')} ${dateLabel(values.toDate)}`
+          : t('Fleksibel', 'Flexible'),
       step: 'place',
     },
   ];
@@ -133,7 +191,10 @@ export function ReviewStep({ onSaved }: { onSaved: () => void }) {
     const job = {
       ...values,
       tags: [...new Set([...values.tags, ...detailTags])],
-      urgent: values.urgent && paid,
+      // The server never takes `urgent` from the form: it marks the job only for a payment
+      // it can confirm (`urgentPurchaseId`, paid before publishing).
+      urgent: false,
+      urgentPurchaseId: paid ? values.urgentPurchaseId : undefined,
     };
     if (editId) {
       const { upload, imagesToDelete } = editChanges(photos, existingImages);
@@ -166,6 +227,15 @@ export function ReviewStep({ onSaved }: { onSaved: () => void }) {
           void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
             () => undefined
           );
+          // The Hast was paid too long ago: the server refunded it and published without it.
+          if (job.urgentPurchaseId && !created.urgent)
+            Alert.alert(
+              t('Publisert uten «Haster»', 'Published without the urgent mark'),
+              t(
+                'Hast-betalingen var for gammel og er betalt tilbake til deg. Oppdraget er publisert uten «Haster».',
+                'The Hast payment was too old and has been refunded to you. The job is published without the urgent mark.'
+              )
+            );
           setPublished(created._id);
         },
         onError: (error) =>
@@ -243,55 +313,128 @@ export function ReviewStep({ onSaved }: { onSaved: () => void }) {
           ))}
         </View>
 
-        {/* Haster is a paid-plan feature. Where plans cannot be bought in the app (iOS, and builds with
-            membership off: App Store 3.1.1) a free account is not shown a feature it cannot buy here. */}
-        {paid || MEMBERSHIP_ENABLED ? (
-          <Pressable
-            onPress={() =>
-              paid
-                ? update({ urgent: !values.urgent })
-                : Alert.alert(
-                    t('Haster', 'Urgent'),
-                    t(
-                      'Haster er kun tilgjengelig for betalte abonnementer.',
-                      'Urgent is only available on paid plans.'
-                    )
-                  )
-            }
-            className="mt-4 flex-row items-center gap-3 rounded-xl border border-line bg-surface p-3"
-          >
-            <View className="h-9 w-9 items-center justify-center rounded-lg bg-warn-tint">
-              <Zap size={16} color="#B7791F" />
+        {/* SafePay, as on the web's "Nesten ferdig" step. Info only: every hire uses it, so
+            it shows on iOS too (nothing is sold here). */}
+        {!editId ? (
+          <View className="mt-5 rounded-xl border border-line bg-surface p-4">
+            <View className="flex-row items-center gap-2">
+              <ShieldCheck size={18} color={TC.brandText} />
+              <Text className="text-[1.0625rem] font-bold text-ink">
+                {t('Trygg betaling med SafePay', 'Safe payment with SafePay')}
+              </Text>
             </View>
-            <View className="flex-1">
+            <Text className="mt-1 text-[0.875rem] leading-5 text-muted">
+              {t(
+                'Det koster ingenting å publisere. Du betaler først når du velger en tilbyder.',
+                'Publishing is free. You pay only when you choose a provider.'
+              )}
+            </Text>
+            {[
+              t(
+                'Når du velger en tilbyder, betaler du til SafePay. Pengene holdes trygt.',
+                'When you choose a provider, you pay SafePay. The money is held safely.'
+              ),
+              t(
+                'Tilbyderen gjør jobben og markerer den som ferdig.',
+                'The provider does the job and marks it as done.'
+              ),
+              t(
+                'Du godkjenner, og først da utbetales pengene. Er noe galt, kan du åpne en tvist.',
+                'You approve, and only then is the money paid out. If something is wrong, you can open a dispute.'
+              ),
+            ].map((text, i) => (
+              <View key={text} className="mt-2.5 flex-row items-start gap-3">
+                <View className="h-6 w-6 items-center justify-center rounded-full bg-tint">
+                  <Text className="text-[0.8125rem] font-semibold text-brand-text">{i + 1}</Text>
+                </View>
+                <Text className="flex-1 text-[0.875rem] leading-5 text-ink">{text}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
+        {/* "Nesten ferdig": Standard (free) or Hast, as on the web. */}
+        {offerUrgent ? (
+          <View className="mt-5">
+            <Text className="text-[1.0625rem] font-bold text-ink">
+              {t('Nesten ferdig! Velg pakke', 'Almost done! Choose a package')}
+            </Text>
+            <View accessibilityRole="radiogroup" className="mt-2 gap-2">
+              {[
+                {
+                  value: false,
+                  name: 'Standard',
+                  price: t('Gratis', 'Free'),
+                  point: t('Synlig i søk og på kartet', 'Shown in search and on the map'),
+                },
+                {
+                  value: true,
+                  name: t('Hast', 'Urgent'),
+                  price: kr(URGENT_PRICE_NOK),
+                  point: t(
+                    'Merket «Haster» og øverst i søket i 3 dager',
+                    'Marked urgent and at the top of search for 3 days'
+                  ),
+                },
+              ].map((p) => {
+                const picked = urgent === p.value;
+                return (
+                  <Pressable
+                    key={p.name}
+                    onPress={() => update({ urgent: p.value })}
+                    // Paid for: switching to Standard would throw the 39 kr away.
+                    disabled={paid && !p.value}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: picked, disabled: paid && !p.value }}
+                    accessibilityLabel={`${p.name}, ${p.price}. ${p.point}`}
+                    className={`flex-row items-center gap-3 rounded-xl border-2 bg-surface p-3 ${picked ? 'border-brand' : 'border-line'}`}
+                  >
+                    <View className="h-9 w-9 items-center justify-center rounded-lg bg-warn-tint">
+                      {p.value ? (
+                        <Zap size={16} color="#B7791F" />
+                      ) : (
+                        <Check size={16} color={TC.brandText} />
+                      )}
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-[0.9375rem] font-semibold text-ink">{p.name}</Text>
+                      <Text className="text-[0.8125rem] text-muted">{p.point}</Text>
+                    </View>
+                    <Text className="text-[1rem] font-bold text-ink">{p.price}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <View className="mt-3 flex-row justify-between">
               <Text className="text-[0.9375rem] font-semibold text-ink">
-                {t('Haster oppdraget?', 'Is the job urgent?')}
+                {t('Totalt', 'Total')}
               </Text>
-              <Text className="text-[0.8125rem] text-muted">
-                {paid
-                  ? t(
-                      'Merkes med «Haster» og løftes høyere i søket.',
-                      'Marked as urgent and shown higher in search.'
-                    )
-                  : t('For betalte abonnementer.', 'For paid plans.')}
+              <Text className="text-[0.9375rem] font-bold text-ink">
+                {kr(urgent ? URGENT_PRICE_NOK : 0)}
               </Text>
             </View>
-            <Switch
-              value={values.urgent && paid}
-              onValueChange={(v) =>
-                paid
-                  ? update({ urgent: v })
-                  : Alert.alert(
-                      t('Haster', 'Urgent'),
-                      t(
-                        'Haster er kun tilgjengelig for betalte abonnementer.',
-                        'Urgent is only available on paid plans.'
-                      )
-                    )
-              }
-              trackColor={{ true: TC.brandText, false: '#D9DBD3' }}
-            />
-          </Pressable>
+            {paid ? (
+              <View
+                accessibilityRole="text"
+                className="mt-3 flex-row items-start gap-2 rounded-xl bg-tint p-3"
+              >
+                <CheckCircle2 size={18} color={TC.brandText} />
+                <Text className="flex-1 text-[0.875rem] font-medium leading-5 text-brand-text">
+                  {t(
+                    `Betalingen er fullført (${URGENT_PRICE_NOK} kr). Publiser oppdraget, så merkes det «Haster». Publiserer du ikke innen 3 dager, får du pengene tilbake.`,
+                    `Payment complete (${URGENT_PRICE_NOK} kr). Publish the job and it is marked urgent. If you do not publish within 3 days, you get the money back.`
+                  )}
+                </Text>
+              </View>
+            ) : urgent ? (
+              <Text className="mt-1 text-[0.8125rem] leading-5 text-muted">
+                {t(
+                  'Du betaler med kort hos Stripe og kommer tilbake hit. Deretter publiserer du oppdraget.',
+                  'You pay by card with Stripe and come back here. Then you publish the job.'
+                )}
+              </Text>
+            ) : null}
+          </View>
         ) : null}
 
         {problems.length ? (
@@ -327,20 +470,24 @@ export function ReviewStep({ onSaved }: { onSaved: () => void }) {
           </Text>
         </Pressable>
         <Pressable
-          onPress={publish}
-          disabled={Boolean(problems.length) || saving}
+          onPress={mustPay ? payForUrgent : publish}
+          disabled={Boolean(problems.length) || saving || paying}
           accessibilityRole="button"
-          accessibilityState={{ disabled: Boolean(problems.length) || saving }}
-          className={`h-12 flex-1 items-center justify-center rounded-full bg-brand ${problems.length || saving ? 'opacity-50' : ''}`}
+          accessibilityState={{ disabled: Boolean(problems.length) || saving || paying }}
+          className={`h-12 flex-1 items-center justify-center rounded-full bg-brand ${problems.length || saving || paying ? 'opacity-50' : ''}`}
         >
           <Text className="text-[0.9375rem] font-semibold text-white">
             {editId
               ? saving
                 ? t('Lagrer…', 'Saving…')
                 : t('Lagre endringer', 'Save changes')
-              : saving
-                ? t('Publiserer…', 'Publishing…')
-                : t('Publiser oppdraget', 'Publish job')}
+              : paying
+                ? t('Venter på betaling…', 'Waiting for payment…')
+                : saving
+                  ? t('Publiserer…', 'Publishing…')
+                  : mustPay
+                    ? t(`Betal ${URGENT_PRICE_NOK} kr`, `Pay ${URGENT_PRICE_NOK} kr`)
+                    : t('Publiser oppdraget', 'Publish job')}
           </Text>
         </Pressable>
       </View>
@@ -384,7 +531,7 @@ export function ReviewStep({ onSaved }: { onSaved: () => void }) {
               </ScrollView>
             ) : null}
             <View className="px-4 pt-4">
-              {values.urgent && paid ? (
+              {urgent ? (
                 <View className="mb-2 self-start rounded-full bg-warn-tint px-2.5 py-1">
                   <Text className="text-[0.8125rem] font-semibold text-ink">
                     {t('Haster', 'Urgent')}

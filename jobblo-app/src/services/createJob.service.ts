@@ -42,6 +42,8 @@ export interface CreateJobFormValues {
   contactPhone: string;
   contactEmail: string;
   checklist: ChecklistItem[];
+  /** Hast already paid ("Betal 39 kr" before publishing): the server checks it and marks the job. */
+  urgentPurchaseId?: string;
 }
 
 /** A blank job (new job in both the post-job flow and the old form). */
@@ -79,6 +81,8 @@ export interface CreateServiceResponse {
   _id: string;
   title: string;
   status: string;
+  /** True when a paid Hast was applied (the server checks urgentPurchaseId). */
+  urgent?: boolean;
 }
 
 type NativeFilePart = { uri: string; name: string; type: string };
@@ -111,6 +115,7 @@ export function buildJobFormData(
     append('hourlyRate', values.hourlyRate.trim());
   append('paymentType', values.paymentType);
   append('urgent', String(values.urgent));
+  if (values.urgentPurchaseId) append('urgentPurchaseId', values.urgentPurchaseId);
   append('maxApplicants', values.maxApplicants.trim() || '0');
   append('equipment', values.equipment);
   if (values.customerType) append('customerType', values.customerType);
@@ -159,6 +164,29 @@ export async function createJob(
   });
   if (!response.data?._id) throw new Error('Oppdraget ble opprettet uten gyldig ID');
   return response.data;
+}
+
+/**
+ * Hast (39 kr, backend services/urgentPurchase.js), paid BEFORE publishing, as on the web.
+ * Stripe returns through the server's HTTPS bridge into the app (`jobblo://create-job`).
+ */
+export async function createUrgentPayment() {
+  const { data } = await apiClient.post<{
+    url?: string;
+    sessionId?: string;
+    alreadyPaid?: boolean;
+    purchaseId?: string;
+  }>('/stripe/create-urgent-payment', { platform: 'mobile' });
+  return data;
+}
+
+/** `paid` only after Stripe confirmed it (webhook, or the server's own session read). */
+export async function getUrgentStatus(sessionId: string) {
+  const { data } = await apiClient.get<{
+    status: 'pending' | 'paid' | 'consumed' | 'expired';
+    purchaseId: string;
+  }>(`/stripe/urgent-status/${sessionId}`);
+  return data;
 }
 
 export async function updateJob(
