@@ -18,7 +18,8 @@ const PACKAGES = [
     price: `${URGENT_PRICE_NOK} kr`,
     points: [
       'Alt i Standard',
-      'Merket «Haster» på oppdraget',
+      'Merket «Haster» i 3 dager',
+      'Øverst i søkeresultatene',
       'Vises når noen filtrerer på «Haster»',
     ],
   },
@@ -150,7 +151,7 @@ function PackageCards({ urgent, setUrgent, onPay, paying, paid }: PackageProps) 
         >
           <CheckCircle2 size={18} className="mt-0.5 shrink-0" />
           Betalingen er fullført ({URGENT_PRICE_NOK} kr). Publiser oppdraget, så merkes det
-          «Haster».
+          «Haster». Publiserer du ikke innen 3 dager, får du pengene tilbake.
         </p>
       )}
       {urgent && !paid && (

@@ -31,9 +31,12 @@
  */
 const SORT_OPTIONS = [
   {
+    // Hast (39 kr, a paid «Haster» mark for a few days) puts a job at the top of the default
+    // order, as FINN's top-of-results placement. Price sorts keep pure price order: there
+    // the user asked for price. Served by the { status, urgent, createdAt } index.
     value: 'newest',
     label: 'Nyeste først',
-    sort: { createdAt: -1 },
+    sort: { urgent: -1, createdAt: -1 },
   },
   {
     value: 'price_low',
@@ -47,21 +50,13 @@ const SORT_OPTIONS = [
   },
   {
     /**
-     * Deliberately identical to `newest` for now.
-     *
-     * There is no relevance signal to rank on: the search path builds regex `$or`
-     * conditions rather than a `$text` query, so there is no `textScore` to sort by,
-     * and no popularity or match-quality score is stored on the document. Inventing
-     * one here — "urgent first", "most viewed" — would be a ranking decision dressed
-     * up as a bug fix, and it would change which listings get seen.
-     *
-     * It stays in the contract because it is already advertised and clients send it;
-     * it resolves safely instead of falling through an unknown-value path. Give it
-     * real behaviour when there is a real signal to rank on.
+     * Same as `newest` (paid «Haster» first, then newest): there is no relevance signal
+     * to rank on — the search path builds regex `$or` conditions rather than a `$text`
+     * query, so there is no `textScore` to sort by. Give it real behaviour when there is.
      */
     value: 'relevant',
     label: 'Mest relevant',
-    sort: { createdAt: -1 },
+    sort: { urgent: -1, createdAt: -1 },
   },
 ];
 

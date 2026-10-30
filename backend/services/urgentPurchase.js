@@ -17,6 +17,17 @@ const { logApplicationError } = require('../utils/errorLogger');
 // ponytail: fixed price, mirrored in frontend components/CreateJobForm/PackageStep.tsx. Move to the
 // admin plans page if it ever needs changing without a deploy.
 const URGENT_PRICE_NOK = 39;
+// How long Hast lasts: HAST_DURATION_MINUTES, else 3 days (live). A few minutes makes the expiry testable locally.
+const DEFAULT_URGENT_MINUTES = 3 * 24 * 60;
+const urgentDurationMs = () => {
+  const minutes = Number(process.env.HAST_DURATION_MINUTES);
+  return (Number.isFinite(minutes) && minutes > 0 ? minutes : DEFAULT_URGENT_MINUTES) * 60 * 1000;
+};
+/** The urgent mark for a job, from now for the configured duration. */
+const urgentMark = (now = new Date()) => ({
+  urgent: true,
+  urgentUntil: new Date(now.getTime() + urgentDurationMs()),
+});
 const CHECKOUT_MINUTES = 30; // Stripe's minimum Checkout lifetime
 const OPEN_STATUSES = ['open', 'pending'];
 
@@ -283,11 +294,9 @@ async function confirmUrgentSession(
     { new: true }
   );
   if (!updated) return { handled: 'urgent_already_paid' };
-  // ponytail: urgent stays on while the job is listed (no 7-day expiry, no refund if the job
-  // is deleted or a prepaid purchase is never used). Add `urgentUntil` + a scheduler sweep
-  // if Hast should run out.
+  // ponytail: no refund once the job is published (Hast delivered), also if it is deleted.
   if (purchase.serviceId)
-    await ServiceModel.updateOne({ _id: purchase.serviceId }, { $set: { urgent: true } });
+    await ServiceModel.updateOne({ _id: purchase.serviceId }, { $set: urgentMark() });
   return { handled: 'urgent_paid' };
 }
 
@@ -321,6 +330,77 @@ async function getUrgentStatus({ userId, sessionId }, overrides = {}) {
   };
 }
 
+// One setting for both: a published job keeps «Haster» this long, and a Hast paid but never
+// used for a job (not published, or its draft deleted) is refunded after the same time.
+const unusedRefundMs = urgentDurationMs;
+
+/**
+ * Refund every prepaid Hast nobody used (paid, no job) once unusedRefundMs has passed. A
+ * purchase is claimed first (paid → refunding), so publishing can no longer use it and two
+ * runs never refund it twice; Stripe's idempotency key covers a retry after a lost answer.
+ * After a refund the user simply pays again for a new Hast.
+ */
+async function refundUnusedPurchases(
+  { now = new Date() } = {},
+  {
+    Model = UrgentPurchase,
+    TransactionModel = require('../models/Transaction'),
+    stripeFor = getStripeForMode,
+  } = {}
+) {
+  const due = await Model.find({
+    status: 'paid',
+    serviceId: null,
+    paidAt: { $lte: new Date(now.getTime() - unusedRefundMs()) },
+  })
+    .select('_id')
+    .limit(50)
+    .lean();
+  let refunded = 0;
+  for (const { _id } of due) {
+    const purchase = await Model.findOneAndUpdate(
+      { _id, status: 'paid', serviceId: null },
+      { $set: { status: 'refunding' } },
+      { new: true }
+    );
+    if (!purchase) continue; // published or refunded meanwhile
+    try {
+      const stripe = await stripeFor(purchase.stripeMode === 'test');
+      const refund = await stripe.refunds.create(
+        {
+          payment_intent: purchase.paymentIntentId,
+          metadata: { type: 'urgent_unused', purchaseId: String(purchase._id) },
+        },
+        { idempotencyKey: `jobblo-urgent-refund:${purchase._id}` }
+      );
+      await Model.updateOne(
+        { _id: purchase._id },
+        { $set: { status: 'refunded', refundedAt: now, refundId: refund.id } }
+      );
+      await TransactionModel.updateOne(
+        { stripeSessionId: purchase.checkoutSessionId },
+        {
+          $set: {
+            status: 'refunded',
+            refunded: true,
+            refundedAt: now,
+            refundReason: 'Oppdraget ble ikke publisert, så Hast ble ikke brukt.',
+          },
+        }
+      );
+      refunded += 1;
+    } catch (err) {
+      // Back to paid: the next run tries again with the same idempotency key.
+      await Model.updateOne(
+        { _id: purchase._id, status: 'refunding' },
+        { $set: { status: 'paid' } }
+      );
+      console.error('[urgent] unused Hast refund failed:', err.code || err.type || err.message);
+    }
+  }
+  return { refunded };
+}
+
 /**
  * Publishing with a prepaid Hast: claim the user's paid, unused purchase for the new job, once
  * (atomic). True when the job may be marked urgent.
@@ -347,6 +427,10 @@ async function consumeUrgentPurchase(
 
 module.exports = {
   URGENT_PRICE_NOK,
+  urgentDurationMs,
+  urgentMark,
+  unusedRefundMs,
+  refundUnusedPurchases,
   UrgentPurchaseError,
   createUrgentCheckout,
   confirmUrgentSession,

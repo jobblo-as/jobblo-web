@@ -7,8 +7,10 @@ const mongoose = require('mongoose');
  *
  * pending  -> Checkout created, not paid yet (expires with the session)
  * paid     -> Stripe confirmed the payment; a job bought for is marked urgent
- * consumed -> a prepaid purchase was used when its job was published (serviceId set then)
- * expired  -> the Checkout session expired or failed unpaid
+ * consumed  -> a prepaid purchase was used when its job was published (serviceId set then)
+ * refunding -> paid but never used: the refund is being made (publishing cannot claim it)
+ * refunded  -> that refund went through (HAST_DURATION_MINUTES after payment)
+ * expired   -> the Checkout session expired or failed unpaid
  */
 const urgentPurchaseSchema = new mongoose.Schema(
   {
@@ -19,7 +21,7 @@ const urgentPurchaseSchema = new mongoose.Schema(
     currency: { type: String, default: 'nok' },
     status: {
       type: String,
-      enum: ['pending', 'paid', 'consumed', 'expired'],
+      enum: ['pending', 'paid', 'consumed', 'refunding', 'refunded', 'expired'],
       default: 'pending',
       required: true,
     },
@@ -28,6 +30,8 @@ const urgentPurchaseSchema = new mongoose.Schema(
     expiresAt: { type: Date, required: true },
     paidAt: Date,
     consumedAt: Date,
+    refundedAt: Date,
+    refundId: String,
   },
   { timestamps: true, collection: 'urgent_purchases' }
 );

@@ -118,8 +118,10 @@ run('hot queries use an index (real MongoDB)', () => {
     ]) {
       if (label === 'urgent' && value !== 'newest') continue;
       test(`list ${value} / ${label} is index-sorted`, async () => {
+        // As browseController: with the «Haster» filter, urgent-first is dropped from the sort.
+        const { urgent: _u, ...dateOnly } = sort;
         const ex = await Service.find({ status: PUB, ...extra })
-          .sort(sort)
+          .sort(label === 'urgent' ? dateOnly : sort)
           .limit(25)
           .explain('executionStats');
         expect(stages(ex)).not.toContain('SORT');

@@ -47,6 +47,20 @@ const SCHEDULE = [
     delayMs: 5 * MINUTE,
   },
   {
+    name: 'expireUrgentMarks',
+    fn: jobs.expireUrgentMarks,
+    // Hourly for the 3-day mark; every minute when HAST_DURATION_MINUTES is short (testing).
+    everyMs: require('../urgentPurchase').urgentDurationMs() < HOUR ? MINUTE : HOUR,
+    delayMs: MINUTE,
+  },
+  {
+    name: 'refundUnusedUrgent',
+    fn: jobs.refundUnusedUrgent,
+    // Hourly for the 3-day window; every minute when HAST_DURATION_MINUTES is short.
+    everyMs: require('../urgentPurchase').unusedRefundMs() < HOUR ? MINUTE : HOUR,
+    delayMs: 2 * MINUTE,
+  },
+  {
     name: 'recordSafePayConnectReadiness',
     fn: jobs.recordSafePayConnectReadiness,
     everyMs: SAFEPAY_CHECK_MS,

@@ -270,7 +270,7 @@ exports.createService = async (req, res) => {
         serviceId: service._id,
       }))
     ) {
-      service.urgent = true;
+      Object.assign(service, require('../../services/urgentPurchase').urgentMark());
       await service.save();
     }
 

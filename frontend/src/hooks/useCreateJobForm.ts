@@ -71,6 +71,9 @@ type JobDraft = Partial<
   }
 >;
 
+/** Fired by the "Dine utkast" list with the id of a draft it deleted. */
+export const DRAFT_DELETED_EVENT = 'jobblo:draft-deleted';
+
 /** A photo's identity that survives the IndexedDB round trip (File objects do not). */
 const fileSig = (file: File) => `${file.name}:${file.size}:${file.lastModified}`;
 
@@ -1129,6 +1132,20 @@ export const useCreateJobForm = (
     await clearFormData();
     window.location.reload();
   };
+
+  // The draft open in this form was deleted from the list: empty the form (as "Avbryt").
+  // Otherwise it kept the deleted text, and its autosave made the draft again.
+  useEffect(() => {
+    const onDeleted = async (event: Event) => {
+      if ((event as CustomEvent<string>).detail !== serverDraftId.current) return;
+      serverDraftId.current = null;
+      clearTimeout(serverSyncTimer.current);
+      await clearFormData();
+      window.location.replace('/Publish-job');
+    };
+    window.addEventListener(DRAFT_DELETED_EVENT, onDeleted);
+    return () => window.removeEventListener(DRAFT_DELETED_EVENT, onDeleted);
+  }, []);
 
   const previewJobData = useMemo(() => {
     const previewImages = imageItems.map((item) => item.url);

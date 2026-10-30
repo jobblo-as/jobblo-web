@@ -55,7 +55,13 @@ describe('confirmUrgentSession', () => {
     expect(await urgent.confirmUrgentSession(session(), Model, Svc, Tx)).toEqual({
       handled: 'urgent_paid',
     });
-    expect(Svc.updateOne).toHaveBeenCalledWith({ _id: serviceId }, { $set: { urgent: true } });
+    // «Haster» for the configured duration (default 3 days).
+    const [where, set] = Svc.updateOne.mock.calls[0];
+    expect(where).toEqual({ _id: serviceId });
+    expect(set.$set.urgent).toBe(true);
+    const ms = set.$set.urgentUntil - Date.now();
+    expect(ms).toBeGreaterThan(urgent.urgentDurationMs() - 5000);
+    expect(ms).toBeLessThanOrEqual(urgent.urgentDurationMs());
     // …and it shows on the admin's Transactions page: one row per Stripe session (upsert).
     const [filter, update, opts] = Tx.updateOne.mock.calls[0];
     expect(filter).toEqual({ stripeSessionId: 'cs_test_abc' });
@@ -284,5 +290,128 @@ describe('pressing "Betal" again', () => {
     });
     expect(Model.create).not.toHaveBeenCalled();
     expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
+  });
+});
+
+describe('Hast runs out after 7 days', () => {
+  const Service = require('../models/Service');
+  const { expireUrgentMarks } = require('../services/scheduler/jobs');
+  afterEach(() => jest.restoreAllMocks());
+
+  test('the hourly sweep clears only marks whose time has passed', async () => {
+    const updateMany = jest.spyOn(Service, 'updateMany').mockResolvedValue({ modifiedCount: 2 });
+    const now = new Date('2026-11-06T12:00:00Z');
+    expect(await expireUrgentMarks(now)).toEqual({ expired: 2 });
+    expect(updateMany).toHaveBeenCalledWith(
+      { urgent: true, urgentUntil: { $lte: now } },
+      { $set: { urgent: false } }
+    );
+  });
+
+  test('the duration comes from HAST_DURATION_MINUTES; unset or invalid means 3 days', () => {
+    const now = new Date('2026-10-30T10:00:00Z');
+    const saved = process.env.HAST_DURATION_MINUTES;
+    try {
+      delete process.env.HAST_DURATION_MINUTES;
+      expect(urgent.urgentMark(now).urgentUntil).toEqual(new Date('2026-11-02T10:00:00Z'));
+      process.env.HAST_DURATION_MINUTES = '3'; // the local test setting
+      expect(urgent.urgentMark(now)).toEqual({
+        urgent: true,
+        urgentUntil: new Date('2026-10-30T10:03:00Z'),
+      });
+      process.env.HAST_DURATION_MINUTES = 'abc';
+      expect(urgent.urgentDurationMs()).toBe(3 * 24 * 3600 * 1000);
+    } finally {
+      if (saved === undefined) delete process.env.HAST_DURATION_MINUTES;
+      else process.env.HAST_DURATION_MINUTES = saved;
+    }
+  });
+});
+
+describe('Hast paid but never published: refunded', () => {
+  const now = new Date('2026-10-30T12:00:00Z');
+  const paidUnused = {
+    _id: purchaseId,
+    status: 'refunding',
+    stripeMode: 'test',
+    paymentIntentId: 'pi_1',
+    checkoutSessionId: 'cs_test_abc',
+  };
+  // find → the due ids; findOneAndUpdate → the claim (null = published or refunded meanwhile).
+  const model = (claim) => {
+    const find = jest.fn(() => ({
+      select: () => ({ limit: () => ({ lean: async () => [{ _id: purchaseId }] }) }),
+    }));
+    return {
+      find,
+      findOneAndUpdate: jest.fn(async () => claim),
+      updateOne: jest.fn(async () => ({})),
+    };
+  };
+  const stripeWith = (create) => async () => ({ refunds: { create } });
+
+  test('claims it, refunds once on Stripe, and marks the purchase and transaction refunded', async () => {
+    const Model = model(paidUnused);
+    const Tx = fakeTx();
+    const create = jest.fn(async () => ({ id: 're_1' }));
+    const out = await urgent.refundUnusedPurchases(
+      { now },
+      { Model, TransactionModel: Tx, stripeFor: stripeWith(create) }
+    );
+    expect(out).toEqual({ refunded: 1 });
+    // Only paid, unused, and older than HAST_DURATION_MINUTES (default 3 days).
+    expect(Model.find.mock.calls[0][0]).toEqual({
+      status: 'paid',
+      serviceId: null,
+      paidAt: { $lte: new Date(now.getTime() - urgent.unusedRefundMs()) },
+    });
+    // Claimed first, so publishing can no longer use it.
+    expect(Model.findOneAndUpdate.mock.calls[0][1]).toEqual({ $set: { status: 'refunding' } });
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ payment_intent: 'pi_1' }), {
+      idempotencyKey: `jobblo-urgent-refund:${purchaseId}`,
+    });
+    expect(Model.updateOne.mock.calls[0][1].$set).toMatchObject({
+      status: 'refunded',
+      refundId: 're_1',
+    });
+    expect(Tx.updateOne).toHaveBeenCalledWith(
+      { stripeSessionId: 'cs_test_abc' },
+      {
+        $set: {
+          status: 'refunded',
+          refunded: true,
+          refundedAt: now,
+          refundReason: 'Oppdraget ble ikke publisert, så Hast ble ikke brukt.',
+        },
+      }
+    );
+  });
+
+  test('published meanwhile: nothing is refunded', async () => {
+    const create = jest.fn();
+    const out = await urgent.refundUnusedPurchases(
+      { now },
+      { Model: model(null), TransactionModel: fakeTx(), stripeFor: stripeWith(create) }
+    );
+    expect(out).toEqual({ refunded: 0 });
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  test('Stripe fails: back to paid, so the next run tries again', async () => {
+    const Model = model(paidUnused);
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    const create = jest.fn(async () => {
+      throw Object.assign(new Error('down'), { type: 'StripeConnectionError' });
+    });
+    const out = await urgent.refundUnusedPurchases(
+      { now },
+      { Model, TransactionModel: fakeTx(), stripeFor: stripeWith(create) }
+    );
+    expect(out).toEqual({ refunded: 0 });
+    expect(Model.updateOne).toHaveBeenCalledWith(
+      { _id: purchaseId, status: 'refunding' },
+      { $set: { status: 'paid' } }
+    );
+    console.error.mockRestore();
   });
 });
