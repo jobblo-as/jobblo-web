@@ -224,3 +224,65 @@ describe('Hast from the app: the HTTPS bridge back into the app', () => {
     }
   });
 });
+
+describe('pressing "Betal" again', () => {
+  const User = require('../models/User');
+  afterEach(() => jest.restoreAllMocks());
+
+  // A Model whose findOne answers by query: a paid unused purchase, or an open one.
+  const modelWith = ({ paid = null, pending = null } = {}) => ({
+    findOne: jest.fn((q) => {
+      const doc = q.status === 'paid' ? paid : q.status === 'pending' ? pending : null;
+      const chain = { select: () => chain, lean: async () => doc };
+      return chain;
+    }),
+    updateMany: jest.fn(async () => ({})),
+    updateOne: jest.fn(async () => ({})),
+    create: jest.fn(),
+  });
+
+  test('already paid and not used: no second charge, the payment is handed back', async () => {
+    const Model = modelWith({ paid: { _id: purchaseId } });
+    const getStripeConfiguration = jest.fn();
+    const out = await urgent.createUrgentCheckout({ userId }, { Model, getStripeConfiguration });
+    expect(out).toEqual({ alreadyPaid: true, purchaseId: String(purchaseId), priceNok: 39 });
+    expect(getStripeConfiguration).not.toHaveBeenCalled();
+    expect(Model.create).not.toHaveBeenCalled();
+  });
+
+  test('a Checkout closed without paying opens again instead of a 409', async () => {
+    jest.spyOn(User, 'findById').mockResolvedValue({ _id: userId });
+    const Model = modelWith({
+      pending: { _id: purchaseId, serviceId: null, checkoutSessionId: 'cs_test_open' },
+    });
+    const stripe = {
+      checkout: {
+        sessions: {
+          retrieve: jest.fn(async () => ({
+            id: 'cs_test_open',
+            status: 'open',
+            url: 'https://checkout.stripe.test/open',
+            success_url: 'http://localhost:5173/Publish-job?hast=paid&session_id=cs_test_open',
+          })),
+          create: jest.fn(),
+        },
+      },
+    };
+    const out = await urgent.createUrgentCheckout(
+      { userId },
+      {
+        Model,
+        getStripeConfiguration: async () => ({ keyModeValid: true, testMode: true, mode: 'test' }),
+        getStripeForMode: async () => stripe,
+        resolveStripeCustomer: async () => 'cus_1',
+      }
+    );
+    expect(out).toEqual({
+      url: 'https://checkout.stripe.test/open',
+      sessionId: 'cs_test_open',
+      priceNok: 39,
+    });
+    expect(Model.create).not.toHaveBeenCalled();
+    expect(stripe.checkout.sessions.create).not.toHaveBeenCalled();
+  });
+});

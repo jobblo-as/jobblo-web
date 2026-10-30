@@ -152,7 +152,14 @@ export default function CreateJobForm({
     }
     setHastBusy(true);
     try {
-      window.location.assign((await createUrgentPayment()).url);
+      const res = await createUrgentPayment();
+      // Paid before and not used yet (e.g. the page reloaded): no second charge.
+      if (res.alreadyPaid && res.purchaseId) {
+        setUrgentPurchaseId(res.purchaseId);
+        setHastBusy(false);
+        return;
+      }
+      if (res.url) window.location.assign(res.url);
     } catch (err) {
       setHastBusy(false);
       toast.error(errorBody(err)?.message || 'Kunne ikke starte betalingen. Prøv igjen.');
