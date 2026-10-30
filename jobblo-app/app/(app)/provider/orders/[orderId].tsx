@@ -379,7 +379,7 @@ export default function ProviderOrderScreen() {
     <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
       >
         {/* No "Se kontrakt" link: /safepay/checkout is customer-only and its provider guard
         redirects straight back here, so the pair used to bounce the provider in a loop. */}
