@@ -37,7 +37,11 @@ import {
   Star,
   Zap,
 } from 'lucide-react-native';
+import { useQuery } from '@tanstack/react-query';
 import { useJobDetails } from '../../../src/hooks/useJobDetails';
+import { usePlans } from '../../../src/hooks/useMembership';
+import { getContactEntitlements } from '../../../src/services/plans.service';
+import { contactUsage } from '../../../src/utils/contactUsage';
 import { useApplyMutation } from '../../../src/hooks/useApplyMutation';
 import { useConnectStatus } from '../../../src/hooks/usePayout';
 import { useMyJobRequests } from '../../../src/hooks/useMyApplications';
@@ -196,10 +200,34 @@ export default function JobDetailsScreen() {
   const { width } = useWindowDimensions();
   const { isSaved, isLoading: savedLoading } = useIsServiceSaved(id ?? '');
 
+  // "Kontakter denne perioden", as on the web's job page.
+  const currentUserId = user ? String((user as any)._id ?? (user as any).id ?? '') : '';
+  const entitlementsQuery = useQuery({
+    queryKey: ['contact-entitlements', currentUserId],
+    queryFn: getContactEntitlements,
+    enabled: isAuthenticated,
+    retry: false,
+  });
+  const { data: plans } = usePlans();
+  const accountPlanType = (user as any)?.role === 'company' ? 'business' : 'private';
+  const usage = isAuthenticated
+    ? contactUsage({
+        entitlements: entitlementsQuery.data,
+        errorCode: (entitlementsQuery.error as any)?.response?.data?.code,
+        planFreeContacts: plans?.find(
+          (plan) =>
+            plan.name === ((user as any)?.subscription || 'Standard') &&
+            plan.type === accountPlanType
+        )?.entitlements?.freeContact,
+        monthlyUsage: (user as any)?.monthlyContactUsage,
+      })
+    : null;
+
   const { mutate: applyToJob, isPending: isApplyLoading } = useApplyMutation({
     onSuccess: () => {
       setIsApplyModalOpen(false);
       setApplyError(null);
+      void entitlementsQuery.refetch();
       // Modal closes, success toast is shown by parent if needed
     },
     onError: (error: any) => {
@@ -241,7 +269,6 @@ export default function JobDetailsScreen() {
     job?.status === 'completed' ||
     job?.status === 'cancelled' ||
     job?.status === 'expired';
-  const currentUserId = user ? String((user as any)._id ?? (user as any).id ?? '') : '';
   const hasPendingRequest = (requestsQuery.data ?? []).some((request) => {
     const serviceId =
       typeof request.serviceId === 'object' ? request.serviceId?._id : request.serviceId;
@@ -533,6 +560,15 @@ export default function JobDetailsScreen() {
               </Text>
             </TouchableOpacity>
           )}
+          {usage ? (
+            <Text
+              testID="contact-usage-summary"
+              className="rounded-xl bg-surface-2 px-4 py-3 text-[0.875rem] text-muted"
+            >
+              Kontakter denne perioden: {usage.used} brukt av {usage.limit} · {usage.remaining}{' '}
+              igjen
+            </Text>
+          ) : null}
         </View>
 
         {/* Safe-payment box (FINN: "Trygg handel med Fiks ferdig") */}
