@@ -3,7 +3,8 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { useColorScheme } from 'nativewind';
 import { useRouter, usePathname, type ErrorBoundaryProps } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { BootSplash } from '../src/components/BootSplash';
 import AppProviders from '../src/providers/AppProviders';
 import {
   subscribeToPushResponses,
@@ -81,6 +82,8 @@ export default function RootLayout() {
   const handledNotificationRef = useRef<string | null>(null);
   hydratedRef.current = hydrated;
   authenticatedRef.current = isAuthenticated;
+  const [splashDone, setSplashDone] = useState(false);
+  const hideSplash = useCallback(() => setSplashDone(true), []);
 
   const routeNotification = useCallback(
     (data: PushNotificationData) => {
@@ -136,6 +139,7 @@ export default function RootLayout() {
             contentStyle: { backgroundColor: dark ? '#121411' : '#F8FAFC' },
           }}
         />
+        {!splashDone ? <BootSplash ready={hydrated} onDone={hideSplash} /> : null}
       </ThemeProvider>
     </AppProviders>
   );
