@@ -11,6 +11,7 @@ const Chat = require('../models/ChatMessage');
 const Service = require('../models/Service');
 const { notify, emitToUser } = require('../services/notifications');
 const { ensureProviderConnectReady } = require('../middleware/requireProviderConnect');
+const { safePayCalculation } = require('../utils/safePayAmounts');
 
 const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
 
@@ -35,13 +36,7 @@ exports.getOrderDetail = async (req, res) => {
     const isCustomer = String(order.customerId._id) === String(req.userId);
     const isProvider = String(order.providerId?._id) === String(req.userId);
     if (!isCustomer && !isProvider) return res.status(403).json({ error: 'Ikke autorisert' });
-    const fee = Math.round((order.agreedPrice || 0) * 0.03);
-    const calculation = {
-      basePrice: order.agreedPrice,
-      fee,
-      total: (order.agreedPrice || 0) + fee,
-      providerNet: (order.agreedPrice || 0) - fee,
-    };
+    const calculation = safePayCalculation(order);
     const dispute = await Dispute.findOne({
       orderId,
       status: { $nin: ['resolved', 'closed', 'cancelled'] },
@@ -339,6 +334,10 @@ exports.uploadEvidence = async (req, res) => {
 
     res.json({ message: 'Bevis lastet opp', urls, order: updated });
   } catch (err) {
+    // Was a silent 500 for everything: a file whose bytes are not JPEG/PNG/WebP/PDF (the
+    // upload's own 400) and a storage failure looked the same, and nothing was logged.
+    if (err?.code === 'INVALID_FILE_TYPE') return res.status(400).json({ error: err.message });
+    console.error('uploadEvidence failed for order %s:', req.params.orderId, err);
     res.status(500).json({ error: 'Serverfeil ved opplasting' });
   }
 };
