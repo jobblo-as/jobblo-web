@@ -577,10 +577,14 @@ export default function SafePaySuccessScreen() {
               label="Oppdragsbeløp"
               value={kr(calculation?.basePrice ?? order.agreedPrice)}
             />
-            {calculation ? (
+            {/* The customer paid the price only (the fee comes out of the payout); an order
+                charged under the old rule still lists the fee it paid on top. */}
+            {calculation && (isProvider || (total ?? 0) > calculation.basePrice) ? (
               <ReceiptRow
                 label={isProvider ? 'SafePay-gebyr (3 %)' : 'SafePay-gebyr'}
-                value={isProvider ? `−${kr(calculation.fee)}` : kr(calculation.fee)}
+                value={
+                  isProvider ? `−${kr(calculation.fee)}` : kr((total ?? 0) - calculation.basePrice)
+                }
               />
             ) : null}
             <ReceiptRow

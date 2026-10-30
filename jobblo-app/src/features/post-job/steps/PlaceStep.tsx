@@ -263,7 +263,8 @@ export function PlaceStep() {
 
         <Text className="mt-8 text-[1.25rem] font-bold text-ink">{t('Når?', 'When?')}</Text>
         <Text className="mt-3 text-[0.875rem] font-semibold text-ink">
-          {t('Fra dato', 'Start date')}
+          {t('Fra dato', 'Start date')}{' '}
+          <Text className="font-normal text-muted">{t('(valgfritt)', '(optional)')}</Text>
         </Text>
         <View className="mt-2 flex-row flex-wrap gap-2">
           {quick.map((q) => {
@@ -271,7 +272,8 @@ export function PlaceStep() {
             return (
               <Pressable
                 key={q.text}
-                onPress={() => setDate('fromDate', q.v)}
+                // Tapping the chosen day again clears it: no date is "flexible".
+                onPress={() => setDate('fromDate', selected ? '' : q.v)}
                 accessibilityRole="radio"
                 accessibilityState={{ selected }}
                 className={`h-10 justify-center rounded-full border px-4 ${selected ? 'border-brand bg-tint' : 'border-line bg-surface'}`}
@@ -296,7 +298,23 @@ export function PlaceStep() {
                 : t('Velg dato', 'Pick a date')}
             </Text>
           </Pressable>
+          {values.fromDate ? (
+            <Pressable
+              onPress={() => update({ fromDate: '' })}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={t('Fjern startdato', 'Remove start date')}
+              className="h-10 w-10 items-center justify-center"
+            >
+              <X size={18} color={tc('#63665F', 'muted')} />
+            </Pressable>
+          ) : null}
         </View>
+        {!values.fromDate ? (
+          <Text className="mt-1 text-[0.8125rem] text-muted">
+            {t('La stå tomt hvis du er fleksibel.', 'Leave empty if you are flexible.')}
+          </Text>
+        ) : null}
         {showErrors && placeErrors.fromDate ? (
           <Text className="mt-1 text-[0.8125rem] font-medium text-danger">
             {placeErrors.fromDate}

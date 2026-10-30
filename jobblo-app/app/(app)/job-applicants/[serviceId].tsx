@@ -19,6 +19,7 @@ import { ErrorState } from '../../../src/components/ui/ErrorState';
 import {
   useApplicants,
   useCreateSafePayContractMutation,
+  useLatestServiceOrder,
   useDeclineApplicantMutation,
   useToggleApplicantArchiveMutation,
   useToggleApplicantFavoriteMutation,
@@ -114,6 +115,9 @@ export default function JobApplicantsScreen() {
   const declineMutation = useDeclineApplicantMutation();
   const contractMutation = useCreateSafePayContractMutation();
   const chatMutation = useCreateOrGetChatMutation();
+  // No active order: find where the job ended (e.g. cancelled + refunded), so its steps and
+  // the declined cards lead there.
+  const { data: lastOrder } = useLatestServiceOrder(serviceId ?? '', !!data && !data.activeOrder);
 
   const errorStatus = getErrorStatus(error);
   const errorCopy = useMemo(() => {
@@ -204,6 +208,13 @@ export default function JobApplicantsScreen() {
       router.push(customerOrderRoute(activeOrder._id, activeOrder.status));
       return;
     }
+    if (application.status === 'declined') {
+      // Not awardable: open where the job ended instead.
+      if (lastOrder && validId(lastOrder._id)) {
+        router.push(customerOrderRoute(lastOrder._id, lastOrder.status, lastOrder.paymentStatus));
+      }
+      return;
+    }
     if (!validId(application.applicant._id) || !validId(application._id)) {
       Alert.alert('Kunne ikke velge søker', 'Søkeren mangler en gyldig ID.');
       return;
@@ -244,7 +255,7 @@ export default function JobApplicantsScreen() {
     <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 18, paddingBottom: 120 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 18, paddingBottom: 32 }}
       >
         <Pressable
           onPress={() => router.back()}
@@ -254,7 +265,15 @@ export default function JobApplicantsScreen() {
           <Text className="text-[0.8125rem] text-muted">Tilbake til oversikt</Text>
         </Pressable>
 
-        <SafePayProgressSteps currentStep={getApplicantProgressStep(activeOrder?.status)} />
+        {/* As the web: this page is always step 1; steps the order has reached are tappable. */}
+        <SafePayProgressSteps
+          currentStep={1}
+          navigableThroughStep={
+            activeOrder ? getApplicantProgressStep(activeOrder.status) : lastOrder ? 2 : 1
+          }
+          serviceId={serviceId}
+          orderId={activeOrder?._id ?? lastOrder?._id}
+        />
 
         <View className="mb-5 rounded-2xl bg-brand-deep p-5">
           <View className="flex-row items-start justify-between gap-3">
@@ -348,6 +367,7 @@ export default function JobApplicantsScreen() {
                 key={application._id}
                 application={application}
                 activeOrder={activeOrder}
+                lastOrder={lastOrder ?? null}
                 isTop={index === 0}
                 isCompared={comparedApplicants.includes(application.applicant._id)}
                 isSelecting={contractMutation.isPending}

@@ -4,13 +4,16 @@ import { BlurView } from 'expo-blur';
 import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColorScheme } from 'nativewind';
-import type { Tabs } from 'expo-router';
+import { usePathname, type Tabs } from 'expo-router';
 import { TC } from '../theme/colors';
 
 type TabBarProps = Parameters<NonNullable<React.ComponentProps<typeof Tabs>['tabBar']>>[0];
 
 const BAR_HEIGHT = 64;
 const VISIBLE_TABS = ['index', 'create-job', 'messages', 'alerts', 'profile'];
+
+/** A conversation is full-screen (FINN): no tab bar over the composer. */
+export const isChatThread = (pathname: string) => /^\/messages\/[^/]+$/.test(pathname);
 
 /**
  * iOS 26+: Apple's Liquid Glass (the App Store / FINN tab bar material).
@@ -35,6 +38,8 @@ export function GlassTabBar({ state, descriptors, emitter, navigateToTab }: TabB
   const insets = useSafeAreaInsets();
   const routes = state.routes.filter((route) => VISIBLE_TABS.includes(route.name));
   const dark = useColorScheme().colorScheme === 'dark';
+  const pathname = usePathname();
+  if (isChatThread(pathname)) return null;
 
   return (
     <View
@@ -46,7 +51,7 @@ export function GlassTabBar({ state, descriptors, emitter, navigateToTab }: TabB
         <GlassView
           glassEffectStyle="regular"
           isInteractive
-          colorScheme="auto"
+          colorScheme={dark ? 'dark' : 'light'}
           style={{
             position: 'absolute',
             top: 0,
@@ -85,7 +90,7 @@ export function GlassTabBar({ state, descriptors, emitter, navigateToTab }: TabB
         {Platform.OS === 'ios' && !LIQUID_GLASS ? (
           <BlurView
             intensity={60}
-            tint="systemChromeMaterial"
+            tint={dark ? 'systemChromeMaterialDark' : 'systemChromeMaterialLight'}
             style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
           />
         ) : null}

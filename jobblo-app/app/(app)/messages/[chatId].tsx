@@ -2,10 +2,10 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   FlatList,
   Image,
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   Text,
   TextInput,
@@ -13,14 +13,22 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
-  ArrowLeft,
+  BadgeCheck,
   Briefcase,
-  Flag,
+  ChevronLeft,
   MoreHorizontal,
   Send,
   ShieldCheck,
   Trash2,
+  TriangleAlert,
+  UserRoundCheck,
+  UserRoundX,
 } from 'lucide-react-native';
+import { useUnblockUser } from '../../../src/hooks/useBlockedUsers';
+import { usePublicProfile } from '../../../src/hooks/usePublicProfile';
+import type { PublicUser } from '../../../src/types/UserProfile';
+import { GlassButton, GlassFill, useGlass } from '../../../src/components/ui/GlassButton';
+import { LIQUID_GLASS } from '../../../src/components/GlassTabBar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../src/store/authStore';
@@ -48,6 +56,12 @@ import { orderRouteForRole } from '../../../src/utils/orderRoute';
 import { groupSystemMessages, isStatusGroup, type ChatItem } from '../../../src/utils/chatGrouping';
 import { TC, tc } from '../../../src/theme/colors';
 import { ChatSkeleton } from '../../../src/components/skeletons/ScreenSkeletons';
+
+/**
+ * The "Oppdragsstatus" cards (runs of system messages) are hidden in the thread for now.
+ * Nothing is removed: the messages still load and StatusCard is kept; set true to show them.
+ */
+const SHOW_STATUS_CARDS = false;
 
 const STATUS_LABELS: Record<string, string> = {
   completed: 'Fullført',
@@ -92,6 +106,23 @@ function formatTime(value?: string) {
     ? ''
     : date.toLocaleTimeString('nb-NO', { hour: '2-digit', minute: '2-digit' });
 }
+/** "18. sep. 19:33" — FINN puts the time between messages, not inside each bubble. */
+function formatStamp(value?: string) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return `${date.toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' })} ${formatTime(value)}`;
+}
+/** A stamp opens the thread and every gap of more than 30 minutes. */
+function showStamp(at?: string, previous?: string) {
+  if (!at) return false;
+  if (!previous) return true;
+  return new Date(at).getTime() - new Date(previous).getTime() > 30 * 60 * 1000;
+}
+function itemTime(item: ChatItem<ChatMessage> | undefined) {
+  if (!item) return undefined;
+  return isStatusGroup(item) ? item.items[0]?.createdAt : item.createdAt;
+}
 function messageKey(message: ChatMessage) {
   return (
     message._id ||
@@ -119,7 +150,7 @@ function StatusCard({
   const latest = items[items.length - 1];
   const target = [...items].reverse().find((item) => item.systemData?.orderId)?.systemData?.orderId;
   return (
-    <View className="my-2 rounded-2xl bg-surface px-4 py-3">
+    <View className="my-2 rounded-3xl bg-surface px-5 py-4">
       <Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-muted">
         Oppdragsstatus
       </Text>
@@ -153,6 +184,63 @@ function StatusCard({
   );
 }
 
+/** Who you are talking to, as FINN: big avatar, name, verified · member since, rating. */
+function ChatIntro({
+  other,
+  profile,
+  onOpenProfile,
+}: {
+  other?: MessageParticipant | null;
+  profile?: PublicUser;
+  onOpenProfile: () => void;
+}) {
+  const name = nameOf(other);
+  const avatar = other?.avatarUrl || profile?.avatarUrl;
+  const verified = other?.verified || profile?.identityVerified;
+  const since = profile?.createdAt ? new Date(profile.createdAt).getFullYear() : null;
+  const rating = profile?.averageRating ?? 0;
+  return (
+    <View className="items-center pb-5">
+      <Pressable
+        onPress={onOpenProfile}
+        accessibilityRole="button"
+        accessibilityLabel={`Se profilen til ${name}`}
+        className="h-28 w-28 items-center justify-center overflow-hidden rounded-full bg-surface-2"
+      >
+        {avatar ? (
+          <Image source={{ uri: avatar }} className="h-full w-full" />
+        ) : (
+          <Text className="text-[2rem] font-semibold text-brand-text">{initials(name)}</Text>
+        )}
+      </Pressable>
+      <Pressable onPress={onOpenProfile} hitSlop={6}>
+        <Text className="mt-3 text-[1.125rem] font-semibold text-brand-text">{name}</Text>
+      </Pressable>
+      {verified || since ? (
+        <View className="mt-1.5 flex-row items-center gap-1.5">
+          {verified ? (
+            <>
+              <BadgeCheck size={15} color={TC.brandText} />
+              <Text className="text-[0.8125rem] text-muted">Verifisert</Text>
+            </>
+          ) : null}
+          {verified && since ? <Text className="text-[0.8125rem] text-muted">|</Text> : null}
+          {since ? (
+            <Text className="text-[0.8125rem] text-muted">På Jobblo siden {since}</Text>
+          ) : null}
+        </View>
+      ) : null}
+      {rating > 0 ? (
+        <Text className="mt-1.5 text-[0.8125rem] text-muted">
+          <Text className="font-semibold text-ink">{rating.toFixed(1).replace('.', ',')}</Text>
+          {'  '}
+          {profile?.reviewCount ?? 0} {profile?.reviewCount === 1 ? 'vurdering' : 'vurderinger'}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
 function JobContext({
   chat,
   userId,
@@ -167,11 +255,8 @@ function JobContext({
   const status = order?.status || chat.status;
   const isCustomer = service?.userId === userId;
   return (
-    <Pressable
-      onPress={onPress}
-      className="mb-3 flex-row items-center gap-3 rounded-2xl border border-line bg-surface p-3"
-    >
-      <View className="h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-tint">
+    <Pressable onPress={onPress} className="flex-row items-center gap-3 rounded-3xl bg-surface p-3">
+      <View className="h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-tint">
         {service?.images?.[0] ? (
           <Image source={{ uri: service.images[0] }} className="h-full w-full" />
         ) : (
@@ -277,6 +362,29 @@ export default function ChatDetailScreen() {
     });
   }, [query.data?.pages]);
   const items = useMemo(() => groupSystemMessages(messages), [messages]);
+  // The other person's public profile, for "På Jobblo siden" and the rating (the chat
+  // payload only carries name, avatar and verified).
+  const otherId = chat
+    ? idOf(chat.clientId) === userId
+      ? idOf(chat.providerId)
+      : idOf(chat.clientId)
+    : null;
+  const { data: otherProfile } = usePublicProfile(otherId);
+  const composer = useGlass(24);
+  const titlePill = useGlass(22);
+  const jobPill = useGlass(20);
+  // Once the big avatar and name have scrolled away, a small one sits between ‹ and •••.
+  const introEnd = useRef(220);
+  const compactRef = useRef(false);
+  const [compact, setCompact] = useState(false);
+  const titleFade = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(titleFade, {
+      toValue: compact ? 1 : 0,
+      duration: 160,
+      useNativeDriver: true,
+    }).start();
+  }, [compact, titleFade]);
 
   const send = () => {
     const trimmed = text.trim();
@@ -319,11 +427,12 @@ export default function ChatDetailScreen() {
 
   // "…" menu and its dialogs (shadcn-style DropdownMenu + ConfirmDialog, no native popups).
   const [menuOpen, setMenuOpen] = useState(false);
-  const [dialog, setDialog] = useState<'report' | 'delete' | 'reported' | null>(null);
+  const [dialog, setDialog] = useState<'report' | 'delete' | 'reported' | 'block' | null>(null);
+  const blockMutation = useUnblockUser();
   const [dialogPending, setDialogPending] = useState(false);
   const [dialogError, setDialogError] = useState<string | null>(null);
   const [reportMessage, setReportMessage] = useState('');
-  const openDialog = (kind: 'report' | 'delete') => {
+  const openDialog = (kind: 'report' | 'delete' | 'block') => {
     setDialogError(null);
     setDialog(kind);
   };
@@ -342,6 +451,21 @@ export default function ChatDetailScreen() {
       router.back();
     } catch (error) {
       setDialogError(serverError(error) || 'Kunne ikke slette samtalen. Prøv igjen.');
+    } finally {
+      setDialogPending(false);
+    }
+  };
+
+  // POST /users/:id/block toggles: blocks, or lifts a block already in place.
+  const confirmBlock = async (otherId?: string) => {
+    if (!otherId) return;
+    try {
+      setDialogPending(true);
+      await blockMutation.mutateAsync(otherId);
+      await queryClient.invalidateQueries({ queryKey: queryKeys.chats.all });
+      setDialog(null);
+    } catch (error) {
+      setDialogError(serverError(error) || 'Kunne ikke oppdatere blokkeringen. Prøv igjen.');
     } finally {
       setDialogPending(false);
     }
@@ -388,58 +512,125 @@ export default function ChatDetailScreen() {
     );
 
   const other = chat.clientId?._id === userId ? chat.providerId : chat.clientId;
-  // Same action bar as the web chat: only the job owner (customer) creates the contract and pays.
-  const chatOrder = typeof chat.orderId === 'object' ? chat.orderId : null;
+  const otherBlocked =
+    !!other?._id &&
+    Array.isArray(user?.blockedUsers) &&
+    user.blockedUsers.map(String).includes(String(other._id));
+  // Only the job owner (customer) creates the contract. Paying is reached from the job card
+  // (it opens checkout); the separate "Start fiks ferdig-betaling" button was removed.
   const isCustomer = !!userId && chat.serviceId?.userId === userId;
   const chatReady = chat.status === 'agreed' || chat.agreedPrice != null || !!chat.orderId;
   const action =
-    !isCustomer || !chat.serviceId || !chatReady
+    !isCustomer || !chat.serviceId || !chatReady || chat.orderId
       ? null
-      : !chat.orderId
-        ? {
-            label: creatingContract ? 'Oppretter kontrakt…' : 'Opprett kontrakt',
-            onPress: () => void createContract(),
-          }
-        : chatOrder?.paymentStatus !== 'paid'
-          ? { label: 'Start fiks ferdig-betaling', onPress: () => openOrder() }
-          : null;
+      : {
+          label: creatingContract ? 'Oppretter kontrakt…' : 'Opprett kontrakt',
+          onPress: () => void createContract(),
+        };
   return (
-    <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
+    // 'bottom' too: there is no tab bar here, so the composer keeps clear of the home bar.
+    <SafeAreaView edges={['top', 'left', 'right', 'bottom']} className="flex-1 bg-page">
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        // Both platforms: on Android (edge-to-edge since SDK 54) the keyboard no longer
+        // resizes the window, so without this the composer sat behind the keyboard.
+        behavior="padding"
       >
-        <View className="flex-row items-center gap-3 border-b border-line bg-surface px-4 py-3">
-          <Pressable onPress={() => router.back()} className="h-9 w-9 items-center justify-center">
-            <ArrowLeft size={19} color={TC.ink} />
-          </Pressable>
-          <View className="h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-tint">
-            {other?.avatarUrl ? (
-              <Image source={{ uri: other.avatarUrl }} className="h-full w-full" />
-            ) : (
-              <Text className="font-semibold text-brand-text">{initials(nameOf(other))}</Text>
-            )}
-          </View>
-          <Text className="flex-1 text-[1.0625rem] font-semibold text-ink" numberOfLines={1}>
-            {nameOf(other)}
-          </Text>
-          {reporting ? <ActivityIndicator size="small" color={TC.brandText} /> : null}
-          <Pressable
-            onPress={() => setMenuOpen(true)}
-            hitSlop={8}
-            accessibilityRole="button"
-            accessibilityLabel="Flere valg"
-            className="h-9 w-9 items-center justify-center rounded-full active:bg-surface-2"
-          >
-            <MoreHorizontal size={22} color={TC.ink} />
-          </Pressable>
-        </View>
-        {/* The job stays pinned under the header instead of scrolling away with the messages. */}
-        <View className="border-b border-line bg-page px-4 pt-3">
-          <JobContext chat={chat} userId={userId} onPress={() => openOrder()} />
-        </View>
+        <FlatList
+          ref={listRef}
+          data={items}
+          keyExtractor={(item) => (isStatusGroup(item) ? item.key : messageKey(item))}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12 }}
+          onContentSizeChange={() => {
+            if (!query.isFetchingNextPage) listRef.current?.scrollToEnd({ animated: false });
+          }}
+          onScroll={(event) => {
+            const next = event.nativeEvent.contentOffset.y > introEnd.current - 48;
+            if (next !== compactRef.current) {
+              compactRef.current = next;
+              setCompact(next);
+            }
+            if (
+              event.nativeEvent.contentOffset.y < 80 &&
+              query.hasNextPage &&
+              !query.isFetchingNextPage
+            )
+              void query.fetchNextPage();
+          }}
+          scrollEventThrottle={32}
+          maintainVisibleContentPosition={{ minIndexForVisible: 1 }}
+          // FINN's chat: who you are talking to, the job, and the house rule, above the thread.
+          ListHeaderComponent={
+            <View className="pb-2">
+              <View
+                onLayout={(event) => {
+                  introEnd.current = event.nativeEvent.layout.y + event.nativeEvent.layout.height;
+                }}
+              >
+                <ChatIntro
+                  other={other}
+                  profile={otherProfile}
+                  onOpenProfile={() =>
+                    other?._id &&
+                    router.push({
+                      pathname: '/(app)/profile/[userId]',
+                      params: { userId: String(other._id) },
+                    })
+                  }
+                />
+                <JobContext chat={chat} userId={userId} onPress={() => openOrder()} />
+              </View>
+              <Text className="mt-3 text-center text-[0.75rem] leading-4 text-muted">
+                Jobblo forbeholder seg retten til å kontrollere og stoppe meldinger.
+              </Text>
+            </View>
+          }
+          ListEmptyComponent={
+            <Text className="mt-8 text-center text-[0.875rem] text-muted">
+              Ingen meldinger ennå. Skriv den første!
+            </Text>
+          }
+          renderItem={({ item, index }) => {
+            const at = itemTime(item);
+            const previous = index > 0 ? itemTime(items[index - 1]) : undefined;
+            const stamp = showStamp(at, previous) ? (
+              <Text className="mb-2 mt-4 text-center text-[0.75rem] text-muted">
+                {formatStamp(at)}
+              </Text>
+            ) : null;
+            if (isStatusGroup(item))
+              return !SHOW_STATUS_CARDS ? null : (
+                <>
+                  {stamp}
+                  <StatusCard items={item.items} onOpen={openOrder} />
+                </>
+              );
+            const own = idOf(item.senderId) === userId;
+            return (
+              <>
+                {stamp}
+                <View
+                  className={[
+                    'mb-1.5 max-w-[80%] rounded-3xl px-4 py-2.5',
+                    own ? 'self-end rounded-br-lg bg-brand' : 'self-start rounded-bl-lg bg-surface',
+                  ].join(' ')}
+                >
+                  <Text
+                    className={[
+                      'text-[0.9375rem] leading-[1.35rem]',
+                      own ? 'text-white' : 'text-ink',
+                    ].join(' ')}
+                  >
+                    {item.text || ''}
+                  </Text>
+                </View>
+              </>
+            );
+          }}
+        />
+
         {action ? (
-          <View className="border-b border-line bg-surface px-4 py-3">
+          <View className="px-4 pb-1 pt-2">
             <Button
               label={action.label}
               onPress={action.onPress}
@@ -448,91 +639,149 @@ export default function ChatDetailScreen() {
             />
           </View>
         ) : null}
-        <FlatList
-          ref={listRef}
-          data={items}
-          keyExtractor={(item) => (isStatusGroup(item) ? item.key : messageKey(item))}
-          contentContainerStyle={{
-            padding: 16,
-            paddingBottom: 18,
-            flexGrow: messages.length ? 0 : 1,
-          }}
-          onContentSizeChange={() => {
-            if (!query.isFetchingNextPage) listRef.current?.scrollToEnd({ animated: false });
-          }}
-          onScroll={(event) => {
-            if (
-              event.nativeEvent.contentOffset.y < 80 &&
-              query.hasNextPage &&
-              !query.isFetchingNextPage
-            )
-              void query.fetchNextPage();
-          }}
-          scrollEventThrottle={200}
-          maintainVisibleContentPosition={{ minIndexForVisible: 1 }}
-          ListEmptyComponent={
-            <View className="flex-1 items-center justify-center">
-              <Text className="text-[0.875rem] text-muted">Ingen meldinger i denne samtalen.</Text>
-            </View>
-          }
-          renderItem={({ item }) => {
-            if (isStatusGroup(item)) return <StatusCard items={item.items} onOpen={openOrder} />;
-            const own = idOf(item.senderId) === userId;
-            return (
-              <View
-                className={[
-                  'mb-2 max-w-[82%] rounded-2xl px-4 py-3',
-                  own ? 'self-end rounded-br-md bg-brand' : 'self-start rounded-bl-md bg-surface',
-                ].join(' ')}
-              >
-                <Text
-                  className={
-                    own
-                      ? 'text-[0.9375rem] leading-relaxed text-white'
-                      : 'text-[0.9375rem] leading-relaxed text-ink'
-                  }
-                >
-                  {item.text || ''}
-                </Text>
-                <Text
-                  className={['mt-1 text-[0.8125rem]', own ? 'text-white/70' : 'text-muted'].join(
-                    ' '
-                  )}
-                >
-                  {formatTime(item.createdAt)}
-                </Text>
-              </View>
-            );
-          }}
-        />
-        <View className="flex-row items-end gap-2 border-t border-line bg-surface px-4 py-3">
-          <TextInput
-            value={text}
-            onChangeText={setText}
-            placeholder="Skriv en melding..."
-            placeholderTextColor={TC.placeholder}
-            multiline
-            className="max-h-28 min-h-[44px] flex-1 rounded-2xl border border-line bg-surface-2 px-4 py-3 text-[0.9375rem] text-ink"
-          />
-          <Pressable
-            onPress={send}
-            disabled={!text.trim() || sendMutation.isPending}
-            className="h-11 w-11 items-center justify-center rounded-full bg-brand disabled:opacity-50"
+
+        {/* FINN's composer: a glass pill, the send button inside it. */}
+        <View className="px-4 pb-2 pt-2">
+          <View
+            className="min-h-[48px] flex-row items-end py-1 pl-4 pr-1"
+            style={[composer, { elevation: LIQUID_GLASS ? 0 : 3 }]}
           >
-            <Send size={17} color="#FFF" />
-          </Pressable>
+            <GlassFill radius={24} />
+            <TextInput
+              value={text}
+              onChangeText={setText}
+              placeholder="Skriv melding …"
+              placeholderTextColor={TC.placeholder}
+              multiline
+              accessibilityLabel="Skriv melding"
+              className="max-h-28 flex-1 py-2.5 text-[0.9375rem] text-ink"
+            />
+            <Pressable
+              onPress={send}
+              disabled={!text.trim() || sendMutation.isPending}
+              accessibilityRole="button"
+              accessibilityLabel="Send melding"
+              className="mb-0.5 h-10 w-10 items-center justify-center rounded-full bg-brand disabled:opacity-40"
+            >
+              <Send size={17} color="#FFF" />
+            </Pressable>
+          </View>
         </View>
+
+        {/* Floating over the thread, as FINN: back left, the menu right. */}
+        <View
+          pointerEvents="box-none"
+          className="absolute left-0 right-0 top-2 flex-row items-center justify-between px-4"
+          style={{ zIndex: 10, elevation: 10, shadowColor: 'transparent' }}
+        >
+          <GlassButton label="Tilbake" onPress={() => router.back()}>
+            <ChevronLeft size={22} color={TC.ink} />
+          </GlassButton>
+          <Animated.View
+            pointerEvents={compact ? 'box-none' : 'none'}
+            className="flex-1 items-center px-2"
+            style={{
+              opacity: titleFade,
+              transform: [
+                {
+                  translateY: titleFade.interpolate({ inputRange: [0, 1], outputRange: [-6, 0] }),
+                },
+              ],
+            }}
+          >
+            <Pressable
+              onPress={() =>
+                other?._id &&
+                router.push({
+                  pathname: '/(app)/profile/[userId]',
+                  params: { userId: String(other._id) },
+                })
+              }
+              accessibilityRole="button"
+              accessibilityLabel={`Se profilen til ${nameOf(other)}`}
+              className="h-11 max-w-full flex-row items-center gap-2 pl-1.5 pr-4"
+              style={[titlePill, { elevation: LIQUID_GLASS ? 0 : 4 }]}
+            >
+              <GlassFill radius={22} />
+              <View className="h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-surface-2">
+                {other?.avatarUrl ? (
+                  <Image source={{ uri: other.avatarUrl }} className="h-full w-full" />
+                ) : (
+                  <Text className="text-[0.75rem] font-semibold text-brand-text">
+                    {initials(nameOf(other))}
+                  </Text>
+                )}
+              </View>
+              <Text numberOfLines={1} className="shrink text-[0.9375rem] font-semibold text-ink">
+                {nameOf(other)}
+              </Text>
+            </Pressable>
+          </Animated.View>
+          <View className="flex-row items-center gap-2">
+            {reporting ? <ActivityIndicator size="small" color={TC.brandText} /> : null}
+            <GlassButton label="Flere valg" onPress={() => setMenuOpen(true)}>
+              <MoreHorizontal size={21} color={TC.ink} />
+            </GlassButton>
+          </View>
+        </View>
+
+        {/* The job stays in reach: once the intro and job card scroll away, a compact copy
+            sits under ‹ and •••. */}
+        <Animated.View
+          pointerEvents={compact ? 'box-none' : 'none'}
+          className="absolute left-0 right-0 px-4"
+          style={{
+            top: 60,
+            zIndex: 9,
+            elevation: 9,
+            shadowColor: 'transparent',
+            opacity: titleFade,
+            transform: [
+              { translateY: titleFade.interpolate({ inputRange: [0, 1], outputRange: [-6, 0] }) },
+            ],
+          }}
+        >
+          <Pressable
+            onPress={() => openOrder()}
+            accessibilityRole="button"
+            accessibilityLabel={`Oppdrag: ${chat.serviceId?.title || 'Oppdrag'}`}
+            className="min-h-[68px] flex-row items-center gap-3 py-2.5 pl-2.5 pr-4"
+            style={[jobPill, { elevation: LIQUID_GLASS ? 0 : 4 }]}
+          >
+            <GlassFill radius={20} solid />
+            <View className="h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-tint">
+              {chat.serviceId?.images?.[0] ? (
+                <Image source={{ uri: chat.serviceId.images[0] }} className="h-full w-full" />
+              ) : (
+                <Briefcase size={17} color={TC.brandText} />
+              )}
+            </View>
+            <View className="min-w-0 flex-1">
+              <Text className="text-[0.875rem] font-semibold text-ink" numberOfLines={1}>
+                {chat.serviceId?.title || 'Oppdrag'}
+              </Text>
+              {chat.agreedPrice != null || chat.serviceId?.price != null ? (
+                <Text className="text-[0.8125rem] font-semibold text-brand-text">
+                  {(chat.agreedPrice ?? chat.serviceId?.price ?? 0).toLocaleString('nb-NO')} kr
+                </Text>
+              ) : null}
+            </View>
+          </Pressable>
+        </Animated.View>
       </KeyboardAvoidingView>
 
       <DropdownMenu
         visible={menuOpen}
         onClose={() => setMenuOpen(false)}
-        label={nameOf(other)}
         items={[
-          { label: 'Rapporter samtale', icon: Flag, onPress: () => openDialog('report') },
-          null,
           {
-            label: 'Slett samtale',
+            label: otherBlocked ? 'Opphev blokkering' : 'Blokker bruker',
+            icon: otherBlocked ? UserRoundCheck : UserRoundX,
+            onPress: () => openDialog('block'),
+          },
+          { label: 'Rapporter bruker', icon: TriangleAlert, onPress: () => openDialog('report') },
+          {
+            label: 'Slett samtalen',
             icon: Trash2,
             destructive: true,
             onPress: () => openDialog('delete'),
@@ -542,7 +791,7 @@ export default function ChatDetailScreen() {
       {/* One dialog for "report?" and "sent": swapping two Modals at once fails on iOS. */}
       <ConfirmDialog
         visible={dialog === 'report' || dialog === 'reported'}
-        title={dialog === 'reported' ? 'Rapport sendt' : 'Rapporter samtalen?'}
+        title={dialog === 'reported' ? 'Rapport sendt' : `Rapporter ${nameOf(other)}?`}
         message={
           dialog === 'reported'
             ? reportMessage
@@ -555,6 +804,24 @@ export default function ChatDetailScreen() {
         isPending={dialogPending}
         errorMessage={dialogError}
         onConfirm={() => (dialog === 'reported' ? setDialog(null) : void confirmReport())}
+        onClose={closeDialog}
+      />
+      <ConfirmDialog
+        visible={dialog === 'block'}
+        title={
+          otherBlocked ? `Oppheve blokkeringen av ${nameOf(other)}?` : `Blokkere ${nameOf(other)}?`
+        }
+        message={
+          otherBlocked
+            ? 'Dere kan sende meldinger og inngå avtaler igjen.'
+            : 'Dere kan ikke sende meldinger til hverandre eller inngå nye avtaler. Du kan oppheve blokkeringen under Innstillinger → Blokkerte brukere.'
+        }
+        confirmLabel={otherBlocked ? 'Opphev' : 'Blokker'}
+        pendingLabel={otherBlocked ? 'Opphever…' : 'Blokkerer…'}
+        destructive={!otherBlocked}
+        isPending={dialogPending}
+        errorMessage={dialogError}
+        onConfirm={() => void confirmBlock(other?._id ? String(other._id) : undefined)}
         onClose={closeDialog}
       />
       <ConfirmDialog

@@ -19,7 +19,10 @@ const upload = multer({
   fileFilter: (_req, file, cb) => {
     const ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
     if (ALLOWED.includes(file.mimetype)) return cb(null, true);
-    cb(new Error('Ugyldig filtype'));
+    // INVALID_FILE_TYPE: the error handler answers 400 with this text, not a bare 500.
+    const err = new Error(`Ugyldig filtype (${file.mimetype}). Last opp JPG, PNG, WEBP eller PDF.`);
+    err.code = 'INVALID_FILE_TYPE';
+    cb(err);
   },
 });
 

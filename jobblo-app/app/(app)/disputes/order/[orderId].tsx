@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -196,7 +195,9 @@ export default function DisputeThreadScreen() {
 
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        // Both platforms: on Android (edge-to-edge since SDK 54) the keyboard no longer
+        // resizes the window, so without this the composer sat behind the keyboard.
+        behavior="padding"
       >
         <ScrollView
           showsVerticalScrollIndicator={false}

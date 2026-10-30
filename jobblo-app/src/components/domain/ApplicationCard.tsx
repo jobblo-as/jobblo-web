@@ -17,6 +17,7 @@ import { ApplicationFlowSteps } from './ApplicationFlowSteps';
 import { orderStatusLabel } from '../../constants/orderStatus';
 import { ApplicationStatusBadge } from './ApplicationStatusBadge';
 import { TC, tc } from '../../theme/colors';
+import { GlassFill, useGlass } from '../ui/GlassButton';
 
 const ORDER_STATUS: Record<
   string,
@@ -82,6 +83,7 @@ export function ApplicationCard({
   onOrder?: (orderId?: string) => void;
   onContract?: (orderId?: string) => void;
 }) {
+  const glass = useGlass(12);
   const service = application.service;
   const status = application.status;
   const badgeStatus =
@@ -106,7 +108,8 @@ export function ApplicationCard({
     'flex-row items-center justify-center gap-1.5 rounded-full bg-brand px-3 py-2';
 
   return (
-    <View className="overflow-hidden rounded-xl bg-surface">
+    <View style={glass} className="overflow-hidden">
+      <GlassFill radius={12} />
       <View className="p-5">
         <View className="flex-row items-start gap-4">
           <View className="flex h-11 w-11 items-center justify-center rounded-xl bg-tint">
@@ -199,7 +202,7 @@ export function ApplicationCard({
         ) : null}
       </View>
 
-      <View className="flex-row flex-wrap items-center gap-2 border-t border-line bg-surface-2 px-5 py-3.5">
+      <View className="flex-row flex-wrap items-center gap-2 border-t border-line px-5 py-3.5">
         {application.order?.status === 'paid' && application.order?._id ? (
           <Pressable
             onPress={() => onOrder?.(application.order?._id)}

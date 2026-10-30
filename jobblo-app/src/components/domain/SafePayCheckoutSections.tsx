@@ -83,14 +83,33 @@ export function SafePayPartiesCard({ order }: { order: SafePayOrder }) {
   );
 }
 
-function Row({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
+function Row({
+  label,
+  value,
+  strong,
+  last,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean;
+  /** No hairline under the final row (the web's `last:border-b-0`). */
+  last?: boolean;
+}) {
   return (
-    <View className="flex-row items-baseline justify-between gap-3 border-b border-line py-2.5">
+    <View
+      className={[
+        'flex-row items-baseline justify-between gap-3 py-2.5',
+        last ? '' : 'border-b border-line',
+      ].join(' ')}
+    >
       <Text className="shrink-0 text-[0.8125rem] text-muted">{label}</Text>
+      {/* flex-1: a long value ("20. oktober 2026 – 21. oktober 2026") wraps inside the box
+          instead of running past its edge. */}
       <Text
-        className={['text-right text-[0.875rem]', strong ? 'font-semibold' : '', 'text-ink'].join(
-          ' '
-        )}
+        className={[
+          'flex-1 text-right text-[0.875rem] text-ink',
+          strong ? 'font-semibold' : '',
+        ].join(' ')}
       >
         {value}
       </Text>
@@ -128,7 +147,7 @@ export function DigitalContractCard({
           strong
         />
         <Row label="Betalingsmetode" value="SafePay — holdes til godkjenning" />
-        <Row label="Kontrakt-ID" value={`#JB-${order._id.substring(0, 8).toUpperCase()}`} />
+        <Row label="Kontrakt-ID" value={`#JB-${order._id.substring(0, 8).toUpperCase()}`} last />
       </View>
       <Text className="mt-4 text-[0.8125rem] leading-relaxed text-muted">
         Kontrakten sendes til begge parter på e-post og lagres under «Kontrakt» i menyen. Den er
@@ -169,7 +188,14 @@ export function SafePayPaymentCard({
         <Text className="text-[0.9375rem] font-semibold text-ink">Betaling</Text>
       </View>
       <Row label="Oppdragsbeløp" value={`${calculation.basePrice.toLocaleString('nb-NO')} kr`} />
-      <Row label="SafePay-gebyr (3 %)" value={`${calculation.fee.toLocaleString('nb-NO')} kr`} />
+      {/* The 3 % comes out of the provider's payout; only an order charged under the old rule
+          (fee on top, kept in its checkout snapshot) still shows it here. */}
+      {calculation.total > calculation.basePrice ? (
+        <Row
+          label="SafePay-gebyr (3 %)"
+          value={`${(calculation.total - calculation.basePrice).toLocaleString('nb-NO')} kr`}
+        />
+      ) : null}
       <View className="flex-row items-baseline justify-between gap-3 pt-3">
         <Text className="text-[0.9375rem] font-semibold text-ink">
           {isPaid ? 'Betalt' : 'Totalt å betale nå'}
@@ -178,6 +204,13 @@ export function SafePayPaymentCard({
           {calculation.total.toLocaleString('nb-NO')} kr
         </Text>
       </View>
+      {calculation.total <= calculation.basePrice ? (
+        <Text className="mt-2 text-[0.8125rem] text-muted">
+          Du betaler ikke noe ekstra. SafePay-gebyret på 3 % (
+          {calculation.fee.toLocaleString('nb-NO')} kr) trekkes fra utbetalingen til{' '}
+          {providerName ?? 'oppdragstakeren'}.
+        </Text>
+      ) : null}
       {!isPaid ? (
         <>
           <View className="mt-5 flex-row items-center gap-3 rounded-2xl border border-line p-3.5">
@@ -235,10 +268,11 @@ export function SafePayPaymentCard({
 
 /** Same texts as the web ContractViewModal's cancellation section. */
 export function SafePayCancelledCard({ order, total }: { order: SafePayOrder; total: number }) {
-  const reason =
-    order.cancellationReason === 'provider_stripe_connect_timeout'
-      ? 'Oppdragstakeren startet ikke oppdraget innen fristen.'
-      : order.cancellationReason || 'Oppdraget er kansellert.';
+  const reason = ['provider_stripe_connect_timeout', 'provider_no_start_deadline'].includes(
+    order.cancellationReason ?? ''
+  )
+    ? 'Oppdragstakeren startet ikke oppdraget innen fristen.'
+    : order.cancellationReason || 'Oppdraget er kansellert.';
   const refund =
     order.paymentStatus === 'refunded'
       ? `Full refusjon (${total.toLocaleString('nb-NO')} kr) er bekreftet. Det kan ta 1–2 virkedager før pengene vises på kontoen din.`

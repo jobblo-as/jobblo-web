@@ -34,7 +34,6 @@ import * as DocumentPicker from 'expo-document-picker';
 import {
   Award,
   Briefcase,
-  ChevronLeft,
   FileText,
   Image as ImageIcon,
   Plus,
@@ -63,6 +62,7 @@ import {
   type ExperienceInput,
 } from '../../../../src/hooks/useSeeker';
 import { TC, tc } from '../../../../src/theme/colors';
+import { GlassBackButton } from '../../../../src/components/ui/GlassButton';
 import { SeekerSkeleton } from '../../../../src/components/skeletons/ScreenSkeletons';
 
 // ─── Max file size: must match backend (8 MB) ────────────────────────────────
@@ -395,15 +395,9 @@ export default function SeekerScreen() {
     <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
       {/* Top bar: Tilbake · title · Lagre (Lagre saves availability + skills). */}
       <View className="h-14 flex-row items-center justify-between border-b border-line bg-page px-2">
-        <Pressable
-          onPress={leave}
-          hitSlop={8}
-          accessibilityRole="button"
-          className="min-w-[72px] flex-row items-center px-2 py-2"
-        >
-          <ChevronLeft size={20} color={TC.ink2} />
-          <Text className="text-[1.0625rem] text-ink-2">Tilbake</Text>
-        </Pressable>
+        <View className="min-w-[72px] px-1">
+          <GlassBackButton label="Tilbake" onPress={leave} />
+        </View>
         <Text className="text-[1.0625rem] font-semibold text-ink">Jobbsøker-profil</Text>
         <Pressable
           onPress={saveBase}

@@ -78,10 +78,11 @@ export function validateCreateJobStep(
       next.address = 'Søk etter adressen og velg et forslag, eller trykk i kartet.';
     else if (values.coordinates[0] === 0 && values.coordinates[1] === 0)
       next.coordinates = 'Velg adressen fra forslagslisten, eller trykk i kartet.';
-    if (!values.fromDate) next.fromDate = 'Vennligst velg startdato.';
-    else if (!isDate(values.fromDate)) next.fromDate = 'Ugyldig fra-dato.';
+    // Both dates are optional (flexible), as on the web; a date that is set must be sane.
+    if (!values.fromDate) {
+      /* optional */
+    } else if (!isDate(values.fromDate)) next.fromDate = 'Ugyldig fra-dato.';
     else if (values.fromDate < today) next.fromDate = 'Startdato kan ikke være i fortiden.';
-    // "Til dato" is optional (flexible end); checked only when set.
     if (!values.toDate) {
       /* optional */
     } else if (!isDate(values.toDate)) next.toDate = 'Ugyldig sluttdato.';

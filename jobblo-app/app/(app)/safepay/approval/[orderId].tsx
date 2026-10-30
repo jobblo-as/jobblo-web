@@ -321,7 +321,7 @@ export default function SafePayApprovalScreen() {
   if (approvalResult) {
     return (
       <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
-        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
+        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
           <Pressable onPress={() => router.back()} className="mb-5 flex-row items-center gap-2">
             <ArrowLeft size={16} color={tc('#63665F', 'muted')} />
             <Text className="text-sm text-muted">Tilbake</Text>
@@ -366,7 +366,7 @@ export default function SafePayApprovalScreen() {
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
         <Pressable onPress={() => router.back()} className="mb-5 flex-row items-center gap-2">
           <ArrowLeft size={16} color={tc('#63665F', 'muted')} />
           <Text className="text-sm text-muted">Tilbake</Text>

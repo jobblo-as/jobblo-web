@@ -3,7 +3,6 @@ import { Linking, Pressable, ScrollView, Text, TextInput, View } from 'react-nat
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
-  ArrowLeft,
   ChevronDown,
   CheckCircle2,
   Mail,
@@ -17,6 +16,7 @@ import type { SupportTicket, SupportTicketStatus } from '../../../src/services/s
 import { Button } from '../../../src/components/ui/Button';
 import { MEMBERSHIP_ENABLED } from '../../../src/config/features';
 import { TC, tc } from '../../../src/theme/colors';
+import { GlassBackButton } from '../../../src/components/ui/GlassButton';
 import { SupportTicketsSkeleton } from '../../../src/components/skeletons/ScreenSkeletons';
 
 const SUPPORT_EMAIL = 'support@jobblo.no';
@@ -57,7 +57,7 @@ const FAQ_ITEMS: FAQ[] = [
     question: 'Hva koster det å bruke Jobblo?',
     answer: MEMBERSHIP_ENABLED
       ? 'Det er gratis å komme i gang. Du kan oppgradere til et medlemskap for flere kontakter, bedre synlighet og ekstra funksjoner.'
-      : 'Det er gratis å komme i gang. Ved betaling med SafePay legges det til et gebyr på 3 %.',
+      : 'Det er gratis å komme i gang. Ved betaling med SafePay trekkes et gebyr på 3 % fra utbetalingen til oppdragstakeren – oppdragsgiver betaler bare oppdragsbeløpet.',
     search: 'pris koste medlemskap planer',
   },
   {
@@ -150,13 +150,9 @@ export default function SupportScreen() {
         contentContainerStyle={{ padding: 16, paddingBottom: 36 }}
         keyboardShouldPersistTaps="handled"
       >
-        <Pressable
-          onPress={() => router.back()}
-          className="mb-3 flex-row items-center self-start py-2"
-        >
-          <ArrowLeft size={18} color={tc('#63665F', 'muted')} />
-          <Text className="ml-2 text-sm font-medium text-muted">Tilbake</Text>
-        </Pressable>
+        <View className="mb-3">
+          <GlassBackButton label="Profil" onPress={() => router.back()} />
+        </View>
 
         <Text className="text-2xl font-bold text-ink">Kundesenter</Text>
         <Text className="mt-1 text-sm leading-5 text-muted">Hva kan vi hjelpe med?</Text>

@@ -20,6 +20,8 @@ async function readHistory({
   providerConnectStatus,
   card = true,
   cancelled = refundStatus !== 'none',
+  amounts = { agreedPrice: 300, fee: 9, tax: 0, totalCustomer: 309, netProvider: 291 },
+  paidMinor = 30900,
 }) {
   const orderId = new mongoose.Types.ObjectId();
   const record = {
@@ -28,20 +30,14 @@ async function readHistory({
     customerId: { _id: userId, name: 'Customer', lastName: 'One' },
     providerId: { _id: providerId, name: 'Provider', lastName: 'One' },
     serviceTitle: 'Maling',
-    amounts: {
-      agreedPrice: 300,
-      fee: 9,
-      tax: 0,
-      totalCustomer: 309,
-      netProvider: 291,
-    },
+    amounts,
     status:
       refundStatus === 'succeeded' || (refundStatus === 'none' && cancelled)
         ? 'automatically_cancelled'
         : refundStatus === 'none'
           ? 'payment_received'
           : 'refund_pending',
-    originalPaymentAmountMinor: 30900,
+    originalPaymentAmountMinor: paidMinor,
     refundAmountMinor: refundMinor,
     refundedAmountMinor: refundStatus === 'succeeded' ? refundMinor : 0,
     refundStatus,
@@ -283,3 +279,29 @@ it('does not expose history or card details to a non-participant', async () => {
   expect(res.status).toHaveBeenCalledWith(403);
   expect(SafePayHistory.find).not.toHaveBeenCalled();
 });
+
+// The customer now pays the price only; records written then stored the fee as
+// "paid − price" = 0. The provider still had 3 % deducted, so that is what is shown.
+it.each([
+  ['provider', true, 26],
+  ['customer', false, 0],
+])(
+  'the fee is 3 %% of the price, shown to the %s even when the record says 0',
+  async (_who, asProvider, totalFees) => {
+    const customerId = new mongoose.Types.ObjectId();
+    const providerId = new mongoose.Types.ObjectId();
+    const { payload } = await readHistory({
+      userId: asProvider ? providerId : customerId,
+      providerId,
+      refundStatus: 'none',
+      refundMinor: 0,
+      cancelled: false,
+      amounts: { agreedPrice: 864, fee: 0, tax: 0, totalCustomer: 864, netProvider: 864 },
+      paidMinor: 86400,
+      transfers: [{ amount: 83800, amountReversed: 0, normalizedStatus: 'transferred' }],
+    });
+
+    expect(payload.history[0].amounts).toMatchObject({ fee: 26, netProvider: 838 });
+    expect(payload.summary.totalFees).toBe(totalFees);
+  }
+);

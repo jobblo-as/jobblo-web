@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { ChevronRight, Check } from 'lucide-react-native';
+import { cn } from '@/lib/utils';
 import { TC, tc } from '../../theme/colors';
 
 const SORT_OPTIONS = [
@@ -15,6 +16,8 @@ interface SearchResultsHeaderProps {
   isLoading: boolean;
   sortValue: string;
   onSortChange: (value: string) => void;
+  /** Replaces the default outer spacing (px-4 mb-4), e.g. inside an already padded page. */
+  className?: string;
 }
 
 /**
@@ -25,11 +28,16 @@ export function SearchResultsHeader({
   isLoading,
   sortValue,
   onSortChange,
+  className,
 }: SearchResultsHeaderProps) {
   const [showSortMenu, setShowSortMenu] = useState(false);
 
   return (
-    <View className="mb-4 flex-row items-center justify-between px-4">
+    // zIndex: the sort menu opens over the job cards that follow (Android needs elevation).
+    <View
+      className={cn('flex-row items-center justify-between', className ?? 'mb-4 px-4')}
+      style={{ zIndex: 20, elevation: 20, shadowColor: 'transparent' }}
+    >
       <Text className="text-[0.875rem] text-muted">
         {isLoading
           ? 'Henter oppdrag…'

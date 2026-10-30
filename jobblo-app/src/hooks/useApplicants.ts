@@ -4,6 +4,7 @@ import {
   declineApplicant,
   createSafePayContract,
   getApplicants,
+  getLatestOrderForService,
   toggleApplicantArchive,
   toggleApplicantFavorite,
 } from '../services/applicants.service';
@@ -14,6 +15,16 @@ export function useApplicants(serviceId: string, sort = 'createdAt', filter = 'n
     queryKey: queryKeys.applicants.detail({ serviceId, sort, filter }),
     queryFn: () => getApplicants(serviceId, sort, filter),
     enabled: !!serviceId,
+    staleTime: 30_000,
+  });
+}
+
+/** The job's last order, looked up only when the applicants route reports none active. */
+export function useLatestServiceOrder(serviceId: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['applicants', 'latest-order', serviceId],
+    queryFn: () => getLatestOrderForService(serviceId),
+    enabled: !!serviceId && enabled,
     staleTime: 30_000,
   });
 }

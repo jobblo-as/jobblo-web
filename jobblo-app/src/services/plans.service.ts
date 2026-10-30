@@ -1,4 +1,5 @@
 import apiClient from '../api/client';
+import type { ContactEntitlements } from '../utils/contactUsage';
 
 /**
  * Entitlements exactly as declared by backend/models/SubscriptionPlan.js.
@@ -55,4 +56,10 @@ export type SubscriptionPlan = {
 export async function getPlans(): Promise<SubscriptionPlan[]> {
   const response = await apiClient.get<SubscriptionPlan[]>('/plans');
   return Array.isArray(response.data) ? response.data : [];
+}
+
+/** GET /api/stripe/v2/entitlements — the signed-in user's included contacts this period. */
+export async function getContactEntitlements(): Promise<ContactEntitlements> {
+  const response = await apiClient.get<ContactEntitlements>('/stripe/v2/entitlements');
+  return response.data;
 }

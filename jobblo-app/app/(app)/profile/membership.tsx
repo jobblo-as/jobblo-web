@@ -12,7 +12,6 @@ import {
   View,
 } from 'react-native';
 import {
-  ArrowLeft,
   BadgeCheck,
   Check,
   ChevronRight,
@@ -31,6 +30,7 @@ import type { SubscriptionPlan } from '../../../src/services/plans.service';
 import { MEMBERSHIP_ENABLED } from '../../../src/config/features';
 import { ErrorState } from '../../../src/components/ui/ErrorState';
 import { TC, tc } from '../../../src/theme/colors';
+import { GlassBackButton } from '../../../src/components/ui/GlassButton';
 import { MembershipSkeleton } from '../../../src/components/skeletons/ScreenSkeletons';
 
 type PlanType = 'private' | 'business';
@@ -335,13 +335,9 @@ function MembershipScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
       >
-        <Pressable
-          onPress={() => router.back()}
-          className="mb-5 flex-row items-center self-start py-2"
-        >
-          <ArrowLeft size={18} color={tc('#63665F', 'muted')} />
-          <Text className="ml-2 text-sm font-medium text-muted">Innstillinger</Text>
-        </Pressable>
+        <View className="mb-5">
+          <GlassBackButton label="Innstillinger" onPress={() => router.back()} />
+        </View>
 
         <View className="mb-5 flex-row items-center">
           <View className="h-11 w-11 items-center justify-center rounded-xl bg-tint">

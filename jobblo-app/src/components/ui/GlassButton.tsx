@@ -1,9 +1,11 @@
 import React from 'react';
-import { Platform, Pressable, type ViewStyle } from 'react-native';
+import { Platform, Pressable, View, type ViewStyle } from 'react-native';
+import { ChevronLeft } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 import { GlassView } from 'expo-glass-effect';
 import { useColorScheme } from 'nativewind';
 import { LIQUID_GLASS } from '../GlassTabBar';
+import { TC } from '../../theme/colors';
 
 /**
  * The tab bar's glass, for any rounded box: Liquid Glass on iOS 26, blur on older iOS,
@@ -34,11 +36,21 @@ export function GlassFill({
   radius,
   interactive,
   tint,
+  solid,
 }: {
   radius: number;
   interactive?: boolean;
   tint?: string;
+  /**
+   * For glass that floats over content to be read (the chat's pinned job card): a
+   * page-coloured veil over the glass, so bubbles behind it don't show through the text.
+   */
+  solid?: boolean;
 }) {
+  // The app's own theme, not "auto": the theme can be set in the app (Innstillinger), and
+  // glass left on auto could keep the previous scheme after a switch.
+  const dark = useColorScheme().colorScheme === 'dark';
+  const veil = solid ? (dark ? 'rgba(28,31,27,0.72)' : 'rgba(255,255,255,0.72)') : undefined;
   const fill = {
     position: 'absolute',
     top: 0,
@@ -52,15 +64,23 @@ export function GlassFill({
       <GlassView
         glassEffectStyle="regular"
         isInteractive={interactive}
-        tintColor={tint}
-        colorScheme="auto"
+        tintColor={tint ?? veil}
+        colorScheme={dark ? 'dark' : 'light'}
         style={fill}
         pointerEvents="none"
       />
     );
   if (Platform.OS === 'ios')
     return (
-      <BlurView intensity={60} tint="systemChromeMaterial" style={fill} pointerEvents="none" />
+      <>
+        <BlurView
+          intensity={60}
+          tint={dark ? 'systemChromeMaterialDark' : 'systemChromeMaterialLight'}
+          style={fill}
+          pointerEvents="none"
+        />
+        {veil ? <View style={[fill, { backgroundColor: veil }]} pointerEvents="none" /> : null}
+      </>
     );
   return null;
 }
@@ -88,5 +108,17 @@ export function GlassButton({
       <GlassFill radius={20} interactive />
       {children}
     </Pressable>
+  );
+}
+
+/**
+ * The back button of every sub-screen (FINN's "‹" in a glass circle). `label` is where it
+ * goes, read out to screen readers ("Tilbake til Innstillinger"); it is not drawn.
+ */
+export function GlassBackButton({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <GlassButton label={`Tilbake til ${label}`} onPress={onPress}>
+      <ChevronLeft size={22} color={TC.ink} />
+    </GlassButton>
   );
 }

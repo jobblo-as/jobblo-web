@@ -17,6 +17,33 @@ export async function getApplicants(
   return response.data;
 }
 
+/**
+ * The job's newest order of any status, from GET /api/orders (the user's orders, newest
+ * first, serviceId populated). The applicants route only reports an *active* order, so a job
+ * whose order was cancelled/refunded would otherwise have nowhere to go from its declined
+ * applicants. Null when the job never had one.
+ */
+export async function getLatestOrderForService(
+  serviceId: string
+): Promise<{ _id: string; status: string; paymentStatus?: string } | null> {
+  const response = await apiClient.get<
+    {
+      _id: string;
+      status: string;
+      paymentStatus?: string;
+      serviceId?: { _id?: string } | string;
+    }[]
+  >('/orders');
+  const orders = Array.isArray(response.data) ? response.data : [];
+  const order = orders.find((o) => {
+    const id = typeof o.serviceId === 'object' ? o.serviceId?._id : o.serviceId;
+    return String(id) === serviceId;
+  });
+  return order
+    ? { _id: order._id, status: order.status, paymentStatus: order.paymentStatus }
+    : null;
+}
+
 export async function toggleApplicantFavorite(requestId: string): Promise<{ favorite: boolean }> {
   const response = await apiClient.patch(`/applicants/${requestId}/favorite`);
   return response.data;

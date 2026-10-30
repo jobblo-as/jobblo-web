@@ -14,6 +14,7 @@ const { getStripeWebhookReadiness } = require('../services/stripe/webhookReadine
 const { resolveStripeCustomer } = require('../services/stripe/customers');
 const { notify, emitToUser } = require('../services/notifications');
 const { normaliseReviewPhotos, MAX_REVIEW_PHOTOS } = require('../utils/reviewPhotos');
+const { safePayCalculation, safePayFee, customerTotal } = require('../utils/safePayAmounts');
 const {
   getProviderConnectDeadlineDays,
   deadlineSnapshot,
@@ -376,7 +377,9 @@ async function confirmPaidSession(session, io) {
     const service = await Service.findById(updatedOrder.serviceId).select('title');
     const originalPayment = updatedOrder.checkoutAmountMinor / 100;
     const agreedPrice = Number(updatedOrder.agreedPrice) || 0;
-    const fee = Math.max(0, originalPayment - agreedPrice);
+    // Jobblo's 3 %, taken from the payout. It was `paid − price`, which only matched while
+    // the customer paid the fee on top; now that they pay the price, it recorded 0.
+    const fee = safePayFee(agreedPrice);
     await SafePayHistory.updateOne(
       { orderId: updatedOrder._id },
       {
@@ -497,9 +500,8 @@ exports.getCheckoutDetails = async (req, res) => {
       return res.status(403).json({ error: 'Ikke autorisert til å se denne kontrakten' });
     }
 
-    const fee = Math.round(order.agreedPrice * 0.03);
-    const total = order.agreedPrice + fee;
-    const netProvider = order.agreedPrice - fee;
+    // The customer pays the job price; the 3 % fee comes out of the payout (safePayAmounts).
+    const calculation = safePayCalculation(order);
 
     // The start deadline the customer is promised before paying: not started in time
     // means an automatic full refund (providerConnectTimeout.js).
@@ -516,12 +518,7 @@ exports.getCheckoutDetails = async (req, res) => {
 
     res.json({
       order,
-      calculation: {
-        basePrice: order.agreedPrice,
-        fee,
-        total,
-        providerNet: netProvider,
-      },
+      calculation,
       startDeadline,
     });
   } catch (err) {
@@ -848,13 +845,12 @@ exports.createSafePaySession = async (req, res) => {
     // resource_missing 500 on the way into checkout.
     const stripeCustomerId = await resolveStripeCustomer(stripe, user, stripeConfig.testMode);
 
-    const fee = Math.round(order.agreedPrice * 0.03);
-    const total = order.agreedPrice + fee;
-    const amountMinor = Math.round(total * 100);
+    // The job price only — the 3 % fee is deducted from the provider's payout instead.
+    const amountMinor = Math.round(order.agreedPrice * 100);
 
     if (amountMinor < 300) {
       return res.status(400).json({
-        error: 'Beløpet er for lavt. Minimumsbeløpet for betaling er 3 kr inkludert gebyr.',
+        error: 'Beløpet er for lavt. Minimumsbeløpet for betaling er 3 kr.',
       });
     }
 
@@ -1554,9 +1550,9 @@ exports.approveAndPayout = async (req, res) => {
       return res.status(400).json({ error: 'Jobben er allerede fullført' });
     }
 
-    const fee = Math.round(order.agreedPrice * 0.03);
+    const fee = safePayFee(order.agreedPrice);
     const tax = 0;
-    const totalCustomer = order.agreedPrice + fee;
+    const totalCustomer = customerTotal(order);
     const netProvider = order.agreedPrice - fee;
 
     // The order is `completed` from here on, so approving again is refused. If one of

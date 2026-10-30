@@ -13,6 +13,7 @@ const {
 } = require('../../utils/apiResponse');
 const { parsePagination, parseObjectId, parseSort, parseDate } = require('../../utils/pagination');
 const { logActivity } = require('../../services/admin/activityService');
+const { safePayFee, customerTotal } = require('../../utils/safePayAmounts');
 
 const SORT_FIELDS = ['createdAt', 'updatedAt', 'agreedPrice'];
 
@@ -121,11 +122,11 @@ const getSafePayList = asyncHandler(async (req, res) => {
 
   // Fee calculation (3% Jobblo fee)
   const enriched = orders.map((o) => {
-    const fee = o.agreedPrice ? Math.round(o.agreedPrice * 0.03) : 0;
+    const fee = o.agreedPrice ? safePayFee(o.agreedPrice) : 0;
     return {
       ...o,
       fee,
-      customerTotal: o.agreedPrice ? o.agreedPrice + fee : null,
+      customerTotal: o.agreedPrice ? customerTotal(o) : null,
       providerNet: o.agreedPrice ? o.agreedPrice - fee : null,
       dispute: disputeMap[String(o._id)] ?? null,
       safePayStatus: safePayMap[String(o._id)]

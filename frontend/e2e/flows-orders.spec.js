@@ -13,7 +13,8 @@ const ORDER_ID = '64d000000000000000000001';
 const CHAT_ID = '64e000000000000000000001';
 const customer = { ...USERS.user, lastName: 'Kunde' };
 const provider = { ...USERS.provider, lastName: 'Utfører', averageRating: 4.5 };
-const calculation = { basePrice: 3000, fee: 90, total: 3090, providerNet: 2910 };
+// The customer pays the price; the 3 % fee comes out of the provider's payout.
+const calculation = { basePrice: 3000, fee: 90, total: 3000, providerNet: 2910 };
 const order = (status, over = {}) => ({
   _id: ORDER_ID,
   status,
@@ -65,7 +66,12 @@ test('customer picks an applicant: contract is created and checkout opens', asyn
     applicantId: provider._id,
     requestId: 'req-1',
   });
-  await expect(page.getByText('3 090 kr').first()).toBeVisible();
+  await expect(page.getByRole('button', { name: /Bekreft og betal 3 000 kr/ })).toBeVisible();
+  await expect(page.getByTestId('safepay-fee-note')).toContainText(
+    'Du betaler ikke noe ekstra. SafePay-gebyret på 3 % (90 kr) trekkes fra utbetalingen'
+  );
+  await page.getByTestId('safepay-fee-note').scrollIntoViewIfNeeded();
+  await shot(page, 'safepay-checkout-uten-tillegg');
   expect(errors).toEqual([]);
 });
 
@@ -167,6 +173,32 @@ test('a paid order shows no payment button', async ({ page }) => {
   await page.goto(`/safepay/checkout/${ORDER_ID}`);
   await expect(page.getByText(SERVICE.title).first()).toBeVisible();
   await expect(page.getByRole('button', { name: /Bekreft og betal/ })).toHaveCount(0);
+});
+
+// cancelled + refunded matched neither "paid" nor "payable", so it offered "Bekreft og betal".
+test('a cancelled, refunded order shows why and the refund, never a payment button', async ({
+  page,
+}) => {
+  const errors = watchErrors(page);
+  await mockApi(page, {
+    as: 'user',
+    routes: {
+      [`GET /api/safepay-checkout/details/${ORDER_ID}`]: () => ({
+        order: order('cancelled', {
+          paymentStatus: 'refunded',
+          cancellationReason: 'provider_no_start_deadline',
+        }),
+        calculation,
+      }),
+    },
+  });
+  await page.goto(`/safepay/checkout/${ORDER_ID}`);
+  const card = page.getByTestId('safepay-cancelled');
+  await expect(card).toContainText('Oppdragstakeren startet ikke oppdraget innen fristen.');
+  await expect(card).toContainText('Full refusjon (3 000 kr) er bekreftet');
+  await expect(page.getByRole('button', { name: /Bekreft og betal/ })).toHaveCount(0);
+  await shot(page, 'safepay-checkout-kansellert');
+  expect(errors).toEqual([]);
 });
 
 test('provider starts the job, then marks it done', async ({ page }) => {

@@ -5,6 +5,7 @@ import type { ApplicantOverviewService } from '../../types/Applicants';
 import { ApplicantAvatarStack } from './ApplicantAvatarStack';
 import { ServiceStatusBadge } from './ServiceStatusBadge';
 import { TC, tc } from '../../theme/colors';
+import { GlassFill, useGlass } from '../ui/GlassButton';
 
 function formatDate(value: string) {
   const date = new Date(value);
@@ -24,14 +25,17 @@ export function ApplicantServiceCard({
   service: ApplicantOverviewService;
   onPress?: (serviceId: string) => void;
 }) {
+  const glass = useGlass(12);
   const awaitingChoice = service.applicantCount > 0 && !service.selectedWorker;
 
   return (
     <Pressable
       onPress={() => onPress?.(service._id)}
       disabled={!onPress}
-      className="rounded-xl border border-line bg-surface p-5 active:opacity-90"
+      style={glass}
+      className="p-5 active:opacity-90"
     >
+      <GlassFill radius={12} interactive />
       <View className="flex-row items-start gap-3">
         <View className="h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-tint">
           <Briefcase size={18} color={TC.brandText} />

@@ -26,14 +26,15 @@ export function useUnblockUser() {
       await queryClient.invalidateQueries({ queryKey: ['users', 'blocked'] });
       await queryClient.invalidateQueries({ queryKey: queryKeys.auth.profile });
 
-      if (!result.isBlocked) {
-        const currentUser = useAuthStore.getState().user;
-        const blockedUsers =
-          currentUser && Array.isArray(currentUser.blockedUsers)
-            ? currentUser.blockedUsers.filter((blockedId) => String(blockedId) !== userId)
-            : [];
-        await useAuthStore.getState().updateUser({ blockedUsers });
-      }
+      // POST /users/:id/block toggles, so this serves "Blokker bruker" too (chat menu).
+      const currentUser = useAuthStore.getState().user;
+      const current =
+        currentUser && Array.isArray(currentUser.blockedUsers)
+          ? currentUser.blockedUsers.map(String).filter((blockedId) => blockedId !== userId)
+          : [];
+      await useAuthStore
+        .getState()
+        .updateUser({ blockedUsers: result.isBlocked ? [...current, userId] : current });
     },
   });
 }

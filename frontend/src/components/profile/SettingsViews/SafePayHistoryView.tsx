@@ -630,13 +630,25 @@ export const SafePayHistoryView = () => {
                         {formatMoney(transaction.amounts.agreedPrice)}
                       </span>
                     </div>
-                    <div className="flex justify-between text-[14px]">
-                      <span className="text-gray-500">SafePay avgift (3 %)</span>
-                      <span className="text-gray-900 font-medium">
-                        {transaction.isProvider ? '−' : ''}
-                        {formatMoney(transaction.amounts.fee)}
-                      </span>
-                    </div>
+                    {/* The provider pays the 3 % out of the payout; the customer only has a
+                        fee row when they paid one on top (orders from the old rule). */}
+                    {(() => {
+                      const paid = Number.isSafeInteger(transaction.originalPaymentAmountMinor)
+                        ? transaction.originalPaymentAmountMinor / 100
+                        : transaction.amounts.totalCustomer;
+                      const surcharge = paid - transaction.amounts.agreedPrice;
+                      if (!transaction.isProvider && surcharge <= 0) return null;
+                      return (
+                        <div className="flex justify-between text-[14px]">
+                          <span className="text-gray-500">SafePay avgift (3 %)</span>
+                          <span className="text-gray-900 font-medium">
+                            {transaction.isProvider
+                              ? `−${formatMoney(transaction.amounts.fee)}`
+                              : formatMoney(surcharge)}
+                          </span>
+                        </div>
+                      );
+                    })()}
                     <div className="flex justify-between text-[14px]">
                       <span className="text-gray-500">
                         {transaction.isProvider ? 'Oppdragsgiver betalte' : 'Opprinnelig betaling'}

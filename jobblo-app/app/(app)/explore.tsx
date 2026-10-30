@@ -1,7 +1,6 @@
 import React from 'react';
-import { View, Text, FlatList, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, Text, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ArrowLeft } from 'lucide-react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useInfiniteJobs } from '../../src/hooks/useInfiniteJobs';
 import { useCategories } from '../../src/hooks/useCategories';
@@ -52,6 +51,8 @@ export default function ExploreScreen() {
     }
   }, [filters, routeLat, routeLng]);
   const [sheetVisible, setSheetVisible] = React.useState(false);
+  // Opened with a search already in it (from Hjem), the field starts open.
+  const [searchOpen, setSearchOpen] = React.useState(!!initialSearch);
   const [saveSheetServiceId, setSaveSheetServiceId] = React.useState<string | null>(null);
 
   const { data: filterOptions, isLoading: categoriesLoading } = useCategories();
@@ -120,41 +121,6 @@ export default function ExploreScreen() {
 
   const renderHeader = () => (
     <View>
-      {/* Utforsk is a hidden tab (href: null) that is always pushed — from Home, the
-          category chips or a search — so the back control has to live in the content. */}
-      <Pressable
-        onPress={() => router.back()}
-        accessibilityRole="button"
-        accessibilityLabel="Tilbake"
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        className="flex-row items-center gap-2 px-4 pt-3"
-      >
-        <ArrowLeft size={20} color={TC.ink} />
-        <Text className="text-[0.875rem] font-medium text-ink">Tilbake</Text>
-      </Pressable>
-
-      <SearchHeader
-        searchText={filters.searchText}
-        onSearchChange={filters.setSearchText}
-        onFilterPress={() => setSheetVisible(true)}
-        activeFilterCount={
-          filters.selectedCategories.length +
-          (filters.minPrice !== 0 || filters.maxPrice !== 100000 ? 1 : 0) +
-          (filters.isUrgent ? 1 : 0) +
-          filters.selectedCountyCodes.length +
-          filters.selectedMunicipalityCodes.length +
-          filters.selectedAreaCodes.length +
-          (filters.userLocation ? 1 : 0)
-        }
-      />
-
-      <SearchResultsHeader
-        totalCount={totalCount}
-        isLoading={isLoading}
-        sortValue={filters.sortValue}
-        onSortChange={filters.setSortValue}
-      />
-
       <ActiveFiltersDisplay
         filters={filters}
         locationTree={locationTree}
@@ -290,6 +256,44 @@ export default function ExploreScreen() {
         mapRadius={mapRadius}
       />
 
+      {/* Fixed above the list: the bar and the count + sort stay put while results scroll.
+          zIndex lets the sort menu open over the cards below. */}
+      <View style={{ zIndex: 10, elevation: 10, shadowColor: 'transparent' }} className="bg-page">
+        {/* Utforsk is a hidden tab (href: null) that is always pushed — from Home, the
+            category chips or a search — so the back control lives in this bar. It sits
+            above the list, so it stays put while the results scroll. */}
+        <SearchHeader
+          title={
+            filters.selectedCategories.length === 1 ? filters.selectedCategories[0] : 'Alle oppdrag'
+          }
+          onBack={() => router.back()}
+          searchOpen={searchOpen || !!filters.searchText}
+          onToggleSearch={() => {
+            // Closing the field also clears the search, so nothing hidden still filters.
+            if (searchOpen || filters.searchText) filters.setSearchText('');
+            setSearchOpen(!(searchOpen || !!filters.searchText));
+          }}
+          searchText={filters.searchText}
+          onSearchChange={filters.setSearchText}
+          onFilterPress={() => setSheetVisible(true)}
+          activeFilterCount={
+            filters.selectedCategories.length +
+            (filters.minPrice !== 0 || filters.maxPrice !== 100000 ? 1 : 0) +
+            (filters.isUrgent ? 1 : 0) +
+            filters.selectedCountyCodes.length +
+            filters.selectedMunicipalityCodes.length +
+            filters.selectedAreaCodes.length +
+            (filters.userLocation ? 1 : 0)
+          }
+        />
+        <SearchResultsHeader
+          totalCount={totalCount}
+          isLoading={isLoading}
+          sortValue={filters.sortValue}
+          onSortChange={filters.setSortValue}
+        />
+      </View>
+
       <FlatList
         data={allJobs}
         keyExtractor={(job) => job._id}
@@ -300,7 +304,9 @@ export default function ExploreScreen() {
             <JobCard job={item} compact onSavePress={(id) => setSaveSheetServiceId(id)} />
           </View>
         )}
-        ListHeaderComponent={renderHeader}
+        // An element, not the function: a new function each render remounted the header,
+        // which dropped the search field's focus while typing.
+        ListHeaderComponent={renderHeader()}
         ListFooterComponent={
           isFetchingNextPage ? (
             <View className="items-center justify-center py-8">
