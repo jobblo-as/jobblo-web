@@ -192,7 +192,7 @@ describe('POST /api/chats/:chatId/payments SafePay integration', () => {
           expect.objectContaining({
             price_data: expect.objectContaining({
               currency: 'nok',
-              unit_amount: 103000,
+              unit_amount: 100000,
             }),
           }),
         ],
@@ -202,7 +202,7 @@ describe('POST /api/chats/:chatId/payments SafePay integration', () => {
     expect(Order.findOneAndUpdate).toHaveBeenCalledTimes(2);
     expect(Order.findOneAndUpdate.mock.calls[0][1].$set).toMatchObject({
       checkoutSessionStatus: 'pending',
-      checkoutAmountMinor: 103000,
+      checkoutAmountMinor: 100000,
       checkoutCurrency: 'nok',
       checkoutMode: 'test',
       checkoutCustomerId: 'cus_test_customer',

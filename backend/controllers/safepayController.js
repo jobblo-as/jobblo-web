@@ -14,6 +14,7 @@ const { notify } = require('../services/notifications');
 const { ensureProviderConnectReady } = require('../middleware/requireProviderConnect');
 const { acquireServiceContractLock } = require('../services/order/contractLock');
 const { liveContractOrderId } = require('../services/order/releaseListing');
+const { safePayCalculation, safePayFee, customerTotal } = require('../utils/safePayAmounts');
 
 /**
  * POST /api/safepay/create-contract
@@ -476,6 +477,19 @@ exports.getSafePayHistory = async (req, res) => {
         const refundedAmount =
           record.refundStatus === 'succeeded' ? Math.min(originalPayment, recordedRefund) : 0;
         const remainingPayment = Math.max(0, originalPayment - refundedAmount);
+        // Jobblo's fee is always 3 % of the price, out of the payout. Records written while
+        // the fee was taken as "paid − price" say 0 for orders paid without a surcharge.
+        const agreedPrice = Number(record.amounts?.agreedPrice) || 0;
+        const fee = safePayFee(agreedPrice);
+        const amounts = {
+          agreedPrice,
+          fee,
+          tax: Number(record.amounts?.tax) || 0,
+          totalCustomer: Number(record.amounts?.totalCustomer) || 0,
+          netProvider: agreedPrice - fee,
+        };
+        // What the customer paid on top of the price: only orders from the old rule.
+        const customerFee = Math.max(0, Math.min(fee, originalPayment - agreedPrice));
         const transfer = transferByOrder.get(String(record.orderId)) || {
           amountMinor: 0,
           grossMinor: 0,
@@ -491,13 +505,10 @@ exports.getSafePayHistory = async (req, res) => {
         const countsAsEarnings = !refundConfirmed && transferredAmountMinor > 0;
         if (isProvider) {
           if (countsAsEarnings) totalEarned += transferredAmountMinor / 100;
-          if (countsAsEarnings) totalFees += record.amounts.fee;
+          if (countsAsEarnings) totalFees += fee;
         } else {
           totalSpent += remainingPayment;
-          totalFees += Math.max(
-            0,
-            record.amounts.fee - Math.min(record.amounts.fee, refundedAmount)
-          );
+          totalFees += Math.max(0, customerFee - Math.min(customerFee, refundedAmount));
         }
         totalTax += record.amounts.tax;
 
@@ -511,7 +522,7 @@ exports.getSafePayHistory = async (req, res) => {
             `${record.providerId?.name || ''} ${record.providerId?.lastName || ''}`.trim(),
           isProvider,
           isCustomer: !isProvider,
-          amounts: record.amounts,
+          amounts,
           paymentDate: record.paymentDate || record.createdAt,
           orderDate: record.createdAt,
           status: record.status,
@@ -556,7 +567,7 @@ exports.getSafePayHistory = async (req, res) => {
               : payout?.stripeLivemode,
           payoutAmountMinor: Number.isFinite(payout?.netProviderAmount)
             ? Math.round(payout.netProviderAmount * 100)
-            : Math.round(Number(record.amounts.netProvider || 0) * 100),
+            : Math.round(amounts.netProvider * 100),
           refundCompletedAt: record.refundCompletedAt,
           refundFailedAt: record.refundFailedAt,
           providerConnectDeadlineAt: record.providerConnectDeadlineAt,
@@ -657,10 +668,11 @@ exports.getSafePayHistory = async (req, res) => {
         const isProvider = orderProviderId === String(userId);
 
         // Consistent fee calculation
-        const fee = Math.round(order.agreedPrice * 0.03);
-        const tax = Math.round(order.agreedPrice * 0); // 0% tax for now
+        const fee = safePayFee(order.agreedPrice);
+        const tax = 0;
         const netProvider = order.agreedPrice - fee;
-        const totalCustomer = order.agreedPrice + fee;
+        // What was charged (the order's checkout snapshot), not a fee added on top.
+        const totalCustomer = customerTotal(order);
         const transfer = transferByOrder.get(String(order._id)) || {
           amountMinor: 0,
           grossMinor: 0,
@@ -850,13 +862,8 @@ exports.getCheckoutDetails = async (req, res) => {
     }
 
     // Calculate fee and net amount
-    const fee = Math.round(order.agreedPrice * 0.03);
-    const calculation = {
-      basePrice: order.agreedPrice,
-      fee,
-      providerNet: order.agreedPrice - fee,
-      totalCustomer: order.agreedPrice + fee,
-    };
+    const { basePrice, fee, total, providerNet } = safePayCalculation(order);
+    const calculation = { basePrice, fee, providerNet, totalCustomer: total };
 
     res.json({ order, calculation });
   } catch (err) {

@@ -245,6 +245,23 @@ const SafePayCheckout: React.FC = () => {
   }
 
   const isPaid = order.paymentStatus === 'paid' || SETTLED_STATUSES.includes(order.status);
+  // A cancelled order (e.g. the worker never started, refunded) is neither payable nor paid:
+  // `cancelled` + `refunded` matched neither check above, so the page offered "Bekreft og
+  // betal" on it. It shows why it ended and the refund instead, as the app does.
+  const isCancelled = order.status === 'cancelled';
+  const cancelReason = ['provider_stripe_connect_timeout', 'provider_no_start_deadline'].includes(
+    order.cancellationReason
+  )
+    ? 'Oppdragstakeren startet ikke oppdraget innen fristen.'
+    : order.cancellationReason || 'Oppdraget er kansellert.';
+  const refundText =
+    order.paymentStatus === 'refunded'
+      ? `Full refusjon (${kr(calculation.total)}) er bekreftet. Det kan ta 1–2 virkedager før pengene vises på kontoen din.`
+      : ['failed', 'manual_review'].includes(order.providerConnectTimeout?.status)
+        ? 'Refusjonen kunne ikke bekreftes automatisk og følges opp manuelt.'
+        : order.paymentStatus === 'paid' || order.providerConnectTimeout?.status
+          ? 'Oppdraget er kansellert og refusjonen behandles. Når Stripe har bekreftet refusjonen, kan det ta 1–2 virkedager før pengene vises på kontoen din.'
+          : null;
 
   const { fromDate, toDate, duration } = service;
   const contractDate = fromDate
@@ -334,125 +351,161 @@ const SafePayCheckout: React.FC = () => {
           </p>
         </section>
 
+        {/* ── Kansellert ───────────────────────────────────────────────────── */}
+        {isCancelled && (
+          <section
+            data-testid="safepay-cancelled"
+            className="rounded-3xl border border-[#F1D9D5] bg-[#FBF0EE] p-5 sm:p-6"
+          >
+            <p className="text-[0.75rem] font-semibold uppercase tracking-[0.12em] text-[#B4453A]">
+              Kansellert
+            </p>
+            <p className="mt-2 text-[0.9375rem] font-semibold text-[#0B0B0B]">{cancelReason}</p>
+            {refundText && (
+              <p className="mt-2 text-[0.8125rem] leading-relaxed text-[#63665F]">{refundText}</p>
+            )}
+            {order.providerConnectDeadlineAt && (
+              <p className="mt-2 text-[0.8125rem] text-[#63665F]">
+                Fristen utløp: {new Date(order.providerConnectDeadlineAt).toLocaleString('nb-NO')}
+              </p>
+            )}
+          </section>
+        )}
+
         {/* ── Betaling ─────────────────────────────────────────────────────── */}
-        <section className={`${CARD} p-5 sm:p-6`}>
-          <h2 className="mb-4 flex items-center gap-2 text-[0.9375rem] font-semibold tracking-[-0.02em] text-[#0B0B0B]">
-            <CreditCard size={16} strokeWidth={2} className="text-[#2E6641]" />
-            Betaling
-          </h2>
+        {!isCancelled && (
+          <section className={`${CARD} p-5 sm:p-6`}>
+            <h2 className="mb-4 flex items-center gap-2 text-[0.9375rem] font-semibold tracking-[-0.02em] text-[#0B0B0B]">
+              <CreditCard size={16} strokeWidth={2} className="text-[#2E6641]" />
+              Betaling
+            </h2>
 
-          <div className="mb-5">
-            <Row label="Oppdragsbeløp">{kr(calculation.basePrice)}</Row>
-            <Row label="SafePay-gebyr (3 %)">{kr(calculation.fee)}</Row>
-            <div className="flex items-baseline justify-between gap-4 pt-3">
-              <span className="text-[0.9375rem] font-semibold text-[#0B0B0B]">
-                {isPaid ? 'Betalt' : 'Totalt å betale nå'}
-              </span>
-              <span className="text-[1.25rem] font-bold tabular-nums tracking-[-0.03em] text-[#0B0B0B]">
-                {kr(calculation.total)}
-              </span>
+            <div className="mb-5">
+              <Row label="Oppdragsbeløp">{kr(calculation.basePrice)}</Row>
+              {/* The 3 % comes out of the provider's payout; only an order charged under the
+                  old rule (fee on top, kept in its checkout snapshot) still shows it here. */}
+              {calculation.total > calculation.basePrice && (
+                <Row label="SafePay-gebyr (3 %)">
+                  {kr(calculation.total - calculation.basePrice)}
+                </Row>
+              )}
+              <div className="flex items-baseline justify-between gap-4 pt-3">
+                <span className="text-[0.9375rem] font-semibold text-[#0B0B0B]">
+                  {isPaid ? 'Betalt' : 'Totalt å betale nå'}
+                </span>
+                <span className="text-[1.25rem] font-bold tabular-nums tracking-[-0.03em] text-[#0B0B0B]">
+                  {kr(calculation.total)}
+                </span>
+              </div>
+              {calculation.total <= calculation.basePrice && (
+                <p data-testid="safepay-fee-note" className="mt-2 text-[0.75rem] text-[#63665F]">
+                  Du betaler ikke noe ekstra. SafePay-gebyret på 3 % ({kr(calculation.fee)}) trekkes
+                  fra utbetalingen til {order.providerId?.name || 'oppdragstakeren'}.
+                </p>
+              )}
             </div>
-          </div>
 
-          {!isPaid && (
-            <>
-              {/* The saved "Visa •••• 4242 / Utløper 09/28" was a hardcoded Stripe test
+            {!isPaid && (
+              <>
+                {/* The saved "Visa •••• 4242 / Utløper 09/28" was a hardcoded Stripe test
                   card presented as the user's own, and the Vipps and Apple Pay options
                   only set local state — the session is unconditionally
                   payment_method_types: ['card']. Offering Vipps and then silently
                   charging a card is a trust problem, so this states what actually
                   happens. Re-add options once the backend passes the method through. */}
-              <div className="mb-4 flex items-center gap-3 rounded-2xl border border-[#E6E7E1] p-3.5">
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#F4F6F0] text-[#63665F]">
-                  <CreditCard size={16} strokeWidth={2} />
-                </span>
-                <div className="min-w-0">
-                  <p className="text-[0.875rem] font-semibold text-[#0B0B0B]">Kort</p>
-                  <p className="text-[0.75rem] text-[#63665F]">
-                    Du fullfører betalingen sikkert hos Stripe i neste steg.
+                <div className="mb-4 flex items-center gap-3 rounded-2xl border border-[#E6E7E1] p-3.5">
+                  <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#F4F6F0] text-[#63665F]">
+                    <CreditCard size={16} strokeWidth={2} />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[0.875rem] font-semibold text-[#0B0B0B]">Kort</p>
+                    <p className="text-[0.75rem] text-[#63665F]">
+                      Du fullfører betalingen sikkert hos Stripe i neste steg.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mb-5 flex gap-3 rounded-2xl bg-[#EAF1E9] p-4">
+                  <Lock size={16} strokeWidth={2} className="mt-0.5 shrink-0 text-[#2E6641]" />
+                  <p className="text-[0.8125rem] leading-relaxed text-[#2E6641]">
+                    <strong className="mb-0.5 block font-semibold">Pengene holdes av Jobblo</strong>
+                    {kr(calculation.total)} trekkes nå, men{' '}
+                    {order.providerId?.name || 'oppdragstakeren'} mottar{' '}
+                    {kr(calculation.providerNet)} først når du har godkjent jobben. Er du ikke
+                    fornøyd, kan du opprette en tvist.
+                    {startDeadlineText && (
+                      <span data-testid="safepay-refund-promise" className="mt-2 block">
+                        Starter ikke {order.providerId?.name || 'oppdragstakeren'} oppdraget innen{' '}
+                        {startDeadlineText} etter betaling, kanselleres det automatisk og du får
+                        hele beløpet ({kr(calculation.total)}) refundert.
+                      </span>
+                    )}
                   </p>
                 </div>
-              </div>
+              </>
+            )}
 
-              <div className="mb-5 flex gap-3 rounded-2xl bg-[#EAF1E9] p-4">
-                <Lock size={16} strokeWidth={2} className="mt-0.5 shrink-0 text-[#2E6641]" />
-                <p className="text-[0.8125rem] leading-relaxed text-[#2E6641]">
-                  <strong className="mb-0.5 block font-semibold">Pengene holdes av Jobblo</strong>
-                  {kr(calculation.total)} trekkes nå, men{' '}
-                  {order.providerId?.name || 'oppdragstakeren'} mottar {kr(calculation.providerNet)}{' '}
-                  først når du har godkjent jobben. Er du ikke fornøyd, kan du opprette en tvist.
-                  {startDeadlineText && (
-                    <span data-testid="safepay-refund-promise" className="mt-2 block">
-                      Starter ikke {order.providerId?.name || 'oppdragstakeren'} oppdraget innen{' '}
-                      {startDeadlineText} etter betaling, kanselleres det automatisk og du får hele
-                      beløpet ({kr(calculation.total)}) refundert.
-                    </span>
-                  )}
-                </p>
-              </div>
-            </>
-          )}
-
-          {isPaid ? (
-            <>
-              <div className="mb-4 flex items-center gap-2.5 rounded-2xl bg-[#EAF1E9] px-4 py-3.5 text-[0.875rem] font-semibold text-[#2E6641]">
-                <CheckCircle2 size={17} strokeWidth={2.2} />
-                Betalingen er gjennomført
-              </div>
-              {/* "Gå til godkjenning" was offered the moment payment cleared, i.e.
+            {isPaid ? (
+              <>
+                <div className="mb-4 flex items-center gap-2.5 rounded-2xl bg-[#EAF1E9] px-4 py-3.5 text-[0.875rem] font-semibold text-[#2E6641]">
+                  <CheckCircle2 size={17} strokeWidth={2.2} />
+                  Betalingen er gjennomført
+                </div>
+                {/* "Gå til godkjenning" was offered the moment payment cleared, i.e.
                   before the provider had started — and the approval page then told the
                   customer the job was already reported finished. The CTA follows the
                   order's real stage now. */}
+                <button
+                  onClick={() =>
+                    navigate(
+                      customerOrderPath(order._id, order.status) ??
+                        `/safepay/success?orderId=${order._id}`
+                    )
+                  }
+                  className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#2E6641] text-[0.9375rem] font-semibold text-white transition-colors hover:bg-[#255335] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/25"
+                >
+                  {isApprovable(order.status) ? 'Gå til godkjenning' : 'Se status på oppdraget'}
+                </button>
+              </>
+            ) : (
               <button
-                onClick={() =>
-                  navigate(
-                    customerOrderPath(order._id, order.status) ??
-                      `/safepay/success?orderId=${order._id}`
-                  )
-                }
-                className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#2E6641] text-[0.9375rem] font-semibold text-white transition-colors hover:bg-[#255335] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/25"
+                onClick={() => paymentMutation.mutate()}
+                disabled={paymentMutation.isPending}
+                className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#2E6641] text-[0.9375rem] font-semibold text-white transition-colors hover:bg-[#255335] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/25 active:scale-[0.995] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isApprovable(order.status) ? 'Gå til godkjenning' : 'Se status på oppdraget'}
+                {paymentMutation.isPending ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" /> Sender deg til Stripe…
+                  </>
+                ) : (
+                  <>
+                    <ShieldCheck size={16} strokeWidth={2.2} /> Bekreft og betal{' '}
+                    {kr(calculation.total)}
+                  </>
+                )}
               </button>
-            </>
-          ) : (
-            <button
-              onClick={() => paymentMutation.mutate()}
-              disabled={paymentMutation.isPending}
-              className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#2E6641] text-[0.9375rem] font-semibold text-white transition-colors hover:bg-[#255335] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/25 active:scale-[0.995] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {paymentMutation.isPending ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" /> Sender deg til Stripe…
-                </>
-              ) : (
-                <>
-                  <ShieldCheck size={16} strokeWidth={2.2} /> Bekreft og betal{' '}
-                  {kr(calculation.total)}
-                </>
-              )}
-            </button>
-          )}
+            )}
 
-          {/* These were four `href="#"` anchors — on the page where the customer legally
+            {/* These were four `href="#"` anchors — on the page where the customer legally
               commits money, the terms link went nowhere. */}
-          <p className="mt-4 text-center text-[0.75rem] leading-relaxed text-[#9B9E96]">
-            Ved å bekrefte godtar du{' '}
-            <Link to="/user-term" className="font-medium text-[#2E6641] hover:underline">
-              Jobblos vilkår
-            </Link>{' '}
-            og{' '}
-            <Link
-              to="/sale-subscription-terms"
-              className="font-medium text-[#2E6641] hover:underline"
-            >
-              SafePay-avtalen
-            </Link>
-            .
-          </p>
-        </section>
+            <p className="mt-4 text-center text-[0.75rem] leading-relaxed text-[#9B9E96]">
+              Ved å bekrefte godtar du{' '}
+              <Link to="/user-term" className="font-medium text-[#2E6641] hover:underline">
+                Jobblos vilkår
+              </Link>{' '}
+              og{' '}
+              <Link
+                to="/sale-subscription-terms"
+                className="font-medium text-[#2E6641] hover:underline"
+              >
+                SafePay-avtalen
+              </Link>
+              .
+            </p>
+          </section>
+        )}
 
-        {order.paymentStatus === 'failed' && (
+        {!isCancelled && order.paymentStatus === 'failed' && (
           <p className="mt-4 flex items-center justify-center gap-2 text-[0.8125rem] font-medium text-[#B4453A]">
             <AlertCircle size={14} /> Forrige betalingsforsøk mislyktes. Du kan prøve igjen over.
           </p>

@@ -550,7 +550,7 @@ describe('SafePay checkout reservations', () => {
         _id: ORDER_ID,
         checkoutSessionId: 'PENDING_attempt_123',
         checkoutAttemptId: 'attempt_123',
-        checkoutAmountMinor: 103000,
+        checkoutAmountMinor: 100000,
         checkoutCurrency: 'nok',
         checkoutMode: 'test',
         checkoutCustomerId: 'cus_test_123',
@@ -598,7 +598,7 @@ describe('SafePay checkout reservations', () => {
       },
     });
     expect(params.line_items[0].price_data).toMatchObject({
-      unit_amount: 103000,
+      unit_amount: 100000,
       product_data: {
         name: 'SafePay: Design mockup',
         description: 'SafePay | Job: Design mockup | Job ID: 507f1f77bcf86cd799439014',
@@ -636,7 +636,7 @@ describe('SafePay checkout reservations', () => {
         _id: ORDER_ID,
         checkoutSessionId: 'PENDING_attempt_long_title',
         checkoutAttemptId: 'attempt_long_title',
-        checkoutAmountMinor: 103000,
+        checkoutAmountMinor: 100000,
         checkoutCurrency: 'nok',
         checkoutMode: 'test',
         checkoutCustomerId: 'cus_test_123',

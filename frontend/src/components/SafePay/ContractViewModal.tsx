@@ -252,9 +252,12 @@ export function ContractViewModal({ orderId, trigger }: ContractViewModalProps) 
                           </span>
                         </div>
                         <div className="flex justify-between items-center px-4 py-3 border-b border-gray-50">
-                          <span className="text-sm text-gray-500">SafePay-gebyr (3%)</span>
+                          {/* Deducted from the payout; the customer pays the agreed amount. */}
                           <span className="text-sm text-gray-500">
-                            {calculation.fee?.toLocaleString('nb-NO')} kr
+                            SafePay-gebyr (3 %, trekkes fra utbetalingen)
+                          </span>
+                          <span className="text-sm text-gray-500">
+                            −{calculation.fee?.toLocaleString('nb-NO')} kr
                           </span>
                         </div>
                         <div className="flex justify-between items-center px-4 py-3 border-b border-gray-50">

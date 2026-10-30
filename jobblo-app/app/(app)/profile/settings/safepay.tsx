@@ -323,10 +323,16 @@ function Transaction({ transaction }: { transaction: SafePayHistoryTransaction }
           ) : null}
           <DetailHeading>Betaling</DetailHeading>
           <Detail label="Avtalt pris" value={money(transaction.amounts.agreedPrice)} />
-          <Detail
-            label="SafePay-avgift (3 %)"
-            value={`${incoming ? '−' : ''}${money(transaction.amounts.fee)}`}
-          />
+          {/* The provider pays the 3 % out of the payout. The customer only sees a fee row
+              when they paid one on top (orders from before the fee moved to the payout). */}
+          {incoming ? (
+            <Detail label="SafePay-avgift (3 %)" value={`−${money(transaction.amounts.fee)}`} />
+          ) : originalAmount > transaction.amounts.agreedPrice ? (
+            <Detail
+              label="SafePay-avgift (3 %)"
+              value={money(originalAmount - transaction.amounts.agreedPrice)}
+            />
+          ) : null}
           {!incoming ? (
             <Detail label="Opprinnelig betaling" value={`−${money(originalAmount)}`} />
           ) : (
