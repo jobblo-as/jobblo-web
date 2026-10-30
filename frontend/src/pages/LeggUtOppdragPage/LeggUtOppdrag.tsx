@@ -6,6 +6,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { FileText, Trash2 } from 'lucide-react';
 import { deleteJobDraft, listJobDrafts } from '../../api/jobDraftsAPI';
 import toast from 'react-hot-toast';
+import { DRAFT_DELETED_EVENT } from '../../hooks/useCreateJobForm';
 import { useJobDetailQuery } from '../../features/jobDetail/hook.ts';
 import { Spinner } from '../../components/Ui/Spinner';
 import { BackLink } from '../../components/Ui/BackLink';
@@ -61,6 +62,14 @@ export default function LeggUtOppdrag() {
       }
 
       toast.success(isEditMode ? 'Oppdrag oppdatert!' : 'Oppdrag publisert!');
+      // The Hast was paid too long ago: the server refunded it and published without it.
+      if (!isEditMode && formData.get('urgentPurchaseId') && !response.data.urgent)
+        toast(
+          'Hast-betalingen var for gammel og er betalt tilbake. Oppdraget er publisert uten «Haster».',
+          {
+            duration: 8000,
+          }
+        );
       // A job published with Hast opens on its own page, with the «Haster» mark showing.
       navigate(response.data.urgent && response.data._id ? `/jobs/${response.data._id}` : '/');
     } catch (error) {
@@ -141,7 +150,11 @@ function DraftsList() {
   const { data: drafts = [] } = useQuery({ queryKey: ['job-drafts'], queryFn: listJobDrafts });
   const remove = useMutation({
     mutationFn: deleteJobDraft,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['job-drafts'] }),
+    onSuccess: (_res, id) => {
+      queryClient.invalidateQueries({ queryKey: ['job-drafts'] });
+      // The form below empties itself if this was its draft (useCreateJobForm).
+      window.dispatchEvent(new CustomEvent(DRAFT_DELETED_EVENT, { detail: id }));
+    },
     onError: () => toast.error('Kunne ikke slette utkastet.'),
   });
   if (drafts.length === 0) return null;

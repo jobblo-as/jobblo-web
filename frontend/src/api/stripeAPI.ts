@@ -51,7 +51,12 @@ export const getExtraContactStatus = async (sessionId: string) =>
 // ── Hast (urgent mark, 39 kr) ─────────────────────────────────────────────────
 // Without a serviceId it is prepaid: Stripe returns to "Nesten ferdig" before publishing.
 export const createUrgentPayment = async (serviceId?: string) =>
-  (await mainLink.post<{ url: string }>('/api/stripe/create-urgent-payment', { serviceId })).data;
+  (
+    await mainLink.post<{ url?: string; alreadyPaid?: boolean; purchaseId?: string }>(
+      '/api/stripe/create-urgent-payment',
+      { serviceId }
+    )
+  ).data;
 
 export const getUrgentStatus = async (sessionId: string) =>
   (

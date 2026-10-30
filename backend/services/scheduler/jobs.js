@@ -512,6 +512,26 @@ async function dispatchSubscriptionRecoveryEmails() {
   return recovery.dispatchRecoveryEmails();
 }
 
+/**
+ * Hast runs out: clear «Haster» on jobs whose paid mark (urgentUntil) has passed.
+ * ponytail: hourly (every minute for a short HAST_DURATION_MINUTES), so a mark can outlive
+ * its time by up to one interval; marks set before
+ * expiry existed have no urgentUntil and are left alone.
+ */
+async function expireUrgentMarks(now = new Date()) {
+  const Service = require('../../models/Service');
+  const res = await Service.updateMany(
+    { urgent: true, urgentUntil: { $lte: now } },
+    { $set: { urgent: false } }
+  );
+  return { expired: res.modifiedCount || 0 };
+}
+
+/** Prepaid Hast never used for a job: refund it (services/urgentPurchase). */
+async function refundUnusedUrgent() {
+  return require('../urgentPurchase').refundUnusedPurchases();
+}
+
 async function recordSafePayConnectReadiness() {
   const { recordReadyProvidersBeforeDeadline } = require('../safepay/providerConnectTimeout');
   return recordReadyProvidersBeforeDeadline();
@@ -528,5 +548,7 @@ module.exports = {
   cancelExpiredSubscriptionRecoveries,
   dispatchSubscriptionRecoveryEmails,
   recordSafePayConnectReadiness,
+  expireUrgentMarks,
+  refundUnusedUrgent,
   config,
 };

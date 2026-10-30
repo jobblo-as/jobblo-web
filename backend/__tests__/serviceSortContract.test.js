@@ -40,8 +40,8 @@ describe('service sort contract', () => {
   });
 
   describe('each option produces the expected Mongo sort', () => {
-    it('newest → newest first', () => {
-      expect(resolveSort('newest').sort).toEqual({ createdAt: -1 });
+    it('newest → paid «Haster» first, then newest first', () => {
+      expect(resolveSort('newest').sort).toEqual({ urgent: -1, createdAt: -1 });
     });
 
     it('price_low → cheapest first', () => {
@@ -53,7 +53,7 @@ describe('service sort contract', () => {
     });
 
     it('relevant → the documented default, until a real relevance signal exists', () => {
-      expect(resolveSort('relevant').sort).toEqual({ createdAt: -1 });
+      expect(resolveSort('relevant').sort).toEqual({ urgent: -1, createdAt: -1 });
     });
 
     it('gives every price sort a createdAt tiebreaker so pagination is stable', () => {
@@ -79,7 +79,7 @@ describe('service sort contract', () => {
       ['an array', ['price']],
     ])('%s → default, marked unmatched', (_label, input) => {
       const result = resolveSort(input);
-      expect(result.sort).toEqual({ createdAt: -1 });
+      expect(result.sort).toEqual({ urgent: -1, createdAt: -1 });
       expect(result.matched).toBe(false);
       expect(result.value).toBe(DEFAULT_SORT_VALUE);
     });
@@ -94,7 +94,9 @@ describe('service sort contract', () => {
 
   describe('the security property survives', () => {
     it('only ever sorts on whitelisted fields', () => {
-      const allowed = new Set(['createdAt', 'price', 'views', 'updatedAt']);
+      // `urgent` is set by the server (the default order: paid «Haster» first), never sent by a
+      // client, and indexed with status and createdAt.
+      const allowed = new Set(['createdAt', 'price', 'views', 'updatedAt', 'urgent']);
       const probes = [
         'newest',
         'price_low',

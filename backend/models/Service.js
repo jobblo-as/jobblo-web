@@ -71,6 +71,8 @@ const serviceSchema = new mongoose.Schema(
     ],
 
     urgent: { type: Boolean, default: false },
+    // When a paid «Haster» mark (Hast) runs out; the scheduler's expireUrgentMarks clears it.
+    urgentUntil: { type: Date, default: null },
     promoted: { type: Boolean, default: false },
     status: {
       type: String,
@@ -156,7 +158,12 @@ serviceSchema.index({ userId: 1, createdAt: -1 }); // "my posted jobs", profile 
 serviceSchema.index({ status: 1, price: -1, createdAt: -1 });
 serviceSchema.index({ categories: 1, status: 1, price: 1, createdAt: -1 });
 serviceSchema.index({ categories: 1, status: 1, price: -1, createdAt: -1 });
-serviceSchema.index({ status: 1, urgent: 1, createdAt: -1 });
+// The default list order is paid «Haster» first, then newest ({ urgent: -1, createdAt: -1 },
+// utils/serviceSort.js); these also serve the urgent filter and its count.
+// ponytail: databases built earlier keep an unused { status: 1, urgent: 1, createdAt: -1 };
+// drop it by hand once this is live.
+serviceSchema.index({ status: 1, urgent: -1, createdAt: -1 });
+serviceSchema.index({ categories: 1, status: 1, urgent: -1, createdAt: -1 });
 
 // Any write clears the cached public job reads (utils/cache namespace "services": list, nearby,
 // detail), from whichever route or job made it. Except the view counter: it changes on every

@@ -1,5 +1,5 @@
 import { test } from '@playwright/test';
-import { expect, mockApi, watchErrors, USERS } from './helpers/app.js';
+import { expect, mockApi, shot, watchErrors, USERS } from './helpers/app.js';
 
 /** Profile edit and notifications, on a mocked API. (Membership: membership.spec.js.) */
 
@@ -69,4 +69,59 @@ test('notifications: listed, and "mark all as read" clears the unread count', as
     calls.some((c) => c.method === 'PUT' && c.pathname === '/api/notifications/read-all')
   ).toBe(true);
   expect(errors).toEqual([]);
+});
+
+test('Abonnementer: a purchase opens to its details, a refunded Hast says when and why', async ({
+  page,
+}) => {
+  const day = (n) => new Date(Date.now() - n * 86400e3).toISOString();
+  await mockApi(page, {
+    as: 'user',
+    routes: {
+      '/api/stripe/subscription': () => ({ subscription: null }),
+      '~GET ^/api/transactions/user$': () => ({
+        transactions: [
+          {
+            _id: 'tx-hast',
+            planName: 'Hast',
+            amount: 39,
+            currency: 'nok',
+            status: 'refunded',
+            type: 'urgent',
+            createdAt: day(4),
+            serviceId: null,
+            refundedAt: day(1),
+            refundReason: 'Oppdraget ble ikke publisert, så Hast ble ikke brukt.',
+          },
+          {
+            _id: 'tx-hast-2',
+            planName: 'Hast',
+            amount: 39,
+            currency: 'nok',
+            status: 'succeeded',
+            type: 'urgent',
+            createdAt: day(2),
+            serviceId: { _id: '64b000000000000000000001', title: 'TEST Male stue' },
+          },
+        ],
+        totalPages: 1,
+      }),
+    },
+  });
+  await page.goto('/settings/subscriptions');
+  const refunded = page.getByRole('button', { name: /Hast.*Refundert/ });
+  await expect(refunded).toHaveAttribute('aria-expanded', 'false');
+  await refunded.click();
+  await expect(refunded).toHaveAttribute('aria-expanded', 'true');
+  await expect(
+    page.getByText('Hvorfor: Oppdraget ble ikke publisert, så Hast ble ikke brukt.')
+  ).toBeVisible();
+  await expect(page.getByText('Ikke publisert', { exact: true })).toBeVisible();
+  // No plan: no endless "Laster kontaktinformasjon…".
+  await expect(page.getByText(/Laster kontaktinformasjon/)).toHaveCount(0);
+  await shot(page, 'abonnementer-refundert');
+  // One open at a time; the paid one names its job.
+  await page.getByRole('button', { name: /Hast.*Fullført/ }).click();
+  await expect(page.getByText(/Hvorfor:/)).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'TEST Male stue' })).toBeVisible();
 });

@@ -58,10 +58,14 @@ exports.getTransactions = async (req, res) => {
 exports.getUserTransactions = async (req, res) => {
   try {
     const { limit, skip } = parsePagination(req.query, { defaultLimit: 10 });
+    // The job a Hast was for (title for the details row); never the Stripe session id,
+    // which the admin list already leaves out.
     const transactions = await Transaction.find({ userId: req.user.id })
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .select('-stripeSessionId')
+      .populate('serviceId', 'title');
 
     const total = await Transaction.countDocuments({ userId: req.user.id });
     res.status(200).json({

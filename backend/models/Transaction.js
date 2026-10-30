@@ -65,6 +65,9 @@ const TransactionSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // When and why money went back (shown to the user in Innstillinger → Abonnementer).
+    refundedAt: { type: Date, default: null },
+    refundReason: { type: String, default: null },
     /**
      * Retained to preserve historical extra-contact transactions for migration.
      * The legacy extra-contact purchase flow is disabled.

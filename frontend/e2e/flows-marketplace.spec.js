@@ -797,6 +797,138 @@ test('"Nesten ferdig": Hast is paid on Stripe first, then back here to publish',
   expect(errors).toEqual([]);
 });
 
+test('"Betal 39 kr" again after paying (page reloaded): no second charge, payment is reused', async ({
+  page,
+}) => {
+  const errors = watchErrors(page);
+  const { calls } = await mockApi(page, {
+    as: 'user',
+    routes: {
+      'GET /api/job-drafts': () => ({ drafts: [] }),
+      'GET /api/job-drafts/d1': () => ({
+        draft: {
+          _id: 'd1',
+          data: {
+            title: SERVICE.title,
+            description: SERVICE.description,
+            categories: 'Maling',
+            address: 'Testveien 1',
+            city: 'Oslo',
+            postalCode: '0150',
+            countyCode: '03',
+            municipalityCode: '0301',
+            latitude: 59.91,
+            longitude: 10.75,
+            price: 3000,
+            paymentType: 'Fastpris',
+            durationValue: 2,
+            durationUnit: 'hours',
+            currentStep: 2,
+          },
+        },
+      }),
+      'PUT /api/job-drafts/d1': () => ({ draft: { _id: 'd1' } }),
+      'POST /api/stripe/create-urgent-payment': () => ({
+        alreadyPaid: true,
+        purchaseId: 'p-earlier',
+        priceNok: 39,
+      }),
+      // Too late: the server refunded that Hast meanwhile and publishes without it.
+      'POST /api/services': () => ({ status: 201, json: { ...SERVICE, urgent: false } }),
+    },
+  });
+  await page.goto('/Publish-job?utkast=d1');
+  await page.getByRole('button', { name: /Gå videre/ }).click();
+  await page.getByRole('radio', { name: /^Hast/ }).check();
+  await page.getByRole('button', { name: 'Betal 39 kr' }).click();
+  // Straight to "paid", on this page: Stripe is not opened again.
+  await expect(page.getByText(/Betalingen er fullført/)).toBeVisible();
+  await expect(page).toHaveURL(/\/Publish-job/);
+  await expect(page.getByRole('button', { name: /Publiser oppdrag/ })).toBeVisible();
+
+  // Published after the Hast was refunded: the user is told, not left thinking it is marked.
+  await page.getByRole('button', { name: /Publiser oppdrag/ }).click();
+  await expect(page.getByText(/Hast-betalingen var for gammel/)).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('"Dine utkast": deleting the draft open in the form empties the form; it does not come back', async ({
+  page,
+}) => {
+  const errors = watchErrors(page);
+  let drafts = [];
+  let made = 0;
+  const { calls } = await mockApi(page, {
+    as: 'user',
+    routes: {
+      'GET /api/job-drafts': () => ({ drafts }),
+      'POST /api/job-drafts': ({ body }) => {
+        made += 1;
+        drafts = [
+          ...drafts,
+          { _id: `d${made}`, title: body.data.title, updatedAt: new Date().toISOString() },
+        ];
+        return { status: 201, json: { draft: { _id: `d${made}` } } };
+      },
+      'PUT /api/job-drafts/d1': () =>
+        drafts.some((d) => d._id === 'd1')
+          ? { draft: { _id: 'd1' } }
+          : { status: 404, json: { error: 'Fant ikke utkastet.' } },
+      'DELETE /api/job-drafts/d1': () => {
+        drafts = drafts.filter((d) => d._id !== 'd1');
+        return { ok: true };
+      },
+    },
+  });
+  await page.goto('/Publish-job');
+  await page.locator('#job-title').fill('Vaske vinduer');
+  const list = page.getByRole('region', { name: 'Dine utkast' });
+  await expect(list.getByText('Vaske vinduer')).toBeVisible();
+
+  await list.getByRole('button', { name: /Slett utkastet Vaske vinduer/ }).click();
+  // The form is empty again (local copy gone too), and the list is gone.
+  await expect(page.locator('#job-title')).toHaveValue('');
+  await expect(list).toHaveCount(0);
+
+  // Typing again starts a new draft; the deleted one is not written to again.
+  await page.locator('#job-title').fill('Male gjerdet');
+  await expect(list.getByText('Male gjerdet')).toBeVisible();
+  await expect(list.getByText('Vaske vinduer')).toHaveCount(0);
+  expect(
+    calls.filter((c) => c.method === 'PUT' && c.pathname === '/api/job-drafts/d1')
+  ).toHaveLength(0);
+  expect(errors).toEqual([]);
+});
+
+test('"Dine utkast": deleting another draft leaves the form as it is', async ({ page }) => {
+  let drafts = [{ _id: 'old', title: 'Gammelt utkast', updatedAt: '2026-10-20T10:00:00Z' }];
+  await mockApi(page, {
+    as: 'user',
+    routes: {
+      'GET /api/job-drafts': () => ({ drafts }),
+      'POST /api/job-drafts': () => {
+        drafts = [
+          ...drafts,
+          { _id: 'd1', title: 'Vaske vinduer', updatedAt: new Date().toISOString() },
+        ];
+        return { status: 201, json: { draft: { _id: 'd1' } } };
+      },
+      'PUT /api/job-drafts/d1': () => ({ draft: { _id: 'd1' } }),
+      'DELETE /api/job-drafts/old': () => {
+        drafts = drafts.filter((d) => d._id !== 'old');
+        return { ok: true };
+      },
+    },
+  });
+  await page.goto('/Publish-job');
+  await page.locator('#job-title').fill('Vaske vinduer');
+  const list = page.getByRole('region', { name: 'Dine utkast' });
+  await expect(list.getByText('Vaske vinduer')).toBeVisible();
+  await list.getByRole('button', { name: /Slett utkastet Gammelt utkast/ }).click();
+  await expect(list.getByText('Gammelt utkast')).toHaveCount(0);
+  await expect(page.locator('#job-title')).toHaveValue('Vaske vinduer');
+});
+
 test('the apply modal is an accessible dialog with a labelled close button', async ({ page }) => {
   await mockApi(page, { as: 'provider', routes: jobRoutes() });
   await page.goto(`/job-listing/${SERVICE._id}`);

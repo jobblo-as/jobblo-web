@@ -121,7 +121,14 @@ describe('getTransactionById ownership (H1)', () => {
 
 describe('transaction history keeps working', () => {
   it('scopes /user history to the caller', async () => {
-    const chain = { sort: () => chain, skip: () => chain, limit: () => Promise.resolve([TX_DOC]) };
+    const select = jest.fn(() => chain);
+    const chain = {
+      sort: () => chain,
+      skip: () => chain,
+      limit: () => chain,
+      select,
+      populate: () => Promise.resolve([TX_DOC]),
+    };
     Transaction.find.mockReturnValue(chain);
     Transaction.countDocuments.mockResolvedValue(1);
     jest.spyOn(console, 'log').mockImplementation(() => {});
@@ -132,6 +139,8 @@ describe('transaction history keeps working', () => {
     );
     expect(Transaction.find).toHaveBeenCalledWith({ userId: String(OWNER) });
     expect(res.status).toHaveBeenCalledWith(200);
+    // The Stripe session id stays on the server, as on the admin list.
+    expect(select).toHaveBeenCalledWith('-stripeSessionId');
   });
 });
 

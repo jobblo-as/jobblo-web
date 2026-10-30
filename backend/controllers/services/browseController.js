@@ -197,7 +197,11 @@ exports.getAllServices = async (req, res) => {
     // endpoint advertises. The two used to be written out separately and had drifted
     // completely apart: the picker offered `price_low`, this endpoint accepted only
     // `price`, so every choice fell through to the default and sorting did nothing.
-    const { sort: sortOption } = resolveSort(sort);
+    const { sort: resolved } = resolveSort(sort);
+    // Filtering on «Haster» makes the urgent-first key constant; without it the index serves
+    // the date order directly (with it Mongo sorted in memory).
+    const { urgent: _urgentFirst, ...withoutUrgent } = resolved;
+    const sortOption = query.urgent === true ? withoutUrgent : resolved;
 
     // `limit` was parsed with no ceiling, so `?limit=1000000` returned the whole
     // collection in one response. MAX_LIMIT matches utils/pagination.js, which the

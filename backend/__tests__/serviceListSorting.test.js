@@ -48,8 +48,8 @@ describe('GET /api/services sorting', () => {
     return capturedSort;
   };
 
-  it('newest → { createdAt: -1 }', async () => {
-    expect(await sortFor({ sort: 'newest' })).toEqual({ createdAt: -1 });
+  it('newest → { urgent: -1, createdAt: -1 } (paid «Haster» first)', async () => {
+    expect(await sortFor({ sort: 'newest' })).toEqual({ urgent: -1, createdAt: -1 });
   });
 
   it('price_low → cheapest first (this is the case that used to do nothing)', async () => {
@@ -61,27 +61,27 @@ describe('GET /api/services sorting', () => {
   });
 
   it('relevant → the documented default', async () => {
-    expect(await sortFor({ sort: 'relevant' })).toEqual({ createdAt: -1 });
+    expect(await sortFor({ sort: 'relevant' })).toEqual({ urgent: -1, createdAt: -1 });
   });
 
   it('no sort parameter → newest', async () => {
-    expect(await sortFor({})).toEqual({ createdAt: -1 });
+    expect(await sortFor({})).toEqual({ urgent: -1, createdAt: -1 });
   });
 
   it('an unknown value falls back instead of failing the request', async () => {
-    expect(await sortFor({ sort: 'most_popular' })).toEqual({ createdAt: -1 });
+    expect(await sortFor({ sort: 'most_popular' })).toEqual({ urgent: -1, createdAt: -1 });
   });
 
   it('refuses to sort on a non-whitelisted field', async () => {
-    expect(await sortFor({ sort: 'contactPhone' })).toEqual({ createdAt: -1 });
-    expect(await sortFor({ sort: 'password' })).toEqual({ createdAt: -1 });
+    expect(await sortFor({ sort: 'contactPhone' })).toEqual({ urgent: -1, createdAt: -1 });
+    expect(await sortFor({ sort: 'password' })).toEqual({ urgent: -1, createdAt: -1 });
   });
 
   it('survives an object injected through the query string', async () => {
     // `?sort[$ne]=null` arrives as an object, not a string.
     const res = await request(app).get('/api/services').query({ 'sort[$ne]': 'null' });
     expect(res.statusCode).toBe(200);
-    expect(capturedSort).toEqual({ createdAt: -1 });
+    expect(capturedSort).toEqual({ urgent: -1, createdAt: -1 });
   });
 
   it('price_low and price_high are genuinely different (the regression itself)', async () => {
