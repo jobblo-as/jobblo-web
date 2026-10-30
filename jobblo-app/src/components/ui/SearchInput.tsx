@@ -10,6 +10,7 @@ interface SearchInputProps {
   placeholder?: string;
   showClear?: boolean;
   rightAction?: React.ReactNode;
+  autoFocus?: boolean;
 }
 
 export function SearchInput({
@@ -19,6 +20,7 @@ export function SearchInput({
   placeholder = 'Søk etter oppdrag',
   showClear = true,
   rightAction,
+  autoFocus,
 }: SearchInputProps) {
   return (
     <View className="h-12 min-w-0 flex-1 flex-row items-center rounded-full border border-line bg-surface pl-4 pr-2">
@@ -34,6 +36,7 @@ export function SearchInput({
         onSubmitEditing={onSubmit}
         autoCapitalize="none"
         autoCorrect={false}
+        autoFocus={autoFocus}
       />
 
       {value && showClear ? (

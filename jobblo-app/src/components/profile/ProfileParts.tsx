@@ -1,8 +1,8 @@
 import React from 'react';
 import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import {
-  ArrowLeft,
   BadgeCheck,
+  ChevronLeft,
   MapPin,
   Pencil,
   Plus,
@@ -148,7 +148,7 @@ export function ProfileIdentity({
         <ProfileCover seed={user._id} height={190} />
         <View className="absolute left-4" style={{ top: topInset + 8 }}>
           <GlassButton label="Tilbake" onPress={onBack}>
-            <ArrowLeft size={19} color={TC.ink} />
+            <ChevronLeft size={22} color={TC.ink} />
           </GlassButton>
         </View>
       </View>

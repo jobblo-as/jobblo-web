@@ -36,17 +36,10 @@ import { JobCard } from '../../src/components/JobCard';
 import { CategoryGrid } from '../../src/components/CategoryGrid';
 import { HomeHero } from '../../src/components/HomeHero';
 import { SaveToListSheet } from '../../src/components/domain/SaveToListSheet';
-import { Select } from '../../src/components/ui/Select';
+import { SearchResultsHeader } from '../../src/components/search/SearchResultsHeader';
 import { useTabBarSpace } from '../../src/components/GlassTabBar';
 import { Skeleton } from '../../src/components/ui/Skeleton';
 import { TC, tc } from '../../src/theme/colors';
-
-const SORT_OPTIONS = [
-  { value: 'newest', label: 'Nyeste først' },
-  { value: 'price_low', label: 'Pris – lavest først' },
-  { value: 'price_high', label: 'Pris – høyest først' },
-  { value: 'relevant', label: 'Mest relevant' },
-] as const;
 
 const SEASONS = [
   {
@@ -370,17 +363,14 @@ export default function HomeScreen() {
           actionLabel="Se alle"
           action={() => router.push('/(app)/explore')}
         />
-        <View className="mb-3 flex-row items-center justify-between">
-          <Text className="text-[0.8125rem] text-muted">
-            {jobsLoading ? 'Laster…' : `${jobs.length} oppdrag`}
-          </Text>
-          <Select
-            value={sortValue}
-            options={SORT_OPTIONS.map((option) => ({ ...option }))}
-            onValueChange={setSortValue}
-            placeholder="Sorter"
-          />
-        </View>
+        {/* The same count + sort as Alle oppdrag. */}
+        <SearchResultsHeader
+          totalCount={jobs.length}
+          isLoading={jobsLoading}
+          sortValue={sortValue}
+          onSortChange={setSortValue}
+          className="mb-3"
+        />
 
         {jobsLoading ? (
           <View
@@ -559,7 +549,9 @@ export default function HomeScreen() {
         <View
           className={
             Platform.OS === 'ios'
-              ? 'overflow-hidden border-b border-line/70'
+              ? // No overflow-hidden: the sort menu opens below the bar (the blur is a plain
+                // full-size rectangle and needs no clipping).
+                'border-b border-line/70'
               : 'border-b border-line bg-page'
           }
           style={{ paddingTop: insets.top + 6 }}
@@ -606,6 +598,14 @@ export default function HomeScreen() {
               );
             })}
           </ScrollView>
+          {/* The count + sort from the list, kept in reach while the jobs scroll. */}
+          <SearchResultsHeader
+            totalCount={jobs.length}
+            isLoading={jobsLoading}
+            sortValue={sortValue}
+            onSortChange={setSortValue}
+            className="px-4 pb-2.5"
+          />
         </View>
       </Animated.View>
 
