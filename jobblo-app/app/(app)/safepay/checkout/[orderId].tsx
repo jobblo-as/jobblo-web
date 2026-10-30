@@ -164,7 +164,7 @@ export default function SafePayCheckoutScreen() {
   if (isLoading) {
     return (
       <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
-        <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
+        <ScrollView contentContainerStyle={{ paddingBottom: 32 }}>
           <CheckoutSkeleton />
         </ScrollView>
       </SafeAreaView>
@@ -338,15 +338,21 @@ export default function SafePayCheckoutScreen() {
     <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: 120 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 20, paddingBottom: 32 }}
       >
         <Pressable
+          // As the web's BackLink: back where you came from; the applicants page only when
+          // there is nothing to go back to (opened from a link). Pushing it every time
+          // stacked søkere → checkout → søkere… and "back" bounced into checkout again.
           onPress={() =>
-            router.push({
-              pathname: '/(app)/job-applicants/[serviceId]',
-              params: { serviceId: service._id },
-            })
+            router.canGoBack()
+              ? router.back()
+              : router.replace({
+                  pathname: '/(app)/job-applicants/[serviceId]',
+                  params: { serviceId: service._id },
+                })
           }
+          accessibilityRole="link"
           className="mb-5 flex-row items-center gap-2 self-start"
         >
           <ArrowLeft size={17} color={tc('#63665F', 'muted')} />
@@ -363,7 +369,7 @@ export default function SafePayCheckoutScreen() {
             Beløpet trekkes nå og holdes av Jobblo til du har godkjent arbeidet.
           </Text>
         </View>
-        <SafePayProgressSteps currentStep={2} />
+        <SafePayProgressSteps currentStep={2} orderId={orderId} serviceId={service?._id} />
         <SafePayPartiesCard order={order} />
         <DigitalContractCard
           service={service}

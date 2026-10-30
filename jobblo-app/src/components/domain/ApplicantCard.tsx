@@ -49,6 +49,7 @@ function activeOrderLabel(order: ActiveApplicantOrder | null) {
 export function ApplicantCard({
   application,
   activeOrder,
+  lastOrder,
   isTop,
   isCompared,
   isSelecting,
@@ -62,6 +63,8 @@ export function ApplicantCard({
 }: {
   application: ApplicantApplication;
   activeOrder: ActiveApplicantOrder | null;
+  /** Set when no order is active: a declined card then opens this order's last step. */
+  lastOrder?: ActiveApplicantOrder | null;
   isTop: boolean;
   isCompared: boolean;
   isSelecting: boolean;
@@ -74,7 +77,17 @@ export function ApplicantCard({
   onChat: (applicantId: string) => void;
 }) {
   const { applicant } = application;
-  const actionLabel = isSelecting ? 'Starter…' : activeOrderLabel(activeOrder);
+  // The server only awards pending/accepted applications (safepayController.createContract),
+  // so a declined one gets no "Velg og start SafePay" — pressing it was a 400. When the job
+  // has an ended order, the button opens its last step instead (handleSelect).
+  const declined = !activeOrder && application.status === 'declined';
+  const actionLabel = declined
+    ? lastOrder
+      ? 'Søknaden er avslått · Se status'
+      : 'Søknaden er avslått'
+    : isSelecting
+      ? 'Starter…'
+      : activeOrderLabel(activeOrder);
 
   return (
     <View
@@ -238,7 +251,7 @@ export function ApplicantCard({
         <Button
           label={actionLabel}
           onPress={() => onSelect(application)}
-          disabled={isSelecting}
+          disabled={isSelecting || (declined && !lastOrder)}
           icon={<Check size={16} color="#FFFFFF" />}
           fullWidth
         />

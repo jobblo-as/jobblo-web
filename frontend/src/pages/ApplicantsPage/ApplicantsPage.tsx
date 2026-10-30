@@ -533,10 +533,15 @@ const ApplicantsPage: React.FC = () => {
                         <Button
                           onClick={() => handleSelectApplicant(app.applicant._id, app._id)}
                           loading={createContractMutation.isPending}
-                          disabled={!!activeOrder && !isContractedApplicant}
+                          disabled={
+                            (!!activeOrder && !isContractedApplicant) ||
+                            (!activeOrder && app.status === 'declined')
+                          }
                           label={
                             !activeOrder
-                              ? 'Velg og start SafePay'
+                              ? app.status === 'declined'
+                                ? 'Søknaden er avslått'
+                                : 'Velg og start SafePay'
                               : !isContractedApplicant
                                 ? 'Ikke valgt'
                                 : isJobAlreadyPaid
@@ -546,7 +551,7 @@ const ApplicantsPage: React.FC = () => {
                                     : 'Kontrakt inngått'
                           }
                           icon={<Check size={16} />}
-                          className={`w-auto rounded-full bg-custom-green px-5 py-2.5 text-[13px] font-medium text-white shadow-sm hover:bg-[#266b3c] sm:flex-1 sm:basis-0 ${activeOrder && !isContractedApplicant ? 'opacity-50' : ''}`}
+                          className={`w-auto rounded-full bg-custom-green px-5 py-2.5 text-[13px] font-medium text-white shadow-sm hover:bg-[#266b3c] sm:flex-1 sm:basis-0 ${(activeOrder && !isContractedApplicant) || (!activeOrder && app.status === 'declined') ? 'opacity-50' : ''}`}
                         />
                         {/* (F-35) "Velg uten SafePay" removed: it only fired
                           toast.success('Bruker valgt uten SafePay') — no API call, no

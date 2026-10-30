@@ -1,22 +1,60 @@
 import React from 'react';
 import { Check } from 'lucide-react-native';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+import { useRouter, type Href } from 'expo-router';
 import { safePayFee, safePayNetToProvider } from '../../utils/safePayFee';
 import { TC } from '../../theme/colors';
 
 const STEPS = ['Velg søker', 'Kontrakt og betaling', 'Jobb utføres', 'Godkjenn og utbetal'];
 
+/** Where each step lives — the web's SafePaySteps `pathFor`. */
+function hrefFor(step: number, orderId?: string, serviceId?: string): Href | null {
+  if (step === 1) {
+    return serviceId
+      ? { pathname: '/(app)/job-applicants/[serviceId]', params: { serviceId } }
+      : null;
+  }
+  if (!orderId) return null;
+  if (step === 2) return { pathname: '/(app)/safepay/checkout/[orderId]', params: { orderId } };
+  if (step === 3) return { pathname: '/(app)/safepay/success', params: { orderId } };
+  return { pathname: '/(app)/safepay/approval/[orderId]', params: { orderId } };
+}
+
+/**
+ * The four SafePay stages, as the web's SafePaySteps: a step you have reached (and is not the
+ * one you are on) can be tapped to go there; steps ahead stay inert, so nobody lands on the
+ * approval page of an order nobody has paid for.
+ */
 export function SafePayProgressSteps({
   currentStep = 1,
-}: { currentStep?: number; orderId?: string; serviceId?: string } = {}) {
+  navigableThroughStep = currentStep,
+  orderId,
+  serviceId,
+}: {
+  currentStep?: number;
+  navigableThroughStep?: number;
+  orderId?: string;
+  serviceId?: string;
+} = {}) {
+  const router = useRouter();
   return (
     <View className="mb-6 flex-row items-start">
       {STEPS.map((label, index) => {
         const step = index + 1;
         const current = step === currentStep;
         const done = step < currentStep;
+        const href = hrefFor(step, orderId, serviceId);
+        const navigable = !!href && step <= Math.max(currentStep, navigableThroughStep) && !current;
         return (
-          <View key={label} className="relative flex-1 items-center gap-2">
+          <Pressable
+            key={label}
+            disabled={!navigable}
+            onPress={() => href && router.push(href)}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: !navigable, selected: current }}
+            accessibilityLabel={navigable ? `Gå til steg: ${label}` : label}
+            className="relative flex-1 items-center gap-2 active:opacity-70"
+          >
             {index > 0 ? (
               <View
                 className={[
@@ -28,7 +66,13 @@ export function SafePayProgressSteps({
             <View
               className={[
                 'z-10 h-7 w-7 items-center justify-center rounded-full',
-                current ? 'bg-brand-deep' : done ? 'bg-brand' : 'border border-line bg-surface',
+                current
+                  ? 'bg-brand-deep'
+                  : done
+                    ? 'bg-brand'
+                    : navigable
+                      ? 'border border-brand/50 bg-surface'
+                      : 'border border-line bg-surface',
               ].join(' ')}
             >
               {done ? (
@@ -38,7 +82,9 @@ export function SafePayProgressSteps({
                   className={
                     current
                       ? 'text-[0.8125rem] font-bold text-white'
-                      : 'text-[0.8125rem] text-muted'
+                      : navigable
+                        ? 'text-[0.8125rem] font-bold text-brand-text'
+                        : 'text-[0.8125rem] text-muted'
                   }
                 >
                   {step}
@@ -50,7 +96,7 @@ export function SafePayProgressSteps({
                 'text-center text-[0.8125rem] leading-tight',
                 current
                   ? 'font-semibold text-ink'
-                  : done
+                  : done || navigable
                     ? 'font-medium text-brand-text'
                     : 'text-muted',
               ].join(' ')}
@@ -58,7 +104,7 @@ export function SafePayProgressSteps({
             >
               {label}
             </Text>
-          </View>
+          </Pressable>
         );
       })}
     </View>
