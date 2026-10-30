@@ -1,11 +1,11 @@
-import { Redirect, Tabs } from 'expo-router';
+import { Redirect, Tabs, usePathname } from 'expo-router';
 import { View, Text } from 'react-native';
 import { Home, MessageCircle, PlusCircle, UserRound, Bell } from 'lucide-react-native';
 import { useAuthStore } from '@/store/authStore';
 import { useUnreadCount } from '@/hooks/useNotifications';
 import { useUnreadConversations } from '@/hooks/useUnreadConversations';
 import { userTerms } from '@/content/userTerms';
-import { GlassTabBar, useTabBarSpace } from '@/components/GlassTabBar';
+import { GlassTabBar, isChatThread, useTabBarSpace } from '@/components/GlassTabBar';
 import { TC } from '../../src/theme/colors';
 import MfaGate from '@/components/auth/MfaGate';
 
@@ -77,6 +77,8 @@ export default function AppLayout() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const user = useAuthStore((s) => s.user);
   const tabBarSpace = useTabBarSpace();
+  // No tab bar in a conversation, so no room is kept for it either.
+  const inChat = isChatThread(usePathname());
 
   // Until the persisted session is read back, "not authenticated" is unknown rather than
   // false. Redirecting here would kick a signed-in user to the login screen on every cold
@@ -111,7 +113,10 @@ export default function AppLayout() {
         tabBar={(props) => <GlassTabBar {...props} />}
         screenOptions={({ route }) => ({
           headerShown: false,
-          sceneStyle: SEE_THROUGH.has(route.name) ? undefined : { paddingBottom: tabBarSpace },
+          sceneStyle:
+            SEE_THROUGH.has(route.name) || (route.name === 'messages' && inChat)
+              ? undefined
+              : { paddingBottom: tabBarSpace },
         })}
       >
         {/* 5 visible tabs */}

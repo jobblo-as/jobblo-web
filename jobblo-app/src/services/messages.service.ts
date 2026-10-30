@@ -4,6 +4,8 @@ export interface MessageParticipant {
   _id: string;
   name?: string;
   avatarUrl?: string;
+  /** Populated on the chat detail (GET /chats/:id). */
+  verified?: boolean;
 }
 
 export interface MessageConversation {

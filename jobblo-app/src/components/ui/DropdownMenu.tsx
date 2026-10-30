@@ -4,6 +4,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { LucideIcon } from 'lucide-react-native';
 import { cn } from '@/lib/utils';
 import { TC } from '../../theme/colors';
+import { GlassFill, useGlass } from './GlassButton';
+import { LIQUID_GLASS } from '../GlassTabBar';
 
 export interface DropdownMenuItem {
   label: string;
@@ -29,6 +31,7 @@ interface DropdownMenuProps {
  */
 export function DropdownMenu({ visible, onClose, label, items, top }: DropdownMenuProps) {
   const insets = useSafeAreaInsets();
+  const glass = useGlass(18);
   // iOS cannot present a new Modal (e.g. a confirm dialog) while this one is still
   // dismissing, so the chosen action runs once the menu is fully gone.
   const pending = useRef<(() => void) | null>(null);
@@ -52,17 +55,21 @@ export function DropdownMenu({ visible, onClose, label, items, top }: DropdownMe
         accessibilityLabel="Lukk meny"
       >
         <View
-          className="absolute right-3 w-60 rounded-xl border border-line bg-surface p-1"
-          style={{
-            top: top ?? insets.top + 58,
-            shadowColor: '#000',
-            shadowOpacity: 0.14,
-            shadowRadius: 16,
-            shadowOffset: { width: 0, height: 8 },
-            elevation: 8,
-          }}
+          className="absolute right-3 w-60 p-1.5"
+          style={[
+            glass,
+            {
+              top: top ?? insets.top + 58,
+              shadowColor: '#000',
+              shadowOpacity: 0.14,
+              shadowRadius: 16,
+              shadowOffset: { width: 0, height: 8 },
+              elevation: LIQUID_GLASS ? 0 : 8,
+            },
+          ]}
           onStartShouldSetResponder={() => true}
         >
+          <GlassFill radius={18} />
           {label ? (
             <Text
               className="px-2.5 pb-1.5 pt-2 text-[0.8125rem] font-semibold text-muted"
@@ -84,10 +91,10 @@ export function DropdownMenu({ visible, onClose, label, items, top }: DropdownMe
                   if (Platform.OS !== 'ios') runPending();
                 }}
                 accessibilityRole="menuitem"
-                className="flex-row items-center gap-2.5 rounded-lg px-2.5 py-2.5 active:bg-surface-2"
+                className="flex-row items-center gap-3 rounded-xl px-3 py-3 active:bg-surface-2/60"
               >
                 {item.icon ? (
-                  <item.icon size={17} color={item.destructive ? TC.danger : TC.ink2} />
+                  <item.icon size={18} color={item.destructive ? TC.danger : TC.ink2} />
                 ) : null}
                 <Text
                   className={cn(
