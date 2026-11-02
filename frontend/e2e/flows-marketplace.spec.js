@@ -99,6 +99,51 @@ test('"Sorter" is the same menu on the home page and the search page, and sorts 
   expect(errors).toEqual([]);
 });
 
+test('landing hero: the photo frames are the categories from the API, the fixed six until then', async ({
+  page,
+}) => {
+  const errors = watchErrors(page);
+  const cat = (name, extra = {}) => ({ _id: `c-${name}`, name, icon: 'x', ...extra });
+  let categories = [];
+  await mockApi(page, { routes: { 'GET /api/categories': () => categories } });
+  await page.setViewportSize({ width: 390, height: 900 }); // the phone row lists every frame
+
+  // No categories (empty database, API down): the fixed showcase, real category names only.
+  await page.goto('/');
+  await expect(page.getByRole('button', { name: 'Se oppdrag i Småjobber' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Se oppdrag i Montering' })).toHaveCount(0);
+  await shot(page, 'hero-1-fast-utvalg');
+
+  // From the API: its order and names; an admin image wins; a category without a photo is
+  // left out ("Bil & Pleie" has none of ours).
+  categories = [
+    cat('Transport'),
+    cat('Bil & Pleie'),
+    cat('Rengjøring', { image: 'https://example.test/vask.jpg' }),
+    cat('Maling'),
+    cat('Flytting'),
+    cat('Hagearbeid'),
+    cat('Rørlegger'),
+  ];
+  await page.route('https://example.test/**', (route) =>
+    route.fulfill({ contentType: 'image/png', body: PHOTO })
+  );
+  await page.reload();
+  const frames = page.getByRole('button', { name: /^Se oppdrag i / });
+  await expect(page.getByRole('button', { name: 'Se oppdrag i Transport' }).first()).toBeVisible();
+  const names = await frames.evaluateAll((els) =>
+    els.map((e) => e.getAttribute('aria-label').replace('Se oppdrag i ', ''))
+  );
+  expect(names).toEqual(
+    expect.arrayContaining(['Transport', 'Rengjøring', 'Maling', 'Flytting', 'Hagearbeid'])
+  );
+  expect(names).not.toContain('Bil & Pleie');
+  expect(names).not.toContain('Småjobber');
+  await expect(page.locator('img[src="https://example.test/vask.jpg"]').first()).toBeAttached();
+  await shot(page, 'hero-2-fra-api');
+  expect(errors).toEqual([]);
+});
+
 test('a listing opens from the search results', async ({ page }) => {
   const errors = watchErrors(page);
   await mockApi(page, {
