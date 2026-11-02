@@ -5,6 +5,7 @@ const { evaluateListingCapabilities } = require('../../utils/listingCapabilities
 const { SERVICE_LIMITS, validateServiceFields, pickContactUpdates } = require('./serviceHelpers');
 const { inputOrServerError } = require('../../utils/serverError');
 const { isOurPublicBlobUrl } = require('../../utils/azureUpload');
+const { knownJobType } = require('../../utils/aiSmartFill');
 // Body image URLs (no files uploaded in this request) must be our own public uploads, never a
 // private-container (evidence) URL, which responses sign; at most MAX_IMAGES per listing.
 // `kept` are URLs already on the listing (may predate this rule).
@@ -240,11 +241,14 @@ exports.createService = async (req, res) => {
       'images',
       'imageMetadata', // only ever set from req.files above
       'urgent',
+      'jobType',
     ];
     const safeServiceData = {};
     for (const field of SERVICE_CREATABLE_FIELDS) {
       if (serviceData[field] !== undefined) safeServiceData[field] = serviceData[field];
     }
+    if (safeServiceData.jobType !== undefined)
+      safeServiceData.jobType = knownJobType(safeServiceData.jobType);
 
     const service = await Service.create({
       ...safeServiceData,
@@ -427,6 +431,7 @@ exports.updateService = async (req, res) => {
       'equipment',
       'maxApplicants',
       'customerType',
+      'jobType',
     ];
 
     // Same bounds as create, applied to whichever fields this edit actually sends.
@@ -436,6 +441,7 @@ exports.updateService = async (req, res) => {
     for (const field of SERVICE_UPDATABLE_FIELDS) {
       if (req.body[field] !== undefined) service[field] = req.body[field];
     }
+    if (req.body.jobType !== undefined) service.jobType = knownJobType(req.body.jobType);
     Object.assign(service, pickContactUpdates(req.body));
 
     // `urgent` is bought ("Hast", services/urgentPurchase.js), never set by an edit: the

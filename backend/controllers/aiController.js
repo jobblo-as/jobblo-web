@@ -1,8 +1,11 @@
 const { OpenAI } = require('openai');
+const mongoose = require('mongoose');
 const Category = require('../models/Category');
-const { validateSmartFillOutput, PAYMENT_TYPES } = require('../utils/aiSmartFill');
+const { validateSmartFillOutput, PAYMENT_TYPES, PRICING } = require('../utils/aiSmartFill');
+const { realPriceStats } = require('./services/priceStatsController');
 const {
   buildRequest,
+  pricingRulesFor,
   supportsStrictSchema,
   SUPPORTED_LANGS,
 } = require('../services/ai/jobListingPrompt');
@@ -212,13 +215,21 @@ async function _callVisionAi(file, categoryNames, lang) {
     `Return Norwegian bokmål unless the requested language is English. Do not invent ` +
     `specific measurements, materials, dates, or conditions. Category must be exactly one ` +
     `of these active Jobblo categories, or an empty string if unclear: ${JSON.stringify(categoryNames)}. ` +
-    `Prices and time are estimates, never guarantees.` +
+    `Prices and time are estimates, never guarantees. ` +
+    // The same Jobblo pricing rules as the text flow: the validator prices from jobType/extras.
+    `Pricing rules per category: ${JSON.stringify(pricingRulesFor({ categoryAllowList: categoryNames }).pricingRules || [])}. ` +
+    `Set jobType to the job type of the chosen category closest to the visible work, written ` +
+    `exactly as listed, or "". In extras list only extras whose condition says to list them and ` +
+    `that apply. customerSuppliesMaterials is false unless the image clearly shows the materials ` +
+    `already bought and ready. If the photo cannot tell between job types (a light or a deep ` +
+    `scratch), put the other candidates in jobTypeAlternatives.` +
     (!useStrictSchema
       ? ` Respond with a single JSON object with keys: title (string), description (string), ` +
         `category (string), duration ({value: number, unit: "minutes"|"hours"|"days"}), ` +
         `durationRange ({min: number, max: number, unit: "minutes"|"hours"|"days"}), ` +
         `suggestedPrice (number), priceMin (number), priceMax (number), ` +
-        `hourlyRate (number), pricingReasoning (string).`
+        `hourlyRate (number), pricingReasoning (string), jobType (string), extras (string array), ` +
+        `customerSuppliesMaterials (boolean), jobTypeAlternatives (string array).`
       : '');
 
   const visionSchema = {
@@ -235,6 +246,10 @@ async function _callVisionAi(file, categoryNames, lang) {
       'priceMax',
       'hourlyRate',
       'pricingReasoning',
+      'jobType',
+      'extras',
+      'customerSuppliesMaterials',
+      'jobTypeAlternatives',
     ],
     properties: {
       title: { type: 'string' },
@@ -264,6 +279,10 @@ async function _callVisionAi(file, categoryNames, lang) {
       priceMax: { type: 'number' },
       hourlyRate: { type: 'number' },
       pricingReasoning: { type: 'string' },
+      jobType: { type: 'string' },
+      extras: { type: 'array', items: { type: 'string' } },
+      customerSuppliesMaterials: { type: 'boolean' },
+      jobTypeAlternatives: { type: 'array', items: { type: 'string' } },
     },
   };
 
@@ -329,7 +348,8 @@ exports.analyzeJobImage = async (req, res) => {
     }
 
     const { names: categoryNames } = await _loadCategoryContext();
-    const raw = await _callVisionAi(req.file, categoryNames, _resolveLang(req.body));
+    const lang = _resolveLang(req.body);
+    const raw = await _callVisionAi(req.file, categoryNames, lang);
     console.error('[analyze-job-image] raw AI output:', JSON.stringify(raw));
     const firstPass = validateSmartFillOutput(raw, { categoryAllowList: categoryNames });
     if (!firstPass.valid) {
@@ -342,6 +362,7 @@ exports.analyzeJobImage = async (req, res) => {
     // pick one manually. Only re-validate with the category context when we have one.
     const validationCtx = {
       categoryAllowList: categoryNames,
+      lang,
       ...(firstPass.cleaned.category && {
         categoryName: firstPass.cleaned.category,
         userCategory: firstPass.cleaned.category,
@@ -355,6 +376,7 @@ exports.analyzeJobImage = async (req, res) => {
     }
 
     const c = validated.cleaned;
+    await _withRealPrices(c, undefined, lang);
     const range = raw.durationRange || {};
     const rangeUnit = ['minutes', 'hours', 'days'].includes(String(range.unit))
       ? range.unit
@@ -380,6 +402,8 @@ exports.analyzeJobImage = async (req, res) => {
         priceMax: c.priceMax,
         hourlyRate: c.hourlyRate,
         pricingReasoning: c.pricingReasoning,
+        priceHidden: !!c.priceHidden,
+        jobType: c.jobType || '',
         isEstimate: true,
       },
     });
@@ -387,6 +411,32 @@ exports.analyzeJobImage = async (req, res) => {
     return _respondWithAiError(res, err, 'analyze-job-image');
   }
 };
+
+/**
+ * Rule 9: once a job type (or else the category) has 20+ completed jobs, the 25th–75th
+ * percentile of what they were agreed for replaces the table range. A database hiccup keeps
+ * the table range rather than failing the request.
+ */
+async function _withRealPrices(c, countyCode, lang) {
+  // Not connected: skip at once instead of waiting out mongoose's 10 s command buffer.
+  if (!c.category || c.priceHidden || mongoose.connection.readyState !== 1) return;
+  try {
+    const real = await realPriceStats({
+      category: c.category,
+      jobType: c.jobType,
+      countyCode: /^\d{2}$/.test(String(countyCode || '')) ? String(countyCode) : '',
+    });
+    if (real.median === null) return;
+    c.priceMin = real.low;
+    c.priceMax = Math.max(real.high, real.low + 1);
+    c.suggestedPrice = real.median;
+    if (c.paymentType !== 'Timepris') c.primaryPrice = real.median;
+    const l = lang === 'en' ? 'en' : 'no';
+    c.pricingReasoning = `${PRICING.disclaimer[l]} ${PRICING.realPricesNote[l].replace('{n}', real.count)}`;
+  } catch (err) {
+    console.error('[ai] real prices unavailable:', err.message);
+  }
+}
 
 /** Fields every endpoint returns, so the three responses stay consistent. */
 function _sharedPayload(c) {
@@ -403,6 +453,9 @@ function _sharedPayload(c) {
     locationRelevance: c.locationRelevance,
     pricingReasoning: c.pricingReasoning,
     paymentType: c.paymentType,
+    priceHidden: !!c.priceHidden, // Anbud with no table price (bathroom): show no figure
+    eveningWeekend: !!c.eveningWeekend, // the evening/weekend rate is already in the price
+    jobType: c.jobType || '', // saved on the job, so real prices can be grouped by job type
     isEstimate: true, // UI shows "Dette er et estimat" label
   };
 }
@@ -459,6 +512,9 @@ exports.generateJobInfo = async (req, res) => {
       categoryName: catChosen,
       categoryAllowList: catNames,
       userCategory: catChosen,
+      urgent: !!urgent,
+      lang: _resolveLang(req.body),
+      userText: title,
     });
 
     if (!validated.valid) {
@@ -474,6 +530,7 @@ exports.generateJobInfo = async (req, res) => {
     // hourlyRate / estimatedPrice / duration / skills / category shape so the
     // frontend BasicInformation.tsx does not need a rewrite.
     const c = validated.cleaned;
+    await _withRealPrices(c, countyCode, _resolveLang(req.body));
     return res.json({
       success: true,
       data: {
@@ -527,6 +584,9 @@ exports.generateTitle = async (req, res) => {
       categoryName: catChosen,
       categoryAllowList: catNames,
       userCategory: catChosen,
+      urgent: !!urgent,
+      lang: _resolveLang(req.body),
+      userText: description,
     });
 
     if (!validated.valid) {
@@ -538,6 +598,7 @@ exports.generateTitle = async (req, res) => {
     }
 
     const c = validated.cleaned;
+    await _withRealPrices(c, countyCode, _resolveLang(req.body));
     return res.json({
       success: true,
       data: {
@@ -572,6 +633,8 @@ exports.generateFullJobListing = async (req, res) => {
       existingCounty,
       existingEquipment,
       existingUrgent,
+      existingFromDate,
+      existingToDate,
     } = req.body || {};
 
     if (!process.env.OPENAI_API_KEY) {
@@ -622,6 +685,11 @@ exports.generateFullJobListing = async (req, res) => {
       categoryName: catChosen,
       categoryAllowList: catNames,
       userCategory: catChosen,
+      urgent: existingUrgent === true || existingUrgent === 'true',
+      lang: _resolveLang(req.body),
+      userText: text,
+      fromDate: existingFromDate,
+      toDate: existingToDate,
     });
 
     if (!validated.valid) {
@@ -634,6 +702,7 @@ exports.generateFullJobListing = async (req, res) => {
     }
 
     const c = validated.cleaned;
+    await _withRealPrices(c, existingCounty, _resolveLang(req.body));
     return res.json({
       success: true,
       data: {

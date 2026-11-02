@@ -1,0 +1,611 @@
+{
+  "_about": "Jobblo AI pricing rules (Jobblo-AI-pricing-rules.pdf). NOK incl. VAT. Starting values: change the numbers here, no code change needed. range: [min, max] kr; hours: [min, max] typical hours; quote: no fixed price, price type Anbud. extras: added to the range on top of labour; when = always | unlessProvided (customer does not supply it) | ifAsked (customer asks for it). perUnit: price per unit of what the user stated (m2 | piece | m | room) — replaces range when the quantity is known, never below unitMinimum or the category minimum. extras perUnit room: times the room count. unsureWith: when this job type is picked but the user's own text has none of unlessWords, the listed job types are added to the range and the user is asked (rule 3).",
+  "currency": "NOK",
+  "disclaimer": {
+    "no": "Prisen er et anslag basert på jobbtype, størrelse og vanlige timepriser.",
+    "en": "The price is an estimate based on job type, size and typical hourly rates."
+  },
+  "quoteNote": {
+    "no": "Krever sertifisert fagperson – be om anbud.",
+    "en": "Requires a certified professional – request quotes."
+  },
+  "urgentPercent": 20,
+  "eveningWeekendPercent": 20,
+  "eveningWeekendKeywords": [
+    "kveld",
+    "helg",
+    "lørdag",
+    "søndag",
+    "evening",
+    "weekend",
+    "saturday",
+    "sunday"
+  ],
+  "realPrices": {
+    "minJobs": 20,
+    "lowPercentile": 25,
+    "highPercentile": 75
+  },
+  "proKeywords": [
+    "oppussing",
+    "renovering",
+    "renovation",
+    "trapp",
+    "stairs",
+    "staircase",
+    "bad",
+    "baderom",
+    "våtrom",
+    "bathroom",
+    "elektr",
+    "electrical",
+    "rørlegg",
+    "plumbing"
+  ],
+  "categories": [
+    {
+      "name": "Rengjøring",
+      "en": "Cleaning",
+      "minimum": 500,
+      "privateHourly": [250, 350],
+      "proHourly": [450, 600],
+      "jobTypes": [
+        {
+          "name": "Vanlig vask",
+          "en": "Regular clean (flat < 60 m²)",
+          "hours": [2, 3],
+          "range": [600, 1500]
+        },
+        {
+          "name": "Storvask / hovedrengjøring",
+          "en": "Deep clean",
+          "hours": [4, 8],
+          "range": [1500, 4000]
+        },
+        {
+          "name": "Flyttevask",
+          "en": "Move-out clean (25–45 kr per m², min 2 000)",
+          "hours": [6, 12],
+          "range": [2000, 6000],
+          "pro": true,
+          "perUnit": {
+            "per": "m2",
+            "price": [25, 45],
+            "unitMinimum": 2000
+          }
+        },
+        {
+          "name": "Vindusvask",
+          "en": "Window cleaning",
+          "hours": [2, 4],
+          "range": [600, 2000]
+        },
+        {
+          "name": "Vask etter oppussing",
+          "en": "Post-renovation clean",
+          "hours": [6, 10],
+          "range": [2500, 6000],
+          "pro": true
+        }
+      ],
+      "askIfUnsure": [
+        "How many m² / rooms and bathrooms?",
+        "Is it a move-out clean that must pass inspection?",
+        "Include oven, fridge or windows?",
+        "Are cleaning supplies provided?",
+        "Any pets?"
+      ]
+    },
+    {
+      "name": "Rørlegger",
+      "en": "Plumbing",
+      "minimum": 1500,
+      "privateHourly": null,
+      "proHourly": [900, 1300],
+      "note": "Professional only. Add call-out fee 500–900 kr. Some plumbing work must legally be done by a certified company – never suggest a private helper.",
+      "extras": [
+        {
+          "name": "Oppmøtegebyr",
+          "en": "Call-out fee",
+          "range": [500, 900],
+          "when": "always"
+        }
+      ],
+      "jobTypes": [
+        {
+          "name": "Tett avløp",
+          "en": "Blocked drain",
+          "hours": [1, 2],
+          "range": [1500, 3500],
+          "pro": true
+        },
+        {
+          "name": "Bytte blandebatteri",
+          "en": "Replace tap/mixer (+ part)",
+          "hours": [1, 2],
+          "range": [1500, 3500],
+          "pro": true
+        },
+        {
+          "name": "Koble til oppvask-/vaskemaskin",
+          "en": "Connect dishwasher/washing machine",
+          "hours": [1, 2],
+          "range": [1500, 3000],
+          "pro": true
+        },
+        {
+          "name": "Lekkasje",
+          "en": "Leak repair",
+          "hours": [2, 4],
+          "range": [2000, 6000],
+          "pro": true
+        },
+        {
+          "name": "Bytte toalett",
+          "en": "Replace toilet",
+          "hours": [3, 5],
+          "range": [4000, 8000],
+          "pro": true
+        },
+        {
+          "name": "Bytte varmtvannsbereder",
+          "en": "Replace water heater",
+          "hours": [4, 8],
+          "range": [8000, 18000],
+          "pro": true
+        }
+      ],
+      "askIfUnsure": [
+        "Is water leaking right now? (then mark as urgent)",
+        "Which fixture and what is wrong?",
+        "Have you bought the part?",
+        "Is it easy to access (under sink, behind panel)?"
+      ]
+    },
+    {
+      "name": "Maling",
+      "en": "Painting",
+      "minimum": 1000,
+      "privateHourly": [300, 450],
+      "proHourly": [600, 800],
+      "note": "Add paint: ~800–1 500 kr per room if not provided.",
+      "quoteKeywords": ["fasade", "facade", "husfasade"],
+      "extras": [
+        {
+          "name": "Maling / beis",
+          "en": "Paint or stain, per room or deck",
+          "range": [800, 1500],
+          "when": "unlessProvided",
+          "perUnit": "room"
+        }
+      ],
+      "jobTypes": [
+        {
+          "name": "Male ett rom (vegger)",
+          "en": "Paint one room, walls (~12 m² floor)",
+          "hours": [6, 8],
+          "range": [3000, 7000],
+          "perUnit": {
+            "per": "room",
+            "price": [3000, 7000]
+          }
+        },
+        {
+          "name": "Male tak",
+          "en": "Paint ceiling",
+          "hours": [3, 6],
+          "range": [2000, 5000]
+        },
+        {
+          "name": "Lister / dører",
+          "en": "Trim / doors (per piece 300–800)",
+          "hours": [1, 4],
+          "range": [600, 3000],
+          "perUnit": {
+            "per": "piece",
+            "price": [300, 800]
+          }
+        },
+        {
+          "name": "Beise terrasse",
+          "en": "Stain/oil deck (~20 m² + 800–1 500 materials)",
+          "hours": [4, 8],
+          "range": [2000, 5000]
+        },
+        {
+          "name": "Male gjerde",
+          "en": "Paint fence",
+          "hours": [4, 10],
+          "range": [2000, 6000]
+        },
+        {
+          "name": "Pusse opp trapp",
+          "en": "Sand and paint staircase",
+          "hours": [8, 16],
+          "range": [5000, 12000],
+          "pro": true
+        },
+        {
+          "name": "Male husfasade",
+          "en": "House exterior (several days)",
+          "hours": [24, 80],
+          "range": [30000, 120000],
+          "pro": true,
+          "quote": true
+        }
+      ],
+      "askIfUnsure": [
+        "How many rooms or m²?",
+        "Ceiling and trim included?",
+        "Changing colour (light to dark needs more coats)?",
+        "Is paint provided?",
+        "Holes or cracks to fill first?"
+      ]
+    },
+    {
+      "name": "Flytting",
+      "en": "Moving",
+      "minimum": 800,
+      "privateHourly": [300, 450],
+      "proHourly": [1200, 1800],
+      "note": "Private rate is per person. Professional rate is per hour for van + 2 movers.",
+      "jobTypes": [
+        {
+          "name": "Bærehjelp (uten bil)",
+          "en": "Carrying help, 2 people ~3 h",
+          "hours": [2, 4],
+          "range": [1800, 3000]
+        },
+        {
+          "name": "Enkeltmøbel",
+          "en": "Single furniture item",
+          "hours": [1, 1],
+          "range": [500, 1500]
+        },
+        {
+          "name": "Flytting 1-roms",
+          "en": "Move 1-room flat with van",
+          "hours": [3, 5],
+          "range": [2500, 6000]
+        },
+        {
+          "name": "Flytting 2–3-roms",
+          "en": "Move 2–3-room flat",
+          "hours": [5, 10],
+          "range": [6000, 15000],
+          "pro": true
+        },
+        {
+          "name": "Piano / tunge ting",
+          "en": "Piano or very heavy items",
+          "hours": [2, 3],
+          "range": [2500, 6000],
+          "pro": true
+        }
+      ],
+      "askIfUnsure": [
+        "From and to address (distance)?",
+        "Floor, and is there a lift at both ends?",
+        "How many rooms / how much stuff?",
+        "Need a van?",
+        "Packing help needed?",
+        "Any heavy items (piano, safe, fridge)?"
+      ],
+      "privateRatePerPerson": true,
+      "defaultPeople": 2
+    },
+    {
+      "name": "Hagearbeid",
+      "en": "Gardening",
+      "minimum": 500,
+      "privateHourly": [250, 400],
+      "proHourly": [500, 700],
+      "note": "Add 500–1 500 kr if garden waste must be removed.",
+      "extras": [
+        {
+          "name": "Bortkjøring av hageavfall",
+          "en": "Garden waste removal",
+          "range": [500, 1500],
+          "when": "ifAsked"
+        }
+      ],
+      "jobTypes": [
+        {
+          "name": "Klippe plen",
+          "en": "Mow lawn (< 300 m²)",
+          "hours": [1, 2],
+          "range": [400, 900]
+        },
+        {
+          "name": "Luke ugress",
+          "en": "Weeding",
+          "hours": [2, 6],
+          "range": [600, 2000]
+        },
+        {
+          "name": "Klippe hekk",
+          "en": "Trim hedge (per 10 m 800–2 500)",
+          "hours": [2, 6],
+          "range": [800, 2500],
+          "perUnit": {
+            "per": "m",
+            "price": [80, 250]
+          }
+        },
+        {
+          "name": "Rake løv",
+          "en": "Rake leaves",
+          "hours": [2, 5],
+          "range": [600, 2000]
+        },
+        {
+          "name": "Felle lite tre",
+          "en": "Fell small tree",
+          "hours": [2, 4],
+          "range": [2000, 6000],
+          "pro": true
+        },
+        {
+          "name": "Felle stort tre",
+          "en": "Fell large tree (arborist)",
+          "hours": [4, 16],
+          "range": [6000, 25000],
+          "pro": true,
+          "quote": true
+        }
+      ],
+      "askIfUnsure": [
+        "How big is the area (m²) / how long is the hedge?",
+        "Should garden waste be taken away?",
+        "Are tools available (mower, trimmer)?",
+        "One-off or recurring?"
+      ]
+    },
+    {
+      "name": "Oppussing",
+      "en": "Renovation",
+      "minimum": 1500,
+      "privateHourly": [400, 550],
+      "proHourly": [700, 950],
+      "note": "Bathrooms (våtrom), electrical and structural work: do not give a price – set price type to Anbud and say a certified professional is required.",
+      "quoteKeywords": [
+        "våtrom",
+        "baderom",
+        "badet",
+        "bad",
+        "bathroom",
+        "elektr",
+        "electrical",
+        "bærevegg",
+        "structural"
+      ],
+      "jobTypes": [
+        {
+          "name": "Sparkling / tette hull",
+          "en": "Fill holes / plaster",
+          "hours": [1, 4],
+          "range": [1000, 3000]
+        },
+        {
+          "name": "Bytte innerdør",
+          "en": "Replace interior door",
+          "hours": [2, 4],
+          "range": [1500, 4000]
+        },
+        {
+          "name": "Legge laminat",
+          "en": "Lay laminate (150–300 kr/m² labour)",
+          "hours": [6, 8],
+          "range": [3000, 7000],
+          "perUnit": {
+            "per": "m2",
+            "price": [150, 300]
+          }
+        },
+        {
+          "name": "Pusse opp trapp",
+          "en": "Renovate staircase",
+          "hours": [8, 16],
+          "range": [5000, 12000],
+          "pro": true
+        },
+        {
+          "name": "Montere kjøkken",
+          "en": "Install kitchen (e.g. IKEA), 2–5 days",
+          "hours": [16, 40],
+          "range": [8000, 25000],
+          "pro": true
+        },
+        {
+          "name": "Bad / våtrom",
+          "en": "Bathroom",
+          "hours": null,
+          "range": null,
+          "pro": true,
+          "quote": true
+        }
+      ],
+      "askIfUnsure": [
+        "How many m²?",
+        "Are materials bought?",
+        "Remove old material first?",
+        "Any deadline?"
+      ]
+    },
+    {
+      "name": "Transport",
+      "en": "Transport",
+      "minimum": 500,
+      "privateHourly": [300, 450],
+      "proHourly": [600, 900],
+      "note": "Long distance: add ~10–20 kr per km.",
+      "jobTypes": [
+        {
+          "name": "Hente møbel",
+          "en": "Pick up furniture locally",
+          "hours": [1, 2],
+          "range": [500, 1200]
+        },
+        {
+          "name": "Kjøre til gjenvinning",
+          "en": "Drive to recycling station (+ fees)",
+          "hours": [1, 3],
+          "range": [600, 1500]
+        },
+        {
+          "name": "Varebil med sjåfør",
+          "en": "Van with driver, per hour",
+          "hours": [1, 1],
+          "range": [600, 900],
+          "pro": true
+        }
+      ],
+      "askIfUnsure": [
+        "From and to address?",
+        "Size and weight of the items?",
+        "Carrying help needed?",
+        "Floors / lift?"
+      ],
+      "perKm": {
+        "price": [10, 20],
+        "fromKm": 30
+      }
+    },
+    {
+      "name": "Småjobber",
+      "en": "Small jobs",
+      "minimum": 400,
+      "privateHourly": [250, 400],
+      "proHourly": [500, 700],
+      "note": "Electrical installation must be done by a registered electrician – do not price it as a small job.",
+      "quoteKeywords": ["elektriker", "elektrisk", "electrical", "sikringsskap", "stikkontakt"],
+      "jobTypes": [
+        {
+          "name": "Montere lite møbel",
+          "en": "Assemble small furniture (e.g. chair, shelf)",
+          "hours": [1, 2],
+          "range": [400, 900]
+        },
+        {
+          "name": "Montere stort møbel",
+          "en": "Assemble large furniture (e.g. PAX wardrobe)",
+          "hours": [3, 6],
+          "range": [1500, 3500]
+        },
+        {
+          "name": "Henge opp",
+          "en": "Hang pictures, shelves, TV",
+          "hours": [1, 3],
+          "range": [400, 1500]
+        },
+        {
+          "name": "Ærend / handle",
+          "en": "Errands / shopping",
+          "hours": [1, 2],
+          "range": [300, 600]
+        },
+        {
+          "name": "Datahjelp",
+          "en": "Computer / phone help",
+          "hours": [1, 2],
+          "range": [400, 800]
+        }
+      ],
+      "askIfUnsure": [
+        "What items and how many?",
+        "Wall type (concrete, plaster, wood)?",
+        "Are tools available?"
+      ]
+    },
+    {
+      "name": "Bil & Pleie",
+      "en": "Car & care",
+      "minimum": 400,
+      "privateHourly": [250, 400],
+      "proHourly": [500, 800],
+      "jobTypes": [
+        {
+          "name": "Utvendig vask",
+          "en": "Exterior wash",
+          "hours": [1, 1],
+          "range": [300, 700]
+        },
+        {
+          "name": "Innvendig rengjøring",
+          "en": "Interior cleaning",
+          "hours": [2, 3],
+          "range": [600, 1500]
+        },
+        {
+          "name": "Full vask + polering",
+          "en": "Full wash and polish",
+          "hours": [4, 6],
+          "range": [1500, 3500]
+        },
+        {
+          "name": "Lett ripe",
+          "en": "Light scratch – polish",
+          "hours": [1, 1],
+          "range": [300, 800],
+          "unsureWith": {
+            "jobTypes": ["Dyp ripe"],
+            "unlessWords": [
+              "lett",
+              "overfladisk",
+              "liten",
+              "små",
+              "dyp",
+              "metall",
+              "primer",
+              "grunning",
+              "negl",
+              "light",
+              "deep",
+              "metal",
+              "fingernail"
+            ]
+          }
+        },
+        {
+          "name": "Dyp ripe",
+          "en": "Deep scratch – touch-up / spot repair",
+          "hours": [2, 4],
+          "range": [1500, 4000],
+          "pro": true
+        },
+        {
+          "name": "Hjulskift",
+          "en": "Change wheels (on rims)",
+          "hours": [1, 1],
+          "range": [400, 800]
+        },
+        {
+          "name": "Lakkere del",
+          "en": "Repaint a panel (workshop), 1–2 days",
+          "hours": [8, 16],
+          "range": [4000, 10000],
+          "pro": true
+        }
+      ],
+      "askIfUnsure": [
+        "Car size (small, SUV, van)?",
+        "How dirty / when was it last cleaned?",
+        "Scratch: can you feel it with a fingernail? Do you see metal or primer?",
+        "Where is the car – water and power available?"
+      ]
+    }
+  ],
+  "includesText": {
+    "no": "Inkluderer",
+    "en": "Includes"
+  },
+  "uncertainNote": {
+    "no": "Svar på spørsmålene for et mer presist anslag.",
+    "en": "Answer the questions for a more precise estimate."
+  },
+  "negationWords": ["ikke", "ikkje", "uten", "unntatt", "not", "no", "except", "without"],
+  "realPricesNote": {
+    "no": "Basert på {n} fullførte lignende oppdrag.",
+    "en": "Based on {n} completed similar jobs."
+  }
+}

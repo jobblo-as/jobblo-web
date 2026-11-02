@@ -129,6 +129,19 @@ describe('checklist handling', () => {
   });
 });
 
+describe('pricing job type', () => {
+  it.each([
+    ['a config job type is kept', 'Pusse opp trapp', 'Pusse opp trapp'],
+    ['an unknown name is dropped', 'Gratis jobb', ''],
+    ['an operator object is dropped', { $ne: '' }, ''],
+    ['an array is dropped', ['Pusse opp trapp'], ''],
+  ])('%s', async (_label, jobType, saved) => {
+    const res = await callCreate(validBody({ jobType }));
+    expect(res.statusCode).toBe(201);
+    expect(Service.create.mock.calls[0][0].jobType).toBe(saved);
+  });
+});
+
 describe('mass assignment', () => {
   it('ignores client-supplied promoted, views and status', async () => {
     const res = await callCreate(validBody({ promoted: true, views: 999999, status: 'completed' }));

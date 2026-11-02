@@ -338,6 +338,7 @@ describe('validator hardening', () => {
         'duration',
         'heuristicTotal',
         'hourlyRate',
+        'jobType',
         'locationRelevance',
         'openQuestions',
         'paymentType',
@@ -357,6 +358,6 @@ describe('validator hardening', () => {
       { title: 'Vask', pricingReasoning: 'Dette er den offisielle markedssatsen.' },
       vctx
     );
-    expect(cleaned.pricingReasoning).toMatch(/ESTIMAT|estimat/i);
+    expect(cleaned.pricingReasoning).toMatch(/ESTIMAT|estimat|anslag/i);
   });
 });

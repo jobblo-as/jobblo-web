@@ -217,11 +217,16 @@ describe('BUG-012: aiSmartFill validator', () => {
   });
 
   // ── 8. Reasoning MUST contain estimate disclaimer ─────────────────────────
+  // (Categories in jobblo-pricing-config.json get the fixed text instead: aiPricingRules.test.js.)
   test('empty reasoning auto-populates with estimate disclaimer + paymentType', () => {
     // Both raw.paymentType and ctx.userPaymentType must be Timepris so the cleaned
     // value is Timepris (raw.paymentType wins over user default in the validator).
-    const raw = goodOutput({ pricingReasoning: '', paymentType: 'Timepris' });
-    const { cleaned } = validateSmartFillOutput(raw, ctx('Rengjøring', 'Timepris'));
+    const raw = goodOutput({
+      pricingReasoning: '',
+      paymentType: 'Timepris',
+      category: 'Snømåking',
+    });
+    const { cleaned } = validateSmartFillOutput(raw, ctx('Snømåking', 'Timepris'));
     expect(cleaned.paymentType).toBe('Timepris');
     expect(cleaned.pricingReasoning.length).toBeGreaterThan(10);
     expect(cleaned.pricingReasoning).toMatch(/estimat/i);
@@ -231,16 +236,17 @@ describe('BUG-012: aiSmartFill validator', () => {
   test('authoritative-sounding reasoning (no estimate word) gets disclaimer prefixed', () => {
     const raw = goodOutput({
       pricingReasoning: 'Dette er den offisielle markedsprisen i Norge.',
+      category: 'Snømåking',
     });
-    const { cleaned } = validateSmartFillOutput(raw, ctx());
+    const { cleaned } = validateSmartFillOutput(raw, ctx('Snømåking'));
     expect(cleaned.pricingReasoning).toMatch(/^Estimat, ikke markedssats: /);
     expect(cleaned.pricingReasoning).not.toContain('[');
   });
 
   test('estimate-labeled reasoning passes through unchanged (no double prefix)', () => {
     const legit = 'Estimat basert på ca. 420 kr/t × 6 timer for maling.';
-    const raw = goodOutput({ pricingReasoning: legit });
-    const { cleaned } = validateSmartFillOutput(raw, ctx());
+    const raw = goodOutput({ pricingReasoning: legit, category: 'Snømåking' });
+    const { cleaned } = validateSmartFillOutput(raw, ctx('Snømåking'));
     expect(cleaned.pricingReasoning).toBe(legit);
   });
 
