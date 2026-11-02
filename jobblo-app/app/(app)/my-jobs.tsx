@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Trash2,
   Users,
+  Zap,
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useDeleteMyJobMutation, useMyJobs } from '../../src/hooks/useMyJobs';
@@ -151,8 +152,10 @@ function MyJobCard({
           <View className="min-w-0 flex-1 flex-row flex-wrap items-center gap-1.5">
             <ServiceStatusBadge status={job.status} />
             {job.urgent ? (
-              <View className="self-start rounded-full bg-brand-deep px-2.5 py-1">
-                <Text className="text-[0.8125rem] font-semibold text-white">Hastar</Text>
+              // Same badge as the job cards and the job page.
+              <View className="flex-row items-center gap-1 self-start rounded-full bg-brand-deep px-2.5 py-1">
+                <Zap size={12} color="#FFFFFF" fill="#FFFFFF" />
+                <Text className="text-[0.8125rem] font-semibold text-white">Haster</Text>
               </View>
             ) : null}
             {job.promoted ? (

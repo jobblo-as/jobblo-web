@@ -18,6 +18,7 @@ import { MEMBERSHIP_ENABLED } from '../../../src/config/features';
 import { TC, tc } from '../../../src/theme/colors';
 import { GlassBackButton } from '../../../src/components/ui/GlassButton';
 import { SupportTicketsSkeleton } from '../../../src/components/skeletons/ScreenSkeletons';
+import { badgeText } from '../../../src/utils/badgeText';
 
 const SUPPORT_EMAIL = 'support@jobblo.no';
 
@@ -78,7 +79,7 @@ const STATUS_LABEL: Record<SupportTicketStatus, string> = {
 
 const STATUS_CLASS: Record<SupportTicketStatus, string> = {
   open: 'bg-surface-2 text-muted',
-  in_progress: 'bg-[#FFF6E8] text-[#A36A1C]',
+  in_progress: 'bg-[#FFF6E8] dark:bg-warn-tint text-[#A36A1C] dark:text-warn',
   resolved: 'bg-tint text-brand-text',
   closed: 'border border-line bg-surface text-muted',
 };
@@ -382,7 +383,9 @@ export default function SupportScreen() {
                           STATUS_CLASS[ticket.status],
                         ].join(' ')}
                       >
-                        <Text className="text-[0.8125rem] font-semibold text-current">
+                        <Text
+                          className={`text-[0.8125rem] font-semibold ${badgeText(STATUS_CLASS[ticket.status])}`}
+                        >
                           {STATUS_LABEL[ticket.status]}
                         </Text>
                       </View>

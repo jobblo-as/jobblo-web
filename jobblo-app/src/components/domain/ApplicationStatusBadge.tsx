@@ -1,5 +1,6 @@
 import React from 'react';
 import { Text, View } from 'react-native';
+import { badgeText } from '../../utils/badgeText';
 
 export type ApplicationStatusBadgeVariant = 'pending' | 'accepted' | 'declined';
 
@@ -18,7 +19,9 @@ const labelMap: Record<ApplicationStatusBadgeVariant, string> = {
 export function ApplicationStatusBadge({ status }: { status: ApplicationStatusBadgeVariant }) {
   return (
     <View className={['self-start rounded-full px-2.5 py-1', badgeClasses[status]].join(' ')}>
-      <Text className="text-[0.8125rem] font-semibold text-current">{labelMap[status]}</Text>
+      <Text className={`text-[0.8125rem] font-semibold ${badgeText(badgeClasses[status])}`}>
+        {labelMap[status]}
+      </Text>
     </View>
   );
 }

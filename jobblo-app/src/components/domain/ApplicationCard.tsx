@@ -18,6 +18,7 @@ import { orderStatusLabel } from '../../constants/orderStatus';
 import { ApplicationStatusBadge } from './ApplicationStatusBadge';
 import { TC, tc } from '../../theme/colors';
 import { GlassFill, useGlass } from '../ui/GlassButton';
+import { badgeText } from '../../utils/badgeText';
 
 const ORDER_STATUS: Record<
   string,
@@ -126,7 +127,9 @@ export function ApplicationCard({
                     STATUS_TONE[orderStatusTone ?? 'quiet'],
                   ].join(' ')}
                 >
-                  <Text className="text-[0.8125rem] font-semibold text-current">
+                  <Text
+                    className={`text-[0.8125rem] font-semibold ${badgeText(STATUS_TONE[orderStatusTone ?? 'quiet'])}`}
+                  >
                     {orderStatusLabel}
                   </Text>
                 </View>
