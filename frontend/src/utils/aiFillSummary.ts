@@ -52,6 +52,7 @@ export type AiDraft = {
   checklist?: string[];
   remote?: boolean;
   pricingReasoning?: string;
+  jobType?: string;
 };
 export type AiDraftKey =
   | 'title'

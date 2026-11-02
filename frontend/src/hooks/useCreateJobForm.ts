@@ -273,6 +273,8 @@ export const useCreateJobForm = (
   const serverSyncTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   /** An AI suggestion waiting in the review popup; nothing reaches the form until it is applied. */
   const [aiDraft, setAiDraft] = useState<AiDraft | null>(null);
+  // The AI's pricing job type, sent with the job so real prices can be grouped by it.
+  const aiJobType = useRef('');
 
   // Flag to prevent save effect from running before load completes
   const [isLoaded, setIsLoaded] = useState(false);
@@ -422,13 +424,19 @@ export const useCreateJobForm = (
           existingCounty: countyCode || undefined,
           existingEquipment: equipment || undefined,
           existingUrgent: urgent,
+          existingFromDate: values.fromDate,
+          existingToDate: values.toDate,
         },
       });
 
       if (response.success) {
         const d = response.data;
         // Price: priceRange.min is the Anbud budget floor; otherwise the suggested price.
-        const price = d.priceRange ? d.priceRange.min : (d.suggestedPrice ?? d.estimatedPrice);
+        const price = d.priceHidden
+          ? undefined
+          : d.priceRange
+            ? d.priceRange.min
+            : (d.suggestedPrice ?? d.estimatedPrice);
         setAiDraft({
           title: d.title,
           description: d.description,
@@ -447,7 +455,11 @@ export const useCreateJobForm = (
           tags: Array.isArray(d.skills) && d.skills.length ? d.skills : undefined,
           checklist: d.checklist?.length ? d.checklist : undefined,
           remote: d.locationRelevance === 'remote',
-          pricingReasoning: d.pricingReasoning,
+          jobType: d.jobType,
+          pricingReasoning:
+            d.priceRange && !d.priceHidden
+              ? `Typisk pris for lignende oppdrag: ${d.priceRange.min.toLocaleString('nb-NO')}–${d.priceRange.max.toLocaleString('nb-NO')} kr. ${d.pricingReasoning || ''}`.trim()
+              : d.pricingReasoning,
         });
         setShowSmartFillInput(false);
         setSmartFillPrompt('');
@@ -512,6 +524,7 @@ export const useCreateJobForm = (
     const d = aiDraft;
     setAiDraft(null);
     if (!d || keys.length === 0) return;
+    aiJobType.current = d.jobType || '';
     const pick = new Set(keys);
     const flags: typeof smartFillSuggestionFlags = { ...smartFillSuggestionFlags };
     if (pick.has('title') && d.title) {
@@ -540,7 +553,11 @@ export const useCreateJobForm = (
       setHourlyRate(String(d.hourlyRate));
       flags.hourlyRate = true;
     }
-    if (pick.has('paymentType') && d.paymentType) setPaymentType(d.paymentType);
+    if (pick.has('paymentType') && d.paymentType) {
+      setPaymentType(d.paymentType);
+      // Anbud with no price (bathroom): the note still says a certified professional is needed.
+      if (!d.price && d.pricingReasoning) setSmartFillPricingNote(d.pricingReasoning);
+    }
     if (pick.has('tags') && d.tags) setTags(d.tags);
     if (pick.has('checklist') && d.checklist)
       setChecklistItems(
@@ -1035,6 +1052,7 @@ export const useCreateJobForm = (
       formData.append('price', values.price.toString());
       if (hourlyRate) formData.append('hourlyRate', hourlyRate.toString());
       formData.append('urgent', urgent.toString());
+      if (aiJobType.current) formData.append('jobType', aiJobType.current);
       formData.append('maxApplicants', maxApplicants.toString());
       formData.append('equipment', equipment);
       formData.append('paymentType', paymentType);

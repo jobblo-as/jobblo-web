@@ -293,6 +293,117 @@ test('AI draft is reviewed in a popup and never replaces typed text unless ticke
   expect(errors).toEqual([]);
 });
 
+// Jobblo-AI-pricing-rules.pdf on the web: the range and the fixed text are shown, the job type
+// goes with the job (real prices are grouped by it), and quote work without a table price
+// (bathroom) offers no figure at all.
+const STAIRS_DRAFT = {
+  title: 'Pusse opp trapp',
+  description: 'Jeg vil slipe og male trappen i huset.',
+  category: 'Oppussing',
+  skills: [],
+  duration: { value: 12, unit: 'hours' },
+  locationRelevance: 'on-site',
+  priceRange: { min: 5000, max: 12000 },
+  suggestedPrice: 8500,
+  priceMin: 5000,
+  priceMax: 12000,
+  pricingReasoning: 'Prisen er et anslag basert på jobbtype, størrelse og vanlige timepriser.',
+  priceHidden: false,
+  jobType: 'Pusse opp trapp',
+  paymentType: 'Fastpris',
+  isEstimate: true,
+};
+
+test('AI price: the PDF range and text are shown, and the job type is published with the job', async ({
+  page,
+}) => {
+  const errors = watchErrors(page);
+  const full = {
+    ...SERVICE,
+    countyCode: '03',
+    municipalityCode: '0301',
+    images: ['https://example.test/a.jpg'],
+    fromDate: '2026-11-01',
+    toDate: '2026-11-02',
+    duration: { value: 2, unit: 'hours' },
+  };
+  const { calls } = await mockApi(page, {
+    as: 'user',
+    routes: {
+      [`GET /api/services/${SERVICE._id}`]: () => full,
+      [`PUT /api/services/${SERVICE._id}`]: () => full,
+      'GET /api/location-filter/tree': () => [
+        { code: '03', name: 'Oslo', children: [{ code: '0301', name: 'Oslo' }] },
+      ],
+      'POST /api/ai/generate-full-listing': () => ({ success: true, data: STAIRS_DRAFT }),
+    },
+  });
+  await page.goto(`/Publish-job/${SERVICE._id}`);
+  await page.getByPlaceholder(/Male en liten bod/).fill('Oppussing av trapper, slipe og male');
+  await page.getByRole('button', { name: 'Foreslå et utkast' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Forslag til utkast' });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('checkbox', { name: /^Pris\s/ }).check();
+  await shot(page, 'pdf-1-forslag-med-pris');
+  await dialog.getByRole('button', { name: /Bruk valgte/ }).click();
+
+  await expect(
+    page.getByText(
+      /Typisk pris for lignende oppdrag: 5\s000–12\s000 kr\. Prisen er et anslag basert på jobbtype, størrelse og vanlige timepriser\./
+    )
+  ).toBeVisible();
+  await shot(page, 'pdf-2-typisk-pris-notat');
+
+  await page.getByRole('button', { name: 'Neste', exact: true }).click();
+  await page.getByRole('button', { name: /Publiser oppdrag/ }).click();
+  await expect
+    .poll(() =>
+      calls.some((c) => c.method === 'PUT' && c.pathname === `/api/services/${SERVICE._id}`)
+    )
+    .toBe(true);
+  const sent = String(
+    calls.find((c) => c.method === 'PUT' && c.pathname === `/api/services/${SERVICE._id}`).body
+  );
+  expect(sent).toMatch(/name="jobType"\r?\n\r?\nPusse opp trapp\r?\n/);
+  expect(errors).toEqual([]);
+});
+
+test('AI price: bathroom (Anbud, no table price) offers no price at all', async ({ page }) => {
+  const errors = watchErrors(page);
+  await mockApi(page, {
+    as: 'user',
+    routes: {
+      'POST /api/ai/generate-full-listing': () => ({
+        success: true,
+        data: {
+          ...STAIRS_DRAFT,
+          title: 'Pusse opp badet',
+          priceRange: { min: 5600, max: 7600 },
+          suggestedPrice: 6600,
+          priceHidden: true,
+          jobType: 'Bad / våtrom',
+          paymentType: 'Anbud',
+          pricingReasoning:
+            'Prisen er et anslag basert på jobbtype, størrelse og vanlige timepriser. Krever sertifisert fagperson – be om anbud.',
+        },
+      }),
+    },
+  });
+  await page.goto('/Publish-job');
+  await page.getByPlaceholder(/Male en liten bod/).fill('Pusse opp badet, nye fliser og sluk');
+  await page.getByRole('button', { name: 'Foreslå et utkast' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Forslag til utkast' });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole('checkbox', { name: /^Pris\s/ })).toHaveCount(0);
+  await expect(dialog.getByText(/5\s600|7\s600|6\s600/)).toHaveCount(0);
+  await shot(page, 'pdf-3-bad-ingen-pris');
+  await dialog.getByRole('button', { name: /Bruk valgte/ }).click();
+  await expect(page.getByText(/Krever sertifisert fagperson – be om anbud\./)).toBeVisible();
+  await expect(page.getByText(/Typisk pris/)).toHaveCount(0);
+  await shot(page, 'pdf-4-bad-anbud-notat');
+  expect(errors).toEqual([]);
+});
+
 // A 40×30 green PNG: a real image the upload accepts and the thumbnail shows.
 const PHOTO = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAACgAAAAeCAIAAADRv8uKAAAAeElEQVR4nMXCgQVCAQBF0TfR3eEtkyRJkiRfkiRJkiRJozbGPU4YVRnGVYZJlWFaZZhVGeZVhkWVYVllWFUZ1lWGTZVhW2UYqgy7KsO+ynCoMhyrDKcqw7nKcKkyXKsMtyrDvcrwqDI8qwyvKsO7yvCpMnyrDL8q/wwGbp2frO4OAAAAAElFTkSuQmCC',

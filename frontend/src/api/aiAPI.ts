@@ -17,6 +17,9 @@ export interface AISmartFillContext {
   existingCountyCode?: string;
   existingEquipment?: string;
   existingUrgent?: boolean;
+  /** 'YYYY-MM-DD': a weekend-only job gets the +20 % evening/weekend rate. */
+  existingFromDate?: string;
+  existingToDate?: string;
 }
 
 interface AIDuration {
@@ -47,6 +50,10 @@ interface AIJobListingResponse {
     priceMax?: number;
     estimatedPrice?: number;
     pricingReasoning?: string;
+    /** Anbud with no table price (bathroom): show no figure. */
+    priceHidden?: boolean;
+    /** The pricing job type ("Pusse opp trapp"), saved on the job for real-price stats. */
+    jobType?: string;
     paymentType: 'Timepris' | 'Fastpris' | 'Anbud';
     isEstimate: boolean;
   };
@@ -77,6 +84,8 @@ export const generateFullJobListing = async (
     existingCounty: ctx.existingCounty ?? ctx.existingCountyCode,
     existingEquipment: ctx.existingEquipment,
     existingUrgent: ctx.existingUrgent,
+    existingFromDate: ctx.existingFromDate || undefined,
+    existingToDate: ctx.existingToDate || undefined,
   };
   if (!images.length) {
     return (await mainLink.post('/api/ai/generate-full-listing', fields, { signal })).data;
