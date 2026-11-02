@@ -58,6 +58,47 @@ test('search and the urgent filter go to the API and narrow the list', async ({ 
   expect(errors).toEqual([]);
 });
 
+test('"Sorter" is the same menu on the home page and the search page, and sorts via the API', async ({
+  page,
+}) => {
+  const errors = watchErrors(page);
+  const { calls } = await mockApi(page, {
+    routes: { 'GET /api/services': () => page1([SERVICE, OTHER]) },
+  });
+  const sortsSent = () =>
+    calls
+      .filter((c) => c.pathname === '/api/services')
+      .map((c) => new URLSearchParams(c.search).get('sort'));
+
+  for (const [path, name] of [
+    ['/home', 'hjem'],
+    ['/search/job/all', 'sok'],
+  ]) {
+    await page.goto(path);
+    const button = page.getByRole('button', { name: 'Sorter: Nyeste først' });
+    await expect(button).toBeVisible();
+    await button.click();
+    const menu = page.getByRole('listbox', { name: 'Sorter' });
+    await expect(menu.getByRole('option')).toHaveCount(4);
+    await expect(menu.getByRole('option', { name: 'Nyeste først' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    await shot(page, `sorter-${name}-1-apen`);
+    // Escape closes it without a change.
+    await page.keyboard.press('Escape');
+    await expect(menu).toBeHidden();
+
+    await button.click();
+    await menu.getByRole('option', { name: 'Pris – lavest først' }).click();
+    await expect(menu).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Sorter: Pris – lavest først' })).toBeVisible();
+    await expect.poll(() => sortsSent().at(-1)).toBe('price_low');
+    await shot(page, `sorter-${name}-2-valgt`);
+  }
+  expect(errors).toEqual([]);
+});
+
 test('a listing opens from the search results', async ({ page }) => {
   const errors = watchErrors(page);
   await mockApi(page, {

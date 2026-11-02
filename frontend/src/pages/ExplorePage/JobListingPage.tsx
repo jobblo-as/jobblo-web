@@ -15,6 +15,7 @@ import { useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { FileText, LayoutGrid, ShieldCheck, Star } from 'lucide-react';
 import type { IconName } from 'lucide-react/dynamic';
 import { CategoryIcon } from '../../components/CategoryIcon';
+import { SortMenu } from '../../components/SortMenu';
 import { useJobs } from '../../features/jobsList/hooks';
 import { useCategories } from '../../features/categories/hooks';
 import { useDashboardStats } from '../../features/explore/hooks';
@@ -481,23 +482,12 @@ export default function JobListingPage() {
             onAction={() => navigate('/search/job/all')}
           />
 
-          <div className="mb-5 flex items-center justify-end gap-2.5">
-            <label htmlFor="explore-sort" className="text-[0.8125rem] font-medium text-[#63665F]">
-              Sorter
-            </label>
-            <select
-              id="explore-sort"
-              data-testid="explore-sort"
+          <div className="mb-5 flex items-center justify-end">
+            <SortMenu
+              options={EXPLORE_SORT_OPTIONS}
               value={sortValue}
-              onChange={(event) => setSortValue(event.target.value)}
-              className="h-10 rounded-xl border border-[#E6E7E1] bg-white px-3 text-[0.875rem] font-medium text-[#0B0B0B] transition-colors hover:border-[#2E6641]/45 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/20"
-            >
-              {EXPLORE_SORT_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
+              onChange={(option) => setSortValue(option.value)}
+            />
           </div>
 
           {/* Two columns from the narrowest phone up — the cards carry no panel, so a

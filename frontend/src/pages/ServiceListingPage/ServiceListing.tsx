@@ -2,7 +2,6 @@ import { useState, useRef, useEffect, useMemo, lazy, Suspense } from 'react';
 import { useParams, useSearchParams, useLocation, useNavigate } from 'react-router-dom';
 import {
   SlidersHorizontal,
-  ArrowUpDown,
   Check,
   Loader2,
   Map as MapIcon,
@@ -18,6 +17,7 @@ import {
 import { Slider } from 'antd';
 import { AntdTheme } from '../../theme/AntdTheme';
 import { JobCard } from '../../components/component/jobCard/JobCard';
+import { SortMenu } from '../../components/SortMenu';
 import { JobCardSkeleton } from '../../components/Loading/JobCardSkeleton';
 import { CARD, GREEN, LINE, MICRO_LABEL, PILL_PRIMARY } from '../../theme/brand';
 const MapComponent = lazy(() =>
@@ -60,7 +60,6 @@ const ServiceListing = () => {
     searchParams.get('search') || searchParams.get('q') || searchParams.get('query') || '';
   const decodedCategoryName = categoryName ? decodeURIComponent(categoryName) : undefined;
 
-  const [isSortOpen, setIsSortOpen] = useState(false);
   const [selectedSort, setSelectedSort] = useState({
     label: 'Nyeste først',
     value: 'newest',
@@ -103,7 +102,6 @@ const ServiceListing = () => {
   const [expandedCounties, setExpandedCounties] = useState<string[]>([]);
   const [expandedMunicipalities, setExpandedMunicipalities] = useState<string[]>([]);
 
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const { data: filterOptions, isLoading: isFiltersLoading } = useFilterOptions();
 
   // Update selectedCategories when categoryName param changes
@@ -266,16 +264,6 @@ const ServiceListing = () => {
     { label: 'Pris – høyest først', value: 'price_high' },
     { label: 'Mest relevant', value: 'relevant' },
   ];
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsSortOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1058,44 +1046,7 @@ const ServiceListing = () => {
               </button>
             </form>
 
-            <div className="relative shrink-0" ref={dropdownRef}>
-              <button
-                onClick={() => setIsSortOpen(!isSortOpen)}
-                aria-haspopup="listbox"
-                aria-expanded={isSortOpen}
-                className="flex h-12 items-center gap-2 rounded-full border border-[#E6E7E1] bg-white px-4 text-[0.875rem] font-semibold text-[#0B0B0B] transition-colors hover:border-[#2E6641]/45 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15"
-              >
-                <ArrowUpDown size={16} strokeWidth={2} className="text-[#2E6641]" />
-                <span className="hidden md:inline">{selectedSort.label}</span>
-              </button>
-
-              {isSortOpen && (
-                <div
-                  role="listbox"
-                  className={`${CARD} absolute right-0 z-100 mt-2 w-60 overflow-hidden p-1.5 shadow-[0_18px_48px_rgba(11,11,11,0.12)]`}
-                >
-                  {sortOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      role="option"
-                      aria-selected={selectedSort.value === option.value}
-                      onClick={() => {
-                        setSelectedSort(option);
-                        setIsSortOpen(false);
-                      }}
-                      className={`flex w-full items-center justify-between gap-2 rounded-xl px-3.5 py-2.5 text-left text-[0.875rem] transition-colors ${
-                        selectedSort.value === option.value
-                          ? 'bg-[#EAF1E9] font-semibold text-[#2E6641]'
-                          : 'text-[#0B0B0B] hover:bg-[#F4F6F0]'
-                      }`}
-                    >
-                      <span>{option.label}</span>
-                      {selectedSort.value === option.value && <Check size={15} strokeWidth={2.6} />}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <SortMenu options={sortOptions} value={selectedSort.value} onChange={setSelectedSort} />
           </div>
         </div>
       </div>
