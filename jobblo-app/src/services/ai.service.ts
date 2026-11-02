@@ -27,6 +27,14 @@ export interface ListingDraft {
   priceMin?: number;
   priceMax?: number;
   duration?: { value: number; unit: 'minutes' | 'hours' | 'days' };
+  /** "Prisen er et anslag …", plus what is included, "be om anbud" or "Basert på 25 …". */
+  pricingReasoning?: string;
+  /** Anbud with no table price (bathroom): show no figure. */
+  priceHidden?: boolean;
+  /** The pricing job type, saved on the job. */
+  jobType?: string;
+  /** The evening/weekend rate is already in the price (the user wrote "lørdag", "kveld"…). */
+  eveningWeekend?: boolean;
 }
 
 /**
@@ -69,10 +77,14 @@ export interface PriceStats {
   scope: 'county' | 'country';
 }
 
-/** What similar jobs were agreed for (10th / 50th / 90th percentile). */
-export async function getPriceStats(category: string, countyCode?: string): Promise<PriceStats> {
+/** What 20+ completed similar jobs were agreed for (25th / 50th / 75th percentile). */
+export async function getPriceStats(
+  category: string,
+  countyCode?: string,
+  jobType?: string
+): Promise<PriceStats> {
   const response = await apiClient.get<PriceStats>('/services/price-stats', {
-    params: { category, countyCode: countyCode || undefined },
+    params: { category, countyCode: countyCode || undefined, jobType: jobType || undefined },
   });
   return response.data;
 }

@@ -44,6 +44,10 @@ export interface CreateJobFormValues {
   checklist: ChecklistItem[];
   /** Hast already paid ("Betal 39 kr" before publishing): the server checks it and marks the job. */
   urgentPurchaseId?: string;
+  /** The AI's pricing job type ("Pusse opp trapp"): real prices are grouped by it. */
+  jobType?: string;
+  /** The weekend rate was added on the place step (so it is offered once). Not sent. */
+  weekendRateAdded?: boolean;
 }
 
 /** A blank job (new job in both the post-job flow and the old form). */
@@ -116,6 +120,7 @@ export function buildJobFormData(
   append('paymentType', values.paymentType);
   append('urgent', String(values.urgent));
   if (values.urgentPurchaseId) append('urgentPurchaseId', values.urgentPurchaseId);
+  if (values.jobType) append('jobType', values.jobType);
   append('maxApplicants', values.maxApplicants.trim() || '0');
   append('equipment', values.equipment);
   if (values.customerType) append('customerType', values.customerType);

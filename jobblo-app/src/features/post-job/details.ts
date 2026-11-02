@@ -118,6 +118,37 @@ const CATEGORY_QUESTIONS: Record<string, DetailQuestion[]> = {
       ],
     },
   ],
+  // Jobblo-AI-pricing-rules.pdf: car size, and for a scratch the depth (it decides polish or repair).
+  'bil & pleie': [
+    {
+      key: 'what',
+      label: t('Hva trenger bilen?', 'What does the car need?'),
+      options: [
+        t('Utvendig vask', 'Exterior wash'),
+        t('Innvendig rengjøring', 'Interior cleaning'),
+        t('Vask og polering', 'Wash and polish'),
+        t('Ripe', 'Scratch'),
+        t('Hjulskift', 'Wheel change'),
+      ],
+    },
+    {
+      key: 'size',
+      label: t('Hvor stor er bilen?', 'How big is the car?'),
+      options: [t('Liten bil', 'Small car'), 'SUV', t('Varebil', 'Van')],
+    },
+    {
+      key: 'scratch',
+      label: t(
+        'Ripe: kjenner du den med neglen, eller ser du metall?',
+        'Scratch: can you feel it with a fingernail, or see metal?'
+      ),
+      options: [
+        t('Nei, den er lett', 'No, it is light'),
+        t('Ja, den er dyp', 'Yes, it is deep'),
+        t('Ingen ripe', 'No scratch'),
+      ],
+    },
+  ],
   oppussing: [
     {
       key: 'what',

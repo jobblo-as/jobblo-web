@@ -20,6 +20,8 @@ export interface AiEstimate {
   priceMin?: number;
   priceMax?: number;
   hourlyRate?: number;
+  /** The server's price text (what is included, "be om anbud", real-price count). */
+  note?: string;
 }
 
 interface PostJobState {

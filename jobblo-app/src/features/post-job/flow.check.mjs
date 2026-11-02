@@ -165,4 +165,11 @@ store.getState().startEdit('job2', job, []);
 store.getState().reset();
 assert.equal(store.getState().values.title, '');
 assert.equal(store.getState().editId, null);
+// Evening/weekend rate: only when every chosen day is a Saturday or Sunday (2026-11-07 = Sat).
+const { weekendOnly } = await import('./price.ts');
+assert.equal(weekendOnly('2026-11-07'), true);
+assert.equal(weekendOnly('2026-11-07', '2026-11-08'), true);
+assert.equal(weekendOnly('2026-11-07', '2026-11-09'), false);
+assert.equal(weekendOnly('2026-11-09'), false);
+assert.equal(weekendOnly(''), false);
 console.log('post-job flow: ok');

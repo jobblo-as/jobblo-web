@@ -85,14 +85,22 @@ export function TextStep() {
         ...(!values.durationValue && draft.duration?.value
           ? { durationValue: String(draft.duration.value), durationUnit: draft.duration.unit }
           : {}),
+        jobType: draft.jobType || '',
+        weekendRateAdded: Boolean(draft.eveningWeekend),
       });
-      setAi({
-        paymentType: draft.paymentType,
-        suggestedPrice: draft.suggestedPrice,
-        priceMin: draft.priceMin,
-        priceMax: draft.priceMax,
-        hourlyRate: draft.hourlyRate,
-      });
+      // Anbud with no table price (bathroom): no figures to offer.
+      setAi(
+        draft.priceHidden
+          ? { paymentType: draft.paymentType, note: draft.pricingReasoning }
+          : {
+              paymentType: draft.paymentType,
+              suggestedPrice: draft.suggestedPrice,
+              priceMin: draft.priceMin,
+              priceMax: draft.priceMax,
+              hourlyRate: draft.hourlyRate,
+              note: draft.pricingReasoning,
+            }
+      );
     },
   });
 
