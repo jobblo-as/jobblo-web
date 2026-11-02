@@ -11,7 +11,7 @@ import { useLocationTree } from '../../../hooks/useLocationTree';
 import { validateCreateJobStep } from '../../../utils/createJobValidation';
 import { usePostJobStore } from '../store';
 import { StepFooter } from '../StepFooter';
-import { totalPrice } from '../price';
+import { totalPrice, weekendOnly, WEEKEND_PERCENT } from '../price';
 import { DATE_LOCALE, t } from '../i18n';
 
 const dateValue = (d: Date) =>
@@ -153,6 +153,18 @@ export function PlaceStep() {
     if (selected && picker) setDate(picker, dateValue(selected));
     setPicker(null);
   };
+
+  // The PDF's evening/weekend +20 %: dates come after the price step, so it is offered here.
+  const timepris = values.paymentType === 'Timepris';
+  const amount = Number(timepris ? values.hourlyRate : values.price) || 0;
+  const withWeekendRate = Math.round(amount * (1 + WEEKEND_PERCENT / 100));
+  const offerWeekendRate =
+    weekendOnly(values.fromDate, values.toDate) && !values.weekendRateAdded && amount > 0;
+  const addWeekendRate = () =>
+    update({
+      [timepris ? 'hourlyRate' : 'price']: String(withWeekendRate),
+      weekendRateAdded: true,
+    });
 
   const quick = [
     { text: t('I dag', 'Today'), v: dateValue(today()) },
@@ -354,6 +366,26 @@ export function PlaceStep() {
           <Text className="mt-1 text-[0.8125rem] font-medium text-danger">
             {placeErrors.toDate}
           </Text>
+        ) : null}
+        {offerWeekendRate ? (
+          <View className="mt-4 rounded-xl border border-line bg-surface-2 p-3">
+            <Text className="text-[0.875rem] leading-5 text-ink">
+              {t(
+                `Helg: vanlig pris er ca. ${WEEKEND_PERCENT} % høyere.`,
+                `Weekend: the usual price is about ${WEEKEND_PERCENT} % higher.`
+              )}
+            </Text>
+            <Pressable
+              onPress={addWeekendRate}
+              accessibilityRole="button"
+              className="mt-2 h-10 self-start justify-center rounded-full bg-brand px-4 active:opacity-85"
+            >
+              <Text className="text-[0.875rem] font-semibold text-white">
+                {t('Bruk', 'Use')} {withWeekendRate.toLocaleString('nb-NO')}{' '}
+                {timepris ? t('kr/t', 'kr/h') : 'kr'}
+              </Text>
+            </Pressable>
+          </View>
         ) : null}
       </ScrollView>
 

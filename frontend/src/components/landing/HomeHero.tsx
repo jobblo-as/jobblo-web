@@ -5,7 +5,7 @@ import { ArrowRight, ChevronLeft, ChevronRight, Search, ShieldCheck } from 'luci
 import { useCategories } from '../../features/categories/hooks';
 import { getPublicStats } from '../../api/publicAPI';
 import { CHIP, CONTAINER, DISPLAY, MICRO_LABEL, TEXT_LINK } from '../../theme/brand';
-import { SERVICE_SHOWCASE } from '../../assets/images/categories';
+import { SERVICE_SHOWCASE, categoryPhoto } from '../../assets/images/categories';
 
 /**
  * The hero: one sentence that finishes itself, and one field that runs the search.
@@ -20,25 +20,21 @@ import { SERVICE_SHOWCASE } from '../../assets/images/categories';
  * through its own sidebar state and accepts no county in the URL, so a picker here would
  * look like it worked and quietly do nothing.
  *
- * The collage is a fixed showcase of the services Jobblo covers — `SERVICE_SHOWCASE` —
- * not a view of the database. It was the six newest open jobs, which meant it vanished
- * entirely on an empty database and showed whatever art the records happened to carry.
- * Now it is always there and always the same, each frame labelled with the service it
- * shows so picture and caption cannot disagree, and each one a link into that category's
- * listing. Real job photos still lead the job cards further down the page.
+ * The collage is the platform's own categories (backend order), each with its photo — the
+ * admin's `image`, else our stand-in — labelled with the category it shows and linking into
+ * its listing. Until the categories load, or when fewer than six have a photo, it is the
+ * fixed `SERVICE_SHOWCASE`, so it never empties (it once was the newest jobs, and vanished
+ * on an empty database). Real job photos still lead the job cards further down the page.
  */
 
 /** Shown until the categories land, so the rotating line never starts empty. */
 const FALLBACK_WORDS = ['maling', 'flytting', 'hagearbeid', 'rørlegger', 'rengjøring'];
 
-/** The arch cycles the first four of the showcase; the plates hold the next two. */
-const CAROUSEL = SERVICE_SHOWCASE.slice(0, 4);
-
 /** The two still frames: which showcase entry each takes, and the shape it is cut to. */
-const PLATES = [
+const PLATE_FRAMES = [
   { at: 4, frame: 'left-0 top-24 size-47.5 rounded-full bg-[#EAF1E9]' },
   { at: 5, frame: 'bottom-24 left-9 h-45 w-62.5 rounded-3xl bg-white' },
-].map(({ at, frame }) => ({ ...SERVICE_SHOWCASE[at], frame }));
+];
 
 const WORD_MS = 2400;
 const SLIDE_MS = 4600;
@@ -66,6 +62,16 @@ export function HomeHero() {
   const words = categories.length
     ? categories.slice(0, 6).map((cat) => cat.name.toLowerCase())
     : FALLBACK_WORDS;
+
+  // The collage: categories with a photo; the fixed showcase until six of them have one.
+  const fromApi = categories.flatMap((cat) => {
+    const src = categoryPhoto(cat);
+    return src ? [{ name: cat.name, src }] : [];
+  });
+  const showcase = fromApi.length >= 6 ? fromApi : SERVICE_SHOWCASE;
+  // The arch cycles the first four; the plates hold the next two.
+  const CAROUSEL = showcase.slice(0, 4);
+  const PLATES = PLATE_FRAMES.map(({ at, frame }) => ({ ...showcase[at], frame }));
 
   // Both counters run unbounded and are read modulo their own list, so neither has to
   // know how long that list is — `words` in particular changes length as the API answers.
@@ -216,7 +222,7 @@ export function HomeHero() {
                 swipeable row instead, bled to the screen edges so the next card
                 peeks in and the gesture is discoverable. */}
             <div className="no-scrollbar -mx-5 mt-8 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-2 sm:-mx-8 sm:px-8 lg:hidden">
-              {SERVICE_SHOWCASE.map((service) => (
+              {showcase.map((service) => (
                 <button
                   key={service.name}
                   type="button"

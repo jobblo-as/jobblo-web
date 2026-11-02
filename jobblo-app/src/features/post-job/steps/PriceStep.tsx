@@ -45,8 +45,8 @@ export function PriceStep() {
   }, []);
 
   const statsQuery = useQuery({
-    queryKey: ['post-job', 'price-stats', category, values.countyCode],
-    queryFn: () => getPriceStats(category, values.countyCode),
+    queryKey: ['post-job', 'price-stats', category, values.countyCode, values.jobType],
+    queryFn: () => getPriceStats(category, values.countyCode, values.jobType),
     enabled: Boolean(category),
     staleTime: 10 * 60 * 1000,
   });
@@ -144,7 +144,9 @@ export function PriceStep() {
             <Text className="text-[0.8125rem] font-medium text-brand-text">
               {market
                 ? `${t('Pris basert på', 'Price based on')} ${stats!.count} ${t('lignende oppdrag', 'similar jobs')}${stats!.scope === 'county' ? t(' i fylket', ' in your county') : ''}`
-                : t('AI-estimat – ikke en markedspris', 'AI estimate – not a market price')}
+                : !timepris && ai?.priceMin && ai?.priceMax
+                  ? `${t('Typisk pris for lignende oppdrag', 'Typical price for similar jobs')}: ${ai.priceMin.toLocaleString('nb-NO')}–${kr(ai.priceMax)}`
+                  : t('AI-estimat – ikke en markedspris', 'AI estimate – not a market price')}
             </Text>
             <View className="mt-2 flex-row flex-wrap justify-center gap-2">
               {chips.map((c) => (
@@ -160,7 +162,19 @@ export function PriceStep() {
                 </Pressable>
               ))}
             </View>
+            {!market ? (
+              <Text className="mt-2 text-center text-[0.75rem] text-muted">
+                {ai?.note ||
+                  t(
+                    'Prisen er et anslag basert på jobbtype, størrelse og vanlige timepriser.',
+                    'The price is an estimate based on job type, size and typical hourly rates.'
+                  )}
+              </Text>
+            ) : null}
           </View>
+        ) : ai?.note ? (
+          // No figure to offer (bathroom: Anbud, a certified professional): the text alone.
+          <Text className="mt-6 text-center text-[0.8125rem] leading-5 text-muted">{ai.note}</Text>
         ) : null}
 
         {!values.durationValue ? (

@@ -20,6 +20,28 @@ const customerId = 'cus_management';
 const periodStart = Math.floor(new Date('2026-10-01T00:00:00Z').getTime() / 1000);
 const periodEnd = Math.floor(new Date('2026-11-01T00:00:00Z').getTime() / 1000);
 
+// The fixture period is fixed, and resume refuses a period that has ended: run the whole file
+// "inside" the period, or every resume test starts failing once the real date passes periodEnd.
+// Only Date is faked; timers stay real.
+beforeAll(() => {
+  jest.useFakeTimers({
+    now: new Date('2026-10-15T12:00:00Z'),
+    doNotFake: [
+      'nextTick',
+      'setImmediate',
+      'clearImmediate',
+      'setTimeout',
+      'clearTimeout',
+      'setInterval',
+      'clearInterval',
+      'queueMicrotask',
+      'hrtime',
+      'performance',
+    ],
+  });
+});
+afterAll(() => jest.useRealTimers());
+
 function lean(value) {
   return {
     lean: async () => value,

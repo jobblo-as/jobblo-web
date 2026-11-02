@@ -15,6 +15,24 @@ export function totalPrice(v: PriceValues): number {
   return (Number(v.hourlyRate) || 0) * hours;
 }
 
+/** The evening/weekend rate (backend jobblo-pricing-config.json eveningWeekendPercent).
+ * ponytail: a copy of the server's number; serve it from the API if it changes often. */
+export const WEEKEND_PERCENT = 20;
+
+/** Every day from `fromDate` to `toDate` ('YYYY-MM-DD', toDate optional) is a Saturday or Sunday. */
+export function weekendOnly(fromDate: string, toDate = ''): boolean {
+  const day = (v: string) => {
+    const [y, m, d] = v.split('-').map(Number);
+    return y && m && d ? new Date(Date.UTC(y, m - 1, d)) : null;
+  };
+  const from = fromDate ? day(fromDate) : null;
+  const to = toDate ? day(toDate) : from;
+  if (!from || !to || to < from || to.getTime() - from.getTime() > 2 * 86_400_000) return false;
+  for (const d = new Date(from); d <= to; d.setUTCDate(d.getUTCDate() + 1))
+    if (d.getUTCDay() % 6 !== 0) return false;
+  return true;
+}
+
 /** '' when the price step may continue; otherwise what is wrong (same limits as createJobValidation). */
 export function priceProblem(v: PriceValues): string {
   const timepris = v.paymentType === 'Timepris';

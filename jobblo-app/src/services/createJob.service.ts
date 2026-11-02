@@ -44,6 +44,10 @@ export interface CreateJobFormValues {
   checklist: ChecklistItem[];
   /** Hast already paid ("Betal 39 kr" before publishing): the server checks it and marks the job. */
   urgentPurchaseId?: string;
+  /** The AI's pricing job type ("Pusse opp trapp"): real prices are grouped by it. */
+  jobType?: string;
+  /** The weekend rate was added on the place step (so it is offered once). Not sent. */
+  weekendRateAdded?: boolean;
 }
 
 /** A blank job (new job in both the post-job flow and the old form). */
@@ -116,6 +120,7 @@ export function buildJobFormData(
   append('paymentType', values.paymentType);
   append('urgent', String(values.urgent));
   if (values.urgentPurchaseId) append('urgentPurchaseId', values.urgentPurchaseId);
+  if (values.jobType) append('jobType', values.jobType);
   append('maxApplicants', values.maxApplicants.trim() || '0');
   append('equipment', values.equipment);
   if (values.customerType) append('customerType', values.customerType);
@@ -150,11 +155,31 @@ export function buildJobFormData(
   return formData;
 }
 
+const storedPhoto = (image: CreateJobImage) => /^https:\/\//i.test(image.uri);
+
+/**
+ * Publishing from "Dine utkast": photos already stored with the draft (https URLs) keep their
+ * place by URL, new ones are `new:<n>` in upload order (backend imageLayout).
+ */
+export const draftImageOrder = (images: CreateJobImage[]) => {
+  let added = 0;
+  return images.map((image) => (storedPhoto(image) ? image.uri : `new:${added++}`));
+};
+
+/** `draftId`: published from "Dine utkast"; its stored photos are taken from the draft. */
 export async function createJob(
   values: CreateJobFormValues,
-  images: CreateJobImage[]
+  images: CreateJobImage[],
+  draftId?: string | null
 ): Promise<CreateServiceResponse> {
-  const formData = buildJobFormData(values, images);
+  const formData = buildJobFormData(
+    values,
+    images.filter((image) => !storedPhoto(image))
+  );
+  if (draftId) {
+    formData.append('imageOrder', JSON.stringify(draftImageOrder(images)));
+    formData.append('draftId', draftId);
+  }
 
   const response = await apiClient.post<CreateServiceResponse>('/services', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },

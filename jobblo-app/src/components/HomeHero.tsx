@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, Image, Pressable, Text, View } from 'react-native';
 import { Locate, Plus, ShieldCheck } from 'lucide-react-native';
 import { SERVICE_SHOWCASE } from '../utils/categoryImage';
+import { useColorScheme } from 'nativewind';
 import { TC } from '../theme/colors';
 
 const FALLBACK_WORDS = ['maling', 'flytting', 'hagearbeid', 'rørlegger', 'rengjøring'];
@@ -21,10 +22,13 @@ interface HomeHeroProps {
 /**
  * Light website-style hero: "Jeg trenger hjelp til <word>" with the word rising into place,
  * a small round photo that cross-fades (decoration only; the categories live in the grid
- * below), and the two actions. Warm light-orange ground from the website's brand orange.
+ * below), and the two actions. Light mode: the website's brand-green card with white text (the
+ * pale tint melted into the page); dark mode: the dark green tint.
  * Motion stops when the phone asks for reduced motion.
  */
 export function HomeHero({ eyebrow, categories, onPost, onNearby }: HomeHeroProps) {
+  const dark = useColorScheme().colorScheme === 'dark';
+  const onCard = dark ? TC.brandText : '#FFFFFF';
   const words = categories.length
     ? categories.slice(0, 6).map((name) => name.toLowerCase())
     : FALLBACK_WORDS;
@@ -67,19 +71,19 @@ export function HomeHero({ eyebrow, categories, onPost, onNearby }: HomeHeroProp
   }, [photo, fades]);
 
   return (
-    <View className="mt-4 overflow-hidden rounded-[28px] bg-[#FBEFE3] dark:bg-[#2A2119]">
-      {/* The soft warm light behind the photo, as on the website. */}
+    <View className="mt-4 overflow-hidden rounded-[28px] bg-brand dark:bg-tint">
+      {/* The soft light behind the photo, as on the website. */}
       <View
         pointerEvents="none"
-        className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-[#E08835]/15"
+        className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/10 dark:bg-brand/15"
       />
 
       <View className="flex-row items-center px-5 pt-5">
         <View className="min-w-0 flex-1 pr-3">
-          <Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.14em] text-[#A85A17] dark:text-[#E8A666]">
+          <Text className="text-[0.8125rem] font-semibold uppercase tracking-[0.14em] text-white/80 dark:text-brand-text">
             {eyebrow}
           </Text>
-          <Text className="mt-1.5 text-[1.5rem] font-bold leading-tight tracking-[-0.02em] text-ink">
+          <Text className="mt-1.5 text-[1.5rem] font-bold leading-tight tracking-[-0.02em] text-white dark:text-ink">
             Jeg trenger hjelp til
           </Text>
           <View className="h-9 overflow-hidden">
@@ -92,7 +96,8 @@ export function HomeHero({ eyebrow, categories, onPost, onNearby }: HomeHeroProp
               }}
             >
               <Text
-                className="text-[1.5rem] font-bold leading-9 tracking-[-0.02em] text-brand-text"
+                // Pale green on the brand card, as the website's second headline line.
+                className="text-[1.5rem] font-bold leading-9 tracking-[-0.02em] text-[#B8DCC2] dark:text-brand-text"
                 numberOfLines={1}
               >
                 {words[word % words.length]}
@@ -134,23 +139,27 @@ export function HomeHero({ eyebrow, categories, onPost, onNearby }: HomeHeroProp
       <View className="mt-4 flex-row gap-2.5 px-5">
         <Pressable
           onPress={onPost}
-          className="h-11 flex-1 flex-row items-center justify-center gap-1.5 rounded-full bg-brand active:opacity-90"
+          className="h-11 flex-1 flex-row items-center justify-center gap-1.5 rounded-full bg-white dark:bg-brand active:opacity-90"
         >
-          <Plus size={17} color="#FFFFFF" />
-          <Text className="text-[0.9375rem] font-semibold text-white">Legg ut oppdrag</Text>
+          <Plus size={17} color={dark ? '#FFFFFF' : TC.brand} />
+          <Text className="text-[0.9375rem] font-semibold text-brand dark:text-white">
+            Legg ut oppdrag
+          </Text>
         </Pressable>
         <Pressable
           onPress={onNearby}
-          className="h-11 flex-row items-center justify-center gap-1.5 rounded-full bg-surface px-4 active:opacity-90"
+          className="h-11 flex-row items-center justify-center gap-1.5 rounded-full border border-white/40 bg-white/10 px-4 dark:border-transparent dark:bg-surface active:opacity-90"
         >
-          <Locate size={16} color={TC.brandText} />
-          <Text className="text-[0.9375rem] font-semibold text-brand-text">Nær meg</Text>
+          <Locate size={16} color={onCard} />
+          <Text className="text-[0.9375rem] font-semibold text-white dark:text-brand-text">
+            Nær meg
+          </Text>
         </Pressable>
       </View>
 
       <View className="flex-row items-center gap-1.5 px-5 pb-4 pt-3">
-        <ShieldCheck size={14} color={TC.brandText} />
-        <Text className="text-[0.8125rem] font-medium text-brand-text">
+        <ShieldCheck size={14} color={onCard} />
+        <Text className="text-[0.8125rem] font-medium text-white/90 dark:text-brand-text">
           Betaling holdes trygt til du har godkjent
         </Text>
       </View>

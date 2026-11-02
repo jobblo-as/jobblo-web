@@ -71,6 +71,9 @@ const serviceSchema = new mongoose.Schema(
     ],
 
     urgent: { type: Boolean, default: false },
+    // The AI's job type from jobblo-pricing-config.json ("Pusse opp trapp"): real prices are
+    // grouped by it (priceStatsController). '' when none was picked.
+    jobType: { type: String, default: '' },
     // When a paid «Haster» mark (Hast) runs out; the scheduler's expireUrgentMarks clears it.
     urgentUntil: { type: Date, default: null },
     promoted: { type: Boolean, default: false },

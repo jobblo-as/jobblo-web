@@ -58,6 +58,92 @@ test('search and the urgent filter go to the API and narrow the list', async ({ 
   expect(errors).toEqual([]);
 });
 
+test('"Sorter" is the same menu on the home page and the search page, and sorts via the API', async ({
+  page,
+}) => {
+  const errors = watchErrors(page);
+  const { calls } = await mockApi(page, {
+    routes: { 'GET /api/services': () => page1([SERVICE, OTHER]) },
+  });
+  const sortsSent = () =>
+    calls
+      .filter((c) => c.pathname === '/api/services')
+      .map((c) => new URLSearchParams(c.search).get('sort'));
+
+  for (const [path, name] of [
+    ['/home', 'hjem'],
+    ['/search/job/all', 'sok'],
+  ]) {
+    await page.goto(path);
+    const button = page.getByRole('button', { name: 'Sorter: Nyeste først' });
+    await expect(button).toBeVisible();
+    await button.click();
+    const menu = page.getByRole('listbox', { name: 'Sorter' });
+    await expect(menu.getByRole('option')).toHaveCount(4);
+    await expect(menu.getByRole('option', { name: 'Nyeste først' })).toHaveAttribute(
+      'aria-selected',
+      'true'
+    );
+    await shot(page, `sorter-${name}-1-apen`);
+    // Escape closes it without a change.
+    await page.keyboard.press('Escape');
+    await expect(menu).toBeHidden();
+
+    await button.click();
+    await menu.getByRole('option', { name: 'Pris – lavest først' }).click();
+    await expect(menu).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Sorter: Pris – lavest først' })).toBeVisible();
+    await expect.poll(() => sortsSent().at(-1)).toBe('price_low');
+    await shot(page, `sorter-${name}-2-valgt`);
+  }
+  expect(errors).toEqual([]);
+});
+
+test('landing hero: the photo frames are the categories from the API, the fixed six until then', async ({
+  page,
+}) => {
+  const errors = watchErrors(page);
+  const cat = (name, extra = {}) => ({ _id: `c-${name}`, name, icon: 'x', ...extra });
+  let categories = [];
+  await mockApi(page, { routes: { 'GET /api/categories': () => categories } });
+  await page.setViewportSize({ width: 390, height: 900 }); // the phone row lists every frame
+
+  // No categories (empty database, API down): the fixed showcase, real category names only.
+  await page.goto('/');
+  await expect(page.getByRole('button', { name: 'Se oppdrag i Småjobber' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Se oppdrag i Montering' })).toHaveCount(0);
+  await shot(page, 'hero-1-fast-utvalg');
+
+  // From the API: its order and names; an admin image wins; a category without a photo is
+  // left out ("Bil & Pleie" has none of ours).
+  categories = [
+    cat('Transport'),
+    cat('Bil & Pleie'),
+    cat('Rengjøring', { image: 'https://example.test/vask.jpg' }),
+    cat('Maling'),
+    cat('Flytting'),
+    cat('Hagearbeid'),
+    cat('Rørlegger'),
+  ];
+  await page.route('https://example.test/**', (route) =>
+    route.fulfill({ contentType: 'image/png', body: PHOTO })
+  );
+  await page.reload();
+  const frames = page.getByRole('button', { name: /^Se oppdrag i / });
+  await expect(page.getByRole('button', { name: 'Se oppdrag i Transport' }).first()).toBeVisible();
+  const names = await frames.evaluateAll((els) =>
+    els.map((e) => e.getAttribute('aria-label').replace('Se oppdrag i ', ''))
+  );
+  expect(names).toEqual(
+    expect.arrayContaining(['Transport', 'Rengjøring', 'Maling', 'Flytting', 'Hagearbeid'])
+  );
+  expect(names).not.toContain('Bil & Pleie');
+  expect(names).not.toContain('Småjobber');
+  await expect(page.locator('img[src="https://example.test/vask.jpg"]').first()).toBeAttached();
+  await shot(page, 'hero-2-fra-api');
+  expect(errors).toEqual([]);
+});
+
 test('a listing opens from the search results', async ({ page }) => {
   const errors = watchErrors(page);
   await mockApi(page, {
@@ -290,6 +376,117 @@ test('AI draft is reviewed in a popup and never replaces typed text unless ticke
     'AI skrev denne beskrivelsen av oppdraget.'
   );
   expect(calls.some((c) => c.pathname === '/api/ai/generate-full-listing')).toBe(true);
+  expect(errors).toEqual([]);
+});
+
+// Jobblo-AI-pricing-rules.pdf on the web: the range and the fixed text are shown, the job type
+// goes with the job (real prices are grouped by it), and quote work without a table price
+// (bathroom) offers no figure at all.
+const STAIRS_DRAFT = {
+  title: 'Pusse opp trapp',
+  description: 'Jeg vil slipe og male trappen i huset.',
+  category: 'Oppussing',
+  skills: [],
+  duration: { value: 12, unit: 'hours' },
+  locationRelevance: 'on-site',
+  priceRange: { min: 5000, max: 12000 },
+  suggestedPrice: 8500,
+  priceMin: 5000,
+  priceMax: 12000,
+  pricingReasoning: 'Prisen er et anslag basert på jobbtype, størrelse og vanlige timepriser.',
+  priceHidden: false,
+  jobType: 'Pusse opp trapp',
+  paymentType: 'Fastpris',
+  isEstimate: true,
+};
+
+test('AI price: the PDF range and text are shown, and the job type is published with the job', async ({
+  page,
+}) => {
+  const errors = watchErrors(page);
+  const full = {
+    ...SERVICE,
+    countyCode: '03',
+    municipalityCode: '0301',
+    images: ['https://example.test/a.jpg'],
+    fromDate: '2026-11-01',
+    toDate: '2026-11-02',
+    duration: { value: 2, unit: 'hours' },
+  };
+  const { calls } = await mockApi(page, {
+    as: 'user',
+    routes: {
+      [`GET /api/services/${SERVICE._id}`]: () => full,
+      [`PUT /api/services/${SERVICE._id}`]: () => full,
+      'GET /api/location-filter/tree': () => [
+        { code: '03', name: 'Oslo', children: [{ code: '0301', name: 'Oslo' }] },
+      ],
+      'POST /api/ai/generate-full-listing': () => ({ success: true, data: STAIRS_DRAFT }),
+    },
+  });
+  await page.goto(`/Publish-job/${SERVICE._id}`);
+  await page.getByPlaceholder(/Male en liten bod/).fill('Oppussing av trapper, slipe og male');
+  await page.getByRole('button', { name: 'Foreslå et utkast' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Forslag til utkast' });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('checkbox', { name: /^Pris\s/ }).check();
+  await shot(page, 'pdf-1-forslag-med-pris');
+  await dialog.getByRole('button', { name: /Bruk valgte/ }).click();
+
+  await expect(
+    page.getByText(
+      /Typisk pris for lignende oppdrag: 5\s000–12\s000 kr\. Prisen er et anslag basert på jobbtype, størrelse og vanlige timepriser\./
+    )
+  ).toBeVisible();
+  await shot(page, 'pdf-2-typisk-pris-notat');
+
+  await page.getByRole('button', { name: 'Neste', exact: true }).click();
+  await page.getByRole('button', { name: /Publiser oppdrag/ }).click();
+  await expect
+    .poll(() =>
+      calls.some((c) => c.method === 'PUT' && c.pathname === `/api/services/${SERVICE._id}`)
+    )
+    .toBe(true);
+  const sent = String(
+    calls.find((c) => c.method === 'PUT' && c.pathname === `/api/services/${SERVICE._id}`).body
+  );
+  expect(sent).toMatch(/name="jobType"\r?\n\r?\nPusse opp trapp\r?\n/);
+  expect(errors).toEqual([]);
+});
+
+test('AI price: bathroom (Anbud, no table price) offers no price at all', async ({ page }) => {
+  const errors = watchErrors(page);
+  await mockApi(page, {
+    as: 'user',
+    routes: {
+      'POST /api/ai/generate-full-listing': () => ({
+        success: true,
+        data: {
+          ...STAIRS_DRAFT,
+          title: 'Pusse opp badet',
+          priceRange: { min: 5600, max: 7600 },
+          suggestedPrice: 6600,
+          priceHidden: true,
+          jobType: 'Bad / våtrom',
+          paymentType: 'Anbud',
+          pricingReasoning:
+            'Prisen er et anslag basert på jobbtype, størrelse og vanlige timepriser. Krever sertifisert fagperson – be om anbud.',
+        },
+      }),
+    },
+  });
+  await page.goto('/Publish-job');
+  await page.getByPlaceholder(/Male en liten bod/).fill('Pusse opp badet, nye fliser og sluk');
+  await page.getByRole('button', { name: 'Foreslå et utkast' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Forslag til utkast' });
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole('checkbox', { name: /^Pris\s/ })).toHaveCount(0);
+  await expect(dialog.getByText(/5\s600|7\s600|6\s600/)).toHaveCount(0);
+  await shot(page, 'pdf-3-bad-ingen-pris');
+  await dialog.getByRole('button', { name: /Bruk valgte/ }).click();
+  await expect(page.getByText(/Krever sertifisert fagperson – be om anbud\./)).toBeVisible();
+  await expect(page.getByText(/Typisk pris/)).toHaveCount(0);
+  await shot(page, 'pdf-4-bad-anbud-notat');
   expect(errors).toEqual([]);
 });
 

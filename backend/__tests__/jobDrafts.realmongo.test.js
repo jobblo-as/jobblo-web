@@ -70,6 +70,32 @@ run('job drafts (real MongoDB)', () => {
     expect((await as(alice).get(`/api/job-drafts/${id}`)).status).toBe(404);
   });
 
+  test('a draft saved by the app (jobblo-app post-job/draft.ts) fits and comes back unchanged', async () => {
+    const data = {
+      title: 'Male stua',
+      description: 'x'.repeat(5000),
+      categories: 'Maling',
+      latitude: 59.91,
+      longitude: 10.75,
+      price: '3000',
+      paymentType: 'Fastpris',
+      checklistItems: [{ id: '1', text: 'Dekke til' }],
+      smartFillPrompt: 'male stua',
+      draftImageUrls: Object.fromEntries(
+        Array.from({ length: 12 }, (_, i) => [
+          `file:///data/user/0/no.jobblo.app/cache/ImagePicker/${'a'.repeat(36)}-${i}.jpg`,
+          `https://jobblo.blob.core.windows.net/services/draft-${'b'.repeat(40)}-${i}.webp`,
+        ])
+      ),
+      customerType: 'business',
+      jobType: 'Male ett rom (vegger)',
+    };
+    const created = await as(alice).post('/api/job-drafts', { data });
+    expect(created.status).toBe(201);
+    const read = await as(alice).get(`/api/job-drafts/${created.body.draft._id}`);
+    expect(read.body.draft.data).toEqual(data);
+  });
+
   test('bad input is a 400/404, never stored', async () => {
     expect((await as(alice).post('/api/job-drafts', {})).status).toBe(400);
     expect((await as(alice).post('/api/job-drafts', { data: ['x'] })).status).toBe(400);

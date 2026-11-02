@@ -165,4 +165,99 @@ store.getState().startEdit('job2', job, []);
 store.getState().reset();
 assert.equal(store.getState().values.title, '');
 assert.equal(store.getState().editId, null);
+// Evening/weekend rate: only when every chosen day is a Saturday or Sunday (2026-11-07 = Sat).
+const { weekendOnly } = await import('./price.ts');
+assert.equal(weekendOnly('2026-11-07'), true);
+assert.equal(weekendOnly('2026-11-07', '2026-11-08'), true);
+assert.equal(weekendOnly('2026-11-07', '2026-11-09'), false);
+assert.equal(weekendOnly('2026-11-09'), false);
+assert.equal(weekendOnly(''), false);
+// "Dine utkast": the web's shape both ways, and garbage never breaks opening a draft.
+const { toDraftData, fromDraftData, draftWorthSaving } = await import('./draft.ts');
+const { emptyJobValues } = await import('../../services/createJob.service.ts');
+const filled = {
+  ...emptyJobValues(),
+  title: 'Male stua',
+  categories: ['Maling'],
+  coordinates: [59.91, 10.75],
+  price: '3000',
+  paymentType: 'Fastpris',
+  checklist: [{ id: '1', text: 'Dekke til' }],
+  customerType: 'business',
+  jobType: 'Male ett rom (vegger)',
+};
+const draftSaved = toDraftData({
+  values: filled,
+  summary: 'male stua',
+  photos: [
+    { uri: 'file:///a.jpg', name: 'a.jpg', type: 'image/jpeg' },
+    { uri: 'file:///b.jpg', name: 'b.jpg', type: 'image/jpeg' },
+  ],
+  photoUrls: { 'file:///a.jpg': 'https://blob.test/a.jpg' },
+});
+assert.equal(draftSaved.categories, 'Maling'); // the web holds one category as a string
+assert.equal(draftSaved.latitude, 59.91);
+assert.deepEqual(draftSaved.draftImageUrls, { 'file:///a.jpg': 'https://blob.test/a.jpg' });
+assert.equal(
+  toDraftData({ values: emptyJobValues(), summary: '', photos: [], photoUrls: {} }).latitude,
+  null
+);
+
+const back = fromDraftData(JSON.parse(JSON.stringify(draftSaved)));
+assert.deepEqual(back.values, filled);
+assert.equal(back.summary, 'male stua');
+assert.deepEqual(
+  back.photos.map((p) => p.uri),
+  ['https://blob.test/a.jpg']
+);
+
+// A web draft: no customerType (the flow uses the account's), odd values cleaned.
+const web = fromDraftData({
+  title: 'Vask',
+  categories: 'Rengjøring',
+  latitude: 60.39,
+  longitude: 5.32,
+  paymentType: 'weird',
+  durationUnit: 'years',
+  checklistItems: [{ id: 'x', text: 'Gulv' }, null, { text: '' }, 'junk'],
+  draftImageUrls: { sig1: 'https://blob.test/w.jpg', sig2: 'javascript:alert(1)', sig3: 7 },
+});
+assert.deepEqual(web.values.categories, ['Rengjøring']);
+assert.deepEqual(web.values.coordinates, [60.39, 5.32]);
+assert.equal(web.values.paymentType, 'Fastpris');
+assert.equal(web.values.durationUnit, 'hours');
+assert.deepEqual(web.values.checklist, [{ id: 'x', text: 'Gulv' }]);
+assert.equal(web.values.customerType, '');
+assert.deepEqual(
+  web.photos.map((p) => p.uri),
+  ['https://blob.test/w.jpg']
+);
+for (const junk of [{}, { tags: 'x', checklistItems: 'y', draftImageUrls: 5, latitude: 'n' }]) {
+  const d = fromDraftData(junk);
+  assert.deepEqual(d.values.coordinates, [0, 0]);
+  assert.deepEqual(d.photos, []);
+}
+assert.equal(draftWorthSaving(emptyJobValues(), '  '), false);
+assert.equal(draftWorthSaving(emptyJobValues(), 'male stua'), true);
+
+// Opening a draft: on the summary when it has a title, else where the answers stop.
+store.getState().reset();
+store.getState().openDraft('d1', back);
+assert.equal(store.getState().step, 'review');
+assert.equal(store.getState().draftId, 'd1');
+assert.equal(store.getState().draftPhotoUrls['https://blob.test/a.jpg'], 'https://blob.test/a.jpg');
+store.getState().openDraft('d2', fromDraftData({ categories: 'Maling', smartFillPrompt: 'x' }));
+assert.equal(store.getState().step, 'text');
+store.getState().reset();
+assert.equal(store.getState().draftId, null);
+// Publishing a draft: stored photos by URL in their place, new ones as new:<n>.
+const { draftImageOrder } = await import('../../services/createJob.service.ts');
+assert.deepEqual(
+  draftImageOrder([
+    { uri: 'file:///n1.jpg', name: '', type: '' },
+    { uri: 'https://blob.test/a.jpg', name: '', type: '' },
+    { uri: 'file:///n2.jpg', name: '', type: '' },
+  ]),
+  ['new:0', 'https://blob.test/a.jpg', 'new:1']
+);
 console.log('post-job flow: ok');

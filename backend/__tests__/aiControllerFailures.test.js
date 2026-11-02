@@ -206,4 +206,28 @@ describe('aiController failure handling', () => {
       expect(res.status).toHaveBeenCalledWith(500);
     }
   });
+
+  test('photo endpoint: gets the pricing rules and prices by the job type it picked', async () => {
+    mockCreate.mockResolvedValue(
+      completion({
+        ...GOOD_OUTPUT,
+        jobType: 'Pusse opp trapp (Sand and paint staircase)',
+        extras: [],
+        customerSuppliesMaterials: true,
+        suggestedPrice: 390,
+        durationRange: { min: 8, max: 16, unit: 'hours' },
+      })
+    );
+    const res = mockRes();
+    const file = { buffer: Buffer.from('img'), mimetype: 'image/jpeg' };
+    await aiController.analyzeJobImage({ body: { lang: 'no' }, file }, res);
+    expect(mockCreate.mock.calls[0][0].messages[0].content).toMatch(
+      /Pusse opp trapp \(Sand and paint staircase\): 5000–12000 kr, pro/
+    );
+    const d = res.json.mock.calls[0][0].data;
+    expect([d.priceMin, d.suggestedPrice, d.priceMax]).toEqual([5000, 5000, 12000]);
+    expect(d.pricingReasoning).toBe(
+      'Prisen er et anslag basert på jobbtype, størrelse og vanlige timepriser.'
+    );
+  });
 });

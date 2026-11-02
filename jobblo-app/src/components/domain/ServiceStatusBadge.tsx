@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 import type { ServiceStatus } from '../../types/Applicants';
+import { badgeText } from '../../utils/badgeText';
 
 type Tone = 'quiet' | 'moving' | 'action' | 'closed';
 
@@ -40,7 +41,9 @@ export function ServiceStatusBadge({ status }: { status: ServiceStatus }) {
 
   return (
     <View className={['self-start rounded-full px-2.5 py-1', TONE_CLASS[mapped.tone]].join(' ')}>
-      <Text className="text-[0.8125rem] font-semibold text-current">{mapped.label}</Text>
+      <Text className={`text-[0.8125rem] font-semibold ${badgeText(TONE_CLASS[mapped.tone])}`}>
+        {mapped.label}
+      </Text>
     </View>
   );
 }

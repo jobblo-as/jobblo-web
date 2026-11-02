@@ -35,10 +35,18 @@ interface NyAnnonseSheetProps {
   suggested: CustomerType;
   onSelect: (type: CustomerType) => void;
   onClose: () => void;
+  /** Below the two cards ("Dine utkast"). */
+  children?: React.ReactNode;
 }
 
 /** FINN-style "Ny annonse": pick the kind of job with two large cards before the form. */
-export function NyAnnonseSheet({ visible, suggested, onSelect, onClose }: NyAnnonseSheetProps) {
+export function NyAnnonseSheet({
+  visible,
+  suggested,
+  onSelect,
+  onClose,
+  children,
+}: NyAnnonseSheetProps) {
   return (
     <BottomSheet
       visible={visible}
@@ -81,6 +89,7 @@ export function NyAnnonseSheet({ visible, suggested, onSelect, onClose }: NyAnno
           </Pressable>
         ))}
       </View>
+      {children}
     </BottomSheet>
   );
 }

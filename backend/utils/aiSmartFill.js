@@ -9,6 +9,10 @@
 // database/table lookup and keep the same function signatures so callers don't
 // change. The AI prompt can then reference "use DB rates +-20%" instead.
 
+// Jobblo's own pricing rules (Jobblo-AI-pricing-rules.pdf): per category a minimum, hourly
+// rates and job types with a price range. Categories listed there override the anchors below.
+const PRICING = require('../config/jobblo-pricing-config.json');
+
 const NO_MINIMUM_HOURLY = 200; // ~lowest legal/service floor Norway (kr/time)
 const NO_CAP_HOURLY = 900; // ~highest AI is allowed to suggest (kr/time)
 const TOTAL_MIN = 100; // Lowest reasonable Fastpris/Anbud (kr)
@@ -85,6 +89,214 @@ function anchorHourlyRate(categoryName) {
 function anchorDuration(categoryName) {
   const hit = _match(CATEGORY_DURATION_ANCHORS, categoryName);
   return hit ? { value: hit.value, unit: hit.unit } : { value: 2, unit: 'hours' };
+}
+
+/** The pricing-config category with this exact name (case-insensitive), or null. */
+function pricingCategory(categoryName) {
+  const n = String(categoryName || '')
+    .trim()
+    .toLowerCase();
+  return (n && PRICING.categories.find((c) => c.name.toLowerCase() === n)) || null;
+}
+
+const _clamp = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
+
+/** A client-sent job type, kept only when it is one of the config's names; otherwise ''. */
+function knownJobType(name) {
+  const n = typeof name === 'string' ? name.trim() : '';
+  return PRICING.categories.some((c) => c.jobTypes.some((j) => j.name === n)) ? n : '';
+}
+
+/** Every day from `fromDate` to `toDate` (or just `fromDate`) is a Saturday or Sunday. */
+function weekendOnly(fromDate, toDate) {
+  const from = new Date(fromDate);
+  const to = toDate ? new Date(toDate) : from;
+  if (isNaN(from) || isNaN(to) || to < from || to - from > 2 * 864e5) return false;
+  for (let d = new Date(from); d <= to; d.setUTCDate(d.getUTCDate() + 1))
+    if (d.getUTCDay() % 6 !== 0) return false;
+  return true;
+}
+
+// Upper bounds a real job stays under: a misread "1e9 rooms" must not price at 150 million kr.
+const QUANTITY_MAX = { m2: 5000, pieces: 500, meters: 2000, rooms: 50, km: 3000, people: 20 };
+const PER_UNIT_KEY = { m2: 'm2', piece: 'pieces', m: 'meters', room: 'rooms' };
+
+/** The quantities the model read from the user's text: positive numbers, else 0. */
+function _quantities(raw) {
+  const q = (raw && raw.quantities) || {};
+  return Object.fromEntries(
+    Object.entries(QUANTITY_MAX).map(([k, max]) => {
+      const n = Number(q[k]);
+      return [k, Number.isFinite(n) && n > 0 ? Math.min(Math.round(n), max) : 0];
+    })
+  );
+}
+
+/**
+ * The PDF's rules on top of the model's numbers:
+ * - the job type's range, or per unit (m², piece, metre, room) when the user gave the quantity,
+ *   or hours × the private/professional hourly rate (× people for moving) when no job type fits;
+ * - unsure between job types: the range spans them all and the user is asked to answer the
+ *   questions; the size (estimated hours) places the suggestion inside a single job type's range;
+ * - +% for urgent / evening-weekend, never below the category minimum;
+ * - extras (call-out fee, paint per room, waste removal) and km for long transport on top;
+ * - Anbud for quote work, with no price shown when the table has none (bathroom);
+ * - the fixed user text.
+ */
+function applyPricingRules(cleaned, raw, rules, ctx) {
+  // The prompt lists "Lekkasje (Leak repair): …", and the model often echoes the English part.
+  const sameName = (picked, name) => {
+    const p = String(picked || '')
+      .trim()
+      .toLowerCase();
+    const n = name.toLowerCase();
+    return p === n || p.startsWith(`${n} (`);
+  };
+  const findJobType = (picked) => rules.jobTypes.find((j) => sameName(picked, j.name)) || null;
+  const jobType = findJobType(raw && raw.jobType);
+  const alternatives = jobType
+    ? [
+        ...new Set(
+          (Array.isArray(raw && raw.jobTypeAlternatives) ? raw.jobTypeAlternatives : [])
+            .map(findJobType)
+            .filter((j) => j && j !== jobType)
+        ),
+      ]
+    : [];
+  const q = _quantities(raw);
+  // Extras (call-out fee, paint, waste removal): "always" ones by rule, materials unless the
+  // model read that the customer supplies them, "ifAsked" ones when the model listed them.
+  const listed = Array.isArray(raw && raw.extras) ? raw.extras : [];
+  const supplies = (raw && raw.customerSuppliesMaterials) === true;
+  const extras = (rules.extras || []).filter((x) =>
+    x.when === 'always'
+      ? true
+      : x.when === 'unlessProvided'
+        ? !supplies
+        : listed.some((e) => sameName(e, x.name))
+  );
+
+  const text = [cleaned.title, cleaned.description, ctx.userText].join(' ').toLowerCase();
+  const words = text.split(/[^a-z0-9æøåé]+/);
+  // ponytail: word-prefix match with a two-word negation look-back ("ikke i helgen"); swap for
+  // explicit form fields if it misfires.
+  const mentions = (keywords) =>
+    words.some(
+      (w, i) =>
+        keywords.some((k) => w.startsWith(k)) &&
+        !PRICING.negationWords.includes(words[i - 1]) &&
+        !PRICING.negationWords.includes(words[i - 2])
+    );
+  // Rule 3: "ripe" alone does not say light or deep, and the model rarely admits it is unsure.
+  const unsure = jobType && jobType.unsureWith;
+  const userWords = String(ctx.userText || '')
+    .toLowerCase()
+    .split(/[^a-z0-9æøåé]+/);
+  if (
+    unsure &&
+    !alternatives.length &&
+    !userWords.some((w) => unsure.unlessWords.some((k) => w.startsWith(k)))
+  )
+    alternatives.push(...unsure.jobTypes.map(findJobType).filter(Boolean));
+  const quote = jobType ? !!jobType.quote : mentions(rules.quoteKeywords || []);
+  const pro =
+    !rules.privateHourly ||
+    quote ||
+    !!(jobType && jobType.pro) ||
+    PRICING.proKeywords.some((k) => text.includes(k));
+  const rate = pro ? rules.proHourly : rules.privateHourly;
+  const people = rules.privateRatePerPerson && !pro ? q.people || rules.defaultPeople : 1;
+  const eveningWeekend =
+    weekendOnly(ctx.fromDate, ctx.toDate) || mentions(PRICING.eveningWeekendKeywords);
+  const mult =
+    1 +
+    ((ctx.urgent ? PRICING.urgentPercent : 0) +
+      (eveningWeekend ? PRICING.eveningWeekendPercent : 0)) /
+      100;
+  const hours = durationToHours(cleaned.duration) || 2;
+
+  const rangeOf = (j) => {
+    const unit = j && j.perUnit;
+    const count = unit && q[PER_UNIT_KEY[unit.per]];
+    if (count) {
+      const floor = unit.unitMinimum || 0;
+      return [Math.max(floor, count * unit.price[0]), Math.max(floor, count * unit.price[1])];
+    }
+    if (j && j.range) return j.range;
+    return [hours * rate[0] * people, hours * rate[1] * people];
+  };
+  let [lo, hi] = rangeOf(jobType);
+  for (const alt of alternatives) {
+    const [l, h] = rangeOf(alt);
+    [lo, hi] = [Math.min(lo, l), Math.max(hi, h)];
+  }
+  lo = Math.max(rules.minimum, Math.round(lo * mult));
+  hi = Math.max(lo, Math.round(hi * mult));
+
+  // Size: where the estimated hours fall in the job type's typical hours sets the suggestion.
+  const h = jobType && jobType.hours;
+  let suggested =
+    h && !alternatives.length
+      ? Math.round(lo + (hi - lo) * _clamp((hours - h[0]) / (h[1] - h[0] || 1), 0, 1))
+      : _clamp(Math.round(Number(raw && raw.suggestedPrice) || (lo + hi) / 2), lo, hi);
+
+  // Quote work shows an indicative range only: no per-room paint on a facade.
+  const added = extras
+    .filter((x) => !(quote && x.when === 'unlessProvided'))
+    .map((x) => {
+      const n = x.perUnit === 'room' ? q.rooms || 1 : 1;
+      return {
+        name: x[ctx.lang === 'en' ? 'en' : 'name'],
+        range: [n * x.range[0], n * x.range[1]],
+      };
+    });
+  if (rules.perKm && q.km >= rules.perKm.fromKm)
+    added.push({
+      name: `${q.km} km`,
+      range: [q.km * rules.perKm.price[0], q.km * rules.perKm.price[1]],
+    });
+  for (const x of added) {
+    [lo, hi] = [lo + x.range[0], hi + x.range[1]];
+    suggested += Math.round((x.range[0] + x.range[1]) / 2);
+  }
+
+  const hrLo = Math.round(rate[0] * mult);
+  const hrHi = Math.round(rate[1] * mult);
+  cleaned.hourlyRate = _clamp(
+    Math.round(Number(raw && raw.hourlyRate) || (hrLo + hrHi) / 2),
+    hrLo,
+    hrHi
+  );
+  cleaned.priceMin = Math.min(lo, TOTAL_MAX - 1);
+  cleaned.priceMax = Math.min(hi, TOTAL_MAX);
+  cleaned.suggestedPrice = _clamp(suggested, cleaned.priceMin, cleaned.priceMax);
+  cleaned.heuristicTotal = Math.round((lo + hi) / 2);
+  // Rule 7: Anbud is for quote work. The model also picked it for a 1 500–4 000 kr scratch
+  // repair; there the user's own price type stays (or Fastpris).
+  if (quote) cleaned.paymentType = 'Anbud';
+  else if (cleaned.paymentType === 'Anbud' && ctx.userPaymentType !== 'Anbud')
+    cleaned.paymentType = PAYMENT_TYPES.includes(ctx.userPaymentType)
+      ? ctx.userPaymentType
+      : 'Fastpris';
+  // "quote / Anbud" with no table price (bathroom): no figure is shown at all.
+  if (quote && !(jobType && jobType.range)) cleaned.priceHidden = true;
+  if (eveningWeekend) cleaned.eveningWeekend = true; // the app then does not offer +20 % again
+  cleaned.primaryPrice =
+    cleaned.paymentType === 'Timepris' ? cleaned.hourlyRate : cleaned.suggestedPrice;
+  cleaned.jobType = jobType ? jobType.name : '';
+
+  const lang = ctx.lang === 'en' ? 'en' : 'no';
+  const kr = (n) => n.toLocaleString('nb-NO');
+  const includes = added.length
+    ? ` ${PRICING.includesText[lang]} ${added
+        .map((x) => `${x.name.toLowerCase()} (${kr(x.range[0])}–${kr(x.range[1])} kr)`)
+        .join(', ')}.`
+    : '';
+  cleaned.pricingReasoning =
+    PRICING.disclaimer[lang] +
+    (cleaned.priceHidden ? '' : includes) +
+    (alternatives.length ? ` ${PRICING.uncertainNote[lang]}` : '') +
+    (quote ? ` ${PRICING.quoteNote[lang]}` : '');
 }
 
 // Convert any duration { value, unit } to hours — used for totals.
@@ -360,6 +572,12 @@ function validateSmartFillOutput(raw, ctx = {}) {
   if (!['on-site', 'remote'].includes(loc)) loc = 'on-site';
   cleaned.locationRelevance = loc;
 
+  // 11. Jobblo's pricing rules, when the job's category is in the pricing config. The category
+  // the model read from the text wins: "vanlig vask" typed into a form still set to Oppussing
+  // was priced at Oppussing's 400 kr/t × 8 h = 3 200 kr instead of 600–1 500.
+  const rules = pricingCategory(cleaned.category || ctx.categoryName);
+  if (rules) applyPricingRules(cleaned, raw, rules, ctx);
+
   // FINAL SANITY ASSERT: all numeric price fields must be strictly positive
   // finite integers. If anything is borked we silently rewrite from anchor
   // rather than let malformed numbers touch the user's form.
@@ -403,5 +621,8 @@ module.exports = {
   anchorHourlyRate,
   anchorDuration,
   durationToHours,
+  pricingCategory,
+  knownJobType,
+  PRICING,
   validateSmartFillOutput,
 };

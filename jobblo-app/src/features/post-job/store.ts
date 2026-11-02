@@ -12,6 +12,7 @@ import {
   type PhotoQuality,
   type PostJobStep,
 } from './flow';
+import type { fromDraftData } from './draft';
 
 /** The AI's price/time estimate from the title step, shown on the price step when there is no market data. */
 export interface AiEstimate {
@@ -20,6 +21,8 @@ export interface AiEstimate {
   priceMin?: number;
   priceMax?: number;
   hourlyRate?: number;
+  /** The server's price text (what is included, "be om anbud", real-price count). */
+  note?: string;
 }
 
 interface PostJobState {
@@ -60,6 +63,13 @@ interface PostJobState {
   startEdit: (id: string, values: CreateJobFormValues, images: string[]) => void;
   /** A new listing put aside by "Rediger"; back once the edit is saved or cancelled (reset). */
   stash: Answers | null;
+  /** "Dine utkast": the server copy of this new listing (draft.ts), and its stored photos. */
+  draftId: string | null;
+  draftPhotoUrls: Record<string, string>;
+  setDraftId: (id: string | null) => void;
+  setDraftPhotoUrl: (uri: string, url: string) => void;
+  /** Continues a saved draft: its answers, on the summary when it has a title. */
+  openDraft: (id: string, draft: ReturnType<typeof fromDraftData>) => void;
 }
 
 const fresh = () => ({
@@ -74,6 +84,8 @@ const fresh = () => ({
   publishedId: null as string | null,
   editId: null as string | null,
   existingImages: [] as string[],
+  draftId: null as string | null,
+  draftPhotoUrls: {} as Record<string, string>,
 });
 
 type Answers = ReturnType<typeof fresh>;
@@ -130,4 +142,21 @@ export const usePostJobStore = create<PostJobState>((set, get) => ({
       photos: images.map((uri) => ({ uri, name: '', type: '' })),
       step: 'review',
     })),
+  setDraftId: (draftId) => set({ draftId }),
+  setDraftPhotoUrl: (uri, url) =>
+    set((s) => ({ draftPhotoUrls: { ...s.draftPhotoUrls, [uri]: url } })),
+  openDraft: (draftId, draft) =>
+    set({
+      ...fresh(),
+      draftId,
+      values: draft.values,
+      summary: draft.summary,
+      photos: draft.photos,
+      draftPhotoUrls: draft.photoUrls,
+      step: draft.values.title.trim()
+        ? 'review'
+        : draft.values.categories.length
+          ? 'text'
+          : 'category',
+    }),
 }));

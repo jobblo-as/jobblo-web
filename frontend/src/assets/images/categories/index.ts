@@ -71,14 +71,9 @@ const BY_CATEGORY: Record<string, string> = {
 };
 
 /**
- * The showcase the landing hero is built from — fixed, and deliberately not derived from
- * anything in the database.
- *
- * The collage used to be the six newest open jobs, which meant it vanished entirely on an
- * empty database and rendered whatever placeholder art the seed data happened to carry.
- * These eight are always there, always the same, and each is labelled with the service it
- * shows, so the picture and its caption can never disagree. `href` points at the real
- * listing route, so the frames are still a way into the product.
+ * The landing hero's fallback showcase: shown until the categories load, or when fewer than
+ * six of them have a photo (`categoryPhoto`), so the collage never empties. The names are
+ * real category names — "Montering" was not one, and its frame opened an empty listing.
  */
 export const SERVICE_SHOWCASE = [
   { name: 'Maling', src: maling },
@@ -86,7 +81,7 @@ export const SERVICE_SHOWCASE = [
   { name: 'Rørlegger', src: rorlegger },
   { name: 'Flytting', src: flytting },
   { name: 'Hagearbeid', src: hagearbeid },
-  { name: 'Montering', src: montering },
+  { name: 'Småjobber', src: montering },
   { name: 'Oppussing', src: oppussing },
   { name: 'Transport', src: transport },
 ] as const;
@@ -106,6 +101,11 @@ const CATEGORY_FALLBACKS = [
 /** "Rengjøring" → "rengjoring", so lookups survive case and Norwegian vowels. */
 const normalise = (name: string) =>
   name.toLowerCase().trim().replace(/ø/g, 'o').replace(/æ/g, 'a').replace(/å/g, 'a');
+
+/** A category's photo for the hero: the admin's `image`, else our stand-in, else none. */
+export const categoryPhoto = (category: { name: string; image?: string }): string | undefined =>
+  (isRealPhoto(category.image) ? category.image : undefined) ||
+  BY_CATEGORY[normalise(category.name)];
 
 /**
  * Filler-image services the seed data points at, which are not real job photos.

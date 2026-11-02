@@ -31,6 +31,7 @@ import { DURATION_OPTIONS, EQUIPMENT_OPTIONS, questionsFor } from '../details';
 import { editChanges, type PostJobStep } from '../flow';
 import { totalPrice } from '../price';
 import { usePostJobStore } from '../store';
+import { discardDraft } from '../draftSync';
 import { DATE_LOCALE, t } from '../i18n';
 
 /** English for the shared (Norwegian) validator's messages, by field. */
@@ -74,8 +75,18 @@ function errorMessage(error: unknown) {
 export function ReviewStep({ onSaved }: { onSaved: () => void }) {
   // For the preview Modal: an iOS Modal's own SafeAreaView gets no insets (see CameraStep).
   const insets = useSafeAreaInsets();
-  const { values, photos, answers, update, goTo, setPublished, editId, existingImages } =
-    usePostJobStore();
+  const {
+    values,
+    photos,
+    answers,
+    update,
+    goTo,
+    setPublished,
+    editId,
+    existingImages,
+    draftId,
+    draftPhotoUrls,
+  } = usePostJobStore();
   const createMutation = useCreateJobMutation();
   const updateMutation = useUpdateJobMutation();
   const saving = createMutation.isPending || updateMutation.isPending;
@@ -221,9 +232,17 @@ export function ReviewStep({ onSaved }: { onSaved: () => void }) {
       return;
     }
     createMutation.mutate(
-      { values: job, images: photos },
+      {
+        values: job,
+        // Photos already stored with the draft go by URL, not uploaded again.
+        images: photos.map((p) =>
+          draftPhotoUrls[p.uri] ? { ...p, uri: draftPhotoUrls[p.uri] } : p
+        ),
+        draftId,
+      },
       {
         onSuccess: (created) => {
+          void discardDraft();
           void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
             () => undefined
           );
