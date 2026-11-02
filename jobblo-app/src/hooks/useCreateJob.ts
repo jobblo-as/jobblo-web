@@ -10,8 +10,15 @@ import { queryKeys } from '../queryKeys';
 export function useCreateJobMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ values, images }: { values: CreateJobFormValues; images: CreateJobImage[] }) =>
-      createJob(values, images),
+    mutationFn: ({
+      values,
+      images,
+      draftId,
+    }: {
+      values: CreateJobFormValues;
+      images: CreateJobImage[];
+      draftId?: string | null;
+    }) => createJob(values, images, draftId),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.jobs.list() }),

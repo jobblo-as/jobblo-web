@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { BackHandler, KeyboardAvoidingView, Platform, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useIsFocused, useRouter } from 'expo-router';
@@ -23,6 +23,9 @@ import { PlaceStep } from './steps/PlaceStep';
 import { ReviewStep } from './steps/ReviewStep';
 import { AiConsentSheet } from './AiConsentSheet';
 import { useAiConsent } from './aiConsent';
+import { DraftsList } from './DraftsList';
+import { draftWorthSaving } from './draft';
+import { discardDraft, saveDraft } from './draftSync';
 
 const SCREENS = {
   photoGrid: PhotoGridStep,
@@ -64,6 +67,14 @@ export function PostJobFlow() {
       return () => sub.remove();
     }, [])
   );
+
+  // "Dine utkast": a new listing is saved on the server as it is filled in (as on the web).
+  const draftPhotoUrls = usePostJobStore((s) => s.draftPhotoUrls);
+  useEffect(() => {
+    if (editId || publishedId || !draftWorthSaving(values, summary)) return;
+    const timer = setTimeout(() => void saveDraft(), 1500);
+    return () => clearTimeout(timer);
+  }, [values, summary, photos, draftPhotoUrls, editId, publishedId]);
 
   const swipeBack = Gesture.Pan()
     .runOnJS(true)
@@ -223,7 +234,9 @@ export function PostJobFlow() {
         onSelect={setCustomerType}
         // Closing without a choice = not posting now: leave the tab (FINN does the same).
         onClose={exit}
-      />
+      >
+        <DraftsList suggested={suggested} />
+      </NyAnnonseSheet>
 
       <ConfirmDialog
         visible={confirmClose}
@@ -243,7 +256,11 @@ export function PostJobFlow() {
         onConfirm={() => {
           setConfirmClose(false);
           if (editId) cancelEdit();
-          else exit();
+          else {
+            // "Bildene og svarene dine blir slettet": the server draft too.
+            void discardDraft();
+            exit();
+          }
         }}
         onClose={() => setConfirmClose(false)}
       />

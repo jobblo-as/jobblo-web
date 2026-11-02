@@ -155,11 +155,31 @@ export function buildJobFormData(
   return formData;
 }
 
+const storedPhoto = (image: CreateJobImage) => /^https:\/\//i.test(image.uri);
+
+/**
+ * Publishing from "Dine utkast": photos already stored with the draft (https URLs) keep their
+ * place by URL, new ones are `new:<n>` in upload order (backend imageLayout).
+ */
+export const draftImageOrder = (images: CreateJobImage[]) => {
+  let added = 0;
+  return images.map((image) => (storedPhoto(image) ? image.uri : `new:${added++}`));
+};
+
+/** `draftId`: published from "Dine utkast"; its stored photos are taken from the draft. */
 export async function createJob(
   values: CreateJobFormValues,
-  images: CreateJobImage[]
+  images: CreateJobImage[],
+  draftId?: string | null
 ): Promise<CreateServiceResponse> {
-  const formData = buildJobFormData(values, images);
+  const formData = buildJobFormData(
+    values,
+    images.filter((image) => !storedPhoto(image))
+  );
+  if (draftId) {
+    formData.append('imageOrder', JSON.stringify(draftImageOrder(images)));
+    formData.append('draftId', draftId);
+  }
 
   const response = await apiClient.post<CreateServiceResponse>('/services', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
