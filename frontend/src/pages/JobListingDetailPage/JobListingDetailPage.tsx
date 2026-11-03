@@ -54,6 +54,8 @@ import {
 
 import { useConfigByKey, usePlans } from '../../features/plans/hooks';
 import { errorBody } from '../../utils/getErrorMessage';
+import { equipmentLabel, formatDuration } from '../../types/Jobs';
+import { jobImage } from '../../assets/images/categories';
 
 const DEFAULT_SHARE_IMAGE = `${SITE_URL}/assets/share-image.png`;
 
@@ -227,7 +229,12 @@ const JobListingDetailPage = () => {
     handleFavoriteClick,
     isLoading: favLoading,
   } = useFavoriteToggle(id!, isAuth);
-  const { data: job, isLoading: isJobLoading } = useJobDetailQuery(id!);
+  const {
+    data: job,
+    isLoading: isJobLoading,
+    error: jobError,
+    refetch: refetchJob,
+  } = useJobDetailQuery(id!);
   const isOwnJob = job?.userId?._id === currentUser?._id;
 
   useListingSeo(job, id);
@@ -598,23 +605,31 @@ const JobListingDetailPage = () => {
     );
   }
 
-  // Not Found State
+  // Not available. The API answers 404 for a job that is completed, closed or removed when the
+  // viewer is not a party to it (it does not confirm which), so the text must not blame the
+  // link: "finnes ikke … lenken er feil" was wrong for every finished job. Any other failure is
+  // a loading problem and gets a retry instead.
   if (!job) {
+    const unavailable = !jobError || (isAxiosError(jobError) && jobError.response?.status === 404);
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#EFF0EA] p-4">
         <div className="w-full max-w-md rounded-3xl border border-[#E6E7E1] bg-white p-10 text-center">
           <span className="mx-auto mb-4 flex size-11 items-center justify-center rounded-full bg-[#EAF1E9] text-[#2E6641]">
             <MapPin size={20} strokeWidth={2} />
           </span>
-          <p className="text-[1.0625rem] font-semibold text-[#0B0B0B]">Oppdraget finnes ikke</p>
+          <p className="text-[1.0625rem] font-semibold text-[#0B0B0B]">
+            {unavailable ? 'Oppdraget er ikke lenger tilgjengelig' : 'Kunne ikke laste oppdraget'}
+          </p>
           <p className="mx-auto mt-2 max-w-sm text-[0.875rem] leading-relaxed text-[#63665F]">
-            Annonsen er kanskje fjernet, eller lenken er feil.
+            {unavailable
+              ? 'Det kan være fullført, lukket eller fjernet av den som la det ut.'
+              : 'Sjekk internettforbindelsen din og prøv igjen.'}
           </p>
           <button
-            onClick={() => navigate('/home')}
+            onClick={() => (unavailable ? navigate('/home') : void refetchJob())}
             className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#2E6641] px-6 text-[0.9375rem] font-semibold text-white transition-colors hover:bg-[#255335]"
           >
-            Se andre oppdrag
+            {unavailable ? 'Se andre oppdrag' : 'Prøv igjen'}
           </button>
         </div>
       </div>
@@ -682,9 +697,15 @@ const JobListingDetailPage = () => {
                     )}
                   </>
                 ) : (
-                  <div className="flex size-full items-center justify-center text-[0.875rem] text-[#63665F]">
-                    Ingen bilde
-                  </div>
+                  // The category photo the cards in search and "Lignende oppdrag" already show
+                  // for this job; here it said "Ingen bilde". Labelled so it is not taken for
+                  // a picture of the job itself.
+                  <>
+                    <img src={jobImage(job)} alt="" className="size-full object-cover" />
+                    <span className="absolute bottom-3 right-3 rounded-full bg-[#0B0B0B]/60 px-2.5 py-1 text-[0.6875rem] font-semibold text-white backdrop-blur-sm">
+                      Illustrasjonsbilde
+                    </span>
+                  </>
                 )}
 
                 {/* Coral #FF8A71 and #FF4B4B appeared nowhere else on the site. */}
@@ -818,12 +839,7 @@ const JobListingDetailPage = () => {
                 {[
                   { label: 'Kategori', value: job.categories?.[0] || 'Generelt' },
                   { label: 'Sted', value: job.location?.city || 'Ikke angitt' },
-                  {
-                    label: 'Varighet',
-                    value: job.duration?.value
-                      ? `${job.duration.value} ${job.duration.unit || ''}`.trim()
-                      : null,
-                  },
+                  { label: 'Varighet', value: formatDuration(job.duration) },
                   {
                     label: 'Ønsket oppstart',
                     value: job.fromDate ? formatDate(job.fromDate) : null,
@@ -834,7 +850,7 @@ const JobListingDetailPage = () => {
                   // path — the row printed "Ikke angitt" on every listing that has ever
                   // existed. `equipment` is the field the form actually collects, and it
                   // was shown nowhere.
-                  { label: 'Utstyr', value: job.equipment || null },
+                  { label: 'Utstyr', value: equipmentLabel(job.equipment) },
                   { label: 'Lagt ut', value: job.createdAt ? formatDate(job.createdAt) : null },
                 ]
                   .filter((row) => row.value)

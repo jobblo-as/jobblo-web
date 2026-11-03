@@ -76,6 +76,22 @@ const authLimiter = makeLimiter('auth', {
   },
 });
 
+// Registration has its own budget. It shared `authLimiter`'s counter, so 20 mistyped logins
+// behind one IP (an office, a household) also blocked anyone there from signing up, and failed
+// sign-ups (taken e-mail, weak password) used up the login budget. Same rules otherwise.
+const registerLimiter = makeLimiter('auth-register', {
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // failed attempts only
+  skipSuccessfulRequests: true,
+  passOnStoreError: false,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    status: 429,
+    message: 'For mange mislykkede registreringsforsøk. Prøv igjen om 15 minutter.',
+  },
+});
+
 // OTP send limiter — max 3 OTP requests per 15 minutes per IP
 // Prevents spam/abuse of email sending
 const otpSendLimiter = makeLimiter('otp-send', {
@@ -130,6 +146,7 @@ module.exports = {
   LIMITERS,
   apiLimiter,
   authLimiter,
+  registerLimiter,
   otpSendLimiter,
   otpVerifyLimiter,
   adminLimiter,

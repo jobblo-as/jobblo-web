@@ -13,8 +13,10 @@ export default defineConfig({
     drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
   },
   // First imported by a lazy route: without pre-bundling, Vite re-bundles mid-session and
-  // reloads the page (seen as "Laster …" hangs in dev and e2e).
-  optimizeDeps: { include: ['lucide-react/dynamic'] },
+  // reloads the page (seen as "Laster …" hangs in dev and e2e). `sonner` is only used by the
+  // lazy /developer and admin pages: re-bundled mid-session it came with a second React copy,
+  // and <Toaster> crashed /developer with "Cannot read properties of null (reading 'useState')".
+  optimizeDeps: { include: ['lucide-react/dynamic', 'sonner'] },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

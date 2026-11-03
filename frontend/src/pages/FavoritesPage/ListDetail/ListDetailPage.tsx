@@ -12,6 +12,7 @@ import Swal from 'sweetalert2';
 import EditListModal from './EditListModal';
 import AddContributorModal from './AddContributorModal';
 import ContributorsModal from './ContributorsModal';
+import { jobImage } from '../../../assets/images/categories';
 
 export const ListDetailPage: React.FC = () => {
   const { listId } = useParams<{ listId: string }>();
@@ -106,7 +107,10 @@ export const ListDetailPage: React.FC = () => {
     }
   };
 
-  const latestImage = list.services?.[list.services.length - 1]?.images?.[0];
+  // Same picture as the job's card; an empty list keeps "Ingen elementer".
+  const latestService = list.services?.[list.services.length - 1];
+  const latestImage =
+    latestService && typeof latestService === 'object' ? jobImage(latestService) : undefined;
 
   return (
     <div className="max-w-300 mx-auto p-6 min-h-screen animate-in fade-in duration-500">

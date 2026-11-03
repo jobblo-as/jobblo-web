@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
 const serviceController = require('../controllers/serviceController');
-const { authenticate, requireAdmin } = require('../middleware/auth');
+const { authenticate, optionalAuthenticate, requireAdmin } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 const { authorizeUser } = require('../controllers/users/userHelpers');
 
@@ -104,7 +104,9 @@ router.get('/search', authenticate, userController.searchUsers);
 router.get('/search-all', authenticate, userController.searchAll);
 router.get('/top', authenticate, userController.getTopUsers);
 router.get('/blocked', authenticate, userController.getBlockedUsers);
-router.get('/:id', authenticate, userController.getUserById);
+// Public profile: a guest gets the public fields (sanitizeUserPublic), the owner their own view.
+// It required login, so a shared profile link showed "Fant ikke brukeren" to visitors.
+router.get('/:id', optionalAuthenticate, userController.getUserById);
 router.put(
   '/:id',
   authenticate,

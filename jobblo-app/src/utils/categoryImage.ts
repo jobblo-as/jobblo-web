@@ -15,9 +15,16 @@ const PHOTOS = {
   transport: require('../../assets/category-showcase/transport.webp'),
 } as const;
 
+// Not in PHOTOS, so the rotation for uncategorised jobs stays the web's eight.
+const BIL_PLEIE = require('../../assets/category-showcase/bil-pleie.webp');
+
 const BY_CATEGORY: Record<string, ImageSourcePropType> = {
   ...PHOTOS,
   smajobber: PHOTOS.montering,
+  // "Bil & Pleie" had no photo, so its jobs fell to the rotation's first frame: a painter.
+  'bil & pleie': BIL_PLEIE,
+  'bil-pleie': BIL_PLEIE,
+  car: BIL_PLEIE,
   painting: PHOTOS.maling,
   cleaning: PHOTOS.rengjoring,
   gardening: PHOTOS.hagearbeid,
