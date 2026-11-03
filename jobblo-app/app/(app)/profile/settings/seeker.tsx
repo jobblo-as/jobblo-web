@@ -34,6 +34,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import {
   Award,
   Briefcase,
+  Check,
   FileText,
   Image as ImageIcon,
   Plus,
@@ -393,28 +394,24 @@ export default function SeekerScreen() {
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
-      {/* Top bar: Tilbake · title · Lagre (Lagre saves availability + skills). */}
-      <View className="h-14 flex-row items-center justify-between border-b border-line bg-page px-2">
-        <View className="min-w-[72px] px-1">
-          <GlassBackButton label="Tilbake" onPress={leave} />
-        </View>
+      {/* Top bar: Tilbake · title · round save button (as on Lagrede lister); it saves
+          availability + skills. Both buttons are 40 px, so the title stays centred. */}
+      <View className="h-14 flex-row items-center justify-between border-b border-line bg-page px-4">
+        <GlassBackButton label="Tilbake" onPress={leave} />
         <Text className="text-[1.0625rem] font-semibold text-ink">Jobbsøker-profil</Text>
         <Pressable
           onPress={saveBase}
           disabled={!canSaveBase}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityState={{ disabled: !canSaveBase }}
-          className="min-w-[72px] items-end px-2 py-2"
+          accessibilityLabel="Lagre"
+          accessibilityState={{ disabled: !canSaveBase, busy: updateProfile.isPending }}
+          className={`h-10 w-10 items-center justify-center rounded-full ${canSaveBase ? 'bg-brand' : 'bg-line'}`}
         >
           {updateProfile.isPending ? (
-            <ActivityIndicator size="small" color={TC.brandText} />
+            <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
-            <Text
-              className={`text-[1.0625rem] font-semibold ${canSaveBase ? 'text-brand-text' : 'text-[#B5B8B0]'}`}
-            >
-              Lagre
-            </Text>
+            <Check size={18} color={canSaveBase ? '#FFFFFF' : TC.muted} />
           )}
         </Pressable>
       </View>
@@ -498,7 +495,7 @@ export default function SeekerScreen() {
           <Text className="mb-6 px-1 text-[0.8125rem] text-muted">
             {baseUnchanged
               ? 'Tilgjengelighet og ferdigheter er lagret.'
-              : 'Trykk «Lagre» øverst for å lagre endringene.'}
+              : 'Trykk ✓ øverst for å lagre endringene.'}
           </Text>
 
           {/* ── 3. Erfaring ── */}

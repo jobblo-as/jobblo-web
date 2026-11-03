@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Crosshair, MapPinHouse } from 'lucide-react-native';
+import { Check, Crosshair, MapPinHouse } from 'lucide-react-native';
 import MapView, {
   LatLng,
   MapPressEvent,
@@ -27,6 +27,7 @@ import { useRouter } from 'expo-router';
 import { useProfile, useUpdateProfile } from '../../../../src/hooks/useProfile';
 import { useAuthStore } from '../../../../src/store/authStore';
 import { ErrorState } from '../../../../src/components/ui/ErrorState';
+import { GlassBackButton } from '../../../../src/components/ui/GlassButton';
 import { Card, SectionLabel } from '../../../../src/components/ui/Card';
 import { FormRow } from '../../../../src/components/ui/FormRow';
 import type { CurrentProfile } from '../../../../src/services/profile.service';
@@ -328,33 +329,24 @@ export default function AddressesSettingsScreen() {
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
-      {/* Top bar: Avbryt · title · Lagre, same as Rediger profil. */}
-      <View className="h-14 flex-row items-center justify-between border-b border-line bg-page px-2">
-        <Pressable
-          onPress={leave}
-          hitSlop={8}
-          accessibilityRole="button"
-          className="min-w-[72px] px-2 py-2"
-        >
-          <Text className="text-[1.0625rem] text-ink-2">Avbryt</Text>
-        </Pressable>
+      {/* Top bar: back arrow (as on the other settings pages) · title · round save button
+          (as on Lagrede lister). Both buttons are 40 px, so the title stays centred. */}
+      <View className="h-14 flex-row items-center justify-between border-b border-line bg-page px-4">
+        <GlassBackButton label="Innstillinger" onPress={leave} />
         <Text className="text-[1.0625rem] font-semibold text-ink">Adresse</Text>
         <Pressable
           onPress={save}
           disabled={!canSave}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityState={{ disabled: !canSave }}
-          className="min-w-[72px] items-end px-2 py-2"
+          accessibilityLabel="Lagre"
+          accessibilityState={{ disabled: !canSave, busy: update.isPending }}
+          className={`h-10 w-10 items-center justify-center rounded-full ${canSave ? 'bg-brand' : 'bg-line'}`}
         >
           {update.isPending ? (
-            <ActivityIndicator size="small" color={TC.brandText} />
+            <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
-            <Text
-              className={`text-[1.0625rem] font-semibold ${canSave ? 'text-brand-text' : 'text-[#B5B8B0]'}`}
-            >
-              Lagre
-            </Text>
+            <Check size={18} color={canSave ? '#FFFFFF' : TC.muted} />
           )}
         </Pressable>
       </View>
