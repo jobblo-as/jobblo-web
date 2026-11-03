@@ -94,7 +94,7 @@ describe('rate limiters with Redis down', () => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
     try {
       expect((await hit(rl.apiLimiter)).status).toBe(200);
-      for (const l of [rl.authLimiter, rl.otpSendLimiter, rl.otpVerifyLimiter])
+      for (const l of [rl.authLimiter, rl.registerLimiter, rl.otpSendLimiter, rl.otpVerifyLimiter])
         expect((await hit(l)).status).toBe(503);
     } finally {
       jest.restoreAllMocks();

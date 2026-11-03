@@ -50,3 +50,18 @@ describe('authLimiter', () => {
     expect(lastBlocked.message).not.toMatch(/hour|time/i);
   });
 });
+
+describe('registerLimiter', () => {
+  it('has its own budget and message for failed sign-ups', async () => {
+    const { registerLimiter } = require('../middleware/rateLimiter');
+    const app = express().post('/register', registerLimiter, (req, res) =>
+      res.status(409).json({ error: 'E-post er i bruk' })
+    );
+    let blocked = null;
+    for (let i = 0; i < 25; i += 1) {
+      const res = await request(app).post('/register');
+      if (res.status === 429) blocked = res.body;
+    }
+    expect(blocked?.message).toMatch(/registreringsforsøk/);
+  });
+});

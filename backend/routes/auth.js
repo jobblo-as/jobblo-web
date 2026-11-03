@@ -3,7 +3,12 @@ const vippsController = require('../controllers/vippsController');
 const User = require('../models/User');
 
 const { authenticate, optionalAuthenticate } = require('../middleware/auth');
-const { authLimiter, otpSendLimiter, otpVerifyLimiter } = require('../middleware/rateLimiter');
+const {
+  authLimiter,
+  registerLimiter,
+  otpSendLimiter,
+  otpVerifyLimiter,
+} = require('../middleware/rateLimiter');
 const { generateTokens, createSession } = require('../utils/tokenUtils');
 const { mobileReturn, noStore, takeOAuthPlatform } = require('../utils/oauthReturn');
 const webOAuth = require('./webOAuth');
@@ -74,7 +79,7 @@ const jwt = require('jsonwebtoken');
  *       400:
  *         description: Ugyldig input
  */
-router.post('/register', authLimiter, authController.register);
+router.post('/register', registerLimiter, authController.register);
 // Confirm the signed-in account's e-mail from the profile page: mail a code, then enter it.
 router.post('/email/send-code', authenticate, otpSendLimiter, authController.sendEmailCode);
 router.post('/email/verify', authenticate, otpVerifyLimiter, authController.confirmEmailCode);
