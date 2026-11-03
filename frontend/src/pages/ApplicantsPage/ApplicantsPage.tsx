@@ -32,6 +32,20 @@ import EmptyState from '../../components/Ui/EmptyState';
 import { timeFormatter } from '../../utils/timeFormatter';
 import { safePayFee, safePayNetToProvider } from '../../utils/safePayFee';
 import { errorBody } from '../../utils/getErrorMessage';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/Ui/select';
+
+/** "4.5★", or "–" for someone nobody has reviewed yet: "0★" read as the worst possible score. */
+const ratingText = (a: { rating?: number; reviewCount?: number }) =>
+  a.reviewCount ? `${a.rating}★` : '–';
+
+const FILTER_CONTROL =
+  'h-10 min-w-[150px] flex-1 rounded-full border-[#E6E7E1] bg-white text-[0.8125rem] font-medium text-[#0B0B0B] md:w-[190px] md:flex-none';
 
 const ApplicantsPage: React.FC = () => {
   const { serviceId } = useParams<{ serviceId: string }>();
@@ -296,11 +310,11 @@ const ApplicantsPage: React.FC = () => {
                       <div className="text-[10px] text-gray-500 uppercase">Fullførte</div>
                     </div>
                     <div className="bg-gray-50 p-2 rounded-lg text-center">
-                      <div className="font-bold">{app.applicant.rating}★</div>
+                      <div className="font-bold">{ratingText(app.applicant)}</div>
                       <div className="text-[10px] text-gray-500 uppercase">Rating</div>
                     </div>
                     <div className="bg-gray-50 p-2 rounded-lg text-center">
-                      <div className="font-bold">{app.applicant.responseRate}</div>
+                      <div className="font-bold">{app.applicant.responseRate ?? '–'}</div>
                       <div className="text-[10px] text-gray-500 uppercase">Svar%</div>
                     </div>
                     {/* "Svartid" removed — the backend hardcoded "< 1t" for every
@@ -316,27 +330,32 @@ const ApplicantsPage: React.FC = () => {
           {/* Left Column - Applicants List */}
           <div>
             <div className="flex flex-wrap items-center justify-between mb-4 gap-2">
-              <h3 className="text-[15px] font-medium text-gray-900">{applicants.length} søkere</h3>
-              <div className="flex flex-wrap gap-2 w-full md:w-auto">
-                <select
-                  value={filterBy}
-                  onChange={(e) => setFilterBy(e.target.value)}
-                  className="flex-1 min-w-[120px] text-[12px] text-gray-600 border border-black/15 rounded-full px-3 py-1 bg-white outline-none cursor-pointer"
-                >
-                  <option value="notArchived">Ikke arkivert</option>
-                  <option value="favorites">Favoritter</option>
-                  <option value="archived">Arkivert</option>
-                </select>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="flex-1 min-w-[120px] text-[12px] text-gray-600 border border-black/15 rounded-full px-3 py-1 bg-white outline-none cursor-pointer"
-                >
-                  <option value="createdAt">Sorter: Nyeste først</option>
-                  <option value="rating">Høyest rating</option>
-                  <option value="completedJobs">Flest oppdrag</option>
-                  <option value="favorites">Favoritter først</option>
-                </select>
+              <h3 className="text-[15px] font-medium text-gray-900">
+                {applicants.length} {applicants.length === 1 ? 'søker' : 'søkere'}
+              </h3>
+              {/* Same shadcn Select and pill styling as the filters on Mine annonser. */}
+              <div className="flex w-full flex-wrap gap-2 md:w-auto">
+                <Select value={filterBy} onValueChange={setFilterBy}>
+                  <SelectTrigger className={FILTER_CONTROL} aria-label="Vis søkere">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl">
+                    <SelectItem value="notArchived">Ikke arkivert</SelectItem>
+                    <SelectItem value="favorites">Favoritter</SelectItem>
+                    <SelectItem value="archived">Arkivert</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className={FILTER_CONTROL} aria-label="Sorter søkere">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl">
+                    <SelectItem value="createdAt">Sorter: Nyeste først</SelectItem>
+                    <SelectItem value="rating">Høyest rating</SelectItem>
+                    <SelectItem value="completedJobs">Flest oppdrag</SelectItem>
+                    <SelectItem value="favorites">Favoritter først</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -417,14 +436,17 @@ const ApplicantsPage: React.FC = () => {
                                 ))}
                               </div>
                               <span className="text-[11px] text-gray-400">
-                                {app.applicant.rating} · {app.applicant.completedJobs} oppdrag
+                                {app.applicant.reviewCount ? `${app.applicant.rating} · ` : ''}
+                                {app.applicant.completedJobs} oppdrag
                               </span>
                             </div>
                           </div>
                         </div>
 
-                        {/* Side by side on a phone, stacked on the right on desktop. */}
-                        <div className="flex shrink-0 items-center justify-between gap-4 md:flex-col md:items-end md:gap-3">
+                        {/* Phone: the figures on top across the full width, the actions under
+                            them. Side by side they needed ~350 px and cut "Svar%" off at 390 px.
+                            Desktop: stacked on the right as before. */}
+                        <div className="flex shrink-0 flex-col-reverse gap-3 md:flex-col md:items-end">
                           <div className="flex items-center gap-0.5">
                             <button
                               type="button"
@@ -479,7 +501,7 @@ const ApplicantsPage: React.FC = () => {
                             </button>
                           </div>
 
-                          <dl className="flex shrink-0 items-start gap-5">
+                          <dl className="grid grid-cols-3 gap-2 md:flex md:shrink-0 md:items-start md:gap-5">
                             <div className="text-center">
                               <dd className="text-[0.9375rem] font-semibold tabular-nums text-[#0B0B0B]">
                                 {app.applicant.completedJobs}
@@ -490,7 +512,7 @@ const ApplicantsPage: React.FC = () => {
                             </div>
                             <div className="text-center">
                               <dd className="text-[0.9375rem] font-semibold tabular-nums text-[#0B0B0B]">
-                                {app.applicant.rating}★
+                                {ratingText(app.applicant)}
                               </dd>
                               <dt className="mt-0.5 text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-[#9B9E96]">
                                 Rating
@@ -498,7 +520,7 @@ const ApplicantsPage: React.FC = () => {
                             </div>
                             <div className="text-center">
                               <dd className="text-[0.9375rem] font-semibold tabular-nums text-[#0B0B0B]">
-                                {app.applicant.responseRate}
+                                {app.applicant.responseRate ?? '–'}
                               </dd>
                               <dt className="mt-0.5 text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-[#9B9E96]">
                                 Svar%
