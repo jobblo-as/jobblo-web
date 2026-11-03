@@ -47,7 +47,7 @@ const ROUTES = [
   ['/api/safepay-checkout', './safePayCheckout'],
   ['/api/connect', './connect'],
   ['/api/my-applications', './myApplications'],
-  ['/api/upcomingFeatures', './upcomingFeature'],
+  ['/api/upcoming', './upcomingFeature'],
   ['/api/location-filter', './locationFilter'],
   ['/api/errors', './errors'],
   ['/api/support', './support'],

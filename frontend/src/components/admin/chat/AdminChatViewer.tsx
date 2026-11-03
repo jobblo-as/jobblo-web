@@ -3,6 +3,7 @@ import { ChatReviewHeader } from './ChatReviewHeader';
 import { ChatParticipantsCard } from './ChatParticipantsCard';
 import { ChatRelatedRecordsCard } from './ChatRelatedRecordsCard';
 import { AdminMessageBubble } from './AdminMessageBubble';
+import { EmptyState, Section, StatusBadge } from '../../developer/kit';
 import type { AdminChatDetailResponse } from '../../../api/admin/chats';
 
 interface AdminChatViewerProps {
@@ -45,37 +46,25 @@ export function AdminChatViewer({
       <ChatReviewHeader chat={chat} onClear={onClear} onSearchAnother={onSearchAnother} />
 
       {/* Two-column layout on large screens */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid gap-4 lg:grid-cols-3">
         {/* Messages — left 2/3 */}
         <div className="lg:col-span-2 space-y-4">
           {/* Report summary panel (when opened from a report link) */}
-          {reportSummary && (
-            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
-              {reportSummary}
-            </div>
-          )}
+          {reportSummary && <Section title="Rapport-sammendrag">{reportSummary}</Section>}
 
           {/* Messages */}
-          <div className="bg-card rounded-lg border border-border overflow-hidden">
-            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-foreground">
-                Meldinger ({safeMessages.length})
-              </h3>
-              <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full font-medium">
-                Kun lesing
-              </span>
-            </div>
-
+          <Section
+            title={`Meldinger (${safeMessages.length})`}
+            action={<StatusBadge status="read_only" tone="warning" label="Kun lesing" />}
+          >
             <div
               ref={highlightRef}
-              className="p-4 space-y-3 max-h-[600px] overflow-y-auto"
+              className="max-h-[600px] space-y-3 overflow-y-auto"
               aria-label="Chatmeldinger (skrivebeskyttet)"
               aria-live="off"
             >
               {safeMessages.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  Ingen meldinger i denne chatten.
-                </p>
+                <EmptyState title="Ingen meldinger i denne chatten." />
               ) : (
                 safeMessages.map((msg) => (
                   <AdminMessageBubble
@@ -87,7 +76,7 @@ export function AdminChatViewer({
                 ))
               )}
             </div>
-          </div>
+          </Section>
         </div>
 
         {/* Sidebar — right 1/3 */}

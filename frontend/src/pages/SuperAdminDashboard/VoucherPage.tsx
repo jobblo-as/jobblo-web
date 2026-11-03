@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Ban, Ticket, Percent, InfinityIcon, Calendar } from 'lucide-react';
+import { Plus, Ban, Ticket, Percent, InfinityIcon, Calendar, Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { createPromotionCode, deactivatePromotionCode, fetchPromotionCodes } from '../../api/admin';
 import {
@@ -10,6 +10,26 @@ import {
   AdminStatCard,
 } from '../../components/admin';
 import type { ColumnDef } from '../../components/admin/AdminDataTable';
+import { StatusBadge } from '../../components/developer/kit';
+import { Badge } from '../../components/developer/ui/badge';
+import { Button } from '../../components/developer/ui/button';
+import { Checkbox } from '../../components/developer/ui/checkbox';
+import { Input } from '../../components/developer/ui/input';
+import { Label } from '../../components/developer/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/developer/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../components/developer/ui/dialog';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface Voucher {
@@ -22,7 +42,7 @@ interface Voucher {
   targetPlanType: 'all' | 'private' | 'business';
   active: boolean;
   activeDate: string;
-  expiresDate: string;
+  expiresDate: string | null;
   usedBy: string[];
   source?: 'legacy' | 'stripe';
   stripeMode?: 'test' | 'live' | null;
@@ -109,7 +129,7 @@ export default function VoucherPage() {
 
   const getStatus = (v: Voucher): 'active' | 'inactive' | 'expired' => {
     if (!v.active) return 'inactive';
-    return new Date(v.expiresDate) < new Date() ? 'expired' : 'active';
+    return v.expiresDate && new Date(v.expiresDate) < new Date() ? 'expired' : 'active';
   };
 
   const openCreate = () => {
@@ -134,7 +154,7 @@ export default function VoucherPage() {
     {
       key: 'name',
       header: 'Navn',
-      render: (v) => <span className="text-sm font-semibold text-foreground">{v.name}</span>,
+      render: (v) => <span className="text-sm font-medium text-foreground">{v.name}</span>,
     },
     {
       key: 'code',
@@ -145,7 +165,7 @@ export default function VoucherPage() {
       key: 'usage',
       header: 'Bruk',
       render: (v) => (
-        <span className="text-sm font-medium text-foreground">
+        <span className="text-sm tabular-nums text-foreground">
           {v.redemptions ?? v.usedBy?.length ?? 0} /{' '}
           {(v.maxRedemptions ?? v.usageLimit) || (
             <InfinityIcon size={14} className="inline text-muted-foreground" />
@@ -157,22 +177,26 @@ export default function VoucherPage() {
       key: 'discount',
       header: 'Rabatt',
       render: (v) => (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
-          <Percent size={11} />
+        <Badge variant="outline" className="tabular-nums">
+          <Percent />
           {v.amount}
           {v.type === 'percentage' ? '%' : ' NOK'}
-        </span>
+        </Badge>
       ),
     },
     {
       key: 'target',
       header: 'Kilde / modus',
       render: (v) => (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700">
-          {v.source === 'stripe'
-            ? `Stripe · ${v.stripeMode === 'test' ? 'SANDBOX' : 'LIVE'}`
-            : 'Legacy'}
-        </span>
+        <StatusBadge
+          status={v.source === 'stripe' ? (v.stripeMode === 'test' ? 'test' : 'live') : 'legacy'}
+          tone={v.source === 'stripe' ? (v.stripeMode === 'test' ? 'info' : 'success') : 'neutral'}
+          label={
+            v.source === 'stripe'
+              ? `Stripe · ${v.stripeMode === 'test' ? 'SANDBOX' : 'LIVE'}`
+              : 'Legacy'
+          }
+        />
       ),
     },
     {
@@ -207,12 +231,9 @@ export default function VoucherPage() {
       render: (v) => (
         <div className="flex items-center gap-1.5">
           {v.source === 'stripe' && v.active ? (
-            <button
-              onClick={() => setDeleteTarget(v)}
-              className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
-            >
-              <Ban size={12} /> Deaktiver
-            </button>
+            <Button variant="destructive" size="xs" onClick={() => setDeleteTarget(v)}>
+              <Ban /> Deaktiver
+            </Button>
           ) : null}
         </div>
       ),
@@ -222,34 +243,31 @@ export default function VoucherPage() {
   const isFormOpen = createOpen || !!editTarget;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <AdminPageHeader
         title="Kuponger"
         description={`Stripe-rabattkoder for medlemskap · ${data?.mode === 'test' ? 'SANDBOX' : data?.mode === 'live' ? 'LIVE' : 'Stripe-modus ukjent'}`}
         actions={
-          <button
-            onClick={openCreate}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-md transition-colors"
-          >
-            <Plus size={16} /> Ny kupong
-          </button>
+          <Button size="sm" onClick={openCreate}>
+            <Plus /> Ny kupong
+          </Button>
         }
       />
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid gap-3 sm:grid-cols-3">
         {[
-          { title: 'Totale kuponger', value: vouchers.length, icon: <Ticket size={18} /> },
+          { title: 'Totale kuponger', value: vouchers.length, icon: <Ticket /> },
           {
             title: 'Aktive',
             value: vouchers.filter((v) => getStatus(v) === 'active').length,
-            icon: <Ticket size={18} />,
+            icon: <Ticket />,
           },
           {
             title: 'Utløpt',
             value: vouchers.filter((v) => getStatus(v) === 'expired' || getStatus(v) === 'inactive')
               .length,
-            icon: <Calendar size={18} />,
+            icon: <Calendar />,
           },
         ].map((s) => (
           <AdminStatCard key={s.title} title={s.title} value={s.value} icon={s.icon} />
@@ -268,203 +286,161 @@ export default function VoucherPage() {
       />
 
       {/* Create / Edit dialog */}
-      {isFormOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="voucher-form-title"
-        >
-          <div className="bg-card rounded-lg shadow-xl w-full max-w-lg p-6 space-y-4 overflow-y-auto max-h-[90vh]">
-            <h2 id="voucher-form-title" className="text-lg font-bold text-foreground">
-              {editTarget ? `Rediger: ${editTarget.name}` : 'Ny kupong'}
-            </h2>
+      <Dialog
+        open={isFormOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCreateOpen(false);
+            setEditTarget(null);
+          }
+        }}
+      >
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editTarget ? `Rediger: ${editTarget.name}` : 'Ny kupong'}</DialogTitle>
+          </DialogHeader>
 
-            {formError && (
-              <p className="text-xs text-red-600 bg-red-50 rounded-lg p-2">{formError}</p>
-            )}
+          {formError && (
+            <p className="rounded-md border border-red-200/70 bg-red-50 px-3 py-2 text-xs text-red-700">
+              {formError}
+            </p>
+          )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="v-name" className="block text-sm font-medium text-foreground mb-1">
-                  Navn *
-                </label>
-                <input
-                  id="v-name"
-                  type="text"
-                  value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                />
-              </div>
-              <div>
-                <label htmlFor="v-code" className="block text-sm font-medium text-foreground mb-1">
-                  Kode *
-                </label>
-                <input
-                  id="v-code"
-                  type="text"
-                  value={form.code}
-                  onChange={(e) => setForm((f) => ({ ...f, code: e.target.value.toUpperCase() }))}
-                  className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50 uppercase tracking-wider font-bold"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="v-type" className="block text-sm font-medium text-foreground mb-1">
-                  Type *
-                </label>
-                <select
-                  id="v-type"
-                  value={form.type}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, type: e.target.value as 'percentage' | 'fixed' }))
-                  }
-                  className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                >
-                  <option value="percentage">Prosent (%)</option>
-                  <option value="fixed">Fast beløp (NOK)</option>
-                </select>
-              </div>
-              <div>
-                <label
-                  htmlFor="v-amount"
-                  className="block text-sm font-medium text-foreground mb-1"
-                >
-                  Beløp *
-                </label>
-                <input
-                  id="v-amount"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={form.amount}
-                  onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
-                  className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-1">Målgruppe</label>
-                <p className="rounded-md border border-border bg-muted/50 px-3 py-2.5 text-sm text-muted-foreground">
-                  Alle medlemsplaner
-                </p>
-              </div>
-              <div>
-                <label htmlFor="v-usage" className="block text-sm font-medium text-foreground mb-1">
-                  Bruksgrense (0 = ubegrenset)
-                </label>
-                <input
-                  id="v-usage"
-                  type="number"
-                  min="0"
-                  value={form.usageLimit}
-                  onChange={(e) => setForm((f) => ({ ...f, usageLimit: e.target.value }))}
-                  className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="v-duration"
-                  className="block text-sm font-medium text-foreground mb-1"
-                >
-                  Varighet *
-                </label>
-                <select
-                  id="v-duration"
-                  value={form.duration}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, duration: e.target.value as VoucherForm['duration'] }))
-                  }
-                  className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                >
-                  <option value="once">Én gang</option>
-                  <option value="forever">For alltid</option>
-                  <option value="repeating">Gjentakende</option>
-                </select>
-              </div>
-              {form.duration === 'repeating' ? (
-                <div>
-                  <label
-                    htmlFor="v-months"
-                    className="block text-sm font-medium text-foreground mb-1"
-                  >
-                    Antall måneder *
-                  </label>
-                  <input
-                    id="v-months"
-                    type="number"
-                    min="1"
-                    step="1"
-                    value={form.durationInMonths}
-                    onChange={(e) => setForm((f) => ({ ...f, durationInMonths: e.target.value }))}
-                    className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                  />
-                </div>
-              ) : (
-                <div />
-              )}
-            </div>
-
-            <div>
-              <div>
-                <label
-                  htmlFor="v-expires"
-                  className="block text-sm font-medium text-foreground mb-1"
-                >
-                  Utløper *
-                </label>
-                <input
-                  id="v-expires"
-                  type="date"
-                  value={form.expiresDate}
-                  onChange={(e) => setForm((f) => ({ ...f, expiresDate: e.target.value }))}
-                  className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                />
-              </div>
-            </div>
-
-            <label className="flex items-center gap-2 text-sm text-foreground">
-              <input
-                type="checkbox"
-                checked={form.active}
-                onChange={(e) => setForm((f) => ({ ...f, active: e.target.checked }))}
-                className="w-4 h-4 rounded border-border text-primary focus:ring-ring/50"
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="v-name">Navn *</Label>
+              <Input
+                id="v-name"
+                type="text"
+                value={form.name}
+                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               />
-              Aktiv
-            </label>
-
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                onClick={() => {
-                  setCreateOpen(false);
-                  setEditTarget(null);
-                }}
-                className="px-4 py-2.5 text-sm font-medium text-muted-foreground bg-muted hover:bg-accent rounded-md transition-colors"
-              >
-                Avbryt
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={saveMutation.isPending}
-                className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-md transition-colors disabled:opacity-60"
-              >
-                {saveMutation.isPending && (
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                )}
-                {editTarget ? 'Oppdater' : 'Opprett'}
-              </button>
             </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="v-code">Kode *</Label>
+              <Input
+                id="v-code"
+                type="text"
+                value={form.code}
+                onChange={(e) => setForm((f) => ({ ...f, code: e.target.value.toUpperCase() }))}
+                className="font-mono uppercase"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="v-type">Type *</Label>
+              <Select
+                value={form.type}
+                onValueChange={(v) => setForm((f) => ({ ...f, type: v as 'percentage' | 'fixed' }))}
+              >
+                <SelectTrigger id="v-type" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="percentage">Prosent (%)</SelectItem>
+                  <SelectItem value="fixed">Fast beløp (NOK)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="v-amount">Beløp *</Label>
+              <Input
+                id="v-amount"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.amount}
+                onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Målgruppe</Label>
+              <p className="flex h-8 items-center rounded-lg border bg-muted/50 px-2.5 text-sm text-muted-foreground">
+                Alle medlemsplaner
+              </p>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="v-usage">Bruksgrense (0 = ubegrenset)</Label>
+              <Input
+                id="v-usage"
+                type="number"
+                min="0"
+                value={form.usageLimit}
+                onChange={(e) => setForm((f) => ({ ...f, usageLimit: e.target.value }))}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="v-duration">Varighet *</Label>
+              <Select
+                value={form.duration}
+                onValueChange={(v) =>
+                  setForm((f) => ({ ...f, duration: v as VoucherForm['duration'] }))
+                }
+              >
+                <SelectTrigger id="v-duration" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="once">Én gang</SelectItem>
+                  <SelectItem value="forever">For alltid</SelectItem>
+                  <SelectItem value="repeating">Gjentakende</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {form.duration === 'repeating' ? (
+              <div className="space-y-1.5">
+                <Label htmlFor="v-months">Antall måneder *</Label>
+                <Input
+                  id="v-months"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={form.durationInMonths}
+                  onChange={(e) => setForm((f) => ({ ...f, durationInMonths: e.target.value }))}
+                />
+              </div>
+            ) : (
+              <div />
+            )}
           </div>
-        </div>
-      )}
+
+          <div className="space-y-1.5">
+            <Label htmlFor="v-expires">Utløper *</Label>
+            <Input
+              id="v-expires"
+              type="date"
+              value={form.expiresDate}
+              onChange={(e) => setForm((f) => ({ ...f, expiresDate: e.target.value }))}
+            />
+          </div>
+
+          <Label>
+            <Checkbox
+              checked={form.active}
+              onCheckedChange={(v) => setForm((f) => ({ ...f, active: v === true }))}
+            />
+            Aktiv
+          </Label>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setCreateOpen(false);
+                setEditTarget(null);
+              }}
+            >
+              Avbryt
+            </Button>
+            <Button onClick={handleSave} disabled={saveMutation.isPending}>
+              {saveMutation.isPending && <Loader2 className="animate-spin" />}
+              {editTarget ? 'Oppdater' : 'Opprett'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AdminConfirmDialog
         title="Deaktiver rabattkode?"

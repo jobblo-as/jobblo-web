@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Copy, CheckCircle2, MessageSquare } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { Button } from '../../developer/ui/button';
 
 interface ChatIdCellProps {
   chatId?: string | null;
@@ -14,7 +15,7 @@ export function ChatIdCell({ chatId, reviewSource = 'safepay', reportId }: ChatI
   const [copied, setCopied] = useState(false);
 
   if (!chatId) {
-    return <span className="text-xs text-muted-foreground italic">Ingen tilknyttet chat</span>;
+    return <span className="text-xs text-muted-foreground">Ingen tilknyttet chat</span>;
   }
 
   const truncated = `${chatId.slice(0, 8)}…${chatId.slice(-4)}`;
@@ -37,26 +38,25 @@ export function ChatIdCell({ chatId, reviewSource = 'safepay', reportId }: ChatI
       <span className="font-mono text-xs text-muted-foreground select-all" title={chatId}>
         {truncated}
       </span>
-      <button
+      <Button
+        variant="ghost"
+        size="icon-xs"
         onClick={handleCopy}
-        className="p-0.5 rounded text-muted-foreground hover:text-foreground transition-colors"
         aria-label="Kopier Chat ID"
         title="Kopier Chat ID"
       >
         {copied ? (
-          <CheckCircle2 size={12} className="text-green-500" aria-hidden="true" />
+          <CheckCircle2 className="text-emerald-600" aria-hidden="true" />
         ) : (
-          <Copy size={12} aria-hidden="true" />
+          <Copy aria-hidden="true" />
         )}
-      </button>
-      <Link
-        to={reviewUrl}
-        className="flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-medium text-primary bg-primary/10 hover:bg-primary/15 rounded transition-colors"
-        title="Gjennomgå chat"
-      >
-        <MessageSquare size={10} aria-hidden="true" />
-        Gjennomgå
-      </Link>
+      </Button>
+      <Button variant="outline" size="xs" asChild>
+        <Link to={reviewUrl} title="Gjennomgå chat">
+          <MessageSquare aria-hidden="true" />
+          Gjennomgå
+        </Link>
+      </Button>
     </div>
   );
 }

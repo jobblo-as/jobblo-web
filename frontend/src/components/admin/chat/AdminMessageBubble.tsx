@@ -11,20 +11,20 @@ interface AdminMessageBubbleProps {
 // Colour coding per message type / sender role
 function getBubbleStyle(message: AdminChatMessage, customerId?: string): string {
   if (message.type === 'system_payment') {
-    return 'bg-emerald-50 border border-emerald-200 text-emerald-800';
+    return 'bg-emerald-50 border border-emerald-200/70 text-emerald-700';
   }
   if (message.type === 'system_contract') {
-    return 'bg-blue-50 border border-blue-200 text-blue-800';
+    return 'bg-sky-50 border border-sky-200/70 text-sky-700';
   }
   if (message.type === 'system_status' || message.type?.startsWith('system_')) {
     return 'bg-muted border border-border text-muted-foreground';
   }
   if (message.isReported) {
-    return 'bg-red-50 border border-red-300 text-foreground';
+    return 'bg-red-50 border border-red-200/70 text-foreground';
   }
 
   const isCustomer = message.sender?._id === customerId;
-  if (isCustomer) return 'bg-primary/10 border border-border text-foreground';
+  if (isCustomer) return 'bg-muted border border-border text-foreground';
   return 'bg-card border border-border text-foreground';
 }
 
@@ -72,7 +72,7 @@ export function AdminMessageBubble({
     >
       {/* Avatar */}
       <div
-        className="w-7 h-7 rounded-full bg-muted shrink-0 flex items-center justify-center text-xs font-bold text-muted-foreground mt-0.5"
+        className="w-7 h-7 rounded-full bg-muted shrink-0 flex items-center justify-center text-xs font-medium text-muted-foreground mt-0.5"
         aria-hidden="true"
       >
         {senderInitial}
@@ -82,14 +82,14 @@ export function AdminMessageBubble({
       <div className="flex-1 min-w-0 max-w-lg">
         {/* Meta */}
         <div className="flex items-center gap-2 mb-1 flex-wrap">
-          <span className="text-xs font-semibold text-foreground">{senderName}</span>
+          <span className="text-xs font-medium text-foreground">{senderName}</span>
           {message.sender?.role && (
-            <span className="text-[10px] text-muted-foreground capitalize">
+            <span className="text-xs text-muted-foreground capitalize">
               {getRoleLabel(message.sender.role)}
             </span>
           )}
           {message.isReported && <ReportedMessageBadge />}
-          <time className="text-[10px] text-muted-foreground/60 ml-auto whitespace-nowrap">
+          <time className="text-xs text-muted-foreground ml-auto whitespace-nowrap">
             {new Date(message.createdAt).toLocaleString('nb-NO', {
               day: '2-digit',
               month: 'short',
@@ -115,7 +115,7 @@ export function AdminMessageBubble({
                   href={url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-[11px] text-primary hover:underline bg-white/70 px-2 py-1 rounded-lg border border-border"
+                  className="flex items-center gap-1 text-xs text-primary hover:underline bg-card px-2 py-1 rounded-md border"
                 >
                   <FileText size={11} aria-hidden="true" />
                   Vedlegg {i + 1}
@@ -127,9 +127,9 @@ export function AdminMessageBubble({
 
           {/* System data preview */}
           {message.systemData && Object.keys(message.systemData).length > 0 && (
-            <details className="mt-2 text-[10px] text-muted-foreground">
+            <details className="mt-2 text-xs text-muted-foreground">
               <summary className="cursor-pointer hover:text-foreground">Systemdata</summary>
-              <pre className="mt-1 bg-muted/50 rounded p-1 overflow-x-auto text-muted-foreground text-[10px]">
+              <pre className="mt-1 overflow-x-auto rounded-md border bg-muted/40 p-2 font-mono text-xs text-foreground">
                 {JSON.stringify(message.systemData, null, 2)}
               </pre>
             </details>

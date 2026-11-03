@@ -29,6 +29,9 @@ import type { ColumnDef } from '../../components/admin/AdminDataTable';
 import { Button } from '../../components/developer/ui/button';
 import { Input } from '../../components/developer/ui/input';
 import { Textarea } from '../../components/developer/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/developer/ui/card';
+import { Label } from '../../components/developer/ui/label';
+import { Switch } from '../../components/developer/ui/switch';
 import {
   Select,
   SelectContent,
@@ -65,9 +68,7 @@ const dateInput = (value: string) => {
 function Field({ label, id, children }: { label: string; id: string; children: React.ReactNode }) {
   return (
     <div className="min-w-0 space-y-1.5">
-      <label htmlFor={id} className="block text-sm font-medium text-foreground">
-        {label}
-      </label>
+      <Label htmlFor={id}>{label}</Label>
       {children}
     </div>
   );
@@ -75,9 +76,11 @@ function Field({ label, id, children }: { label: string; id: string; children: R
 
 function Metric({ label, value, detail }: { label: string; value: string; detail?: string }) {
   return (
-    <div className="border-l-2 border-custom-green pl-3 py-1">
+    <div className="border-l-2 border-border py-1 pl-3">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="mt-1 text-xl font-semibold text-foreground">{value}</p>
+      <p className="mt-1 text-xl font-semibold tracking-tight tabular-nums text-foreground">
+        {value}
+      </p>
       {detail && <p className="text-xs text-muted-foreground">{detail}</p>}
     </div>
   );
@@ -113,7 +116,7 @@ export default function CampaignManagementPage() {
       header: 'Kampanje',
       render: (campaign) => (
         <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-foreground">{campaign.name}</p>
+          <p className="truncate text-sm font-medium text-foreground">{campaign.name}</p>
           <p className="mt-0.5 truncate text-xs text-muted-foreground">
             {campaign.bannerCtaLabel} · Popup {campaign.popupDelayMs / 1000}s
           </p>
@@ -146,25 +149,25 @@ export default function CampaignManagementPage() {
             type="button"
             variant="outline"
             size="sm"
-            className="w-auto gap-1.5 rounded-lg px-2.5 text-xs"
+            className="bg-card"
             onClick={() => {
               setSelectedId(campaign._id);
               setActiveSection('campaign');
               setView('edit');
             }}
           >
-            <Edit2 size={13} /> Rediger
+            <Edit2 /> Rediger
           </Button>
           <Button
             type="button"
             variant="ghost"
-            size="icon"
-            className="w-9 text-red-600 hover:bg-red-50 hover:text-red-700"
+            size="icon-sm"
+            className="text-red-600 hover:bg-red-50 hover:text-red-700"
             aria-label={`Slett ${campaign.name}`}
             title={`Slett ${campaign.name}`}
             onClick={() => setDeleteTarget(campaign)}
           >
-            <Trash2 size={16} />
+            <Trash2 />
           </Button>
         </div>
       ),
@@ -184,10 +187,7 @@ export default function CampaignManagementPage() {
   const change =
     (field: keyof EditableCampaign) =>
     (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const value =
-        event.target instanceof HTMLInputElement && event.target.type === 'checkbox'
-          ? event.target.checked
-          : event.target.value;
+      const { value } = event.target;
       setForm((previous) => (previous ? { ...previous, [field]: value } : previous));
     };
 
@@ -257,7 +257,7 @@ export default function CampaignManagementPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         <AdminPageHeader
           title="Kampanjer"
           description="Administrer kampanjeinnhold og resultater."
@@ -269,7 +269,7 @@ export default function CampaignManagementPage() {
 
   if (isError) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         <AdminPageHeader
           title="Kampanjer"
           description="Administrer kampanjeinnhold og resultater."
@@ -307,10 +307,7 @@ export default function CampaignManagementPage() {
         return (
           <section className="space-y-5" aria-labelledby="campaign-settings-heading">
             <div>
-              <h2
-                id="campaign-settings-heading"
-                className="text-base font-semibold text-foreground"
-              >
+              <h2 id="campaign-settings-heading" className="text-sm font-semibold text-foreground">
                 Grunninnstillinger
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -335,14 +332,11 @@ export default function CampaignManagementPage() {
               </div>
               <label className="inline-flex cursor-pointer items-center gap-3">
                 <span className="text-sm text-muted-foreground">{form.enabled ? 'På' : 'Av'}</span>
-                <input
-                  type="checkbox"
+                <Switch
                   checked={form.enabled}
-                  onChange={change('enabled')}
-                  className="peer sr-only"
+                  onCheckedChange={(enabled) => setForm({ ...form, enabled })}
                   aria-label="Aktiver kampanje"
                 />
-                <span className="relative h-6 w-11 rounded-full bg-muted-foreground/30 transition-colors peer-checked:bg-primary peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ring after:absolute after:left-0.5 after:top-0.5 after:size-5 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:after:translate-x-5" />
               </label>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -371,7 +365,7 @@ export default function CampaignManagementPage() {
         return (
           <section className="space-y-5" aria-labelledby="campaign-banner-heading">
             <div>
-              <h2 id="campaign-banner-heading" className="text-base font-semibold text-foreground">
+              <h2 id="campaign-banner-heading" className="text-sm font-semibold text-foreground">
                 Landingssidebanner
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -414,7 +408,7 @@ export default function CampaignManagementPage() {
         return (
           <section className="space-y-5" aria-labelledby="campaign-popup-heading">
             <div>
-              <h2 id="campaign-popup-heading" className="text-base font-semibold text-foreground">
+              <h2 id="campaign-popup-heading" className="text-sm font-semibold text-foreground">
                 Popup og A/B-varianter
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -497,7 +491,7 @@ export default function CampaignManagementPage() {
         return (
           <section className="space-y-5" aria-labelledby="campaign-terms-heading">
             <div>
-              <h2 id="campaign-terms-heading" className="text-base font-semibold text-foreground">
+              <h2 id="campaign-terms-heading" className="text-sm font-semibold text-foreground">
                 Kampanjevilkår
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -555,32 +549,31 @@ export default function CampaignManagementPage() {
             {view === 'edit' ? (
               <Button
                 type="button"
-                variant="secondary"
+                variant="outline"
                 size="sm"
-                className="w-auto gap-2 rounded-lg"
+                className="bg-card"
                 onClick={backToList}
               >
-                <ArrowLeft size={15} /> Tilbake til kampanjer
+                <ArrowLeft /> Tilbake til kampanjer
               </Button>
             ) : (
               <>
                 <Button
                   type="button"
-                  variant="secondary"
+                  variant="outline"
                   size="sm"
-                  className="w-auto gap-2 rounded-lg"
+                  className="bg-card"
                   onClick={() => refetch()}
                 >
-                  <RefreshCw size={15} /> Oppdater
+                  <RefreshCw /> Oppdater
                 </Button>
                 <Button
                   type="button"
                   size="sm"
-                  className="w-auto gap-2 rounded-lg"
                   onClick={openCreate}
                   disabled={isLoadingDefaults || !campaignDefaults}
                 >
-                  <Plus size={16} /> Ny kampanje
+                  <Plus /> Ny kampanje
                 </Button>
               </>
             )}
@@ -590,7 +583,7 @@ export default function CampaignManagementPage() {
 
       {view === 'list' && (
         <>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <AdminStatCard
               title="Totale kampanjer"
               value={campaigns.length}
@@ -647,94 +640,93 @@ export default function CampaignManagementPage() {
       )}
 
       {view === 'edit' && !isNewCampaign && campaigns.length === 0 ? (
-        <div className="rounded-lg border border-border bg-card">
+        <Card>
           <AdminEmptyState
             title="Ingen kampanjer ennå"
             description="Opprett en kampanje for å konfigurere landingssidebanner, popup og vilkår."
-            icon={<Megaphone size={30} />}
+            icon={<Megaphone />}
             action={
-              <Button type="button" size="sm" className="w-auto gap-2" onClick={openCreate}>
-                <Plus size={16} /> Opprett kampanje
+              <Button type="button" size="sm" onClick={openCreate}>
+                <Plus /> Opprett kampanje
               </Button>
             }
           />
-        </div>
+        </Card>
       ) : view === 'edit' && form && (isNewCampaign || selected) ? (
         <>
           {!isNewCampaign && selected && (
-            <section className="flex flex-col gap-4 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-              <div className="min-w-0 flex-1">
-                <label
-                  htmlFor="campaign-select"
-                  className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                >
-                  Valgt kampanje
-                </label>
-                <Select value={selected._id} onValueChange={setSelectedId}>
-                  <SelectTrigger
-                    id="campaign-select"
-                    className="max-w-xl rounded-md border-border bg-card"
-                  >
-                    <SelectValue placeholder="Velg kampanje" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {campaigns.map((campaign) => (
-                      <SelectItem key={campaign._id} value={campaign._id}>
-                        {campaign.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex flex-wrap items-center gap-3 sm:justify-end">
-                <AdminStatusBadge status={campaignStatus} />
-                <span className="text-xs text-muted-foreground">
-                  {new Date(selected.startDate).toLocaleDateString('nb-NO')} –{' '}
-                  {new Date(selected.endDate).toLocaleDateString('nb-NO')}
-                </span>
-              </div>
-            </section>
+            <Card size="sm">
+              <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <Label htmlFor="campaign-select">Valgt kampanje</Label>
+                  <Select value={selected._id} onValueChange={setSelectedId}>
+                    <SelectTrigger id="campaign-select" className="w-full max-w-xl">
+                      <SelectValue placeholder="Velg kampanje" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {campaigns.map((campaign) => (
+                        <SelectItem key={campaign._id} value={campaign._id}>
+                          {campaign.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex flex-wrap items-center gap-3 sm:justify-end">
+                  <AdminStatusBadge status={campaignStatus} />
+                  <span className="text-xs text-muted-foreground">
+                    {new Date(selected.startDate).toLocaleDateString('nb-NO')} –{' '}
+                    {new Date(selected.endDate).toLocaleDateString('nb-NO')}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
           )}
 
           {!isNewCampaign && analytics && (
-            <section
-              aria-label="Kampanjeanalyse"
-              className="rounded-lg border border-border bg-card p-4 sm:p-5"
-            >
-              <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
-                <BarChart3 size={17} className="text-primary" /> Resultater
-              </div>
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                <Metric
-                  label="Visninger"
-                  value={analytics.total.impressions.toLocaleString('nb-NO')}
-                />
-                <Metric label="CTA-klikk" value={analytics.total.clicks.toLocaleString('nb-NO')} />
-                <Metric label="Lukket" value={analytics.total.closes.toLocaleString('nb-NO')} />
-                <Metric label="CTR" value={`${analytics.total.ctr}%`} />
-              </div>
-              <div className="mt-5 grid gap-4 border-t border-border pt-4 md:grid-cols-2">
-                {(['A', 'B'] as const).map((variant) => {
-                  const stats = analytics.variants[variant];
-                  return (
-                    <div key={variant} className="min-w-0">
-                      <p className="mb-2 text-sm font-semibold text-foreground">
-                        Variant {variant}
-                      </p>
-                      <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs text-muted-foreground sm:grid-cols-4">
-                        <span>{stats.impressions} visninger</span>
-                        <span>{stats.clicks} klikk</span>
-                        <span>{stats.closes} lukket</span>
-                        <span className="font-semibold text-primary">CTR {stats.ctr}%</span>
+            <Card role="region" aria-label="Kampanjeanalyse" className="gap-3">
+              <CardHeader>
+                <CardTitle className="text-sm font-semibold">Resultater</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                  <Metric
+                    label="Visninger"
+                    value={analytics.total.impressions.toLocaleString('nb-NO')}
+                  />
+                  <Metric
+                    label="CTA-klikk"
+                    value={analytics.total.clicks.toLocaleString('nb-NO')}
+                  />
+                  <Metric label="Lukket" value={analytics.total.closes.toLocaleString('nb-NO')} />
+                  <Metric label="CTR" value={`${analytics.total.ctr}%`} />
+                </div>
+                <div className="mt-5 grid gap-4 border-t border-border pt-4 md:grid-cols-2">
+                  {(['A', 'B'] as const).map((variant) => {
+                    const stats = analytics.variants[variant];
+                    return (
+                      <div key={variant} className="min-w-0">
+                        <p className="mb-2 text-sm font-semibold text-foreground">
+                          Variant {variant}
+                        </p>
+                        <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs text-muted-foreground sm:grid-cols-4">
+                          <span>{stats.impressions} visninger</span>
+                          <span>{stats.clicks} klikk</span>
+                          <span>{stats.closes} lukket</span>
+                          <span className="font-medium text-foreground">CTR {stats.ctr}%</span>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
           )}
 
-          <form onSubmit={save} className="overflow-hidden rounded-lg border border-border bg-card">
+          <form
+            onSubmit={save}
+            className="overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10"
+          >
             <div className="grid min-h-112 lg:grid-cols-[14rem_minmax(0,1fr)]">
               <nav
                 aria-label="Kampanjeinnstillinger"
@@ -749,13 +741,11 @@ export default function CampaignManagementPage() {
                       role="tab"
                       aria-selected={active}
                       onClick={() => setActiveSection(section.id)}
-                      className={`flex min-w-max items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors lg:w-full ${active ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:bg-muted/50'}`}
+                      className={`flex min-w-max items-center gap-3 rounded-md px-3 py-2.5 text-left transition-colors lg:w-full ${active ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted/50'}`}
                     >
-                      <span className={active ? 'text-primary' : 'text-muted-foreground'}>
-                        {section.icon}
-                      </span>
+                      <span className="[&_svg]:size-4">{section.icon}</span>
                       <span className="min-w-0">
-                        <span className="block text-sm font-semibold">{section.label}</span>
+                        <span className="block text-sm font-medium">{section.label}</span>
                         <span className="hidden text-xs text-muted-foreground lg:block">
                           {section.description}
                         </span>
@@ -764,7 +754,7 @@ export default function CampaignManagementPage() {
                   );
                 })}
               </nav>
-              <div role="tabpanel" className="min-w-0 p-4 sm:p-6 lg:p-7">
+              <div role="tabpanel" className="min-w-0 p-4 sm:p-5">
                 {sectionContent()}
               </div>
             </div>
@@ -774,9 +764,9 @@ export default function CampaignManagementPage() {
                 {activeSection !== 'campaign' && (
                   <Button
                     type="button"
-                    variant="secondary"
+                    variant="outline"
                     size="sm"
-                    className="w-auto rounded-lg"
+                    className="bg-card"
                     onClick={() =>
                       setActiveSection(
                         sections[sections.findIndex((section) => section.id === activeSection) - 1]
@@ -790,9 +780,9 @@ export default function CampaignManagementPage() {
                 {activeSection !== 'terms' && (
                   <Button
                     type="button"
-                    variant="secondary"
+                    variant="outline"
                     size="sm"
-                    className="w-auto rounded-lg"
+                    className="bg-card"
                     onClick={() =>
                       setActiveSection(
                         sections[sections.findIndex((section) => section.id === activeSection) + 1]
@@ -806,10 +796,9 @@ export default function CampaignManagementPage() {
                 <Button
                   type="submit"
                   size="sm"
-                  className="w-auto gap-2 rounded-lg"
                   disabled={updateMutation.isPending || createMutation.isPending}
                 >
-                  <Save size={15} />
+                  <Save />
                   {updateMutation.isPending || createMutation.isPending
                     ? 'Lagrer...'
                     : isNewCampaign

@@ -12,6 +12,7 @@ import {
   AdminPageHeader,
 } from '../../components/admin';
 import type { ColumnDef } from '../../components/admin/AdminDataTable';
+import { Button } from '../../components/developer/ui/button';
 
 const STATUS_OPTIONS = [
   { label: 'Åpen', value: 'open' },
@@ -66,10 +67,10 @@ export default function ServicesPage() {
       render: (s) => {
         const img = s.images?.[0];
         return img ? (
-          <img src={img} alt={s.title} className="w-12 h-12 object-cover rounded-lg" />
+          <img src={img} alt={s.title} className="size-10 rounded-md border object-cover" />
         ) : (
-          <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
-            <Briefcase size={16} className="text-muted-foreground/60" />
+          <div className="flex size-10 items-center justify-center rounded-md border bg-muted/50">
+            <Briefcase className="size-4 text-muted-foreground" />
           </div>
         );
       },
@@ -80,7 +81,7 @@ export default function ServicesPage() {
       header: 'Tittel',
       render: (s) => (
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-foreground truncate max-w-[200px]">{s.title}</p>
+          <p className="text-sm font-medium text-foreground truncate max-w-[200px]">{s.title}</p>
           <p className="text-xs text-muted-foreground truncate max-w-[200px]">
             {s.categories.slice(0, 2).join(', ')}
           </p>
@@ -101,7 +102,7 @@ export default function ServicesPage() {
       key: 'price',
       header: 'Pris',
       render: (s) => (
-        <span className="font-semibold text-foreground">{s.price.toLocaleString('nb-NO')} NOK</span>
+        <span className="tabular-nums text-foreground">{s.price.toLocaleString('nb-NO')} NOK</span>
       ),
     },
     {
@@ -129,37 +130,40 @@ export default function ServicesPage() {
       header: 'Handlinger',
       className: 'whitespace-nowrap',
       render: (s) => (
-        <div className="flex items-center gap-1.5">
-          <button
+        <div className="flex items-center gap-1">
+          <Button
+            size="xs"
+            variant="outline"
             onClick={() => navigate(`/dashboard/services/${s._id}/edit`)}
-            className="px-2.5 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
             aria-label={`Rediger ${s.title}`}
           >
             Rediger
-          </button>
-          <button
+          </Button>
+          <Button
+            size="xs"
+            variant="outline"
             onClick={() =>
               setStatusTarget({ service: s, newStatus: s.status === 'open' ? 'closed' : 'open' })
             }
-            className="px-2.5 py-1.5 text-xs font-medium text-muted-foreground bg-muted hover:bg-accent rounded-lg transition-colors"
             aria-label={`${s.status === 'open' ? 'Lukk' : 'Åpne'} ${s.title}`}
           >
             {s.status === 'open' ? 'Lukk' : 'Åpne'}
-          </button>
-          <button
+          </Button>
+          <Button
+            size="xs"
+            variant="destructive"
             onClick={() => setDeleteTarget(s)}
-            className="px-2.5 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
             aria-label={`Slett ${s.title}`}
           >
             Slett
-          </button>
+          </Button>
         </div>
       ),
     },
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <AdminPageHeader title="Tjenester" description="Alle tjenester publisert på plattformen" />
 
       <AdminDataTable

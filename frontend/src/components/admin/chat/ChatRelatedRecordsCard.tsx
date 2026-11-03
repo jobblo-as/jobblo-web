@@ -1,109 +1,87 @@
-import React from 'react';
+import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ExternalLink } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import { AdminStatusBadge } from '../AdminStatusBadge';
+import { KeyValue, Mono, Section } from '../../developer/kit';
+import { Button } from '../../developer/ui/button';
 import type { AdminChatRelatedRecords } from '../../../api/admin/chats';
 
 interface ChatRelatedRecordsCardProps {
   records: AdminChatRelatedRecords;
 }
 
-function Row({
-  label,
-  value,
-  badge,
-  link,
-  mono,
-}: {
-  label: string;
-  value?: React.ReactNode;
-  badge?: string;
-  link?: string;
-  mono?: boolean;
-}) {
-  if (value === null || value === undefined) return null;
-
-  return (
-    <div className="flex items-start justify-between py-1.5 gap-4">
-      <span className="text-xs text-muted-foreground shrink-0 w-36">{label}</span>
-      <span
-        className={`text-sm text-foreground text-right flex items-center gap-1.5 min-w-0 flex-wrap justify-end ${
-          mono ? 'font-mono text-xs' : ''
-        }`}
-      >
-        {badge ? (
-          <AdminStatusBadge status={badge} />
-        ) : link ? (
-          <Link to={link} className="flex items-center gap-1 text-primary hover:underline text-xs">
-            {String(value)} <ExternalLink size={10} aria-hidden="true" />
-          </Link>
-        ) : (
-          <span className="break-all">
-            {value ?? <span className="text-muted-foreground/60">–</span>}
-          </span>
-        )}
-      </span>
-    </div>
+const linkTo = (to: string | null | undefined, text: string) =>
+  to ? (
+    <Link to={to} className="font-mono text-xs text-primary hover:underline">
+      {text}
+    </Link>
+  ) : (
+    <span className="font-mono text-xs">{text}</span>
   );
-}
 
 export function ChatRelatedRecordsCard({ records }: ChatRelatedRecordsCardProps) {
+  const rows: [string, ReactNode][] = [];
+  if (records.serviceTitle) rows.push(['Tjeneste', records.serviceTitle]);
+  if (records.serviceId) rows.push(['Tjeneste-ID', <Mono key="s">{records.serviceId}</Mono>]);
+  if (records.orderId)
+    rows.push([
+      'Ordre-ID',
+      linkTo(
+        `/dashboard/orders/${records.orderId}`,
+        String(records.orderId).slice(-8).toUpperCase()
+      ),
+    ]);
+  if (records.safePayOrderId)
+    rows.push([
+      'SafePay-ordre',
+      linkTo(records.safePayDetailLink, String(records.safePayOrderId).slice(-8).toUpperCase()),
+    ]);
+  if (records.orderStatus)
+    rows.push(['Ordrestatus', <AdminStatusBadge key="o" status={records.orderStatus} />]);
+  if (records.paymentStatus)
+    rows.push(['Betalingsstatus', <AdminStatusBadge key="p" status={records.paymentStatus} />]);
+  if (records.disputeStatus)
+    rows.push(['Tviststatus', <AdminStatusBadge key="d" status={records.disputeStatus} />]);
+  if (records.agreedPrice != null)
+    rows.push(['Avtalt pris', `${Number(records.agreedPrice).toLocaleString('nb-NO')} NOK`]);
+  if (records.disputeId)
+    rows.push([
+      'Tvist',
+      <Link
+        key="t"
+        to={`/dashboard/disputes/${records.disputeId}`}
+        className="text-primary hover:underline"
+      >
+        Se tvist
+      </Link>,
+    ]);
+
   return (
-    <div className="bg-card rounded-lg border border-border p-5">
-      <h3 className="text-sm font-semibold text-foreground mb-4 border-b border-border pb-2">
-        Tilknyttede data
-      </h3>
+    <Section title="Tilknyttede data">
+      {rows.length ? (
+        <KeyValue items={rows} />
+      ) : (
+        <p className="text-sm text-muted-foreground">Ingen data.</p>
+      )}
 
-      <div className="space-y-0.5">
-        {records.serviceTitle && <Row label="Tjeneste" value={records.serviceTitle} />}
-        {records.serviceId && <Row label="Tjeneste-ID" value={records.serviceId} mono />}
-        {records.orderId && (
-          <Row
-            label="Ordre-ID"
-            value={String(records.orderId).slice(-8).toUpperCase()}
-            link={`/dashboard/orders/${records.orderId}`}
-          />
-        )}
-        {records.safePayOrderId && (
-          <Row
-            label="SafePay-ordre"
-            value={String(records.safePayOrderId).slice(-8).toUpperCase()}
-            link={records.safePayDetailLink ?? undefined}
-          />
-        )}
-        {records.orderStatus && <Row label="Ordrestatus" badge={records.orderStatus} />}
-        {records.paymentStatus && <Row label="Betalingsstatus" badge={records.paymentStatus} />}
-        {records.disputeStatus && <Row label="Tviststatus" badge={records.disputeStatus} />}
-        {records.agreedPrice != null && (
-          <Row
-            label="Avtalt pris"
-            value={`${Number(records.agreedPrice).toLocaleString('nb-NO')} NOK`}
-          />
-        )}
-        {records.disputeId && (
-          <Row label="Tvist" value="Se tvist" link={`/dashboard/disputes/${records.disputeId}`} />
-        )}
-      </div>
-
-      {/* Quick-nav links */}
-      <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-border">
-        {records.safePayDetailLink && (
-          <Link
-            to={records.safePayDetailLink}
-            className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-primary bg-primary/10 hover:bg-primary/15 rounded-lg transition-colors"
-          >
-            SafePay-detaljer <ExternalLink size={10} aria-hidden="true" />
-          </Link>
-        )}
-        {records.reportDetailLink && (
-          <Link
-            to={records.reportDetailLink}
-            className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-orange-700 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors"
-          >
-            Se rapporter <ExternalLink size={10} aria-hidden="true" />
-          </Link>
-        )}
-      </div>
-    </div>
+      {(records.safePayDetailLink || records.reportDetailLink) && (
+        <div className="mt-4 flex flex-wrap gap-2 border-t pt-3">
+          {records.safePayDetailLink && (
+            <Button variant="outline" size="sm" className="bg-card" asChild>
+              <Link to={records.safePayDetailLink}>
+                SafePay-detaljer <ArrowUpRight aria-hidden="true" />
+              </Link>
+            </Button>
+          )}
+          {records.reportDetailLink && (
+            <Button variant="outline" size="sm" className="bg-card" asChild>
+              <Link to={records.reportDetailLink}>
+                Se rapporter <ArrowUpRight aria-hidden="true" />
+              </Link>
+            </Button>
+          )}
+        </div>
+      )}
+    </Section>
   );
 }

@@ -19,6 +19,26 @@ import {
   AdminConfirmDialog,
 } from '../../components/admin';
 import type { ColumnDef } from '../../components/admin/AdminDataTable';
+import { StatusBadge } from '../../components/developer/kit';
+import { Button } from '../../components/developer/ui/button';
+import { Input } from '../../components/developer/ui/input';
+import { Label } from '../../components/developer/ui/label';
+import { Textarea } from '../../components/developer/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/developer/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../components/developer/ui/dialog';
 
 const STATUS_OPTIONS: { label: string; value: DisputeStatus }[] = [
   { label: 'Åpen', value: 'open' },
@@ -36,13 +56,6 @@ const PRIORITY_OPTIONS = [
   { label: 'Høy', value: 'high' },
   { label: 'Kritisk', value: 'critical' },
 ];
-
-const PRIORITY_COLOR: Record<string, string> = {
-  low: 'text-muted-foreground bg-muted/50',
-  medium: 'text-yellow-600 bg-yellow-50',
-  high: 'text-orange-600 bg-orange-50',
-  critical: 'text-red-700 bg-red-100',
-};
 
 const OUTCOME_OPTIONS: { label: string; value: DisputeOutcome }[] = [
   { label: 'Frigi til tilbyder', value: 'release_to_provider' },
@@ -181,13 +194,7 @@ export default function DisputesPage() {
     {
       key: 'priority',
       header: 'Prioritet',
-      render: (d) => (
-        <span
-          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${PRIORITY_COLOR[d.priority] ?? ''}`}
-        >
-          {d.priority}
-        </span>
-      ),
+      render: (d) => <StatusBadge status={d.priority} />,
     },
     {
       key: 'assigned',
@@ -196,7 +203,7 @@ export default function DisputesPage() {
         d.assignedAdminId ? (
           <span className="text-xs text-foreground">{d.assignedAdminId.name}</span>
         ) : (
-          <span className="text-xs text-orange-500">Ikke tildelt</span>
+          <span className="text-xs text-amber-700">Ikke tildelt</span>
         ),
     },
     {
@@ -224,40 +231,34 @@ export default function DisputesPage() {
         const isResolved = ['resolved', 'closed'].includes(d.status);
         return (
           <div className="flex items-center gap-1.5">
-            <Link
-              to={`/dashboard/disputes/${d._id}`}
-              className="px-2.5 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-            >
-              Se detaljer
-            </Link>
+            <Button variant="outline" size="xs" className="bg-card" asChild>
+              <Link to={`/dashboard/disputes/${d._id}`}>Se detaljer</Link>
+            </Button>
             {isActive && !d.assignedAdminId && (
-              <button
+              <Button
+                variant="outline"
+                size="xs"
+                className="bg-card"
                 onClick={() => assignMutation.mutate(d._id)}
                 disabled={assignMutation.isPending}
-                className="px-2.5 py-1.5 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 rounded-lg transition-colors disabled:opacity-50"
               >
                 Ta sak
-              </button>
+              </Button>
             )}
             {isActive && (
-              <button
-                onClick={() => {
-                  setResolveTarget(d);
-                }}
-                className="px-2.5 py-1.5 text-xs font-medium text-orange-600 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors"
-              >
+              <Button size="xs" onClick={() => setResolveTarget(d)}>
                 Løs
-              </button>
+              </Button>
             )}
             {isResolved && (
-              <button
-                onClick={() => {
-                  setReopenTarget(d);
-                }}
-                className="px-2.5 py-1.5 text-xs font-medium text-muted-foreground bg-muted hover:bg-accent rounded-lg transition-colors"
+              <Button
+                variant="outline"
+                size="xs"
+                className="bg-card"
+                onClick={() => setReopenTarget(d)}
               >
                 Gjenåpne
-              </button>
+              </Button>
             )}
           </div>
         );
@@ -266,14 +267,14 @@ export default function DisputesPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <AdminPageHeader
         title="Tvister"
         description="Administrer alle SafePay-tvister og løsninger"
       />
 
       {/* Summary */}
-      <section className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-4">
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">
         {summaryLoading
           ? Array.from({ length: 6 }).map((_, i) => <AdminStatCardSkeleton key={i} />)
           : summary &&
@@ -346,108 +347,95 @@ export default function DisputesPage() {
       />
 
       {/* Resolve dialog */}
-      {resolveTarget && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="bg-card rounded-lg shadow-xl w-full max-w-lg p-6 space-y-4">
-            <h2 className="text-lg font-bold text-foreground">Løs tvist: {resolveTarget.title}</h2>
-            <p className="text-sm text-muted-foreground">
+      <Dialog open={!!resolveTarget} onOpenChange={(o) => !o && setResolveTarget(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Løs tvist: {resolveTarget?.title}</DialogTitle>
+            <DialogDescription>
               Alle handlinger logges og varsler berørte parter. Stripe-refusjoner behandles i
               sanntid.
-            </p>
+            </DialogDescription>
+          </DialogHeader>
 
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Utfall *</label>
-              <select
-                value={resolveForm.outcome}
-                onChange={(e) =>
-                  setResolveForm((f) => ({ ...f, outcome: e.target.value as DisputeOutcome }))
-                }
-                className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-              >
-                <option value="">Velg utfall</option>
+          <div className="space-y-1.5">
+            <Label htmlFor="resolve-outcome">Utfall *</Label>
+            <Select
+              value={resolveForm.outcome}
+              onValueChange={(v) => setResolveForm((f) => ({ ...f, outcome: v as DisputeOutcome }))}
+            >
+              <SelectTrigger id="resolve-outcome" className="w-full">
+                <SelectValue placeholder="Velg utfall" />
+              </SelectTrigger>
+              <SelectContent>
                 {OUTCOME_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
+                  <SelectItem key={o.value} value={o.value}>
                     {o.label}
-                  </option>
+                  </SelectItem>
                 ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                Begrunnelse *
-              </label>
-              <textarea
-                rows={3}
-                value={resolveForm.reason}
-                onChange={(e) => setResolveForm((f) => ({ ...f, reason: e.target.value }))}
-                className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50 resize-none"
-                placeholder="Forklar hvorfor du valgte dette utfallet..."
-              />
-            </div>
-
-            {['partial_refund', 'split_payment'].includes(resolveForm.outcome) && (
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
-                    Kundebeløp (NOK)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={resolveForm.customerAmount}
-                    onChange={(e) =>
-                      setResolveForm((f) => ({ ...f, customerAmount: e.target.value }))
-                    }
-                    className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
-                    Tilbyderbeløp (NOK)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={resolveForm.providerAmount}
-                    onChange={(e) =>
-                      setResolveForm((f) => ({ ...f, providerAmount: e.target.value }))
-                    }
-                    className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                  />
-                </div>
-              </div>
-            )}
-
-            <p className="text-xs text-amber-600 bg-amber-50 rounded-lg p-3">
-              ⚠️ For refusjoner: Stripe API kalles umiddelbart. Dette kan ikke angres.
-            </p>
-
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                onClick={() => setResolveTarget(null)}
-                className="px-4 py-2.5 text-sm font-medium text-muted-foreground bg-muted hover:bg-accent rounded-md transition-colors"
-              >
-                Avbryt
-              </button>
-              <button
-                onClick={handleResolve}
-                disabled={
-                  resolveMutation.isPending || !resolveForm.outcome || !resolveForm.reason.trim()
-                }
-                className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-md transition-colors disabled:opacity-50"
-              >
-                {resolveMutation.isPending && <Loader2 size={14} className="animate-spin" />}
-                Bekreft løsning
-              </button>
-            </div>
+              </SelectContent>
+            </Select>
           </div>
-        </div>
-      )}
+
+          <div className="space-y-1.5">
+            <Label htmlFor="resolve-reason">Begrunnelse *</Label>
+            <Textarea
+              id="resolve-reason"
+              rows={3}
+              value={resolveForm.reason}
+              onChange={(e) => setResolveForm((f) => ({ ...f, reason: e.target.value }))}
+              placeholder="Forklar hvorfor du valgte dette utfallet..."
+            />
+          </div>
+
+          {['partial_refund', 'split_payment'].includes(resolveForm.outcome) && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="resolve-customer">Kundebeløp (NOK)</Label>
+                <Input
+                  id="resolve-customer"
+                  type="number"
+                  min="0"
+                  value={resolveForm.customerAmount}
+                  onChange={(e) =>
+                    setResolveForm((f) => ({ ...f, customerAmount: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="resolve-provider">Tilbyderbeløp (NOK)</Label>
+                <Input
+                  id="resolve-provider"
+                  type="number"
+                  min="0"
+                  value={resolveForm.providerAmount}
+                  onChange={(e) =>
+                    setResolveForm((f) => ({ ...f, providerAmount: e.target.value }))
+                  }
+                />
+              </div>
+            </div>
+          )}
+
+          <p className="rounded-md border border-amber-200/70 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+            For refusjoner: Stripe API kalles umiddelbart. Dette kan ikke angres.
+          </p>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setResolveTarget(null)}>
+              Avbryt
+            </Button>
+            <Button
+              onClick={handleResolve}
+              disabled={
+                resolveMutation.isPending || !resolveForm.outcome || !resolveForm.reason.trim()
+              }
+            >
+              {resolveMutation.isPending && <Loader2 className="animate-spin" />}
+              Bekreft løsning
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Reopen dialog */}
       <AdminConfirmDialog
@@ -464,7 +452,14 @@ export default function DisputesPage() {
           setReopenReason('');
         }}
         trigger={undefined}
-      />
+      >
+        <Textarea
+          aria-label="Årsak til gjenåpning"
+          rows={3}
+          value={reopenReason}
+          onChange={(e) => setReopenReason(e.target.value)}
+        />
+      </AdminConfirmDialog>
     </div>
   );
 }

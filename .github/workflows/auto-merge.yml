@@ -1,0 +1,38 @@
+name: Auto merge
+
+# A PR to main, opened by hand, gets auto-merge on: it merges itself once the required checks
+# pass, and the merge to main runs CI → Deploy → release. No PR is opened from here (that was
+# auto-pr.yml, removed). Draft PRs are left alone until marked ready for review.
+#
+# Needs the secret AUTOMERGE_TOKEN: a fine-grained personal access token for this repository
+# with Contents + Pull requests: read & write. Not GITHUB_TOKEN: a merge made with that token
+# does not start other workflows, so main would get no CI and no deploy.
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  auto-merge:
+    name: Turn on auto-merge
+    # Fork PRs get no secrets, and only this repo's branches should merge themselves.
+    if: ${{ !github.event.pull_request.draft && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Auto-merge on
+        env:
+          GH_TOKEN: ${{ secrets.AUTOMERGE_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::warning::AUTOMERGE_TOKEN is not set: auto-merge not turned on."
+            exit 0
+          fi
+          gh pr merge "$PR" --repo "$REPO" --auto --merge
+          echo "### PR #$PR: auto-merge on" >> "$GITHUB_STEP_SUMMARY"

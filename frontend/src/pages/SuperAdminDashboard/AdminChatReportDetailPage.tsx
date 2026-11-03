@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, MessageSquare, UserCheck, FileText, ExternalLink, Loader2 } from 'lucide-react';
@@ -18,6 +18,24 @@ import {
   AdminErrorState,
   AdminPageHeader,
 } from '../../components/admin';
+import { KeyValue, Mono, Section } from '../../components/developer/kit';
+import { Button } from '../../components/developer/ui/button';
+import { Textarea } from '../../components/developer/ui/textarea';
+import { Label } from '../../components/developer/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/developer/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../components/developer/ui/dialog';
 
 const RESOLVE_OUTCOMES = [
   { label: 'Ingen overtredelse', value: 'no_violation' },
@@ -32,32 +50,6 @@ const RESOLVE_OUTCOMES = [
   { label: 'Løst mellom brukerne', value: 'resolved_between_users' },
   { label: 'Annet', value: 'other' },
 ];
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="bg-card rounded-lg border border-border p-5">
-      <h3 className="text-sm font-semibold text-foreground mb-4 border-b border-border pb-2">
-        {title}
-      </h3>
-      {children}
-    </div>
-  );
-}
-
-function Row({ label, value, badge }: { label: string; value?: React.ReactNode; badge?: string }) {
-  return (
-    <div className="flex items-start justify-between py-1.5 gap-4">
-      <span className="text-xs text-muted-foreground shrink-0 w-40">{label}</span>
-      <span className="text-sm text-foreground text-right flex items-center gap-1 min-w-0">
-        {badge ? (
-          <AdminStatusBadge status={badge} />
-        ) : (
-          (value ?? <span className="text-muted-foreground/60">–</span>)
-        )}
-      </span>
-    </div>
-  );
-}
 
 export default function AdminChatReportDetailPage() {
   const { reportId } = useParams<{ reportId: string }>();
@@ -146,288 +138,253 @@ export default function AdminChatReportDetailPage() {
   const isActive = !['resolved', 'dismissed', 'closed'].includes(report.status);
   const isClosed = ['resolved', 'dismissed', 'closed'].includes(report.status);
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Link
-          to="/dashboard/chat-reports"
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft size={16} /> Tilbake til rapporter
-        </Link>
+  const person = (u?: { name: string; email: string } | null) =>
+    u ? (
+      <div>
+        <p className="text-sm font-medium text-foreground">{u.name}</p>
+        <p className="text-xs text-muted-foreground">{u.email}</p>
       </div>
+    ) : (
+      <p className="text-sm text-muted-foreground">–</p>
+    );
 
+  const details: [string, ReactNode][] = [
+    ['Rapport-ID', <Mono key="id">{report._id}</Mono>],
+    ['Status', <AdminStatusBadge key="st" status={report.status} />],
+    [
+      'Prioritet',
+      <span key="p" className="capitalize">
+        {report.priority}
+      </span>,
+    ],
+  ];
+  if (report.assignedAdminId) details.push(['Tildelt', report.assignedAdminId.name]);
+  details.push(['Type', report.reportType.replace(/_/g, ' ')], ['Omfang', report.scope]);
+  if (report.messageId) details.push(['Meldings-ID', <Mono key="m">{report.messageId}</Mono>]);
+  details.push(
+    ['Beskrivelse', report.description],
+    ['Opprettet', new Date(report.createdAt).toLocaleString('nb-NO')]
+  );
+
+  return (
+    <div className="space-y-5">
       <AdminPageHeader
         title={`Rapport: ${report.title}`}
         description={`${report.reportType.replace(/_/g, ' ')} · ${report.scope}`}
         actions={
-          chatId ? (
-            <Link
-              to={`/dashboard/chat-review?chatId=${chatId}&reportId=${report._id}&source=report`}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/15 rounded-md transition-colors"
-            >
-              <MessageSquare size={15} /> Gjennomgå chat
-            </Link>
-          ) : undefined
+          <>
+            <Button variant="outline" size="sm" className="bg-card" asChild>
+              <Link to="/dashboard/chat-reports">
+                <ArrowLeft /> Tilbake til rapporter
+              </Link>
+            </Button>
+            {chatId && (
+              <Button variant="outline" size="sm" className="bg-card" asChild>
+                <Link
+                  to={`/dashboard/chat-review?chatId=${chatId}&reportId=${report._id}&source=report`}
+                >
+                  <MessageSquare /> Gjennomgå chat
+                </Link>
+              </Button>
+            )}
+          </>
         }
       />
 
-      {/* Status bar */}
-      <div className="flex flex-wrap gap-3 bg-card rounded-lg border border-border p-4">
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Status:</span>
-          <AdminStatusBadge status={report.status} />
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Prioritet:</span>
-          <span className="text-xs font-semibold text-foreground capitalize">
-            {report.priority}
-          </span>
-        </div>
-        {report.assignedAdminId && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Tildelt:</span>
-            <span className="text-xs text-foreground">{report.assignedAdminId.name}</span>
-          </div>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid gap-4 lg:grid-cols-3">
         {/* Left */}
-        <div className="lg:col-span-2 space-y-4">
-          {/* Report details */}
+        <div className="space-y-4 lg:col-span-2">
           <Section title="Rapportdetaljer">
-            <Row
-              label="Rapport-ID"
-              value={<span className="font-mono text-xs">{report._id}</span>}
-            />
-            <Row label="Type" value={report.reportType.replace(/_/g, ' ')} />
-            <Row label="Omfang" value={report.scope} />
-            {report.messageId && (
-              <Row
-                label="Meldings-ID"
-                value={<span className="font-mono text-xs">{report.messageId}</span>}
-              />
-            )}
-            <Row
-              label="Beskrivelse"
-              value={<span className="text-xs leading-relaxed">{report.description}</span>}
-            />
-            <Row label="Opprettet" value={new Date(report.createdAt).toLocaleString('nb-NO')} />
+            <KeyValue items={details} />
           </Section>
 
           {/* Evidence */}
           {report.evidence && report.evidence.length > 0 && (
             <Section title={`Bevis (${report.evidence.length})`}>
-              <div className="space-y-2">
+              <ul className="divide-y rounded-md border">
                 {report.evidence.map((e) => (
-                  <div key={e._id} className="flex items-center gap-3 p-2 bg-muted/50 rounded-md">
-                    <FileText size={14} className="text-muted-foreground shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs text-muted-foreground truncate">
-                        {e.fileType ?? 'Fil'}
-                      </p>
+                  <li key={e._id} className="flex items-center gap-3 px-3 py-2">
+                    <FileText className="size-4 shrink-0 text-muted-foreground" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm text-foreground">{e.fileType ?? 'Fil'}</p>
                       {e.description && (
                         <p className="text-xs text-muted-foreground">{e.description}</p>
                       )}
                     </div>
-                    <a
-                      href={e.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-xs text-primary hover:underline"
-                    >
-                      Åpne <ExternalLink size={10} />
-                    </a>
-                  </div>
+                    <Button variant="ghost" size="xs" asChild>
+                      <a href={e.fileUrl} target="_blank" rel="noopener noreferrer">
+                        Åpne <ExternalLink />
+                      </a>
+                    </Button>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </Section>
           )}
 
           {/* Official messages */}
           {report.officialMessages && report.officialMessages.length > 0 && (
             <Section title="Offisielle meldinger">
-              <div className="space-y-3">
+              <ul className="divide-y rounded-md border">
                 {report.officialMessages.map((m) => (
-                  <div key={m._id} className="p-3 bg-blue-50 rounded-md">
-                    <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                  <li key={m._id} className="px-3 py-2.5">
+                    <div className="mb-1 flex justify-between gap-2 text-xs text-muted-foreground">
                       <span>
                         Fra: {m.senderId?.name ?? '–'} → Til: {m.recipientId?.name ?? '–'}
                       </span>
                       <time>{new Date(m.createdAt).toLocaleString('nb-NO')}</time>
                     </div>
                     <p className="text-sm text-foreground">{m.message}</p>
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </Section>
           )}
 
           {/* Timeline */}
           {report.timeline && report.timeline.length > 0 && (
             <Section title="Tidslinje">
-              <div className="relative pl-6">
-                <div className="absolute left-2 top-0 bottom-0 w-px bg-muted" />
-                <div className="space-y-3">
-                  {[...report.timeline].reverse().map((t) => (
-                    <div key={t._id} className="relative">
-                      <div className="absolute -left-4 w-2 h-2 rounded-full bg-muted-foreground/30 border-2 border-white mt-1" />
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-medium text-foreground">
-                          {t.action.replace(/_/g, ' ')}
-                        </span>
-                        {t.actorId && (
-                          <span className="text-xs text-muted-foreground">av {t.actorId.name}</span>
-                        )}
-                        <time className="text-[10px] text-muted-foreground/60 ml-auto">
-                          {new Date(t.createdAt).toLocaleString('nb-NO')}
-                        </time>
-                      </div>
-                      {t.description && (
-                        <p className="text-xs text-muted-foreground mt-0.5">{t.description}</p>
-                      )}
+              <ol className="relative space-y-3 border-l pl-5">
+                {[...report.timeline].reverse().map((t) => (
+                  <li key={t._id} className="relative">
+                    <span className="absolute top-1.5 -left-[25px] size-2.5 rounded-full bg-muted-foreground/50 ring-4 ring-muted" />
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+                      <span className="text-sm font-medium text-foreground first-letter:uppercase">
+                        {t.action.replace(/_/g, ' ')}
+                      </span>
+                      <time className="text-xs text-muted-foreground">
+                        {new Date(t.createdAt).toLocaleString('nb-NO')}
+                      </time>
                     </div>
-                  ))}
-                </div>
-              </div>
+                    {(t.actorId || t.description) && (
+                      <div className="text-xs text-muted-foreground">
+                        {t.actorId && <span>av {t.actorId.name} </span>}
+                        {t.description}
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ol>
             </Section>
           )}
 
           {/* Internal notes (admin-only) */}
           <Section title="Interne notater (kun admin)">
             {report.internalNotes && report.internalNotes.length > 0 && (
-              <div className="space-y-2 mb-4">
+              <ul className="mb-4 divide-y rounded-md border">
                 {report.internalNotes.map((n) => (
-                  <div key={n._id} className="p-3 bg-yellow-50 border border-yellow-100 rounded-md">
-                    <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                  <li key={n._id} className="px-3 py-2.5">
+                    <div className="mb-1 flex justify-between text-xs text-muted-foreground">
                       <span>{n.adminId?.name ?? '–'}</span>
                       <time>{new Date(n.createdAt).toLocaleString('nb-NO')}</time>
                     </div>
                     <p className="text-sm text-foreground">{n.note}</p>
-                  </div>
+                  </li>
                 ))}
-              </div>
+              </ul>
             )}
             <div className="space-y-2">
-              <textarea
+              <Textarea
                 rows={2}
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
                 placeholder="Legg til internt notat (kun synlig for admins)…"
-                className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50 resize-none"
               />
-              <button
+              <Button
+                size="sm"
                 onClick={() => noteMut.mutate(noteText)}
                 disabled={noteText.trim().length < 3 || noteMut.isPending}
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-md disabled:opacity-40 transition-colors"
               >
-                {noteMut.isPending && <Loader2 size={13} className="animate-spin" />} Lagre notat
-              </button>
+                {noteMut.isPending && <Loader2 className="animate-spin" />} Lagre notat
+              </Button>
             </div>
           </Section>
         </div>
 
         {/* Right sidebar */}
         <div className="space-y-4">
-          {/* Participants */}
           <Section title="Deltakere">
-            <div className="space-y-3">
-              <div>
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1">
-                  Rapportert av
-                </p>
-                {report.reportedBy ? (
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{report.reportedBy.name}</p>
-                    <p className="text-xs text-muted-foreground">{report.reportedBy.email}</p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">–</p>
-                )}
+            <div className="divide-y">
+              <div className="space-y-1 pb-3">
+                <p className="text-xs text-muted-foreground">Rapportert av</p>
+                {person(report.reportedBy)}
               </div>
-              <div className="border-t border-border pt-3">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1">
-                  Rapportert bruker
-                </p>
-                {report.reportedUser ? (
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      {report.reportedUser.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{report.reportedUser.email}</p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">–</p>
-                )}
+              <div className="space-y-1 pt-3">
+                <p className="text-xs text-muted-foreground">Rapportert bruker</p>
+                {person(report.reportedUser)}
               </div>
             </div>
           </Section>
 
-          {/* Send official message */}
           <Section title="Send offisiell melding">
             <div className="space-y-2">
-              <select
+              <Select
                 value={msgRecipient}
-                onChange={(e) => setMsgRecipient(e.target.value as 'reporter' | 'reported_user')}
-                className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
+                onValueChange={(v) => setMsgRecipient(v as 'reporter' | 'reported_user')}
               >
-                <option value="reporter">Til: Reporter</option>
-                <option value="reported_user">Til: Rapportert bruker</option>
-              </select>
-              <textarea
+                <SelectTrigger className="w-full" aria-label="Mottaker">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="reporter">Til: Reporter</SelectItem>
+                  <SelectItem value="reported_user">Til: Rapportert bruker</SelectItem>
+                </SelectContent>
+              </Select>
+              <Textarea
                 rows={2}
                 value={msgText}
                 onChange={(e) => setMsgText(e.target.value)}
                 placeholder="Melding…"
-                className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50 resize-none"
               />
-              <button
+              <Button
+                size="sm"
+                className="w-full"
                 onClick={() => msgMut.mutate()}
                 disabled={msgText.trim().length < 3 || msgMut.isPending}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-40 transition-colors"
               >
-                {msgMut.isPending && <Loader2 size={13} className="animate-spin" />} Send melding
-              </button>
+                {msgMut.isPending && <Loader2 className="animate-spin" />} Send melding
+              </Button>
             </div>
           </Section>
 
-          {/* Actions */}
           <Section title="Handlinger">
             <div className="space-y-2">
               {isActive && !report.assignedAdminId && (
-                <button
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full bg-card"
                   onClick={() => assignMut.mutate()}
                   disabled={assignMut.isPending}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-green-700 bg-green-50 hover:bg-green-100 rounded-md disabled:opacity-50 transition-colors"
                 >
-                  <UserCheck size={14} /> Ta sak
-                </button>
+                  <UserCheck /> Ta sak
+                </Button>
               )}
               {isActive && (
                 <>
-                  <button
-                    onClick={() => setShowResolve(true)}
-                    className="w-full px-3 py-2 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/15 rounded-md transition-colors"
-                  >
+                  <Button size="sm" className="w-full" onClick={() => setShowResolve(true)}>
                     Løs rapport
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="w-full"
                     onClick={() => setShowDismiss(true)}
-                    className="w-full px-3 py-2 text-sm font-medium text-muted-foreground bg-muted hover:bg-accent rounded-md transition-colors"
                   >
                     Avvis rapport
-                  </button>
+                  </Button>
                 </>
               )}
               {isClosed && (
-                <button
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full bg-card"
                   onClick={() => reopenMut.mutate()}
                   disabled={reopenMut.isPending}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-orange-700 bg-orange-50 hover:bg-orange-100 rounded-md disabled:opacity-50 transition-colors"
                 >
-                  {reopenMut.isPending && <Loader2 size={13} className="animate-spin" />} Gjenåpne
-                </button>
+                  {reopenMut.isPending && <Loader2 className="animate-spin" />} Gjenåpne
+                </Button>
               )}
             </div>
           </Section>
@@ -435,99 +392,82 @@ export default function AdminChatReportDetailPage() {
       </div>
 
       {/* Resolve dialog */}
-      {showResolve && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="bg-card rounded-lg shadow-xl w-full max-w-md p-6 space-y-4">
-            <h2 className="text-lg font-bold text-foreground">Løs rapport</h2>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Utfall *</label>
-              <select
-                value={resolveOutcome}
-                onChange={(e) => setResolveOutcome(e.target.value)}
-                className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-              >
-                <option value="">Velg utfall</option>
-                {RESOLVE_OUTCOMES.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
+      <Dialog open={showResolve} onOpenChange={setShowResolve}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Løs rapport</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="resolve-outcome">Utfall *</Label>
+              <Select value={resolveOutcome} onValueChange={setResolveOutcome}>
+                <SelectTrigger id="resolve-outcome" className="w-full">
+                  <SelectValue placeholder="Velg utfall" />
+                </SelectTrigger>
+                <SelectContent>
+                  {RESOLVE_OUTCOMES.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                Begrunnelse *
-              </label>
-              <textarea
+            <div className="space-y-1.5">
+              <Label htmlFor="resolve-reason">Begrunnelse *</Label>
+              <Textarea
+                id="resolve-reason"
                 rows={3}
                 value={resolveReason}
                 onChange={(e) => setResolveReason(e.target.value)}
-                className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50 resize-none"
                 placeholder="Forklar beslutningen…"
               />
             </div>
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => setShowResolve(false)}
-                className="px-4 py-2.5 text-sm text-muted-foreground bg-muted hover:bg-accent rounded-md transition-colors"
-              >
-                Avbryt
-              </button>
-              <button
-                onClick={() => resolveMut.mutate()}
-                disabled={!resolveOutcome || !resolveReason.trim() || resolveMut.isPending}
-                className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-md disabled:opacity-40 transition-colors"
-              >
-                {resolveMut.isPending && <Loader2 size={13} className="animate-spin" />} Bekreft
-              </button>
-            </div>
           </div>
-        </div>
-      )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowResolve(false)}>
+              Avbryt
+            </Button>
+            <Button
+              onClick={() => resolveMut.mutate()}
+              disabled={!resolveOutcome || !resolveReason.trim() || resolveMut.isPending}
+            >
+              {resolveMut.isPending && <Loader2 className="animate-spin" />} Bekreft
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Dismiss dialog */}
-      {showDismiss && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="bg-card rounded-lg shadow-xl w-full max-w-md p-6 space-y-4">
-            <h2 className="text-lg font-bold text-foreground">Avvis rapport</h2>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">
-                Begrunnelse *
-              </label>
-              <textarea
-                rows={3}
-                value={dismissReason}
-                onChange={(e) => setDismissReason(e.target.value)}
-                className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50 resize-none"
-                placeholder="Forklar avvisningen…"
-              />
-            </div>
-            <div className="flex gap-2 justify-end">
-              <button
-                onClick={() => setShowDismiss(false)}
-                className="px-4 py-2.5 text-sm text-muted-foreground bg-muted hover:bg-accent rounded-md transition-colors"
-              >
-                Avbryt
-              </button>
-              <button
-                onClick={() => dismissMut.mutate()}
-                disabled={!dismissReason.trim() || dismissMut.isPending}
-                className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-md disabled:opacity-40 transition-colors"
-              >
-                {dismissMut.isPending && <Loader2 size={13} className="animate-spin" />} Avvis
-              </button>
-            </div>
+      <Dialog open={showDismiss} onOpenChange={setShowDismiss}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Avvis rapport</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label htmlFor="dismiss-reason">Begrunnelse *</Label>
+            <Textarea
+              id="dismiss-reason"
+              rows={3}
+              value={dismissReason}
+              onChange={(e) => setDismissReason(e.target.value)}
+              placeholder="Forklar avvisningen…"
+            />
           </div>
-        </div>
-      )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDismiss(false)}>
+              Avbryt
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => dismissMut.mutate()}
+              disabled={!dismissReason.trim() || dismissMut.isPending}
+            >
+              {dismissMut.isPending && <Loader2 className="animate-spin" />} Avvis
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

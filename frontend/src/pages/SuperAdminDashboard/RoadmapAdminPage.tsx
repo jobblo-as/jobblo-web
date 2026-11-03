@@ -1,21 +1,29 @@
-import { useState } from 'react';
-import { Trash2, Edit3 } from 'lucide-react';
+import { useState, type FormEvent } from 'react';
+import { Trash2, Edit3, Plus } from 'lucide-react';
+import { toast } from 'react-hot-toast';
+import { AdminConfirmDialog, AdminDataTable, AdminPageHeader } from '../../components/admin';
+import type { ColumnDef } from '../../components/admin/AdminDataTable';
+import { StatusBadge } from '../../components/developer/kit';
+import { Badge } from '../../components/developer/ui/badge';
+import { Button } from '../../components/developer/ui/button';
+import { Input } from '../../components/developer/ui/input';
+import { Label } from '../../components/developer/ui/label';
+import { Progress } from '../../components/developer/ui/progress';
+import { Textarea } from '../../components/developer/ui/textarea';
 import {
-  Button,
-  Space,
-  Tag,
-  Typography,
-  Modal,
-  Form,
-  Input,
   Select,
-  InputNumber,
-  message,
-  Progress,
-} from 'antd';
-import { AntdTheme } from '../../theme/AntdTheme';
-import ConfirmDialog from '../../components/Ui/ConfirmDialog';
-import { AdminTable } from '../../components/Ui/AdminTable';
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/developer/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../components/developer/ui/dialog';
 import {
   useRoadmapFeatures,
   useCreateRoadmapFeature,
@@ -24,11 +32,18 @@ import {
 } from '../../features/roadMap/hooks/useRoadmap';
 import type { RoadmapFeature, RoadmapFeatureInput } from '../../features/roadMap/types/roadmap';
 
-const { Title, Text } = Typography;
-const { Option } = Select;
+const emptyForm: RoadmapFeatureInput = {
+  title: '',
+  description: '',
+  status: 'planned',
+  tag: 'feature',
+  progress: 0,
+};
 
-const RoadmapAdminPage = () => {
-  const { data: features = [], isLoading: loading } = useRoadmapFeatures();
+const STATUS_TONE = { completed: 'success', 'in-progress': 'info', planned: 'neutral' } as const;
+
+export default function RoadmapAdminPage() {
+  const { data: features = [], isLoading: loading, isError, refetch } = useRoadmapFeatures();
   const createMutation = useCreateRoadmapFeature();
   const updateMutation = useUpdateRoadmapFeature();
   const deleteMutation = useDeleteRoadmapFeature();
@@ -39,214 +54,219 @@ const RoadmapAdminPage = () => {
     visible: false,
     id: '',
   });
-  const [form] = Form.useForm();
+  const [form, setForm] = useState<RoadmapFeatureInput>(emptyForm);
 
   const handleOpenModal = (feature: RoadmapFeature | null = null) => {
-    if (feature) {
-      setEditingFeature(feature);
-      form.setFieldsValue({
-        title: feature.title,
-        description: feature.description,
-        status: feature.status,
-        tag: feature.tag,
-        progress: feature.progress,
-      });
-    } else {
-      setEditingFeature(null);
-      form.resetFields();
-      form.setFieldsValue({
-        status: 'planned',
-        tag: 'feature',
-        progress: 0,
-      });
-    }
+    setEditingFeature(feature);
+    setForm(
+      feature
+        ? {
+            title: feature.title,
+            description: feature.description,
+            status: feature.status,
+            tag: feature.tag,
+            progress: feature.progress,
+          }
+        : emptyForm
+    );
     setIsModalOpen(true);
   };
 
-  const handleSubmit = async (values: RoadmapFeatureInput) => {
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
     try {
       if (editingFeature) {
-        await updateMutation.mutateAsync({ id: editingFeature._id, data: values });
-        message.success('Feature updated.');
+        await updateMutation.mutateAsync({ id: editingFeature._id, data: form });
       } else {
-        await createMutation.mutateAsync(values);
-        message.success('New feature added.');
+        await createMutation.mutateAsync(form);
       }
       setIsModalOpen(false);
     } catch (err: unknown) {
       const error = err as { response?: { data?: { error?: string } } };
-      message.error(error.response?.data?.error || 'Action failed');
+      toast.error(error.response?.data?.error || 'Action failed');
     }
   };
 
   const handleDelete = async () => {
     try {
       await deleteMutation.mutateAsync(deleteConfirm.id);
-      message.success('Feature has been removed.');
       setDeleteConfirm({ visible: false, id: '' });
     } catch {
-      message.error('Deletion failed');
+      toast.error('Deletion failed');
     }
   };
 
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'success';
-      case 'in-progress':
-        return 'processing';
-      default:
-        return 'default';
-    }
-  };
-
-  const columns = [
+  const columns: ColumnDef<RoadmapFeature>[] = [
     {
-      title: 'Feature',
       key: 'feature',
-      render: (_: any, record: RoadmapFeature) => (
-        <Space direction="vertical" size="small">
-          <Text strong>{record.title}</Text>
-          <Text type="secondary" className="text-xs">
-            {record.description}
-          </Text>
-        </Space>
+      header: 'Feature',
+      className: 'max-w-md whitespace-normal',
+      render: (record) => (
+        <div className="min-w-0">
+          <p className="font-medium text-foreground">{record.title}</p>
+          <p className="text-xs text-muted-foreground">{record.description}</p>
+        </div>
       ),
     },
     {
-      title: 'Status',
-      dataIndex: 'status',
       key: 'status',
-      render: (status: string) => (
-        <Tag color={getStatusColor(status)} className="uppercase text-[10px] font-bold">
-          {status}
-        </Tag>
+      header: 'Status',
+      render: (record) => (
+        <StatusBadge status={record.status} tone={STATUS_TONE[record.status] ?? 'neutral'} />
       ),
     },
     {
-      title: 'Tag',
-      dataIndex: 'tag',
       key: 'tag',
-      render: (tag: string) => (
-        <Tag className="uppercase text-[10px] font-bold text-muted-foreground italic">{tag}</Tag>
+      header: 'Tag',
+      render: (record) => (
+        <Badge variant="outline" className="capitalize text-muted-foreground">
+          {record.tag}
+        </Badge>
       ),
     },
     {
-      title: 'Progress',
       key: 'progress',
-      render: (_: any, record: RoadmapFeature) => (
-        <Space align="center">
-          <Progress percent={record.progress} size="small" strokeColor="#2d4a3e" />
-          <Text strong className="text-xs">
-            {record.progress}%
-          </Text>
-        </Space>
+      header: 'Progress',
+      render: (record) => (
+        <div className="flex w-36 items-center gap-2">
+          <Progress value={record.progress} className="h-1.5" />
+          <span className="text-xs tabular-nums text-muted-foreground">{record.progress}%</span>
+        </div>
       ),
     },
     {
-      title: 'Action',
       key: 'action',
-      render: (_: any, record: RoadmapFeature) => (
-        <Space>
-          <Button
-            type="primary"
-            icon={<Edit3 size={16} />}
-            onClick={() => handleOpenModal(record)}
-            className="flex items-center"
-          >
-            Edit
+      header: 'Action',
+      className: 'whitespace-nowrap',
+      render: (record) => (
+        <div className="flex items-center gap-1.5">
+          <Button variant="outline" size="sm" onClick={() => handleOpenModal(record)}>
+            <Edit3 /> Edit
           </Button>
           <Button
-            type="primary"
-            danger
-            icon={<Trash2 size={16} />}
+            variant="destructive"
+            size="sm"
             onClick={() => setDeleteConfirm({ visible: true, id: record._id })}
-            className="flex items-center"
           >
-            Delete
+            <Trash2 /> Delete
           </Button>
-        </Space>
+        </div>
       ),
     },
   ];
 
   return (
-    <div className="p-4">
-      <Title level={2}>Roadmap Management</Title>
-
-      <AdminTable
-        title="Roadmap"
-        columns={columns}
-        dataSource={features}
-        rowKey="_id"
-        loading={loading}
-        pagination={false}
-        onAddButtonClick={() => handleOpenModal()}
-        addButtonText="Add New Entry"
+    <div className="space-y-5">
+      <AdminPageHeader
+        title="Roadmap Management"
+        actions={
+          <Button size="sm" onClick={() => handleOpenModal()}>
+            <Plus /> Add New Entry
+          </Button>
+        }
       />
 
-      <Modal
-        title={editingFeature ? 'Edit Feature' : 'Add New Feature'}
-        open={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
-        footer={null}
-        width={500}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSubmit}
-          initialValues={{
-            status: 'planned',
-            tag: 'feature',
-            progress: 0,
-          }}
-        >
-          <Form.Item name="title" label="Title" rules={[{ required: true }]}>
-            <Input placeholder="E.g. Chat Improvements" />
-          </Form.Item>
+      <AdminDataTable
+        columns={columns}
+        data={features}
+        keyExtractor={(row) => row._id}
+        loading={loading}
+        error={isError}
+        onRetry={() => refetch()}
+        emptyTitle="No roadmap entries"
+        emptyDescription="Add the first entry to the roadmap."
+      />
 
-          <Form.Item name="description" label="Description" rules={[{ required: true }]}>
-            <Input.TextArea rows={3} placeholder="Detailed description..." />
-          </Form.Item>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Form.Item name="status" label="Status" rules={[{ required: true }]}>
-              <Select>
-                <Option value="planned">Planned</Option>
-                <Option value="in-progress">In Progress</Option>
-                <Option value="completed">Completed</Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item name="tag" label="Tag" rules={[{ required: true }]}>
-              <Select>
-                <Option value="feature">Feature</Option>
-                <Option value="bugfix">Bugfix</Option>
-                <Option value="improvement">Improvement</Option>
-                <Option value="security">Security</Option>
-              </Select>
-            </Form.Item>
-          </div>
-
-          <Form.Item name="progress" label="Progress">
-            <InputNumber min={0} max={100} className="w-full" addonAfter="%" />
-          </Form.Item>
-
-          <Form.Item className="flex justify-end">
-            <Space>
-              <Button onClick={() => setIsModalOpen(false)}>Cancel</Button>
-              <Button type="primary" htmlType="submit" loading={isSubmitting}>
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editingFeature ? 'Edit Feature' : 'Add New Feature'}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="roadmap-title">Title</Label>
+              <Input
+                id="roadmap-title"
+                required
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                placeholder="E.g. Chat Improvements"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="roadmap-description">Description</Label>
+              <Textarea
+                id="roadmap-description"
+                required
+                rows={3}
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                placeholder="Detailed description..."
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="roadmap-status">Status</Label>
+                <Select
+                  value={form.status}
+                  onValueChange={(status) =>
+                    setForm({ ...form, status: status as RoadmapFeature['status'] })
+                  }
+                >
+                  <SelectTrigger id="roadmap-status" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="planned">Planned</SelectItem>
+                    <SelectItem value="in-progress">In Progress</SelectItem>
+                    <SelectItem value="completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="roadmap-tag">Tag</Label>
+                <Select
+                  value={form.tag}
+                  onValueChange={(tag) => setForm({ ...form, tag: tag as RoadmapFeature['tag'] })}
+                >
+                  <SelectTrigger id="roadmap-tag" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="feature">Feature</SelectItem>
+                    <SelectItem value="bugfix">Bugfix</SelectItem>
+                    <SelectItem value="improvement">Improvement</SelectItem>
+                    <SelectItem value="security">Security</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="roadmap-progress">Progress (%)</Label>
+              <Input
+                id="roadmap-progress"
+                type="number"
+                min={0}
+                max={100}
+                value={form.progress}
+                onChange={(e) => setForm({ ...form, progress: Number(e.target.value) })}
+              />
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
                 {editingFeature ? 'Update Feature' : 'Add Feature'}
               </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-      <ConfirmDialog
+      <AdminConfirmDialog
         title="Are you sure?"
         description="You cannot undo this!"
         confirmText="Yes, delete it!"
@@ -257,13 +277,5 @@ const RoadmapAdminPage = () => {
         onConfirm={handleDelete}
       />
     </div>
-  );
-};
-
-export default function RoadmapAdminPageWithTheme() {
-  return (
-    <AntdTheme>
-      <RoadmapAdminPage />
-    </AntdTheme>
   );
 }

@@ -38,11 +38,7 @@ describe('legacy subscription endpoints', () => {
     ['get', '/api/stripe/extra-contact-status/cs_1', 'SUBSCRIPTION_V2_ENTITLEMENTS_DISABLED'],
     ['get', '/api/plans', 'SUBSCRIPTION_V2_PLAN_CATALOGUE_DISABLED'],
     ['post', '/api/coupons/validate', 'SUBSCRIPTION_REBUILD_IN_PROGRESS'],
-    ['get', '/api/admin/billing/subscriptions/summary', 'SUBSCRIPTION_REBUILD_IN_PROGRESS'],
     ['post', '/api/admin/billing/subscriptions/reconcile', 'SUBSCRIPTION_REBUILD_IN_PROGRESS'],
-    ['get', '/api/admin/promotion-codes', 'SUBSCRIPTION_REBUILD_IN_PROGRESS'],
-    ['post', '/api/admin/promotion-codes', 'SUBSCRIPTION_REBUILD_IN_PROGRESS'],
-    ['post', '/api/admin/promotion-codes/coupon_1/deactivate', 'SUBSCRIPTION_REBUILD_IN_PROGRESS'],
   ])('%s %s returns the appropriate disabled response', async (method, path, code) => {
     const response = await request(app)[method](path);
 

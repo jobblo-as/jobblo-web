@@ -376,12 +376,6 @@ export const deleteShopItem = async (id: string) => {
 export const fetchSubscriptionBillingSummary = async (mode: string) =>
   (await mainLink.get(`/api/admin/billing/subscriptions/summary?mode=${mode}`)).data;
 
-export const reconcileSubscriptionBilling = async (payload: {
-  mode: string;
-  limit: number;
-  cursorUserId?: string;
-}) => (await mainLink.post('/api/admin/billing/subscriptions/reconcile', payload)).data;
-
 export const fetchPromotionCodes = async <T = unknown>(): Promise<{
   vouchers: T[];
   mode: string;

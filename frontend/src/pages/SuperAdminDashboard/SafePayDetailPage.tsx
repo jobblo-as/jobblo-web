@@ -1,4 +1,11 @@
 import React, { useState } from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from '../../components/developer/ui/avatar';
+import { Button } from '../../components/developer/ui/button';
+import { Card, CardContent } from '../../components/developer/ui/card';
+import { Checkbox } from '../../components/developer/ui/checkbox';
+import { Progress } from '../../components/developer/ui/progress';
+import { Textarea } from '../../components/developer/ui/textarea';
+import { Section, StatusBadge, Timeline } from '../../components/developer/kit';
 import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -10,6 +17,7 @@ import {
   MessageSquare,
   Lock,
   Loader2,
+  Star,
 } from 'lucide-react';
 import { useSafePayDetail, useSafePayTimeline, useSafePayChat } from '../../hooks/admin/safepay';
 import type { AdminChatMessage } from '../../api/admin/safepay';
@@ -29,28 +37,19 @@ function copyToClipboard(text: string) {
 function CopyButton({ value }: { value: string }) {
   const [copied, setCopied] = useState(false);
   return (
-    <button
+    <Button
+      variant="ghost"
+      size="icon-xs"
       onClick={() => {
         copyToClipboard(value);
         setCopied(true);
         setTimeout(() => setCopied(false), 1500);
       }}
-      className="ml-1.5 text-muted-foreground hover:text-foreground transition-colors"
+      className="text-muted-foreground"
       aria-label="Kopier"
     >
-      {copied ? <CheckCircle2 size={13} className="text-green-500" /> : <Copy size={13} />}
-    </button>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="rounded-lg border border-border bg-card p-5 shadow-sm">
-      <h3 className="mb-4 border-b border-border pb-3 text-sm font-semibold tracking-tight text-foreground">
-        {title}
-      </h3>
-      {children}
-    </div>
+      {copied ? <CheckCircle2 className="text-emerald-600" /> : <Copy />}
+    </Button>
   );
 }
 
@@ -72,7 +71,7 @@ function Row({
         {badge ? (
           <AdminStatusBadge status={badge} />
         ) : (
-          (value ?? <span className="text-muted-foreground/60">–</span>)
+          (value ?? <span className="text-muted-foreground">–</span>)
         )}
         {copy && <CopyButton value={copy} />}
       </span>
@@ -99,38 +98,28 @@ function UserCard({
   if (!user) return <p className="text-sm text-muted-foreground">Ikke tilgjengelig</p>;
   return (
     <div className="flex items-start gap-3">
-      <img
-        src={
-          user.avatarUrl ||
-          `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name ?? 'U')}&background=2d4a3e&color=fff&size=48`
-        }
-        alt={user.name}
-        className="w-10 h-10 rounded-full object-cover shrink-0"
-      />
+      <Avatar size="lg">
+        {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user.name} />}
+        <AvatarFallback>{(user.name ?? 'U')[0]?.toUpperCase()}</AvatarFallback>
+      </Avatar>
       <div className="min-w-0 space-y-0.5">
-        <p className="text-sm font-semibold text-foreground">{user.name}</p>
+        <p className="text-sm font-medium text-foreground">{user.name}</p>
         <p className="text-xs text-muted-foreground">{user.email}</p>
         <p className="text-xs text-muted-foreground capitalize">{role}</p>
         <div className="flex items-center gap-2 mt-1">
-          {user.verified && (
-            <span className="text-xs text-green-600 font-medium">✓ Verifisert</span>
-          )}
+          {user.verified && <StatusBadge status="verified" tone="success" label="Verifisert" />}
           {user.accountStatus && <AdminStatusBadge status={user.accountStatus} />}
         </div>
-        <p className="text-xs text-muted-foreground">
-          ⭐ {user.averageRating?.toFixed(1) ?? '–'} · {user.completedJobs ?? 0} jobber
+        <p className="flex items-center gap-1 text-xs text-muted-foreground">
+          <Star className="size-3" /> {user.averageRating?.toFixed(1) ?? '–'} ·{' '}
+          {user.completedJobs ?? 0} jobber
         </p>
       </div>
     </div>
   );
 }
 
-const SOURCE_COLORS: Record<string, string> = {
-  order: 'bg-blue-100 text-blue-700',
-  chat: 'bg-purple-100 text-purple-700',
-  dispute: 'bg-red-100 text-red-700',
-  admin: 'bg-orange-100 text-orange-700',
-};
+const SOURCE_TONE = { order: 'info', dispute: 'danger', admin: 'warning' } as const;
 
 // ── Chat access panel ──────────────────────────────────────────────────────────
 function ChatAccessPanel({
@@ -160,43 +149,43 @@ function ChatAccessPanel({
 
   if (!showForm && !submitted) {
     return (
-      <button
+      <Button
+        variant="outline"
+        size="sm"
+        className="w-full justify-start bg-card"
         onClick={() => setShowForm(true)}
-        className="flex items-center gap-2 w-full px-3 py-2 text-xs font-medium text-muted-foreground bg-muted/50 hover:bg-accent rounded-md transition-colors border border-border"
       >
-        <Lock size={13} />
+        <Lock />
         {hasActiveDispute ? 'Se full chat (tvist åpen)' : 'Be om tilgang til full chat'}
-      </button>
+      </Button>
     );
   }
 
   if (showForm && !submitted) {
     return (
       <div className="space-y-2 pt-2">
-        <p className="text-xs text-amber-600 bg-amber-50 rounded-lg p-2">
+        <p className="rounded-md border border-amber-200/70 bg-amber-50 p-2 text-xs text-amber-700">
           Tilgang logges som admin-aktivitet. Oppgi en gyldig grunn.
         </p>
-        <textarea
+        <Textarea
           rows={2}
           value={reason}
           onChange={(e) => setReason(e.target.value)}
           placeholder="Grunn for tilgang (min. 5 tegn)…"
-          className="w-full px-3 py-2 text-xs border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50 resize-none"
+          className="resize-none text-xs"
         />
         <div className="flex gap-2">
-          <button
-            onClick={resetAccess}
-            className="flex-1 py-2 text-xs font-medium text-muted-foreground bg-muted hover:bg-accent rounded-md transition-colors"
-          >
+          <Button variant="outline" size="sm" className="flex-1 bg-card" onClick={resetAccess}>
             Avbryt
-          </button>
-          <button
+          </Button>
+          <Button
+            size="sm"
+            className="flex-1"
             onClick={handleSubmit}
             disabled={reason.trim().length < 5}
-            className="flex-1 py-2 text-xs font-medium text-white bg-primary hover:bg-primary/90 rounded-md transition-colors disabled:opacity-40"
           >
             Hent chat
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -206,21 +195,18 @@ function ChatAccessPanel({
     <div className="pt-2 space-y-2">
       {chatQuery.isLoading && (
         <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
-          <Loader2 size={14} className="animate-spin" /> Laster chatthistorikk…
+          <Loader2 className="size-3.5 animate-spin" /> Laster chatthistorikk…
         </div>
       )}
       {chatQuery.isError && (
         <div className="space-y-2">
-          <p className="text-xs text-red-600 bg-red-50 rounded-lg p-2">
+          <p className="rounded-md border border-red-200/70 bg-red-50 p-2 text-xs text-red-700">
             {(chatQuery.error as { response?: { data?: { message?: string } } })?.response?.data
               ?.message ?? 'Tilgang nektet. Krever aktiv tvist eller revisjonstillatelse.'}
           </p>
-          <button
-            onClick={resetAccess}
-            className="text-xs text-muted-foreground hover:text-foreground underline"
-          >
+          <Button variant="outline" size="sm" onClick={resetAccess}>
             Prøv igjen
-          </button>
+          </Button>
         </div>
       )}
       {chatQuery.data && (
@@ -239,24 +225,19 @@ function ChatMessagesView({
   onClose: () => void;
 }) {
   return (
-    <div className="border border-border rounded-md overflow-hidden">
-      <div className="flex items-center justify-between px-3 py-2 bg-muted/50 border-b border-border">
+    <div className="overflow-hidden rounded-md border">
+      <div className="flex items-center justify-between border-b bg-muted/40 px-3 py-2">
         <div className="flex items-center gap-2">
-          <MessageSquare size={13} className="text-muted-foreground" />
-          <span className="text-xs font-semibold text-foreground">
+          <MessageSquare className="size-3.5 text-muted-foreground" />
+          <span className="text-xs font-medium text-foreground">
             Chatthistorikk (skrivebeskyttet)
           </span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full font-medium">
-            Kun lesing
-          </span>
-          <button
-            onClick={onClose}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
+          <StatusBadge status="read_only" tone="warning" label="Kun lesing" />
+          <Button variant="ghost" size="xs" onClick={onClose}>
             Lukk
-          </button>
+          </Button>
         </div>
       </div>
       <div className="max-h-80 overflow-y-auto p-3 space-y-2 bg-card">
@@ -268,7 +249,7 @@ function ChatMessagesView({
             if (isSystem) {
               return (
                 <div key={msg._id} className="text-center">
-                  <span className="inline-block text-[10px] text-muted-foreground bg-muted/50 px-3 py-1 rounded-full border border-border">
+                  <span className="inline-block rounded-md border bg-muted/40 px-2 py-0.5 text-[10px] text-muted-foreground">
                     {msg.text ?? msg.type}
                   </span>
                 </div>
@@ -278,18 +259,18 @@ function ChatMessagesView({
             const senderRole = msg.sender?.role ?? '';
             return (
               <div key={msg._id} className="flex gap-2.5">
-                <div className="w-6 h-6 rounded-full bg-muted shrink-0 flex items-center justify-center text-[10px] font-bold text-muted-foreground mt-0.5">
+                <div className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-medium text-muted-foreground">
                   {senderName[0]?.toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 mb-0.5">
-                    <span className="text-xs font-semibold text-foreground">{senderName}</span>
+                    <span className="text-xs font-medium text-foreground">{senderName}</span>
                     {senderRole && (
                       <span className="text-[10px] text-muted-foreground capitalize">
                         {senderRole}
                       </span>
                     )}
-                    <time className="text-[10px] text-muted-foreground/60 ml-auto">
+                    <time className="ml-auto text-[10px] text-muted-foreground">
                       {new Date(msg.createdAt).toLocaleString('nb-NO')}
                     </time>
                   </div>
@@ -306,8 +287,8 @@ function ChatMessagesView({
                           rel="noopener noreferrer"
                           className="flex items-center gap-1 text-[10px] text-primary hover:underline"
                         >
-                          <FileText size={10} /> Vedlegg {i + 1}
-                          <ExternalLink size={9} />
+                          <FileText className="size-2.5" /> Vedlegg {i + 1}
+                          <ExternalLink className="size-2.5" />
                         </a>
                       ))}
                     </div>
@@ -469,50 +450,48 @@ export default function SafePayDetailPage() {
     ].includes(dispute.status);
 
   return (
-    <div className="space-y-6">
-      {/* Back nav */}
-      <div className="flex items-center gap-3">
-        <Link
-          to="/dashboard/safepay"
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft size={16} /> Tilbake til SafePay
-        </Link>
-      </div>
-
+    <div className="space-y-4">
       <AdminPageHeader
         title={`Kontrakt ${order._id.slice(-8).toUpperCase()}`}
         description={order.serviceId?.title ?? 'Ukjent tjeneste'}
         actions={
-          dispute ? (
-            <Link
-              to={`/dashboard/disputes/${dispute._id}`}
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors"
-            >
-              <AlertTriangle size={15} /> Vis tvist
-            </Link>
-          ) : undefined
+          <>
+            <Button variant="outline" size="sm" className="bg-card" asChild>
+              <Link to="/dashboard/safepay">
+                <ArrowLeft /> Tilbake til SafePay
+              </Link>
+            </Button>
+            {dispute && (
+              <Button variant="outline" size="sm" className="bg-card text-red-700" asChild>
+                <Link to={`/dashboard/disputes/${dispute._id}`}>
+                  <AlertTriangle /> Vis tvist
+                </Link>
+              </Button>
+            )}
+          </>
         }
       />
 
       {/* Status bar */}
-      <div className="flex flex-wrap gap-x-6 gap-y-3 rounded-lg border border-border bg-card p-4 shadow-sm">
-        {(
-          [
-            { label: 'Ordre', value: order.status },
-            { label: 'Betaling', value: order.paymentStatus },
-            { label: 'Chat', value: chatMeta?.status },
-            { label: 'Tvist', value: dispute?.status },
-          ] as { label: string; value?: string }[]
-        ).map(({ label, value }) =>
-          value ? (
-            <div key={label} className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">{label}:</span>
-              <AdminStatusBadge status={value} />
-            </div>
-          ) : null
-        )}
-      </div>
+      <Card size="sm">
+        <CardContent className="flex flex-wrap gap-x-6 gap-y-3">
+          {(
+            [
+              { label: 'Ordre', value: order.status },
+              { label: 'Betaling', value: order.paymentStatus },
+              { label: 'Chat', value: chatMeta?.status },
+              { label: 'Tvist', value: dispute?.status },
+            ] as { label: string; value?: string }[]
+          ).map(({ label, value }) =>
+            value ? (
+              <div key={label} className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">{label}:</span>
+                <AdminStatusBadge status={value} />
+              </div>
+            ) : null
+          )}
+        </CardContent>
+      </Card>
 
       {/* Main grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -745,7 +724,7 @@ export default function SafePayDetailPage() {
                   value={new Date(safePayHistory.paymentDate).toLocaleString('nb-NO')}
                 />
               )}
-              <p className="mt-2 rounded-lg border border-amber-100 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
+              <p className="mt-2 rounded-md border border-amber-200/70 bg-amber-50 p-3 text-xs leading-5 text-amber-700">
                 Connect-status viser kontotilkobling. Tilbyderens interne saldo er ikke en bekreftet
                 bankutbetaling; overføringsstatus er ikke tilgjengelig her.
               </p>
@@ -764,19 +743,15 @@ export default function SafePayDetailPage() {
               />
             ) : (
               <div className="space-y-2">
-                <div className="h-2 bg-muted rounded-full overflow-hidden mb-3">
-                  <div
-                    className="h-full bg-primary rounded-full transition-all"
-                    style={{ width: `${checklistPct}%` }}
-                  />
-                </div>
+                <Progress value={checklistPct} className="mb-3 h-1.5" />
                 {checklist.map((item) => (
                   <div key={item.id} className="flex items-start gap-2.5 py-1.5">
-                    <div
-                      className={`w-4 h-4 rounded border shrink-0 mt-0.5 flex items-center justify-center ${item.checked ? 'bg-primary border-primary' : 'border-border'}`}
-                    >
-                      {item.checked && <CheckCircle2 size={12} className="text-white" />}
-                    </div>
+                    <Checkbox
+                      checked={item.checked}
+                      disabled
+                      aria-label={item.text}
+                      className="mt-0.5 disabled:opacity-100"
+                    />
                     <div className="min-w-0">
                       <p
                         className={`text-sm ${item.checked ? 'text-muted-foreground line-through' : 'text-foreground'}`}
@@ -812,7 +787,7 @@ export default function SafePayDetailPage() {
                         <img
                           src={url}
                           alt={`Før ${i + 1}`}
-                          className="w-16 h-16 object-cover rounded-lg border border-border"
+                          className="size-16 rounded-md border object-cover"
                         />
                       </a>
                     ))}
@@ -828,7 +803,7 @@ export default function SafePayDetailPage() {
                         <img
                           src={url}
                           alt={`Etter ${i + 1}`}
-                          className="w-16 h-16 object-cover rounded-lg border border-border"
+                          className="size-16 rounded-md border object-cover"
                         />
                       </a>
                     ))}
@@ -846,7 +821,8 @@ export default function SafePayDetailPage() {
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 text-xs text-primary hover:underline mb-1"
                     >
-                      <FileText size={13} /> Vedlegg {i + 1} <ExternalLink size={11} />
+                      <FileText className="size-3.5" /> Vedlegg {i + 1}{' '}
+                      <ExternalLink className="size-3" />
                     </a>
                   ))}
                 </div>
@@ -908,12 +884,16 @@ export default function SafePayDetailPage() {
               <Row label="Status" badge={dispute.status} />
               <Row label="Prioritet" value={dispute.priority} />
               <div className="pt-2">
-                <Link
-                  to={`/dashboard/disputes/${dispute._id}`}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors"
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-start bg-card text-red-700"
+                  asChild
                 >
-                  <AlertTriangle size={13} /> Administrer tvist
-                </Link>
+                  <Link to={`/dashboard/disputes/${dispute._id}`}>
+                    <AlertTriangle /> Administrer tvist
+                  </Link>
+                </Button>
               </div>
             </Section>
           )}
@@ -929,35 +909,15 @@ export default function SafePayDetailPage() {
                 className="py-4"
               />
             ) : (
-              <div className="relative">
-                <div className="absolute left-3 top-0 bottom-0 w-px bg-muted" aria-hidden="true" />
-                <div className="space-y-3 pl-8">
-                  {timeline.map((event, i) => (
-                    <div key={i} className="relative">
-                      <div
-                        className="absolute -left-5 w-2.5 h-2.5 rounded-full bg-muted-foreground/30 border-2 border-white mt-1"
-                        aria-hidden="true"
-                      />
-                      <div>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span
-                            className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium ${SOURCE_COLORS[event.source] ?? 'bg-muted text-muted-foreground'}`}
-                          >
-                            {event.source}
-                          </span>
-                          <span className="text-xs font-medium text-foreground">
-                            {event.action.replace(/_/g, ' ')}
-                          </span>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">{event.description}</p>
-                        <time className="text-[10px] text-muted-foreground/60">
-                          {new Date(event.timestamp).toLocaleString('nb-NO')}
-                        </time>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <Timeline
+                events={timeline.map((event) => ({
+                  at: event.timestamp,
+                  source: event.source,
+                  title: event.action.replace(/_/g, ' '),
+                  detail: event.description,
+                  tone: SOURCE_TONE[event.source as keyof typeof SOURCE_TONE] ?? 'neutral',
+                }))}
+              />
             )}
           </Section>
         </div>

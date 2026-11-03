@@ -13,6 +13,8 @@ import {
   AdminSearchInput,
 } from '../../components/admin';
 import type { ColumnDef } from '../../components/admin/AdminDataTable';
+import { StatusBadge } from '../../components/developer/kit';
+import { Button } from '../../components/developer/ui/button';
 
 const STATUS_OPTIONS = [
   { label: 'Forespurt', value: 'requested' },
@@ -38,7 +40,9 @@ const SAFEPAY_OPTIONS = [
 function CopyButton({ value }: { value: string }) {
   const [copied, setCopied] = useState(false);
   return (
-    <button
+    <Button
+      variant="ghost"
+      size="icon-xs"
       onClick={(e) => {
         e.stopPropagation();
         navigator.clipboard.writeText(value).then(() => {
@@ -47,12 +51,11 @@ function CopyButton({ value }: { value: string }) {
           setTimeout(() => setCopied(false), 1500);
         });
       }}
-      className="p-1 rounded text-muted-foreground hover:text-foreground transition-colors"
       aria-label="Kopier Chat ID"
       title="Kopier Chat ID"
     >
-      {copied ? <CheckCircle2 size={13} className="text-green-500" /> : <Copy size={13} />}
-    </button>
+      {copied ? <CheckCircle2 className="text-emerald-600" /> : <Copy />}
+    </Button>
   );
 }
 
@@ -158,9 +161,7 @@ export default function AdminChatsPage() {
       header: 'Rapporter',
       render: (c) =>
         c.reportCount > 0 ? (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">
-            {c.reportCount}
-          </span>
+          <StatusBadge status="reported" tone="danger" label={String(c.reportCount)} />
         ) : (
           <span className="text-xs text-muted-foreground">0</span>
         ),
@@ -181,26 +182,26 @@ export default function AdminChatsPage() {
       className: 'whitespace-nowrap',
       render: (c) => (
         <div className="flex items-center gap-1.5">
-          <button
+          <Button
+            variant="outline"
+            size="xs"
             onClick={() => navigate(`/dashboard/chats/${c._id}`)}
-            className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
             aria-label="Se chat"
           >
-            <Eye size={12} aria-hidden="true" /> Se chat
-          </button>
-          <Link
-            to={`/dashboard/chat-review?chatId=${c._id}`}
-            className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-primary bg-primary/10 hover:bg-primary/15 rounded-lg transition-colors"
-          >
-            <MessageSquare size={12} aria-hidden="true" /> Gjennomgå
-          </Link>
+            <Eye aria-hidden="true" /> Se chat
+          </Button>
+          <Button variant="outline" size="xs" asChild>
+            <Link to={`/dashboard/chat-review?chatId=${c._id}`}>
+              <MessageSquare aria-hidden="true" /> Gjennomgå
+            </Link>
+          </Button>
         </div>
       ),
     },
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <AdminPageHeader
         title="Chatter"
         description="Søk og administrer samtaler mellom kunder og tilbydere"
@@ -218,7 +219,7 @@ export default function AdminChatsPage() {
         pagination={data?.pagination}
         onPageChange={(p) => setPage(p)}
         toolbar={
-          <div className="flex flex-wrap gap-3 w-full">
+          <div className="flex w-full flex-wrap gap-2">
             <AdminSearchInput
               value={search}
               onChange={(v) => {

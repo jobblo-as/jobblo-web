@@ -20,13 +20,13 @@ export function AdminPagination({ pagination, onPageChange, className }: AdminPa
   return (
     <div
       className={cn(
-        'flex flex-col sm:flex-row items-center justify-between gap-3 px-1 py-3',
+        'flex flex-col items-center justify-between gap-2 py-2 text-xs text-muted-foreground sm:flex-row',
         className
       )}
       role="navigation"
       aria-label="Paginering"
     >
-      <p className="text-sm text-muted-foreground">
+      <p>
         Viser{' '}
         <span className="font-medium text-foreground">
           {from}–{to}
@@ -34,16 +34,15 @@ export function AdminPagination({ pagination, onPageChange, className }: AdminPa
         av <span className="font-medium text-foreground">{total}</span> resultater
       </p>
 
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1">
         <Button
           variant="outline"
-          size="icon"
+          size="icon-sm"
           onClick={() => onPageChange(page - 1)}
           disabled={!hasPreviousPage}
-          className="disabled:opacity-40"
           aria-label="Forrige side"
         >
-          <ChevronLeft size={16} />
+          <ChevronLeft />
         </Button>
 
         {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -61,13 +60,9 @@ export function AdminPagination({ pagination, onPageChange, className }: AdminPa
             <Button
               key={pageNum}
               variant={pageNum === page ? 'default' : 'outline'}
+              size="sm"
               onClick={() => onPageChange(pageNum)}
-              className={cn(
-                'min-w-[36px] h-9 px-3 rounded-lg text-sm font-medium',
-                pageNum === page
-                  ? 'bg-primary text-white hover:bg-primary/90'
-                  : 'border-border text-muted-foreground'
-              )}
+              className="min-w-8 px-2 tabular-nums"
               aria-label={`Side ${pageNum}`}
               aria-current={pageNum === page ? 'page' : undefined}
             >
@@ -78,13 +73,12 @@ export function AdminPagination({ pagination, onPageChange, className }: AdminPa
 
         <Button
           variant="outline"
-          size="icon"
+          size="icon-sm"
           onClick={() => onPageChange(page + 1)}
           disabled={!hasNextPage}
-          className="disabled:opacity-40"
           aria-label="Neste side"
         >
-          <ChevronRight size={16} />
+          <ChevronRight />
         </Button>
       </div>
     </div>
