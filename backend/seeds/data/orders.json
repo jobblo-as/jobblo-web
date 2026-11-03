@@ -1,0 +1,1308 @@
+[
+  {
+    "_id": {
+      "$oid": "6aea37b121b49793625a82f0"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80da"
+    },
+    "customerId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "providerId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "status": "completed",
+    "initialPrice": 800,
+    "agreedPrice": 800,
+    "paymentStatus": "paid",
+    "autoReleaseWarnedAt": null,
+    "lastAutoAttemptAt": null,
+    "payoutLockId": null,
+    "payoutLockedAt": null,
+    "checklist": [],
+    "review": {
+      "overall": 5,
+      "punctuality": 5,
+      "quality": 5,
+      "communication": 5,
+      "tidiness": 0,
+      "comment": "Kom presis, bar sofaen ned uten en ripe i trappen. Anbefales!"
+    },
+    "history": [
+      {
+        "action": "contract_created",
+        "userId": {
+          "$oid": "6aea373bf112ab8acd7e9af2"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:36:17.426Z"
+        },
+        "data": {
+          "message": "SafePay kontrakt opprettet"
+        },
+        "_id": {
+          "$oid": "6aea37b121b49793625a82f1"
+        }
+      },
+      {
+        "action": "payment_confirmed",
+        "userId": null,
+        "timestamp": {
+          "$date": "2026-11-03T19:36:37.608Z"
+        },
+        "data": {
+          "stripeSessionId": "cs_test_a1shZhg5YvmDtyA4cE37ErhLRdFDVUT2Ptn73aEYLW52I76o0RXWp1NJcS",
+          "message": "Betaling bekreftet"
+        },
+        "_id": {
+          "$oid": "6aea37c521b49793625a8333"
+        }
+      },
+      {
+        "action": "job_started",
+        "userId": {
+          "$oid": "6aea3741f112ab8acd7e9b61"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:36:38.519Z"
+        },
+        "data": {
+          "message": "Utfører startet oppdraget"
+        },
+        "_id": {
+          "$oid": "6aea37c621b49793625a836f"
+        }
+      },
+      {
+        "action": "ready_for_review",
+        "userId": {
+          "$oid": "6aea3741f112ab8acd7e9b61"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:36:38.557Z"
+        },
+        "data": {
+          "message": "Jobb meldt ferdig"
+        },
+        "_id": {
+          "$oid": "6aea37c621b49793625a8392"
+        }
+      },
+      {
+        "action": "work_approved",
+        "userId": {
+          "$oid": "6aea373bf112ab8acd7e9af2"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:36:38.609Z"
+        },
+        "data": {
+          "ratings": {
+            "overall": 5,
+            "quality": 5,
+            "punctuality": 5,
+            "communication": 5
+          },
+          "comment": "Kom presis, bar sofaen ned uten en ripe i trappen. Anbefales!",
+          "recommendWorker": true
+        },
+        "_id": {
+          "$oid": "6aea37c621b49793625a83ba"
+        }
+      }
+    ],
+    "beforeImages": [],
+    "afterImages": [],
+    "attachments": [],
+    "priceNegotiation": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:17.428Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:41.848Z"
+    },
+    "__v": 0,
+    "chatId": {
+      "$oid": "6aea37ae21b49793625a825d"
+    },
+    "checkoutAmountMinor": 80000,
+    "checkoutAttemptId": "fc52c967-037c-4744-987b-b45094bb58c3",
+    "checkoutCancelUrl": "http://localhost:5174/safepay/checkout/6aea37b121b49793625a82f0",
+    "checkoutCurrency": "nok",
+    "checkoutCustomerId": "cus_VYvLjFFdStyU1j",
+    "checkoutMode": "test",
+    "checkoutProductName": "SafePay: Bære sofa ned fra 3. etasje",
+    "checkoutSessionCreatedAt": {
+      "$date": "2026-11-03T19:36:18.670Z"
+    },
+    "checkoutSessionId": "cs_test_a1shZhg5YvmDtyA4cE37ErhLRdFDVUT2Ptn73aEYLW52I76o0RXWp1NJcS",
+    "checkoutSessionStatus": "complete",
+    "checkoutSuccessUrl": "http://localhost:5174/safepay/success?session_id={CHECKOUT_SESSION_ID}&orderId=6aea37b121b49793625a82f0",
+    "paymentConfirmedAt": {
+      "$date": "2026-11-03T19:36:37.608Z"
+    },
+    "paymentIntentId": "pi_3UXnVT3acMP9uu8L1lQmZde2",
+    "providerConnectDeadlineAt": {
+      "$date": "2026-11-03T19:38:37.608Z"
+    },
+    "providerConnectDeadlineDays": 1,
+    "providerConnectDeadlineTestMinutes": 2,
+    "startedAt": {
+      "$date": "2026-11-03T19:36:38.519Z"
+    },
+    "readyForReviewAt": {
+      "$date": "2026-11-03T19:36:38.557Z"
+    },
+    "completedAt": {
+      "$date": "2026-11-03T19:36:38.609Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6aea37cc21b49793625a84a2"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8085"
+    },
+    "customerId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "providerId": {
+      "$oid": "6aea3742f112ab8acd7e9b6f"
+    },
+    "status": "completed",
+    "initialPrice": 1400,
+    "agreedPrice": 1400,
+    "paymentStatus": "paid",
+    "autoReleaseWarnedAt": null,
+    "lastAutoAttemptAt": null,
+    "payoutLockId": null,
+    "payoutLockedAt": null,
+    "checklist": [],
+    "review": {
+      "overall": 5,
+      "punctuality": 5,
+      "quality": 5,
+      "communication": 5,
+      "tidiness": 0,
+      "comment": "Leiligheten var skinnende til visning. Grundig og blid."
+    },
+    "history": [
+      {
+        "action": "contract_created",
+        "userId": {
+          "$oid": "6aea373bf112ab8acd7e9af2"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:36:44.515Z"
+        },
+        "data": {
+          "message": "SafePay kontrakt opprettet"
+        },
+        "_id": {
+          "$oid": "6aea37cc21b49793625a84a3"
+        }
+      },
+      {
+        "action": "payment_confirmed",
+        "userId": null,
+        "timestamp": {
+          "$date": "2026-11-03T19:37:04.136Z"
+        },
+        "data": {
+          "stripeSessionId": "cs_test_a1GR3F7BCX2oAcxBz4ZJppWANLTXxC3dJQjBpo78heCauHjzHYNYw03y5r",
+          "message": "Betaling bekreftet"
+        },
+        "_id": {
+          "$oid": "6aea37e021b49793625a8578"
+        }
+      },
+      {
+        "action": "job_started",
+        "userId": {
+          "$oid": "6aea3742f112ab8acd7e9b6f"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:37:05.030Z"
+        },
+        "data": {
+          "message": "Utfører startet oppdraget"
+        },
+        "_id": {
+          "$oid": "6aea37e121b49793625a85b4"
+        }
+      },
+      {
+        "action": "ready_for_review",
+        "userId": {
+          "$oid": "6aea3742f112ab8acd7e9b6f"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:37:05.210Z"
+        },
+        "data": {
+          "message": "Jobb meldt ferdig"
+        },
+        "_id": {
+          "$oid": "6aea37e121b49793625a85d7"
+        }
+      },
+      {
+        "action": "work_approved",
+        "userId": {
+          "$oid": "6aea373bf112ab8acd7e9af2"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:37:05.315Z"
+        },
+        "data": {
+          "ratings": {
+            "overall": 5,
+            "quality": 5,
+            "punctuality": 5,
+            "communication": 5
+          },
+          "comment": "Leiligheten var skinnende til visning. Grundig og blid.",
+          "recommendWorker": true
+        },
+        "_id": {
+          "$oid": "6aea37e121b49793625a85ff"
+        }
+      }
+    ],
+    "beforeImages": [],
+    "afterImages": [],
+    "attachments": [],
+    "priceNegotiation": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:44.521Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:08.615Z"
+    },
+    "__v": 0,
+    "chatId": {
+      "$oid": "6aea37ca21b49793625a8429"
+    },
+    "checkoutAmountMinor": 140000,
+    "checkoutAttemptId": "32229457-0098-4767-8901-9f0503f3ae41",
+    "checkoutCancelUrl": "http://localhost:5174/safepay/checkout/6aea37cc21b49793625a84a2",
+    "checkoutCurrency": "nok",
+    "checkoutCustomerId": "cus_VYvLjFFdStyU1j",
+    "checkoutMode": "test",
+    "checkoutProductName": "SafePay: Vask av 2-roms før visning",
+    "checkoutSessionCreatedAt": {
+      "$date": "2026-11-03T19:36:45.707Z"
+    },
+    "checkoutSessionId": "cs_test_a1GR3F7BCX2oAcxBz4ZJppWANLTXxC3dJQjBpo78heCauHjzHYNYw03y5r",
+    "checkoutSessionStatus": "complete",
+    "checkoutSuccessUrl": "http://localhost:5174/safepay/success?session_id={CHECKOUT_SESSION_ID}&orderId=6aea37cc21b49793625a84a2",
+    "paymentConfirmedAt": {
+      "$date": "2026-11-03T19:37:04.135Z"
+    },
+    "paymentIntentId": "pi_3UXnVp3acMP9uu8L0UGu2z1y",
+    "providerConnectDeadlineAt": {
+      "$date": "2026-11-03T19:39:04.135Z"
+    },
+    "providerConnectDeadlineDays": 1,
+    "providerConnectDeadlineTestMinutes": 2,
+    "startedAt": {
+      "$date": "2026-11-03T19:37:05.030Z"
+    },
+    "readyForReviewAt": {
+      "$date": "2026-11-03T19:37:05.210Z"
+    },
+    "completedAt": {
+      "$date": "2026-11-03T19:37:05.315Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6aea37e621b49793625a86ba"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8166"
+    },
+    "customerId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "providerId": {
+      "$oid": "6aea3744f112ab8acd7e9bb4"
+    },
+    "status": "completed",
+    "initialPrice": 1200,
+    "agreedPrice": 1200,
+    "paymentStatus": "paid",
+    "autoReleaseWarnedAt": null,
+    "lastAutoAttemptAt": null,
+    "payoutLockId": null,
+    "payoutLockedAt": null,
+    "checklist": [],
+    "review": {
+      "overall": 4,
+      "punctuality": 3,
+      "quality": 4,
+      "communication": 5,
+      "tidiness": 0,
+      "comment": "Fikk byttet begge raskt. Kom 20 min for sent, men sa ifra."
+    },
+    "history": [
+      {
+        "action": "contract_created",
+        "userId": {
+          "$oid": "6aea373cf112ab8acd7e9afe"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:37:10.428Z"
+        },
+        "data": {
+          "message": "SafePay kontrakt opprettet"
+        },
+        "_id": {
+          "$oid": "6aea37e621b49793625a86bb"
+        }
+      },
+      {
+        "action": "payment_confirmed",
+        "userId": null,
+        "timestamp": {
+          "$date": "2026-11-03T19:37:22.339Z"
+        },
+        "data": {
+          "stripeSessionId": "cs_test_a1wvLqJHKIWvEMeDGwJaYIij3baKd876rGnNFGihR17Y8cfbdCQexnNldS",
+          "message": "Betaling bekreftet"
+        },
+        "_id": {
+          "$oid": "6aea37f221b49793625a86ee"
+        }
+      },
+      {
+        "action": "job_started",
+        "userId": {
+          "$oid": "6aea3744f112ab8acd7e9bb4"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:37:23.047Z"
+        },
+        "data": {
+          "message": "Utfører startet oppdraget"
+        },
+        "_id": {
+          "$oid": "6aea37f321b49793625a872a"
+        }
+      },
+      {
+        "action": "ready_for_review",
+        "userId": {
+          "$oid": "6aea3744f112ab8acd7e9bb4"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:37:23.088Z"
+        },
+        "data": {
+          "message": "Jobb meldt ferdig"
+        },
+        "_id": {
+          "$oid": "6aea37f321b49793625a874c"
+        }
+      },
+      {
+        "action": "work_approved",
+        "userId": {
+          "$oid": "6aea373cf112ab8acd7e9afe"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:37:23.123Z"
+        },
+        "data": {
+          "ratings": {
+            "overall": 4,
+            "quality": 4,
+            "punctuality": 3,
+            "communication": 5
+          },
+          "comment": "Fikk byttet begge raskt. Kom 20 min for sent, men sa ifra.",
+          "recommendWorker": true
+        },
+        "_id": {
+          "$oid": "6aea37f321b49793625a8773"
+        }
+      }
+    ],
+    "beforeImages": [],
+    "afterImages": [],
+    "attachments": [],
+    "priceNegotiation": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:10.431Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:26.203Z"
+    },
+    "__v": 0,
+    "chatId": {
+      "$oid": "6aea37e521b49793625a866e"
+    },
+    "checkoutAmountMinor": 120000,
+    "checkoutAttemptId": "0127402e-ccef-49e3-a0b7-765b91c06f39",
+    "checkoutCancelUrl": "http://localhost:5174/safepay/checkout/6aea37e621b49793625a86ba",
+    "checkoutCurrency": "nok",
+    "checkoutCustomerId": "cus_VYvMIMuDdGbvHC",
+    "checkoutMode": "test",
+    "checkoutProductName": "SafePay: Hjulskift på to biler",
+    "checkoutSessionCreatedAt": {
+      "$date": "2026-11-03T19:37:12.038Z"
+    },
+    "checkoutSessionId": "cs_test_a1wvLqJHKIWvEMeDGwJaYIij3baKd876rGnNFGihR17Y8cfbdCQexnNldS",
+    "checkoutSessionStatus": "complete",
+    "checkoutSuccessUrl": "http://localhost:5174/safepay/success?session_id={CHECKOUT_SESSION_ID}&orderId=6aea37e621b49793625a86ba",
+    "paymentConfirmedAt": {
+      "$date": "2026-11-03T19:37:22.339Z"
+    },
+    "paymentIntentId": "pi_3UXnWE3acMP9uu8L1y1Mtv75",
+    "providerConnectDeadlineAt": {
+      "$date": "2026-11-03T19:39:22.339Z"
+    },
+    "providerConnectDeadlineDays": 1,
+    "providerConnectDeadlineTestMinutes": 2,
+    "startedAt": {
+      "$date": "2026-11-03T19:37:23.047Z"
+    },
+    "readyForReviewAt": {
+      "$date": "2026-11-03T19:37:23.088Z"
+    },
+    "completedAt": {
+      "$date": "2026-11-03T19:37:23.123Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6aea37f721b49793625a882e"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8102"
+    },
+    "customerId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "providerId": {
+      "$oid": "6aea3743f112ab8acd7e9ba6"
+    },
+    "status": "completed",
+    "initialPrice": 300,
+    "agreedPrice": 300,
+    "paymentStatus": "paid",
+    "autoReleaseWarnedAt": null,
+    "lastAutoAttemptAt": null,
+    "payoutLockId": null,
+    "payoutLockedAt": null,
+    "checklist": [],
+    "review": {
+      "overall": 5,
+      "punctuality": 5,
+      "quality": 5,
+      "communication": 5,
+      "tidiness": 0,
+      "comment": "Rask og effektiv. Hagen ser bedre ut enn før stormen."
+    },
+    "history": [
+      {
+        "action": "contract_created",
+        "userId": {
+          "$oid": "6aea373ef112ab8acd7e9b29"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:37:27.937Z"
+        },
+        "data": {
+          "message": "SafePay kontrakt opprettet"
+        },
+        "_id": {
+          "$oid": "6aea37f721b49793625a882f"
+        }
+      },
+      {
+        "action": "payment_confirmed",
+        "userId": null,
+        "timestamp": {
+          "$date": "2026-11-03T19:37:38.086Z"
+        },
+        "data": {
+          "stripeSessionId": "cs_test_a1dT9RM4WLHGD0w9RL4JrhtyMqY4oxZlgeYv3WoXr6qcpaeOzTMA8OxoSh",
+          "message": "Betaling bekreftet"
+        },
+        "_id": {
+          "$oid": "6aea380221b49793625a8865"
+        }
+      },
+      {
+        "action": "job_started",
+        "userId": {
+          "$oid": "6aea3743f112ab8acd7e9ba6"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:37:38.825Z"
+        },
+        "data": {
+          "message": "Utfører startet oppdraget"
+        },
+        "_id": {
+          "$oid": "6aea380221b49793625a88a0"
+        }
+      },
+      {
+        "action": "ready_for_review",
+        "userId": {
+          "$oid": "6aea3743f112ab8acd7e9ba6"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:37:38.856Z"
+        },
+        "data": {
+          "message": "Jobb meldt ferdig"
+        },
+        "_id": {
+          "$oid": "6aea380221b49793625a88c2"
+        }
+      },
+      {
+        "action": "work_approved",
+        "userId": {
+          "$oid": "6aea373ef112ab8acd7e9b29"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:37:38.889Z"
+        },
+        "data": {
+          "ratings": {
+            "overall": 5,
+            "quality": 5,
+            "punctuality": 5,
+            "communication": 5
+          },
+          "comment": "Rask og effektiv. Hagen ser bedre ut enn før stormen.",
+          "recommendWorker": true
+        },
+        "_id": {
+          "$oid": "6aea380221b49793625a88e9"
+        }
+      }
+    ],
+    "beforeImages": [],
+    "afterImages": [],
+    "attachments": [],
+    "priceNegotiation": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:27.938Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:42.064Z"
+    },
+    "__v": 0,
+    "chatId": {
+      "$oid": "6aea37f721b49793625a87e2"
+    },
+    "checkoutAmountMinor": 30000,
+    "checkoutAttemptId": "364c4dd1-4d19-433a-b422-bd441aa36462",
+    "checkoutCancelUrl": "http://localhost:5174/safepay/checkout/6aea37f721b49793625a882e",
+    "checkoutCurrency": "nok",
+    "checkoutCustomerId": "cus_VYvN9mZ0Yl508S",
+    "checkoutMode": "test",
+    "checkoutProductName": "SafePay: Rydde hage etter storm",
+    "checkoutSessionCreatedAt": {
+      "$date": "2026-11-03T19:37:29.032Z"
+    },
+    "checkoutSessionId": "cs_test_a1dT9RM4WLHGD0w9RL4JrhtyMqY4oxZlgeYv3WoXr6qcpaeOzTMA8OxoSh",
+    "checkoutSessionStatus": "complete",
+    "checkoutSuccessUrl": "http://localhost:5174/safepay/success?session_id={CHECKOUT_SESSION_ID}&orderId=6aea37f721b49793625a882e",
+    "paymentConfirmedAt": {
+      "$date": "2026-11-03T19:37:38.086Z"
+    },
+    "paymentIntentId": "pi_3UXnWT3acMP9uu8L0vWo2Il6",
+    "providerConnectDeadlineAt": {
+      "$date": "2026-11-03T19:39:38.086Z"
+    },
+    "providerConnectDeadlineDays": 1,
+    "providerConnectDeadlineTestMinutes": 2,
+    "startedAt": {
+      "$date": "2026-11-03T19:37:38.825Z"
+    },
+    "readyForReviewAt": {
+      "$date": "2026-11-03T19:37:38.856Z"
+    },
+    "completedAt": {
+      "$date": "2026-11-03T19:37:38.889Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6aea380821b49793625a89bd"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80bc"
+    },
+    "customerId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "providerId": {
+      "$oid": "6aea3747f112ab8acd7e9bec"
+    },
+    "status": "completed",
+    "initialPrice": 4500,
+    "agreedPrice": 4500,
+    "paymentStatus": "paid",
+    "autoReleaseWarnedAt": null,
+    "lastAutoAttemptAt": null,
+    "payoutLockId": null,
+    "payoutLockedAt": null,
+    "checklist": [],
+    "review": {
+      "overall": 5,
+      "punctuality": 5,
+      "quality": 5,
+      "communication": 5,
+      "tidiness": 0,
+      "comment": "Profesjonelt fra start til slutt. Ryddet etter seg og holdt tiden."
+    },
+    "history": [
+      {
+        "action": "contract_created",
+        "userId": {
+          "$oid": "6aea373cf112ab8acd7e9afe"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:37:44.187Z"
+        },
+        "data": {
+          "message": "SafePay kontrakt opprettet"
+        },
+        "_id": {
+          "$oid": "6aea380821b49793625a89be"
+        }
+      },
+      {
+        "action": "payment_confirmed",
+        "userId": null,
+        "timestamp": {
+          "$date": "2026-11-03T19:37:53.516Z"
+        },
+        "data": {
+          "stripeSessionId": "cs_test_a1Za7ng3jmXiBHD8IDsO4DkgdVe1NYXNUTWe6xo5FTA1C5KthWAqhITnCH",
+          "message": "Betaling bekreftet"
+        },
+        "_id": {
+          "$oid": "6aea381121b49793625a89ef"
+        }
+      },
+      {
+        "action": "job_started",
+        "userId": {
+          "$oid": "6aea3747f112ab8acd7e9bec"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:37:54.207Z"
+        },
+        "data": {
+          "message": "Utfører startet oppdraget"
+        },
+        "_id": {
+          "$oid": "6aea381221b49793625a8a2a"
+        }
+      },
+      {
+        "action": "ready_for_review",
+        "userId": {
+          "$oid": "6aea3747f112ab8acd7e9bec"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:37:54.246Z"
+        },
+        "data": {
+          "message": "Jobb meldt ferdig"
+        },
+        "_id": {
+          "$oid": "6aea381221b49793625a8a4c"
+        }
+      },
+      {
+        "action": "work_approved",
+        "userId": {
+          "$oid": "6aea373cf112ab8acd7e9afe"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:37:54.276Z"
+        },
+        "data": {
+          "ratings": {
+            "overall": 5,
+            "quality": 5,
+            "punctuality": 5,
+            "communication": 5
+          },
+          "comment": "Profesjonelt fra start til slutt. Ryddet etter seg og holdt tiden.",
+          "recommendWorker": true
+        },
+        "_id": {
+          "$oid": "6aea381221b49793625a8a73"
+        }
+      }
+    ],
+    "beforeImages": [],
+    "afterImages": [],
+    "attachments": [],
+    "priceNegotiation": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:44.188Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:57.466Z"
+    },
+    "__v": 0,
+    "chatId": {
+      "$oid": "6aea380621b49793625a8958"
+    },
+    "checkoutAmountMinor": 450000,
+    "checkoutAttemptId": "ac9233a5-cd0f-4b63-842b-ad4a685ce9db",
+    "checkoutCancelUrl": "http://localhost:5174/safepay/checkout/6aea380821b49793625a89bd",
+    "checkoutCurrency": "nok",
+    "checkoutCustomerId": "cus_VYvMIMuDdGbvHC",
+    "checkoutMode": "test",
+    "checkoutProductName": "SafePay: Male barnerom",
+    "checkoutSessionCreatedAt": {
+      "$date": "2026-11-03T19:37:45.210Z"
+    },
+    "checkoutSessionId": "cs_test_a1Za7ng3jmXiBHD8IDsO4DkgdVe1NYXNUTWe6xo5FTA1C5KthWAqhITnCH",
+    "checkoutSessionStatus": "complete",
+    "checkoutSuccessUrl": "http://localhost:5174/safepay/success?session_id={CHECKOUT_SESSION_ID}&orderId=6aea380821b49793625a89bd",
+    "paymentConfirmedAt": {
+      "$date": "2026-11-03T19:37:53.516Z"
+    },
+    "paymentIntentId": "pi_3UXnWj3acMP9uu8L0prBaGcd",
+    "providerConnectDeadlineAt": {
+      "$date": "2026-11-03T19:39:53.516Z"
+    },
+    "providerConnectDeadlineDays": 1,
+    "providerConnectDeadlineTestMinutes": 2,
+    "startedAt": {
+      "$date": "2026-11-03T19:37:54.207Z"
+    },
+    "readyForReviewAt": {
+      "$date": "2026-11-03T19:37:54.246Z"
+    },
+    "completedAt": {
+      "$date": "2026-11-03T19:37:54.276Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6aea381721b49793625a8b4c"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80e4"
+    },
+    "customerId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "providerId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "status": "ready_for_review",
+    "initialPrice": 350,
+    "agreedPrice": 350,
+    "paymentStatus": "paid",
+    "autoReleaseWarnedAt": null,
+    "lastAutoAttemptAt": null,
+    "payoutLockId": null,
+    "payoutLockedAt": null,
+    "checklist": [],
+    "review": {
+      "overall": 0,
+      "punctuality": 0,
+      "quality": 0,
+      "communication": 0,
+      "tidiness": 0,
+      "comment": ""
+    },
+    "history": [
+      {
+        "action": "contract_created",
+        "userId": {
+          "$oid": "6aea3740f112ab8acd7e9b53"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:37:59.670Z"
+        },
+        "data": {
+          "message": "SafePay kontrakt opprettet"
+        },
+        "_id": {
+          "$oid": "6aea381721b49793625a8b4d"
+        }
+      },
+      {
+        "action": "payment_confirmed",
+        "userId": null,
+        "timestamp": {
+          "$date": "2026-11-03T19:38:08.786Z"
+        },
+        "data": {
+          "stripeSessionId": "cs_test_a1dkm14Qk6g8AX696PgJ93kiRL2KCbbupn7R6cIWwgJfJ2w62ydX5cVpkj",
+          "message": "Betaling bekreftet"
+        },
+        "_id": {
+          "$oid": "6aea382021b49793625a8be4"
+        }
+      },
+      {
+        "action": "job_started",
+        "userId": {
+          "$oid": "6aea3741f112ab8acd7e9b61"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:38:09.598Z"
+        },
+        "data": {
+          "message": "Utfører startet oppdraget"
+        },
+        "_id": {
+          "$oid": "6aea382121b49793625a8c1f"
+        }
+      },
+      {
+        "action": "ready_for_review",
+        "userId": {
+          "$oid": "6aea3741f112ab8acd7e9b61"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:38:09.635Z"
+        },
+        "data": {
+          "message": "Jobb meldt ferdig"
+        },
+        "_id": {
+          "$oid": "6aea382121b49793625a8c41"
+        }
+      }
+    ],
+    "beforeImages": [],
+    "afterImages": [],
+    "attachments": [],
+    "priceNegotiation": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:59.671Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:09.635Z"
+    },
+    "__v": 0,
+    "chatId": {
+      "$oid": "6aea381621b49793625a8ae2"
+    },
+    "checkoutAmountMinor": 35000,
+    "checkoutAttemptId": "5af39897-b482-40c5-84fe-d4515a5c6a7d",
+    "checkoutCancelUrl": "http://localhost:5174/safepay/checkout/6aea381721b49793625a8b4c",
+    "checkoutCurrency": "nok",
+    "checkoutCustomerId": "cus_VYvNAydoFDehJZ",
+    "checkoutMode": "test",
+    "checkoutProductName": "SafePay: Bærehjelp ved innflytting",
+    "checkoutSessionCreatedAt": {
+      "$date": "2026-11-03T19:38:00.768Z"
+    },
+    "checkoutSessionId": "cs_test_a1dkm14Qk6g8AX696PgJ93kiRL2KCbbupn7R6cIWwgJfJ2w62ydX5cVpkj",
+    "checkoutSessionStatus": "complete",
+    "checkoutSuccessUrl": "http://localhost:5174/safepay/success?session_id={CHECKOUT_SESSION_ID}&orderId=6aea381721b49793625a8b4c",
+    "paymentConfirmedAt": {
+      "$date": "2026-11-03T19:38:08.786Z"
+    },
+    "paymentIntentId": "pi_3UXnWy3acMP9uu8L1AUHCgE0",
+    "providerConnectDeadlineAt": {
+      "$date": "2026-11-03T19:40:08.786Z"
+    },
+    "providerConnectDeadlineDays": 1,
+    "providerConnectDeadlineTestMinutes": 2,
+    "startedAt": {
+      "$date": "2026-11-03T19:38:09.598Z"
+    },
+    "readyForReviewAt": {
+      "$date": "2026-11-03T19:38:09.635Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6aea382321b49793625a8cdb"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a812f"
+    },
+    "customerId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "providerId": {
+      "$oid": "6aea3742f112ab8acd7e9b7d"
+    },
+    "status": "in_progress",
+    "initialPrice": 1000,
+    "agreedPrice": 1000,
+    "paymentStatus": "paid",
+    "autoReleaseWarnedAt": null,
+    "lastAutoAttemptAt": null,
+    "payoutLockId": null,
+    "payoutLockedAt": null,
+    "checklist": [],
+    "review": {
+      "overall": 0,
+      "punctuality": 0,
+      "quality": 0,
+      "communication": 0,
+      "tidiness": 0,
+      "comment": ""
+    },
+    "history": [
+      {
+        "action": "contract_created",
+        "userId": {
+          "$oid": "6aea373cf112ab8acd7e9b0c"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:38:11.840Z"
+        },
+        "data": {
+          "message": "SafePay kontrakt opprettet"
+        },
+        "_id": {
+          "$oid": "6aea382321b49793625a8cdc"
+        }
+      },
+      {
+        "action": "payment_confirmed",
+        "userId": null,
+        "timestamp": {
+          "$date": "2026-11-03T19:38:21.857Z"
+        },
+        "data": {
+          "stripeSessionId": "cs_test_a1GzNYx7FPk981UVUCK3Hu3RqeznUboTtfg9XcEBPqWLOjWxjzVTixRjFH",
+          "message": "Betaling bekreftet"
+        },
+        "_id": {
+          "$oid": "6aea382d21b49793625a8d0e"
+        }
+      },
+      {
+        "action": "job_started",
+        "userId": {
+          "$oid": "6aea3742f112ab8acd7e9b7d"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:38:22.588Z"
+        },
+        "data": {
+          "message": "Utfører startet oppdraget"
+        },
+        "_id": {
+          "$oid": "6aea382e21b49793625a8d49"
+        }
+      }
+    ],
+    "beforeImages": [],
+    "afterImages": [],
+    "attachments": [],
+    "priceNegotiation": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:11.841Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:22.589Z"
+    },
+    "__v": 0,
+    "chatId": {
+      "$oid": "6aea382221b49793625a8c70"
+    },
+    "checkoutAmountMinor": 100000,
+    "checkoutAttemptId": "fb0b6358-0c97-4bcc-bf87-5b7f114c06fe",
+    "checkoutCancelUrl": "http://localhost:5174/safepay/checkout/6aea382321b49793625a8cdb",
+    "checkoutCurrency": "nok",
+    "checkoutCustomerId": "cus_VYvNxigIVZ0brA",
+    "checkoutMode": "test",
+    "checkoutProductName": "SafePay: Hente sofa fra Finn-kjøp på Majorstuen",
+    "checkoutSessionCreatedAt": {
+      "$date": "2026-11-03T19:38:13.001Z"
+    },
+    "checkoutSessionId": "cs_test_a1GzNYx7FPk981UVUCK3Hu3RqeznUboTtfg9XcEBPqWLOjWxjzVTixRjFH",
+    "checkoutSessionStatus": "complete",
+    "checkoutSuccessUrl": "http://localhost:5174/safepay/success?session_id={CHECKOUT_SESSION_ID}&orderId=6aea382321b49793625a8cdb",
+    "paymentConfirmedAt": {
+      "$date": "2026-11-03T19:38:21.857Z"
+    },
+    "paymentIntentId": "pi_3UXnXC3acMP9uu8L044jbXER",
+    "providerConnectDeadlineAt": {
+      "$date": "2026-11-03T19:40:21.857Z"
+    },
+    "providerConnectDeadlineDays": 1,
+    "providerConnectDeadlineTestMinutes": 2,
+    "startedAt": {
+      "$date": "2026-11-03T19:38:22.588Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6aea383021b49793625a8dda"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a814d"
+    },
+    "customerId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "providerId": {
+      "$oid": "6aea3746f112ab8acd7e9bde"
+    },
+    "status": "cancelled",
+    "initialPrice": 1800,
+    "agreedPrice": 1800,
+    "paymentStatus": "refunded",
+    "autoReleaseWarnedAt": null,
+    "lastAutoAttemptAt": null,
+    "payoutLockId": null,
+    "payoutLockedAt": null,
+    "checklist": [],
+    "review": {
+      "overall": 0,
+      "punctuality": 0,
+      "quality": 0,
+      "communication": 0,
+      "tidiness": 0,
+      "comment": ""
+    },
+    "history": [
+      {
+        "action": "contract_created",
+        "userId": {
+          "$oid": "6aea373cf112ab8acd7e9b0c"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:38:24.965Z"
+        },
+        "data": {
+          "message": "SafePay kontrakt opprettet"
+        },
+        "_id": {
+          "$oid": "6aea383021b49793625a8ddb"
+        }
+      },
+      {
+        "action": "payment_confirmed",
+        "userId": null,
+        "timestamp": {
+          "$date": "2026-11-03T19:38:34.399Z"
+        },
+        "data": {
+          "stripeSessionId": "cs_test_a1RQIC18UjPVB3cZ2FYnCGtq0bXdpQPy8CM0mV3OpDhxbwGh0ZVXFo7gmO",
+          "message": "Betaling bekreftet"
+        },
+        "_id": {
+          "$oid": "6aea383a21b49793625a8e0f"
+        }
+      },
+      {
+        "action": "provider_connect_timeout_refunded",
+        "userId": null,
+        "timestamp": {
+          "$date": "2026-11-03T19:41:34.359Z"
+        },
+        "data": {
+          "reason": "provider_stripe_connect_timeout",
+          "originalPaymentAmountMinor": 180000,
+          "refundedAmountMinor": 180000,
+          "paymentIntentId": "pi_3UXnXO3acMP9uu8L0vewWrpA",
+          "refundId": "re_3UXnXO3acMP9uu8L02shXMFD"
+        },
+        "_id": {
+          "$oid": "6aea38ee21b49793625a94e7"
+        }
+      }
+    ],
+    "beforeImages": [],
+    "afterImages": [],
+    "attachments": [],
+    "priceNegotiation": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:24.966Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:41:34.359Z"
+    },
+    "__v": 0,
+    "chatId": {
+      "$oid": "6aea383021b49793625a8da1"
+    },
+    "checkoutAmountMinor": 180000,
+    "checkoutAttemptId": "464a2eba-ce89-41dd-9b1d-44597133885c",
+    "checkoutCancelUrl": "http://localhost:5174/safepay/checkout/6aea383021b49793625a8dda",
+    "checkoutCurrency": "nok",
+    "checkoutCustomerId": "cus_VYvNxigIVZ0brA",
+    "checkoutMode": "test",
+    "checkoutProductName": "SafePay: Montere PAX-garderobe",
+    "checkoutSessionCreatedAt": {
+      "$date": "2026-11-03T19:38:26.036Z"
+    },
+    "checkoutSessionId": "cs_test_a1RQIC18UjPVB3cZ2FYnCGtq0bXdpQPy8CM0mV3OpDhxbwGh0ZVXFo7gmO",
+    "checkoutSessionStatus": "complete",
+    "checkoutSuccessUrl": "http://localhost:5174/safepay/success?session_id={CHECKOUT_SESSION_ID}&orderId=6aea383021b49793625a8dda",
+    "paymentConfirmedAt": {
+      "$date": "2026-11-03T19:38:34.399Z"
+    },
+    "paymentIntentId": "pi_3UXnXO3acMP9uu8L0vewWrpA",
+    "providerConnectDeadlineAt": {
+      "$date": "2026-11-03T19:40:34.399Z"
+    },
+    "providerConnectDeadlineDays": 1,
+    "providerConnectDeadlineTestMinutes": 2,
+    "providerConnectTimeout": {
+      "providerVerificationAt": {
+        "$date": "2026-11-03T19:39:00.420Z"
+      },
+      "status": "succeeded",
+      "lastAttemptAt": {
+        "$date": "2026-11-03T19:41:30.366Z"
+      },
+      "lockUntil": null,
+      "operationKey": "safepay-connect-timeout:6aea383021b49793625a8dda:pi_3UXnXO3acMP9uu8L0vewWrpA",
+      "originalPaymentAmountMinor": 180000,
+      "autoCancelledAt": {
+        "$date": "2026-11-03T19:41:34.359Z"
+      },
+      "refundAmountMinor": 180000,
+      "refundCompletedAt": {
+        "$date": "2026-11-03T19:41:34.359Z"
+      },
+      "refundedAmountMinor": 180000,
+      "stripeRefundId": "re_3UXnXO3acMP9uu8L02shXMFD"
+    },
+    "cancellationReason": "provider_stripe_connect_timeout"
+  },
+  {
+    "_id": {
+      "$oid": "6aea383b21b49793625a8e9e"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80ad"
+    },
+    "customerId": {
+      "$oid": "6aea373ff112ab8acd7e9b45"
+    },
+    "providerId": {
+      "$oid": "6aea377521b49793625a805a"
+    },
+    "status": "awaiting_payment",
+    "initialPrice": 2500,
+    "agreedPrice": 2500,
+    "paymentStatus": "unpaid",
+    "autoReleaseWarnedAt": null,
+    "lastAutoAttemptAt": null,
+    "payoutLockId": null,
+    "payoutLockedAt": null,
+    "checklist": [],
+    "review": {
+      "overall": 0,
+      "punctuality": 0,
+      "quality": 0,
+      "communication": 0,
+      "tidiness": 0,
+      "comment": ""
+    },
+    "history": [
+      {
+        "action": "contract_created",
+        "userId": {
+          "$oid": "6aea373ff112ab8acd7e9b45"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:38:35.964Z"
+        },
+        "data": {
+          "message": "SafePay kontrakt opprettet"
+        },
+        "_id": {
+          "$oid": "6aea383b21b49793625a8e9f"
+        }
+      }
+    ],
+    "beforeImages": [],
+    "afterImages": [],
+    "attachments": [],
+    "priceNegotiation": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:35.965Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:35.984Z"
+    },
+    "__v": 0,
+    "chatId": {
+      "$oid": "6aea383b21b49793625a8e52"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6aea383e21b49793625a8f33"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80df"
+    },
+    "customerId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "providerId": {
+      "$oid": "6aea3748f112ab8acd7e9c09"
+    },
+    "status": "awaiting_payment",
+    "initialPrice": 4500,
+    "agreedPrice": 4500,
+    "paymentStatus": "unpaid",
+    "autoReleaseWarnedAt": null,
+    "lastAutoAttemptAt": null,
+    "payoutLockId": null,
+    "payoutLockedAt": null,
+    "checklist": [],
+    "review": {
+      "overall": 0,
+      "punctuality": 0,
+      "quality": 0,
+      "communication": 0,
+      "tidiness": 0,
+      "comment": ""
+    },
+    "history": [
+      {
+        "action": "contract_created",
+        "userId": {
+          "$oid": "6aea373ef112ab8acd7e9b29"
+        },
+        "timestamp": {
+          "$date": "2026-11-03T19:38:38.955Z"
+        },
+        "data": {
+          "message": "SafePay kontrakt opprettet"
+        },
+        "_id": {
+          "$oid": "6aea383e21b49793625a8f34"
+        }
+      }
+    ],
+    "beforeImages": [],
+    "afterImages": [],
+    "attachments": [],
+    "priceNegotiation": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:38.957Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:38.988Z"
+    },
+    "__v": 0,
+    "chatId": {
+      "$oid": "6aea383d21b49793625a8ee7"
+    }
+  }
+]

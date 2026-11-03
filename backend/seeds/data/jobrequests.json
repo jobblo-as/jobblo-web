@@ -1,0 +1,1197 @@
+[
+  {
+    "_id": {
+      "$oid": "6aea37ae21b49793625a8256"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80da"
+    },
+    "customerId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "providerId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "status": "accepted",
+    "message": "Hei! Student med god tid og sterk rygg. Kan komme når det passer deg.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:36:14.877Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:17.456Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37af21b49793625a8274"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80da"
+    },
+    "customerId": {
+      "$oid": "6aea3745f112ab8acd7e9bd0"
+    },
+    "providerId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "status": "declined",
+    "message": "Hei, jeg har tilhenger og stropper. Kan ta dette i helgen.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": {
+      "$oid": "6aea37b121b49793625a82f0"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:36:15.789Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:17.460Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37b021b49793625a8291"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80da"
+    },
+    "customerId": {
+      "$oid": "6aea3746f112ab8acd7e9bde"
+    },
+    "providerId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "status": "declined",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": {
+      "$oid": "6aea37b121b49793625a82f0"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:36:16.624Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:17.460Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37ca21b49793625a8422"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8085"
+    },
+    "customerId": {
+      "$oid": "6aea3742f112ab8acd7e9b6f"
+    },
+    "providerId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "status": "accepted",
+    "message": "Hei, jeg har lang erfaring med vask og tar med eget utstyr.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:36:42.571Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:44.567Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37cb21b49793625a843f"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8085"
+    },
+    "customerId": {
+      "$oid": "6aea3747f112ab8acd7e9bfa"
+    },
+    "providerId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "status": "declined",
+    "message": "Hei, Skinnende Renhold her. Vi kan ta jobben med garanti.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": {
+      "$oid": "6aea37cc21b49793625a84a2"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:36:43.299Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:44.575Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37e521b49793625a8667"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8166"
+    },
+    "customerId": {
+      "$oid": "6aea3744f112ab8acd7e9bb4"
+    },
+    "providerId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "status": "accepted",
+    "message": "Hei! Jobber på verksted og har alt utstyret som trengs.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:37:09.463Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:10.493Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37f721b49793625a87db"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8102"
+    },
+    "customerId": {
+      "$oid": "6aea3743f112ab8acd7e9ba6"
+    },
+    "providerId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "status": "accepted",
+    "message": "Hei, jeg bor i nærheten og kan komme på kort varsel.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:37:27.123Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:27.961Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea380621b49793625a8951"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80bc"
+    },
+    "customerId": {
+      "$oid": "6aea3747f112ab8acd7e9bec"
+    },
+    "providerId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "status": "accepted",
+    "message": "Hei! Vi er en malerbedrift med fire ansatte og gir fast pris etter befaring.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:37:42.735Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:44.211Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea380721b49793625a896f"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80bc"
+    },
+    "customerId": {
+      "$oid": "6aea3745f112ab8acd7e9bc2"
+    },
+    "providerId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "status": "declined",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": {
+      "$oid": "6aea380821b49793625a89bd"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:37:43.382Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:44.214Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea381621b49793625a8adb"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80e4"
+    },
+    "customerId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "providerId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "status": "accepted",
+    "message": "Hei! Student med god tid og sterk rygg. Kan komme når det passer deg.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:37:58.124Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:59.694Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea381621b49793625a8af9"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80e4"
+    },
+    "customerId": {
+      "$oid": "6aea3745f112ab8acd7e9bd0"
+    },
+    "providerId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "status": "declined",
+    "message": "Hei, jeg har tilhenger og stropper. Kan ta dette i helgen.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": {
+      "$oid": "6aea381721b49793625a8b4c"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:37:58.801Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:59.698Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea382221b49793625a8c69"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a812f"
+    },
+    "customerId": {
+      "$oid": "6aea3742f112ab8acd7e9b7d"
+    },
+    "providerId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "status": "accepted",
+    "message": "Hei! Jeg har varebil og kan ta dette denne uka.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:38:10.321Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:11.861Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea382221b49793625a8c88"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a812f"
+    },
+    "customerId": {
+      "$oid": "6aea3748f112ab8acd7e9c09"
+    },
+    "providerId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "status": "declined",
+    "message": "Hei! Vi har bil og folk ledig og kan gi et godt tilbud.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": {
+      "$oid": "6aea382321b49793625a8cdb"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:38:10.972Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:11.866Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea382f21b49793625a8d6d"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a814d"
+    },
+    "customerId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "providerId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "status": "declined",
+    "message": "Hei! Student med god tid og sterk rygg. Kan komme når det passer deg.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": {
+      "$oid": "6aea383021b49793625a8dda"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:38:23.452Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:25Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea383021b49793625a8d8b"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a814d"
+    },
+    "customerId": {
+      "$oid": "6aea3746f112ab8acd7e9bde"
+    },
+    "providerId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "status": "declined",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:38:24.139Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:41:34.385Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea383b21b49793625a8e4b"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80ad"
+    },
+    "customerId": {
+      "$oid": "6aea377521b49793625a805a"
+    },
+    "providerId": {
+      "$oid": "6aea373ff112ab8acd7e9b45"
+    },
+    "status": "accepted",
+    "message": "Hei, tømrermester her. Vi tar gjerne jobben og har alt verktøy.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:38:35.089Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:36.014Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea383c21b49793625a8ec3"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80df"
+    },
+    "customerId": {
+      "$oid": "6aea3743f112ab8acd7e9ba6"
+    },
+    "providerId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "status": "declined",
+    "message": "Hei, jeg bor i nærheten og kan komme på kort varsel.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": {
+      "$oid": "6aea383e21b49793625a8f33"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:38:36.764Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:39.017Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea383d21b49793625a8ee0"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80df"
+    },
+    "customerId": {
+      "$oid": "6aea3748f112ab8acd7e9c09"
+    },
+    "providerId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "status": "accepted",
+    "message": "Hei! Vi har bil og folk ledig og kan gi et godt tilbud.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:38:37.590Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:39.007Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea383f21b49793625a8f56"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80f8"
+    },
+    "customerId": {
+      "$oid": "6aea3745f112ab8acd7e9bc2"
+    },
+    "providerId": {
+      "$oid": "6aea373df112ab8acd7e9b1a"
+    },
+    "status": "accepted",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:38:39.768Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:40.927Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384021b49793625a8f6f"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80f8"
+    },
+    "customerId": {
+      "$oid": "6aea3743f112ab8acd7e9ba6"
+    },
+    "providerId": {
+      "$oid": "6aea373df112ab8acd7e9b1a"
+    },
+    "status": "pending",
+    "message": "Hei, jeg bor i nærheten og kan komme på kort varsel.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:38:40.778Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:40.778Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384221b49793625a8fc4"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a816b"
+    },
+    "customerId": {
+      "$oid": "6aea3744f112ab8acd7e9bb4"
+    },
+    "providerId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "status": "accepted",
+    "message": "Hei! Jobber på verksted og har alt utstyret som trengs.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:38:42.087Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:43.225Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384221b49793625a8fe2"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a816b"
+    },
+    "customerId": {
+      "$oid": "6aea3747f112ab8acd7e9bfa"
+    },
+    "providerId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "status": "pending",
+    "message": "Hei, Skinnende Renhold her. Vi kan ta jobben med garanti.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:38:42.961Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:42.961Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384421b49793625a9033"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a808a"
+    },
+    "customerId": {
+      "$oid": "6aea3747f112ab8acd7e9bfa"
+    },
+    "providerId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "status": "accepted",
+    "message": "Hei, Skinnende Renhold her. Vi kan ta jobben med garanti.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:38:44.296Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:45.385Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384521b49793625a9051"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a808a"
+    },
+    "customerId": {
+      "$oid": "6aea3742f112ab8acd7e9b6f"
+    },
+    "providerId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "status": "pending",
+    "message": "Hei, jeg har lang erfaring med vask og tar med eget utstyr.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:38:45.248Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:45.248Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384621b49793625a90a5"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80c6"
+    },
+    "customerId": {
+      "$oid": "6aea3747f112ab8acd7e9bec"
+    },
+    "providerId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "status": "pending",
+    "message": "Hei! Vi er en malerbedrift med fire ansatte og gir fast pris etter befaring.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:38:46.564Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:46.564Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384721b49793625a90c3"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80c6"
+    },
+    "customerId": {
+      "$oid": "6aea3745f112ab8acd7e9bc2"
+    },
+    "providerId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "status": "pending",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:38:47.578Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:47.578Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384821b49793625a90dc"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a811b"
+    },
+    "customerId": {
+      "$oid": "6aea377521b49793625a805a"
+    },
+    "providerId": {
+      "$oid": "6aea373df112ab8acd7e9b1a"
+    },
+    "status": "pending",
+    "message": "Hei, tømrermester her. Vi tar gjerne jobben og har alt verktøy.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:38:48.452Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:48.452Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384921b49793625a90f9"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a811b"
+    },
+    "customerId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "providerId": {
+      "$oid": "6aea373df112ab8acd7e9b1a"
+    },
+    "status": "pending",
+    "message": "Hei! Student med god tid og sterk rygg. Kan komme når det passer deg.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:38:49.244Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:49.244Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384a21b49793625a9116"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80a3"
+    },
+    "customerId": {
+      "$oid": "6aea377521b49793625a805a"
+    },
+    "providerId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "status": "pending",
+    "message": "Hei, tømrermester her. Vi tar gjerne jobben og har alt verktøy.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:38:50.318Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:50.318Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384b21b49793625a9134"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80e9"
+    },
+    "customerId": {
+      "$oid": "6aea3748f112ab8acd7e9c09"
+    },
+    "providerId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "status": "pending",
+    "message": "Hei! Vi har bil og folk ledig og kan gi et godt tilbud.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:38:51.275Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:51.275Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384c21b49793625a9151"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80fd"
+    },
+    "customerId": {
+      "$oid": "6aea3745f112ab8acd7e9bc2"
+    },
+    "providerId": {
+      "$oid": "6aea373ff112ab8acd7e9b45"
+    },
+    "status": "pending",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:38:52.044Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:52.044Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384c21b49793625a916a"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80fd"
+    },
+    "customerId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "providerId": {
+      "$oid": "6aea373ff112ab8acd7e9b45"
+    },
+    "status": "pending",
+    "message": "Hei! Student med god tid og sterk rygg. Kan komme når det passer deg.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:38:52.945Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:52.945Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384d21b49793625a9187"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8116"
+    },
+    "customerId": {
+      "$oid": "6aea377521b49793625a805a"
+    },
+    "providerId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "status": "pending",
+    "message": "Hei, tømrermester her. Vi tar gjerne jobben og har alt verktøy.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:38:53.877Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:53.877Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384e21b49793625a91a4"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8116"
+    },
+    "customerId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "providerId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "status": "pending",
+    "message": "Hei! Student med god tid og sterk rygg. Kan komme når det passer deg.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:38:55.078Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:55.078Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea385021b49793625a91c2"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8116"
+    },
+    "customerId": {
+      "$oid": "6aea3746f112ab8acd7e9bde"
+    },
+    "providerId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "status": "pending",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:38:56.402Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:56.402Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea385121b49793625a91db"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8134"
+    },
+    "customerId": {
+      "$oid": "6aea3742f112ab8acd7e9b7d"
+    },
+    "providerId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "status": "pending",
+    "message": "Hei! Jeg har varebil og kan ta dette denne uka.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:38:57.162Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:57.162Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea385321b49793625a91f9"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80ee"
+    },
+    "customerId": {
+      "$oid": "6aea3745f112ab8acd7e9bd0"
+    },
+    "providerId": {
+      "$oid": "6aea373ff112ab8acd7e9b37"
+    },
+    "status": "pending",
+    "message": "Hei, jeg har tilhenger og stropper. Kan ta dette i helgen.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:38:59.253Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:59.253Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea385521b49793625a9264"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80ee"
+    },
+    "customerId": {
+      "$oid": "6aea3748f112ab8acd7e9c09"
+    },
+    "providerId": {
+      "$oid": "6aea373ff112ab8acd7e9b37"
+    },
+    "status": "pending",
+    "message": "Hei! Vi har bil og folk ledig og kan gi et godt tilbud.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:39:01.038Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:39:01.038Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea385721b49793625a92a0"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8157"
+    },
+    "customerId": {
+      "$oid": "6aea3746f112ab8acd7e9bde"
+    },
+    "providerId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "status": "pending",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:39:03.095Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:39:03.095Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea385821b49793625a92b9"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a808f"
+    },
+    "customerId": {
+      "$oid": "6aea3742f112ab8acd7e9b6f"
+    },
+    "providerId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "status": "pending",
+    "message": "Hei, jeg har lang erfaring med vask og tar med eget utstyr.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:39:04.015Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:39:04.015Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea385821b49793625a92d6"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a808f"
+    },
+    "customerId": {
+      "$oid": "6aea3747f112ab8acd7e9bfa"
+    },
+    "providerId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "status": "pending",
+    "message": "Hei, Skinnende Renhold her. Vi kan ta jobben med garanti.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:39:04.920Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:39:04.920Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea385921b49793625a92f4"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8152"
+    },
+    "customerId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "providerId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "status": "pending",
+    "message": "Hei! Student med god tid og sterk rygg. Kan komme når det passer deg.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:39:05.732Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:39:05.732Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea385a21b49793625a9312"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8152"
+    },
+    "customerId": {
+      "$oid": "6aea3746f112ab8acd7e9bde"
+    },
+    "providerId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "status": "pending",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:39:06.550Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:39:06.550Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea385b21b49793625a932b"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8094"
+    },
+    "customerId": {
+      "$oid": "6aea3743f112ab8acd7e9ba6"
+    },
+    "providerId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "status": "pending",
+    "message": "Hei, jeg bor i nærheten og kan komme på kort varsel.",
+    "favorite": false,
+    "archived": false,
+    "withdrawnAt": null,
+    "autoDeclinedByOrderId": null,
+    "createdAt": {
+      "$date": "2026-11-03T19:39:07.341Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:39:07.341Z"
+    },
+    "__v": 0
+  }
+]

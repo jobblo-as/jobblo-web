@@ -1,0 +1,68 @@
+[
+  {
+    "_id": {
+      "$oid": "69835967e4e9204ab27e6452"
+    },
+    "title": "10% Rabatt på neste bestilling",
+    "description": "Få 10% rabatt på din neste tjeneste",
+    "coins": 500,
+    "category": "Rabatt",
+    "isActive": true,
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "69835967e4e9204ab27e6453"
+    },
+    "title": "20% Rabatt på neste bestilling",
+    "description": "Få 20% rabatt på din neste tjeneste",
+    "coins": 1000,
+    "category": "Rabatt",
+    "isActive": true,
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "69835967e4e9204ab27e6454"
+    },
+    "title": "Gratis Premium i 1 måned",
+    "description": "Få tilgang til premium funksjoner i 30 dager",
+    "coins": 2000,
+    "category": "Premium",
+    "isActive": true,
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "69835967e4e9204ab27e6455"
+    },
+    "title": "50% Rabatt på Premium",
+    "description": "Få 50% rabatt på din neste Premium abonnement",
+    "coins": 1500,
+    "category": "Premium",
+    "isActive": true,
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "69835967e4e9204ab27e6456"
+    },
+    "title": "Gratis annonse-fremheving",
+    "description": "Fremhev din annonse i 7 dager",
+    "coins": 800,
+    "category": "Synlighet",
+    "isActive": true,
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "69835967e4e9204ab27e6457"
+    },
+    "title": "Prioritert kundestøtte",
+    "description": "Få prioritert hjelp fra vårt supportteam",
+    "coins": 300,
+    "category": "Service",
+    "isActive": true,
+    "__v": 0
+  }
+]

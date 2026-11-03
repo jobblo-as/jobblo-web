@@ -1,0 +1,451 @@
+[
+  {
+    "_id": {
+      "$oid": "6aea37c555f923a56452f52d"
+    },
+    "orderId": {
+      "$oid": "6aea37b121b49793625a82f0"
+    },
+    "__v": 0,
+    "amounts": {
+      "agreedPrice": 800,
+      "fee": 24,
+      "tax": 0,
+      "totalCustomer": 800,
+      "netProvider": 776
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:36:37.632Z"
+    },
+    "customerId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "originalPaymentAmountMinor": 80000,
+    "paymentDate": {
+      "$date": "2026-11-03T19:36:37.608Z"
+    },
+    "paymentMethodBrand": "visa",
+    "paymentMethodLast4": "4242",
+    "paymentProvider": "stripe",
+    "providerConnectDeadlineAt": {
+      "$date": "2026-11-03T19:38:37.608Z"
+    },
+    "providerConnectDeadlineDays": 1,
+    "providerConnectStatus": "pending",
+    "providerId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "refundAmountMinor": 0,
+    "refundStatus": "none",
+    "refundedAmountMinor": 0,
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80da"
+    },
+    "serviceTitle": "Bære sofa ned fra 3. etasje",
+    "status": "completed",
+    "stripeLivemode": false,
+    "stripePaymentIntentId": "pi_3UXnVT3acMP9uu8L1lQmZde2",
+    "transactionId": "pi_3UXnVT3acMP9uu8L1lQmZde2",
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:38.631Z"
+    },
+    "ratings": {
+      "overall": 5,
+      "punctuality": 5,
+      "quality": 5,
+      "communication": 5
+    },
+    "reviewComment": "Kom presis, bar sofaen ned uten en ripe i trappen. Anbefales!"
+  },
+  {
+    "_id": {
+      "$oid": "6aea37e055f923a56452f532"
+    },
+    "orderId": {
+      "$oid": "6aea37cc21b49793625a84a2"
+    },
+    "__v": 0,
+    "amounts": {
+      "agreedPrice": 1400,
+      "fee": 42,
+      "tax": 0,
+      "totalCustomer": 1400,
+      "netProvider": 1358
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:37:04.216Z"
+    },
+    "customerId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "originalPaymentAmountMinor": 140000,
+    "paymentDate": {
+      "$date": "2026-11-03T19:37:04.135Z"
+    },
+    "paymentMethodBrand": "visa",
+    "paymentMethodLast4": "4242",
+    "paymentProvider": "stripe",
+    "providerConnectDeadlineAt": {
+      "$date": "2026-11-03T19:39:04.135Z"
+    },
+    "providerConnectDeadlineDays": 1,
+    "providerConnectStatus": "pending",
+    "providerId": {
+      "$oid": "6aea3742f112ab8acd7e9b6f"
+    },
+    "refundAmountMinor": 0,
+    "refundStatus": "none",
+    "refundedAmountMinor": 0,
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8085"
+    },
+    "serviceTitle": "Vask av 2-roms før visning",
+    "status": "completed",
+    "stripeLivemode": false,
+    "stripePaymentIntentId": "pi_3UXnVp3acMP9uu8L0UGu2z1y",
+    "transactionId": "pi_3UXnVp3acMP9uu8L0UGu2z1y",
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:05.396Z"
+    },
+    "ratings": {
+      "overall": 5,
+      "punctuality": 5,
+      "quality": 5,
+      "communication": 5
+    },
+    "reviewComment": "Leiligheten var skinnende til visning. Grundig og blid."
+  },
+  {
+    "_id": {
+      "$oid": "6aea37f255f923a56452f537"
+    },
+    "orderId": {
+      "$oid": "6aea37e621b49793625a86ba"
+    },
+    "__v": 0,
+    "amounts": {
+      "agreedPrice": 1200,
+      "fee": 36,
+      "tax": 0,
+      "totalCustomer": 1200,
+      "netProvider": 1164
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:37:22.360Z"
+    },
+    "customerId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "originalPaymentAmountMinor": 120000,
+    "paymentDate": {
+      "$date": "2026-11-03T19:37:22.339Z"
+    },
+    "paymentMethodBrand": "visa",
+    "paymentMethodLast4": "4242",
+    "paymentProvider": "stripe",
+    "providerConnectDeadlineAt": {
+      "$date": "2026-11-03T19:39:22.339Z"
+    },
+    "providerConnectDeadlineDays": 1,
+    "providerConnectStatus": "pending",
+    "providerId": {
+      "$oid": "6aea3744f112ab8acd7e9bb4"
+    },
+    "refundAmountMinor": 0,
+    "refundStatus": "none",
+    "refundedAmountMinor": 0,
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8166"
+    },
+    "serviceTitle": "Hjulskift på to biler",
+    "status": "completed",
+    "stripeLivemode": false,
+    "stripePaymentIntentId": "pi_3UXnWE3acMP9uu8L1y1Mtv75",
+    "transactionId": "pi_3UXnWE3acMP9uu8L1y1Mtv75",
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:23.143Z"
+    },
+    "ratings": {
+      "overall": 4,
+      "punctuality": 3,
+      "quality": 4,
+      "communication": 5
+    },
+    "reviewComment": "Fikk byttet begge raskt. Kom 20 min for sent, men sa ifra."
+  },
+  {
+    "_id": {
+      "$oid": "6aea380255f923a56452f53c"
+    },
+    "orderId": {
+      "$oid": "6aea37f721b49793625a882e"
+    },
+    "__v": 0,
+    "amounts": {
+      "agreedPrice": 300,
+      "fee": 9,
+      "tax": 0,
+      "totalCustomer": 300,
+      "netProvider": 291
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:37:38.105Z"
+    },
+    "customerId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "originalPaymentAmountMinor": 30000,
+    "paymentDate": {
+      "$date": "2026-11-03T19:37:38.086Z"
+    },
+    "paymentMethodBrand": "visa",
+    "paymentMethodLast4": "4242",
+    "paymentProvider": "stripe",
+    "providerConnectDeadlineAt": {
+      "$date": "2026-11-03T19:39:38.086Z"
+    },
+    "providerConnectDeadlineDays": 1,
+    "providerConnectStatus": "pending",
+    "providerId": {
+      "$oid": "6aea3743f112ab8acd7e9ba6"
+    },
+    "refundAmountMinor": 0,
+    "refundStatus": "none",
+    "refundedAmountMinor": 0,
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8102"
+    },
+    "serviceTitle": "Rydde hage etter storm",
+    "status": "completed",
+    "stripeLivemode": false,
+    "stripePaymentIntentId": "pi_3UXnWT3acMP9uu8L0vWo2Il6",
+    "transactionId": "pi_3UXnWT3acMP9uu8L0vWo2Il6",
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:38.907Z"
+    },
+    "ratings": {
+      "overall": 5,
+      "punctuality": 5,
+      "quality": 5,
+      "communication": 5
+    },
+    "reviewComment": "Rask og effektiv. Hagen ser bedre ut enn før stormen."
+  },
+  {
+    "_id": {
+      "$oid": "6aea381155f923a56452f541"
+    },
+    "orderId": {
+      "$oid": "6aea380821b49793625a89bd"
+    },
+    "__v": 0,
+    "amounts": {
+      "agreedPrice": 4500,
+      "fee": 135,
+      "tax": 0,
+      "totalCustomer": 4500,
+      "netProvider": 4365
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:37:53.534Z"
+    },
+    "customerId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "originalPaymentAmountMinor": 450000,
+    "paymentDate": {
+      "$date": "2026-11-03T19:37:53.516Z"
+    },
+    "paymentMethodBrand": "visa",
+    "paymentMethodLast4": "4242",
+    "paymentProvider": "stripe",
+    "providerConnectDeadlineAt": {
+      "$date": "2026-11-03T19:39:53.516Z"
+    },
+    "providerConnectDeadlineDays": 1,
+    "providerConnectStatus": "pending",
+    "providerId": {
+      "$oid": "6aea3747f112ab8acd7e9bec"
+    },
+    "refundAmountMinor": 0,
+    "refundStatus": "none",
+    "refundedAmountMinor": 0,
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80bc"
+    },
+    "serviceTitle": "Male barnerom",
+    "status": "completed",
+    "stripeLivemode": false,
+    "stripePaymentIntentId": "pi_3UXnWj3acMP9uu8L0prBaGcd",
+    "transactionId": "pi_3UXnWj3acMP9uu8L0prBaGcd",
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:54.293Z"
+    },
+    "ratings": {
+      "overall": 5,
+      "punctuality": 5,
+      "quality": 5,
+      "communication": 5
+    },
+    "reviewComment": "Profesjonelt fra start til slutt. Ryddet etter seg og holdt tiden."
+  },
+  {
+    "_id": {
+      "$oid": "6aea382055f923a56452f546"
+    },
+    "orderId": {
+      "$oid": "6aea381721b49793625a8b4c"
+    },
+    "__v": 0,
+    "amounts": {
+      "agreedPrice": 350,
+      "fee": 11,
+      "tax": 0,
+      "totalCustomer": 350,
+      "netProvider": 339
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:38:08.802Z"
+    },
+    "customerId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "originalPaymentAmountMinor": 35000,
+    "paymentDate": {
+      "$date": "2026-11-03T19:38:08.786Z"
+    },
+    "paymentMethodBrand": "visa",
+    "paymentMethodLast4": "4242",
+    "paymentProvider": "stripe",
+    "providerConnectDeadlineAt": {
+      "$date": "2026-11-03T19:40:08.786Z"
+    },
+    "providerConnectDeadlineDays": 1,
+    "providerConnectStatus": "pending",
+    "providerId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "refundAmountMinor": 0,
+    "refundStatus": "none",
+    "refundedAmountMinor": 0,
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80e4"
+    },
+    "serviceTitle": "Bærehjelp ved innflytting",
+    "status": "payment_received",
+    "stripeLivemode": false,
+    "stripePaymentIntentId": "pi_3UXnWy3acMP9uu8L1AUHCgE0",
+    "transactionId": "pi_3UXnWy3acMP9uu8L1AUHCgE0",
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:08.802Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6aea382d55f923a56452f549"
+    },
+    "orderId": {
+      "$oid": "6aea382321b49793625a8cdb"
+    },
+    "__v": 0,
+    "amounts": {
+      "agreedPrice": 1000,
+      "fee": 30,
+      "tax": 0,
+      "totalCustomer": 1000,
+      "netProvider": 970
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:38:21.879Z"
+    },
+    "customerId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "originalPaymentAmountMinor": 100000,
+    "paymentDate": {
+      "$date": "2026-11-03T19:38:21.857Z"
+    },
+    "paymentMethodBrand": "visa",
+    "paymentMethodLast4": "4242",
+    "paymentProvider": "stripe",
+    "providerConnectDeadlineAt": {
+      "$date": "2026-11-03T19:40:21.857Z"
+    },
+    "providerConnectDeadlineDays": 1,
+    "providerConnectStatus": "pending",
+    "providerId": {
+      "$oid": "6aea3742f112ab8acd7e9b7d"
+    },
+    "refundAmountMinor": 0,
+    "refundStatus": "none",
+    "refundedAmountMinor": 0,
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a812f"
+    },
+    "serviceTitle": "Hente sofa fra Finn-kjøp på Majorstuen",
+    "status": "payment_received",
+    "stripeLivemode": false,
+    "stripePaymentIntentId": "pi_3UXnXC3acMP9uu8L044jbXER",
+    "transactionId": "pi_3UXnXC3acMP9uu8L044jbXER",
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:21.879Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6aea383a55f923a56452f54c"
+    },
+    "orderId": {
+      "$oid": "6aea383021b49793625a8dda"
+    },
+    "__v": 0,
+    "amounts": {
+      "agreedPrice": 1800,
+      "fee": 54,
+      "tax": 0,
+      "totalCustomer": 1800,
+      "netProvider": 1746
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:38:34.428Z"
+    },
+    "customerId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "originalPaymentAmountMinor": 180000,
+    "paymentDate": {
+      "$date": "2026-11-03T19:38:34.399Z"
+    },
+    "paymentMethodBrand": "visa",
+    "paymentMethodLast4": "4242",
+    "paymentProvider": "stripe",
+    "providerConnectDeadlineAt": {
+      "$date": "2026-11-03T19:40:34.399Z"
+    },
+    "providerConnectDeadlineDays": 1,
+    "providerConnectStatus": "ready",
+    "providerId": {
+      "$oid": "6aea3746f112ab8acd7e9bde"
+    },
+    "refundAmountMinor": 180000,
+    "refundStatus": "succeeded",
+    "refundedAmountMinor": 180000,
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a814d"
+    },
+    "serviceTitle": "Montere PAX-garderobe",
+    "status": "automatically_cancelled",
+    "stripeLivemode": false,
+    "stripePaymentIntentId": "pi_3UXnXO3acMP9uu8L0vewWrpA",
+    "transactionId": "pi_3UXnXO3acMP9uu8L0vewWrpA",
+    "updatedAt": {
+      "$date": "2026-11-03T19:41:34.369Z"
+    },
+    "cancellationReason": "provider_stripe_connect_timeout",
+    "refundCompletedAt": {
+      "$date": "2026-11-03T19:41:34.369Z"
+    },
+    "refundReason": "provider_stripe_connect_timeout",
+    "stripeRefundId": "re_3UXnXO3acMP9uu8L02shXMFD"
+  }
+]

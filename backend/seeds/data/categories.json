@@ -1,0 +1,174 @@
+[
+  {
+    "_id": {
+      "$oid": "69b81cb7b06532ba96701e4f"
+    },
+    "name": "Rengjøring",
+    "slug": "rengjoring",
+    "parentId": null,
+    "icon": "BrushCleaning",
+    "keywords": [],
+    "sortOrder": 0,
+    "isActive": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-03-16T15:07:35.985Z"
+    },
+    "updatedAt": {
+      "$date": "2026-03-16T15:07:35.985Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69b81cb7b06532ba96701e50"
+    },
+    "name": "Rørlegger",
+    "slug": "rorlegger",
+    "parentId": null,
+    "icon": "Wrench",
+    "keywords": [],
+    "sortOrder": 1,
+    "isActive": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-03-16T15:07:35.986Z"
+    },
+    "updatedAt": {
+      "$date": "2026-08-05T14:07:07.307Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69b81cb7b06532ba96701e51"
+    },
+    "name": "Maling",
+    "slug": "maling",
+    "parentId": null,
+    "icon": "Paintbrush",
+    "keywords": [],
+    "sortOrder": 2,
+    "isActive": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-03-16T15:07:35.986Z"
+    },
+    "updatedAt": {
+      "$date": "2026-03-16T15:07:35.986Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69b81cb7b06532ba96701e52"
+    },
+    "name": "Flytting",
+    "slug": "flytting",
+    "parentId": null,
+    "icon": "Truck",
+    "keywords": [],
+    "sortOrder": 3,
+    "isActive": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-03-16T15:07:35.986Z"
+    },
+    "updatedAt": {
+      "$date": "2026-03-16T15:07:35.986Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69b81cb7b06532ba96701e53"
+    },
+    "name": "Hagearbeid",
+    "slug": "hagearbeid",
+    "parentId": null,
+    "icon": "Flower2",
+    "keywords": [],
+    "sortOrder": 4,
+    "isActive": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-03-16T15:07:35.987Z"
+    },
+    "updatedAt": {
+      "$date": "2026-03-16T15:07:35.987Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69b81cb7b06532ba96701e54"
+    },
+    "name": "Oppussing",
+    "slug": "oppussing",
+    "parentId": null,
+    "icon": "Hammer",
+    "keywords": [],
+    "sortOrder": 5,
+    "isActive": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-03-16T15:07:35.987Z"
+    },
+    "updatedAt": {
+      "$date": "2026-03-16T15:07:35.987Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69b81cb7b06532ba96701e55"
+    },
+    "name": "Transport",
+    "slug": "transport",
+    "parentId": null,
+    "icon": "Box",
+    "keywords": [],
+    "sortOrder": 6,
+    "isActive": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-03-16T15:07:35.987Z"
+    },
+    "updatedAt": {
+      "$date": "2026-03-16T15:07:35.987Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "69b81cb7b06532ba96701e56"
+    },
+    "name": "Småjobber",
+    "slug": "smajobber",
+    "parentId": null,
+    "icon": "Handshake",
+    "keywords": [],
+    "sortOrder": 7,
+    "isActive": true,
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-03-16T15:07:35.987Z"
+    },
+    "updatedAt": {
+      "$date": "2026-03-16T15:07:35.987Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6ae8ad69ff98ac6287e63037"
+    },
+    "name": "Bil & Pleie",
+    "slug": "bil-pleie",
+    "description": "Bilvask, polering, riper og hjulskift",
+    "parentId": null,
+    "keywords": [],
+    "sortOrder": 8,
+    "isActive": true,
+    "createdAt": {
+      "$date": "2026-11-02T15:34:01.698Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-02T15:34:01.698Z"
+    },
+    "__v": 0,
+    "icon": "Car"
+  }
+]

@@ -1,0 +1,60 @@
+[
+  {
+    "_id": {
+      "$oid": "6aea4d026802f6bb1bd0f8c8"
+    },
+    "name": "Jobblo",
+    "lastName": "Admin",
+    "email": "admin@jobblo.no",
+    "password": "$2a$12$9bETKXr1.MQ4.W9K1ZK3weO1CgTEMe54c1jW/mLqm0FT70UQr0atS",
+    "role": "superAdmin",
+    "acceptedTerms": true,
+    "termsVersion": "2026-01-08",
+    "termsAcceptedAt": {
+      "$date": "2026-11-03T19:34:00Z"
+    },
+    "emailVerifiedAt": {
+      "$date": "2026-11-03T19:34:00Z"
+    },
+    "accountStatus": "active",
+    "verified": true,
+    "isTrusted": true,
+    "isDeleted": false,
+    "deletedAt": null,
+    "planType": "private",
+    "subscription": "Standard",
+    "locations": [],
+    "favorites": [],
+    "blockedUsers": [],
+    "oauthProviders": [],
+    "experience": [],
+    "availability": [],
+    "portfolio": [],
+    "previousProjects": [],
+    "certifications": [],
+    "averageRating": 0,
+    "reviewCount": 0,
+    "completedJobs": 0,
+    "earnings": 0,
+    "spending": 0,
+    "pointsBalance": 0,
+    "pointsHistory": [],
+    "monthlyContactUsage": 0,
+    "lastContactReset": {
+      "$date": "2026-11-03T19:34:00Z"
+    },
+    "payoutOnboardingStatus": "none",
+    "payoutEnabled": false,
+    "chargesEnabled": false,
+    "detailsSubmitted": false,
+    "payoutMethod": null,
+    "payoutVerified": false,
+    "createdAt": {
+      "$date": "2026-11-03T19:34:00Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:34:00Z"
+    },
+    "__v": 0
+  }
+]

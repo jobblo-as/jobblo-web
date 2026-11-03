@@ -1,0 +1,81 @@
+[
+  {
+    "_id": {
+      "$oid": "69bc210e42b45c7759d92252"
+    },
+    "title": "Ny Kolleksjon",
+    "subtitle": "Oppdag vårens nyheter",
+    "buttonText": "Se mer",
+    "footerText": "Gjelder så langt lageret rekker",
+    "bgColor": "#2D4239",
+    "image": "https://res.cloudinary.com/dv0zorcek/image/upload/v1773937767/hero/1555bd95-01c6-4a47-a847-e4a1ce2de24b.jpg",
+    "activeFrom": {
+      "$date": "2026-03-19T00:00:00Z"
+    },
+    "expireAt": {
+      "$date": "2031-03-20T00:00:00Z"
+    },
+    "isActive": true,
+    "createdAt": {
+      "$date": "2026-03-19T16:15:10.984Z"
+    },
+    "updatedAt": {
+      "$date": "2026-03-19T16:46:13.177Z"
+    },
+    "__v": 0,
+    "buttonUrl": "http://172.235.43.254.nip.io/home"
+  },
+  {
+    "_id": {
+      "$oid": "69bc21bc42b45c7759d924da"
+    },
+    "title": "Gratis frakt",
+    "subtitle": "på alle jakker",
+    "buttonText": "Gå til liste",
+    "footerText": "Tilbudet varer fra 9. mars til og med 15. mars og gjelder alt i jakker-kategorien",
+    "bgColor": "#132A22",
+    "image": "https://res.cloudinary.com/dv0zorcek/image/upload/v1773937083/hero/737d525b-0fa2-458d-bb52-aa2f79c91542.jpg",
+    "activeFrom": {
+      "$date": "2026-03-19T00:00:00Z"
+    },
+    "expireAt": {
+      "$date": "2029-12-21T00:00:00Z"
+    },
+    "isActive": true,
+    "createdAt": {
+      "$date": "2026-03-19T16:18:04.240Z"
+    },
+    "updatedAt": {
+      "$date": "2026-03-19T16:45:59.740Z"
+    },
+    "__v": 0,
+    "buttonUrl": "http://172.235.43.254.nip.io/home"
+  },
+  {
+    "_id": {
+      "$oid": "69f0e3c2fff6a6a66f055121"
+    },
+    "title": "Adipisicing dolore m",
+    "subtitle": "Et nisi explicabo V",
+    "buttonText": "Numquam et ad sunt v",
+    "buttonUrl": "Sapiente non et nequ",
+    "footerText": "Voluptatem Exercita",
+    "bgColor": "Veniam amet tempor",
+    "image": "https://res.cloudinary.com/dv0zorcek/image/upload/v1777394625/hero/2dc4586a-a218-441a-b39c-5471f5be3cde.png",
+    "activeFrom": {
+      "$date": "2026-04-28T00:00:00Z"
+    },
+    "expireAt": {
+      "$date": "2026-05-18T00:00:00Z"
+    },
+    "isActive": false,
+    "displayType": "popup",
+    "createdAt": {
+      "$date": "2026-04-28T16:43:46.122Z"
+    },
+    "updatedAt": {
+      "$date": "2026-05-19T18:04:07.075Z"
+    },
+    "__v": 0
+  }
+]

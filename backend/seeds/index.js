@@ -1,8 +1,15 @@
 require('../config/env'); // backend/.env.development (production: .env.production)
 const mongoose = require('mongoose');
 
-const seedUsers = require('./users.seed');
 const seedPlans = require('./plan.seed');
+const seedCategories = require('./categories.seed');
+const seedReference = require('./reference.seed');
+const seedUsers = require('./users.seed');
+const seedAdmin = require('./admin.seed');
+const seedJobs = require('./jobs.seed');
+const seedActivity = require('./activity.seed');
+
+const total = (counts) => Object.values(counts).reduce((a, b) => a + b, 0);
 
 async function run() {
   try {
@@ -12,16 +19,22 @@ async function run() {
     await mongoose.connect(process.env.MONGO_URI);
     console.log('✅ MongoDB connected');
 
-    const users = await seedUsers();
-    console.log(`👤 Users: ${users.length}`);
-
-    const plans = await seedPlans();
-    console.log(`💳 Plans: ${plans.length}`);
+    await seedPlans(); // logs its own count (it returns nothing)
+    console.log(`🏷️  Categories: ${(await seedCategories()).categories}`);
+    console.log(`🗂️  Config, homepage: ${total(await seedReference())}`);
+    console.log(`👤 Users: ${(await seedUsers()).users}`);
+    console.log(`🛡️  Super admin: ${(await seedAdmin()).admin} (admin@jobblo.no)`);
+    console.log(`🧰 Jobs: ${(await seedJobs()).services}`);
+    const activity = await seedActivity();
+    console.log(
+      `💬 Activity: ${activity.jobrequests} applications, ${activity.chats} chats, ` +
+        `${activity.orders} orders, ${activity.reviews} reviews`
+    );
 
     console.log('🎉 Database seeded successfully');
     process.exit(0);
   } catch (err) {
-    console.error('❌ Seeding failed:', err);
+    console.error('❌ Seeding failed:', err.message);
     process.exit(1);
   }
 }

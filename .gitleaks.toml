@@ -1,0 +1,13 @@
+# gitleaks reads this from the repo root (CI: `gitleaks detect --source .`).
+# The default rules stay on; only these exact non-secret shapes in the demo seed data are
+# allowed, so a real secret added to seeds/data later is still caught.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Demo seed data: idempotency labels and config names, not secrets"
+regexes = [
+  '''payout_order_[0-9a-f]{24}''',
+  '''jobblo_financial_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}''',
+  '''FREE_PRIVATE_JOBS_UNDER_10000''',
+]

@@ -1,0 +1,3855 @@
+[
+  {
+    "_id": {
+      "$oid": "6aea37ae21b49793625a8261"
+    },
+    "userId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Jonas har søkt på \"Bære sofa ned fra 3. etasje\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea37ae21b49793625a8256"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:14.910Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:14.910Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37af21b49793625a827f"
+    },
+    "userId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Ahmed har søkt på \"Bære sofa ned fra 3. etasje\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3745f112ab8acd7e9bd0"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea37af21b49793625a8274"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:15.806Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:15.806Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37b021b49793625a8298"
+    },
+    "userId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Sara har søkt på \"Bære sofa ned fra 3. etasje\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3746f112ab8acd7e9bde"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea37b021b49793625a8291"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:16.634Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:16.634Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37b021b49793625a82aa"
+    },
+    "userId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Søknaden din på \"Bære sofa ned fra 3. etasje\" er godkjent",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea37ae21b49793625a8256"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:16.663Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:16.663Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37b021b49793625a82bd"
+    },
+    "userId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Hei! Jeg kan komme lørdag kl. 10. Er det greit?",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:16.711Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:16.711Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37b021b49793625a82cc"
+    },
+    "userId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Perfekt, ringeklokke Solberg. Sofaen er ganske tung.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:16.727Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:16.727Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37b021b49793625a82de"
+    },
+    "userId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Ingen problem, jeg tar med en kompis.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:16.753Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:16.753Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37b121b49793625a8301"
+    },
+    "userId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Du er valgt til oppdraget \"Bære sofa ned fra 3. etasje\" — venter på betaling.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "orderId": {
+      "$oid": "6aea37b121b49793625a82f0"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:17.464Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:17.464Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37c521b49793625a8345"
+    },
+    "userId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Betaling mottatt — du kan starte jobben.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "orderId": {
+      "$oid": "6aea37b121b49793625a82f0"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:37.701Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:37.701Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37c521b49793625a8346"
+    },
+    "userId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Start oppdraget innen 4.11.2026, ellers kanselleres det og kunden får full refusjon. Stripe Connect må være klart for å starte: http://localhost:5174/settings/payout",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "orderId": {
+      "$oid": "6aea37b121b49793625a82f0"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:37.701Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:37.701Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37c521b49793625a8347"
+    },
+    "userId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Betalingen er bekreftet og holdes trygt til jobben er godkjent.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "orderId": {
+      "$oid": "6aea37b121b49793625a82f0"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:37.701Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:37.701Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37c621b49793625a837e"
+    },
+    "userId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Utføreren har startet oppdraget.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "orderId": {
+      "$oid": "6aea37b121b49793625a82f0"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:38.532Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:38.532Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37c621b49793625a83a3"
+    },
+    "userId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Utføreren har levert jobben — se over og godkjenn.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "orderId": {
+      "$oid": "6aea37b121b49793625a82f0"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:38.579Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:38.579Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37c921b49793625a83f3"
+    },
+    "userId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Jobb godkjent — 776 kr er på vei til deg.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "orderId": {
+      "$oid": "6aea37b121b49793625a82f0"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:41.883Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:41.883Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37c921b49793625a83f4"
+    },
+    "userId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Oppdraget er fullført og godkjent.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "orderId": {
+      "$oid": "6aea37b121b49793625a82f0"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:41.883Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:41.883Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37ca21b49793625a842d"
+    },
+    "userId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Emilie har søkt på \"Vask av 2-roms før visning\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3742f112ab8acd7e9b6f"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea37ca21b49793625a8422"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:42.590Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:42.590Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37cb21b49793625a844a"
+    },
+    "userId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Skinnende Renhold AS har søkt på \"Vask av 2-roms før visning\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3747f112ab8acd7e9bfa"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea37cb21b49793625a843f"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:43.321Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:43.321Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37cb21b49793625a845c"
+    },
+    "userId": {
+      "$oid": "6aea3742f112ab8acd7e9b6f"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Søknaden din på \"Vask av 2-roms før visning\" er godkjent",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea37ca21b49793625a8422"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:43.472Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:43.472Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37cb21b49793625a846f"
+    },
+    "userId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Hei Ingrid, jeg har tid onsdag formiddag. Har du vaskemidler, eller skal jeg ta med?",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3742f112ab8acd7e9b6f"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:43.622Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:43.622Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37cb21b49793625a847e"
+    },
+    "userId": {
+      "$oid": "6aea3742f112ab8acd7e9b6f"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Ta gjerne med det du liker å bruke, så betaler jeg 100 ekstra.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:43.663Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:43.663Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37cb21b49793625a8491"
+    },
+    "userId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Avtale!",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3742f112ab8acd7e9b6f"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:43.781Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:43.781Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37cc21b49793625a84b3"
+    },
+    "userId": {
+      "$oid": "6aea3742f112ab8acd7e9b6f"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Du er valgt til oppdraget \"Vask av 2-roms før visning\" — venter på betaling.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "orderId": {
+      "$oid": "6aea37cc21b49793625a84a2"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:44.580Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:44.580Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37e021b49793625a858a"
+    },
+    "userId": {
+      "$oid": "6aea3742f112ab8acd7e9b6f"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Betaling mottatt — du kan starte jobben.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "orderId": {
+      "$oid": "6aea37cc21b49793625a84a2"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:04.246Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:04.246Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37e021b49793625a858b"
+    },
+    "userId": {
+      "$oid": "6aea3742f112ab8acd7e9b6f"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Start oppdraget innen 4.11.2026, ellers kanselleres det og kunden får full refusjon. Stripe Connect må være klart for å starte: http://localhost:5174/settings/payout",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "orderId": {
+      "$oid": "6aea37cc21b49793625a84a2"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:04.247Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:04.247Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37e021b49793625a858c"
+    },
+    "userId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Betalingen er bekreftet og holdes trygt til jobben er godkjent.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "orderId": {
+      "$oid": "6aea37cc21b49793625a84a2"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:04.247Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:04.247Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37e121b49793625a85c3"
+    },
+    "userId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Utføreren har startet oppdraget.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3742f112ab8acd7e9b6f"
+    },
+    "orderId": {
+      "$oid": "6aea37cc21b49793625a84a2"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:05.066Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:05.066Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37e121b49793625a85e8"
+    },
+    "userId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Utføreren har levert jobben — se over og godkjenn.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3742f112ab8acd7e9b6f"
+    },
+    "orderId": {
+      "$oid": "6aea37cc21b49793625a84a2"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:05.229Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:05.229Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37e421b49793625a8638"
+    },
+    "userId": {
+      "$oid": "6aea3742f112ab8acd7e9b6f"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Jobb godkjent — 1358 kr er på vei til deg.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "orderId": {
+      "$oid": "6aea37cc21b49793625a84a2"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:08.661Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:08.661Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37e421b49793625a8639"
+    },
+    "userId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Oppdraget er fullført og godkjent.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "orderId": {
+      "$oid": "6aea37cc21b49793625a84a2"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:08.661Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:08.661Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37e521b49793625a8672"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Mats har søkt på \"Hjulskift på to biler\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3744f112ab8acd7e9bb4"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea37e521b49793625a8667"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:09.490Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:09.490Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37e521b49793625a8685"
+    },
+    "userId": {
+      "$oid": "6aea3744f112ab8acd7e9bb4"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Søknaden din på \"Hjulskift på to biler\" er godkjent",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea37e521b49793625a8667"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:09.564Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:09.564Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37e521b49793625a8698"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Hei! Jeg tar med momentnøkkel. Passer torsdag kl. 18?",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3744f112ab8acd7e9bb4"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:09.672Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:09.672Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37e521b49793625a86a6"
+    },
+    "userId": {
+      "$oid": "6aea3744f112ab8acd7e9bb4"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Torsdag 18 passer bra.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:09.713Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:09.713Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37e621b49793625a86ca"
+    },
+    "userId": {
+      "$oid": "6aea3744f112ab8acd7e9bb4"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Du er valgt til oppdraget \"Hjulskift på to biler\" — venter på betaling.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "orderId": {
+      "$oid": "6aea37e621b49793625a86ba"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:10.506Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:10.506Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37f221b49793625a86ff"
+    },
+    "userId": {
+      "$oid": "6aea3744f112ab8acd7e9bb4"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Betaling mottatt — du kan starte jobben.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "orderId": {
+      "$oid": "6aea37e621b49793625a86ba"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:22.370Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:22.370Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37f221b49793625a8700"
+    },
+    "userId": {
+      "$oid": "6aea3744f112ab8acd7e9bb4"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Start oppdraget innen 4.11.2026, ellers kanselleres det og kunden får full refusjon. Stripe Connect må være klart for å starte: http://localhost:5174/settings/payout",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "orderId": {
+      "$oid": "6aea37e621b49793625a86ba"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:22.370Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:22.370Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37f221b49793625a8701"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Betalingen er bekreftet og holdes trygt til jobben er godkjent.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "orderId": {
+      "$oid": "6aea37e621b49793625a86ba"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:22.370Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:22.370Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37f321b49793625a8738"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Utføreren har startet oppdraget.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3744f112ab8acd7e9bb4"
+    },
+    "orderId": {
+      "$oid": "6aea37e621b49793625a86ba"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:23.067Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:23.067Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37f321b49793625a875c"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Utføreren har levert jobben — se over og godkjenn.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3744f112ab8acd7e9bb4"
+    },
+    "orderId": {
+      "$oid": "6aea37e621b49793625a86ba"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:23.099Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:23.099Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37f621b49793625a87ab"
+    },
+    "userId": {
+      "$oid": "6aea3744f112ab8acd7e9bb4"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Jobb godkjent — 1164 kr er på vei til deg.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "orderId": {
+      "$oid": "6aea37e621b49793625a86ba"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:26.235Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:26.235Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37f621b49793625a87ac"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Oppdraget er fullført og godkjent.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "orderId": {
+      "$oid": "6aea37e621b49793625a86ba"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:26.235Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:26.235Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37f721b49793625a87e6"
+    },
+    "userId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Nora har søkt på \"Rydde hage etter storm\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3743f112ab8acd7e9ba6"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea37f721b49793625a87db"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:27.146Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:27.146Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37f721b49793625a87f9"
+    },
+    "userId": {
+      "$oid": "6aea3743f112ab8acd7e9ba6"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Søknaden din på \"Rydde hage etter storm\" er godkjent",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea37f721b49793625a87db"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:27.173Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:27.173Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37f721b49793625a880c"
+    },
+    "userId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Hei Sofie! Jeg bor i Fana og kan komme lørdag.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3743f112ab8acd7e9ba6"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:27.205Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:27.205Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37f721b49793625a881a"
+    },
+    "userId": {
+      "$oid": "6aea3743f112ab8acd7e9ba6"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Supert, takk!",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:27.216Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:27.216Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37f721b49793625a883e"
+    },
+    "userId": {
+      "$oid": "6aea3743f112ab8acd7e9ba6"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Du er valgt til oppdraget \"Rydde hage etter storm\" — venter på betaling.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "orderId": {
+      "$oid": "6aea37f721b49793625a882e"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:27.966Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:27.966Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea380221b49793625a8876"
+    },
+    "userId": {
+      "$oid": "6aea3743f112ab8acd7e9ba6"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Betaling mottatt — du kan starte jobben.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "orderId": {
+      "$oid": "6aea37f721b49793625a882e"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:38.114Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:38.114Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea380221b49793625a8877"
+    },
+    "userId": {
+      "$oid": "6aea3743f112ab8acd7e9ba6"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Start oppdraget innen 4.11.2026, ellers kanselleres det og kunden får full refusjon. Stripe Connect må være klart for å starte: http://localhost:5174/settings/payout",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "orderId": {
+      "$oid": "6aea37f721b49793625a882e"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:38.114Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:38.114Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea380221b49793625a8878"
+    },
+    "userId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Betalingen er bekreftet og holdes trygt til jobben er godkjent.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "orderId": {
+      "$oid": "6aea37f721b49793625a882e"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:38.114Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:38.114Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea380221b49793625a88ae"
+    },
+    "userId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Utføreren har startet oppdraget.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3743f112ab8acd7e9ba6"
+    },
+    "orderId": {
+      "$oid": "6aea37f721b49793625a882e"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:38.835Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:38.835Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea380221b49793625a88d2"
+    },
+    "userId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Utføreren har levert jobben — se over og godkjenn.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3743f112ab8acd7e9ba6"
+    },
+    "orderId": {
+      "$oid": "6aea37f721b49793625a882e"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:38.867Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:38.867Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea380621b49793625a8921"
+    },
+    "userId": {
+      "$oid": "6aea3743f112ab8acd7e9ba6"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Jobb godkjent — 291 kr er på vei til deg.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "orderId": {
+      "$oid": "6aea37f721b49793625a882e"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:42.089Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:42.089Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea380621b49793625a8922"
+    },
+    "userId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Oppdraget er fullført og godkjent.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "orderId": {
+      "$oid": "6aea37f721b49793625a882e"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:42.089Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:42.089Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea380621b49793625a895c"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Brekke Malerservice AS har søkt på \"Male barnerom\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3747f112ab8acd7e9bec"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea380621b49793625a8951"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:42.746Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:42.746Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea380721b49793625a8976"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Linnea har søkt på \"Male barnerom\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3745f112ab8acd7e9bc2"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea380721b49793625a896f"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:43.390Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:43.390Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea380721b49793625a8988"
+    },
+    "userId": {
+      "$oid": "6aea3747f112ab8acd7e9bec"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Søknaden din på \"Male barnerom\" er godkjent",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea380621b49793625a8951"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:43.413Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:43.413Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea380721b49793625a899b"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Hei Kristian. Vi kan ta rommet fredag–søndag. Vi dekker til gulv og møbler.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3747f112ab8acd7e9bec"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:43.445Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:43.445Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea380721b49793625a89ab"
+    },
+    "userId": {
+      "$oid": "6aea3747f112ab8acd7e9bec"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Flott, da sier vi det.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:43.458Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:43.458Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea380821b49793625a89cd"
+    },
+    "userId": {
+      "$oid": "6aea3747f112ab8acd7e9bec"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Du er valgt til oppdraget \"Male barnerom\" — venter på betaling.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "orderId": {
+      "$oid": "6aea380821b49793625a89bd"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:44.217Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:44.217Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea381121b49793625a8a00"
+    },
+    "userId": {
+      "$oid": "6aea3747f112ab8acd7e9bec"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Betaling mottatt — du kan starte jobben.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "orderId": {
+      "$oid": "6aea380821b49793625a89bd"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:53.542Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:53.542Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea381121b49793625a8a01"
+    },
+    "userId": {
+      "$oid": "6aea3747f112ab8acd7e9bec"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Start oppdraget innen 4.11.2026, ellers kanselleres det og kunden får full refusjon. Stripe Connect må være klart for å starte: http://localhost:5174/settings/payout",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "orderId": {
+      "$oid": "6aea380821b49793625a89bd"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:53.543Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:53.543Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea381121b49793625a8a02"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Betalingen er bekreftet og holdes trygt til jobben er godkjent.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "orderId": {
+      "$oid": "6aea380821b49793625a89bd"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:53.543Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:53.543Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea381221b49793625a8a38"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Utføreren har startet oppdraget.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3747f112ab8acd7e9bec"
+    },
+    "orderId": {
+      "$oid": "6aea380821b49793625a89bd"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:54.228Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:54.228Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea381221b49793625a8a5c"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Utføreren har levert jobben — se over og godkjenn.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3747f112ab8acd7e9bec"
+    },
+    "orderId": {
+      "$oid": "6aea380821b49793625a89bd"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:54.257Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:54.257Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea381521b49793625a8aab"
+    },
+    "userId": {
+      "$oid": "6aea3747f112ab8acd7e9bec"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Jobb godkjent — 4365 kr er på vei til deg.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "orderId": {
+      "$oid": "6aea380821b49793625a89bd"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:57.491Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:57.491Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea381521b49793625a8aac"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Oppdraget er fullført og godkjent.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "orderId": {
+      "$oid": "6aea380821b49793625a89bd"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:57.491Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:57.491Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea381621b49793625a8ae6"
+    },
+    "userId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Jonas har søkt på \"Bærehjelp ved innflytting\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea381621b49793625a8adb"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:58.136Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:58.136Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea381621b49793625a8b04"
+    },
+    "userId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Ahmed har søkt på \"Bærehjelp ved innflytting\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3745f112ab8acd7e9bd0"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea381621b49793625a8af9"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:58.826Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:58.826Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea381621b49793625a8b17"
+    },
+    "userId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Søknaden din på \"Bærehjelp ved innflytting\" er godkjent",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea381621b49793625a8adb"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:58.852Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:58.852Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea381621b49793625a8b2a"
+    },
+    "userId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Hei Daniel, jeg kan søndag. Hvor mange esker er det?",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:58.881Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:58.881Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea381621b49793625a8b38"
+    },
+    "userId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Ca. 40 esker og et par tunge skap.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:58.895Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:58.895Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea381721b49793625a8b5c"
+    },
+    "userId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Du er valgt til oppdraget \"Bærehjelp ved innflytting\" — venter på betaling.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "orderId": {
+      "$oid": "6aea381721b49793625a8b4c"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:59.701Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:59.701Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea382021b49793625a8bf5"
+    },
+    "userId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Betaling mottatt — du kan starte jobben.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "orderId": {
+      "$oid": "6aea381721b49793625a8b4c"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:08.811Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:08.811Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea382021b49793625a8bf6"
+    },
+    "userId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Start oppdraget innen 4.11.2026, ellers kanselleres det og kunden får full refusjon. Stripe Connect må være klart for å starte: http://localhost:5174/settings/payout",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "orderId": {
+      "$oid": "6aea381721b49793625a8b4c"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:08.811Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:08.811Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea382021b49793625a8bf7"
+    },
+    "userId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Betalingen er bekreftet og holdes trygt til jobben er godkjent.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "orderId": {
+      "$oid": "6aea381721b49793625a8b4c"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:08.811Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:08.811Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea382121b49793625a8c2d"
+    },
+    "userId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Utføreren har startet oppdraget.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "orderId": {
+      "$oid": "6aea381721b49793625a8b4c"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:09.617Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:09.617Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea382121b49793625a8c51"
+    },
+    "userId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Utføreren har levert jobben — se over og godkjenn.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "orderId": {
+      "$oid": "6aea381721b49793625a8b4c"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:09.646Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:09.646Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea382221b49793625a8c74"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Yusuf har søkt på \"Hente sofa fra Finn-kjøp på Majorstuen\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3742f112ab8acd7e9b7d"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea382221b49793625a8c69"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:10.343Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:10.343Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea382221b49793625a8c93"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Lunde Flytt & Transport AS har søkt på \"Hente sofa fra Finn-kjøp på Majorstuen\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3748f112ab8acd7e9c09"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea382221b49793625a8c88"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:10.982Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:10.982Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea382321b49793625a8ca6"
+    },
+    "userId": {
+      "$oid": "6aea3742f112ab8acd7e9b7d"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Søknaden din på \"Hente sofa fra Finn-kjøp på Majorstuen\" er godkjent",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea382221b49793625a8c69"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:11.005Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:11.005Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea382321b49793625a8cb9"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Hei Amina, jeg har varebil og kan hente tirsdag kveld.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3742f112ab8acd7e9b7d"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:11.037Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:11.037Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea382321b49793625a8cc9"
+    },
+    "userId": {
+      "$oid": "6aea3742f112ab8acd7e9b7d"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Tusen takk! Selger heter Per, jeg sender adressen.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:11.046Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:11.046Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea382321b49793625a8ceb"
+    },
+    "userId": {
+      "$oid": "6aea3742f112ab8acd7e9b7d"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Du er valgt til oppdraget \"Hente sofa fra Finn-kjøp på Majorstuen\" — venter på betaling.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "orderId": {
+      "$oid": "6aea382321b49793625a8cdb"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:11.869Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:11.869Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea382d21b49793625a8d1f"
+    },
+    "userId": {
+      "$oid": "6aea3742f112ab8acd7e9b7d"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Betaling mottatt — du kan starte jobben.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "orderId": {
+      "$oid": "6aea382321b49793625a8cdb"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:21.889Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:21.889Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea382d21b49793625a8d20"
+    },
+    "userId": {
+      "$oid": "6aea3742f112ab8acd7e9b7d"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Start oppdraget innen 4.11.2026, ellers kanselleres det og kunden får full refusjon. Stripe Connect må være klart for å starte: http://localhost:5174/settings/payout",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "orderId": {
+      "$oid": "6aea382321b49793625a8cdb"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:21.889Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:21.889Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea382d21b49793625a8d21"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Betalingen er bekreftet og holdes trygt til jobben er godkjent.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "orderId": {
+      "$oid": "6aea382321b49793625a8cdb"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:21.889Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:21.889Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea382e21b49793625a8d57"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Utføreren har startet oppdraget.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3742f112ab8acd7e9b7d"
+    },
+    "orderId": {
+      "$oid": "6aea382321b49793625a8cdb"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:22.614Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:22.614Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea382f21b49793625a8d78"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Jonas har søkt på \"Montere PAX-garderobe\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea382f21b49793625a8d6d"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:23.474Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:23.474Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea383021b49793625a8d92"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Sara har søkt på \"Montere PAX-garderobe\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3746f112ab8acd7e9bde"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea383021b49793625a8d8b"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:24.155Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:24.155Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea383021b49793625a8da5"
+    },
+    "userId": {
+      "$oid": "6aea3746f112ab8acd7e9bde"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Søknaden din på \"Montere PAX-garderobe\" er godkjent",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea383021b49793625a8d8b"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:24.205Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:24.205Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea383021b49793625a8db8"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Hei! Jeg har satt opp mange PAX-skap. Har slagdrill til betong.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3746f112ab8acd7e9bde"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:24.260Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:24.260Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea383021b49793625a8dc8"
+    },
+    "userId": {
+      "$oid": "6aea3746f112ab8acd7e9bde"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Fint, skapene står i esker i soverommet.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:24.285Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:24.285Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea383121b49793625a8de9"
+    },
+    "userId": {
+      "$oid": "6aea3746f112ab8acd7e9bde"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Du er valgt til oppdraget \"Montere PAX-garderobe\" — venter på betaling.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "orderId": {
+      "$oid": "6aea383021b49793625a8dda"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:25.004Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:25.004Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea383a21b49793625a8e1f"
+    },
+    "userId": {
+      "$oid": "6aea3746f112ab8acd7e9bde"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Betaling mottatt — du kan starte jobben.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "orderId": {
+      "$oid": "6aea383021b49793625a8dda"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:34.440Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:34.440Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea383a21b49793625a8e20"
+    },
+    "userId": {
+      "$oid": "6aea3746f112ab8acd7e9bde"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Start oppdraget innen 4.11.2026, ellers kanselleres det og kunden får full refusjon. Stripe Connect må være klart for å starte: http://localhost:5174/settings/payout",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "orderId": {
+      "$oid": "6aea383021b49793625a8dda"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:34.440Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:34.440Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea383a21b49793625a8e21"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Betalingen er bekreftet og holdes trygt til jobben er godkjent.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "orderId": {
+      "$oid": "6aea383021b49793625a8dda"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:34.440Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:34.440Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea383b21b49793625a8e56"
+    },
+    "userId": {
+      "$oid": "6aea373ff112ab8acd7e9b45"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Aas Tømrer og Bygg AS har søkt på \"Koble til ny oppvaskmaskin\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea377521b49793625a805a"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea383b21b49793625a8e4b"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:35.103Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:35.103Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea383b21b49793625a8e69"
+    },
+    "userId": {
+      "$oid": "6aea377521b49793625a805a"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Søknaden din på \"Koble til ny oppvaskmaskin\" er godkjent",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373ff112ab8acd7e9b45"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea383b21b49793625a8e4b"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:35.147Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:35.147Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea383b21b49793625a8e7c"
+    },
+    "userId": {
+      "$oid": "6aea373ff112ab8acd7e9b45"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Hei Marte. Vi kan ta dette neste uke og tar med den gamle maskinen.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea377521b49793625a805a"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:35.201Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:35.201Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea383b21b49793625a8e8a"
+    },
+    "userId": {
+      "$oid": "6aea377521b49793625a805a"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Høres bra ut, jeg betaler nå.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373ff112ab8acd7e9b45"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:35.224Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:35.224Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea383c21b49793625a8eaf"
+    },
+    "userId": {
+      "$oid": "6aea377521b49793625a805a"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Du er valgt til oppdraget \"Koble til ny oppvaskmaskin\" — venter på betaling.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373ff112ab8acd7e9b45"
+    },
+    "orderId": {
+      "$oid": "6aea383b21b49793625a8e9e"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:36.022Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:36.022Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea383c21b49793625a8ece"
+    },
+    "userId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Nora har søkt på \"Flytting av 1-roms innen Bergen\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3743f112ab8acd7e9ba6"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea383c21b49793625a8ec3"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:36.816Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:36.816Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea383d21b49793625a8eeb"
+    },
+    "userId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Lunde Flytt & Transport AS har søkt på \"Flytting av 1-roms innen Bergen\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3748f112ab8acd7e9c09"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea383d21b49793625a8ee0"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:37.652Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:37.652Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea383d21b49793625a8efe"
+    },
+    "userId": {
+      "$oid": "6aea3748f112ab8acd7e9c09"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Søknaden din på \"Flytting av 1-roms innen Bergen\" er godkjent",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea383d21b49793625a8ee0"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:37.750Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:37.750Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea383d21b49793625a8f11"
+    },
+    "userId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Hei Sofie, vi har bil ledig 5. desember. Pris som avtalt.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3748f112ab8acd7e9c09"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:37.962Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:37.962Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea383e21b49793625a8f22"
+    },
+    "userId": {
+      "$oid": "6aea3748f112ab8acd7e9c09"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Super, da booker vi det.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:38.195Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:38.195Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea383f21b49793625a8f43"
+    },
+    "userId": {
+      "$oid": "6aea3748f112ab8acd7e9c09"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Du er valgt til oppdraget \"Flytting av 1-roms innen Bergen\" — venter på betaling.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "orderId": {
+      "$oid": "6aea383e21b49793625a8f33"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:39.024Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:39.024Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea383f21b49793625a8f5d"
+    },
+    "userId": {
+      "$oid": "6aea373df112ab8acd7e9b1a"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Linnea har søkt på \"Rake løv i stor hage\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3745f112ab8acd7e9bc2"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea383f21b49793625a8f56"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:39.846Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:39.846Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384021b49793625a8f7a"
+    },
+    "userId": {
+      "$oid": "6aea373df112ab8acd7e9b1a"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Nora har søkt på \"Rake løv i stor hage\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3743f112ab8acd7e9ba6"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea384021b49793625a8f6f"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:40.823Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:40.823Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384021b49793625a8f8e"
+    },
+    "userId": {
+      "$oid": "6aea3745f112ab8acd7e9bc2"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Søknaden din på \"Rake løv i stor hage\" er godkjent",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373df112ab8acd7e9b1a"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea383f21b49793625a8f56"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:40.956Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:40.956Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384121b49793625a8fa2"
+    },
+    "userId": {
+      "$oid": "6aea373df112ab8acd7e9b1a"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Hei Lars-Erik, jeg bor på Bekkestua og kan komme i helgen.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3745f112ab8acd7e9bc2"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:41.090Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:41.090Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384121b49793625a8faf"
+    },
+    "userId": {
+      "$oid": "6aea3745f112ab8acd7e9bc2"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Så bra! Har du egen rake?",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373df112ab8acd7e9b1a"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:41.225Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:41.225Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384221b49793625a8fcf"
+    },
+    "userId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Mats har søkt på \"Innvendig vask av familiebil\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3744f112ab8acd7e9bb4"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea384221b49793625a8fc4"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:42.158Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:42.158Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384321b49793625a8fed"
+    },
+    "userId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Skinnende Renhold AS har søkt på \"Innvendig vask av familiebil\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3747f112ab8acd7e9bfa"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea384221b49793625a8fe2"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:43.080Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:43.080Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384321b49793625a8fff"
+    },
+    "userId": {
+      "$oid": "6aea3744f112ab8acd7e9bb4"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Søknaden din på \"Innvendig vask av familiebil\" er godkjent",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea384221b49793625a8fc4"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:43.241Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:43.241Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384321b49793625a9012"
+    },
+    "userId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Hei, jeg har damprenser til setene. Passer det onsdag?",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3744f112ab8acd7e9bb4"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:43.493Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:43.493Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384321b49793625a901d"
+    },
+    "userId": {
+      "$oid": "6aea3744f112ab8acd7e9bb4"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Onsdag etter kl. 17 er fint.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:43.515Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:43.515Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384421b49793625a903e"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Skinnende Renhold AS har søkt på \"Flyttevask 3-roms på Frogner\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3747f112ab8acd7e9bfa"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea384421b49793625a9033"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:44.387Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:44.387Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384521b49793625a905c"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Emilie har søkt på \"Flyttevask 3-roms på Frogner\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3742f112ab8acd7e9b6f"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea384521b49793625a9051"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:45.275Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:45.275Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384521b49793625a906f"
+    },
+    "userId": {
+      "$oid": "6aea3747f112ab8acd7e9bfa"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Søknaden din på \"Flyttevask 3-roms på Frogner\" er godkjent",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea384421b49793625a9033"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:45.397Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:45.397Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384521b49793625a9083"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Hei Kristian. Vi gir garanti på flyttevasken. Kan vi ta en titt på leiligheten før?",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3747f112ab8acd7e9bfa"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:45.593Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:45.593Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384521b49793625a9090"
+    },
+    "userId": {
+      "$oid": "6aea3747f112ab8acd7e9bfa"
+    },
+    "isSystem": false,
+    "type": "message",
+    "content": "Ja, du kan komme innom torsdag.",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:45.796Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:45.796Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384621b49793625a90b0"
+    },
+    "userId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Brekke Malerservice AS har søkt på \"Male stue og gang i rekkehus\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3747f112ab8acd7e9bec"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea384621b49793625a90a5"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:46.590Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:46.590Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384721b49793625a90ca"
+    },
+    "userId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Linnea har søkt på \"Male stue og gang i rekkehus\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3745f112ab8acd7e9bc2"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea384721b49793625a90c3"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:47.775Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:47.775Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384821b49793625a90e7"
+    },
+    "userId": {
+      "$oid": "6aea373df112ab8acd7e9b1a"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Aas Tømrer og Bygg AS har søkt på \"Montere IKEA-kjøkken\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea377521b49793625a805a"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea384821b49793625a90dc"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:48.509Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:48.509Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384921b49793625a9104"
+    },
+    "userId": {
+      "$oid": "6aea373df112ab8acd7e9b1a"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Jonas har søkt på \"Montere IKEA-kjøkken\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea384921b49793625a90f9"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:49.347Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:49.347Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384a21b49793625a9121"
+    },
+    "userId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Aas Tømrer og Bygg AS har søkt på \"Tett avløp i dusjen\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea377521b49793625a805a"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea384a21b49793625a9116"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:50.524Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:50.524Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384b21b49793625a913f"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Lunde Flytt & Transport AS har søkt på \"Flytte piano ut av leilighet\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3748f112ab8acd7e9c09"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea384b21b49793625a9134"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:51.320Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:51.320Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384c21b49793625a9158"
+    },
+    "userId": {
+      "$oid": "6aea373ff112ab8acd7e9b45"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Linnea har søkt på \"Klippe hekk før vinteren\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3745f112ab8acd7e9bc2"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea384c21b49793625a9151"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:52.072Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:52.072Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384c21b49793625a9175"
+    },
+    "userId": {
+      "$oid": "6aea373ff112ab8acd7e9b45"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Jonas har søkt på \"Klippe hekk før vinteren\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea384c21b49793625a916a"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:52.972Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:52.972Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384e21b49793625a9192"
+    },
+    "userId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Aas Tømrer og Bygg AS har søkt på \"Legge laminat i soverom\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea377521b49793625a805a"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea384d21b49793625a9187"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:54.081Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:54.081Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384f21b49793625a91af"
+    },
+    "userId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Jonas har søkt på \"Legge laminat i soverom\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea384e21b49793625a91a4"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:55.440Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:55.440Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea385021b49793625a91c9"
+    },
+    "userId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Sara har søkt på \"Legge laminat i soverom\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3746f112ab8acd7e9bde"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea385021b49793625a91c2"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:56.440Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:56.440Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea385121b49793625a91e6"
+    },
+    "userId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Yusuf har søkt på \"Kjøre møbler til gjenvinning\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3742f112ab8acd7e9b7d"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea385121b49793625a91db"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:57.480Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:57.480Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea385321b49793625a9204"
+    },
+    "userId": {
+      "$oid": "6aea373ff112ab8acd7e9b37"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Ahmed har søkt på \"Flytting 3-roms Drammen til Lier\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3745f112ab8acd7e9bd0"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea385321b49793625a91f9"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:59.593Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:59.593Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea385521b49793625a9277"
+    },
+    "userId": {
+      "$oid": "6aea373ff112ab8acd7e9b37"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Lunde Flytt & Transport AS har søkt på \"Flytting 3-roms Drammen til Lier\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3748f112ab8acd7e9c09"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea385521b49793625a9264"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:39:01.653Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:39:01.653Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea385721b49793625a92a7"
+    },
+    "userId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Sara har søkt på \"Hjelp med å sette opp ny PC og skriver\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3746f112ab8acd7e9bde"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea385721b49793625a92a0"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:39:03.122Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:39:03.122Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea385821b49793625a92c4"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Emilie har søkt på \"Ukentlig vask, fast hjelp\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3742f112ab8acd7e9b6f"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea385821b49793625a92b9"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:39:04.047Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:39:04.047Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea385821b49793625a92e1"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Skinnende Renhold AS har søkt på \"Ukentlig vask, fast hjelp\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3747f112ab8acd7e9bfa"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea385821b49793625a92d6"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:39:04.950Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:39:04.950Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea385921b49793625a92ff"
+    },
+    "userId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Jonas har søkt på \"Henge opp TV, hyller og lamper\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea385921b49793625a92f4"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:39:05.786Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:39:05.786Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea385a21b49793625a9319"
+    },
+    "userId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Sara har søkt på \"Henge opp TV, hyller og lamper\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3746f112ab8acd7e9bde"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea385a21b49793625a9312"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:39:06.578Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:39:06.578Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea385b21b49793625a9336"
+    },
+    "userId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "isSystem": false,
+    "type": "application",
+    "content": "Nora har søkt på \"Vindusvask i leilighet\"",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea3743f112ab8acd7e9ba6"
+    },
+    "orderId": null,
+    "requestId": {
+      "$oid": "6aea385b21b49793625a932b"
+    },
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:39:07.372Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:39:07.372Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea38ee21b49793625a94f7"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "isSystem": false,
+    "type": "payment",
+    "content": "Oppdraget ble kansellert fordi utføreren ikke startet oppdraget innen fristen. Full refusjon er bekreftet hos Stripe. Det kan ta noen virkedager før pengene vises på kontoen din.",
+    "read": false,
+    "senderId": null,
+    "orderId": {
+      "$oid": "6aea383021b49793625a8dda"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:41:34.389Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:41:34.389Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea38ee21b49793625a94f8"
+    },
+    "userId": {
+      "$oid": "6aea3746f112ab8acd7e9bde"
+    },
+    "isSystem": false,
+    "type": "order",
+    "content": "Oppdraget ble automatisk kansellert fordi det ikke ble startet innen fristen. Kundens full refusjon er bekreftet hos Stripe.",
+    "read": false,
+    "senderId": null,
+    "orderId": {
+      "$oid": "6aea383021b49793625a8dda"
+    },
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:41:34.389Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:41:34.389Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea42b48aff1717254d58a9"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "isSystem": false,
+    "type": "favorite",
+    "content": "Ingrid added your item \"Utvendig vask av bil\" to their list",
+    "read": false,
+    "senderId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "orderId": null,
+    "requestId": null,
+    "readBy": [],
+    "createdAt": {
+      "$date": "2026-11-03T20:23:16.395Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T20:23:16.395Z"
+    },
+    "__v": 0
+  }
+]
