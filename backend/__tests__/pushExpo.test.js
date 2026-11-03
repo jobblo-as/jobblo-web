@@ -10,7 +10,7 @@ jest.mock('../services/monitoring/faults', () => ({ assertNoFault: jest.fn() }))
 const PushToken = require('../models/PushToken');
 const { getFirebaseMessaging } = require('../services/firebaseAdmin');
 const { logDelivery } = require('../services/monitoring/deliveryLog');
-const { deliverPush } = require('../services/pushNotifications');
+const { deliverPush, deliverPushToAll } = require('../services/pushNotifications');
 const { providerOf } = require('../controllers/pushTokenController');
 
 const IOS = 'ExponentPushToken[abcdefghij123456]';
@@ -100,4 +100,55 @@ test('Expo down but Android delivered: no retry (it would push Android twice)', 
   expect(logDelivery).toHaveBeenLastCalledWith(
     expect.objectContaining({ status: 'partial', accepted: 1 })
   );
+});
+
+test('an admin broadcast reaches every device in provider-sized batches', async () => {
+  const list = [
+    ...Array.from({ length: 1201 }, (_, i) => ({
+      token: `fcm-${i}`.padEnd(40, 'x'),
+      provider: 'fcm',
+    })),
+    ...Array.from({ length: 150 }, (_, i) => ({
+      token: i === 7 ? IOS_DEAD : `ExponentPushToken[ios${i}]`,
+      provider: 'expo',
+    })),
+  ];
+  PushToken.find.mockReturnValue({
+    select: () => ({
+      lean: () => ({
+        cursor: () =>
+          (async function* () {
+            yield* list;
+          })(),
+      }),
+    }),
+  });
+  const result = await deliverPushToAll({
+    title: 'Jobblo',
+    body: 'Ny versjon',
+    data: { type: 'system' },
+  });
+
+  expect(sendEachForMulticast.mock.calls.map((c) => c[0].tokens.length)).toEqual([500, 500, 201]);
+  expect(global.fetch.mock.calls.map((c) => JSON.parse(c[1].body).length)).toEqual([100, 50]);
+  expect(result).toEqual({ accepted: 1350, rejected: 1 });
+  expect(PushToken.updateMany).toHaveBeenCalledWith(
+    { token: { $in: [IOS_DEAD] } },
+    { $set: { active: false } }
+  );
+  expect(PushToken.find).toHaveBeenCalledWith({ active: true });
+});
+
+test('a job photo rides along as the big picture; a non-https one is dropped', async () => {
+  const img = 'https://res.cloudinary.com/x/job.jpg';
+  PushToken.find.mockReturnValue(
+    tokens({ token: ANDROID, provider: 'fcm' }, { token: IOS, provider: 'expo' })
+  );
+  await deliverPush('u1', { ...message, imageUrl: img });
+  expect(sendEachForMulticast.mock.calls[0][0].notification.imageUrl).toBe(img);
+  expect(JSON.parse(global.fetch.mock.calls[0][1].body)[0].richContent).toEqual({ image: img });
+
+  await deliverPush('u1', { ...message, imageUrl: 'http://evil/x.jpg' });
+  expect(sendEachForMulticast.mock.calls[1][0].notification).not.toHaveProperty('imageUrl');
+  expect(JSON.parse(global.fetch.mock.calls[1][1].body)[0]).not.toHaveProperty('richContent');
 });

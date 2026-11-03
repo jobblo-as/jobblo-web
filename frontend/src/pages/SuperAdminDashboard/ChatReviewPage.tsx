@@ -2,14 +2,16 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-import { Shield } from 'lucide-react';
 import { fetchAdminChatById, fetchAdminChatReportById } from '../../api/admin/chats';
 import type { AdminChatDetailResponse, AdminChatReportDetail } from '../../api/admin/chats';
 import { ChatIdSearchForm } from '../../components/admin/chat/ChatIdSearchForm';
 import { ChatAccessReasonDialog } from '../../components/admin/chat/ChatAccessReasonDialog';
 import { ChatReviewEmptyState } from '../../components/admin/chat/ChatReviewEmptyState';
 import { AdminChatViewer } from '../../components/admin/chat/AdminChatViewer';
-import { AdminPageHeader } from '../../components/admin';
+import { AdminPageHeader, AdminStatusBadge } from '../../components/admin';
+import { KeyValue, Section } from '../../components/developer/kit';
+import { Card } from '../../components/developer/ui/card';
+import { Skeleton } from '../../components/developer/ui/skeleton';
 
 // ── Source → default access reason mapping ─────────────────────────────────
 const SOURCE_REASON: Record<string, string> = {
@@ -20,24 +22,18 @@ const SOURCE_REASON: Record<string, string> = {
 // ── Report summary panel ──────────────────────────────────────────────────
 function ReportSummaryPanel({ report }: { report: AdminChatReportDetail }) {
   return (
-    <div className="space-y-2">
-      <p className="text-xs font-semibold text-orange-800 uppercase tracking-wider">
-        Rapport-sammendrag
-      </p>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-        <span className="text-orange-600">Type</span>
-        <span className="text-orange-900 font-medium">{report.reportType.replace(/_/g, ' ')}</span>
-        <span className="text-orange-600">Tittel</span>
-        <span className="text-orange-900 font-medium">{report.title}</span>
-        <span className="text-orange-600">Status</span>
-        <span className="text-orange-900 font-medium">{report.status}</span>
-        <span className="text-orange-600">Rapportert av</span>
-        <span className="text-orange-900 font-medium">{report.reportedBy?.name ?? '–'}</span>
-        <span className="text-orange-600">Rapportert bruker</span>
-        <span className="text-orange-900 font-medium">{report.reportedUser?.name ?? '–'}</span>
-      </div>
+    <div className="space-y-3">
+      <KeyValue
+        items={[
+          ['Type', report.reportType.replace(/_/g, ' ')],
+          ['Tittel', report.title],
+          ['Status', <AdminStatusBadge key="s" status={report.status} />],
+          ['Rapportert av', report.reportedBy?.name ?? '–'],
+          ['Rapportert bruker', report.reportedUser?.name ?? '–'],
+        ]}
+      />
       {report.description && (
-        <p className="text-xs text-orange-800 mt-1 leading-relaxed">{report.description}</p>
+        <p className="text-sm leading-relaxed text-muted-foreground">{report.description}</p>
       )}
     </div>
   );
@@ -150,23 +146,16 @@ export default function ChatReviewPage() {
   const highlightMessageId = reportQuery.data?.messageId ?? null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <AdminPageHeader
         title="Chat-gjennomgang"
         description="Søk på Chat ID for å gjennomgå en samtale på en sikker måte."
       />
 
-      {/* Privacy notice */}
-      <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-700">
-        <Shield size={16} className="shrink-0 text-blue-500" aria-hidden="true" />
-        <span>
-          Chatter vises ikke automatisk. Skriv inn et eksakt Chat ID og oppgi en tilgangsgrunn. Alle
-          tilganger logges automatisk.
-        </span>
-      </div>
-
-      {/* Search form — always visible */}
-      <div className="bg-card rounded-lg border border-border p-5">
+      <Section
+        title="Søk på Chat ID"
+        description="Chatter vises ikke automatisk. Skriv inn et eksakt Chat ID og oppgi en tilgangsgrunn. Alle tilganger logges automatisk."
+      >
         <ChatIdSearchForm
           onSearch={handleSearch}
           defaultValue={urlChatId}
@@ -178,7 +167,7 @@ export default function ChatReviewPage() {
               ?.message ?? 'Feil ved henting av chat. Sjekk Chat ID og prøv igjen.'}
           </p>
         )}
-      </div>
+      </Section>
 
       {/* Access reason dialog */}
       <ChatAccessReasonDialog
@@ -190,12 +179,9 @@ export default function ChatReviewPage() {
 
       {/* Main content */}
       {chatQuery.isFetching ? (
-        <div className="flex items-center justify-center py-20">
-          <span
-            className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin"
-            role="status"
-            aria-label="Laster chat…"
-          />
+        <div className="space-y-4" role="status" aria-label="Laster chat…">
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-96 w-full" />
         </div>
       ) : chatData ? (
         <AdminChatViewer
@@ -208,7 +194,9 @@ export default function ChatReviewPage() {
           }
         />
       ) : (
-        <ChatReviewEmptyState />
+        <Card>
+          <ChatReviewEmptyState />
+        </Card>
       )}
     </div>
   );

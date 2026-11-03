@@ -9,6 +9,9 @@ import {
   AdminPageHeader,
 } from '../../components/admin';
 import type { ColumnDef } from '../../components/admin/AdminDataTable';
+import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '../../components/developer/ui/avatar';
+import { Button } from '../../components/developer/ui/button';
 
 const RATING_OPTIONS = [
   { label: '⭐ 1', value: '1' },
@@ -24,8 +27,10 @@ function StarRating({ rating }: { rating: number }) {
       {Array.from({ length: 5 }).map((_, i) => (
         <Star
           key={i}
-          size={14}
-          className={i < rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/60'}
+          className={cn(
+            'size-3.5',
+            i < rating ? 'fill-amber-500 text-amber-500' : 'text-muted-foreground/50'
+          )}
         />
       ))}
       <span className="ml-1 text-xs text-muted-foreground">{rating}/5</span>
@@ -54,14 +59,10 @@ export default function ReviewsPage() {
       header: 'Anmelder',
       render: (r) => (
         <div className="flex items-center gap-2.5">
-          <img
-            src={
-              r.reviewerId?.avatarUrl ||
-              `https://ui-avatars.com/api/?name=${encodeURIComponent(r.reviewerId?.name ?? 'U')}&background=2d4a3e&color=fff&size=40`
-            }
-            alt={r.reviewerId?.name ?? 'Bruker'}
-            className="w-8 h-8 rounded-full object-cover shrink-0"
-          />
+          <Avatar>
+            <AvatarImage src={r.reviewerId?.avatarUrl} alt={r.reviewerId?.name ?? 'Bruker'} />
+            <AvatarFallback>{(r.reviewerId?.name ?? 'U').slice(0, 2).toUpperCase()}</AvatarFallback>
+          </Avatar>
           <div className="min-w-0">
             <p className="text-sm font-medium text-foreground truncate">
               {r.reviewerId?.name ?? '–'}
@@ -97,7 +98,7 @@ export default function ReviewsPage() {
       header: 'Kommentar',
       render: (r) => (
         <span className="text-sm text-muted-foreground truncate max-w-[200px] block">
-          {r.comment ?? <span className="text-muted-foreground/60 italic">Ingen kommentar</span>}
+          {r.comment ?? <span className="text-muted-foreground">Ingen kommentar</span>}
         </span>
       ),
     },
@@ -118,19 +119,20 @@ export default function ReviewsPage() {
       key: 'actions',
       header: 'Handlinger',
       render: (r) => (
-        <button
+        <Button
+          size="xs"
+          variant="destructive"
           onClick={() => setDeleteTarget(r)}
-          className="px-2.5 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
           aria-label="Slett vurdering"
         >
           Slett
-        </button>
+        </Button>
       ),
     },
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <AdminPageHeader
         title="Vurderinger"
         description="Moderer alle bruker- og tjenesevurderinger"
@@ -150,7 +152,7 @@ export default function ReviewsPage() {
         toolbar={
           <div className="flex flex-wrap gap-3 w-full">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Star size={16} />
+              <Star className="size-4" />
               <span>{data?.pagination.total ?? 0} vurderinger totalt</span>
             </div>
             <div className="ml-auto">

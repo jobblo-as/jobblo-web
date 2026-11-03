@@ -27,6 +27,13 @@ const slaOf = (t) => {
     metAt: done ? t.resolvedAt || t.updatedAt : null,
   };
 };
+/** What the poster is told when an admin moves their case. */
+const TICKET_STATUS_TEXT = {
+  in_progress: 'er under behandling.',
+  resolved: 'er løst.',
+  closed: 'er avsluttet.',
+};
+
 const maskEmail = (e) => require('../../services/monitoring/securityEvents').maskEmail(e);
 
 const getTickets = asyncHandler(async (req, res) => {
@@ -173,6 +180,16 @@ const updateTicket = asyncHandler(async (req, res) => {
   }
   if (!changes.length) return sendError(res, 'Nothing to update.', 400);
   await t.save();
+  // The person who wrote in hears when their case moves (internal notes stay internal).
+  if (changes.includes('status') && t.userId && TICKET_STATUS_TEXT[t.status]) {
+    void require('../../services/notifications').notify({
+      userId: t.userId,
+      type: 'system',
+      title: 'Kundeservice',
+      content: `Saken din «${t.subject}» ${TICKET_STATUS_TEXT[t.status]}`,
+      data: { type: 'support_ticket' },
+    });
+  }
   await audit(req, `Developer updated support ticket (${changes.join(', ')})`, {
     area: 'developer.tickets',
     ticketId: String(t._id),

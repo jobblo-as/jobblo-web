@@ -50,7 +50,13 @@
           }
         }
       ],
-      "expo-notifications",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#2E6641"
+        }
+      ],
       "expo-web-browser",
       "expo-apple-authentication",
       [

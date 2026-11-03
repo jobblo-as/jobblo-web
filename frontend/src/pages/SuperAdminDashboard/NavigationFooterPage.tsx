@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Save, RefreshCw, Link, Mail, Globe, Copyright } from 'lucide-react';
+import { Save, RefreshCw, Mail, Copyright } from 'lucide-react';
 import {
   useNavigation,
   useUpdateNavigation,
@@ -8,6 +8,11 @@ import {
 } from '../../hooks/admin/content';
 import { AdminPageHeader, AdminLoadingSkeleton, AdminErrorState } from '../../components/admin';
 import { toast } from 'react-hot-toast';
+import { Section } from '../../components/developer/kit';
+import { Button } from '../../components/developer/ui/button';
+import { Input } from '../../components/developer/ui/input';
+import { Label } from '../../components/developer/ui/label';
+import { Textarea } from '../../components/developer/ui/textarea';
 
 const parseLines = (str: string): { label: string; url: string }[] =>
   str
@@ -111,7 +116,7 @@ export default function NavigationFooterPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         <AdminPageHeader
           title="Navigasjon & Footer"
           description="Administrer navigasjonslenker og footer-innhold"
@@ -123,7 +128,7 @@ export default function NavigationFooterPage() {
 
   if (navError || footerError) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         <AdminPageHeader
           title="Navigasjon & Footer"
           description="Administrer navigasjonslenker og footer-innhold"
@@ -139,157 +144,138 @@ export default function NavigationFooterPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <AdminPageHeader
         title="Navigasjon & Footer"
         description="Administrer navigasjonslenker og footer-innhold"
         actions={
-          <button
+          <Button
+            variant="outline"
+            size="sm"
+            className="bg-card"
             onClick={() => {
               refetchNav();
               refetchFooter();
             }}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-foreground bg-muted hover:bg-accent rounded-md transition-colors"
           >
-            <RefreshCw size={16} />
+            <RefreshCw />
             Oppdater
-          </button>
+          </Button>
         }
       />
 
-      {/* Navigasjon */}
-      <div className="bg-card rounded-lg border border-border p-5 space-y-5">
-        <div className="flex items-center justify-between border-b border-border pb-3">
-          <div className="flex items-center gap-2 text-foreground font-semibold text-sm">
-            <Link size={16} />
-            Navigasjon
-          </div>
-          <button
-            onClick={handleSaveNav}
-            disabled={updateNavMutation.isPending}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Save size={14} />
+      <Section
+        title="Navigasjon"
+        contentClassName="space-y-4"
+        action={
+          <Button size="sm" onClick={handleSaveNav} disabled={updateNavMutation.isPending}>
+            <Save />
             {updateNavMutation.isPending ? 'Lagrer...' : 'Lagre navigasjon'}
-          </button>
-        </div>
-
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-foreground">
-            Header-lenker (én per linje: Tittel | /url)
-          </label>
-          <textarea
+          </Button>
+        }
+      >
+        <div className="space-y-1.5">
+          <Label htmlFor="nav-header-links">Header-lenker (én per linje: Tittel | /url)</Label>
+          <Textarea
+            id="nav-header-links"
             value={navForm.headerLinks}
             onChange={handleNavChange('headerLinks')}
             placeholder="Stillinger | /jobs&#10;Tjenester | /services&#10;Om oss | /about"
             rows={4}
-            className="flex w-full rounded-md border border-border bg-card px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring disabled:cursor-not-allowed disabled:opacity-50 resize-y min-h-[80px] font-mono"
+            className="font-mono"
           />
         </div>
 
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-foreground">
-            Footer-lenker (én per linje: Tittel | /url)
-          </label>
-          <textarea
+        <div className="space-y-1.5">
+          <Label htmlFor="nav-footer-links">Footer-lenker (én per linje: Tittel | /url)</Label>
+          <Textarea
+            id="nav-footer-links"
             value={navForm.footerLinks}
             onChange={handleNavChange('footerLinks')}
             placeholder="Personvern | /privacy&#10;Vilkår | /terms&#10;Kontakt | /contact"
             rows={4}
-            className="flex w-full rounded-md border border-border bg-card px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring disabled:cursor-not-allowed disabled:opacity-50 resize-y min-h-[80px] font-mono"
+            className="font-mono"
           />
         </div>
 
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-foreground">
+        <div className="space-y-1.5">
+          <Label htmlFor="nav-social-links">
             Sosiale medier (én per linje: Platform | https://...)
-          </label>
-          <textarea
+          </Label>
+          <Textarea
+            id="nav-social-links"
             value={navForm.socialLinks}
             onChange={handleNavChange('socialLinks')}
             placeholder="Facebook | https://facebook.com/..."
             rows={3}
-            className="flex w-full rounded-md border border-border bg-card px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring disabled:cursor-not-allowed disabled:opacity-50 resize-y min-h-[80px] font-mono"
+            className="font-mono"
           />
         </div>
-      </div>
+      </Section>
 
-      {/* Footer */}
-      <div className="bg-card rounded-lg border border-border p-5 space-y-5">
-        <div className="flex items-center justify-between border-b border-border pb-3">
-          <div className="flex items-center gap-2 text-foreground font-semibold text-sm">
-            <Globe size={16} />
-            Footer
-          </div>
-          <button
-            onClick={handleSaveFooter}
-            disabled={updateFooterMutation.isPending}
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Save size={14} />
+      <Section
+        title="Footer"
+        contentClassName="space-y-4"
+        action={
+          <Button size="sm" onClick={handleSaveFooter} disabled={updateFooterMutation.isPending}>
+            <Save />
             {updateFooterMutation.isPending ? 'Lagrer...' : 'Lagre footer'}
-          </button>
-        </div>
-
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-foreground">Kontakt-e-post</label>
+          </Button>
+        }
+      >
+        <div className="space-y-1.5">
+          <Label htmlFor="footer-contact-email">Kontakt-e-post</Label>
           <div className="relative">
-            <Mail
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-            />
-            <input
+            <Mail className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id="footer-contact-email"
               value={footerForm.contactEmail}
               onChange={handleFooterChange('contactEmail')}
               placeholder="kontakt@example.no"
-              className="flex h-10 w-full rounded-md border border-border bg-card pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring disabled:cursor-not-allowed disabled:opacity-50"
+              className="pl-8"
             />
           </div>
         </div>
 
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-foreground">Support-e-post</label>
+        <div className="space-y-1.5">
+          <Label htmlFor="footer-support-email">Support-e-post</Label>
           <div className="relative">
-            <Mail
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-            />
-            <input
+            <Mail className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id="footer-support-email"
               value={footerForm.supportEmail}
               onChange={handleFooterChange('supportEmail')}
               placeholder="support@example.no"
-              className="flex h-10 w-full rounded-md border border-border bg-card pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring disabled:cursor-not-allowed disabled:opacity-50"
+              className="pl-8"
             />
           </div>
         </div>
 
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-foreground">Copyright-tekst</label>
+        <div className="space-y-1.5">
+          <Label htmlFor="footer-copyright">Copyright-tekst</Label>
           <div className="relative">
-            <Copyright
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-            />
-            <input
+            <Copyright className="absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              id="footer-copyright"
               value={footerForm.copyrightText}
               onChange={handleFooterChange('copyrightText')}
               placeholder="© 2026 Jobblo. Alle rettigheter reservert."
-              className="flex h-10 w-full rounded-md border border-border bg-card pl-9 pr-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring disabled:cursor-not-allowed disabled:opacity-50"
+              className="pl-8"
             />
           </div>
         </div>
 
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-foreground">Om-tekst</label>
-          <textarea
+        <div className="space-y-1.5">
+          <Label htmlFor="footer-about">Om-tekst</Label>
+          <Textarea
+            id="footer-about"
             value={footerForm.aboutText}
             onChange={handleFooterChange('aboutText')}
             placeholder="Jobblo er Norges ledende jobbplattform..."
             rows={4}
-            className="flex w-full rounded-md border border-border bg-card px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring disabled:cursor-not-allowed disabled:opacity-50 resize-y min-h-[80px]"
           />
         </div>
-      </div>
+      </Section>
     </div>
   );
 }

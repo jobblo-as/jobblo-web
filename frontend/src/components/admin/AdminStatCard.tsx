@@ -54,36 +54,35 @@ export function AdminStatCard({
     </span>
   ) : null;
 
-  // Developer Console StatCard: uppercase label, tinted icon, large tabular value.
+  // The Developer Console's StatCard (components/developer/kit.tsx): small card, uppercase
+  // label, bare icon, large tabular value.
   const content = (
     <>
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-center justify-between gap-2 px-3">
         <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{title}</p>
-        <div
-          className={cn(
-            'flex size-7 items-center justify-center rounded-md bg-muted text-muted-foreground [&_svg]:size-4',
-            iconClassName
-          )}
+        <span
+          className={cn('text-muted-foreground [&_svg]:size-4', iconClassName)}
           aria-hidden="true"
         >
           {icon}
-        </div>
+        </span>
       </div>
-      <p className="text-2xl font-semibold leading-none tracking-tight text-foreground tabular-nums">
-        {typeof value === 'number' ? value.toLocaleString('nb-NO') : value}
-      </p>
-      <div className="flex min-h-4 items-center gap-2">
-        {trendEl}
-        {!hasChange && subtitle && (
-          <span className="text-xs text-muted-foreground">{subtitle}</span>
+      <div className="px-3">
+        <div className="text-2xl font-semibold tracking-tight text-foreground tabular-nums">
+          {typeof value === 'number' ? value.toLocaleString('nb-NO') : value}
+        </div>
+        {(trendEl || subtitle) && (
+          <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+            {trendEl ?? subtitle}
+          </div>
         )}
       </div>
     </>
   );
 
   const cardClassName = cn(
-    'relative flex flex-col gap-3 overflow-hidden rounded-lg border bg-card p-4 text-left shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
-    active ? 'border-primary/50 ring-2 ring-primary/15' : '',
+    'flex h-full flex-col gap-2 overflow-hidden rounded-xl bg-card py-3 text-left text-sm ring-1 ring-foreground/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
+    active && 'ring-2 ring-primary/40',
     (to || onClick) && 'hover:bg-muted/40',
     className
   );

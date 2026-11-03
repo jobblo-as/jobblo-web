@@ -209,31 +209,24 @@ exports.createJobRequest = async (req, res) => {
       ],
     });
 
-    if (!chat) {
-      const initialMessages = [];
-      // Add the application message as first chat message if provided
-      if (req.body.message) {
-        initialMessages.push({
-          senderId: customerId,
-          text: req.body.message,
-          createdAt: new Date(),
-          seenBy: [customerId],
-        });
-      }
-      // Add system message about the application
-      initialMessages.push({
-        type: 'system_status',
-        systemData: { event: 'application_submitted', requestId: jobRequest._id },
-        text: `Forespørsel sendt for "${service.title}"`,
-        createdAt: new Date(),
-      });
-
+    // No message, no chat: the request alone waits for the owner, and accepting it opens the
+    // chat (updateJobRequestStatus). Before, an empty request opened a chat with only a status line.
+    const firstMessage = typeof message === 'string' ? message.trim() : '';
+    if (!chat && firstMessage) {
       chat = await Chat.create({
         clientId: customerId,
         providerId: providerId,
         serviceId,
-        messages: initialMessages,
-        lastMessage: req.body.message || `Forespørsel sendt for "${service.title}"`,
+        messages: [
+          { senderId: customerId, text: firstMessage, createdAt: new Date(), seenBy: [customerId] },
+          {
+            type: 'system_status',
+            systemData: { event: 'application_submitted', requestId: jobRequest._id },
+            text: `Forespørsel sendt for "${service.title}"`,
+            createdAt: new Date(),
+          },
+        ],
+        lastMessage: firstMessage,
         status: 'requested',
       });
     }
@@ -250,7 +243,7 @@ exports.createJobRequest = async (req, res) => {
       payload: jobRequest,
     });
 
-    res.status(201).json({ ...jobRequest.toObject(), chatId: chat._id });
+    res.status(201).json({ ...jobRequest.toObject(), chatId: chat?._id ?? null });
   } catch (err) {
     if (err instanceof V2EntitlementError) {
       return res.status(err.status).json({

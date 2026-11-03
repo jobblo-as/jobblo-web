@@ -111,7 +111,10 @@ const OrderRequestModal: React.FC<OrderRequestModalProps> = ({
               maxLength={500}
               className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#2F7E47] focus:border-transparent resize-none transition-all"
             />
-            <p className="text-xs text-gray-400 mt-1 text-right">{message.length}/500</p>
+            <div className="mt-1 flex justify-between gap-3 text-xs text-gray-400">
+              <span>Uten melding starter chatten først når forespørselen er godkjent.</span>
+              <span>{message.length}/500</span>
+            </div>
           </div>
         )}
 

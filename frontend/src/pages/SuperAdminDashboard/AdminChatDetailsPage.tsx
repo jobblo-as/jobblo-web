@@ -6,6 +6,7 @@ import { fetchAdminChatById } from '../../api/admin/chats';
 import { AdminChatViewer } from '../../components/admin/chat/AdminChatViewer';
 import { ChatAccessReasonDialog } from '../../components/admin/chat/ChatAccessReasonDialog';
 import { AdminLoadingSkeleton, AdminErrorState } from '../../components/admin';
+import { Button } from '../../components/developer/ui/button';
 
 export default function AdminChatDetailsPage() {
   const { chatId } = useParams<{ chatId: string }>();
@@ -32,15 +33,13 @@ export default function AdminChatDetailsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Back link */}
-      <div className="flex items-center gap-3">
-        <Link
-          to="/dashboard/chats"
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft size={16} aria-hidden="true" /> Tilbake til chatter
-        </Link>
+    <div className="space-y-5">
+      <div>
+        <Button variant="outline" size="sm" className="bg-card" asChild>
+          <Link to="/dashboard/chats">
+            <ArrowLeft aria-hidden="true" /> Tilbake til chatter
+          </Link>
+        </Button>
       </div>
 
       {/* Access reason dialog — shown on first load */}

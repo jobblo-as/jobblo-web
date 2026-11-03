@@ -329,7 +329,7 @@ async function postChatMessage({ chatId, userId, text }) {
     return { status: 400, error: `Meldingen er for lang (maks ${MAX_MESSAGE_LENGTH} tegn).` };
   }
 
-  const chat = await Chat.findById(chatId).select('clientId providerId');
+  const chat = await Chat.findById(chatId).select('clientId providerId serviceId');
   if (!chat) return { status: 404, error: 'Chat not found' };
   const uid = String(userId);
   if (String(chat.clientId) !== uid && String(chat.providerId) !== uid) {
@@ -363,9 +363,41 @@ async function postChatMessage({ chatId, userId, text }) {
   if (!result.modifiedCount) {
     return { status: 409, error: 'Samtalen er full. Start en ny samtale.', code: 'chat_full' };
   }
+  // Tray entry + push for the other person (HTTP route and socket both come through here).
+  // Dropped by accident in 16c70591 (an AI commit): since then no chat message reached a
+  // phone that was not on the chat screen.
+  void notifyChatMessage({
+    chatId,
+    senderId: uid,
+    recipientId: otherId,
+    serviceId: chat.serviceId,
+    text: trimmed,
+  });
   return { message };
 }
 exports.postChatMessage = postChatMessage;
+
+async function notifyChatMessage({ chatId, senderId, recipientId, serviceId, text }) {
+  if (mongoose.connection.readyState !== 1) return; // no database (unit tests): nothing to store
+  try {
+    const [sender, job] = await Promise.all([
+      User.findById(senderId).select('name').lean(),
+      serviceId ? Service.findById(serviceId).select('images').lean() : null,
+    ]);
+    await notify({
+      userId: recipientId,
+      type: 'message',
+      content: text.length > 200 ? `${text.slice(0, 197)}…` : text,
+      senderId,
+      title: sender?.name ? `Melding fra ${sender.name}` : undefined,
+      data: { type: 'chat_message', chatId: String(chatId) },
+      // The job's first photo as the big picture in the notification.
+      imageUrl: job?.images?.[0],
+    });
+  } catch (err) {
+    console.error('chat notify failed:', err.message);
+  }
+}
 
 exports.sendMessage = async (req, res) => {
   try {

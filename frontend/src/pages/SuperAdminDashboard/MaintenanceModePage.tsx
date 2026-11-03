@@ -1,8 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Save, RefreshCw, AlertTriangle, Wrench } from 'lucide-react';
+import { Loader2, Save, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useMaintenanceMode, useToggleMaintenanceMode } from '../../hooks/admin/content';
 import { AdminPageHeader, AdminLoadingSkeleton, AdminErrorState } from '../../components/admin';
 import { toast } from 'react-hot-toast';
+import { Section } from '../../components/developer/kit';
+import { Button } from '../../components/developer/ui/button';
+import { Label } from '../../components/developer/ui/label';
+import { Switch } from '../../components/developer/ui/switch';
+import { Textarea } from '../../components/developer/ui/textarea';
 
 export default function MaintenanceModePage() {
   const [saving, setSaving] = useState(false);
@@ -44,7 +49,7 @@ export default function MaintenanceModePage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         <AdminPageHeader
           title="Vedlikeholdsmodus"
           description="Sett plattformen i vedlikeholdsmodus"
@@ -56,7 +61,7 @@ export default function MaintenanceModePage() {
 
   if (isError) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         <AdminPageHeader
           title="Vedlikeholdsmodus"
           description="Sett plattformen i vedlikeholdsmodus"
@@ -67,27 +72,24 @@ export default function MaintenanceModePage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <AdminPageHeader
         title="Vedlikeholdsmodus"
         description="Sett plattformen i vedlikeholdsmodus"
         actions={
-          <button
-            onClick={() => refetch()}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-foreground bg-muted hover:bg-accent rounded-md transition-colors"
-          >
-            <RefreshCw size={16} />
+          <Button variant="outline" size="sm" className="bg-card" onClick={() => refetch()}>
+            <RefreshCw />
             Oppdater
-          </button>
+          </Button>
         }
       />
 
       {enabled && (
-        <div className="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-          <AlertTriangle size={20} className="shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 rounded-lg border border-red-200/70 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0" />
           <div>
-            <p className="font-semibold">Vedlikeholdsmodus er aktiv</p>
-            <p className="text-red-500 mt-0.5">
+            <p className="font-medium">Vedlikeholdsmodus er aktiv</p>
+            <p className="mt-0.5 text-xs">
               Plattformen er utilgjengelig for vanlige brukere. Den angitte meldingen vises på
               allmenningssiden.
             </p>
@@ -95,62 +97,43 @@ export default function MaintenanceModePage() {
         </div>
       )}
 
-      <div className="bg-card rounded-lg border border-border p-5 space-y-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-semibold text-foreground">Aktiver vedlikeholdsmodus</p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Slå på for å hindre brukertilgang mens du gjør endringer
-            </p>
-          </div>
-          <button
-            onClick={handleToggle}
-            className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-ring/50 ${
-              enabled ? 'bg-red-500' : 'bg-muted'
-            }`}
-            role="switch"
-            aria-checked={enabled}
+      <Section
+        title="Aktiver vedlikeholdsmodus"
+        description="Slå på for å hindre brukertilgang mens du gjør endringer"
+        action={
+          <Switch
+            checked={enabled}
+            onCheckedChange={handleToggle}
+            className="data-checked:bg-red-600"
             aria-label={enabled ? 'Deaktiver vedlikeholdsmodus' : 'Aktiver vedlikeholdsmodus'}
-          >
-            <span
-              className={`pointer-events-none inline-flex h-6 w-6 items-center justify-center rounded-full bg-card shadow-sm ring-0 transition-transform duration-200 ease-in-out ${
-                enabled ? 'translate-x-5' : 'translate-x-0'
-              }`}
-            >
-              <Wrench size={14} className={enabled ? 'text-red-500' : 'text-muted-foreground'} />
-            </span>
-          </button>
-        </div>
+          />
+        }
+      >
+        <div className="space-y-4">
+          {enabled && (
+            <div className="space-y-1.5">
+              <Label htmlFor="maintenance-message">Vedlikeholdsmelding</Label>
+              <Textarea
+                id="maintenance-message"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                rows={4}
+                placeholder="Skriv inn en melding som vises for brukerne..."
+              />
+              <p className="text-xs text-muted-foreground">
+                Denne meldingen vises på innloggingssiden når vedlikeholdsmodus er aktiv.
+              </p>
+            </div>
+          )}
 
-        {enabled && (
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-foreground">
-              Vedlikeholdsmelding
-            </label>
-            <textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              rows={4}
-              placeholder="Skriv inn en melding som vises for brukerne..."
-              className="w-full rounded-md border border-border px-4 py-3 text-sm text-foreground placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent resize-y"
-            />
-            <p className="text-xs text-muted-foreground">
-              Denne meldingen vises på innloggingssiden når vedlikeholdsmodus er aktiv.
-            </p>
+          <div className="flex justify-end">
+            <Button size="sm" onClick={handleSave} disabled={saving}>
+              {saving ? <Loader2 className="animate-spin" /> : <Save />}
+              {saving ? 'Lagrer...' : 'Lagre'}
+            </Button>
           </div>
-        )}
-
-        <div className="flex justify-end pt-1">
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary/90 disabled:opacity-50 rounded-md transition-colors"
-          >
-            <Save size={16} />
-            {saving ? 'Lagrer...' : 'Lagre'}
-          </button>
         </div>
-      </div>
+      </Section>
     </div>
   );
 }

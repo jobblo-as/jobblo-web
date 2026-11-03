@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -29,7 +29,8 @@ import { usePublicProfile } from '../../../src/hooks/usePublicProfile';
 import type { PublicUser } from '../../../src/types/UserProfile';
 import { GlassButton, GlassFill, useGlass } from '../../../src/components/ui/GlassButton';
 import { LIQUID_GLASS } from '../../../src/components/GlassTabBar';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { setActiveChat } from '../../../src/services/pushNotifications.service';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../../src/store/authStore';
 import {
@@ -298,6 +299,13 @@ export default function ChatDetailScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ chatId: string | string[] }>();
   const chatId = (Array.isArray(params.chatId) ? params.chatId[0] : params.chatId) || '';
+  // While this chat is open its own pushes show no banner (the message is already here).
+  useFocusEffect(
+    useCallback(() => {
+      setActiveChat(chatId || null);
+      return () => setActiveChat(null);
+    }, [chatId])
+  );
   const user = useAuthStore((state) => state.user);
   const userId =
     user && typeof user === 'object' && '_id' in user && typeof user._id === 'string'

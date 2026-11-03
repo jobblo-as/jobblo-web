@@ -1,16 +1,37 @@
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Bell, Info, AlertTriangle, Tag, Plus, X } from 'lucide-react';
-import { Button, Space, Tag as AntTag, Typography, Form, Input, Select, message } from 'antd';
-import { AntdTheme } from '../../theme/AntdTheme';
+import { toast } from 'react-hot-toast';
 import { fetchSystemHistory, sendSystemNotification } from '../../api/admin';
-import ConfirmDialog from '../../components/Ui/ConfirmDialog';
-import { AdminTable } from '../../components/Ui/AdminTable';
+import { AdminConfirmDialog, AdminDataTable, AdminPageHeader } from '../../components/admin';
+import type { ColumnDef } from '../../components/admin/AdminDataTable';
+import { Section, StatusBadge } from '../../components/developer/kit';
+import { Button } from '../../components/developer/ui/button';
+import { Label } from '../../components/developer/ui/label';
+import { Textarea } from '../../components/developer/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/developer/ui/select';
 
-const { Title, Text } = Typography;
-const { Option } = Select;
+type SystemNotification = { _id: string; type: string; content: string; createdAt: string };
 
-const NotificationsPage = () => {
+const notificationTypes = [
+  { id: 'system_update', label: 'Update', icon: <Info />, tone: 'info' },
+  { id: 'alert', label: 'Alert', icon: <AlertTriangle />, tone: 'danger' },
+  { id: 'promotion', label: 'Offer', icon: <Tag />, tone: 'warning' },
+  { id: 'general', label: 'General', icon: <Bell />, tone: 'neutral' },
+] as const;
+
+const getTypeInfo = (type: string) =>
+  notificationTypes.find((t) => t.id === type) || notificationTypes[3];
+
+const emptyForm = { type: 'system_update', content: '' };
+
+export default function NotificationsPage() {
   const [showForm, setShowForm] = useState(false);
   const [page, setPage] = useState(1);
   const queryClient = useQueryClient();
@@ -19,45 +40,18 @@ const NotificationsPage = () => {
     queryFn: () => fetchSystemHistory(page),
     placeholderData: keepPreviousData,
   });
-  const history = historyQuery.data?.data ?? [];
-  const totalPages = historyQuery.data?.totalPages ?? 1;
-  const historyLoading = historyQuery.isFetching;
+  const history: SystemNotification[] = historyQuery.data?.data ?? [];
+  const totalPages: number = historyQuery.data?.totalPages ?? 1;
   const sendMutation = useMutation({ mutationFn: sendSystemNotification });
-  const [sendConfirm, setSendConfirm] = useState<{ visible: boolean; data: any }>({
-    visible: false,
-    data: null,
-  });
-  const [form] = Form.useForm();
+  const [form, setForm] = useState(emptyForm);
+  const [sendConfirm, setSendConfirm] = useState<{
+    visible: boolean;
+    data: typeof emptyForm | null;
+  }>({ visible: false, data: null });
 
-  const notificationTypes = [
-    {
-      id: 'system_update',
-      label: 'Update',
-      icon: <Info size={16} />,
-      color: 'blue',
-    },
-    {
-      id: 'alert',
-      label: 'Alert',
-      icon: <AlertTriangle size={16} />,
-      color: 'red',
-    },
-    {
-      id: 'promotion',
-      label: 'Offer',
-      icon: <Tag size={16} />,
-      color: 'orange',
-    },
-    {
-      id: 'general',
-      label: 'General',
-      icon: <Bell size={16} />,
-      color: 'default',
-    },
-  ];
-
-  const handleSendConfirm = async (values: any) => {
-    setSendConfirm({ visible: true, data: values });
+  const handleSendConfirm = (e: FormEvent) => {
+    e.preventDefault();
+    setSendConfirm({ visible: true, data: form });
   };
 
   const handleSubmit = async () => {
@@ -67,123 +61,125 @@ const NotificationsPage = () => {
         isSystem: true,
         userId: null,
       });
-      message.success(data.message);
-      form.resetFields();
+      toast.success(data.message);
+      setForm(emptyForm);
       setShowForm(false);
       setPage(1);
       queryClient.invalidateQueries({ queryKey: ['admin', 'system-history'] });
     } catch (error: unknown) {
       const err = error as { response?: { data?: { error?: string } } };
-      message.error(err.response?.data?.error || 'Failed to send');
+      toast.error(err.response?.data?.error || 'Failed to send');
     } finally {
       setSendConfirm({ visible: false, data: null });
     }
   };
 
-  const getTypeInfo = (type: string) => {
-    return notificationTypes.find((t) => t.id === type) || notificationTypes[3];
-  };
-
-  const columns = [
+  const columns: ColumnDef<SystemNotification>[] = [
     {
-      title: 'Type',
       key: 'type',
-      render: (_: any, record: any) => {
+      header: 'Type',
+      render: (record) => {
         const typeInfo = getTypeInfo(record.type);
         return (
-          <Space>
+          <span className="inline-flex items-center gap-2 text-muted-foreground [&_svg]:size-4">
             {typeInfo.icon}
-            <AntTag color={typeInfo.color}>{typeInfo.label}</AntTag>
-          </Space>
+            <StatusBadge status={typeInfo.id} label={typeInfo.label} tone={typeInfo.tone} />
+          </span>
         );
       },
     },
     {
-      title: 'Content',
-      dataIndex: 'content',
       key: 'content',
-      ellipsis: true,
+      header: 'Content',
+      className: 'max-w-md truncate',
+      render: (record) => record.content,
     },
     {
-      title: 'Created',
       key: 'created',
-      render: (_: any, record: any) => (
-        <Text type="secondary" className="text-xs">
-          {new Date(record.createdAt).toLocaleDateString()}
-        </Text>
-      ),
+      header: 'Created',
+      className: 'text-xs text-muted-foreground',
+      render: (record) => new Date(record.createdAt).toLocaleDateString(),
     },
   ];
 
-  const topSection = showForm ? (
-    <div className="w-full mb-6 p-6 bg-muted/50 rounded-md">
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={handleSendConfirm}
-        initialValues={{ type: 'system_update' }}
-      >
-        <Form.Item name="type" label="Notification Type" rules={[{ required: true }]}>
-          <Select>
-            {notificationTypes.map((type) => (
-              <Option key={type.id} value={type.id}>
-                <Space>
-                  {type.icon}
-                  {type.label}
-                </Space>
-              </Option>
-            ))}
-          </Select>
-        </Form.Item>
-
-        <Form.Item name="content" label="Notification Content" rules={[{ required: true }]}>
-          <Input.TextArea rows={3} placeholder="Enter notification content..." />
-        </Form.Item>
-
-        <Form.Item className="flex justify-end">
-          <Button type="primary" htmlType="submit">
-            Send Notification
-          </Button>
-        </Form.Item>
-      </Form>
-    </div>
-  ) : null;
-
   return (
-    <div className="p-4">
-      <Title level={2}>System Notifications</Title>
-      <Text type="secondary" className="block mb-8">
-        Manage global broadcasts
-      </Text>
-
-      <AdminTable
-        title="Notifications"
-        columns={columns}
-        dataSource={history}
-        rowKey="_id"
-        loading={historyLoading}
-        pagination={{
-          current: page,
-          pageSize: 5,
-          total: totalPages * 5,
-          onChange: (p) => setPage(p),
-        }}
-        extra={
+    <div className="space-y-5">
+      <AdminPageHeader
+        title="System Notifications"
+        description="Manage global broadcasts"
+        actions={
           <Button
-            type="primary"
-            icon={showForm ? <X size={18} /> : <Plus size={18} />}
+            size="sm"
+            variant={showForm ? 'outline' : 'default'}
+            className={showForm ? 'bg-card' : undefined}
             onClick={() => setShowForm(!showForm)}
-            danger={showForm}
-            className="flex items-center"
           >
+            {showForm ? <X /> : <Plus />}
             {showForm ? 'Close Form' : 'Create Notification'}
           </Button>
         }
-        topSection={topSection}
-        showAddButton={false}
       />
 
-      <ConfirmDialog
+      {showForm && (
+        <Section title="Create Notification">
+          <form onSubmit={handleSendConfirm} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="notification-type">Notification Type</Label>
+              <Select value={form.type} onValueChange={(type) => setForm({ ...form, type })}>
+                <SelectTrigger id="notification-type" className="w-full sm:w-64">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {notificationTypes.map((type) => (
+                    <SelectItem key={type.id} value={type.id}>
+                      {type.icon}
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="notification-content">Notification Content</Label>
+              <Textarea
+                id="notification-content"
+                rows={3}
+                required
+                value={form.content}
+                onChange={(e) => setForm({ ...form, content: e.target.value })}
+                placeholder="Enter notification content..."
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button type="submit" size="sm">
+                Send Notification
+              </Button>
+            </div>
+          </form>
+        </Section>
+      )}
+
+      <AdminDataTable
+        columns={columns}
+        data={history}
+        keyExtractor={(row) => row._id}
+        loading={historyQuery.isLoading}
+        error={historyQuery.isError}
+        onRetry={() => historyQuery.refetch()}
+        emptyTitle="No notifications"
+        emptyDescription="No global broadcasts have been sent yet."
+        pagination={{
+          page,
+          limit: 5,
+          total: historyQuery.data?.total ?? totalPages * 5,
+          totalPages,
+          hasNextPage: page < totalPages,
+          hasPreviousPage: page > 1,
+        }}
+        onPageChange={setPage}
+      />
+
+      <AdminConfirmDialog
         title="Confirm Broadcast?"
         description="This will create a single global notification for all users."
         confirmText="Yes, Send!"
@@ -193,13 +189,5 @@ const NotificationsPage = () => {
         onConfirm={handleSubmit}
       />
     </div>
-  );
-};
-
-export default function NotificationsPageWithTheme() {
-  return (
-    <AntdTheme>
-      <NotificationsPage />
-    </AntdTheme>
   );
 }
