@@ -6,6 +6,7 @@ import rorlegger from './rorlegger.webp';
 import montering from './montering.webp';
 import oppussing from './oppussing.webp';
 import transport from './transport.webp';
+import bilPleie from './bil-pleie.webp';
 
 /**
  * Stand-in photography for jobs posted without a picture of their own.
@@ -38,6 +39,8 @@ import transport from './transport.webp';
  *   oppussing   plastering a wall              Karolina Grabowska  1BnCBIJxXzI
  *   transport   loading a van                  Getty Images        6nIkztwmYMQ
  *   montering   fitting a kitchen cupboard     Getty Images        EhSPx8KgLZs
+ *   bil-pleie   washing a car by hand          Unsplash            photo-1607860108855-64acf2078ed9
+ *               (cropped: the branded buckets in the corner are cut out)
  */
 const BY_CATEGORY: Record<string, string> = {
   maling,
@@ -50,6 +53,10 @@ const BY_CATEGORY: Record<string, string> = {
   transport,
   // Norwegian names that differ from their photo's key.
   smajobber: montering,
+  // "Bil & Pleie" had no photo, so its jobs fell to the rotation's first frame: a painter.
+  'bil & pleie': bilPleie,
+  'bil-pleie': bilPleie,
+  car: bilPleie,
   // The category collection is Norwegian, but services carry English strings in their
   // own `categories` array ("Cleaning", "House Service") — the two were seeded from
   // different lists and never reconciled. Both spellings resolve to the same photo so
