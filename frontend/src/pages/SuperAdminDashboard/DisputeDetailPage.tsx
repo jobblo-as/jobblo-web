@@ -16,6 +16,27 @@ import {
 } from '../../components/admin';
 import type { Dispute, DisputeOutcome } from '../../types/admin/safepay';
 import { toast } from 'react-hot-toast';
+import { KeyValue, Section, StatusBadge } from '../../components/developer/kit';
+import { Button } from '../../components/developer/ui/button';
+import { Card, CardContent } from '../../components/developer/ui/card';
+import { Input } from '../../components/developer/ui/input';
+import { Label } from '../../components/developer/ui/label';
+import { Textarea } from '../../components/developer/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/developer/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../components/developer/ui/dialog';
 
 const OUTCOME_OPTIONS: { label: string; value: DisputeOutcome }[] = [
   { label: 'Frigi til tilbyder', value: 'release_to_provider' },
@@ -26,31 +47,8 @@ const OUTCOME_OPTIONS: { label: string; value: DisputeOutcome }[] = [
   { label: 'Ingen handling', value: 'no_action' },
 ];
 
-function Row({ label, value, badge }: { label: string; value?: React.ReactNode; badge?: string }) {
-  return (
-    <div className="flex items-start justify-between py-1.5 gap-4">
-      <span className="text-xs text-muted-foreground shrink-0 w-40">{label}</span>
-      <span className="text-sm text-foreground text-right flex items-center gap-1 min-w-0">
-        {badge ? (
-          <AdminStatusBadge status={badge} />
-        ) : (
-          (value ?? <span className="text-muted-foreground/60">–</span>)
-        )}
-      </span>
-    </div>
-  );
-}
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="bg-card rounded-lg border border-border p-5">
-      <h3 className="text-sm font-semibold text-foreground mb-4 border-b border-border pb-2">
-        {title}
-      </h3>
-      {children}
-    </div>
-  );
-}
+type KV = [string, React.ReactNode];
+const rows = (items: (KV | false | null | undefined | '')[]) => items.filter(Boolean) as KV[];
 
 export default function DisputeDetailPage() {
   const { disputeId } = useParams<{ disputeId: string }>();
@@ -96,22 +94,28 @@ export default function DisputeDetailPage() {
     'evidence_submitted',
   ].includes(d.status);
   const isResolved = ['resolved', 'closed', 'cancelled'].includes(d.status);
-  const PRIORITY_COLOR: Record<string, string> = {
-    low: 'bg-muted text-muted-foreground',
-    medium: 'bg-yellow-50 text-yellow-700',
-    high: 'bg-orange-50 text-orange-700',
-    critical: 'bg-red-100 text-red-700',
-  };
+
+  const party = (p: unknown, role?: string) =>
+    p && typeof p === 'object' ? (
+      <div>
+        <p className="text-sm font-medium text-foreground">
+          {(p as { name?: string }).name ?? '–'}
+        </p>
+        <p className="text-xs text-muted-foreground">{(p as { email?: string }).email ?? ''}</p>
+        {role && <p className="text-xs text-muted-foreground capitalize">{role}</p>}
+      </div>
+    ) : (
+      <p className="text-sm text-muted-foreground">–</p>
+    );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Link
-          to="/dashboard/disputes"
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft size={16} /> Tilbake til tvister
-        </Link>
+    <div className="space-y-4">
+      <div>
+        <Button variant="ghost" size="sm" asChild>
+          <Link to="/dashboard/disputes">
+            <ArrowLeft /> Tilbake til tvister
+          </Link>
+        </Button>
       </div>
 
       <AdminPageHeader
@@ -119,112 +123,107 @@ export default function DisputeDetailPage() {
         description={`${d.reasonCategory?.replace(/_/g, ' ')} · Opprettet ${new Date(d.openedAt ?? d.createdAt).toLocaleDateString('nb-NO')}`}
         actions={
           orderId ? (
-            <Link
-              to={`/dashboard/safepay/${orderId}`}
-              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/15 rounded-md transition-colors"
-            >
-              <ExternalLink size={14} /> Se kontrakt
-            </Link>
+            <Button variant="outline" size="sm" className="bg-card" asChild>
+              <Link to={`/dashboard/safepay/${orderId}`}>
+                <ExternalLink /> Se kontrakt
+              </Link>
+            </Button>
           ) : undefined
         }
       />
 
       {/* Status bar */}
-      <div className="flex flex-wrap gap-3 bg-card rounded-lg border border-border p-4 items-center">
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Status:</span>
-          <AdminStatusBadge status={d.status} />
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Prioritet:</span>
-          <span
-            className={`px-2 py-0.5 rounded-full text-xs font-semibold ${PRIORITY_COLOR[d.priority] ?? ''}`}
-          >
-            {d.priority}
-          </span>
-        </div>
-        {d.assignedAdminId && (
+      <Card size="sm">
+        <CardContent className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Tildelt:</span>
-            <span className="text-xs text-foreground">
-              {(d.assignedAdminId as { name?: string }).name ?? '–'}
-            </span>
+            <span className="text-xs text-muted-foreground">Status:</span>
+            <AdminStatusBadge status={d.status} />
           </div>
-        )}
-        {!d.assignedAdminId && isActive && (
-          <button
-            onClick={() => assignMut.mutate(d._id)}
-            disabled={assignMut.isPending}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 rounded-lg transition-colors disabled:opacity-50 ml-auto"
-          >
-            {assignMut.isPending && <Loader2 size={12} className="animate-spin" />} Ta sak
-          </button>
-        )}
-      </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">Prioritet:</span>
+            <StatusBadge status={d.priority} />
+          </div>
+          {d.assignedAdminId && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Tildelt:</span>
+              <span className="text-xs text-foreground">
+                {(d.assignedAdminId as { name?: string }).name ?? '–'}
+              </span>
+            </div>
+          )}
+          {!d.assignedAdminId && isActive && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="ml-auto bg-card"
+              onClick={() => assignMut.mutate(d._id)}
+              disabled={assignMut.isPending}
+            >
+              {assignMut.isPending && <Loader2 className="animate-spin" />} Ta sak
+            </Button>
+          )}
+        </CardContent>
+      </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {/* Left */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="space-y-4 lg:col-span-2">
           <Section title="Tvistdetaljer">
-            <Row label="Tvist-ID" value={<span className="font-mono text-xs">{d._id}</span>} />
-            <Row label="Årsak" value={d.reasonCategory?.replace(/_/g, ' ')} />
-            <Row
-              label="Beskrivelse"
-              value={
-                <span className="text-xs leading-relaxed whitespace-pre-wrap">{d.description}</span>
-              }
-            />
-            <Row
-              label="Åpnet"
-              value={new Date(d.openedAt ?? d.createdAt).toLocaleString('nb-NO')}
-            />
-            {d.closedAt && (
-              <Row label="Lukket" value={new Date(d.closedAt).toLocaleString('nb-NO')} />
-            )}
-            <Row
-              label="Ordre-ID"
-              value={
-                orderId ? (
-                  <Link
-                    to={`/dashboard/safepay/${orderId}`}
-                    className="font-mono text-xs text-primary hover:underline"
-                  >
-                    {String(orderId).slice(-8).toUpperCase()}
-                  </Link>
-                ) : undefined
-              }
+            <KeyValue
+              items={rows([
+                ['Tvist-ID', <span className="font-mono text-xs">{d._id}</span>],
+                ['Årsak', d.reasonCategory?.replace(/_/g, ' ')],
+                [
+                  'Beskrivelse',
+                  <span className="whitespace-pre-wrap leading-relaxed">{d.description}</span>,
+                ],
+                ['Åpnet', new Date(d.openedAt ?? d.createdAt).toLocaleString('nb-NO')],
+                d.closedAt && ['Lukket', new Date(d.closedAt).toLocaleString('nb-NO')],
+                [
+                  'Ordre-ID',
+                  orderId ? (
+                    <Link
+                      to={`/dashboard/safepay/${orderId}`}
+                      className="font-mono text-xs text-primary hover:underline"
+                    >
+                      {String(orderId).slice(-8).toUpperCase()}
+                    </Link>
+                  ) : undefined,
+                ],
+              ])}
             />
           </Section>
 
           {/* Messages */}
           {d.messages && d.messages.length > 0 && (
             <Section title={`Meldinger (${d.messages.length})`}>
-              <div className="space-y-3 max-h-80 overflow-y-auto">
+              <div className="max-h-80 space-y-3 overflow-y-auto">
                 {d.messages
                   .filter((m) => !m.isInternal)
                   .map((m) => (
                     <div
                       key={m._id}
-                      className={`p-3 rounded-md text-sm ${m.senderRole === 'admin' ? 'bg-blue-50 border border-blue-100' : 'bg-muted/50 border border-border'}`}
+                      className={`rounded-md border p-3 text-sm ${m.senderRole === 'admin' ? 'border-sky-200/70 bg-sky-50' : 'bg-muted/40'}`}
                     >
-                      <div className="flex items-center justify-between gap-2 mb-1">
-                        <span className="text-xs font-semibold text-foreground capitalize">
+                      <div className="mb-1 flex items-center justify-between gap-2">
+                        <span className="text-xs font-medium text-foreground capitalize">
                           {m.senderRole}
                         </span>
-                        <time className="text-[10px] text-muted-foreground">
+                        <time className="text-xs text-muted-foreground">
                           {new Date(m.createdAt).toLocaleString('nb-NO')}
                         </time>
                       </div>
-                      <p className="text-foreground leading-relaxed">{m.message}</p>
+                      <p className="leading-relaxed text-foreground">{m.message}</p>
                       {m.attachments?.map((url, i) => (
                         <a
                           key={i}
                           href={url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-1 text-xs text-primary hover:underline mt-1"
+                          className="mt-1 flex items-center gap-1 text-xs text-primary hover:underline"
                         >
-                          <FileText size={11} /> Vedlegg {i + 1} <ExternalLink size={9} />
+                          <FileText className="size-3" /> Vedlegg {i + 1}{' '}
+                          <ExternalLink className="size-3" />
                         </a>
                       ))}
                     </div>
@@ -235,64 +234,62 @@ export default function DisputeDetailPage() {
 
           {/* Internal notes — admin only */}
           <Section title="Interne notater (kun admin)">
-            {d.messages
-              ?.filter((m) => m.isInternal)
-              .map((m) => (
-                <div
-                  key={m._id}
-                  className="p-3 bg-yellow-50 border border-yellow-100 rounded-md mb-2"
-                >
-                  <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                    <span className="font-medium">
-                      {(m.senderId as { name?: string })?.name ?? 'Admin'}
-                    </span>
-                    <time>{new Date(m.createdAt).toLocaleString('nb-NO')}</time>
+            <div className="space-y-2">
+              {d.messages
+                ?.filter((m) => m.isInternal)
+                .map((m) => (
+                  <div
+                    key={m._id}
+                    className="rounded-md border border-amber-200/70 bg-amber-50 p-3"
+                  >
+                    <div className="mb-1 flex justify-between text-xs text-muted-foreground">
+                      <span className="font-medium">
+                        {(m.senderId as { name?: string })?.name ?? 'Admin'}
+                      </span>
+                      <time>{new Date(m.createdAt).toLocaleString('nb-NO')}</time>
+                    </div>
+                    <p className="text-sm text-foreground">{m.message}</p>
                   </div>
-                  <p className="text-sm text-foreground">{m.message}</p>
-                </div>
-              ))}
-            <div className="space-y-2 mt-2">
-              <textarea
+                ))}
+              <Textarea
                 rows={2}
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
                 placeholder="Legg til internt notat…"
-                className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50 resize-none"
               />
-              <button
+              <Button
+                size="sm"
                 onClick={() => {
                   if (!noteText.trim()) return;
                   noteMut.mutate({ id: d._id, note: noteText.trim() });
                   setNoteText('');
                 }}
                 disabled={!noteText.trim() || noteMut.isPending}
-                className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-primary hover:bg-primary/90 rounded-md disabled:opacity-40 transition-colors"
               >
-                {noteMut.isPending && <Loader2 size={13} className="animate-spin" />} Lagre notat
-              </button>
+                {noteMut.isPending && <Loader2 className="animate-spin" />} Lagre notat
+              </Button>
             </div>
           </Section>
 
           {/* Timeline */}
           {d.timeline && d.timeline.length > 0 && (
             <Section title="Tidslinje">
-              <div className="relative pl-6">
-                <div className="absolute left-2 top-0 bottom-0 w-px bg-muted" />
-                <div className="space-y-3">
-                  {[...d.timeline].reverse().map((t, idx) => (
-                    <div key={idx} className="relative">
-                      <div className="absolute -left-4 w-2 h-2 rounded-full bg-muted-foreground/30 border-2 border-white mt-1" />
-                      <p className="text-xs font-medium text-foreground">
+              <ol className="relative space-y-3 border-l pl-5">
+                {[...d.timeline].reverse().map((t, idx) => (
+                  <li key={idx} className="relative">
+                    <span className="absolute top-1.5 -left-[25px] size-2.5 rounded-full bg-muted-foreground/50 ring-4 ring-muted" />
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+                      <span className="text-sm font-medium text-foreground first-letter:uppercase">
                         {t.action.replace(/_/g, ' ')}
-                      </p>
-                      {t.note && <p className="text-xs text-muted-foreground mt-0.5">{t.note}</p>}
-                      <time className="text-[10px] text-muted-foreground/60">
+                      </span>
+                      <time className="text-xs text-muted-foreground">
                         {new Date(t.createdAt).toLocaleString('nb-NO')}
                       </time>
                     </div>
-                  ))}
-                </div>
-              </div>
+                    {t.note && <p className="text-xs text-muted-foreground">{t.note}</p>}
+                  </li>
+                ))}
+              </ol>
             </Section>
           )}
         </div>
@@ -300,87 +297,54 @@ export default function DisputeDetailPage() {
         {/* Right sidebar */}
         <div className="space-y-4">
           <Section title="Parter">
-            <div className="space-y-4">
-              <div>
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1">
-                  Åpnet av
-                </p>
-                {d.openedBy && typeof d.openedBy === 'object' ? (
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      {(d.openedBy as { name?: string }).name ?? '–'}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {(d.openedBy as { email?: string }).email ?? ''}
-                    </p>
-                    <p className="text-xs text-muted-foreground capitalize">{d.openedByRole}</p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">–</p>
-                )}
-              </div>
-              <div className="border-t border-border pt-3">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase mb-1">
-                  Åpnet mot
-                </p>
-                {d.openedAgainst && typeof d.openedAgainst === 'object' ? (
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      {(d.openedAgainst as { name?: string }).name ?? '–'}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {(d.openedAgainst as { email?: string }).email ?? ''}
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">–</p>
-                )}
-              </div>
-            </div>
+            <KeyValue
+              items={[
+                ['Åpnet av', party(d.openedBy, d.openedByRole)],
+                ['Åpnet mot', party(d.openedAgainst)],
+              ]}
+            />
           </Section>
 
           {d.resolution?.outcome && (
             <Section title="Løsning">
-              <Row label="Utfall" value={d.resolution.outcome.replace(/_/g, ' ')} />
-              <Row
-                label="Begrunnelse"
-                value={<span className="text-xs">{d.resolution.reason}</span>}
+              <KeyValue
+                items={rows([
+                  ['Utfall', d.resolution.outcome.replace(/_/g, ' ')],
+                  ['Begrunnelse', d.resolution.reason],
+                  d.resolution.resolvedBy &&
+                    typeof d.resolution.resolvedBy === 'object' && [
+                      'Løst av',
+                      (d.resolution.resolvedBy as { name?: string }).name,
+                    ],
+                  d.resolution.resolvedAt && [
+                    'Løst dato',
+                    new Date(d.resolution.resolvedAt).toLocaleString('nb-NO'),
+                  ],
+                  d.resolution.stripeRefundId && [
+                    'Stripe refusjon',
+                    <span className="font-mono text-xs">{d.resolution.stripeRefundId}</span>,
+                  ],
+                ])}
               />
-              {d.resolution.resolvedBy && typeof d.resolution.resolvedBy === 'object' && (
-                <Row label="Løst av" value={(d.resolution.resolvedBy as { name?: string }).name} />
-              )}
-              {d.resolution.resolvedAt && (
-                <Row
-                  label="Løst dato"
-                  value={new Date(d.resolution.resolvedAt).toLocaleString('nb-NO')}
-                />
-              )}
-              {d.resolution.stripeRefundId && (
-                <Row
-                  label="Stripe refusjon"
-                  value={<span className="font-mono text-xs">{d.resolution.stripeRefundId}</span>}
-                />
-              )}
             </Section>
           )}
 
           <Section title="Handlinger">
             <div className="space-y-2">
               {isActive && (
-                <button
-                  onClick={() => setShowResolve(true)}
-                  className="w-full py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-md transition-colors"
-                >
+                <Button size="sm" className="w-full" onClick={() => setShowResolve(true)}>
                   Løs tvist
-                </button>
+                </Button>
               )}
               {isResolved && (
-                <button
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full bg-card"
                   onClick={() => setShowReopen(true)}
-                  className="w-full py-2.5 text-sm font-medium text-orange-700 bg-orange-50 hover:bg-orange-100 rounded-md transition-colors"
                 >
                   Gjenåpne
-                </button>
+                </Button>
               )}
             </div>
           </Section>
@@ -394,9 +358,10 @@ export default function DisputeDetailPage() {
                   href={e.fileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-xs text-primary hover:underline mb-1.5"
+                  className="mb-1.5 flex items-center gap-2 text-xs text-primary hover:underline"
                 >
-                  <FileText size={12} /> {e.fileType ?? 'Fil'} <ExternalLink size={10} />
+                  <FileText className="size-3" /> {e.fileType ?? 'Fil'}{' '}
+                  <ExternalLink className="size-3" />
                 </a>
               ))}
             </Section>
@@ -405,162 +370,132 @@ export default function DisputeDetailPage() {
       </div>
 
       {/* Resolve dialog */}
-      {showResolve && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="bg-card rounded-lg shadow-xl w-full max-w-lg p-6 space-y-4">
-            <h2 className="text-lg font-bold text-foreground">Løs tvist: {d.title}</h2>
-            <p className="text-sm text-muted-foreground">
+      <Dialog open={showResolve} onOpenChange={setShowResolve}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Løs tvist: {d.title}</DialogTitle>
+            <DialogDescription>
               Alle handlinger logges og varsler berørte parter. Stripe-refusjoner behandles i
               sanntid.
-            </p>
-            <div>
-              <label
-                htmlFor="resolve-outcome"
-                className="block text-sm font-medium text-foreground mb-1"
-              >
-                Utfall *
-              </label>
-              <select
-                id="resolve-outcome"
-                value={resolveOutcome}
-                onChange={(e) => setResolveOutcome(e.target.value as DisputeOutcome)}
-                className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-              >
-                <option value="">Velg utfall</option>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label htmlFor="resolve-outcome">Utfall *</Label>
+            <Select
+              value={resolveOutcome}
+              onValueChange={(v) => setResolveOutcome(v as DisputeOutcome)}
+            >
+              <SelectTrigger id="resolve-outcome" className="w-full">
+                <SelectValue placeholder="Velg utfall" />
+              </SelectTrigger>
+              <SelectContent>
                 {OUTCOME_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
+                  <SelectItem key={o.value} value={o.value}>
                     {o.label}
-                  </option>
+                  </SelectItem>
                 ))}
-              </select>
-            </div>
-            <div>
-              <label
-                htmlFor="resolve-reason"
-                className="block text-sm font-medium text-foreground mb-1"
-              >
-                Begrunnelse *
-              </label>
-              <textarea
-                id="resolve-reason"
-                rows={3}
-                value={resolveReason}
-                onChange={(e) => setResolveReason(e.target.value)}
-                className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50 resize-none"
-                placeholder="Forklar beslutningen…"
-              />
-            </div>
-            {['partial_refund', 'split_payment'].includes(resolveOutcome) && (
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
-                    Kundebeløp (NOK)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={resolveCustomer}
-                    onChange={(e) => setResolveCustomer(e.target.value)}
-                    className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground mb-1">
-                    Tilbyderbeløp (NOK)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={resolveProvider}
-                    onChange={(e) => setResolveProvider(e.target.value)}
-                    className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                  />
-                </div>
-              </div>
-            )}
-            <p className="text-xs text-amber-600 bg-amber-50 rounded-lg p-3">
-              ⚠️ For refusjoner: Stripe API kalles umiddelbart. Dette kan ikke angres.
-            </p>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowResolve(false)}
-                className="px-4 py-2.5 text-sm text-muted-foreground bg-muted hover:bg-accent rounded-md transition-colors"
-              >
-                Avbryt
-              </button>
-              <button
-                onClick={() => {
-                  if (!resolveOutcome || !resolveReason.trim()) {
-                    toast.error('Fyll ut utfall og begrunnelse.');
-                    return;
-                  }
-                  resolveMut.mutate({
-                    id: d._id,
-                    payload: {
-                      outcome: resolveOutcome,
-                      reason: resolveReason.trim(),
-                      customerAmount: resolveCustomer ? parseFloat(resolveCustomer) : 0,
-                      providerAmount: resolveProvider ? parseFloat(resolveProvider) : 0,
-                    },
-                  });
-                  setShowResolve(false);
-                }}
-                disabled={resolveMut.isPending || !resolveOutcome || !resolveReason.trim()}
-                className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-md disabled:opacity-40 transition-colors"
-              >
-                {resolveMut.isPending && <Loader2 size={13} className="animate-spin" />} Bekreft
-                løsning
-              </button>
-            </div>
+              </SelectContent>
+            </Select>
           </div>
-        </div>
-      )}
+          <div className="space-y-1.5">
+            <Label htmlFor="resolve-reason">Begrunnelse *</Label>
+            <Textarea
+              id="resolve-reason"
+              rows={3}
+              value={resolveReason}
+              onChange={(e) => setResolveReason(e.target.value)}
+              placeholder="Forklar beslutningen…"
+            />
+          </div>
+          {['partial_refund', 'split_payment'].includes(resolveOutcome) && (
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="resolve-customer">Kundebeløp (NOK)</Label>
+                <Input
+                  id="resolve-customer"
+                  type="number"
+                  min="0"
+                  value={resolveCustomer}
+                  onChange={(e) => setResolveCustomer(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="resolve-provider">Tilbyderbeløp (NOK)</Label>
+                <Input
+                  id="resolve-provider"
+                  type="number"
+                  min="0"
+                  value={resolveProvider}
+                  onChange={(e) => setResolveProvider(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+          <p className="rounded-md border border-amber-200/70 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+            For refusjoner: Stripe API kalles umiddelbart. Dette kan ikke angres.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowResolve(false)}>
+              Avbryt
+            </Button>
+            <Button
+              onClick={() => {
+                if (!resolveOutcome || !resolveReason.trim()) {
+                  toast.error('Fyll ut utfall og begrunnelse.');
+                  return;
+                }
+                resolveMut.mutate({
+                  id: d._id,
+                  payload: {
+                    outcome: resolveOutcome,
+                    reason: resolveReason.trim(),
+                    customerAmount: resolveCustomer ? parseFloat(resolveCustomer) : 0,
+                    providerAmount: resolveProvider ? parseFloat(resolveProvider) : 0,
+                  },
+                });
+                setShowResolve(false);
+              }}
+              disabled={resolveMut.isPending || !resolveOutcome || !resolveReason.trim()}
+            >
+              {resolveMut.isPending && <Loader2 className="animate-spin" />} Bekreft løsning
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Reopen dialog */}
-      {showReopen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          role="dialog"
-          aria-modal="true"
-        >
-          <div className="bg-card rounded-lg shadow-xl w-full max-w-md p-6 space-y-4">
-            <h2 className="text-lg font-bold text-foreground">Gjenåpne tvist?</h2>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1">Årsak *</label>
-              <textarea
-                rows={2}
-                value={reopenReason}
-                onChange={(e) => setReopenReason(e.target.value)}
-                className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50 resize-none"
-                placeholder="Skriv årsaken til gjenåpning…"
-              />
-            </div>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowReopen(false)}
-                className="px-4 py-2.5 text-sm text-muted-foreground bg-muted hover:bg-accent rounded-md transition-colors"
-              >
-                Avbryt
-              </button>
-              <button
-                onClick={() => {
-                  if (!reopenReason.trim()) return;
-                  reopenMut.mutate({ id: d._id, reason: reopenReason.trim() });
-                  setShowReopen(false);
-                }}
-                disabled={!reopenReason.trim() || reopenMut.isPending}
-                className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600 rounded-md disabled:opacity-40 transition-colors"
-              >
-                {reopenMut.isPending && <Loader2 size={13} className="animate-spin" />} Gjenåpne
-              </button>
-            </div>
+      <Dialog open={showReopen} onOpenChange={setShowReopen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Gjenåpne tvist?</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-1.5">
+            <Label htmlFor="reopen-reason">Årsak *</Label>
+            <Textarea
+              id="reopen-reason"
+              rows={2}
+              value={reopenReason}
+              onChange={(e) => setReopenReason(e.target.value)}
+              placeholder="Skriv årsaken til gjenåpning…"
+            />
           </div>
-        </div>
-      )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowReopen(false)}>
+              Avbryt
+            </Button>
+            <Button
+              onClick={() => {
+                if (!reopenReason.trim()) return;
+                reopenMut.mutate({ id: d._id, reason: reopenReason.trim() });
+                setShowReopen(false);
+              }}
+              disabled={!reopenReason.trim() || reopenMut.isPending}
+            >
+              {reopenMut.isPending && <Loader2 className="animate-spin" />} Gjenåpne
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

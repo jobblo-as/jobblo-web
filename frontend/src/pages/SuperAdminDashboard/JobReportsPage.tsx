@@ -23,6 +23,7 @@ import {
   AdminStatCardSkeleton,
 } from '../../components/admin';
 import type { ColumnDef } from '../../components/admin/AdminDataTable';
+import { Button } from '../../components/developer/ui/button';
 
 const STATUS_OPTIONS = [
   { label: 'Åpen', value: 'open' },
@@ -132,7 +133,7 @@ export default function JobReportsPage() {
         r.assignedAdminId ? (
           <span className="text-xs text-foreground">{r.assignedAdminId.name}</span>
         ) : (
-          <span className="text-xs text-orange-500">Ikke tildelt</span>
+          <span className="text-xs text-amber-600">Ikke tildelt</span>
         ),
     },
     {
@@ -153,29 +154,26 @@ export default function JobReportsPage() {
         const isActive = !['resolved', 'dismissed'].includes(r.status);
         return (
           <div className="flex items-center gap-1.5 flex-wrap">
-            <Link
-              to={`/dashboard/job-reports/${r._id}`}
-              className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-            >
-              <Eye size={11} aria-hidden="true" /> Detaljer
-            </Link>
-            {r.serviceId && (
-              <Link
-                to={`/job-listing/${r.serviceId._id}`}
-                target="_blank"
-                className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-primary bg-primary/10 hover:bg-primary/15 rounded-lg transition-colors"
-              >
-                <Briefcase size={11} aria-hidden="true" /> Se annonse
+            <Button variant="outline" size="xs" asChild>
+              <Link to={`/dashboard/job-reports/${r._id}`}>
+                <Eye aria-hidden="true" /> Detaljer
               </Link>
+            </Button>
+            {r.serviceId && (
+              <Button variant="outline" size="xs" asChild>
+                <Link to={`/job-listing/${r.serviceId._id}`} target="_blank">
+                  <Briefcase aria-hidden="true" /> Se annonse
+                </Link>
+              </Button>
             )}
             {isActive && !r.assignedAdminId && (
-              <button
+              <Button
+                size="xs"
                 onClick={() => assignMutation.mutate(r._id)}
                 disabled={assignMutation.isPending}
-                className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 rounded-lg transition-colors disabled:opacity-50"
               >
-                <UserCheck size={11} aria-hidden="true" /> Ta sak
-              </button>
+                <UserCheck aria-hidden="true" /> Ta sak
+              </Button>
             )}
           </div>
         );
@@ -186,13 +184,13 @@ export default function JobReportsPage() {
   const summary = data?.summary;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <AdminPageHeader
         title="Jobbrapporter"
         description="Rapporter fra brukere om annonser på markedsplassen"
       />
 
-      <section className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-3">
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {isLoading
           ? Array.from({ length: 7 }).map((_, i) => <AdminStatCardSkeleton key={i} />)
           : summary &&
@@ -229,7 +227,7 @@ export default function JobReportsPage() {
         pagination={data?.pagination}
         onPageChange={(p) => setPage(p)}
         toolbar={
-          <div className="flex flex-wrap gap-3 w-full">
+          <div className="flex w-full flex-wrap gap-2">
             <AdminFilterSelect
               value={statusFilter}
               onChange={(v) => {

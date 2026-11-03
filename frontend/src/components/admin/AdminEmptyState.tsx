@@ -19,16 +19,19 @@ export function AdminEmptyState({
 }: AdminEmptyStateProps) {
   return (
     <div
-      className={cn('flex flex-col items-center justify-center px-4 py-12 text-center', className)}
+      className={cn(
+        'flex flex-col items-center justify-center gap-2 px-4 py-10 text-center',
+        className
+      )}
       role="status"
       aria-label={title}
     >
-      <div className="mb-3 flex size-10 items-center justify-center rounded-md border bg-muted text-muted-foreground [&_svg]:size-5">
+      <div className="flex size-9 items-center justify-center rounded-md border bg-muted/50 text-muted-foreground [&_svg]:size-4">
         {icon ?? <Inbox />}
       </div>
       <h3 className="text-sm font-medium text-foreground">{title}</h3>
-      <p className="mt-1 max-w-sm text-sm text-muted-foreground">{description}</p>
-      {action && <div className="mt-4">{action}</div>}
+      <p className="max-w-sm text-xs text-muted-foreground">{description}</p>
+      {action && <div className="mt-2">{action}</div>}
     </div>
   );
 }

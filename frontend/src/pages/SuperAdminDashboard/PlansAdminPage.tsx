@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Edit, ShieldCheck, Settings, Info, Plus, Trash2, CreditCard } from 'lucide-react';
+import { Edit, ShieldCheck, Plus, Trash2 } from 'lucide-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
 import {
@@ -11,6 +11,36 @@ import {
 } from '../../features/plans/api';
 import { AdminDataTable, AdminPageHeader, AdminStatusBadge } from '../../components/admin';
 import type { ColumnDef } from '../../components/admin/AdminDataTable';
+import { Section, StatusBadge } from '../../components/developer/kit';
+import { Badge } from '../../components/developer/ui/badge';
+import {
+  Card,
+  CardAction,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../../components/developer/ui/card';
+import { Button } from '../../components/developer/ui/button';
+import { Checkbox } from '../../components/developer/ui/checkbox';
+import { Input } from '../../components/developer/ui/input';
+import { Label } from '../../components/developer/ui/label';
+import { Separator } from '../../components/developer/ui/separator';
+import { Skeleton } from '../../components/developer/ui/skeleton';
+import { Switch } from '../../components/developer/ui/switch';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/developer/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../components/developer/ui/dialog';
 
 interface PlanEntitlements {
   freeContact: number;
@@ -68,24 +98,18 @@ function ConfigToggle({
   onToggle: (key: string, value: boolean) => void;
 }) {
   return (
-    <div className="flex items-center justify-between p-4 bg-muted/50 rounded-md border border-border">
+    <div className="flex items-center justify-between gap-3 rounded-md border px-3 py-2.5">
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium text-foreground">{config.key.replace(/_/g, ' ')}</p>
         {config.description && (
-          <p className="text-xs text-muted-foreground mt-0.5">{config.description}</p>
+          <p className="text-xs text-muted-foreground">{config.description}</p>
         )}
       </div>
-      <button
-        onClick={() => onToggle(config.key, !config.value)}
-        className={`relative w-10 h-5 rounded-full transition-colors shrink-0 ml-3 ${config.value ? 'bg-primary' : 'bg-muted-foreground/30'}`}
+      <Switch
+        checked={!!config.value}
+        onCheckedChange={() => onToggle(config.key, !config.value)}
         aria-label={`${config.key.replace(/_/g, ' ')}: ${config.value ? 'På' : 'Av'}`}
-        role="switch"
-        aria-checked={config.value}
-      >
-        <span
-          className={`absolute top-0.5 left-0.5 w-4 h-4 bg-card rounded-full shadow-sm transition-transform ${config.value ? 'translate-x-5' : ''}`}
-        />
-      </button>
+      />
     </div>
   );
 }
@@ -261,11 +285,11 @@ export default function PlansAdminPage() {
       header: 'Plan',
       render: (p) => (
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-muted rounded-md">
-            <ShieldCheck size={18} className="text-muted-foreground" />
+          <div className="flex size-8 items-center justify-center rounded-md border bg-muted/50 text-muted-foreground">
+            <ShieldCheck className="size-4" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-foreground">{p.name}</p>
+            <p className="text-sm font-medium text-foreground">{p.name}</p>
             <AdminStatusBadge status={p.type} />
           </div>
         </div>
@@ -274,7 +298,7 @@ export default function PlansAdminPage() {
     {
       key: 'price',
       header: 'Pris',
-      render: (p) => <span className="font-semibold text-foreground">{p.price} NOK</span>,
+      render: (p) => <span className="tabular-nums text-foreground">{p.price} NOK</span>,
     },
     {
       key: 'contacts',
@@ -286,18 +310,14 @@ export default function PlansAdminPage() {
     {
       key: 'visibility',
       header: 'Synlighet',
-      render: (p) => (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700">
-          Nivå {p.entitlements?.visibilityLevel ?? 0}
-        </span>
-      ),
+      render: (p) => <Badge variant="outline">Nivå {p.entitlements?.visibilityLevel ?? 0}</Badge>,
     },
     {
       key: 'badge',
       header: 'Merke',
       render: (p) => (
         <span
-          className={`text-xs font-medium ${p.entitlements?.hasBadge ? 'text-green-600' : 'text-muted-foreground'}`}
+          className={`text-xs ${p.entitlements?.hasBadge ? 'text-emerald-600' : 'text-muted-foreground'}`}
         >
           {p.entitlements?.hasBadge ? 'Ja' : 'Nei'}
         </span>
@@ -308,7 +328,7 @@ export default function PlansAdminPage() {
       header: 'Analyse',
       render: (p) => (
         <span
-          className={`text-xs font-medium ${p.entitlements?.hasAnalytics ? 'text-green-600' : 'text-muted-foreground'}`}
+          className={`text-xs ${p.entitlements?.hasAnalytics ? 'text-emerald-600' : 'text-muted-foreground'}`}
         >
           {p.entitlements?.hasAnalytics ? 'Ja' : 'Nei'}
         </span>
@@ -324,75 +344,67 @@ export default function PlansAdminPage() {
       header: 'Handlinger',
       className: 'whitespace-nowrap',
       render: (p) => (
-        <button
-          onClick={() => openEdit(p)}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-        >
-          <Edit size={13} /> Rediger
-        </button>
+        <Button variant="outline" size="xs" className="bg-card" onClick={() => openEdit(p)}>
+          <Edit /> Rediger
+        </Button>
       ),
     },
   ];
 
+  const numberFields: [keyof PlanForm, string, string, string?, string?][] = [
+    ['freeContact', 'ep-contacts', 'Gratis kontakter/mnd'],
+    ['radius', 'ep-radius', 'Søkeradius (km)'],
+    ['perContactPrice', 'ep-extra-price', 'Ekstra kontakt (NOK)', '0.01'],
+    ['ContactUnlock', 'ep-unlock', 'Tilgangsforsinkelse (min)'],
+    ['maxJobsValue', 'ep-max-jobs', 'Maks jobbverdi (NOK)', '0.01'],
+    ['maxContact', 'ep-max-contact', 'Maks kontakter'],
+    ['visibilityLevel', 'ep-visibility', 'Synlighet (0-5)', undefined, '5'],
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <AdminPageHeader
         title="Abonnementer"
         description="Administrer prisplaner og globale funksjonsbrytere"
       />
 
       {/* Stripe Test Mode Toggle */}
-      <div
-        className={`rounded-lg border p-5 ${stripeTestMode?.value ? 'bg-amber-50 border-amber-200' : 'bg-card border-border'}`}
-      >
-        <div className="flex items-center justify-between gap-4">
-          <div className="min-w-0 flex-1">
-            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <CreditCard size={16} /> Stripe Testmodus
-            </h3>
-            <p className="text-xs text-muted-foreground mt-1">
-              {stripeTestMode?.value
-                ? 'Aktiv: Betalinger bruker Stripe test-nøkler. Ingen ekte belastninger skjer.'
-                : 'Inaktiv: Betalinger bruker produksjons-nøkler (ekte belastninger).'}
-            </p>
-          </div>
-          <div className="flex items-center gap-3 shrink-0">
-            <span
-              className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wide ${stripeTestMode?.value ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'}`}
-            >
-              {stripeTestMode?.value ? 'TEST' : 'LIVE'}
-            </span>
-            <button
-              onClick={() => handleToggleStripeTestMode(!stripeTestMode?.value)}
+      <Card className={stripeTestMode?.value ? 'bg-amber-50/40 ring-amber-200/70' : undefined}>
+        <CardHeader>
+          <CardTitle className="text-sm font-semibold">Stripe Testmodus</CardTitle>
+          <CardDescription className="text-xs">
+            {stripeTestMode?.value
+              ? 'Aktiv: Betalinger bruker Stripe test-nøkler. Ingen ekte belastninger skjer.'
+              : 'Inaktiv: Betalinger bruker produksjons-nøkler (ekte belastninger).'}
+          </CardDescription>
+          <CardAction className="flex items-center gap-3">
+            <StatusBadge
+              status={stripeTestMode?.value ? 'test' : 'live'}
+              label={stripeTestMode?.value ? 'TEST' : 'LIVE'}
+              tone={stripeTestMode?.value ? 'warning' : 'success'}
+            />
+            <Switch
+              checked={!!stripeTestMode?.value}
+              onCheckedChange={() => handleToggleStripeTestMode(!stripeTestMode?.value)}
               disabled={stripeTestMode === undefined}
-              className={`relative w-12 h-6 rounded-full transition-colors shrink-0 ${stripeTestMode?.value ? 'bg-amber-500' : 'bg-muted-foreground/30'}`}
               aria-label={`Stripe testmodus: ${stripeTestMode?.value ? 'På' : 'Av'}`}
-              role="switch"
-              aria-checked={!!stripeTestMode?.value}
-            >
-              <span
-                className={`absolute top-0.5 left-0.5 w-5 h-5 bg-card rounded-full shadow-sm transition-transform ${stripeTestMode?.value ? 'translate-x-6' : ''}`}
-              />
-            </button>
-          </div>
-        </div>
-      </div>
+            />
+          </CardAction>
+        </CardHeader>
+      </Card>
 
       {/* Global Feature Toggles */}
-      <div className="bg-card rounded-lg border border-border p-5">
-        <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-          <Settings size={16} /> Globale funksjonsbrytere
-        </h3>
+      <Section title="Globale funksjonsbrytere">
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-16 bg-muted rounded-md animate-pulse" />
+              <Skeleton key={i} className="h-14" />
             ))}
           </div>
         ) : configs.length === 0 ? (
           <p className="text-sm text-muted-foreground">Ingen konfigurasjoner funnet.</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {configs
               .filter((config) => config.key !== 'STRIPE_TEST_MODE')
               .map((config) => (
@@ -400,7 +412,7 @@ export default function PlansAdminPage() {
               ))}
           </div>
         )}
-      </div>
+      </Section>
 
       {/* Plans table */}
       <AdminDataTable
@@ -413,302 +425,160 @@ export default function PlansAdminPage() {
       />
 
       {/* Edit plan modal */}
-      {showEdit && editTarget && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="edit-plan-title"
-        >
-          <div className="bg-card rounded-lg shadow-xl w-full max-w-lg p-6 space-y-4 overflow-y-auto max-h-[90vh]">
-            <h2 id="edit-plan-title" className="text-lg font-bold text-foreground">
-              Rediger: {editTarget.name}
-            </h2>
+      <Dialog open={showEdit && !!editTarget} onOpenChange={setShowEdit}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Rediger: {editTarget?.name}</DialogTitle>
+          </DialogHeader>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="ep-name" className="block text-sm font-medium text-foreground mb-1">
-                  Navn *
-                </label>
-                <input
-                  id="ep-name"
-                  type="text"
-                  value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="ep-price"
-                  className="block text-sm font-medium text-foreground mb-1"
-                >
-                  Pris (NOK) *
-                </label>
-                <input
-                  id="ep-price"
-                  type="number"
-                  min="0"
-                  value={form.price}
-                  onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
-                  className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                />
-              </div>
-              <div>
-                <label htmlFor="ep-type" className="block text-sm font-medium text-foreground mb-1">
-                  Type *
-                </label>
-                <select
-                  id="ep-type"
-                  value={form.type}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, type: e.target.value as 'private' | 'business' }))
-                  }
-                  className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                >
-                  <option value="private">Privat</option>
-                  <option value="business">Bedrift</option>
-                </select>
-              </div>
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-foreground mb-1 pt-5">
-                  <input
-                    type="checkbox"
-                    checked={form.isActive}
-                    onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
-                    className="w-4 h-4 rounded border-border text-primary focus:ring-ring/50"
-                  />
-                  Aktiv
-                </label>
-              </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="ep-name">Navn *</Label>
+              <Input
+                id="ep-name"
+                type="text"
+                value={form.name}
+                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+              />
             </div>
-
-            <div className="border-t border-border pt-4">
-              <h4 className="text-sm font-semibold text-foreground mb-3">
-                Rettigheter og funksjoner
-              </h4>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label
-                    htmlFor="ep-contacts"
-                    className="block text-sm font-medium text-foreground mb-1"
-                  >
-                    Gratis kontakter/mnd
-                  </label>
-                  <input
-                    id="ep-contacts"
-                    type="number"
-                    min="0"
-                    value={form.freeContact}
-                    onChange={(e) => setForm((f) => ({ ...f, freeContact: e.target.value }))}
-                    className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="ep-radius"
-                    className="block text-sm font-medium text-foreground mb-1"
-                  >
-                    Søkeradius (km)
-                  </label>
-                  <input
-                    id="ep-radius"
-                    type="number"
-                    min="0"
-                    value={form.radius}
-                    onChange={(e) => setForm((f) => ({ ...f, radius: e.target.value }))}
-                    className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="ep-extra-price"
-                    className="block text-sm font-medium text-foreground mb-1"
-                  >
-                    Ekstra kontakt (NOK)
-                  </label>
-                  <input
-                    id="ep-extra-price"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={form.perContactPrice}
-                    onChange={(e) => setForm((f) => ({ ...f, perContactPrice: e.target.value }))}
-                    className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="ep-unlock"
-                    className="block text-sm font-medium text-foreground mb-1"
-                  >
-                    Tilgangsforsinkelse (min)
-                  </label>
-                  <input
-                    id="ep-unlock"
-                    type="number"
-                    min="0"
-                    value={form.ContactUnlock}
-                    onChange={(e) => setForm((f) => ({ ...f, ContactUnlock: e.target.value }))}
-                    className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="ep-max-jobs"
-                    className="block text-sm font-medium text-foreground mb-1"
-                  >
-                    Maks jobbverdi (NOK)
-                  </label>
-                  <input
-                    id="ep-max-jobs"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={form.maxJobsValue}
-                    onChange={(e) => setForm((f) => ({ ...f, maxJobsValue: e.target.value }))}
-                    className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="ep-max-contact"
-                    className="block text-sm font-medium text-foreground mb-1"
-                  >
-                    Maks kontakter
-                  </label>
-                  <input
-                    id="ep-max-contact"
-                    type="number"
-                    min="0"
-                    value={form.maxContact}
-                    onChange={(e) => setForm((f) => ({ ...f, maxContact: e.target.value }))}
-                    className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="ep-visibility"
-                    className="block text-sm font-medium text-foreground mb-1"
-                  >
-                    Synlighet (0-5)
-                  </label>
-                  <input
-                    id="ep-visibility"
-                    type="number"
-                    min="0"
-                    max="5"
-                    value={form.visibilityLevel}
-                    onChange={(e) => setForm((f) => ({ ...f, visibilityLevel: e.target.value }))}
-                    className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                  />
-                </div>
-                <div>
-                  <label
-                    htmlFor="ep-location"
-                    className="block text-sm font-medium text-foreground mb-1"
-                  >
-                    Plasseringspresisjon
-                  </label>
-                  <select
-                    id="ep-location"
-                    value={form.locationPrecision}
-                    onChange={(e) => setForm((f) => ({ ...f, locationPrecision: e.target.value }))}
-                    className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                  >
-                    <option value="approximate">Omtrentlig</option>
-                    <option value="exact">Nøyaktig</option>
-                  </select>
-                </div>
-              </div>
-              <div className="flex items-center gap-6 mt-3">
-                <label className="flex items-center gap-2 text-sm text-foreground">
-                  <input
-                    type="checkbox"
-                    checked={form.hasBadge}
-                    onChange={(e) => setForm((f) => ({ ...f, hasBadge: e.target.checked }))}
-                    className="w-4 h-4 rounded border-border text-primary focus:ring-ring/50"
-                  />
-                  Verifisert merke
-                </label>
-                <label className="flex items-center gap-2 text-sm text-foreground">
-                  <input
-                    type="checkbox"
-                    checked={form.hasAnalytics}
-                    onChange={(e) => setForm((f) => ({ ...f, hasAnalytics: e.target.checked }))}
-                    className="w-4 h-4 rounded border-border text-primary focus:ring-ring/50"
-                  />
-                  Analyse
-                </label>
-              </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="ep-price">Pris (NOK) *</Label>
+              <Input
+                id="ep-price"
+                type="number"
+                min="0"
+                value={form.price}
+                onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
+              />
             </div>
-
-            <div className="border-t border-border pt-4">
-              <h4 className="text-sm font-semibold text-foreground mb-2 flex items-center gap-1">
-                <Info size={14} /> Funksjoner (vises for brukere)
-              </h4>
-              <div className="space-y-2 mb-2">
-                {form.featuresText.map((feat, idx) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={feat}
-                      onChange={(e) => {
-                        const updated = [...form.featuresText];
-                        updated[idx] = e.target.value;
-                        setForm((f) => ({ ...f, featuresText: updated }));
-                      }}
-                      className="flex-1 px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                    />
-                    <button
-                      onClick={() => removeFeature(idx)}
-                      className="p-1.5 text-red-400 hover:text-red-600 transition-colors"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={newFeature}
-                  onChange={(e) => setNewFeature(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      addFeature();
-                    }
-                  }}
-                  placeholder="Legg til funksjon…"
-                  className="flex-1 px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                />
-                <button
-                  onClick={addFeature}
-                  className="flex items-center gap-1 px-3 py-2 text-xs font-medium text-primary bg-green-50 hover:bg-green-100 rounded-md transition-colors"
-                >
-                  <Plus size={14} /> Legg til
-                </button>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2 border-t border-border">
-              <button
-                onClick={() => setShowEdit(false)}
-                className="px-4 py-2.5 text-sm font-medium text-muted-foreground bg-muted hover:bg-accent rounded-md transition-colors"
+            <div className="space-y-1.5">
+              <Label htmlFor="ep-type">Type *</Label>
+              <Select
+                value={form.type}
+                onValueChange={(v) => setForm((f) => ({ ...f, type: v as 'private' | 'business' }))}
               >
-                Avbryt
-              </button>
-              <button
-                onClick={handleSavePlan}
-                className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-md transition-colors"
-              >
-                <Settings size={14} /> Lagre endringer
-              </button>
+                <SelectTrigger id="ep-type" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="private">Privat</SelectItem>
+                  <SelectItem value="business">Bedrift</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Label className="self-end pb-2">
+              <Checkbox
+                checked={form.isActive}
+                onCheckedChange={(v) => setForm((f) => ({ ...f, isActive: v === true }))}
+              />
+              Aktiv
+            </Label>
+          </div>
+
+          <Separator />
+          <div className="space-y-3">
+            <h4 className="text-sm font-medium text-foreground">Rettigheter og funksjoner</h4>
+            <div className="grid grid-cols-2 gap-3">
+              {numberFields.map(([key, id, label, step, max]) => (
+                <div key={key} className="space-y-1.5">
+                  <Label htmlFor={id}>{label}</Label>
+                  <Input
+                    id={id}
+                    type="number"
+                    min="0"
+                    max={max}
+                    step={step}
+                    value={form[key] as string}
+                    onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
+                  />
+                </div>
+              ))}
+              <div className="space-y-1.5">
+                <Label htmlFor="ep-location">Plasseringspresisjon</Label>
+                <Select
+                  value={form.locationPrecision}
+                  onValueChange={(v) => setForm((f) => ({ ...f, locationPrecision: v }))}
+                >
+                  <SelectTrigger id="ep-location" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="approximate">Omtrentlig</SelectItem>
+                    <SelectItem value="exact">Nøyaktig</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex items-center gap-6">
+              <Label>
+                <Checkbox
+                  checked={form.hasBadge}
+                  onCheckedChange={(v) => setForm((f) => ({ ...f, hasBadge: v === true }))}
+                />
+                Verifisert merke
+              </Label>
+              <Label>
+                <Checkbox
+                  checked={form.hasAnalytics}
+                  onCheckedChange={(v) => setForm((f) => ({ ...f, hasAnalytics: v === true }))}
+                />
+                Analyse
+              </Label>
             </div>
           </div>
-        </div>
-      )}
+
+          <Separator />
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-foreground">Funksjoner (vises for brukere)</h4>
+            {form.featuresText.map((feat, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <Input
+                  type="text"
+                  value={feat}
+                  onChange={(e) => {
+                    const updated = [...form.featuresText];
+                    updated[idx] = e.target.value;
+                    setForm((f) => ({ ...f, featuresText: updated }));
+                  }}
+                />
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  className="text-muted-foreground hover:text-red-600"
+                  onClick={() => removeFeature(idx)}
+                  aria-label="Fjern funksjon"
+                >
+                  <Trash2 />
+                </Button>
+              </div>
+            ))}
+            <div className="flex items-center gap-2">
+              <Input
+                type="text"
+                value={newFeature}
+                onChange={(e) => setNewFeature(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addFeature();
+                  }
+                }}
+                placeholder="Legg til funksjon…"
+              />
+              <Button variant="outline" className="bg-card" onClick={addFeature}>
+                <Plus /> Legg til
+              </Button>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEdit(false)}>
+              Avbryt
+            </Button>
+            <Button onClick={handleSavePlan}>Lagre endringer</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

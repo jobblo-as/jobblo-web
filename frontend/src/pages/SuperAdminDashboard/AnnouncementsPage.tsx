@@ -8,6 +8,19 @@ import {
   AdminEmptyState,
 } from '../../components/admin';
 import { toast } from 'react-hot-toast';
+import { Mono, Section } from '../../components/developer/kit';
+import { Button } from '../../components/developer/ui/button';
+import { Input } from '../../components/developer/ui/input';
+import { Label } from '../../components/developer/ui/label';
+import { Switch } from '../../components/developer/ui/switch';
+import { Textarea } from '../../components/developer/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/developer/ui/select';
 
 interface Announcement {
   key: string;
@@ -57,7 +70,7 @@ export default function AnnouncementsPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         <AdminPageHeader
           title="Kunngjøringer"
           description="Administrer systemmeldinger og varsler"
@@ -69,7 +82,7 @@ export default function AnnouncementsPage() {
 
   if (isError) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         <AdminPageHeader
           title="Kunngjøringer"
           description="Administrer systemmeldinger og varsler"
@@ -81,7 +94,7 @@ export default function AnnouncementsPage() {
 
   if (!announcementList.length) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         <AdminPageHeader
           title="Kunngjøringer"
           description="Administrer systemmeldinger og varsler"
@@ -96,18 +109,15 @@ export default function AnnouncementsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <AdminPageHeader
         title="Kunngjøringer"
         description="Administrer systemmeldinger og varsler"
         actions={
-          <button
-            onClick={() => refetch()}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-foreground bg-muted hover:bg-accent rounded-md transition-colors"
-          >
-            <RefreshCw size={16} />
+          <Button variant="outline" size="sm" className="bg-card" onClick={() => refetch()}>
+            <RefreshCw />
             Oppdater
-          </button>
+          </Button>
         }
       />
 
@@ -123,90 +133,73 @@ export default function AnnouncementsPage() {
           const hasChanges = key in edits;
 
           return (
-            <div key={key} className="bg-card rounded-lg border border-border p-5 space-y-4">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2">
-                  <Megaphone size={16} className="text-muted-foreground" />
-                  <span className="text-xs font-mono text-muted-foreground select-all">{key}</span>
-                </div>
-              </div>
-
-              <div className="grid gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground mb-1">
-                    Melding
-                  </label>
-                  <textarea
-                    value={text as string}
-                    onChange={(e) => handleChange(key, 'text', e.target.value)}
-                    rows={3}
-                    className="w-full rounded-md border border-border px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 resize-y"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold text-muted-foreground mb-1">
-                      Type
-                    </label>
-                    <select
-                      value={type as string}
-                      onChange={(e) => handleChange(key, 'type', e.target.value)}
-                      className="w-full rounded-md border border-border px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50"
-                    >
-                      <option value="info">Info</option>
-                      <option value="warning">Advarsel</option>
-                      <option value="success">Suksess</option>
-                      <option value="error">Feil</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-muted-foreground mb-1">
-                      Aktiv
-                    </label>
-                    <button
-                      onClick={() => handleChange(key, 'active', !active)}
-                      className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-ring/50 ${
-                        active ? 'bg-primary' : 'bg-muted'
-                      }`}
-                      role="switch"
-                      aria-checked={active as boolean}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-card shadow-sm ring-0 transition-transform duration-200 ease-in-out ${
-                          active ? 'translate-x-5' : 'translate-x-0'
-                        }`}
-                      />
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-muted-foreground mb-1">
-                    Lenke-URL
-                  </label>
-                  <input
-                    type="text"
-                    value={linkUrl as string}
-                    onChange={(e) => handleChange(key, 'linkUrl', e.target.value)}
-                    placeholder="https://..."
-                    className="w-full rounded-md border border-border px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end">
-                <button
+            <Section
+              key={key}
+              title={<Mono className="select-all">{key}</Mono>}
+              contentClassName="space-y-4"
+              action={
+                <Button
+                  size="sm"
                   onClick={() => handleSave(announcement)}
                   disabled={!hasChanges || isSaving}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary/90 disabled:opacity-50 rounded-md transition-colors"
                 >
-                  <Save size={15} />
+                  <Save />
                   {isSaving ? 'Lagrer...' : 'Lagre'}
-                </button>
+                </Button>
+              }
+            >
+              <div className="space-y-1.5">
+                <Label htmlFor={`${key}-text`}>Melding</Label>
+                <Textarea
+                  id={`${key}-text`}
+                  value={text as string}
+                  onChange={(e) => handleChange(key, 'text', e.target.value)}
+                  rows={3}
+                />
               </div>
-            </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor={`${key}-type`}>Type</Label>
+                  <Select
+                    value={type as string}
+                    onValueChange={(value) => handleChange(key, 'type', value)}
+                  >
+                    <SelectTrigger id={`${key}-type`} className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="info">Info</SelectItem>
+                      <SelectItem value="warning">Advarsel</SelectItem>
+                      <SelectItem value="success">Suksess</SelectItem>
+                      <SelectItem value="error">Feil</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor={`${key}-active`}>Aktiv</Label>
+                  <div className="flex h-8 items-center">
+                    <Switch
+                      id={`${key}-active`}
+                      checked={active as boolean}
+                      onCheckedChange={(checked) => handleChange(key, 'active', checked)}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor={`${key}-link`}>Lenke-URL</Label>
+                <Input
+                  id={`${key}-link`}
+                  type="text"
+                  value={linkUrl as string}
+                  onChange={(e) => handleChange(key, 'linkUrl', e.target.value)}
+                  placeholder="https://..."
+                />
+              </div>
+            </Section>
           );
         })}
       </div>

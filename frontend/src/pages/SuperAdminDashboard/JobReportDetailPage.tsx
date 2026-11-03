@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+﻿import { useState, type ReactNode } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, UserCheck, Briefcase, CheckCircle2, XCircle, RotateCcw } from 'lucide-react';
@@ -15,32 +15,9 @@ import {
   AdminPageHeader,
   AdminConfirmDialog,
 } from '../../components/admin';
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="bg-card rounded-lg border border-border p-5">
-      <h3 className="text-sm font-semibold text-foreground mb-4 border-b border-border pb-2">
-        {title}
-      </h3>
-      {children}
-    </div>
-  );
-}
-
-function Row({ label, value, badge }: { label: string; value?: React.ReactNode; badge?: string }) {
-  return (
-    <div className="flex items-start justify-between py-1.5 gap-4">
-      <span className="text-xs text-muted-foreground shrink-0 w-40">{label}</span>
-      <span className="text-sm text-foreground text-right flex items-center gap-1 min-w-0">
-        {badge ? (
-          <AdminStatusBadge status={badge} />
-        ) : (
-          (value ?? <span className="text-muted-foreground/60">â€“</span>)
-        )}
-      </span>
-    </div>
-  );
-}
+import { KeyValue, Mono, Section } from '../../components/developer/kit';
+import { Button } from '../../components/developer/ui/button';
+import { Textarea } from '../../components/developer/ui/textarea';
 
 export default function JobReportDetailPage() {
   const { reportId } = useParams<{ reportId: string }>();
@@ -75,12 +52,12 @@ export default function JobReportDetailPage() {
   const resolveMut = useMutation({
     mutationFn: () => updateJobReportStatus(reportId!, 'resolved', resolveNote),
     onSuccess: () => {
-      toast.success('Rapport markert som lÃ¸st.');
+      toast.success('Rapport markert som løst.');
       setShowResolve(false);
       setResolveNote('');
       inv();
     },
-    onError: () => toast.error('Kunne ikke lÃ¸se rapporten.'),
+    onError: () => toast.error('Kunne ikke løse rapporten.'),
   });
   const dismissMut = useMutation({
     mutationFn: () => updateJobReportStatus(reportId!, 'dismissed', dismissNote),
@@ -95,10 +72,10 @@ export default function JobReportDetailPage() {
   const reopenMut = useMutation({
     mutationFn: () => updateJobReportStatus(reportId!, 'under_review'),
     onSuccess: () => {
-      toast.success('Rapport gjenÃ¥pnet.');
+      toast.success('Rapport gjenåpnet.');
       inv();
     },
-    onError: () => toast.error('Kunne ikke gjenÃ¥pne rapporten.'),
+    onError: () => toast.error('Kunne ikke gjenåpne rapporten.'),
   });
 
   if (isLoading)
@@ -113,126 +90,100 @@ export default function JobReportDetailPage() {
   const service = report.serviceId;
   const isClosed = ['resolved', 'dismissed'].includes(report.status);
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <Link
-          to="/dashboard/job-reports"
-          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <ArrowLeft size={16} /> Tilbake til rapporter
-        </Link>
-      </div>
+  const details: [string, ReactNode][] = [
+    ['Rapport-ID', <Mono key="id">{report._id}</Mono>],
+    ['Status', <AdminStatusBadge key="st" status={report.status} />],
+    ['Tildelt', report.assignedAdminId?.name ?? '–'],
+    ['Type', report.reportType.replace(/_/g, ' ')],
+    ['Beskrivelse', report.description],
+    ['Opprettet', new Date(report.createdAt).toLocaleString('nb-NO')],
+    ['Sist oppdatert', new Date(report.updatedAt).toLocaleString('nb-NO')],
+  ];
+  if (report.resolvedAt)
+    details.push(['Løst dato', new Date(report.resolvedAt).toLocaleString('nb-NO')]);
+  if (report.resolutionNote) details.push(['Løsningsnotat', report.resolutionNote]);
+  if (report.resolvedBy) details.push(['Løst av', report.resolvedBy.name]);
 
+  return (
+    <div className="space-y-5">
       <AdminPageHeader
         title={`Rapport: ${service?.title ?? 'Slettet annonse'}`}
         description={report.reportType.replace(/_/g, ' ')}
         actions={
-          service ? (
-            <Link
-              to={`/job-listing/${service._id}`}
-              target="_blank"
-              className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/15 rounded-md transition-colors"
-            >
-              <Briefcase size={15} /> Se annonse
-            </Link>
-          ) : undefined
+          <>
+            <Button variant="outline" size="sm" className="bg-card" asChild>
+              <Link to="/dashboard/job-reports">
+                <ArrowLeft /> Tilbake til rapporter
+              </Link>
+            </Button>
+            {service && (
+              <Button variant="outline" size="sm" className="bg-card" asChild>
+                <Link to={`/job-listing/${service._id}`} target="_blank">
+                  <Briefcase /> Se annonse
+                </Link>
+              </Button>
+            )}
+            {!report.assignedAdminId && !isClosed && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-card"
+                onClick={() => assignMut.mutate()}
+                disabled={assignMut.isPending}
+              >
+                <UserCheck /> Ta saken
+              </Button>
+            )}
+            {!isClosed ? (
+              <>
+                <Button variant="destructive" size="sm" onClick={() => setShowDismiss(true)}>
+                  <XCircle /> Avvis
+                </Button>
+                <Button size="sm" onClick={() => setShowResolve(true)}>
+                  <CheckCircle2 /> Løs
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-card"
+                onClick={() => reopenMut.mutate()}
+                disabled={reopenMut.isPending}
+              >
+                <RotateCcw /> Gjenåpne
+              </Button>
+            )}
+          </>
         }
       />
 
-      <div className="flex flex-wrap gap-3 bg-card rounded-lg border border-border p-4 items-center">
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">Status:</span>
-          <AdminStatusBadge status={report.status} />
-        </div>
-        {report.assignedAdminId && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">Tildelt:</span>
-            <span className="text-xs text-foreground">{report.assignedAdminId.name}</span>
-          </div>
-        )}
-        <div className="flex-1" />
-        {!report.assignedAdminId && !isClosed && (
-          <button
-            onClick={() => assignMut.mutate()}
-            disabled={assignMut.isPending}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 rounded-md transition-colors disabled:opacity-50"
-          >
-            <UserCheck size={14} /> Ta saken
-          </button>
-        )}
-        {!isClosed ? (
-          <>
-            <button
-              onClick={() => setShowDismiss(true)}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors"
-            >
-              <XCircle size={14} /> Avvis
-            </button>
-            <button
-              onClick={() => setShowResolve(true)}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 rounded-md transition-colors"
-            >
-              <CheckCircle2 size={14} /> LÃ¸s
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={() => reopenMut.mutate()}
-            disabled={reopenMut.isPending}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-muted-foreground bg-muted/50 hover:bg-accent rounded-md transition-colors disabled:opacity-50"
-          >
-            <RotateCcw size={14} /> GjenÃ¥pne
-          </button>
-        )}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-2 space-y-4">
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="space-y-4 lg:col-span-2">
           <Section title="Rapportdetaljer">
-            <Row
-              label="Rapport-ID"
-              value={<span className="font-mono text-xs">{report._id}</span>}
-            />
-            <Row label="Type" value={report.reportType.replace(/_/g, ' ')} />
-            <Row
-              label="Beskrivelse"
-              value={<span className="text-xs leading-relaxed">{report.description}</span>}
-            />
-            <Row label="Opprettet" value={new Date(report.createdAt).toLocaleString('nb-NO')} />
-            <Row
-              label="Sist oppdatert"
-              value={new Date(report.updatedAt).toLocaleString('nb-NO')}
-            />
-            {report.resolvedAt && (
-              <Row label="LÃ¸st dato" value={new Date(report.resolvedAt).toLocaleString('nb-NO')} />
-            )}
-            {report.resolutionNote && (
-              <Row
-                label="LÃ¸sningsnotat"
-                value={<span className="text-xs leading-relaxed">{report.resolutionNote}</span>}
-              />
-            )}
-            {report.resolvedBy && <Row label="LÃ¸st av" value={report.resolvedBy.name} />}
+            <KeyValue items={details} />
           </Section>
 
           <Section title="Annonseinformasjon">
             {service ? (
-              <>
-                <Row label="Tittel" value={service.title} />
-                {service.price != null && (
-                  <Row label="Pris" value={`${service.price.toLocaleString('nb-NO')} kr`} />
-                )}
-                <Row label="Status" badge={service.status} />
-                <Row
-                  label="Opprettet"
-                  value={new Date(service.createdAt ?? report.createdAt).toLocaleDateString(
-                    'nb-NO'
-                  )}
-                />
-              </>
+              <KeyValue
+                items={[
+                  ['Tittel', service.title],
+                  ...(service.price != null
+                    ? [['Pris', `${service.price.toLocaleString('nb-NO')} kr`] as [string, string]]
+                    : []),
+                  [
+                    'Status',
+                    service.status ? <AdminStatusBadge key="s" status={service.status} /> : '–',
+                  ],
+                  [
+                    'Opprettet',
+                    new Date(service.createdAt ?? report.createdAt).toLocaleDateString('nb-NO'),
+                  ],
+                ]}
+              />
             ) : (
-              <p className="text-xs text-muted-foreground">Annonsen er slettet.</p>
+              <p className="text-sm text-muted-foreground">Annonsen er slettet.</p>
             )}
           </Section>
         </div>
@@ -249,7 +200,7 @@ export default function JobReportDetailPage() {
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-muted-foreground">Bruker slettet</p>
+              <p className="text-sm text-muted-foreground">Bruker slettet</p>
             )}
           </Section>
 
@@ -264,34 +215,34 @@ export default function JobReportDetailPage() {
                 </div>
               </div>
             ) : (
-              <p className="text-xs text-muted-foreground">Bruker slettet</p>
+              <p className="text-sm text-muted-foreground">Bruker slettet</p>
             )}
           </Section>
         </div>
       </div>
 
       <AdminConfirmDialog
-        title="LÃ¸s rapporten?"
-        description="Marker denne rapporten som lÃ¸st. Du kan legge til et notat for journalfÃ¸ring."
-        confirmText="Ja, lÃ¸s"
+        title="Løs rapporten?"
+        description="Marker denne rapporten som løst. Du kan legge til et notat for journalføring."
+        confirmText="Ja, løs"
         cancelText="Avbryt"
         variant="default"
         isOpen={showResolve}
         onOpenChange={setShowResolve}
         onConfirm={() => resolveMut.mutate()}
       >
-        <textarea
+        <Textarea
           value={resolveNote}
           onChange={(e) => setResolveNote(e.target.value)}
           placeholder="Notat (valgfritt)"
           rows={3}
-          className="mt-3 w-full px-4 py-3 border border-border rounded-md text-sm text-foreground placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-transparent resize-none transition-all"
+          className="mt-3"
         />
       </AdminConfirmDialog>
 
       <AdminConfirmDialog
         title="Avvis rapporten?"
-        description="Marker denne rapporten som avvist. Du kan legge til et notat for journalfÃ¸ring."
+        description="Marker denne rapporten som avvist. Du kan legge til et notat for journalføring."
         confirmText="Ja, avvis"
         cancelText="Avbryt"
         variant="destructive"
@@ -299,12 +250,12 @@ export default function JobReportDetailPage() {
         onOpenChange={setShowDismiss}
         onConfirm={() => dismissMut.mutate()}
       >
-        <textarea
+        <Textarea
           value={dismissNote}
           onChange={(e) => setDismissNote(e.target.value)}
           placeholder="Notat (valgfritt)"
           rows={3}
-          className="mt-3 w-full px-4 py-3 border border-border rounded-md text-sm text-foreground placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-400 focus:border-transparent resize-none transition-all"
+          className="mt-3"
         />
       </AdminConfirmDialog>
     </div>

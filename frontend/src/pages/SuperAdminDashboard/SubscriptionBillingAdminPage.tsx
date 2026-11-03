@@ -1,9 +1,16 @@
 import { useState } from 'react';
-import { CreditCard, RefreshCw, ShieldAlert } from 'lucide-react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'react-hot-toast';
-import { fetchSubscriptionBillingSummary, reconcileSubscriptionBilling } from '../../api/admin';
+import { CreditCard, ShieldAlert } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { fetchSubscriptionBillingSummary } from '../../api/admin';
 import { AdminPageHeader } from '../../components/admin';
+import { ErrorState, Section, StatCard, StatusBadge } from '../../components/developer/kit';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/developer/ui/select';
 
 type BillingSummary = {
   mode: string;
@@ -21,168 +28,114 @@ type BillingSummary = {
   webhookReadiness: { ready: boolean; status: string; mode: string | null };
 };
 
+// SubscriptionV2 statuses.
 const statusLabels: Record<string, string> = {
   active: 'Aktive',
   past_due: 'Forfalt',
-  inactive: 'Inaktive',
-  cancelled: 'Avsluttet',
+  canceling: 'Avsluttes',
+  canceled: 'Avsluttet',
   expired: 'Utløpt',
 };
 
 export default function SubscriptionBillingAdminPage() {
   const [mode, setMode] = useState<'all' | 'test' | 'live'>('all');
-  const [cursorUserId, setCursorUserId] = useState<string | null>(null);
-  const [reconciliationComplete, setReconciliationComplete] = useState(false);
-  const queryClient = useQueryClient();
   const { data, isLoading, isError } = useQuery<BillingSummary>({
     queryKey: ['admin-subscription-billing', mode],
     queryFn: () => fetchSubscriptionBillingSummary(mode),
   });
-  const reconcile = useMutation({
-    mutationFn: () =>
-      reconcileSubscriptionBilling({
-        mode,
-        limit: 10,
-        ...(cursorUserId ? { cursorUserId } : {}),
-      }),
-    onSuccess: (result) => {
-      setCursorUserId(result.nextCursorUserId || null);
-      setReconciliationComplete(!result.nextCursorUserId);
-      toast.success(
-        `Avstemming fullført for ${result.synchronized} abonnement(er).${
-          result.results?.some((item: { status: string }) => item.status === 'failed')
-            ? ' Enkelte poster må prøves igjen.'
-            : ''
-        }`
-      );
-      queryClient.invalidateQueries({ queryKey: ['admin-subscription-billing'] });
-    },
-    onError: (error: { response?: { data?: { message?: string } } }) =>
-      toast.error(error.response?.data?.message || 'Avstemming kunne ikke gjennomføres.'),
-  });
   const counts = Object.fromEntries((data?.statuses || []).map(({ _id, count }) => [_id, count]));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <AdminPageHeader
         title="Abonnementsfakturering"
-        description="Abonnentstatus, mislykkede fakturaer og Stripe API-avstemming."
+        description="Abonnentstatus og mislykkede abonnementsbetalinger."
+        actions={
+          <Select value={mode} onValueChange={(value) => setMode(value as 'all' | 'test' | 'live')}>
+            <SelectTrigger size="sm" className="w-36 bg-card" aria-label="Stripe-modus">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent align="end">
+              <SelectItem value="all">Test + Live</SelectItem>
+              <SelectItem value="test">Test</SelectItem>
+              <SelectItem value="live">Live</SelectItem>
+            </SelectContent>
+          </Select>
+        }
       />
-      <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <label className="flex items-center gap-2 text-sm font-semibold text-foreground">
-            Stripe-modus
-            <select
-              value={mode}
-              onChange={(event) => {
-                setMode(event.target.value as 'all' | 'test' | 'live');
-                setCursorUserId(null);
-                setReconciliationComplete(false);
-              }}
-              className="rounded-lg border border-border bg-card px-3 py-2"
-            >
-              <option value="all">Test + Live</option>
-              <option value="test">Test</option>
-              <option value="live">Live</option>
-            </select>
-          </label>
-          <button
-            type="button"
-            disabled={mode === 'all' || reconcile.isPending || reconciliationComplete}
-            onClick={() => reconcile.mutate()}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <RefreshCw size={15} className={reconcile.isPending ? 'animate-spin' : ''} />
-            {reconcile.isPending
-              ? 'Avstemmer…'
-              : reconciliationComplete
-                ? 'Avstemming fullført'
-                : 'Avstem 10 abonnementer'}
-          </button>
-        </div>
-        {mode === 'all' && (
-          <p className="mt-2 text-xs text-muted-foreground">
-            Velg test eller live for å starte avstemming.
-          </p>
-        )}
-      </section>
 
       {isError ? (
-        <div
-          role="alert"
-          className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800"
-        >
-          Kunne ikke hente abonnementsoversikten.
+        <div role="alert">
+          <ErrorState error={{ message: 'Kunne ikke hente abonnementsoversikten.' }} />
         </div>
       ) : (
         <>
-          <section aria-label="Abonnentstatus" className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+          <section aria-label="Abonnentstatus" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {[
               ['Abonnenter', data?.subscribers ?? 0],
               ...Object.entries(statusLabels).map(([key, label]) => [label, counts[key] || 0]),
             ].map(([label, count]) => (
-              <article
+              <StatCard
                 key={String(label)}
-                className="rounded-lg border border-border bg-card p-5 shadow-sm"
-              >
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {label}
-                </p>
-                <p className="mt-2 text-2xl font-black text-foreground">
-                  {isLoading ? '…' : Number(count).toLocaleString('nb-NO')}
-                </p>
-              </article>
+                label={String(label)}
+                loading={isLoading}
+                value={Number(count).toLocaleString('nb-NO')}
+              />
             ))}
           </section>
 
-          <section className="rounded-lg border border-border bg-card p-5 shadow-sm">
-            <div className="flex items-center gap-2">
-              {data?.webhookReadiness.ready ? (
-                <CreditCard size={18} className="text-emerald-600" />
-              ) : (
-                <ShieldAlert size={18} className="text-amber-600" />
-              )}
-              <h2 className="font-bold text-foreground">Webhook-status</h2>
-            </div>
-            <p className="mt-2 text-sm text-muted-foreground">
+          <Section
+            title={
+              <span className="flex items-center gap-2">
+                {data?.webhookReadiness.ready ? (
+                  <CreditCard className="size-4 text-emerald-600" />
+                ) : (
+                  <ShieldAlert className="size-4 text-amber-600" />
+                )}
+                Webhook-status
+              </span>
+            }
+          >
+            <p className="text-sm text-muted-foreground">
               {data?.webhookReadiness.ready
                 ? `Stripe-webhook er verifisert for ${data.webhookReadiness.mode?.toUpperCase()}-modus.`
                 : `Webhook krever oppfølging (${data?.webhookReadiness.status || 'ukjent status'}).`}
             </p>
-          </section>
+          </Section>
 
-          <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-            <div className="border-b border-border px-5 py-4">
-              <h2 className="font-bold text-foreground">Mislykkede abonnementsbetalinger</h2>
-            </div>
+          <Section title="Mislykkede abonnementsbetalinger">
             {!data?.failedInvoices.length ? (
-              <p className="p-5 text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Ingen mislykkede betalinger registrert.
               </p>
             ) : (
-              <ul className="divide-y divide-border">
+              <ul className="divide-y">
                 {data.failedInvoices.map((invoice) => (
                   <li
                     key={invoice.stripeSessionId}
-                    className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 text-sm"
+                    className="flex flex-wrap items-center justify-between gap-3 py-2.5 text-sm"
                   >
                     <div>
-                      <p className="font-semibold text-foreground">
+                      <p className="font-medium text-foreground">
                         {invoice.planName || 'Abonnement'}
                       </p>
-                      <p className="mt-1 text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground">
                         {invoice.userId} · {new Date(invoice.createdAt).toLocaleDateString('nb-NO')}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">
-                        {invoice.livemode === false
-                          ? 'TEST'
-                          : invoice.livemode === true
-                            ? 'LIVE'
-                            : 'UKJENT'}
-                      </span>
-                      <span className="font-bold text-foreground">
+                      <StatusBadge
+                        status="livemode"
+                        tone="warning"
+                        label={
+                          invoice.livemode === false
+                            ? 'TEST'
+                            : invoice.livemode === true
+                              ? 'LIVE'
+                              : 'UKJENT'
+                        }
+                      />
+                      <span className="tabular-nums font-medium text-foreground">
                         {new Intl.NumberFormat('nb-NO', {
                           style: 'currency',
                           currency: (invoice.currency || 'nok').toUpperCase(),
@@ -193,7 +146,7 @@ export default function SubscriptionBillingAdminPage() {
                 ))}
               </ul>
             )}
-          </section>
+          </Section>
         </>
       )}
     </div>

@@ -5,6 +5,7 @@ const SubscriptionV2 = require('../../models/SubscriptionV2');
 const SubscriptionBillingOperationV2 = require('../../models/SubscriptionBillingOperationV2');
 const User = require('../../models/User');
 const { getStripeConfiguration, getStripeForMode } = require('../../config/stripe');
+const { paidInFull } = require('./v2WebhookProcessor');
 
 const BILLABLE_STATUSES = new Set([
   'active',
@@ -412,6 +413,8 @@ async function createSubscriptionCheckoutSession({ user, planId, couponCode }, o
         customer: customerId,
         client_reference_id: String(user._id),
         line_items: [{ price: priceId, quantity: 1 }],
+        // Membership discount codes made in the admin "Kuponger" page.
+        allow_promotion_codes: true,
         success_url: urls.successUrl,
         cancel_url: urls.cancelUrl,
         metadata,
@@ -534,7 +537,7 @@ async function getSubscriptionCheckoutStatus(userId, sessionId, overrides = {}) 
   if (
     (session.currency && session.currency.toLowerCase() !== 'nok') ||
     (Number.isSafeInteger(session.amount_total) &&
-      session.amount_total !== Math.round(plan.price * 100)) ||
+      !paidInFull(session.amount_total, session.total_details?.amount_discount, plan.price)) ||
     (session.status === 'complete' &&
       (!Number.isSafeInteger(session.amount_total) || !session.currency))
   ) {

@@ -26,6 +26,8 @@ const campaignController = require('../../controllers/campaignController');
 const stripeWebhookHealthController = require('../../controllers/admin/stripeWebhookHealthController');
 const safePayFinanceController = require('../../controllers/safepayFinanceController');
 const subscriptionRebuildInProgress = require('../../middleware/subscriptionRebuildInProgress');
+const promotionCodeController = require('../../controllers/admin/promotionCodeController');
+const subscriptionBillingController = require('../../controllers/admin/subscriptionBillingController');
 
 // Apply auth + admin check + rate limiter to ALL routes
 router.use(authenticate, requireAdmin, adminLimiter);
@@ -44,13 +46,13 @@ router.post(
   '/stripe/payment-incidents/:id/close-lost-chargeback',
   stripePaymentIncidentController.closeLostChargebackWithoutTransfer
 );
-router.get('/billing/subscriptions/summary', subscriptionRebuildInProgress);
+router.get('/billing/subscriptions/summary', subscriptionBillingController.getAdminSummary);
 router.post('/billing/subscriptions/reconcile', financeSyncLimiter, subscriptionRebuildInProgress);
 
 // ── Stripe membership promotion codes ─────────────────────────────────────
-router.get('/promotion-codes', subscriptionRebuildInProgress);
-router.post('/promotion-codes', subscriptionRebuildInProgress);
-router.post('/promotion-codes/:id/deactivate', subscriptionRebuildInProgress);
+router.get('/promotion-codes', promotionCodeController.listPromotionCodes);
+router.post('/promotion-codes', promotionCodeController.createPromotionCode);
+router.post('/promotion-codes/:id/deactivate', promotionCodeController.deactivatePromotionCode);
 
 // ── Promotional campaigns ───────────────────────────────────────────────────
 router.get('/campaigns/defaults', campaignController.getCampaignDefaults);

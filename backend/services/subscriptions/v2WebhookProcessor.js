@@ -248,6 +248,18 @@ async function setOperationReconciliation(operation, reason, OperationModel) {
   );
 }
 
+/**
+ * Paid amount plus Stripe's own discount (a promotion code from the admin "Kuponger" page) equals
+ * the plan price. Without a discount this is the old "paid exactly the plan price" check.
+ */
+function paidInFull(paidMinor, discountMinor, planPrice) {
+  const discount = Number.isSafeInteger(discountMinor) && discountMinor > 0 ? discountMinor : 0;
+  return Number.isSafeInteger(paidMinor) && paidMinor + discount === Math.round(planPrice * 100);
+}
+
+const invoiceDiscount = (invoice) =>
+  (invoice.total_discount_amounts || []).reduce((sum, d) => sum + (d.amount || 0), 0);
+
 async function recordActivation({
   identity,
   operation,
@@ -273,7 +285,7 @@ async function recordActivation({
     period.item.price?.recurring?.interval !== 'month' ||
     period.item.price?.recurring?.interval_count !== 1 ||
     invoice.currency?.toLowerCase() !== 'nok' ||
-    invoice.amount_paid !== Math.round(plan.price * 100)
+    !paidInFull(invoice.amount_paid, invoiceDiscount(invoice), plan.price)
   ) {
     throw new Error('subscription_price_mismatch');
   }
@@ -1078,8 +1090,8 @@ async function processVerifiedEvent(event, mode, stripe, overrides = {}) {
           if (
             invoice &&
             invoice.currency?.toLowerCase() === 'nok' &&
-            object.amount_total === Math.round(plan?.price * 100) &&
-            plan
+            plan &&
+            paidInFull(object.amount_total, object.total_details?.amount_discount, plan.price)
           ) {
             operation.stripeCheckoutSessionId = object.id;
             operation.stripeCustomerId = idOf(object.customer);
@@ -1559,6 +1571,7 @@ async function processVerifiedEvent(event, mode, stripe, overrides = {}) {
 }
 
 module.exports = {
+  paidInFull,
   BILLABLE_STATUSES,
   STALE_CLAIM_MS,
   isV2Metadata,

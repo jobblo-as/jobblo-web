@@ -1,6 +1,24 @@
 import { useState, useCallback, useRef } from 'react';
 import { Users, UserPlus, Calendar, Plus, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Avatar, AvatarFallback, AvatarImage } from '../../components/developer/ui/avatar';
+import { Button } from '../../components/developer/ui/button';
+import { Input } from '../../components/developer/ui/input';
+import { Label } from '../../components/developer/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/developer/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../components/developer/ui/dialog';
 import {
   useAdminUsers,
   useCreateAdminUser,
@@ -93,16 +111,12 @@ export default function UsersPage() {
       header: 'Bruker',
       render: (u) => (
         <Link to={`/dashboard/users/${u._id}`} className="group flex min-w-0 items-center gap-2.5">
-          <img
-            src={
-              u.avatarUrl ||
-              `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=e8edfb&color=3b5bdb&size=40`
-            }
-            alt={u.name}
-            className="w-8 h-8 rounded-full object-cover shrink-0"
-          />
+          <Avatar>
+            <AvatarImage src={u.avatarUrl} alt={u.name} />
+            <AvatarFallback>{u.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+          </Avatar>
           <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-foreground group-hover:text-primary group-hover:underline">
+            <p className="truncate text-sm font-medium text-foreground group-hover:underline">
               {u.name}
             </p>
             <p className="text-xs text-muted-foreground truncate">{u.email}</p>
@@ -125,7 +139,7 @@ export default function UsersPage() {
       header: 'Verifisert',
       render: (u) => (
         <span
-          className={`text-xs font-medium ${u.verified ? 'text-green-600' : 'text-muted-foreground'}`}
+          className={`text-xs font-medium ${u.verified ? 'text-emerald-700' : 'text-muted-foreground'}`}
         >
           {u.verified ? 'Ja' : 'Nei'}
         </span>
@@ -148,55 +162,59 @@ export default function UsersPage() {
       render: (u) => {
         const isSelf = u._id === currentUser?._id;
         return (
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             {/* Verify */}
             {!u.verified && (
-              <button
+              <Button
+                size="xs"
+                variant="outline"
                 onClick={() => verifyMutation.mutate(u._id)}
                 disabled={verifyMutation.isPending}
-                className="px-2.5 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors disabled:opacity-50"
                 aria-label={`Verifiser ${u.name}`}
               >
                 Verifiser
-              </button>
+              </Button>
             )}
             {/* Toggle status */}
             {!isSelf && (
-              <button
+              <Button
+                size="xs"
+                variant={u.accountStatus === 'active' ? 'destructive' : 'outline'}
                 onClick={() => {
                   if (u.accountStatus === 'active') setStatusTarget(u);
                   else statusMutation.mutate({ id: u._id, accountStatus: 'active' });
                 }}
                 disabled={statusMutation.isPending}
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors disabled:opacity-50 ${
-                  u.accountStatus === 'active'
-                    ? 'text-red-600 bg-red-50 hover:bg-red-100'
-                    : 'text-muted-foreground bg-muted hover:bg-accent'
-                }`}
                 aria-label={`${u.accountStatus === 'active' ? 'Deaktiver' : 'Aktiver'} ${u.name}`}
               >
                 {u.accountStatus === 'active' ? 'Deaktiver' : 'Aktiver'}
-              </button>
+              </Button>
             )}
             {/* Change role — not allowed for self */}
             {!isSelf && (
-              <select
+              <Select
                 value={u.role}
-                onChange={(e) => {
-                  const newRole = e.target.value;
+                onValueChange={(newRole) => {
                   if (newRole !== u.role) {
                     setRoleTarget({ user: u, newRole });
                   }
                 }}
-                className="px-2 py-1.5 text-xs font-medium border border-border rounded-lg bg-card focus:outline-none focus:ring-2 focus:ring-ring/50"
-                aria-label={`Endre rolle for ${u.name}`}
               >
-                {CHANGE_ROLE_OPTIONS.map((r) => (
-                  <option key={r.value} value={r.value} disabled={r.value === 'superAdmin'}>
-                    {r.label}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger
+                  size="sm"
+                  className="w-32 text-xs"
+                  aria-label={`Endre rolle for ${u.name}`}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  {CHANGE_ROLE_OPTIONS.map((r) => (
+                    <SelectItem key={r.value} value={r.value} disabled={r.value === 'superAdmin'}>
+                      {r.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
           </div>
         );
@@ -237,34 +255,27 @@ export default function UsersPage() {
     : null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <AdminPageHeader
         title="Brukere"
         description="Administrer alle plattformbrukere"
         actions={
-          <button
-            onClick={() => setCreateOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-ring/50"
-          >
-            <Plus size={16} />
+          <Button size="sm" onClick={() => setCreateOpen(true)}>
+            <Plus />
             Ny bruker
-          </button>
+          </Button>
         }
       />
 
       {/* Stats row */}
       {stats && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <AdminStatCard title="Totale brukere" value={stats.total} icon={<Users size={18} />} />
-          <AdminStatCard
-            title="Søkeresultater"
-            value={stats.thisPage}
-            icon={<UserPlus size={18} />}
-          />
+        <div className="grid gap-3 sm:grid-cols-3">
+          <AdminStatCard title="Totale brukere" value={stats.total} icon={<Users />} />
+          <AdminStatCard title="Søkeresultater" value={stats.thisPage} icon={<UserPlus />} />
           <AdminStatCard
             title="Sider"
             value={data?.pagination.totalPages ?? 0}
-            icon={<Calendar size={18} />}
+            icon={<Calendar />}
           />
         </div>
       )}
@@ -312,92 +323,80 @@ export default function UsersPage() {
       />
 
       {/* Create user dialog */}
-      {createOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="create-user-title"
-        >
-          <div className="bg-card rounded-lg shadow-xl w-full max-w-md p-6 space-y-4">
-            <h2 id="create-user-title" className="text-lg font-bold text-foreground">
-              Opprett ny bruker
-            </h2>
+      <Dialog
+        open={createOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCreateOpen(false);
+            setFormErrors({});
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Opprett ny bruker</DialogTitle>
+          </DialogHeader>
 
-            {(['name', 'email', 'phone', 'password'] as const).map((field) => (
-              <div key={field}>
-                <label
-                  htmlFor={`create-${field}`}
-                  className="block text-sm font-medium text-foreground mb-1 capitalize"
-                >
-                  {field === 'name'
-                    ? 'Navn *'
-                    : field === 'email'
-                      ? 'E-post *'
-                      : field === 'phone'
-                        ? 'Telefon'
-                        : 'Passord *'}
-                </label>
-                <input
-                  id={`create-${field}`}
-                  type={field === 'password' ? 'password' : field === 'email' ? 'email' : 'text'}
-                  value={form[field]}
-                  onChange={(e) => setForm((f) => ({ ...f, [field]: e.target.value }))}
-                  className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring"
-                  aria-describedby={formErrors[field] ? `err-${field}` : undefined}
-                  aria-invalid={!!formErrors[field]}
-                />
-                {formErrors[field] && (
-                  <p id={`err-${field}`} className="text-xs text-red-600 mt-1">
-                    {formErrors[field]}
-                  </p>
-                )}
-              </div>
-            ))}
+          {(['name', 'email', 'phone', 'password'] as const).map((field) => (
+            <div key={field} className="space-y-1.5">
+              <Label htmlFor={`create-${field}`}>
+                {field === 'name'
+                  ? 'Navn *'
+                  : field === 'email'
+                    ? 'E-post *'
+                    : field === 'phone'
+                      ? 'Telefon'
+                      : 'Passord *'}
+              </Label>
+              <Input
+                id={`create-${field}`}
+                type={field === 'password' ? 'password' : field === 'email' ? 'email' : 'text'}
+                value={form[field]}
+                onChange={(e) => setForm((f) => ({ ...f, [field]: e.target.value }))}
+                aria-describedby={formErrors[field] ? `err-${field}` : undefined}
+                aria-invalid={!!formErrors[field]}
+              />
+              {formErrors[field] && (
+                <p id={`err-${field}`} className="text-xs text-red-600">
+                  {formErrors[field]}
+                </p>
+              )}
+            </div>
+          ))}
 
-            <div>
-              <label
-                htmlFor="create-role"
-                className="block text-sm font-medium text-foreground mb-1"
-              >
-                Rolle *
-              </label>
-              <select
-                id="create-role"
-                value={form.role}
-                onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
-                className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-              >
+          <div className="space-y-1.5">
+            <Label htmlFor="create-role">Rolle *</Label>
+            <Select value={form.role} onValueChange={(role) => setForm((f) => ({ ...f, role }))}>
+              <SelectTrigger id="create-role" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
                 {ROLE_OPTIONS.map((r) => (
-                  <option key={r.value} value={r.value}>
+                  <SelectItem key={r.value} value={r.value}>
                     {r.label}
-                  </option>
+                  </SelectItem>
                 ))}
-              </select>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                onClick={() => {
-                  setCreateOpen(false);
-                  setFormErrors({});
-                }}
-                className="px-4 py-2.5 text-sm font-medium text-muted-foreground bg-muted hover:bg-accent rounded-md transition-colors"
-              >
-                Avbryt
-              </button>
-              <button
-                onClick={handleCreate}
-                disabled={createMutation.isPending}
-                className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-md transition-colors disabled:opacity-60"
-              >
-                {createMutation.isPending && <Loader2 size={14} className="animate-spin" />}
-                Opprett bruker
-              </button>
-            </div>
+              </SelectContent>
+            </Select>
           </div>
-        </div>
-      )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setCreateOpen(false);
+                setFormErrors({});
+              }}
+            >
+              Avbryt
+            </Button>
+            <Button onClick={handleCreate} disabled={createMutation.isPending}>
+              {createMutation.isPending && <Loader2 className="animate-spin" />}
+              Opprett bruker
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Role change confirm */}
       <AdminConfirmDialog

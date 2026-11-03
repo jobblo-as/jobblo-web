@@ -52,10 +52,7 @@ export function AdminDataTable<T>({
   className,
 }: AdminDataTableProps<T>) {
   return (
-    <div
-      className={cn('overflow-hidden rounded-lg border bg-card shadow-xs', className)}
-      translate="no"
-    >
+    <div className={cn('overflow-hidden rounded-md border bg-card', className)} translate="no">
       {toolbar && <div className="flex flex-wrap items-center gap-2 border-b p-3">{toolbar}</div>}
 
       {loading ? (
@@ -70,7 +67,7 @@ export function AdminDataTable<T>({
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/50 hover:bg-muted/50">
+              <TableRow className="bg-muted/40 hover:bg-muted/40">
                 {columns.map((col) => (
                   <TableHead
                     key={col.key}

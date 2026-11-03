@@ -1,10 +1,11 @@
-import { useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@tanstack/react-query';
+import { ArrowLeft } from 'lucide-react';
 import { fetchAdminServiceById, updateAdminServiceForm } from '../../api/admin';
 import CreateJobForm from '../../components/CreateJobForm/CreateJobForm';
-import { Spinner } from '../../components/Ui/Spinner';
-import { BackLink } from '../../components/Ui/BackLink';
-import { MICRO_LABEL } from '../../theme/brand';
+import { EmptyState, PageHeader } from '../../components/developer/kit';
+import { Button } from '../../components/developer/ui/button';
+import { Skeleton } from '../../components/developer/ui/skeleton';
 import { useUserStore } from '../../stores/userStore';
 
 function useAdminJobDetail(id: string) {
@@ -27,14 +28,15 @@ export default function AdminEditJobPage() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <Spinner />
+      <div className="space-y-5">
+        <Skeleton className="h-12 w-72" />
+        <Skeleton className="h-96 w-full" />
       </div>
     );
   }
 
   if (!job) {
-    return <div className="p-10 text-center text-muted-foreground">Oppdrag ikke funnet.</div>;
+    return <EmptyState title="Oppdrag ikke funnet." />;
   }
 
   const handleFormSubmit = async (formData: FormData) => {
@@ -69,20 +71,18 @@ export default function AdminEditJobPage() {
   };
 
   return (
-    <div className="min-h-screen bg-muted">
-      <div className="mx-auto w-full max-w-3xl px-4 pt-8 sm:px-6">
-        <BackLink fallback="/dashboard/services" />
-
-        <header className="mt-6 mb-8">
-          <p className={MICRO_LABEL}>Admin · Rediger</p>
-          <h1 className="mt-2 text-[clamp(1.75rem,4vw,2.5rem)] font-bold leading-tight tracking-[-0.04em] text-foreground">
-            Rediger oppdraget
-          </h1>
-          <p className="mt-2 max-w-lg text-[0.9375rem] leading-relaxed text-muted-foreground">
-            Endringene lagres direkte. Eier av oppdraget vil se dem umiddelbart.
-          </p>
-        </header>
-      </div>
+    <div className="space-y-5">
+      <PageHeader
+        title="Rediger oppdraget"
+        description="Endringene lagres direkte. Eier av oppdraget vil se dem umiddelbart."
+        actions={
+          <Button variant="outline" size="sm" className="bg-card" asChild>
+            <Link to="/dashboard/services">
+              <ArrowLeft /> Tjenester
+            </Link>
+          </Button>
+        }
+      />
 
       <CreateJobForm
         onSubmit={handleFormSubmit}

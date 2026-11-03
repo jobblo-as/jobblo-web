@@ -106,6 +106,11 @@ export default function RootLayout() {
         router.push({ pathname: '/(app)/job-applicants/[serviceId]', params: { serviceId } });
       } else if (data.type === 'application_status') {
         router.push('/(app)/my-applications');
+      } else if (data.type === 'support_ticket') {
+        router.push('/(app)/profile/support');
+      } else if (data.type === 'system') {
+        // An admin update to everyone: it is in "Varsler".
+        router.push('/(app)/alerts');
       }
     },
     [router]

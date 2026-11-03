@@ -8,6 +8,7 @@ import {
   Coins,
   ToggleLeft,
   ToggleRight,
+  Loader2,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
@@ -27,6 +28,25 @@ import {
   AdminStatusBadge,
 } from '../../components/admin';
 import type { ColumnDef } from '../../components/admin/AdminDataTable';
+import { Badge } from '../../components/developer/ui/badge';
+import { Button } from '../../components/developer/ui/button';
+import { Input } from '../../components/developer/ui/input';
+import { Label } from '../../components/developer/ui/label';
+import { Textarea } from '../../components/developer/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/developer/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../components/developer/ui/dialog';
 
 const emptyForm: ShopForm = { title: '', description: '', coins: '0', category: 'coins' };
 
@@ -118,10 +138,8 @@ export default function ShopAdminPage() {
       header: 'Tittel',
       render: (item) => (
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-muted rounded-lg" aria-hidden="true">
-            <ShoppingBag size={14} className="text-muted-foreground" />
-          </div>
-          <span className="text-sm font-semibold text-foreground">{item.title}</span>
+          <ShoppingBag className="size-4 text-muted-foreground" aria-hidden="true" />
+          <span className="font-medium text-foreground">{item.title}</span>
         </div>
       ),
     },
@@ -129,8 +147,8 @@ export default function ShopAdminPage() {
       key: 'description',
       header: 'Beskrivelse',
       render: (item) => (
-        <span className="text-sm text-muted-foreground truncate max-w-[220px] block">
-          {item.description || <span className="text-muted-foreground/60 italic">–</span>}
+        <span className="block max-w-55 truncate text-muted-foreground">
+          {item.description || '–'}
         </span>
       ),
     },
@@ -138,22 +156,25 @@ export default function ShopAdminPage() {
       key: 'coins',
       header: 'Mynter',
       render: (item) => (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-50 text-yellow-700">
-          <Coins size={12} /> {item.coins}
-        </span>
+        <Badge
+          variant="outline"
+          className="border-amber-200/70 bg-amber-50 text-amber-700 tabular-nums"
+        >
+          <Coins /> {item.coins}
+        </Badge>
       ),
     },
     {
       key: 'category',
       header: 'Kategori',
       render: (item) => (
-        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 capitalize">
+        <Badge variant="outline" className="text-muted-foreground">
           {item.category === 'coins'
             ? 'Mynter'
             : item.category === 'premium'
               ? 'Premium'
               : 'Funksjon'}
-        </span>
+        </Badge>
       ),
     },
     {
@@ -177,26 +198,21 @@ export default function ShopAdminPage() {
       className: 'whitespace-nowrap',
       render: (item) => (
         <div className="flex items-center gap-1.5">
-          <button
-            onClick={() => openEdit(item)}
-            className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-          >
-            <Edit3 size={12} /> Rediger
-          </button>
-          <button
+          <Button variant="outline" size="sm" onClick={() => openEdit(item)}>
+            <Edit3 /> Rediger
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => toggleMutation.mutate(item._id)}
             disabled={toggleMutation.isPending}
-            className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-muted-foreground bg-muted hover:bg-accent rounded-lg transition-colors disabled:opacity-50"
           >
-            {item.isActive ? <ToggleLeft size={12} /> : <ToggleRight size={12} />}
+            {item.isActive ? <ToggleLeft /> : <ToggleRight />}
             {item.isActive ? 'Deaktiver' : 'Aktiver'}
-          </button>
-          <button
-            onClick={() => setDeleteTarget(item)}
-            className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
-          >
-            <Trash2 size={12} /> Slett
-          </button>
+          </Button>
+          <Button variant="destructive" size="sm" onClick={() => setDeleteTarget(item)}>
+            <Trash2 /> Slett
+          </Button>
         </div>
       ),
     },
@@ -205,17 +221,14 @@ export default function ShopAdminPage() {
   const isFormOpen = createOpen || !!editTarget;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <AdminPageHeader
         title="Shop - Mynthandel"
         description="Administrer Jobblo Shop-varer og myntpakker"
         actions={
-          <button
-            onClick={openCreate}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-md transition-colors"
-          >
-            <Plus size={16} /> Ny vare
-          </button>
+          <Button size="sm" onClick={openCreate}>
+            <Plus /> Ny vare
+          </Button>
         }
       />
 
@@ -232,118 +245,94 @@ export default function ShopAdminPage() {
         onPageChange={setPage}
       />
 
-      {isFormOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="shop-form-title"
-        >
-          <div className="bg-card rounded-lg shadow-xl w-full max-w-lg p-6 space-y-4 overflow-y-auto max-h-[90vh]">
-            <h2 id="shop-form-title" className="text-lg font-bold text-foreground">
-              {editTarget ? `Rediger: ${editTarget.title}` : 'Ny vare'}
-            </h2>
+      <Dialog
+        open={isFormOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCreateOpen(false);
+            setEditTarget(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editTarget ? `Rediger: ${editTarget.title}` : 'Ny vare'}</DialogTitle>
+          </DialogHeader>
 
-            {formError && (
-              <p className="text-xs text-red-600 bg-red-50 rounded-lg p-2">{formError}</p>
-            )}
+          {formError && (
+            <p className="rounded-md border border-red-200/70 bg-red-50 px-3 py-2 text-xs text-red-700">
+              {formError}
+            </p>
+          )}
 
-            <div>
-              <label
-                htmlFor="shop-title"
-                className="block text-sm font-medium text-foreground mb-1"
-              >
-                Tittel *
-              </label>
-              <input
-                id="shop-title"
-                type="text"
-                value={form.title}
-                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
+          <div className="space-y-1.5">
+            <Label htmlFor="shop-title">Tittel *</Label>
+            <Input
+              id="shop-title"
+              type="text"
+              value={form.title}
+              onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="shop-desc">Beskrivelse</Label>
+            <Textarea
+              id="shop-desc"
+              rows={2}
+              value={form.description}
+              onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="shop-coins">Mynter *</Label>
+              <Input
+                id="shop-coins"
+                type="number"
+                min="0"
+                value={form.coins}
+                onChange={(e) => setForm((f) => ({ ...f, coins: e.target.value }))}
               />
             </div>
-
-            <div>
-              <label htmlFor="shop-desc" className="block text-sm font-medium text-foreground mb-1">
-                Beskrivelse
-              </label>
-              <textarea
-                id="shop-desc"
-                rows={2}
-                value={form.description}
-                onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50 resize-none"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label
-                  htmlFor="shop-coins"
-                  className="block text-sm font-medium text-foreground mb-1"
-                >
-                  Mynter *
-                </label>
-                <input
-                  id="shop-coins"
-                  type="number"
-                  min="0"
-                  value={form.coins}
-                  onChange={(e) => setForm((f) => ({ ...f, coins: e.target.value }))}
-                  className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                />
-              </div>
-              <div>
-                <label
-                  htmlFor="shop-category"
-                  className="block text-sm font-medium text-foreground mb-1"
-                >
-                  Kategori *
-                </label>
-                <select
-                  id="shop-category"
-                  value={form.category}
-                  onChange={(e) =>
-                    setForm((f) => ({
-                      ...f,
-                      category: e.target.value as 'coins' | 'premium' | 'feature',
-                    }))
-                  }
-                  className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                >
-                  <option value="coins">Mynter</option>
-                  <option value="premium">Premium</option>
-                  <option value="feature">Funksjon</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                onClick={() => {
-                  setCreateOpen(false);
-                  setEditTarget(null);
-                }}
-                className="px-4 py-2.5 text-sm font-medium text-muted-foreground bg-muted hover:bg-accent rounded-md transition-colors"
+            <div className="space-y-1.5">
+              <Label htmlFor="shop-category">Kategori *</Label>
+              <Select
+                value={form.category}
+                onValueChange={(value) =>
+                  setForm((f) => ({ ...f, category: value as 'coins' | 'premium' | 'feature' }))
+                }
               >
-                Avbryt
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={saveMutation.isPending}
-                className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-md transition-colors disabled:opacity-60"
-              >
-                {saveMutation.isPending && (
-                  <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                )}
-                <Save size={14} />
-                {editTarget ? 'Oppdater' : 'Opprett'}
-              </button>
+                <SelectTrigger id="shop-category" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="coins">Mynter</SelectItem>
+                  <SelectItem value="premium">Premium</SelectItem>
+                  <SelectItem value="feature">Funksjon</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
-        </div>
-      )}
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setCreateOpen(false);
+                setEditTarget(null);
+              }}
+            >
+              Avbryt
+            </Button>
+            <Button onClick={handleSave} disabled={saveMutation.isPending}>
+              {saveMutation.isPending ? <Loader2 className="animate-spin" /> : <Save />}
+              {editTarget ? 'Oppdater' : 'Opprett'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AdminConfirmDialog
         title="Slett vare?"

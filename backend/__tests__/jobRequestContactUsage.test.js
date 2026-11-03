@@ -430,3 +430,25 @@ describe('application message and block checks', () => {
     }
   });
 });
+
+describe('the request message decides whether a chat opens', () => {
+  beforeEach(() => setup());
+
+  test('with a message the chat opens with it; without one no chat is made', async () => {
+    const res = response();
+    await orderController.createJobRequest(request(), res);
+    expect(Chat.create.mock.calls[0][0].messages[0].text).toBe('Please contact me');
+
+    for (const message of [undefined, '', '   ']) {
+      Chat.create.mockClear();
+      const empty = response();
+      await orderController.createJobRequest(
+        { userId: String(applicantId), body: { serviceId: String(serviceId), message } },
+        empty
+      );
+      expect(empty.statusCode).toBe(201);
+      expect(empty.body.chatId).toBeNull();
+      expect(Chat.create).not.toHaveBeenCalled();
+    }
+  });
+});

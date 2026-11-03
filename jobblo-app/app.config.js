@@ -32,7 +32,9 @@ module.exports = ({ config }) => {
   // default ('development') is only right for development builds.
   if (easProfile === 'production') {
     const i = plugins.findIndex((p) => (Array.isArray(p) ? p[0] : p) === 'expo-notifications');
-    plugins[i] = ['expo-notifications', { mode: 'production' }];
+    // Keeps the icon/colour from app.json; only adds the APNs mode.
+    const options = Array.isArray(plugins[i]) ? plugins[i][1] : {};
+    plugins[i] = ['expo-notifications', { ...options, mode: 'production' }];
   }
 
   if (androidKey || iosKey) {

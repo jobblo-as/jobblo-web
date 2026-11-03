@@ -3,7 +3,7 @@ import FinanceHistoryTabs from '../../components/SafePay/FinanceHistoryTabs';
 
 export default function FinanceHistoryPage() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <AdminPageHeader
         title="Stripe-økonomihistorikk"
         description="Se overføringer til providerkontoer og Stripe-utbetalinger til bank."
