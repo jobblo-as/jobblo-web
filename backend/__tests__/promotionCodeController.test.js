@@ -93,10 +93,17 @@ test('lists and deactivates by Stripe id; rejects other ids', async () => {
   await c.listPromotionCodes({}, r);
   expect(r.json.mock.calls[0][0].promotions[0]).toMatchObject({ redemptions: 3, name: 'Vinter' });
 
-  stripe.promotionCodes.update.mockResolvedValue({ ...promo, active: false, promotion: { coupon } });
+  stripe.promotionCodes.update.mockResolvedValue({
+    ...promo,
+    active: false,
+    promotion: { coupon },
+  });
   r = res();
   await c.deactivatePromotionCode({ params: { id: 'promo_1' } }, r);
-  expect(stripe.promotionCodes.update).toHaveBeenCalledWith('promo_1', expect.objectContaining({ active: false }));
+  expect(stripe.promotionCodes.update).toHaveBeenCalledWith(
+    'promo_1',
+    expect.objectContaining({ active: false })
+  );
   expect(r.json.mock.calls[0][0].promotion.active).toBe(false);
 
   r = res();

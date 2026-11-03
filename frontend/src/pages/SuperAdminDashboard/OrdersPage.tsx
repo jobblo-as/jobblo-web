@@ -53,10 +53,7 @@ export default function OrdersPage() {
       key: 'id',
       header: 'Ordre-ID',
       render: (o) => (
-        <Link
-          to={`/dashboard/orders/${o._id}`}
-          className="hover:underline"
-        >
+        <Link to={`/dashboard/orders/${o._id}`} className="hover:underline">
           <Mono>{o._id.slice(-8).toUpperCase()}</Mono>
         </Link>
       ),

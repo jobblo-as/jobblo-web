@@ -709,10 +709,26 @@ export default function SafePayPage() {
           {activeFilterCount > 0 && (
             <div className="flex flex-wrap items-center gap-2" aria-label="Aktive filtre">
               {debouncedSearch && <Badge variant="secondary">Søk: {debouncedSearch}</Badge>}
-              {statusFilter && <Badge variant="secondary">Ordre:{' '}{STATUS_OPTIONS.find((option) => option.value === statusFilter)?.label ?? statusFilter}</Badge>}
-              {paymentFilter && <Badge variant="secondary">Betaling:{' '}{PAYMENT_OPTIONS.find((option) => option.value === paymentFilter)?.label ?? paymentFilter}</Badge>}
-              {timeoutReview && <Badge variant="secondary">Connect / refusjon: Krever oppfølging</Badge>}
-              {dateFrom && <Badge variant="secondary">Fra: {dateLabel(dateFrom, 'Fra dato')}</Badge>}
+              {statusFilter && (
+                <Badge variant="secondary">
+                  Ordre:{' '}
+                  {STATUS_OPTIONS.find((option) => option.value === statusFilter)?.label ??
+                    statusFilter}
+                </Badge>
+              )}
+              {paymentFilter && (
+                <Badge variant="secondary">
+                  Betaling:{' '}
+                  {PAYMENT_OPTIONS.find((option) => option.value === paymentFilter)?.label ??
+                    paymentFilter}
+                </Badge>
+              )}
+              {timeoutReview && (
+                <Badge variant="secondary">Connect / refusjon: Krever oppfølging</Badge>
+              )}
+              {dateFrom && (
+                <Badge variant="secondary">Fra: {dateLabel(dateFrom, 'Fra dato')}</Badge>
+              )}
               {dateTo && <Badge variant="secondary">Til: {dateLabel(dateTo, 'Til dato')}</Badge>}
             </div>
           )}
@@ -743,8 +759,8 @@ export default function SafePayPage() {
               {!isLoading && !!data?.contracts.length && data.pagination && (
                 <>
                   <p className="text-xs text-muted-foreground">
-                    Connect viser kontotilkobling, ikke en bankutbetaling. Status for overføring
-                    til bank er ikke tilgjengelig i SafePay-dataene.
+                    Connect viser kontotilkobling, ikke en bankutbetaling. Status for overføring til
+                    bank er ikke tilgjengelig i SafePay-dataene.
                   </p>
                   <AdminPagination pagination={data.pagination} onPageChange={setPage} />
                 </>

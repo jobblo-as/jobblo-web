@@ -345,7 +345,10 @@ export default function DashboardOverviewPage() {
       />
 
       {/* KPI stat cards */}
-      <section aria-label="Nøkkeltall" className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <section
+        aria-label="Nøkkeltall"
+        className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6"
+      >
         {isLoading
           ? Array.from({ length: 6 }).map((_, i) => <AdminStatCardSkeleton key={i} />)
           : cards.map((c) => (
@@ -363,7 +366,11 @@ export default function DashboardOverviewPage() {
 
       {/* Charts row */}
       <section aria-label="Diagrammer" className="grid gap-4 lg:grid-cols-3">
-        <Section title="Brukerregistreringer" description="Siste 30 dager" className="lg:col-span-2">
+        <Section
+          title="Brukerregistreringer"
+          description="Siste 30 dager"
+          className="lg:col-span-2"
+        >
           {isLoading ? (
             <Skeleton className="h-44 w-full" />
           ) : (

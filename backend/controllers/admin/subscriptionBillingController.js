@@ -21,7 +21,9 @@ exports.getAdminSummary = async (req, res) => {
         { $group: { _id: '$status', count: { $sum: 1 } } },
       ]),
       SubscriptionV2.find({ ...match, firstPaymentFailureAt: { $ne: null } })
-        .select('userId planId stripeMode stripeSubscriptionId recoveryInvoiceId firstPaymentFailureAt')
+        .select(
+          'userId planId stripeMode stripeSubscriptionId recoveryInvoiceId firstPaymentFailureAt'
+        )
         .sort({ firstPaymentFailureAt: -1 })
         .limit(50)
         .populate({ path: 'planId', model: SubscriptionPlan, select: 'name price' })

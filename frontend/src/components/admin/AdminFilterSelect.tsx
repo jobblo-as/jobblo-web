@@ -35,10 +35,7 @@ export function AdminFilterSelect({
       onValueChange={(v) => onChange(v === '__all__' ? '' : v)}
       disabled={disabled}
     >
-      <SelectTrigger
-        className={cn('min-w-[140px] bg-card', className)}
-        aria-label={placeholder}
-      >
+      <SelectTrigger className={cn('min-w-[140px] bg-card', className)} aria-label={placeholder}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>

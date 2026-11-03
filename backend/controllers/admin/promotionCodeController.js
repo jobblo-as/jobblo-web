@@ -22,7 +22,8 @@ function input(body) {
 
   if (!name || !code) throw bad('Navn og kode er påkrevd.');
   if (name.length > 40) throw bad('Navnet kan ha maks 40 tegn.');
-  if (!/^[A-Z0-9-]{3,30}$/.test(code)) throw bad('Koden kan bare ha A–Z, 0–9 og bindestrek (3–30 tegn).');
+  if (!/^[A-Z0-9-]{3,30}$/.test(code))
+    throw bad('Koden kan bare ha A–Z, 0–9 og bindestrek (3–30 tegn).');
   if (!['percentage', 'fixed'].includes(type)) throw bad('Rabatt-typen er ugyldig.');
   if (!Number.isFinite(amount) || amount <= 0 || (type === 'percentage' && amount > 100)) {
     throw bad('Rabattbeløpet er ugyldig.');

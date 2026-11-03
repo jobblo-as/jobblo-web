@@ -1,7 +1,13 @@
 import { useTranslate } from '../../i18n/useTranslate';
 import { locales, localeLabels } from '../../i18n/types';
 import type { SupportedLocale } from '../../i18n/types';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../developer/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../developer/ui/select';
 
 export function LanguageSwitcher() {
   const { locale, setLocale, t } = useTranslate();

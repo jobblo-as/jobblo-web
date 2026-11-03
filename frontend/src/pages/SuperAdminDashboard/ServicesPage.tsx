@@ -164,10 +164,7 @@ export default function ServicesPage() {
 
   return (
     <div className="space-y-5">
-      <AdminPageHeader
-        title="Tjenester"
-        description="Alle tjenester publisert på plattformen"
-      />
+      <AdminPageHeader title="Tjenester" description="Alle tjenester publisert på plattformen" />
 
       <AdminDataTable
         columns={columns}

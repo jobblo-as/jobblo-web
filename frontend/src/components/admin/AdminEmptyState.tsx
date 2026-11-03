@@ -19,7 +19,10 @@ export function AdminEmptyState({
 }: AdminEmptyStateProps) {
   return (
     <div
-      className={cn('flex flex-col items-center justify-center gap-2 px-4 py-10 text-center', className)}
+      className={cn(
+        'flex flex-col items-center justify-center gap-2 px-4 py-10 text-center',
+        className
+      )}
       role="status"
       aria-label={title}
     >

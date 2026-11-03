@@ -37,7 +37,11 @@ const call = async (mode) => {
 test('returns counts, statuses and failed renewals in the shape the admin page reads', async () => {
   const body = (await call()).json.mock.calls[0][0];
   expect(SubscriptionV2.countDocuments).toHaveBeenCalledWith({});
-  expect(body).toMatchObject({ mode: 'all', subscribers: 3, statuses: [{ _id: 'active', count: 2 }] });
+  expect(body).toMatchObject({
+    mode: 'all',
+    subscribers: 3,
+    statuses: [{ _id: 'active', count: 2 }],
+  });
   expect(body.failedInvoices).toEqual([
     {
       stripeSessionId: 'in_2',

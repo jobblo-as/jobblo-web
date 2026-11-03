@@ -5,7 +5,8 @@ const { logDelivery } = require('./monitoring/deliveryLog');
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 
 /** Only a public https URL: FCM and Expo fetch it from the phone. */
-const pushImage = (url) => (typeof url === 'string' && url.startsWith('https://') ? url : undefined);
+const pushImage = (url) =>
+  typeof url === 'string' && url.startsWith('https://') ? url : undefined;
 
 function stringData(data) {
   return Object.fromEntries(Object.entries(data || {}).map(([key, value]) => [key, String(value)]));
@@ -72,7 +73,9 @@ async function sendExpo(tokens, message) {
         priority: message.priority === 'normal' ? 'normal' : 'high',
         // ponytail: iOS shows this only with a notification service extension, which the app
         // does not have yet; until then iOS shows the text alone.
-        ...(pushImage(message.imageUrl) ? { richContent: { image: pushImage(message.imageUrl) } } : {}),
+        ...(pushImage(message.imageUrl)
+          ? { richContent: { image: pushImage(message.imageUrl) } }
+          : {}),
       }))
     ),
   });

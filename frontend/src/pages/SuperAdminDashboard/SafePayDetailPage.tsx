@@ -475,21 +475,21 @@ export default function SafePayDetailPage() {
       {/* Status bar */}
       <Card size="sm">
         <CardContent className="flex flex-wrap gap-x-6 gap-y-3">
-        {(
-          [
-            { label: 'Ordre', value: order.status },
-            { label: 'Betaling', value: order.paymentStatus },
-            { label: 'Chat', value: chatMeta?.status },
-            { label: 'Tvist', value: dispute?.status },
-          ] as { label: string; value?: string }[]
-        ).map(({ label, value }) =>
-          value ? (
-            <div key={label} className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">{label}:</span>
-              <AdminStatusBadge status={value} />
-            </div>
-          ) : null
-        )}
+          {(
+            [
+              { label: 'Ordre', value: order.status },
+              { label: 'Betaling', value: order.paymentStatus },
+              { label: 'Chat', value: chatMeta?.status },
+              { label: 'Tvist', value: dispute?.status },
+            ] as { label: string; value?: string }[]
+          ).map(({ label, value }) =>
+            value ? (
+              <div key={label} className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">{label}:</span>
+                <AdminStatusBadge status={value} />
+              </div>
+            ) : null
+          )}
         </CardContent>
       </Card>
 
@@ -821,7 +821,8 @@ export default function SafePayDetailPage() {
                       rel="noopener noreferrer"
                       className="flex items-center gap-2 text-xs text-primary hover:underline mb-1"
                     >
-                      <FileText className="size-3.5" /> Vedlegg {i + 1} <ExternalLink className="size-3" />
+                      <FileText className="size-3.5" /> Vedlegg {i + 1}{' '}
+                      <ExternalLink className="size-3" />
                     </a>
                   ))}
                 </div>

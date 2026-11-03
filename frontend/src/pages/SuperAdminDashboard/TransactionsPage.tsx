@@ -112,9 +112,7 @@ export default function TransactionsPage() {
       key: 'refunded',
       header: 'Refundert',
       render: (t) => (
-        <span
-          className={`text-xs ${t.refunded ? 'text-foreground' : 'text-muted-foreground'}`}
-        >
+        <span className={`text-xs ${t.refunded ? 'text-foreground' : 'text-muted-foreground'}`}>
           {t.refunded ? 'Ja' : 'Nei'}
         </span>
       ),
@@ -208,7 +206,6 @@ export default function TransactionsPage() {
           </div>
         }
       />
-
     </div>
   );
 }

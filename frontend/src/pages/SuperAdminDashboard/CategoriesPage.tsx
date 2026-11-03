@@ -156,7 +156,9 @@ export default function CategoriesPage() {
     {
       key: 'sortOrder',
       header: 'Sortering',
-      render: (c) => <span className="text-sm tabular-nums text-muted-foreground">{c.sortOrder}</span>,
+      render: (c) => (
+        <span className="text-sm tabular-nums text-muted-foreground">{c.sortOrder}</span>
+      ),
     },
     {
       key: 'status',
