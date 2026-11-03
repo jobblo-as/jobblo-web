@@ -60,16 +60,22 @@ describe('seed entry points stop before connecting', () => {
       timeout: 15000,
     });
 
-  it.each(['seeds/index.js', 'seeds/run-plan.js'])('%s refuses on production', (script) => {
-    const r = run(script, { NODE_ENV: 'production' }, ['--yes-wipe=jobblo-dev']);
-    expect(r.status).toBe(1);
-    expect(r.stderr).toMatch(/NODE_ENV=production/);
-    expect(r.stdout + r.stderr).not.toMatch(/hunter2/);
-  });
+  it.each(['seeds/index.js', 'seeds/run-plan.js', 'seeds/wipe.js'])(
+    '%s refuses on production',
+    (script) => {
+      const r = run(script, { NODE_ENV: 'production' }, ['--yes-wipe=jobblo-dev']);
+      expect(r.status).toBe(1);
+      expect(r.stderr).toMatch(/NODE_ENV=production/);
+      expect(r.stdout + r.stderr).not.toMatch(/hunter2/);
+    }
+  );
 
-  it('refuses without --yes-wipe outside production', () => {
-    const r = run('seeds/run-plan.js', { NODE_ENV: 'development' });
-    expect(r.status).toBe(1);
-    expect(r.stderr).toMatch(/--yes-wipe=jobblo-dev/);
-  });
+  it.each(['seeds/run-plan.js', 'seeds/wipe.js'])(
+    '%s refuses without --yes-wipe outside production',
+    (script) => {
+      const r = run(script, { NODE_ENV: 'development' });
+      expect(r.status).toBe(1);
+      expect(r.stderr).toMatch(/--yes-wipe=jobblo-dev/);
+    }
+  );
 });

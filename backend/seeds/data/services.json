@@ -1,0 +1,2569 @@
+[
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a8085"
+    },
+    "userId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "title": "Vask av 2-roms før visning",
+    "description": "Trenger vask av 2-roms på 48 kvm før visning neste uke. Bad, kjøkken og gulv, støvtørking. Støvsuger og bøtte finnes. Katten er hos naboen.",
+    "price": 1400,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.7579, 59.9233],
+      "address": "Thorvald Meyers gate 41, Oslo",
+      "postalCode": "0552",
+      "city": "Oslo"
+    },
+    "countyCode": "03",
+    "municipalityCode": "0301",
+    "areaCode": "030102",
+    "categories": ["Rengjøring"],
+    "images": ["https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1200&q=80"],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "completed",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 3,
+      "unit": "hours"
+    },
+    "fromDate": {
+      "$date": "2026-11-12T00:00:00Z"
+    },
+    "toDate": {
+      "$date": "2026-11-12T00:00:00Z"
+    },
+    "equipment": "delvis utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-15T00:35:57.046Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:05.350Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a808a"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "title": "Flyttevask 3-roms på Frogner",
+    "description": "Flytter ut 30. november og trenger flyttevask som går gjennom hos utleier. 75 kvm, to soverom, ett bad, kjøkken med stekeovn og kjøleskap som må vaskes inni. Vinduer innvendig. Fint om du har gjort flyttevask før.",
+    "price": 4500,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.7056, 59.9196],
+      "address": "Bygdøy allé 22, Oslo",
+      "postalCode": "0263",
+      "city": "Oslo"
+    },
+    "countyCode": "03",
+    "municipalityCode": "0301",
+    "areaCode": "030105",
+    "categories": ["Rengjøring"],
+    "images": ["https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&q=80"],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 8,
+      "unit": "hours"
+    },
+    "fromDate": {
+      "$date": "2026-11-29T00:00:00Z"
+    },
+    "toDate": {
+      "$date": "2026-11-30T00:00:00Z"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-15T10:05:57.067Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.063Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a808f"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "title": "Ukentlig vask, fast hjelp",
+    "description": "Ser etter en fast person som kan vaske leiligheten annenhver fredag. 3 timer hver gang.",
+    "price": 300,
+    "hourlyRate": 300,
+    "paymentType": "Timepris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.8806, 59.9611],
+      "address": "Ammerudveien 18, Oslo",
+      "postalCode": "0985",
+      "city": "Oslo"
+    },
+    "countyCode": "03",
+    "municipalityCode": "0301",
+    "areaCode": "030110",
+    "categories": ["Rengjøring"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 3,
+      "unit": "hours"
+    },
+    "equipment": "utstyrfri",
+    "customerType": "private",
+    "views": 3,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-15T19:35:57.082Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T20:07:41.590Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a8094"
+    },
+    "userId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "title": "Vindusvask i leilighet",
+    "description": "Seks vinduer, inn- og utside. Tredje etasje, men alle vinduene kan vippes helt rundt.",
+    "price": 900,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [5.3242, 60.3913],
+      "address": "Nygårdsgaten 14, Bergen",
+      "postalCode": "5014",
+      "city": "Bergen"
+    },
+    "countyCode": "46",
+    "municipalityCode": "4601",
+    "areaCode": "460102",
+    "categories": ["Rengjøring"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 2,
+      "unit": "hours"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-16T05:05:57.099Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.096Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a8099"
+    },
+    "userId": {
+      "$oid": "6aea373df112ab8acd7e9b1a"
+    },
+    "title": "Storvask etter maling av stue og gang",
+    "description": "Har malt stue og gang, og nå er det støv og malingsprut over alt. Trenger skikkelig storvask: lister, vinduskarmer, gulv og kjøkkenfronter. Ca. 120 kvm hus over to plan. Kaffe og vafler følger med.",
+    "price": 3500,
+    "paymentType": "Anbud",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.5236, 59.889],
+      "address": "Rudolf Peersens vei 5, Sandvika",
+      "postalCode": "1337",
+      "city": "Sandvika"
+    },
+    "countyCode": "32",
+    "municipalityCode": "3201",
+    "categories": ["Rengjøring"],
+    "images": ["https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1200&q=80"],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 6,
+      "unit": "hours"
+    },
+    "fromDate": {
+      "$date": "2026-11-20T00:00:00Z"
+    },
+    "toDate": {
+      "$date": "2026-11-22T00:00:00Z"
+    },
+    "equipment": "delvis utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-16T14:35:57.117Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.113Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a809e"
+    },
+    "userId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "title": "Rask vask av bad og kjøkken",
+    "description": "Bad og kjøkken trenger en runde før svigers kommer på lørdag. Bør ta et par timer.",
+    "price": 800,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.8028, 59.8606],
+      "address": "Nordstrandveien 50, Oslo",
+      "postalCode": "1170",
+      "city": "Oslo"
+    },
+    "countyCode": "03",
+    "municipalityCode": "0301",
+    "areaCode": "030114",
+    "categories": ["Rengjøring"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 2,
+      "unit": "hours"
+    },
+    "fromDate": {
+      "$date": "2026-11-14T00:00:00Z"
+    },
+    "toDate": {
+      "$date": "2026-11-14T00:00:00Z"
+    },
+    "equipment": "utstyrfri",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-17T00:05:57.136Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.131Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a80a3"
+    },
+    "userId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "title": "Tett avløp i dusjen",
+    "description": "Vannet står i dusjen etter fem minutter. Har prøvd Plumbo og stoppekran uten hell. Trenger noen med riktig utstyr.",
+    "price": 2000,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.7579, 59.9233],
+      "address": "Thorvald Meyers gate 41, Oslo",
+      "postalCode": "0552",
+      "city": "Oslo"
+    },
+    "countyCode": "03",
+    "municipalityCode": "0301",
+    "areaCode": "030102",
+    "categories": ["Rørlegger"],
+    "images": ["https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=1200&q=80"],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 1,
+      "unit": "hours"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-17T09:35:57.153Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.148Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a80a8"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "title": "Bytte blandebatteri på kjøkkenet",
+    "description": "Har kjøpt nytt blandebatteri (Grohe) og trenger hjelp til å montere det. Det gamle drypper og sitter fast.",
+    "price": 2200,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.7056, 59.9196],
+      "address": "Bygdøy allé 22, Oslo",
+      "postalCode": "0263",
+      "city": "Oslo"
+    },
+    "countyCode": "03",
+    "municipalityCode": "0301",
+    "areaCode": "030105",
+    "categories": ["Rørlegger"],
+    "images": ["https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=1200&q=80"],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 2,
+      "unit": "hours"
+    },
+    "fromDate": {
+      "$date": "2026-11-18T00:00:00Z"
+    },
+    "toDate": {
+      "$date": "2026-11-19T00:00:00Z"
+    },
+    "equipment": "delvis utstyr",
+    "customerType": "private",
+    "views": 1,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-17T19:05:57.171Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T20:07:56.599Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a80ad"
+    },
+    "userId": {
+      "$oid": "6aea373ff112ab8acd7e9b45"
+    },
+    "title": "Koble til ny oppvaskmaskin",
+    "description": "Ny oppvaskmaskin står klar. Den gamle må kobles fra og bæres ut, og den nye kobles til vann og avløp. Fint om du kan ta med den gamle til gjenvinning.",
+    "price": 2500,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [11.0496, 59.956],
+      "address": "Storgata 30, Lillestrøm",
+      "postalCode": "2000",
+      "city": "Lillestrøm"
+    },
+    "countyCode": "32",
+    "municipalityCode": "3205",
+    "categories": ["Rørlegger"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "awaiting_payment",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 2,
+      "unit": "hours"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-18T04:35:57.188Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:36.001Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a80b2"
+    },
+    "userId": {
+      "$oid": "6aea373ff112ab8acd7e9b37"
+    },
+    "title": "Lekkasje under vasken",
+    "description": "Det drypper fra røret under badevasken. Har satt en bøtte under. Haster litt.",
+    "price": 3000,
+    "paymentType": "Anbud",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.2045, 59.7439],
+      "address": "Bragernes torg 6, Drammen",
+      "postalCode": "3015",
+      "city": "Drammen"
+    },
+    "countyCode": "33",
+    "municipalityCode": "3301",
+    "categories": ["Rørlegger"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 2,
+      "unit": "hours"
+    },
+    "fromDate": {
+      "$date": "2026-11-06T00:00:00Z"
+    },
+    "toDate": {
+      "$date": "2026-11-08T00:00:00Z"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-18T14:05:57.210Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.204Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a80b7"
+    },
+    "userId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "title": "Bytte toalett i kjellerleilighet",
+    "description": "Gammelt gulvmontert toalett skal byttes til nytt vegghengt. Toalettet er kjøpt inn. Trenger autorisert rørlegger og samsvarserklæring til forsikringen.",
+    "price": 7000,
+    "paymentType": "Anbud",
+    "location": {
+      "type": "Point",
+      "coordinates": [5.2961, 60.3828],
+      "address": "Nygårdsgaten 14, Bergen",
+      "postalCode": "5160",
+      "city": "Bergen"
+    },
+    "countyCode": "46",
+    "municipalityCode": "4601",
+    "areaCode": "460105",
+    "categories": ["Rørlegger"],
+    "images": ["https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=1200&q=80"],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 4,
+      "unit": "hours"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-18T23:35:57.251Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.227Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a80bc"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "title": "Male barnerom",
+    "description": "Barnerom på ca. 10 kvm skal males fra rosa til hvitt. Vegger og tak, to strøk. Maling er kjøpt (Lady Pure Color).",
+    "price": 4500,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.7056, 59.9196],
+      "address": "Bygdøy allé 22, Oslo",
+      "postalCode": "0263",
+      "city": "Oslo"
+    },
+    "countyCode": "03",
+    "municipalityCode": "0301",
+    "areaCode": "030105",
+    "categories": ["Maling"],
+    "images": ["https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=1200&q=80"],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "completed",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 8,
+      "unit": "hours"
+    },
+    "fromDate": {
+      "$date": "2026-11-21T00:00:00Z"
+    },
+    "toDate": {
+      "$date": "2026-11-23T00:00:00Z"
+    },
+    "equipment": "delvis utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-19T09:05:57.297Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:54.288Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a80c1"
+    },
+    "userId": {
+      "$oid": "6aea373df112ab8acd7e9b1a"
+    },
+    "title": "Beise terrasse før vinteren",
+    "description": "Terrasse på ca. 30 kvm trenger vask og ett strøk beis før det blir for kaldt. Beis står i garasjen.",
+    "price": 3500,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.6156, 59.9089],
+      "address": "Rudolf Peersens vei 5, Stabekk",
+      "postalCode": "1369",
+      "city": "Stabekk"
+    },
+    "countyCode": "32",
+    "municipalityCode": "3201",
+    "categories": ["Maling"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 6,
+      "unit": "hours"
+    },
+    "equipment": "delvis utstyr",
+    "customerType": "private",
+    "views": 1,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-19T18:35:57.327Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T20:26:57.140Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a80c6"
+    },
+    "userId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "title": "Male stue og gang i rekkehus",
+    "description": "Nykjøpt rekkehus. Stue (35 kvm) og gang skal males. Noen hull i veggene må sparkles først. Ønsker fast pris eller anbud, gjerne fra noen med erfaring. Vi er fleksible på dato i desember.",
+    "price": 12000,
+    "paymentType": "Anbud",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.8028, 59.8606],
+      "address": "Nordstrandveien 50, Oslo",
+      "postalCode": "1170",
+      "city": "Oslo"
+    },
+    "countyCode": "03",
+    "municipalityCode": "0301",
+    "areaCode": "030114",
+    "categories": ["Maling"],
+    "images": ["https://images.unsplash.com/photo-1589939705384-5185137a7f0f?w=1200&q=80"],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 3,
+      "unit": "days"
+    },
+    "fromDate": {
+      "$date": "2026-12-01T00:00:00Z"
+    },
+    "toDate": {
+      "$date": "2026-12-15T00:00:00Z"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-20T04:05:57.369Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.351Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a80cb"
+    },
+    "userId": {
+      "$oid": "6aea373ff112ab8acd7e9b37"
+    },
+    "title": "Male inngangsdør og lister",
+    "description": "Inngangsdør (innside) og dørlister i gangen. Slipe lett og to strøk.",
+    "price": 400,
+    "hourlyRate": 400,
+    "paymentType": "Timepris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.24, 59.733],
+      "address": "Bragernes torg 6, Drammen",
+      "postalCode": "3036",
+      "city": "Drammen"
+    },
+    "countyCode": "33",
+    "municipalityCode": "3301",
+    "categories": ["Maling"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 4,
+      "unit": "hours"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-20T13:35:57.401Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.394Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a80d0"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "title": "Male tak på soverom",
+    "description": "Taket på soverommet har gulnet. Ca. 12 kvm, hvitt, to strøk. Møbler flyttes av meg.",
+    "price": 2500,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.8806, 59.9611],
+      "address": "Ammerudveien 18, Oslo",
+      "postalCode": "0985",
+      "city": "Oslo"
+    },
+    "countyCode": "03",
+    "municipalityCode": "0301",
+    "areaCode": "030110",
+    "categories": ["Maling"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 4,
+      "unit": "hours"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-20T23:05:57.439Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.434Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a80d5"
+    },
+    "userId": {
+      "$oid": "6aea373ff112ab8acd7e9b45"
+    },
+    "title": "Male gjerde rundt hagen",
+    "description": "Ca. 25 meter tregjerde trenger nytt strøk. Kan vente til våren hvis det er for kaldt nå, men vil gjerne ha en avtale klar.",
+    "price": 4000,
+    "paymentType": "Anbud",
+    "location": {
+      "type": "Point",
+      "coordinates": [11.0496, 59.956],
+      "address": "Storgata 30, Lillestrøm",
+      "postalCode": "2000",
+      "city": "Lillestrøm"
+    },
+    "countyCode": "32",
+    "municipalityCode": "3205",
+    "categories": ["Maling"],
+    "images": ["https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80"],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 1,
+      "unit": "days"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-21T08:35:57.462Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.455Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a80da"
+    },
+    "userId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "title": "Bære sofa ned fra 3. etasje",
+    "description": "Trenger hjelp til å bære en sofa ned fra 3. etasje i bygård uten heis på Grünerløkka, lørdag formiddag. Sofaen skal bare ned på fortauet, henteren kommer selv. Bør ta rundt én time.",
+    "price": 800,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.7579, 59.9233],
+      "address": "Thorvald Meyers gate 41, Oslo",
+      "postalCode": "0552",
+      "city": "Oslo"
+    },
+    "countyCode": "03",
+    "municipalityCode": "0301",
+    "areaCode": "030102",
+    "categories": ["Flytting"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "completed",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 1,
+      "unit": "hours"
+    },
+    "fromDate": {
+      "$date": "2026-11-15T00:00:00Z"
+    },
+    "toDate": {
+      "$date": "2026-11-15T00:00:00Z"
+    },
+    "equipment": "utstyrfri",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-21T18:05:57.480Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:38.624Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a80df"
+    },
+    "userId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "title": "Flytting av 1-roms innen Bergen",
+    "description": "Flytter fra Nygårdshøyden til Åsane. Ca. 15 flytteesker, seng, sofa, kommode og en vaskemaskin. Trenger bil og to personer.",
+    "price": 4500,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [5.3242, 60.3913],
+      "address": "Nygårdsgaten 14, Bergen",
+      "postalCode": "5014",
+      "city": "Bergen"
+    },
+    "countyCode": "46",
+    "municipalityCode": "4601",
+    "areaCode": "460102",
+    "categories": ["Flytting"],
+    "images": ["https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=1200&q=80"],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "awaiting_payment",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 4,
+      "unit": "hours"
+    },
+    "fromDate": {
+      "$date": "2026-12-05T00:00:00Z"
+    },
+    "toDate": {
+      "$date": "2026-12-05T00:00:00Z"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-22T03:35:57.496Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:39Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a80e4"
+    },
+    "userId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "title": "Bærehjelp ved innflytting",
+    "description": "Flyttebilen kommer søndag kl. 10. Trenger to ekstra hender i tre timer til å bære inn i rekkehus. Pizza og brus etterpå.",
+    "price": 350,
+    "hourlyRate": 350,
+    "paymentType": "Timepris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.8028, 59.8606],
+      "address": "Nordstrandveien 50, Oslo",
+      "postalCode": "1170",
+      "city": "Oslo"
+    },
+    "countyCode": "03",
+    "municipalityCode": "0301",
+    "areaCode": "030114",
+    "categories": ["Flytting"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "waiting_for_approval",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 3,
+      "unit": "hours"
+    },
+    "fromDate": {
+      "$date": "2026-11-16T00:00:00Z"
+    },
+    "toDate": {
+      "$date": "2026-11-16T00:00:00Z"
+    },
+    "equipment": "utstyrfri",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-22T13:05:57.518Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:09.653Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a80e9"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "title": "Flytte piano ut av leilighet",
+    "description": "Opprettstående piano skal fra 2. etasje (bred trapp, ingen heis) til bod i kjelleren i samme bygg. Trenger folk som har gjort dette før og har pianotralle.",
+    "price": 4000,
+    "paymentType": "Anbud",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.7056, 59.9196],
+      "address": "Bygdøy allé 22, Oslo",
+      "postalCode": "0263",
+      "city": "Oslo"
+    },
+    "countyCode": "03",
+    "municipalityCode": "0301",
+    "areaCode": "030105",
+    "categories": ["Flytting"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 2,
+      "unit": "hours"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-22T22:35:57.532Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.529Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a80ee"
+    },
+    "userId": {
+      "$oid": "6aea373ff112ab8acd7e9b37"
+    },
+    "title": "Flytting 3-roms Drammen til Lier",
+    "description": "Hele 3-roms skal flyttes. Vi pakker selv. Trenger bil, stropper og to–tre personer en hel dag.",
+    "price": 12000,
+    "paymentType": "Anbud",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.2045, 59.7439],
+      "address": "Bragernes torg 6, Drammen",
+      "postalCode": "3015",
+      "city": "Drammen"
+    },
+    "countyCode": "33",
+    "municipalityCode": "3301",
+    "categories": ["Flytting"],
+    "images": ["https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=1200&q=80"],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 1,
+      "unit": "days"
+    },
+    "fromDate": {
+      "$date": "2026-12-12T00:00:00Z"
+    },
+    "toDate": {
+      "$date": "2026-12-13T00:00:00Z"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-23T08:05:57.549Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.545Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a80f3"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "title": "Få ned kjøleskap fra 4. etasje",
+    "description": "Gammelt kjøleskap må ned fire etasjer. Det er heis, men den er liten.",
+    "price": 700,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.8806, 59.9611],
+      "address": "Ammerudveien 18, Oslo",
+      "postalCode": "0985",
+      "city": "Oslo"
+    },
+    "countyCode": "03",
+    "municipalityCode": "0301",
+    "areaCode": "030110",
+    "categories": ["Flytting"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 1,
+      "unit": "hours"
+    },
+    "equipment": "utstyrfri",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-23T17:35:57.565Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.561Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a80f8"
+    },
+    "userId": {
+      "$oid": "6aea373df112ab8acd7e9b1a"
+    },
+    "title": "Rake løv i stor hage",
+    "description": "Hagen er full av løv fra tre store eiketrær. Løvet må rakes og fylles i sekker, jeg kjører til gjenvinning selv. Ca. 800 kvm.",
+    "price": 300,
+    "hourlyRate": 300,
+    "paymentType": "Timepris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.5236, 59.889],
+      "address": "Rudolf Peersens vei 5, Sandvika",
+      "postalCode": "1337",
+      "city": "Sandvika"
+    },
+    "countyCode": "32",
+    "municipalityCode": "3201",
+    "categories": ["Hagearbeid"],
+    "images": ["https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=1200&q=80"],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 4,
+      "unit": "hours"
+    },
+    "equipment": "delvis utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-24T03:05:57.581Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.577Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a80fd"
+    },
+    "userId": {
+      "$oid": "6aea373ff112ab8acd7e9b45"
+    },
+    "title": "Klippe hekk før vinteren",
+    "description": "Tujahekk på ca. 20 meter, rundt 1,8 m høy. Må klippes på toppen og sidene. Har hekksaks, men ikke stige som er høy nok.",
+    "price": 2000,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [11.0496, 59.956],
+      "address": "Storgata 30, Lillestrøm",
+      "postalCode": "2000",
+      "city": "Lillestrøm"
+    },
+    "countyCode": "32",
+    "municipalityCode": "3205",
+    "categories": ["Hagearbeid"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 4,
+      "unit": "hours"
+    },
+    "equipment": "delvis utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-24T12:35:57.598Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.593Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a8102"
+    },
+    "userId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "title": "Rydde hage etter storm",
+    "description": "Mange greiner og litt søppel i hagen etter helgens storm. Trenger hjelp et par timer.",
+    "price": 300,
+    "hourlyRate": 300,
+    "paymentType": "Timepris",
+    "location": {
+      "type": "Point",
+      "coordinates": [5.3486, 60.2636],
+      "address": "Nygårdsgaten 14, Bergen",
+      "postalCode": "5221",
+      "city": "Bergen"
+    },
+    "countyCode": "46",
+    "municipalityCode": "4601",
+    "areaCode": "460103",
+    "categories": ["Hagearbeid"],
+    "images": ["https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=1200&q=80"],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "completed",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 2,
+      "unit": "hours"
+    },
+    "fromDate": {
+      "$date": "2026-11-07T00:00:00Z"
+    },
+    "toDate": {
+      "$date": "2026-11-09T00:00:00Z"
+    },
+    "equipment": "utstyrfri",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-24T22:05:57.616Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:38.901Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a8107"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "title": "Snømåking hele vinteren",
+    "description": "Ser etter noen som kan måke innkjørsel og trapp når det har snødd mer enn 10 cm, fra desember til mars. Betaler per gang. Fint om du bor i nærheten av Ullern.",
+    "price": 500,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.6567, 59.9247],
+      "address": "Bygdøy allé 22, Oslo",
+      "postalCode": "0281",
+      "city": "Oslo"
+    },
+    "countyCode": "03",
+    "municipalityCode": "0301",
+    "areaCode": "030106",
+    "categories": ["Hagearbeid"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 1,
+      "unit": "hours"
+    },
+    "fromDate": {
+      "$date": "2026-12-01T00:00:00Z"
+    },
+    "toDate": {
+      "$date": "2027-03-31T00:00:00Z"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-25T07:35:57.632Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.628Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a810c"
+    },
+    "userId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "title": "Felle lite bjørketre",
+    "description": "Lite bjørketre (ca. 6 m) står for nær huset. Må felles og kappes opp. Kvisten kan ligge igjen i en haug.",
+    "price": 4000,
+    "paymentType": "Anbud",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.8028, 59.8606],
+      "address": "Nordstrandveien 50, Oslo",
+      "postalCode": "1170",
+      "city": "Oslo"
+    },
+    "countyCode": "03",
+    "municipalityCode": "0301",
+    "areaCode": "030114",
+    "categories": ["Hagearbeid"],
+    "images": ["https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80"],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 3,
+      "unit": "hours"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-25T17:05:57.649Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.645Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a8111"
+    },
+    "userId": {
+      "$oid": "6aea373ff112ab8acd7e9b37"
+    },
+    "title": "Rense takrenner",
+    "description": "Takrennene er fulle av løv og mose. Enebolig, én etasje. Har stige.",
+    "price": 1200,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.24, 59.733],
+      "address": "Bragernes torg 6, Drammen",
+      "postalCode": "3036",
+      "city": "Drammen"
+    },
+    "countyCode": "33",
+    "municipalityCode": "3301",
+    "categories": ["Hagearbeid"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 2,
+      "unit": "hours"
+    },
+    "equipment": "delvis utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-26T02:35:57.665Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.661Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a8116"
+    },
+    "userId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "title": "Legge laminat i soverom",
+    "description": "Soverom på 14 kvm. Laminat og underlag er kjøpt. Gamle lister må av og settes på igjen.",
+    "price": 4500,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.8028, 59.8606],
+      "address": "Nordstrandveien 50, Oslo",
+      "postalCode": "1170",
+      "city": "Oslo"
+    },
+    "countyCode": "03",
+    "municipalityCode": "0301",
+    "areaCode": "030114",
+    "categories": ["Oppussing"],
+    "images": ["https://images.unsplash.com/photo-1504148455328-c376907d081c?w=1200&q=80"],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 1,
+      "unit": "days"
+    },
+    "fromDate": {
+      "$date": "2026-11-25T00:00:00Z"
+    },
+    "toDate": {
+      "$date": "2026-11-28T00:00:00Z"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-26T12:05:57.680Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.676Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a811b"
+    },
+    "userId": {
+      "$oid": "6aea373df112ab8acd7e9b1a"
+    },
+    "title": "Montere IKEA-kjøkken",
+    "description": "Nytt IKEA-kjøkken (Metod), ca. 4 meter med høyskap og kjøkkenøy. Alt er levert. Gammelt kjøkken er revet. Trenger noen som har montert IKEA-kjøkken før. Rørlegger og elektriker er bestilt separat. Kan gjerne fordeles over flere dager.",
+    "price": 18000,
+    "paymentType": "Anbud",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.5875, 59.9183],
+      "address": "Rudolf Peersens vei 5, Bekkestua",
+      "postalCode": "1357",
+      "city": "Bekkestua"
+    },
+    "countyCode": "32",
+    "municipalityCode": "3201",
+    "categories": ["Oppussing"],
+    "images": ["https://images.unsplash.com/photo-1503387762-592deb58ef4e?w=1200&q=80"],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 3,
+      "unit": "days"
+    },
+    "fromDate": {
+      "$date": "2026-11-23T00:00:00Z"
+    },
+    "toDate": {
+      "$date": "2026-12-04T00:00:00Z"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 1,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-26T21:35:57.695Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T20:07:56.599Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a8120"
+    },
+    "userId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "title": "Sparkle hull etter bilder",
+    "description": "Mange små hull i stueveggen etter bilder og hyller. Sparkle, slipe og flekkmale.",
+    "price": 1500,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.7579, 59.9233],
+      "address": "Thorvald Meyers gate 41, Oslo",
+      "postalCode": "0552",
+      "city": "Oslo"
+    },
+    "countyCode": "03",
+    "municipalityCode": "0301",
+    "areaCode": "030102",
+    "categories": ["Oppussing"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 2,
+      "unit": "hours"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-27T07:05:57.709Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.704Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a8125"
+    },
+    "userId": {
+      "$oid": "6aea373ff112ab8acd7e9b37"
+    },
+    "title": "Bytte to innerdører",
+    "description": "To innerdører med karm skal byttes. Dørene er kjøpt på Byggmakker.",
+    "price": 6000,
+    "paymentType": "Anbud",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.2045, 59.7439],
+      "address": "Bragernes torg 6, Drammen",
+      "postalCode": "3015",
+      "city": "Drammen"
+    },
+    "countyCode": "33",
+    "municipalityCode": "3301",
+    "categories": ["Oppussing"],
+    "images": ["https://images.unsplash.com/photo-1595814433015-e6f5ce69614e?w=1200&q=80"],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 1,
+      "unit": "days"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-27T16:35:57.725Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.720Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a812a"
+    },
+    "userId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "title": "Pusse opp trapp i rekkehus",
+    "description": "Tretrapp med 14 trinn skal slipes og lakkes. Ønsker pris på hele jobben.",
+    "price": 8000,
+    "paymentType": "Anbud",
+    "location": {
+      "type": "Point",
+      "coordinates": [5.3369, 60.4664],
+      "address": "Nygårdsgaten 14, Bergen",
+      "postalCode": "5116",
+      "city": "Bergen"
+    },
+    "countyCode": "46",
+    "municipalityCode": "4601",
+    "areaCode": "460108",
+    "categories": ["Oppussing"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 2,
+      "unit": "days"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-28T02:05:57.740Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.736Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a812f"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "title": "Hente sofa fra Finn-kjøp på Majorstuen",
+    "description": "Har kjøpt en 3-seter på Finn. Må hentes på Majorstuen (2. etasje, heis) og kjøres til Grorud. Trenger bil og en til å bære.",
+    "price": 1000,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.8806, 59.9611],
+      "address": "Ammerudveien 18, Oslo",
+      "postalCode": "0985",
+      "city": "Oslo"
+    },
+    "countyCode": "03",
+    "municipalityCode": "0301",
+    "areaCode": "030110",
+    "categories": ["Transport"],
+    "images": ["https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=1200&q=80"],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "in_progress",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 2,
+      "unit": "hours"
+    },
+    "fromDate": {
+      "$date": "2026-11-11T00:00:00Z"
+    },
+    "toDate": {
+      "$date": "2026-11-11T00:00:00Z"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-28T11:35:57.756Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:22.636Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a8134"
+    },
+    "userId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "title": "Kjøre møbler til gjenvinning",
+    "description": "En gammel seng, en kontorstol og noen poser. Til Grønmo eller Haraldrud.",
+    "price": 800,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.7579, 59.9233],
+      "address": "Thorvald Meyers gate 41, Oslo",
+      "postalCode": "0552",
+      "city": "Oslo"
+    },
+    "countyCode": "03",
+    "municipalityCode": "0301",
+    "areaCode": "030102",
+    "categories": ["Transport"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 2,
+      "unit": "hours"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-28T21:05:57.784Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.775Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a8139"
+    },
+    "userId": {
+      "$oid": "6aea373ff112ab8acd7e9b45"
+    },
+    "title": "Varebil med sjåfør en lørdag",
+    "description": "Trenger varebil med sjåfør noen timer lørdag. Skal hente en kommode i Ski og et bord på Kjeller.",
+    "price": 600,
+    "hourlyRate": 600,
+    "paymentType": "Timepris",
+    "location": {
+      "type": "Point",
+      "coordinates": [11.0496, 59.956],
+      "address": "Storgata 30, Lillestrøm",
+      "postalCode": "2000",
+      "city": "Lillestrøm"
+    },
+    "countyCode": "32",
+    "municipalityCode": "3205",
+    "categories": ["Transport"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 3,
+      "unit": "hours"
+    },
+    "fromDate": {
+      "$date": "2026-11-21T00:00:00Z"
+    },
+    "toDate": {
+      "$date": "2026-11-21T00:00:00Z"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-29T06:35:57.801Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.797Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a813e"
+    },
+    "userId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "title": "Levere sykkel til Fana",
+    "description": "El-sykkel skal fra sentrum til Fana. Kan ikke ta den på bussen.",
+    "price": 500,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [5.3242, 60.3913],
+      "address": "Nygårdsgaten 14, Bergen",
+      "postalCode": "5014",
+      "city": "Bergen"
+    },
+    "countyCode": "46",
+    "municipalityCode": "4601",
+    "areaCode": "460102",
+    "categories": ["Transport"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 1,
+      "unit": "hours"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-29T16:05:57.816Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.813Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a8143"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "title": "Hente vinterdekk fra hotell",
+    "description": "Fire vinterdekk står på dekkhotell på Skøyen og skal hjem til garasjen på Frogner.",
+    "price": 600,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.7056, 59.9196],
+      "address": "Bygdøy allé 22, Oslo",
+      "postalCode": "0263",
+      "city": "Oslo"
+    },
+    "countyCode": "03",
+    "municipalityCode": "0301",
+    "areaCode": "030105",
+    "categories": ["Transport"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 1,
+      "unit": "hours"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-30T01:35:57.832Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.828Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a8148"
+    },
+    "userId": {
+      "$oid": "6aea373ff112ab8acd7e9b37"
+    },
+    "title": "Frakte byggavfall",
+    "description": "Ca. 3 kubikk med gipsplater og treverk etter oppussing. Må kjøres til Lindum.",
+    "price": 1500,
+    "paymentType": "Anbud",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.2045, 59.7439],
+      "address": "Bragernes torg 6, Drammen",
+      "postalCode": "3015",
+      "city": "Drammen"
+    },
+    "countyCode": "33",
+    "municipalityCode": "3301",
+    "categories": ["Transport"],
+    "images": ["https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=1200&q=80"],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 2,
+      "unit": "hours"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-30T11:05:57.848Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.843Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a814d"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "title": "Montere PAX-garderobe",
+    "description": "To PAX-skap, 100 cm brede, med dører. Må festes i veggen (betong).",
+    "price": 1800,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.8806, 59.9611],
+      "address": "Ammerudveien 18, Oslo",
+      "postalCode": "0985",
+      "city": "Oslo"
+    },
+    "countyCode": "03",
+    "municipalityCode": "0301",
+    "areaCode": "030110",
+    "categories": ["Småjobber"],
+    "images": ["https://images.unsplash.com/photo-1595814433015-e6f5ce69614e?w=1200&q=80"],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "cancelled",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 3,
+      "unit": "hours"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-30T20:35:57.864Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:41:34.373Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a8152"
+    },
+    "userId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "title": "Henge opp TV, hyller og lamper",
+    "description": "TV på veggen (55\"), to hyller og tre taklamper. Lampene har vanlige stikkontakter, ingen elektrikerjobb.",
+    "price": 400,
+    "hourlyRate": 400,
+    "paymentType": "Timepris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.8028, 59.8606],
+      "address": "Nordstrandveien 50, Oslo",
+      "postalCode": "1170",
+      "city": "Oslo"
+    },
+    "countyCode": "03",
+    "municipalityCode": "0301",
+    "areaCode": "030114",
+    "categories": ["Småjobber"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 3,
+      "unit": "hours"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-31T06:05:57.879Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.875Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a8157"
+    },
+    "userId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "title": "Hjelp med å sette opp ny PC og skriver",
+    "description": "Mamma (78) har fått ny laptop og skriver. Trenger noen tålmodige som kan sette opp e-post, BankID og skriver, og vise henne hvordan.",
+    "price": 600,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.7579, 59.9233],
+      "address": "Thorvald Meyers gate 41, Oslo",
+      "postalCode": "0552",
+      "city": "Oslo"
+    },
+    "countyCode": "03",
+    "municipalityCode": "0301",
+    "areaCode": "030102",
+    "categories": ["Småjobber"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 2,
+      "unit": "hours"
+    },
+    "equipment": "utstyrfri",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-10-31T15:35:57.892Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.889Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a815c"
+    },
+    "userId": {
+      "$oid": "6aea373ff112ab8acd7e9b45"
+    },
+    "title": "Handle og bære opp varer",
+    "description": "Trenger noen som kan handle på Rema og bære opp til 3. etasje hver torsdag i desember. Jeg betaler varene med Vipps.",
+    "price": 350,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [11.0496, 59.956],
+      "address": "Storgata 30, Lillestrøm",
+      "postalCode": "2000",
+      "city": "Lillestrøm"
+    },
+    "countyCode": "32",
+    "municipalityCode": "3205",
+    "categories": ["Småjobber"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 1,
+      "unit": "hours"
+    },
+    "fromDate": {
+      "$date": "2026-12-03T00:00:00Z"
+    },
+    "toDate": {
+      "$date": "2026-12-24T00:00:00Z"
+    },
+    "equipment": "utstyrfri",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-11-01T01:05:57.907Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.903Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a8161"
+    },
+    "userId": {
+      "$oid": "6aea373df112ab8acd7e9b1a"
+    },
+    "title": "Sette sammen trampoline",
+    "description": "Ny trampoline i eske skal settes sammen i hagen. Julegave, så helst før 20. desember.",
+    "price": 900,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.5236, 59.889],
+      "address": "Rudolf Peersens vei 5, Sandvika",
+      "postalCode": "1337",
+      "city": "Sandvika"
+    },
+    "countyCode": "32",
+    "municipalityCode": "3201",
+    "categories": ["Småjobber"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 2,
+      "unit": "hours"
+    },
+    "fromDate": {
+      "$date": "2026-12-10T00:00:00Z"
+    },
+    "toDate": {
+      "$date": "2026-12-20T00:00:00Z"
+    },
+    "equipment": "delvis utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-11-01T10:35:57.923Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.918Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a8166"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "title": "Hjulskift på to biler",
+    "description": "Bytte til vinterhjul på en Tesla Model Y og en VW Golf. Hjulene står i garasjen. Har jekk, men ikke momentnøkkel.",
+    "price": 1200,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.7056, 59.9196],
+      "address": "Bygdøy allé 22, Oslo",
+      "postalCode": "0263",
+      "city": "Oslo"
+    },
+    "countyCode": "03",
+    "municipalityCode": "0301",
+    "areaCode": "030105",
+    "categories": ["Bil & Pleie"],
+    "images": ["https://images.unsplash.com/photo-1520340356584-f9917d1eea6f?w=1200&q=80"],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "completed",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 2,
+      "unit": "hours"
+    },
+    "fromDate": {
+      "$date": "2026-11-09T00:00:00Z"
+    },
+    "toDate": {
+      "$date": "2026-11-13T00:00:00Z"
+    },
+    "equipment": "delvis utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-11-01T20:05:57.938Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:23.136Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a816b"
+    },
+    "userId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "title": "Innvendig vask av familiebil",
+    "description": "Familiebil med to barneseter. Smuler, saft og hundehår. Trenger grundig innvendig rengjøring, gjerne med setetrekk.",
+    "price": 1200,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.8028, 59.8606],
+      "address": "Nordstrandveien 50, Oslo",
+      "postalCode": "1170",
+      "city": "Oslo"
+    },
+    "countyCode": "03",
+    "municipalityCode": "0301",
+    "areaCode": "030114",
+    "categories": ["Bil & Pleie"],
+    "images": ["https://images.unsplash.com/photo-1520340356584-f9917d1eea6f?w=1200&q=80"],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 3,
+      "unit": "hours"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-11-02T05:35:57.954Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.949Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a8170"
+    },
+    "userId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "title": "Polering før salg",
+    "description": "Skal selge bilen og vil at den skal se best mulig ut. Full vask og polering.",
+    "price": 2500,
+    "paymentType": "Anbud",
+    "location": {
+      "type": "Point",
+      "coordinates": [5.3242, 60.3913],
+      "address": "Nygårdsgaten 14, Bergen",
+      "postalCode": "5014",
+      "city": "Bergen"
+    },
+    "countyCode": "46",
+    "municipalityCode": "4601",
+    "areaCode": "460102",
+    "categories": ["Bil & Pleie"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 5,
+      "unit": "hours"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-11-02T15:05:57.969Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.965Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a8175"
+    },
+    "userId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "title": "Utvendig vask av bil",
+    "description": "Vanlig utvendig vask, bilen står i parkeringskjeller med vann.",
+    "price": 400,
+    "paymentType": "Fastpris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.8806, 59.9611],
+      "address": "Ammerudveien 18, Oslo",
+      "postalCode": "0985",
+      "city": "Oslo"
+    },
+    "countyCode": "03",
+    "municipalityCode": "0301",
+    "areaCode": "030110",
+    "categories": ["Bil & Pleie"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 1,
+      "unit": "hours"
+    },
+    "equipment": "utstyrfri",
+    "customerType": "private",
+    "views": 0,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-11-03T00:35:57.984Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:35:57.980Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea379d21b49793625a817a"
+    },
+    "userId": {
+      "$oid": "6aea373df112ab8acd7e9b1a"
+    },
+    "title": "Fjerne ripe på bakdør",
+    "description": "Lett ripe på bakdøren etter en handlevogn, ca. 20 cm. Ikke gjennom lakken.",
+    "price": 500,
+    "hourlyRate": 500,
+    "paymentType": "Timepris",
+    "location": {
+      "type": "Point",
+      "coordinates": [10.6156, 59.9089],
+      "address": "Rudolf Peersens vei 5, Stabekk",
+      "postalCode": "1369",
+      "city": "Stabekk"
+    },
+    "countyCode": "32",
+    "municipalityCode": "3201",
+    "categories": ["Bil & Pleie"],
+    "images": [],
+    "urgent": false,
+    "jobType": "",
+    "urgentUntil": null,
+    "promoted": false,
+    "status": "open",
+    "contractLockAt": null,
+    "tags": [],
+    "duration": {
+      "value": 1,
+      "unit": "hours"
+    },
+    "equipment": "trengs utstyr",
+    "customerType": "private",
+    "views": 1,
+    "maxApplicants": 0,
+    "checklist": [],
+    "imageMetadata": [],
+    "timeEntries": [],
+    "createdAt": {
+      "$date": "2026-11-03T10:05:58.001Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T20:26:42.133Z"
+    },
+    "__v": 0
+  }
+]

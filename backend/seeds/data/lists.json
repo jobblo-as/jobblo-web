@@ -1,0 +1,30 @@
+[
+  {
+    "_id": {
+      "$oid": "6aea42b48aff1717254d58a1"
+    },
+    "name": "Til helgen",
+    "user": [
+      {
+        "$oid": "6aea373bf112ab8acd7e9af2"
+      }
+    ],
+    "public": false,
+    "services": [
+      {
+        "$oid": "6aea379d21b49793625a8175"
+      }
+    ],
+    "contributors": [],
+    "createdAt": {
+      "$date": "2026-11-03T20:23:16.374Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T20:23:16.386Z"
+    },
+    "__v": 1,
+    "latestservice": {
+      "$oid": "6aea379d21b49793625a8175"
+    }
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "_id": {
+      "$oid": "6aea38ec21b49793625a94dd"
+    },
+    "operationKey": "safepay-connect-timeout:6aea383021b49793625a8dda:pi_3UXnXO3acMP9uu8L0vewWrpA",
+    "idempotencyKey": "jobblo_financial_8d8fa9be-1c80-4361-8333-7558f18ea6c1",
+    "type": "refund",
+    "status": "succeeded",
+    "orderId": {
+      "$oid": "6aea383021b49793625a8dda"
+    },
+    "paymentId": {
+      "$oid": "6aea383a55f923a56452f54b"
+    },
+    "stripeMode": "test",
+    "paymentIntentId": "pi_3UXnXO3acMP9uu8L0vewWrpA",
+    "chargeId": "ch_3UXnXO3acMP9uu8L055KZ7Rt",
+    "amount": 180000,
+    "currency": "NOK",
+    "createdAt": {
+      "$date": "2026-11-03T19:41:32.053Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:41:34.344Z"
+    },
+    "__v": 0,
+    "attemptedAt": {
+      "$date": "2026-11-03T19:41:32.438Z"
+    },
+    "lastErrorCode": null,
+    "completedAt": {
+      "$date": "2026-11-03T19:41:34.344Z"
+    },
+    "failedAt": null,
+    "stripeObjectId": "re_3UXnXO3acMP9uu8L02shXMFD"
+  }
+]

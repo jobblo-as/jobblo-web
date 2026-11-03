@@ -1,0 +1,222 @@
+[
+  {
+    "_id": {
+      "$oid": "6aea37a021b49793625a81e5"
+    },
+    "at": {
+      "$date": "2026-11-03T19:35:57.117Z"
+    },
+    "method": "POST",
+    "route": "/api/services/",
+    "status": "2xx",
+    "kind": "removed",
+    "breaking": true,
+    "path": "areaCode",
+    "detail": "present in 100% of 31 earlier responses",
+    "version": "0.0.0",
+    "commit": "3bb6e430762a",
+    "acknowledgedBy": null,
+    "acknowledgedAt": null,
+    "note": null
+  },
+  {
+    "_id": {
+      "$oid": "6aea385621b49793625a9281"
+    },
+    "at": {
+      "$date": "2026-11-03T19:38:23.491Z"
+    },
+    "method": "POST",
+    "route": "/api/orders/request",
+    "status": "2xx",
+    "kind": "removed",
+    "breaking": true,
+    "path": "serviceId.fromDate",
+    "detail": "present in 100% of 20 earlier responses",
+    "version": "0.0.0",
+    "commit": "3bb6e430762a",
+    "acknowledgedBy": null,
+    "acknowledgedAt": null,
+    "note": null
+  },
+  {
+    "_id": {
+      "$oid": "6aea385621b49793625a9282"
+    },
+    "at": {
+      "$date": "2026-11-03T19:38:23.491Z"
+    },
+    "method": "POST",
+    "route": "/api/orders/request",
+    "status": "2xx",
+    "kind": "removed",
+    "breaking": true,
+    "path": "serviceId.toDate",
+    "detail": "present in 100% of 20 earlier responses",
+    "version": "0.0.0",
+    "commit": "3bb6e430762a",
+    "acknowledgedBy": null,
+    "acknowledgedAt": null,
+    "note": null
+  },
+  {
+    "_id": {
+      "$oid": "6aea385621b49793625a928a"
+    },
+    "at": {
+      "$date": "2026-11-03T19:38:24.169Z"
+    },
+    "method": "POST",
+    "route": "/api/orders/request",
+    "status": "2xx",
+    "kind": "removed",
+    "breaking": true,
+    "path": "message",
+    "detail": "present in 92% of 24 earlier responses",
+    "version": "0.0.0",
+    "commit": "3bb6e430762a",
+    "acknowledgedBy": null,
+    "acknowledgedAt": null,
+    "note": null
+  },
+  {
+    "_id": {
+      "$oid": "6aea385621b49793625a928c"
+    },
+    "at": {
+      "$date": "2026-11-03T19:38:35.114Z"
+    },
+    "method": "POST",
+    "route": "/api/orders/request",
+    "status": "2xx",
+    "kind": "removed",
+    "breaking": true,
+    "path": "serviceId.areaCode",
+    "detail": "present in 100% of 25 earlier responses",
+    "version": "0.0.0",
+    "commit": "3bb6e430762a",
+    "acknowledgedBy": null,
+    "acknowledgedAt": null,
+    "note": null
+  },
+  {
+    "_id": {
+      "$oid": "6aea385621b49793625a928f"
+    },
+    "at": {
+      "$date": "2026-11-03T19:38:39.941Z"
+    },
+    "method": "POST",
+    "route": "/api/orders/request",
+    "status": "2xx",
+    "kind": "removed",
+    "breaking": true,
+    "path": "serviceId.areaCode",
+    "detail": "present in 93% of 27 earlier responses",
+    "version": "0.0.0",
+    "commit": "3bb6e430762a",
+    "acknowledgedBy": null,
+    "acknowledgedAt": null,
+    "note": null
+  },
+  {
+    "_id": {
+      "$oid": "6aea398021b49793625aa1b3"
+    },
+    "at": {
+      "$date": "2026-11-03T19:43:49.541Z"
+    },
+    "method": "GET",
+    "route": "/api/auth/profile",
+    "status": "2xx",
+    "kind": "removed",
+    "breaking": true,
+    "path": "lastName",
+    "detail": "present in 100% of 26 earlier responses",
+    "version": "0.0.0",
+    "commit": "3bb6e430762a",
+    "acknowledgedBy": null,
+    "acknowledgedAt": null,
+    "note": null
+  },
+  {
+    "_id": {
+      "$oid": "6aea398021b49793625aa1b4"
+    },
+    "at": {
+      "$date": "2026-11-03T19:43:49.541Z"
+    },
+    "method": "GET",
+    "route": "/api/auth/profile",
+    "status": "2xx",
+    "kind": "added",
+    "breaking": false,
+    "path": "companyName",
+    "detail": "new string field",
+    "version": "0.0.0",
+    "commit": "3bb6e430762a",
+    "acknowledgedBy": null,
+    "acknowledgedAt": null,
+    "note": null
+  },
+  {
+    "_id": {
+      "$oid": "6aea398021b49793625aa1b5"
+    },
+    "at": {
+      "$date": "2026-11-03T19:43:49.541Z"
+    },
+    "method": "GET",
+    "route": "/api/auth/profile",
+    "status": "2xx",
+    "kind": "added",
+    "breaking": false,
+    "path": "orgNumber",
+    "detail": "new string field",
+    "version": "0.0.0",
+    "commit": "3bb6e430762a",
+    "acknowledgedBy": null,
+    "acknowledgedAt": null,
+    "note": null
+  },
+  {
+    "_id": {
+      "$oid": "6aea398021b49793625aa1b6"
+    },
+    "at": {
+      "$date": "2026-11-03T19:43:49.541Z"
+    },
+    "method": "GET",
+    "route": "/api/auth/profile",
+    "status": "2xx",
+    "kind": "added",
+    "breaking": false,
+    "path": "website",
+    "detail": "new string field",
+    "version": "0.0.0",
+    "commit": "3bb6e430762a",
+    "acknowledgedBy": null,
+    "acknowledgedAt": null,
+    "note": null
+  },
+  {
+    "_id": {
+      "$oid": "6aea43728aff1717254d5b3d"
+    },
+    "at": {
+      "$date": "2026-11-03T20:26:19.537Z"
+    },
+    "method": "POST",
+    "route": "/api/auth/refresh-token",
+    "status": "4xx",
+    "kind": "added",
+    "breaking": false,
+    "path": "code",
+    "detail": "new string field",
+    "version": "0.0.0",
+    "commit": "3bb6e430762a",
+    "acknowledgedBy": null,
+    "acknowledgedAt": null,
+    "note": null
+  }
+]

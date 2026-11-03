@@ -1,0 +1,207 @@
+[
+  {
+    "_id": {
+      "$oid": "6aea37c955f923a56452f52e"
+    },
+    "stripeObjectId": "tr_3UXnVT3acMP9uu8L1yjrhKUf",
+    "livemode": false,
+    "stripeAccountId": "acct_1UXnUH3zgOhnDqbP",
+    "__v": 0,
+    "amount": 77600,
+    "amountReversed": 0,
+    "audit": [],
+    "balanceTransactionId": "txn_3UXnVT3acMP9uu8L1GBYEyPB",
+    "createdAt": {
+      "$date": "2026-11-03T19:36:41.870Z"
+    },
+    "currency": "NOK",
+    "destinationPaymentId": "py_1UXnVc3zgOhnDqbPOGJa8PuC",
+    "lastSyncError": null,
+    "lastVerifiedAt": {
+      "$date": "2026-11-03T20:05:27.097Z"
+    },
+    "normalizedStatus": "transferred",
+    "orderId": {
+      "$oid": "6aea37b121b49793625a82f0"
+    },
+    "payoutId": {
+      "$oid": "6aea37c721b49793625a83e0"
+    },
+    "providerId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "reversed": false,
+    "source": "reconciliation",
+    "sourceTransactionId": "ch_3UXnVT3acMP9uu8L1S33QGzB",
+    "stripeCreatedAt": {
+      "$date": "2026-11-03T19:36:40Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T20:05:27.099Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6aea37e455f923a56452f533"
+    },
+    "stripeObjectId": "tr_3UXnVp3acMP9uu8L0jZ8y5W0",
+    "livemode": false,
+    "stripeAccountId": "acct_1UXnUL3HvyrETi0h",
+    "__v": 0,
+    "amount": 135800,
+    "amountReversed": 0,
+    "audit": [],
+    "balanceTransactionId": "txn_3UXnVp3acMP9uu8L0c5DnrP2",
+    "createdAt": {
+      "$date": "2026-11-03T19:37:08.643Z"
+    },
+    "currency": "NOK",
+    "destinationPaymentId": "py_1UXnW33HvyrETi0hxe0myBgY",
+    "lastSyncError": null,
+    "lastVerifiedAt": {
+      "$date": "2026-11-03T20:05:27.515Z"
+    },
+    "normalizedStatus": "transferred",
+    "orderId": {
+      "$oid": "6aea37cc21b49793625a84a2"
+    },
+    "payoutId": {
+      "$oid": "6aea37e221b49793625a8626"
+    },
+    "providerId": {
+      "$oid": "6aea3742f112ab8acd7e9b6f"
+    },
+    "reversed": false,
+    "source": "reconciliation",
+    "sourceTransactionId": "ch_3UXnVp3acMP9uu8L010vVOFr",
+    "stripeCreatedAt": {
+      "$date": "2026-11-03T19:37:07Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T20:05:27.517Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6aea37f655f923a56452f538"
+    },
+    "stripeObjectId": "tr_3UXnWE3acMP9uu8L1TF03uYP",
+    "livemode": false,
+    "stripeAccountId": "acct_1UXnUU3crbZy42uf",
+    "__v": 0,
+    "amount": 116400,
+    "amountReversed": 0,
+    "audit": [],
+    "balanceTransactionId": "txn_3UXnWE3acMP9uu8L1TFk1yk5",
+    "createdAt": {
+      "$date": "2026-11-03T19:37:26.220Z"
+    },
+    "currency": "NOK",
+    "destinationPaymentId": "py_1UXnWK3crbZy42ufBbeAfpfg",
+    "lastSyncError": null,
+    "lastVerifiedAt": {
+      "$date": "2026-11-03T20:05:28.744Z"
+    },
+    "normalizedStatus": "transferred",
+    "orderId": {
+      "$oid": "6aea37e621b49793625a86ba"
+    },
+    "payoutId": {
+      "$oid": "6aea37f421b49793625a8798"
+    },
+    "providerId": {
+      "$oid": "6aea3744f112ab8acd7e9bb4"
+    },
+    "reversed": false,
+    "source": "reconciliation",
+    "sourceTransactionId": "ch_3UXnWE3acMP9uu8L1nPn1cjI",
+    "stripeCreatedAt": {
+      "$date": "2026-11-03T19:37:24Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T20:05:28.745Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6aea380655f923a56452f53d"
+    },
+    "stripeAccountId": "acct_1UXnUR3rhIMXkVBA",
+    "livemode": false,
+    "stripeObjectId": "tr_3UXnWT3acMP9uu8L0H10obW0",
+    "__v": 0,
+    "amount": 29100,
+    "amountReversed": 0,
+    "audit": [],
+    "balanceTransactionId": "txn_3UXnWT3acMP9uu8L0RmZIsZd",
+    "createdAt": {
+      "$date": "2026-11-03T19:37:42.077Z"
+    },
+    "currency": "NOK",
+    "destinationPaymentId": "py_1UXnWa3rhIMXkVBAo0oeTJo4",
+    "lastSyncError": null,
+    "lastVerifiedAt": {
+      "$date": "2026-11-03T20:05:28.333Z"
+    },
+    "normalizedStatus": "transferred",
+    "orderId": {
+      "$oid": "6aea37f721b49793625a882e"
+    },
+    "payoutId": {
+      "$oid": "6aea380421b49793625a890e"
+    },
+    "providerId": {
+      "$oid": "6aea3743f112ab8acd7e9ba6"
+    },
+    "reversed": false,
+    "source": "reconciliation",
+    "sourceTransactionId": "ch_3UXnWT3acMP9uu8L0kcR04go",
+    "stripeCreatedAt": {
+      "$date": "2026-11-03T19:37:40Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T20:05:28.333Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6aea381555f923a56452f543"
+    },
+    "stripeObjectId": "tr_3UXnWj3acMP9uu8L09fHrF73",
+    "livemode": false,
+    "stripeAccountId": "acct_1UXnUhKhuwoC2Pw9",
+    "__v": 0,
+    "amount": 436500,
+    "amountReversed": 0,
+    "audit": [],
+    "balanceTransactionId": "txn_3UXnWj3acMP9uu8L0gDI5Pqz",
+    "createdAt": {
+      "$date": "2026-11-03T19:37:57.479Z"
+    },
+    "currency": "NOK",
+    "destinationPaymentId": "py_1UXnWqKhuwoC2Pw9E66VqR39",
+    "lastSyncError": null,
+    "lastVerifiedAt": {
+      "$date": "2026-11-03T20:05:30.791Z"
+    },
+    "normalizedStatus": "transferred",
+    "orderId": {
+      "$oid": "6aea380821b49793625a89bd"
+    },
+    "payoutId": {
+      "$oid": "6aea381321b49793625a8a98"
+    },
+    "providerId": {
+      "$oid": "6aea3747f112ab8acd7e9bec"
+    },
+    "reversed": false,
+    "source": "reconciliation",
+    "sourceTransactionId": "ch_3UXnWj3acMP9uu8L0rKrcsXG",
+    "stripeCreatedAt": {
+      "$date": "2026-11-03T19:37:56Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T20:05:30.792Z"
+    }
+  }
+]

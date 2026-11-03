@@ -1,0 +1,292 @@
+[
+  {
+    "_id": {
+      "$oid": "6aea37c621b49793625a83d2"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80da"
+    },
+    "orderId": {
+      "$oid": "6aea37b121b49793625a82f0"
+    },
+    "reviewerId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "revieweeId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "revieweeRole": "poster",
+    "rating": 5,
+    "comment": "Kom presis, bar sofaen ned uten en ripe i trappen. Anbefales!",
+    "photos": [],
+    "recommendWorker": true,
+    "createdAt": {
+      "$date": "2026-11-03T19:36:38.638Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:38.638Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37c921b49793625a8412"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80da"
+    },
+    "orderId": {
+      "$oid": "6aea37b121b49793625a82f0"
+    },
+    "reviewerId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "revieweeId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "revieweeRole": "seeker",
+    "rating": 5,
+    "comment": "Hyggelig kunde, alt var klart da vi kom.",
+    "photos": [],
+    "recommendWorker": false,
+    "createdAt": {
+      "$date": "2026-11-03T19:36:41.909Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:41.909Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37e121b49793625a8617"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8085"
+    },
+    "orderId": {
+      "$oid": "6aea37cc21b49793625a84a2"
+    },
+    "reviewerId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "revieweeId": {
+      "$oid": "6aea3742f112ab8acd7e9b6f"
+    },
+    "revieweeRole": "poster",
+    "rating": 5,
+    "comment": "Leiligheten var skinnende til visning. Grundig og blid.",
+    "photos": [],
+    "recommendWorker": true,
+    "createdAt": {
+      "$date": "2026-11-03T19:37:05.440Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:05.440Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37e421b49793625a8657"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8085"
+    },
+    "orderId": {
+      "$oid": "6aea37cc21b49793625a84a2"
+    },
+    "reviewerId": {
+      "$oid": "6aea3742f112ab8acd7e9b6f"
+    },
+    "revieweeId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "revieweeRole": "seeker",
+    "rating": 5,
+    "comment": "Ryddig leilighet og god kommunikasjon.",
+    "photos": [],
+    "recommendWorker": false,
+    "createdAt": {
+      "$date": "2026-11-03T19:37:08.748Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:08.748Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37f321b49793625a878a"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8166"
+    },
+    "orderId": {
+      "$oid": "6aea37e621b49793625a86ba"
+    },
+    "reviewerId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "revieweeId": {
+      "$oid": "6aea3744f112ab8acd7e9bb4"
+    },
+    "revieweeRole": "poster",
+    "rating": 4,
+    "comment": "Fikk byttet begge raskt. Kom 20 min for sent, men sa ifra.",
+    "photos": [],
+    "recommendWorker": true,
+    "createdAt": {
+      "$date": "2026-11-03T19:37:23.147Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:23.147Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37f621b49793625a87ca"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8166"
+    },
+    "orderId": {
+      "$oid": "6aea37e621b49793625a86ba"
+    },
+    "reviewerId": {
+      "$oid": "6aea3744f112ab8acd7e9bb4"
+    },
+    "revieweeId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "revieweeRole": "seeker",
+    "rating": 5,
+    "comment": "Grei kunde, betalte med en gang.",
+    "photos": [],
+    "recommendWorker": false,
+    "createdAt": {
+      "$date": "2026-11-03T19:37:26.287Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:26.287Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea380221b49793625a8900"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8102"
+    },
+    "orderId": {
+      "$oid": "6aea37f721b49793625a882e"
+    },
+    "reviewerId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "revieweeId": {
+      "$oid": "6aea3743f112ab8acd7e9ba6"
+    },
+    "revieweeRole": "poster",
+    "rating": 5,
+    "comment": "Rask og effektiv. Hagen ser bedre ut enn før stormen.",
+    "photos": [],
+    "recommendWorker": true,
+    "createdAt": {
+      "$date": "2026-11-03T19:37:38.913Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:38.913Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea380621b49793625a8940"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8102"
+    },
+    "orderId": {
+      "$oid": "6aea37f721b49793625a882e"
+    },
+    "reviewerId": {
+      "$oid": "6aea3743f112ab8acd7e9ba6"
+    },
+    "revieweeId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "revieweeRole": "seeker",
+    "rating": 5,
+    "comment": "Takk for kaffen!",
+    "photos": [],
+    "recommendWorker": false,
+    "createdAt": {
+      "$date": "2026-11-03T19:37:42.109Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:42.109Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea381221b49793625a8a8a"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80bc"
+    },
+    "orderId": {
+      "$oid": "6aea380821b49793625a89bd"
+    },
+    "reviewerId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "revieweeId": {
+      "$oid": "6aea3747f112ab8acd7e9bec"
+    },
+    "revieweeRole": "poster",
+    "rating": 5,
+    "comment": "Profesjonelt fra start til slutt. Ryddet etter seg og holdt tiden.",
+    "photos": [],
+    "recommendWorker": true,
+    "createdAt": {
+      "$date": "2026-11-03T19:37:54.299Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:54.299Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea381521b49793625a8aca"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80bc"
+    },
+    "orderId": {
+      "$oid": "6aea380821b49793625a89bd"
+    },
+    "reviewerId": {
+      "$oid": "6aea3747f112ab8acd7e9bec"
+    },
+    "revieweeId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "revieweeRole": "seeker",
+    "rating": 5,
+    "comment": "Ryddig og forberedt kunde.",
+    "photos": [],
+    "recommendWorker": false,
+    "createdAt": {
+      "$date": "2026-11-03T19:37:57.510Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:57.510Z"
+    },
+    "__v": 0
+  }
+]
