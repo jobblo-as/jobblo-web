@@ -55,3 +55,33 @@ export type Jobs = {
     updatedAt: string;
   }[];
 };
+
+/** The stored `equipment` values in words (same labels as the app, jobblo-app/src/types/Jobs.ts). */
+export const EQUIPMENT_LABELS: Record<Jobs['equipment'], string> = {
+  utstyrfri: 'Ingen utstyr nødvendig',
+  'delvis utstyr': 'Noe utstyr trengs',
+  'trengs utstyr': 'Utstyr må medbringes',
+};
+
+/** Label for a stored equipment value; an unknown value is shown as is, a missing one as null. */
+export const equipmentLabel = (value?: string | null): string | null =>
+  value ? (EQUIPMENT_LABELS as Record<string, string>)[value] || value : null;
+
+const DURATION_UNITS: Record<string, [string, string]> = {
+  minutes: ['minutt', 'minutter'],
+  minutter: ['minutt', 'minutter'],
+  hours: ['time', 'timer'],
+  timer: ['time', 'timer'],
+  days: ['dag', 'dager'],
+  dager: ['dag', 'dager'],
+};
+
+/**
+ * "3 timer", "1 dag". The job page printed the stored unit, so listings read "3 hours".
+ * The schema also accepts the Norwegian unit names, and an unset unit means hours (its default).
+ */
+export function formatDuration(duration?: { value?: number; unit?: string } | null): string | null {
+  if (!duration?.value) return null;
+  const [one, many] = DURATION_UNITS[duration.unit || 'hours'] ?? DURATION_UNITS.hours;
+  return `${duration.value} ${duration.value === 1 ? one : many}`;
+}

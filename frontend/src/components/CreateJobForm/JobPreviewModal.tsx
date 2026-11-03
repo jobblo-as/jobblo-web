@@ -1,6 +1,8 @@
 import React, { useState, lazy, Suspense } from 'react';
 import { ChevronLeft, X, MapPin, Star, Bookmark, Zap, Share2 } from 'lucide-react';
 import { dateFormatter } from '../../utils/dateFormatter';
+import { formatDuration } from '../../types/Jobs';
+import { jobImage } from '../../assets/images/categories';
 const MapComponent = lazy(() =>
   import('../component/map/MapComponent').then((module) => ({
     default: module.MapComponent,
@@ -97,8 +99,12 @@ export const JobPreviewModal: React.FC<JobPreviewModalProps> = ({
                   className="w-full max-h-125 h-full object-contain"
                 />
               ) : (
-                <div className="w-full h-96 bg-gray-200 flex items-center justify-center">
-                  <span className="text-gray-400">Ingen bilde</span>
+                // What visitors will see: the category photo, as on the job page.
+                <div className="relative h-96 w-full">
+                  <img src={jobImage(job)} alt="" className="size-full object-cover" />
+                  <span className="absolute bottom-3 right-3 rounded-full bg-black/60 px-2.5 py-1 text-[0.6875rem] font-semibold text-white">
+                    Illustrasjonsbilde
+                  </span>
                 </div>
               )}
 
@@ -173,7 +179,7 @@ export const JobPreviewModal: React.FC<JobPreviewModalProps> = ({
                 </div>
               </div>
               <p className="text-sm text-gray-500">
-                Varighet: {job.duration?.value || '-'} {job.duration?.unit || ''}
+                Varighet: {formatDuration(job.duration) || '-'}
               </p>
             </div>
 
