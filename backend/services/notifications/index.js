@@ -30,7 +30,7 @@ const Notification = require('../../models/Notification');
 
 const { userRooms } = require('../../sockets/rooms');
 const { getIO } = require('../../sockets/io');
-const { sendPushToUser } = require('../pushNotifications');
+const { sendPushToUser, deliverPushToAll } = require('../pushNotifications');
 
 /**
  * The notification catalogue.
@@ -202,6 +202,7 @@ async function notify(input = {}) {
     data,
     channelId,
     priority,
+    imageUrl,
   } = input;
 
   try {
@@ -247,6 +248,7 @@ async function notify(input = {}) {
       data: pushData({ type, event, payload, requestId, orderId, data }),
       ...(channelId ? { channelId } : {}),
       ...(priority ? { priority } : {}),
+      ...(imageUrl ? { imageUrl } : {}),
     });
 
     return populated;
@@ -274,6 +276,14 @@ async function broadcast({ type, content }) {
     }
     const created = await Notification.create({ type, content, isSystem: true, userId: null });
     if (io) io.emit('new_notification', { ...created.toObject(), urgent: TYPES[type].urgent });
+    // Phones that are closed get it too; on Android in the quieter "Varsler" channel.
+    void deliverPushToAll({
+      title: PUSH_TITLES[type],
+      body: content,
+      data: { type: 'system' },
+      channelId: 'general',
+      priority: TYPES[type].urgent ? 'high' : 'normal',
+    }).catch((err) => console.error('broadcast push failed:', err.message));
     return created;
   } catch (err) {
     console.error('broadcast failed [type=%s]: %s', type, err.message);

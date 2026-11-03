@@ -4,6 +4,9 @@ const { logDelivery } = require('./monitoring/deliveryLog');
 
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 
+/** Only a public https URL: FCM and Expo fetch it from the phone. */
+const pushImage = (url) => (typeof url === 'string' && url.startsWith('https://') ? url : undefined);
+
 function stringData(data) {
   return Object.fromEntries(Object.entries(data || {}).map(([key, value]) => [key, String(value)]));
 }
@@ -15,6 +18,7 @@ async function sendFcm(tokens, message) {
     notification: {
       title: String(message.title || ''),
       body: String(message.body || ''),
+      ...(pushImage(message.imageUrl) ? { imageUrl: pushImage(message.imageUrl) } : {}),
     },
     data: stringData(message.data),
     android: {
@@ -66,6 +70,9 @@ async function sendExpo(tokens, message) {
         data: stringData(message.data),
         sound: 'default',
         priority: message.priority === 'normal' ? 'normal' : 'high',
+        // ponytail: iOS shows this only with a notification service extension, which the app
+        // does not have yet; until then iOS shows the text alone.
+        ...(pushImage(message.imageUrl) ? { richContent: { image: pushImage(message.imageUrl) } } : {}),
       }))
     ),
   });
@@ -162,4 +169,51 @@ async function sendPushToUser(userId, message) {
   return require('./queue').enqueue('push', 'send', { userId: String(userId), message });
 }
 
-module.exports = { sendPushToUser, deliverPush };
+/**
+ * An admin broadcast ("Send varsel til alle"): every active device, in provider-sized batches
+ * (FCM 500 per multicast, Expo 100 per request). Runs in the background and is not retried:
+ * a retry would send the batches that got through a second time.
+ * ponytail: one process walks every token; move to the queue in chunks if devices reach ~100k.
+ */
+async function deliverPushToAll(message) {
+  const started = Date.now();
+  let accepted = 0;
+  let rejected = 0;
+  const invalid = [];
+  const batches = { fcm: [], expo: [] };
+  const flush = async (provider) => {
+    const tokens = batches[provider].splice(0);
+    if (!tokens.length) return;
+    try {
+      const r = await (provider === 'expo' ? sendExpo : sendFcm)(tokens, message);
+      accepted += r.accepted;
+      rejected += r.rejected;
+      invalid.push(...r.invalid);
+    } catch (error) {
+      rejected += tokens.length;
+      console.error(`${provider.toUpperCase()} broadcast batch failed:`, error.message);
+    }
+  };
+  const cursor = PushToken.find({ active: true }).select('token provider').lean().cursor();
+  for await (const { token, provider } of cursor) {
+    const p = provider === 'expo' ? 'expo' : 'fcm';
+    batches[p].push(token);
+    if (batches[p].length >= (p === 'expo' ? 100 : 500)) await flush(p);
+  }
+  await flush('fcm');
+  await flush('expo');
+  if (invalid.length)
+    await PushToken.updateMany({ token: { $in: invalid } }, { $set: { active: false } });
+  logDelivery({
+    channel: 'push',
+    template: `broadcast: ${String(message?.title || '').slice(0, 180)}`,
+    userId: null,
+    latencyMs: Date.now() - started,
+    status: !rejected ? 'sent' : accepted ? 'partial' : 'failed',
+    accepted,
+    rejected,
+  });
+  return { accepted, rejected };
+}
+
+module.exports = { sendPushToUser, deliverPush, deliverPushToAll };

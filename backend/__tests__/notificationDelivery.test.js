@@ -6,7 +6,13 @@ jest.mock('../models/Notification', () => ({
   countDocuments: jest.fn(),
 }));
 
+jest.mock('../services/pushNotifications', () => ({
+  sendPushToUser: jest.fn(async () => undefined),
+  deliverPushToAll: jest.fn(async () => ({ accepted: 0, rejected: 0 })),
+}));
+
 const Notification = require('../models/Notification');
+const { deliverPushToAll } = require('../services/pushNotifications');
 const { setIO } = require('../sockets/io');
 const { userRooms, joinUserRooms } = require('../sockets/rooms');
 const { notify, broadcast, emitToUser } = require('../services/notifications');
@@ -190,6 +196,19 @@ describe('broadcast', () => {
 
     expect(io.emit).toHaveBeenCalledTimes(1);
     expect(emits[0].rooms).toEqual([]);
+  });
+
+  it('is pushed to every device too, in the quieter "Varsler" channel', async () => {
+    setIO(mockIO().io);
+    Notification.create.mockResolvedValue(mockCreated({ userId: null, isSystem: true }));
+    await broadcast({ type: 'system_update', content: 'Ny versjon av appen er ute' });
+    expect(deliverPushToAll).toHaveBeenCalledWith({
+      title: 'Jobblo',
+      body: 'Ny versjon av appen er ute',
+      data: { type: 'system' },
+      channelId: 'general',
+      priority: 'normal',
+    });
   });
 });
 

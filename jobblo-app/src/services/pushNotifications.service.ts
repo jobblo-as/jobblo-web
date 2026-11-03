@@ -62,6 +62,12 @@ async function fetchPushToken(notifications: NotificationModule) {
   return (await notifications.getExpoPushTokenAsync({ projectId: extra?.eas?.projectId })).data;
 }
 
+/** The chat on screen right now: its own messages arrive there, so no banner for them. */
+let activeChatId: string | null = null;
+export function setActiveChat(chatId: string | null) {
+  activeChatId = chatId;
+}
+
 export function configurePushNotifications() {
   if (notificationBootstrapPromise) return notificationBootstrapPromise;
   notificationBootstrapPromise = (async () => {
@@ -70,12 +76,17 @@ export function configurePushNotifications() {
     if (!notifications) return false;
 
     notifications.setNotificationHandler({
-      handleNotification: async () => ({
-        shouldShowBanner: true,
-        shouldShowList: true,
-        shouldPlaySound: true,
-        shouldSetBadge: false,
-      }),
+      handleNotification: async (notification) => {
+        const data = notification.request.content.data as PushNotificationData | undefined;
+        const onScreen =
+          data?.type === 'chat_message' && Boolean(data.chatId) && data.chatId === activeChatId;
+        return {
+          shouldShowBanner: !onScreen,
+          shouldShowList: !onScreen,
+          shouldPlaySound: !onScreen,
+          shouldSetBadge: false,
+        };
+      },
     });
 
     if (Platform.OS === 'android') {
@@ -85,6 +96,11 @@ export function configurePushNotifications() {
         // No `sound`: expo-notifications reads it as a bundled file name, so 'default' failed
         // with "Custom sound 'default' not found". Left out, the channel uses the system sound.
         enableVibrate: true,
+      });
+      // Admin updates and news to everyone (backend broadcast, channelId 'general'): quieter.
+      await notifications.setNotificationChannelAsync('general', {
+        name: 'Varsler',
+        importance: 3,
       });
     }
     return true;
