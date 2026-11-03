@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const reviewController = require('../controllers/reviewController');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, optionalAuthenticate } = require('../middleware/auth');
 
 /**
  * @swagger
@@ -123,7 +123,8 @@ router.post('/services/:id/reviews', authenticate, reviewController.createReview
  */
 router.post('/reviews', authenticate, reviewController.createReview);
 router.put('/reviews/:id', authenticate, reviewController.updateReview);
-router.get('/users/:userId/reviews', authenticate, reviewController.getUserReviews);
+// Public, like the profile it is shown on (reviewer name/avatar, job title, rating, comment).
+router.get('/users/:userId/reviews', optionalAuthenticate, reviewController.getUserReviews);
 // (F-34) Both of these were missing `authenticate`, unlike every neighbouring route.
 router.get('/orders/:orderId/review', authenticate, reviewController.getReviewByOrderId);
 router.get('/reviews', authenticate, reviewController.getAllReviews);

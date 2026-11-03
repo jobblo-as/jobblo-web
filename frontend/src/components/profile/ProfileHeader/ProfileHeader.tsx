@@ -389,6 +389,8 @@ export function ProfileHeader({
                 </div>
               </>
             ) : (
+              // A visitor who is not logged in has nobody to block for.
+              currentUser &&
               !isBlockedByMe && (
                 <button
                   type="button"
