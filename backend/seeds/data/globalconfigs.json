@@ -1,0 +1,155 @@
+[
+  {
+    "_id": {
+      "$oid": "6a0c9f9ff1c720558fcf3677"
+    },
+    "key": "FREE_PRIVATE_JOBS_UNDER_10000",
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-05-19T17:36:31.026Z"
+    },
+    "updatedAt": {
+      "$date": "2026-09-04T15:05:53.549Z"
+    },
+    "updatedBy": {
+      "$oid": "697bbedac2291f5546bf7a3c"
+    },
+    "value": false
+  },
+  {
+    "_id": {
+      "$oid": "6a0ca1d2f1c720558fcf3678"
+    },
+    "key": "SHOW_ADS_NON_SUBSCRIBERS",
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-05-19T17:45:54.214Z"
+    },
+    "updatedAt": {
+      "$date": "2026-08-04T15:02:29.685Z"
+    },
+    "updatedBy": {
+      "$oid": "697bbedac2291f5546bf7a3c"
+    },
+    "value": true
+  },
+  {
+    "_id": {
+      "$oid": "6a590f5349841953afd47765"
+    },
+    "key": "maintenance_mode",
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-07-16T17:05:23.809Z"
+    },
+    "updatedAt": {
+      "$date": "2026-08-04T15:01:44.583Z"
+    },
+    "value": false
+  },
+  {
+    "_id": {
+      "$oid": "6a71fe96e1c9e4b9859b5ef0"
+    },
+    "key": "ADS_FOR_NON_SUBSCRIBERS",
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-08-04T15:00:38.487Z"
+    },
+    "description": "Enable ads for non-subscribers",
+    "updatedAt": {
+      "$date": "2026-08-04T15:21:06.053Z"
+    },
+    "value": true
+  },
+  {
+    "_id": {
+      "$oid": "6a71fe96e1c9e4b9859b5ef1"
+    },
+    "key": "STRIPE_TEST_MODE",
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-08-04T15:00:38.525Z"
+    },
+    "description": "Use Stripe test keys (STRIPE_TEST_SECRET_KEY) instead of live keys. Enable only for testing.",
+    "updatedAt": {
+      "$date": "2026-08-06T14:52:05.900Z"
+    },
+    "value": true
+  },
+  {
+    "_id": {
+      "$oid": "6ace4892512b885ee6a699b0"
+    },
+    "key": "SAFEPAY_CONNECT_ONBOARDING_DEADLINE_DAYS",
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-13T15:04:50.733Z"
+    },
+    "description": "Provider Stripe Connect onboarding deadline in 24-hour days",
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:34.390Z"
+    },
+    "value": 1
+  },
+  {
+    "_id": {
+      "$oid": "6ad7c707babdb54c74ffbd0f"
+    },
+    "key": "SAFEPAY_NO_START_REFUND_FEE_POLICY",
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-20T19:54:47.666Z"
+    },
+    "description": "Client-approved: refund the full customer charge incl. the 3% SafePay fee",
+    "updatedAt": {
+      "$date": "2026-10-21T13:53:18.691Z"
+    },
+    "value": "full_charge"
+  },
+  {
+    "_id": {
+      "$oid": "6ad8c3a9babdb54c74ffbd10"
+    },
+    "key": "SAFEPAY_NO_START_REFUND_DEADLINE_DAYS",
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-21T13:52:41.552Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-21T13:53:18.655Z"
+    },
+    "value": 3
+  },
+  {
+    "_id": {
+      "$oid": "6ad8c3a9babdb54c74ffbd11"
+    },
+    "key": "SAFEPAY_NO_START_REFUND_ENABLED",
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-21T13:52:41.621Z"
+    },
+    "updatedAt": {
+      "$date": "2026-10-21T14:18:32.903Z"
+    },
+    "value": false
+  },
+  {
+    "_id": {
+      "$oid": "6adba0f2babdb54c74ffbd3f"
+    },
+    "key": "devdash_alert_thresholds",
+    "__v": 0,
+    "createdAt": {
+      "$date": "2026-10-23T18:01:22.884Z"
+    },
+    "description": "Developer dashboard alert thresholds",
+    "updatedAt": {
+      "$date": "2026-10-23T18:01:22.914Z"
+    },
+    "value": {
+      "apiP95Ms": 2000
+    }
+  }
+]

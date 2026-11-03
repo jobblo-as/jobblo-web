@@ -1,0 +1,18 @@
+[
+  {
+    "_id": {
+      "$oid": "6a6a0fbdc88ea830bf135583"
+    },
+    "mediaUrl": "https://res.cloudinary.com/dv0zorcek/image/upload/v1785335728/home_hero/k1hqtcro3jrfeu6stde5.png",
+    "mediaPublicId": "home_hero/k1hqtcro3jrfeu6stde5",
+    "mediaType": "image",
+    "isActive": true,
+    "createdAt": {
+      "$date": "2026-07-29T14:35:41.664Z"
+    },
+    "updatedAt": {
+      "$date": "2026-07-29T14:35:41.664Z"
+    },
+    "__v": 0
+  }
+]

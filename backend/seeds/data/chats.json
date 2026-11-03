@@ -1,0 +1,3517 @@
+[
+  {
+    "_id": {
+      "$oid": "6aea37ae21b49793625a825d"
+    },
+    "clientId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "providerId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80da"
+    },
+    "status": "completed",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3741f112ab8acd7e9b61"
+        },
+        "text": "Hei! Student med god tid og sterk rygg. Kan komme når det passer deg.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3741f112ab8acd7e9b61"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:36:14.895Z"
+        },
+        "_id": {
+          "$oid": "6aea37ae21b49793625a825e"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Bære sofa ned fra 3. etasje\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea37ae21b49793625a8256"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:36:14.895Z"
+        },
+        "_id": {
+          "$oid": "6aea37ae21b49793625a825f"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea3741f112ab8acd7e9b61"
+        },
+        "text": "Hei! Jeg kan komme lørdag kl. 10. Er det greit?",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3741f112ab8acd7e9b61"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:36:16.698Z"
+        },
+        "_id": {
+          "$oid": "6aea37b021b49793625a82b7"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea373bf112ab8acd7e9af2"
+        },
+        "text": "Perfekt, ringeklokke Solberg. Sofaen er ganske tung.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea373bf112ab8acd7e9af2"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:36:16.715Z"
+        },
+        "_id": {
+          "$oid": "6aea37b021b49793625a82c3"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea3741f112ab8acd7e9b61"
+        },
+        "text": "Ingen problem, jeg tar med en kompis.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3741f112ab8acd7e9b61"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:36:16.741Z"
+        },
+        "_id": {
+          "$oid": "6aea37b021b49793625a82d5"
+        }
+      },
+      {
+        "text": "Kontrakt er opprettet!",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_contract",
+        "systemData": {
+          "orderId": {
+            "$oid": "6aea37b121b49793625a82f0"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:36:17.446Z"
+        },
+        "_id": {
+          "$oid": "6aea37b121b49793625a82fc"
+        }
+      },
+      {
+        "text": "Betaling på 800 kr er bekreftet og holdes i SafePay",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_payment",
+        "systemData": {
+          "orderId": {
+            "$oid": "6aea37b121b49793625a82f0"
+          },
+          "amount": 800
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:36:37.620Z"
+        },
+        "_id": {
+          "$oid": "6aea37c521b49793625a833f"
+        }
+      },
+      {
+        "text": "Utfører har startet oppdraget",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "job_started",
+          "orderId": {
+            "$oid": "6aea37b121b49793625a82f0"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:36:38.519Z"
+        },
+        "_id": {
+          "$oid": "6aea37c621b49793625a837c"
+        }
+      },
+      {
+        "text": "Utfører melder jobben som ferdig",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "ready_for_review",
+          "orderId": {
+            "$oid": "6aea37b121b49793625a82f0"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:36:38.557Z"
+        },
+        "_id": {
+          "$oid": "6aea37c621b49793625a83a1"
+        }
+      },
+      {
+        "text": "Jobb godkjent av oppdragsgiver — utbetaling klar",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "work_approved",
+          "orderId": {
+            "$oid": "6aea37b121b49793625a82f0"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:36:38.620Z"
+        },
+        "_id": {
+          "$oid": "6aea37c621b49793625a83cc"
+        }
+      }
+    ],
+    "lastMessage": "Ingen problem, jeg tar med en kompis.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:14.898Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:38.622Z"
+    },
+    "__v": 5,
+    "agreedPrice": 800,
+    "orderId": {
+      "$oid": "6aea37b121b49793625a82f0"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6aea37af21b49793625a827b"
+    },
+    "clientId": {
+      "$oid": "6aea3745f112ab8acd7e9bd0"
+    },
+    "providerId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80da"
+    },
+    "status": "requested",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3745f112ab8acd7e9bd0"
+        },
+        "text": "Hei, jeg har tilhenger og stropper. Kan ta dette i helgen.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3745f112ab8acd7e9bd0"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:36:15.801Z"
+        },
+        "_id": {
+          "$oid": "6aea37af21b49793625a827c"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Bære sofa ned fra 3. etasje\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea37af21b49793625a8274"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:36:15.801Z"
+        },
+        "_id": {
+          "$oid": "6aea37af21b49793625a827d"
+        }
+      }
+    ],
+    "lastMessage": "Hei, jeg har tilhenger og stropper. Kan ta dette i helgen.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:15.803Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:15.803Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37ca21b49793625a8429"
+    },
+    "clientId": {
+      "$oid": "6aea3742f112ab8acd7e9b6f"
+    },
+    "providerId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8085"
+    },
+    "status": "completed",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3742f112ab8acd7e9b6f"
+        },
+        "text": "Hei, jeg har lang erfaring med vask og tar med eget utstyr.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3742f112ab8acd7e9b6f"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:36:42.584Z"
+        },
+        "_id": {
+          "$oid": "6aea37ca21b49793625a842a"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Vask av 2-roms før visning\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea37ca21b49793625a8422"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:36:42.584Z"
+        },
+        "_id": {
+          "$oid": "6aea37ca21b49793625a842b"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea3742f112ab8acd7e9b6f"
+        },
+        "text": "Hei Ingrid, jeg har tid onsdag formiddag. Har du vaskemidler, eller skal jeg ta med?",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3742f112ab8acd7e9b6f"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:36:43.606Z"
+        },
+        "_id": {
+          "$oid": "6aea37cb21b49793625a8469"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea373bf112ab8acd7e9af2"
+        },
+        "text": "Ta gjerne med det du liker å bruke, så betaler jeg 100 ekstra.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea373bf112ab8acd7e9af2"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:36:43.640Z"
+        },
+        "_id": {
+          "$oid": "6aea37cb21b49793625a8476"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea3742f112ab8acd7e9b6f"
+        },
+        "text": "Avtale!",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3742f112ab8acd7e9b6f"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:36:43.714Z"
+        },
+        "_id": {
+          "$oid": "6aea37cb21b49793625a8488"
+        }
+      },
+      {
+        "text": "Kontrakt er opprettet!",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_contract",
+        "systemData": {
+          "orderId": {
+            "$oid": "6aea37cc21b49793625a84a2"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:36:44.548Z"
+        },
+        "_id": {
+          "$oid": "6aea37cc21b49793625a84ae"
+        }
+      },
+      {
+        "text": "Betaling på 1400 kr er bekreftet og holdes i SafePay",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_payment",
+        "systemData": {
+          "orderId": {
+            "$oid": "6aea37cc21b49793625a84a2"
+          },
+          "amount": 1400
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:37:04.165Z"
+        },
+        "_id": {
+          "$oid": "6aea37e021b49793625a8584"
+        }
+      },
+      {
+        "text": "Utfører har startet oppdraget",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "job_started",
+          "orderId": {
+            "$oid": "6aea37cc21b49793625a84a2"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:37:05.030Z"
+        },
+        "_id": {
+          "$oid": "6aea37e121b49793625a85c1"
+        }
+      },
+      {
+        "text": "Utfører melder jobben som ferdig",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "ready_for_review",
+          "orderId": {
+            "$oid": "6aea37cc21b49793625a84a2"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:37:05.210Z"
+        },
+        "_id": {
+          "$oid": "6aea37e121b49793625a85e6"
+        }
+      },
+      {
+        "text": "Jobb godkjent av oppdragsgiver — utbetaling klar",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "work_approved",
+          "orderId": {
+            "$oid": "6aea37cc21b49793625a84a2"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:37:05.343Z"
+        },
+        "_id": {
+          "$oid": "6aea37e121b49793625a8611"
+        }
+      }
+    ],
+    "lastMessage": "Avtale!",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:42.586Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:05.345Z"
+    },
+    "__v": 5,
+    "agreedPrice": 1400,
+    "orderId": {
+      "$oid": "6aea37cc21b49793625a84a2"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6aea37cb21b49793625a8446"
+    },
+    "clientId": {
+      "$oid": "6aea3747f112ab8acd7e9bfa"
+    },
+    "providerId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8085"
+    },
+    "status": "requested",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3747f112ab8acd7e9bfa"
+        },
+        "text": "Hei, Skinnende Renhold her. Vi kan ta jobben med garanti.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3747f112ab8acd7e9bfa"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:36:43.314Z"
+        },
+        "_id": {
+          "$oid": "6aea37cb21b49793625a8447"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Vask av 2-roms før visning\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea37cb21b49793625a843f"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:36:43.314Z"
+        },
+        "_id": {
+          "$oid": "6aea37cb21b49793625a8448"
+        }
+      }
+    ],
+    "lastMessage": "Hei, Skinnende Renhold her. Vi kan ta jobben med garanti.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:36:43.316Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:43.316Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea37e521b49793625a866e"
+    },
+    "clientId": {
+      "$oid": "6aea3744f112ab8acd7e9bb4"
+    },
+    "providerId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8166"
+    },
+    "status": "completed",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3744f112ab8acd7e9bb4"
+        },
+        "text": "Hei! Jobber på verksted og har alt utstyret som trengs.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3744f112ab8acd7e9bb4"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:37:09.482Z"
+        },
+        "_id": {
+          "$oid": "6aea37e521b49793625a866f"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Hjulskift på to biler\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea37e521b49793625a8667"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:37:09.482Z"
+        },
+        "_id": {
+          "$oid": "6aea37e521b49793625a8670"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea3744f112ab8acd7e9bb4"
+        },
+        "text": "Hei! Jeg tar med momentnøkkel. Passer torsdag kl. 18?",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3744f112ab8acd7e9bb4"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:37:09.640Z"
+        },
+        "_id": {
+          "$oid": "6aea37e521b49793625a8692"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea373cf112ab8acd7e9afe"
+        },
+        "text": "Torsdag 18 passer bra.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea373cf112ab8acd7e9afe"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:37:09.684Z"
+        },
+        "_id": {
+          "$oid": "6aea37e521b49793625a869f"
+        }
+      },
+      {
+        "text": "Kontrakt er opprettet!",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_contract",
+        "systemData": {
+          "orderId": {
+            "$oid": "6aea37e621b49793625a86ba"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:37:10.475Z"
+        },
+        "_id": {
+          "$oid": "6aea37e621b49793625a86c5"
+        }
+      },
+      {
+        "text": "Betaling på 1200 kr er bekreftet og holdes i SafePay",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_payment",
+        "systemData": {
+          "orderId": {
+            "$oid": "6aea37e621b49793625a86ba"
+          },
+          "amount": 1200
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:37:22.349Z"
+        },
+        "_id": {
+          "$oid": "6aea37f221b49793625a86f9"
+        }
+      },
+      {
+        "text": "Utfører har startet oppdraget",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "job_started",
+          "orderId": {
+            "$oid": "6aea37e621b49793625a86ba"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:37:23.047Z"
+        },
+        "_id": {
+          "$oid": "6aea37f321b49793625a8736"
+        }
+      },
+      {
+        "text": "Utfører melder jobben som ferdig",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "ready_for_review",
+          "orderId": {
+            "$oid": "6aea37e621b49793625a86ba"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:37:23.088Z"
+        },
+        "_id": {
+          "$oid": "6aea37f321b49793625a875a"
+        }
+      },
+      {
+        "text": "Jobb godkjent av oppdragsgiver — utbetaling klar",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "work_approved",
+          "orderId": {
+            "$oid": "6aea37e621b49793625a86ba"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:37:23.131Z"
+        },
+        "_id": {
+          "$oid": "6aea37f321b49793625a8784"
+        }
+      }
+    ],
+    "lastMessage": "Torsdag 18 passer bra.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:09.484Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:23.132Z"
+    },
+    "__v": 5,
+    "agreedPrice": 1200,
+    "orderId": {
+      "$oid": "6aea37e621b49793625a86ba"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6aea37f721b49793625a87e2"
+    },
+    "clientId": {
+      "$oid": "6aea3743f112ab8acd7e9ba6"
+    },
+    "providerId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8102"
+    },
+    "status": "completed",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3743f112ab8acd7e9ba6"
+        },
+        "text": "Hei, jeg bor i nærheten og kan komme på kort varsel.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3743f112ab8acd7e9ba6"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:37:27.143Z"
+        },
+        "_id": {
+          "$oid": "6aea37f721b49793625a87e3"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Rydde hage etter storm\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea37f721b49793625a87db"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:37:27.143Z"
+        },
+        "_id": {
+          "$oid": "6aea37f721b49793625a87e4"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea3743f112ab8acd7e9ba6"
+        },
+        "text": "Hei Sofie! Jeg bor i Fana og kan komme lørdag.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3743f112ab8acd7e9ba6"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:37:27.198Z"
+        },
+        "_id": {
+          "$oid": "6aea37f721b49793625a8806"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea373ef112ab8acd7e9b29"
+        },
+        "text": "Supert, takk!",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea373ef112ab8acd7e9b29"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:37:27.209Z"
+        },
+        "_id": {
+          "$oid": "6aea37f721b49793625a8812"
+        }
+      },
+      {
+        "text": "Kontrakt er opprettet!",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_contract",
+        "systemData": {
+          "orderId": {
+            "$oid": "6aea37f721b49793625a882e"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:37:27.951Z"
+        },
+        "_id": {
+          "$oid": "6aea37f721b49793625a8839"
+        }
+      },
+      {
+        "text": "Betaling på 300 kr er bekreftet og holdes i SafePay",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_payment",
+        "systemData": {
+          "orderId": {
+            "$oid": "6aea37f721b49793625a882e"
+          },
+          "amount": 300
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:37:38.095Z"
+        },
+        "_id": {
+          "$oid": "6aea380221b49793625a8870"
+        }
+      },
+      {
+        "text": "Utfører har startet oppdraget",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "job_started",
+          "orderId": {
+            "$oid": "6aea37f721b49793625a882e"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:37:38.825Z"
+        },
+        "_id": {
+          "$oid": "6aea380221b49793625a88ac"
+        }
+      },
+      {
+        "text": "Utfører melder jobben som ferdig",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "ready_for_review",
+          "orderId": {
+            "$oid": "6aea37f721b49793625a882e"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:37:38.856Z"
+        },
+        "_id": {
+          "$oid": "6aea380221b49793625a88d0"
+        }
+      },
+      {
+        "text": "Jobb godkjent av oppdragsgiver — utbetaling klar",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "work_approved",
+          "orderId": {
+            "$oid": "6aea37f721b49793625a882e"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:37:38.897Z"
+        },
+        "_id": {
+          "$oid": "6aea380221b49793625a88fa"
+        }
+      }
+    ],
+    "lastMessage": "Supert, takk!",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:27.143Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:38.898Z"
+    },
+    "__v": 5,
+    "agreedPrice": 300,
+    "orderId": {
+      "$oid": "6aea37f721b49793625a882e"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6aea380621b49793625a8958"
+    },
+    "clientId": {
+      "$oid": "6aea3747f112ab8acd7e9bec"
+    },
+    "providerId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80bc"
+    },
+    "status": "completed",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3747f112ab8acd7e9bec"
+        },
+        "text": "Hei! Vi er en malerbedrift med fire ansatte og gir fast pris etter befaring.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3747f112ab8acd7e9bec"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:37:42.743Z"
+        },
+        "_id": {
+          "$oid": "6aea380621b49793625a8959"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Male barnerom\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea380621b49793625a8951"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:37:42.743Z"
+        },
+        "_id": {
+          "$oid": "6aea380621b49793625a895a"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea3747f112ab8acd7e9bec"
+        },
+        "text": "Hei Kristian. Vi kan ta rommet fredag–søndag. Vi dekker til gulv og møbler.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3747f112ab8acd7e9bec"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:37:43.435Z"
+        },
+        "_id": {
+          "$oid": "6aea380721b49793625a8995"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea373cf112ab8acd7e9afe"
+        },
+        "text": "Flott, da sier vi det.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea373cf112ab8acd7e9afe"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:37:43.450Z"
+        },
+        "_id": {
+          "$oid": "6aea380721b49793625a89a3"
+        }
+      },
+      {
+        "text": "Kontrakt er opprettet!",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_contract",
+        "systemData": {
+          "orderId": {
+            "$oid": "6aea380821b49793625a89bd"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:37:44.203Z"
+        },
+        "_id": {
+          "$oid": "6aea380821b49793625a89c8"
+        }
+      },
+      {
+        "text": "Betaling på 4500 kr er bekreftet og holdes i SafePay",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_payment",
+        "systemData": {
+          "orderId": {
+            "$oid": "6aea380821b49793625a89bd"
+          },
+          "amount": 4500
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:37:53.526Z"
+        },
+        "_id": {
+          "$oid": "6aea381121b49793625a89fa"
+        }
+      },
+      {
+        "text": "Utfører har startet oppdraget",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "job_started",
+          "orderId": {
+            "$oid": "6aea380821b49793625a89bd"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:37:54.207Z"
+        },
+        "_id": {
+          "$oid": "6aea381221b49793625a8a36"
+        }
+      },
+      {
+        "text": "Utfører melder jobben som ferdig",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "ready_for_review",
+          "orderId": {
+            "$oid": "6aea380821b49793625a89bd"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:37:54.246Z"
+        },
+        "_id": {
+          "$oid": "6aea381221b49793625a8a5a"
+        }
+      },
+      {
+        "text": "Jobb godkjent av oppdragsgiver — utbetaling klar",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "work_approved",
+          "orderId": {
+            "$oid": "6aea380821b49793625a89bd"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:37:54.284Z"
+        },
+        "_id": {
+          "$oid": "6aea381221b49793625a8a84"
+        }
+      }
+    ],
+    "lastMessage": "Flott, da sier vi det.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:42.743Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:54.285Z"
+    },
+    "__v": 5,
+    "agreedPrice": 4500,
+    "orderId": {
+      "$oid": "6aea380821b49793625a89bd"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6aea381621b49793625a8ae2"
+    },
+    "clientId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "providerId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80e4"
+    },
+    "status": "in_progress",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3741f112ab8acd7e9b61"
+        },
+        "text": "Hei! Student med god tid og sterk rygg. Kan komme når det passer deg.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3741f112ab8acd7e9b61"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:37:58.131Z"
+        },
+        "_id": {
+          "$oid": "6aea381621b49793625a8ae3"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Bærehjelp ved innflytting\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea381621b49793625a8adb"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:37:58.131Z"
+        },
+        "_id": {
+          "$oid": "6aea381621b49793625a8ae4"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea3741f112ab8acd7e9b61"
+        },
+        "text": "Hei Daniel, jeg kan søndag. Hvor mange esker er det?",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3741f112ab8acd7e9b61"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:37:58.873Z"
+        },
+        "_id": {
+          "$oid": "6aea381621b49793625a8b24"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea3740f112ab8acd7e9b53"
+        },
+        "text": "Ca. 40 esker og et par tunge skap.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3740f112ab8acd7e9b53"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:37:58.887Z"
+        },
+        "_id": {
+          "$oid": "6aea381621b49793625a8b30"
+        }
+      },
+      {
+        "text": "Kontrakt er opprettet!",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_contract",
+        "systemData": {
+          "orderId": {
+            "$oid": "6aea381721b49793625a8b4c"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:37:59.687Z"
+        },
+        "_id": {
+          "$oid": "6aea381721b49793625a8b57"
+        }
+      },
+      {
+        "text": "Betaling på 350 kr er bekreftet og holdes i SafePay",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_payment",
+        "systemData": {
+          "orderId": {
+            "$oid": "6aea381721b49793625a8b4c"
+          },
+          "amount": 350
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:08.794Z"
+        },
+        "_id": {
+          "$oid": "6aea382021b49793625a8bef"
+        }
+      },
+      {
+        "text": "Utfører har startet oppdraget",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "job_started",
+          "orderId": {
+            "$oid": "6aea381721b49793625a8b4c"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:09.598Z"
+        },
+        "_id": {
+          "$oid": "6aea382121b49793625a8c2b"
+        }
+      },
+      {
+        "text": "Utfører melder jobben som ferdig",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "ready_for_review",
+          "orderId": {
+            "$oid": "6aea381721b49793625a8b4c"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:09.635Z"
+        },
+        "_id": {
+          "$oid": "6aea382121b49793625a8c4f"
+        }
+      }
+    ],
+    "lastMessage": "Ca. 40 esker og et par tunge skap.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:58.132Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:09.641Z"
+    },
+    "__v": 4,
+    "agreedPrice": 350,
+    "orderId": {
+      "$oid": "6aea381721b49793625a8b4c"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6aea381621b49793625a8b00"
+    },
+    "clientId": {
+      "$oid": "6aea3745f112ab8acd7e9bd0"
+    },
+    "providerId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80e4"
+    },
+    "status": "requested",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3745f112ab8acd7e9bd0"
+        },
+        "text": "Hei, jeg har tilhenger og stropper. Kan ta dette i helgen.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3745f112ab8acd7e9bd0"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:37:58.820Z"
+        },
+        "_id": {
+          "$oid": "6aea381621b49793625a8b01"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Bærehjelp ved innflytting\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea381621b49793625a8af9"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:37:58.820Z"
+        },
+        "_id": {
+          "$oid": "6aea381621b49793625a8b02"
+        }
+      }
+    ],
+    "lastMessage": "Hei, jeg har tilhenger og stropper. Kan ta dette i helgen.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:37:58.820Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:58.820Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea382221b49793625a8c70"
+    },
+    "clientId": {
+      "$oid": "6aea3742f112ab8acd7e9b7d"
+    },
+    "providerId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a812f"
+    },
+    "status": "in_progress",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3742f112ab8acd7e9b7d"
+        },
+        "text": "Hei! Jeg har varebil og kan ta dette denne uka.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3742f112ab8acd7e9b7d"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:10.338Z"
+        },
+        "_id": {
+          "$oid": "6aea382221b49793625a8c71"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Hente sofa fra Finn-kjøp på Majorstuen\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea382221b49793625a8c69"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:10.338Z"
+        },
+        "_id": {
+          "$oid": "6aea382221b49793625a8c72"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea3742f112ab8acd7e9b7d"
+        },
+        "text": "Hei Amina, jeg har varebil og kan hente tirsdag kveld.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3742f112ab8acd7e9b7d"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:11.029Z"
+        },
+        "_id": {
+          "$oid": "6aea382321b49793625a8cb3"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea373cf112ab8acd7e9b0c"
+        },
+        "text": "Tusen takk! Selger heter Per, jeg sender adressen.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea373cf112ab8acd7e9b0c"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:11.040Z"
+        },
+        "_id": {
+          "$oid": "6aea382321b49793625a8cc0"
+        }
+      },
+      {
+        "text": "Kontrakt er opprettet!",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_contract",
+        "systemData": {
+          "orderId": {
+            "$oid": "6aea382321b49793625a8cdb"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:11.854Z"
+        },
+        "_id": {
+          "$oid": "6aea382321b49793625a8ce6"
+        }
+      },
+      {
+        "text": "Betaling på 1000 kr er bekreftet og holdes i SafePay",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_payment",
+        "systemData": {
+          "orderId": {
+            "$oid": "6aea382321b49793625a8cdb"
+          },
+          "amount": 1000
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:21.868Z"
+        },
+        "_id": {
+          "$oid": "6aea382d21b49793625a8d19"
+        }
+      },
+      {
+        "text": "Utfører har startet oppdraget",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "job_started",
+          "orderId": {
+            "$oid": "6aea382321b49793625a8cdb"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:22.588Z"
+        },
+        "_id": {
+          "$oid": "6aea382e21b49793625a8d55"
+        }
+      }
+    ],
+    "lastMessage": "Tusen takk! Selger heter Per, jeg sender adressen.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:10.339Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:22.602Z"
+    },
+    "__v": 3,
+    "agreedPrice": 1000,
+    "orderId": {
+      "$oid": "6aea382321b49793625a8cdb"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6aea382221b49793625a8c8f"
+    },
+    "clientId": {
+      "$oid": "6aea3748f112ab8acd7e9c09"
+    },
+    "providerId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a812f"
+    },
+    "status": "requested",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3748f112ab8acd7e9c09"
+        },
+        "text": "Hei! Vi har bil og folk ledig og kan gi et godt tilbud.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3748f112ab8acd7e9c09"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:10.978Z"
+        },
+        "_id": {
+          "$oid": "6aea382221b49793625a8c90"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Hente sofa fra Finn-kjøp på Majorstuen\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea382221b49793625a8c88"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:10.978Z"
+        },
+        "_id": {
+          "$oid": "6aea382221b49793625a8c91"
+        }
+      }
+    ],
+    "lastMessage": "Hei! Vi har bil og folk ledig og kan gi et godt tilbud.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:10.978Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:10.978Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea382f21b49793625a8d74"
+    },
+    "clientId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "providerId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a814d"
+    },
+    "status": "requested",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3741f112ab8acd7e9b61"
+        },
+        "text": "Hei! Student med god tid og sterk rygg. Kan komme når det passer deg.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3741f112ab8acd7e9b61"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:23.466Z"
+        },
+        "_id": {
+          "$oid": "6aea382f21b49793625a8d75"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Montere PAX-garderobe\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea382f21b49793625a8d6d"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:23.466Z"
+        },
+        "_id": {
+          "$oid": "6aea382f21b49793625a8d76"
+        }
+      }
+    ],
+    "lastMessage": "Hei! Student med god tid og sterk rygg. Kan komme når det passer deg.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:23.468Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:23.468Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea383021b49793625a8da1"
+    },
+    "clientId": {
+      "$oid": "6aea3746f112ab8acd7e9bde"
+    },
+    "providerId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a814d"
+    },
+    "status": "cancelled",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea373cf112ab8acd7e9b0c"
+        },
+        "text": "Forespørsel godkjent! Vi kan nå starte samtalen.",
+        "attachments": [],
+        "seenBy": [],
+        "type": "text",
+        "_id": {
+          "$oid": "6aea383021b49793625a8da2"
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:24.197Z"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea3746f112ab8acd7e9bde"
+        },
+        "text": "Hei! Jeg har satt opp mange PAX-skap. Har slagdrill til betong.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3746f112ab8acd7e9bde"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:24.248Z"
+        },
+        "_id": {
+          "$oid": "6aea383021b49793625a8db2"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea373cf112ab8acd7e9b0c"
+        },
+        "text": "Fint, skapene står i esker i soverommet.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea373cf112ab8acd7e9b0c"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:24.268Z"
+        },
+        "_id": {
+          "$oid": "6aea383021b49793625a8dbf"
+        }
+      },
+      {
+        "text": "Kontrakt er opprettet!",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_contract",
+        "systemData": {
+          "orderId": {
+            "$oid": "6aea383021b49793625a8dda"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:24.986Z"
+        },
+        "_id": {
+          "$oid": "6aea383021b49793625a8de4"
+        }
+      },
+      {
+        "text": "Betaling på 1800 kr er bekreftet og holdes i SafePay",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_payment",
+        "systemData": {
+          "orderId": {
+            "$oid": "6aea383021b49793625a8dda"
+          },
+          "amount": 1800
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:34.416Z"
+        },
+        "_id": {
+          "$oid": "6aea383a21b49793625a8e19"
+        }
+      },
+      {
+        "text": "Oppdraget ble automatisk kansellert fordi det ikke ble startet innen fristen. Full refusjon er registrert.",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "provider_connect_timeout_refunded",
+          "orderId": {
+            "$oid": "6aea383021b49793625a8dda"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:41:34.359Z"
+        },
+        "_id": {
+          "$oid": "6aea38ee21b49793625a94ef"
+        }
+      }
+    ],
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:24.198Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:41:34.379Z"
+    },
+    "__v": 2,
+    "lastMessage": "Fint, skapene står i esker i soverommet.",
+    "agreedPrice": 1800,
+    "orderId": {
+      "$oid": "6aea383021b49793625a8dda"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6aea383b21b49793625a8e52"
+    },
+    "clientId": {
+      "$oid": "6aea377521b49793625a805a"
+    },
+    "providerId": {
+      "$oid": "6aea373ff112ab8acd7e9b45"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80ad"
+    },
+    "status": "contracted",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea377521b49793625a805a"
+        },
+        "text": "Hei, tømrermester her. Vi tar gjerne jobben og har alt verktøy.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea377521b49793625a805a"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:35.099Z"
+        },
+        "_id": {
+          "$oid": "6aea383b21b49793625a8e53"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Koble til ny oppvaskmaskin\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea383b21b49793625a8e4b"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:35.099Z"
+        },
+        "_id": {
+          "$oid": "6aea383b21b49793625a8e54"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea377521b49793625a805a"
+        },
+        "text": "Hei Marte. Vi kan ta dette neste uke og tar med den gamle maskinen.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea377521b49793625a805a"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:35.189Z"
+        },
+        "_id": {
+          "$oid": "6aea383b21b49793625a8e76"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea373ff112ab8acd7e9b45"
+        },
+        "text": "Høres bra ut, jeg betaler nå.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea373ff112ab8acd7e9b45"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:35.211Z"
+        },
+        "_id": {
+          "$oid": "6aea383b21b49793625a8e82"
+        }
+      },
+      {
+        "text": "Kontrakt er opprettet!",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_contract",
+        "systemData": {
+          "orderId": {
+            "$oid": "6aea383b21b49793625a8e9e"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:35.993Z"
+        },
+        "_id": {
+          "$oid": "6aea383b21b49793625a8ea9"
+        }
+      }
+    ],
+    "lastMessage": "Høres bra ut, jeg betaler nå.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:35.100Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:35.996Z"
+    },
+    "__v": 1,
+    "agreedPrice": 2500,
+    "orderId": {
+      "$oid": "6aea383b21b49793625a8e9e"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6aea383c21b49793625a8eca"
+    },
+    "clientId": {
+      "$oid": "6aea3743f112ab8acd7e9ba6"
+    },
+    "providerId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80df"
+    },
+    "status": "requested",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3743f112ab8acd7e9ba6"
+        },
+        "text": "Hei, jeg bor i nærheten og kan komme på kort varsel.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3743f112ab8acd7e9ba6"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:36.793Z"
+        },
+        "_id": {
+          "$oid": "6aea383c21b49793625a8ecb"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Flytting av 1-roms innen Bergen\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea383c21b49793625a8ec3"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:36.793Z"
+        },
+        "_id": {
+          "$oid": "6aea383c21b49793625a8ecc"
+        }
+      }
+    ],
+    "lastMessage": "Hei, jeg bor i nærheten og kan komme på kort varsel.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:36.796Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:36.796Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea383d21b49793625a8ee7"
+    },
+    "clientId": {
+      "$oid": "6aea3748f112ab8acd7e9c09"
+    },
+    "providerId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80df"
+    },
+    "status": "contracted",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3748f112ab8acd7e9c09"
+        },
+        "text": "Hei! Vi har bil og folk ledig og kan gi et godt tilbud.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3748f112ab8acd7e9c09"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:37.644Z"
+        },
+        "_id": {
+          "$oid": "6aea383d21b49793625a8ee8"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Flytting av 1-roms innen Bergen\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea383d21b49793625a8ee0"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:37.644Z"
+        },
+        "_id": {
+          "$oid": "6aea383d21b49793625a8ee9"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea3748f112ab8acd7e9c09"
+        },
+        "text": "Hei Sofie, vi har bil ledig 5. desember. Pris som avtalt.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3748f112ab8acd7e9c09"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:37.948Z"
+        },
+        "_id": {
+          "$oid": "6aea383d21b49793625a8f0b"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea373ef112ab8acd7e9b29"
+        },
+        "text": "Super, da booker vi det.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea373ef112ab8acd7e9b29"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:38.031Z"
+        },
+        "_id": {
+          "$oid": "6aea383e21b49793625a8f1c"
+        }
+      },
+      {
+        "text": "Kontrakt er opprettet!",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_contract",
+        "systemData": {
+          "orderId": {
+            "$oid": "6aea383e21b49793625a8f33"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:38.994Z"
+        },
+        "_id": {
+          "$oid": "6aea383e21b49793625a8f3e"
+        }
+      }
+    ],
+    "lastMessage": "Super, da booker vi det.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:37.645Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:38.995Z"
+    },
+    "__v": 1,
+    "agreedPrice": 4500,
+    "orderId": {
+      "$oid": "6aea383e21b49793625a8f33"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6aea384021b49793625a8f76"
+    },
+    "clientId": {
+      "$oid": "6aea3743f112ab8acd7e9ba6"
+    },
+    "providerId": {
+      "$oid": "6aea373df112ab8acd7e9b1a"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80f8"
+    },
+    "status": "requested",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3743f112ab8acd7e9ba6"
+        },
+        "text": "Hei, jeg bor i nærheten og kan komme på kort varsel.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3743f112ab8acd7e9ba6"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:40.811Z"
+        },
+        "_id": {
+          "$oid": "6aea384021b49793625a8f77"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Rake løv i stor hage\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea384021b49793625a8f6f"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:40.811Z"
+        },
+        "_id": {
+          "$oid": "6aea384021b49793625a8f78"
+        }
+      }
+    ],
+    "lastMessage": "Hei, jeg bor i nærheten og kan komme på kort varsel.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:40.814Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:40.814Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384021b49793625a8f8a"
+    },
+    "clientId": {
+      "$oid": "6aea3745f112ab8acd7e9bc2"
+    },
+    "providerId": {
+      "$oid": "6aea373df112ab8acd7e9b1a"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80f8"
+    },
+    "status": "requested",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea373df112ab8acd7e9b1a"
+        },
+        "text": "Forespørsel godkjent! Vi kan nå starte samtalen.",
+        "attachments": [],
+        "seenBy": [],
+        "type": "text",
+        "_id": {
+          "$oid": "6aea384021b49793625a8f8b"
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:40.939Z"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea3745f112ab8acd7e9bc2"
+        },
+        "text": "Hei Lars-Erik, jeg bor på Bekkestua og kan komme i helgen.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3745f112ab8acd7e9bc2"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:41.064Z"
+        },
+        "_id": {
+          "$oid": "6aea384121b49793625a8f9c"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea373df112ab8acd7e9b1a"
+        },
+        "text": "Så bra! Har du egen rake?",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea373df112ab8acd7e9b1a"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:41.179Z"
+        },
+        "_id": {
+          "$oid": "6aea384121b49793625a8fa8"
+        }
+      }
+    ],
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:40.940Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:41.180Z"
+    },
+    "__v": 0,
+    "lastMessage": "Så bra! Har du egen rake?"
+  },
+  {
+    "_id": {
+      "$oid": "6aea384221b49793625a8fcb"
+    },
+    "clientId": {
+      "$oid": "6aea3744f112ab8acd7e9bb4"
+    },
+    "providerId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a816b"
+    },
+    "status": "requested",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3744f112ab8acd7e9bb4"
+        },
+        "text": "Hei! Jobber på verksted og har alt utstyret som trengs.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3744f112ab8acd7e9bb4"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:42.150Z"
+        },
+        "_id": {
+          "$oid": "6aea384221b49793625a8fcc"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Innvendig vask av familiebil\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea384221b49793625a8fc4"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:42.150Z"
+        },
+        "_id": {
+          "$oid": "6aea384221b49793625a8fcd"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea3744f112ab8acd7e9bb4"
+        },
+        "text": "Hei, jeg har damprenser til setene. Passer det onsdag?",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3744f112ab8acd7e9bb4"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:43.476Z"
+        },
+        "_id": {
+          "$oid": "6aea384321b49793625a900c"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea3740f112ab8acd7e9b53"
+        },
+        "text": "Onsdag etter kl. 17 er fint.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3740f112ab8acd7e9b53"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:43.507Z"
+        },
+        "_id": {
+          "$oid": "6aea384321b49793625a9017"
+        }
+      }
+    ],
+    "lastMessage": "Onsdag etter kl. 17 er fint.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:42.153Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:43.507Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384321b49793625a8fe9"
+    },
+    "clientId": {
+      "$oid": "6aea3747f112ab8acd7e9bfa"
+    },
+    "providerId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a816b"
+    },
+    "status": "requested",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3747f112ab8acd7e9bfa"
+        },
+        "text": "Hei, Skinnende Renhold her. Vi kan ta jobben med garanti.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3747f112ab8acd7e9bfa"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:43.073Z"
+        },
+        "_id": {
+          "$oid": "6aea384321b49793625a8fea"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Innvendig vask av familiebil\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea384221b49793625a8fe2"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:43.073Z"
+        },
+        "_id": {
+          "$oid": "6aea384321b49793625a8feb"
+        }
+      }
+    ],
+    "lastMessage": "Hei, Skinnende Renhold her. Vi kan ta jobben med garanti.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:43.075Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:43.075Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384421b49793625a903a"
+    },
+    "clientId": {
+      "$oid": "6aea3747f112ab8acd7e9bfa"
+    },
+    "providerId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a808a"
+    },
+    "status": "requested",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3747f112ab8acd7e9bfa"
+        },
+        "text": "Hei, Skinnende Renhold her. Vi kan ta jobben med garanti.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3747f112ab8acd7e9bfa"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:44.339Z"
+        },
+        "_id": {
+          "$oid": "6aea384421b49793625a903b"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Flyttevask 3-roms på Frogner\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea384421b49793625a9033"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:44.339Z"
+        },
+        "_id": {
+          "$oid": "6aea384421b49793625a903c"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea3747f112ab8acd7e9bfa"
+        },
+        "text": "Hei Kristian. Vi gir garanti på flyttevasken. Kan vi ta en titt på leiligheten før?",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3747f112ab8acd7e9bfa"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:45.542Z"
+        },
+        "_id": {
+          "$oid": "6aea384521b49793625a907c"
+        }
+      },
+      {
+        "senderId": {
+          "$oid": "6aea373cf112ab8acd7e9afe"
+        },
+        "text": "Ja, du kan komme innom torsdag.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea373cf112ab8acd7e9afe"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:45.645Z"
+        },
+        "_id": {
+          "$oid": "6aea384521b49793625a9089"
+        }
+      }
+    ],
+    "lastMessage": "Ja, du kan komme innom torsdag.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:44.344Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:45.645Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384521b49793625a9058"
+    },
+    "clientId": {
+      "$oid": "6aea3742f112ab8acd7e9b6f"
+    },
+    "providerId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a808a"
+    },
+    "status": "requested",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3742f112ab8acd7e9b6f"
+        },
+        "text": "Hei, jeg har lang erfaring med vask og tar med eget utstyr.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3742f112ab8acd7e9b6f"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:45.264Z"
+        },
+        "_id": {
+          "$oid": "6aea384521b49793625a9059"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Flyttevask 3-roms på Frogner\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea384521b49793625a9051"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:45.264Z"
+        },
+        "_id": {
+          "$oid": "6aea384521b49793625a905a"
+        }
+      }
+    ],
+    "lastMessage": "Hei, jeg har lang erfaring med vask og tar med eget utstyr.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:45.270Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:45.270Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384621b49793625a90ac"
+    },
+    "clientId": {
+      "$oid": "6aea3747f112ab8acd7e9bec"
+    },
+    "providerId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80c6"
+    },
+    "status": "requested",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3747f112ab8acd7e9bec"
+        },
+        "text": "Hei! Vi er en malerbedrift med fire ansatte og gir fast pris etter befaring.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3747f112ab8acd7e9bec"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:46.583Z"
+        },
+        "_id": {
+          "$oid": "6aea384621b49793625a90ad"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Male stue og gang i rekkehus\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea384621b49793625a90a5"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:46.583Z"
+        },
+        "_id": {
+          "$oid": "6aea384621b49793625a90ae"
+        }
+      }
+    ],
+    "lastMessage": "Hei! Vi er en malerbedrift med fire ansatte og gir fast pris etter befaring.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:46.584Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:46.584Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384821b49793625a90e3"
+    },
+    "clientId": {
+      "$oid": "6aea377521b49793625a805a"
+    },
+    "providerId": {
+      "$oid": "6aea373df112ab8acd7e9b1a"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a811b"
+    },
+    "status": "requested",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea377521b49793625a805a"
+        },
+        "text": "Hei, tømrermester her. Vi tar gjerne jobben og har alt verktøy.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea377521b49793625a805a"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:48.503Z"
+        },
+        "_id": {
+          "$oid": "6aea384821b49793625a90e4"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Montere IKEA-kjøkken\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea384821b49793625a90dc"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:48.503Z"
+        },
+        "_id": {
+          "$oid": "6aea384821b49793625a90e5"
+        }
+      }
+    ],
+    "lastMessage": "Hei, tømrermester her. Vi tar gjerne jobben og har alt verktøy.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:48.504Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:48.504Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384921b49793625a9100"
+    },
+    "clientId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "providerId": {
+      "$oid": "6aea373df112ab8acd7e9b1a"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a811b"
+    },
+    "status": "requested",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3741f112ab8acd7e9b61"
+        },
+        "text": "Hei! Student med god tid og sterk rygg. Kan komme når det passer deg.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3741f112ab8acd7e9b61"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:49.320Z"
+        },
+        "_id": {
+          "$oid": "6aea384921b49793625a9101"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Montere IKEA-kjøkken\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea384921b49793625a90f9"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:49.320Z"
+        },
+        "_id": {
+          "$oid": "6aea384921b49793625a9102"
+        }
+      }
+    ],
+    "lastMessage": "Hei! Student med god tid og sterk rygg. Kan komme når det passer deg.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:49.322Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:49.322Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384a21b49793625a911d"
+    },
+    "clientId": {
+      "$oid": "6aea377521b49793625a805a"
+    },
+    "providerId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80a3"
+    },
+    "status": "requested",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea377521b49793625a805a"
+        },
+        "text": "Hei, tømrermester her. Vi tar gjerne jobben og har alt verktøy.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea377521b49793625a805a"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:50.470Z"
+        },
+        "_id": {
+          "$oid": "6aea384a21b49793625a911e"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Tett avløp i dusjen\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea384a21b49793625a9116"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:50.470Z"
+        },
+        "_id": {
+          "$oid": "6aea384a21b49793625a911f"
+        }
+      }
+    ],
+    "lastMessage": "Hei, tømrermester her. Vi tar gjerne jobben og har alt verktøy.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:50.516Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:50.516Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384b21b49793625a913b"
+    },
+    "clientId": {
+      "$oid": "6aea3748f112ab8acd7e9c09"
+    },
+    "providerId": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80e9"
+    },
+    "status": "requested",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3748f112ab8acd7e9c09"
+        },
+        "text": "Hei! Vi har bil og folk ledig og kan gi et godt tilbud.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3748f112ab8acd7e9c09"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:51.314Z"
+        },
+        "_id": {
+          "$oid": "6aea384b21b49793625a913c"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Flytte piano ut av leilighet\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea384b21b49793625a9134"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:51.314Z"
+        },
+        "_id": {
+          "$oid": "6aea384b21b49793625a913d"
+        }
+      }
+    ],
+    "lastMessage": "Hei! Vi har bil og folk ledig og kan gi et godt tilbud.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:51.316Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:51.316Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384c21b49793625a9171"
+    },
+    "clientId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "providerId": {
+      "$oid": "6aea373ff112ab8acd7e9b45"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80fd"
+    },
+    "status": "requested",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3741f112ab8acd7e9b61"
+        },
+        "text": "Hei! Student med god tid og sterk rygg. Kan komme når det passer deg.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3741f112ab8acd7e9b61"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:52.965Z"
+        },
+        "_id": {
+          "$oid": "6aea384c21b49793625a9172"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Klippe hekk før vinteren\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea384c21b49793625a916a"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:52.965Z"
+        },
+        "_id": {
+          "$oid": "6aea384c21b49793625a9173"
+        }
+      }
+    ],
+    "lastMessage": "Hei! Student med god tid og sterk rygg. Kan komme når det passer deg.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:52.967Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:52.967Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384e21b49793625a918e"
+    },
+    "clientId": {
+      "$oid": "6aea377521b49793625a805a"
+    },
+    "providerId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8116"
+    },
+    "status": "requested",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea377521b49793625a805a"
+        },
+        "text": "Hei, tømrermester her. Vi tar gjerne jobben og har alt verktøy.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea377521b49793625a805a"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:54.074Z"
+        },
+        "_id": {
+          "$oid": "6aea384e21b49793625a918f"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Legge laminat i soverom\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea384d21b49793625a9187"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:54.074Z"
+        },
+        "_id": {
+          "$oid": "6aea384e21b49793625a9190"
+        }
+      }
+    ],
+    "lastMessage": "Hei, tømrermester her. Vi tar gjerne jobben og har alt verktøy.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:54.075Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:54.075Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea384f21b49793625a91ab"
+    },
+    "clientId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "providerId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8116"
+    },
+    "status": "requested",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3741f112ab8acd7e9b61"
+        },
+        "text": "Hei! Student med god tid og sterk rygg. Kan komme når det passer deg.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3741f112ab8acd7e9b61"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:55.410Z"
+        },
+        "_id": {
+          "$oid": "6aea384f21b49793625a91ac"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Legge laminat i soverom\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea384e21b49793625a91a4"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:55.410Z"
+        },
+        "_id": {
+          "$oid": "6aea384f21b49793625a91ad"
+        }
+      }
+    ],
+    "lastMessage": "Hei! Student med god tid og sterk rygg. Kan komme når det passer deg.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:55.412Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:55.412Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea385121b49793625a91e2"
+    },
+    "clientId": {
+      "$oid": "6aea3742f112ab8acd7e9b7d"
+    },
+    "providerId": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8134"
+    },
+    "status": "requested",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3742f112ab8acd7e9b7d"
+        },
+        "text": "Hei! Jeg har varebil og kan ta dette denne uka.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3742f112ab8acd7e9b7d"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:57.285Z"
+        },
+        "_id": {
+          "$oid": "6aea385121b49793625a91e3"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Kjøre møbler til gjenvinning\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea385121b49793625a91db"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:57.285Z"
+        },
+        "_id": {
+          "$oid": "6aea385121b49793625a91e4"
+        }
+      }
+    ],
+    "lastMessage": "Hei! Jeg har varebil og kan ta dette denne uka.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:57.287Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:57.287Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea385321b49793625a9200"
+    },
+    "clientId": {
+      "$oid": "6aea3745f112ab8acd7e9bd0"
+    },
+    "providerId": {
+      "$oid": "6aea373ff112ab8acd7e9b37"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80ee"
+    },
+    "status": "requested",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3745f112ab8acd7e9bd0"
+        },
+        "text": "Hei, jeg har tilhenger og stropper. Kan ta dette i helgen.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3745f112ab8acd7e9bd0"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:38:59.372Z"
+        },
+        "_id": {
+          "$oid": "6aea385321b49793625a9201"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Flytting 3-roms Drammen til Lier\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea385321b49793625a91f9"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:38:59.372Z"
+        },
+        "_id": {
+          "$oid": "6aea385321b49793625a9202"
+        }
+      }
+    ],
+    "lastMessage": "Hei, jeg har tilhenger og stropper. Kan ta dette i helgen.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:38:59.374Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:59.374Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea385521b49793625a9270"
+    },
+    "clientId": {
+      "$oid": "6aea3748f112ab8acd7e9c09"
+    },
+    "providerId": {
+      "$oid": "6aea373ff112ab8acd7e9b37"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a80ee"
+    },
+    "status": "requested",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3748f112ab8acd7e9c09"
+        },
+        "text": "Hei! Vi har bil og folk ledig og kan gi et godt tilbud.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3748f112ab8acd7e9c09"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:39:01.386Z"
+        },
+        "_id": {
+          "$oid": "6aea385521b49793625a9271"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Flytting 3-roms Drammen til Lier\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea385521b49793625a9264"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:39:01.386Z"
+        },
+        "_id": {
+          "$oid": "6aea385521b49793625a9272"
+        }
+      }
+    ],
+    "lastMessage": "Hei! Vi har bil og folk ledig og kan gi et godt tilbud.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:39:01.389Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:39:01.389Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea385821b49793625a92c0"
+    },
+    "clientId": {
+      "$oid": "6aea3742f112ab8acd7e9b6f"
+    },
+    "providerId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a808f"
+    },
+    "status": "requested",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3742f112ab8acd7e9b6f"
+        },
+        "text": "Hei, jeg har lang erfaring med vask og tar med eget utstyr.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3742f112ab8acd7e9b6f"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:39:04.040Z"
+        },
+        "_id": {
+          "$oid": "6aea385821b49793625a92c1"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Ukentlig vask, fast hjelp\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea385821b49793625a92b9"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:39:04.040Z"
+        },
+        "_id": {
+          "$oid": "6aea385821b49793625a92c2"
+        }
+      }
+    ],
+    "lastMessage": "Hei, jeg har lang erfaring med vask og tar med eget utstyr.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:39:04.042Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:39:04.042Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea385821b49793625a92dd"
+    },
+    "clientId": {
+      "$oid": "6aea3747f112ab8acd7e9bfa"
+    },
+    "providerId": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a808f"
+    },
+    "status": "requested",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3747f112ab8acd7e9bfa"
+        },
+        "text": "Hei, Skinnende Renhold her. Vi kan ta jobben med garanti.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3747f112ab8acd7e9bfa"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:39:04.940Z"
+        },
+        "_id": {
+          "$oid": "6aea385821b49793625a92de"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Ukentlig vask, fast hjelp\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea385821b49793625a92d6"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:39:04.940Z"
+        },
+        "_id": {
+          "$oid": "6aea385821b49793625a92df"
+        }
+      }
+    ],
+    "lastMessage": "Hei, Skinnende Renhold her. Vi kan ta jobben med garanti.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:39:04.942Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:39:04.942Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea385921b49793625a92fb"
+    },
+    "clientId": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "providerId": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8152"
+    },
+    "status": "requested",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3741f112ab8acd7e9b61"
+        },
+        "text": "Hei! Student med god tid og sterk rygg. Kan komme når det passer deg.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3741f112ab8acd7e9b61"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:39:05.767Z"
+        },
+        "_id": {
+          "$oid": "6aea385921b49793625a92fc"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Henge opp TV, hyller og lamper\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea385921b49793625a92f4"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:39:05.767Z"
+        },
+        "_id": {
+          "$oid": "6aea385921b49793625a92fd"
+        }
+      }
+    ],
+    "lastMessage": "Hei! Student med god tid og sterk rygg. Kan komme når det passer deg.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:39:05.768Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:39:05.768Z"
+    },
+    "__v": 0
+  },
+  {
+    "_id": {
+      "$oid": "6aea385b21b49793625a9332"
+    },
+    "clientId": {
+      "$oid": "6aea3743f112ab8acd7e9ba6"
+    },
+    "providerId": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "serviceId": {
+      "$oid": "6aea379d21b49793625a8094"
+    },
+    "status": "requested",
+    "messages": [
+      {
+        "senderId": {
+          "$oid": "6aea3743f112ab8acd7e9ba6"
+        },
+        "text": "Hei, jeg bor i nærheten og kan komme på kort varsel.",
+        "attachments": [],
+        "seenBy": [
+          {
+            "$oid": "6aea3743f112ab8acd7e9ba6"
+          }
+        ],
+        "type": "text",
+        "createdAt": {
+          "$date": "2026-11-03T19:39:07.366Z"
+        },
+        "_id": {
+          "$oid": "6aea385b21b49793625a9333"
+        }
+      },
+      {
+        "text": "Forespørsel sendt for \"Vindusvask i leilighet\"",
+        "attachments": [],
+        "seenBy": [],
+        "type": "system_status",
+        "systemData": {
+          "event": "application_submitted",
+          "requestId": {
+            "$oid": "6aea385b21b49793625a932b"
+          }
+        },
+        "createdAt": {
+          "$date": "2026-11-03T19:39:07.366Z"
+        },
+        "_id": {
+          "$oid": "6aea385b21b49793625a9334"
+        }
+      }
+    ],
+    "lastMessage": "Hei, jeg bor i nærheten og kan komme på kort varsel.",
+    "deletedFor": [],
+    "createdAt": {
+      "$date": "2026-11-03T19:39:07.367Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:39:07.367Z"
+    },
+    "__v": 0
+  }
+]

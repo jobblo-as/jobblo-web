@@ -1,0 +1,1436 @@
+[
+  {
+    "_id": {
+      "$oid": "6aea373bf112ab8acd7e9af2"
+    },
+    "name": "Ingrid",
+    "lastName": "Solberg",
+    "email": "customer1@jobblo.no",
+    "password": "$2a$12$LwGUjFDLOXGuzzEaHf6Bte59LuolzE.jH6OHIG20UsOut6.A4Ny5.",
+    "role": "user",
+    "developerAccess": "readonly",
+    "locations": [],
+    "subscription": "Standard",
+    "planType": "private",
+    "verified": false,
+    "isTrusted": false,
+    "acceptedTerms": true,
+    "termsVersion": "2026-01-08",
+    "termsAcceptedAt": {
+      "$date": "2026-11-03T19:34:19.200Z"
+    },
+    "skills": [],
+    "earnings": 0,
+    "spending": 0,
+    "accountStatus": "active",
+    "deactivatedAt": null,
+    "deactivatedBy": null,
+    "averageRating": 5,
+    "reviewCount": 2,
+    "completedJobs": 0,
+    "favorites": [],
+    "blockedUsers": [],
+    "pointsBalance": 0,
+    "monthlyContactUsage": 0,
+    "payoutOnboardingStatus": "none",
+    "payoutEnabled": false,
+    "chargesEnabled": false,
+    "detailsSubmitted": false,
+    "payoutMethod": null,
+    "payoutVerified": false,
+    "isDeleted": false,
+    "deletedAt": null,
+    "experience": [],
+    "availability": [],
+    "portfolio": [],
+    "previousProjects": [],
+    "certifications": [],
+    "oauthProviders": [],
+    "pointsHistory": [],
+    "lastContactReset": {
+      "$date": "2026-11-03T19:34:19.201Z"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:34:19.202Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T20:26:47.684Z"
+    },
+    "__v": 0,
+    "address": "Thorvald Meyers gate 41",
+    "bio": "Bor på Grünerløkka med samboer og en katt som feller mye. Jobber turnus på Ullevål, så jeg trenger ofte litt hjelp i hverdagen.",
+    "country": "Norge",
+    "phone": "+47 41007919",
+    "postNumber": "0552",
+    "postSted": "Oslo",
+    "avatarUrl": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&q=80",
+    "emailVerifiedAt": {
+      "$date": "2026-11-03T19:34:19.337Z"
+    },
+    "stripeCustomerIdTest": "cus_VYvLjFFdStyU1j"
+  },
+  {
+    "_id": {
+      "$oid": "6aea373cf112ab8acd7e9afe"
+    },
+    "name": "Kristian",
+    "lastName": "Haugen",
+    "email": "customer2@jobblo.no",
+    "password": "$2a$12$yit9A3GKWYHNRpegdjXK8.X1ofmhIXeHSlftMs8WkJdhRXGcRLtQW",
+    "role": "user",
+    "developerAccess": "readonly",
+    "locations": [],
+    "subscription": "Standard",
+    "planType": "private",
+    "verified": false,
+    "isTrusted": false,
+    "acceptedTerms": true,
+    "termsVersion": "2026-01-08",
+    "termsAcceptedAt": {
+      "$date": "2026-11-03T19:34:20.134Z"
+    },
+    "skills": [],
+    "earnings": 0,
+    "spending": 0,
+    "accountStatus": "active",
+    "deactivatedAt": null,
+    "deactivatedBy": null,
+    "averageRating": 5,
+    "reviewCount": 2,
+    "completedJobs": 0,
+    "favorites": [],
+    "blockedUsers": [],
+    "pointsBalance": 0,
+    "monthlyContactUsage": 0,
+    "payoutOnboardingStatus": "none",
+    "payoutEnabled": false,
+    "chargesEnabled": false,
+    "detailsSubmitted": false,
+    "payoutMethod": null,
+    "payoutVerified": false,
+    "isDeleted": false,
+    "deletedAt": null,
+    "experience": [],
+    "availability": [],
+    "portfolio": [],
+    "previousProjects": [],
+    "certifications": [],
+    "oauthProviders": [],
+    "pointsHistory": [],
+    "lastContactReset": {
+      "$date": "2026-11-03T19:34:20.134Z"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:34:20.135Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:57.515Z"
+    },
+    "__v": 0,
+    "address": "Bygdøy allé 22",
+    "bio": "Tobarnsfar på Frogner. Pusser opp leiligheten litt etter litt og liker å finne folk som gjør en ordentlig jobb.",
+    "country": "Norge",
+    "phone": "+47 41015838",
+    "postNumber": "0263",
+    "postSted": "Oslo",
+    "avatarUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop&q=80",
+    "emailVerifiedAt": {
+      "$date": "2026-11-03T19:34:20.167Z"
+    },
+    "stripeCustomerIdTest": "cus_VYvMIMuDdGbvHC"
+  },
+  {
+    "_id": {
+      "$oid": "6aea373cf112ab8acd7e9b0c"
+    },
+    "name": "Amina",
+    "lastName": "Yusuf",
+    "email": "customer3@jobblo.no",
+    "password": "$2a$12$jZDbhE2c7Y9wNYDZ2EipYeTNAbp4ITwLmSV/txCP5qAoTY/H/nXTu",
+    "role": "user",
+    "developerAccess": "readonly",
+    "locations": [],
+    "subscription": "Standard",
+    "planType": "private",
+    "verified": false,
+    "isTrusted": false,
+    "acceptedTerms": true,
+    "termsVersion": "2026-01-08",
+    "termsAcceptedAt": {
+      "$date": "2026-11-03T19:34:20.935Z"
+    },
+    "skills": [],
+    "earnings": 0,
+    "spending": 0,
+    "accountStatus": "active",
+    "deactivatedAt": null,
+    "deactivatedBy": null,
+    "averageRating": 0,
+    "reviewCount": 0,
+    "completedJobs": 0,
+    "favorites": [],
+    "blockedUsers": [],
+    "pointsBalance": 0,
+    "monthlyContactUsage": 0,
+    "payoutOnboardingStatus": "none",
+    "payoutEnabled": false,
+    "chargesEnabled": false,
+    "detailsSubmitted": false,
+    "payoutMethod": null,
+    "payoutVerified": false,
+    "isDeleted": false,
+    "deletedAt": null,
+    "experience": [],
+    "availability": [],
+    "portfolio": [],
+    "previousProjects": [],
+    "certifications": [],
+    "oauthProviders": [],
+    "pointsHistory": [],
+    "lastContactReset": {
+      "$date": "2026-11-03T19:34:20.936Z"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:34:20.937Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:34.434Z"
+    },
+    "__v": 0,
+    "address": "Ammerudveien 18",
+    "country": "Norge",
+    "postNumber": "0985",
+    "postSted": "Oslo",
+    "avatarUrl": "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400&h=400&fit=crop&q=80",
+    "emailVerifiedAt": {
+      "$date": "2026-11-03T19:34:20.967Z"
+    },
+    "stripeCustomerIdTest": "cus_VYvNxigIVZ0brA"
+  },
+  {
+    "_id": {
+      "$oid": "6aea373df112ab8acd7e9b1a"
+    },
+    "name": "Lars-Erik",
+    "lastName": "Moen",
+    "email": "customer4@jobblo.no",
+    "password": "$2a$12$79ZG9aEbpmzY5AyPYLYCWeYvut0/xIBAvntL7YIk1H4FlkKO0qOB2",
+    "role": "user",
+    "developerAccess": "readonly",
+    "locations": [],
+    "subscription": "Standard",
+    "planType": "private",
+    "verified": false,
+    "isTrusted": false,
+    "acceptedTerms": true,
+    "termsVersion": "2026-01-08",
+    "termsAcceptedAt": {
+      "$date": "2026-11-03T19:34:21.650Z"
+    },
+    "skills": [],
+    "earnings": 0,
+    "spending": 0,
+    "accountStatus": "active",
+    "deactivatedAt": null,
+    "deactivatedBy": null,
+    "averageRating": 0,
+    "reviewCount": 0,
+    "completedJobs": 0,
+    "favorites": [],
+    "blockedUsers": [],
+    "pointsBalance": 0,
+    "monthlyContactUsage": 0,
+    "payoutOnboardingStatus": "none",
+    "payoutEnabled": false,
+    "chargesEnabled": false,
+    "detailsSubmitted": false,
+    "payoutMethod": null,
+    "payoutVerified": false,
+    "isDeleted": false,
+    "deletedAt": null,
+    "experience": [],
+    "availability": [],
+    "portfolio": [],
+    "previousProjects": [],
+    "certifications": [],
+    "oauthProviders": [],
+    "pointsHistory": [],
+    "lastContactReset": {
+      "$date": "2026-11-03T19:34:21.650Z"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:34:21.650Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:07.460Z"
+    },
+    "__v": 0,
+    "address": "Rudolf Peersens vei 5",
+    "bio": "Pensjonert ingeniør i Bærum. Har stor hage og et hus som alltid trenger noe. Betaler gjerne for godt håndverk.",
+    "country": "Norge",
+    "phone": "+47 41031676",
+    "postNumber": "1337",
+    "postSted": "Sandvika",
+    "avatarUrl": "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=400&fit=crop&q=80",
+    "emailVerifiedAt": {
+      "$date": "2026-11-03T19:34:21.688Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6aea373ef112ab8acd7e9b29"
+    },
+    "name": "Sofie",
+    "lastName": "Lie",
+    "email": "customer5@jobblo.no",
+    "password": "$2a$12$6u8Ct0vVv4ODtggH.Yny6eobRLyNPGbyN25bIRYSwamn1OMv.XFkG",
+    "role": "user",
+    "developerAccess": "readonly",
+    "locations": [],
+    "subscription": "Standard",
+    "planType": "private",
+    "verified": false,
+    "isTrusted": false,
+    "acceptedTerms": true,
+    "termsVersion": "2026-01-08",
+    "termsAcceptedAt": {
+      "$date": "2026-11-03T19:34:22.407Z"
+    },
+    "skills": [],
+    "earnings": 0,
+    "spending": 0,
+    "accountStatus": "active",
+    "deactivatedAt": null,
+    "deactivatedBy": null,
+    "averageRating": 5,
+    "reviewCount": 1,
+    "completedJobs": 0,
+    "favorites": [],
+    "blockedUsers": [],
+    "pointsBalance": 0,
+    "monthlyContactUsage": 0,
+    "payoutOnboardingStatus": "none",
+    "payoutEnabled": false,
+    "chargesEnabled": false,
+    "detailsSubmitted": false,
+    "payoutMethod": null,
+    "payoutVerified": false,
+    "isDeleted": false,
+    "deletedAt": null,
+    "experience": [],
+    "availability": [],
+    "portfolio": [],
+    "previousProjects": [],
+    "certifications": [],
+    "oauthProviders": [],
+    "pointsHistory": [],
+    "lastContactReset": {
+      "$date": "2026-11-03T19:34:22.407Z"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:34:22.408Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:42.112Z"
+    },
+    "__v": 0,
+    "address": "Nygårdsgaten 14",
+    "bio": "Masterstudent ved UiB som akkurat har flyttet inn i første egne leilighet.",
+    "country": "Norge",
+    "phone": "+47 41039595",
+    "postNumber": "5014",
+    "postSted": "Bergen",
+    "avatarUrl": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop&q=80",
+    "emailVerifiedAt": {
+      "$date": "2026-11-03T19:34:22.451Z"
+    },
+    "stripeCustomerIdTest": "cus_VYvN9mZ0Yl508S"
+  },
+  {
+    "_id": {
+      "$oid": "6aea373ff112ab8acd7e9b37"
+    },
+    "name": "Tomasz",
+    "lastName": "Nowak",
+    "email": "customer6@jobblo.no",
+    "password": "$2a$12$a2UWEAjrG88fLEYy23TPyuoaL5Lc/i9xeSNHqVJm/T0LSNvlPgOLy",
+    "role": "user",
+    "developerAccess": "readonly",
+    "locations": [],
+    "subscription": "Standard",
+    "planType": "private",
+    "verified": false,
+    "isTrusted": false,
+    "acceptedTerms": true,
+    "termsVersion": "2026-01-08",
+    "termsAcceptedAt": {
+      "$date": "2026-11-03T19:34:23.135Z"
+    },
+    "skills": [],
+    "earnings": 0,
+    "spending": 0,
+    "accountStatus": "active",
+    "deactivatedAt": null,
+    "deactivatedBy": null,
+    "averageRating": 0,
+    "reviewCount": 0,
+    "completedJobs": 0,
+    "favorites": [],
+    "blockedUsers": [],
+    "pointsBalance": 0,
+    "monthlyContactUsage": 0,
+    "payoutOnboardingStatus": "none",
+    "payoutEnabled": false,
+    "chargesEnabled": false,
+    "detailsSubmitted": false,
+    "payoutMethod": null,
+    "payoutVerified": false,
+    "isDeleted": false,
+    "deletedAt": null,
+    "experience": [],
+    "availability": [],
+    "portfolio": [],
+    "previousProjects": [],
+    "certifications": [],
+    "oauthProviders": [],
+    "pointsHistory": [],
+    "lastContactReset": {
+      "$date": "2026-11-03T19:34:23.135Z"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:34:23.136Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:08.145Z"
+    },
+    "__v": 0,
+    "address": "Bragernes torg 6",
+    "country": "Norge",
+    "postNumber": "3015",
+    "postSted": "Drammen",
+    "emailVerifiedAt": {
+      "$date": "2026-11-03T19:34:23.165Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6aea373ff112ab8acd7e9b45"
+    },
+    "name": "Marte",
+    "lastName": "Kvam",
+    "email": "customer7@jobblo.no",
+    "password": "$2a$12$H99awaBN6eMbXjCidZ8Hy.EZuKTSvvuYqdQueSnxhnbTQbg3MnNpm",
+    "role": "user",
+    "developerAccess": "readonly",
+    "locations": [],
+    "subscription": "Standard",
+    "planType": "private",
+    "verified": false,
+    "isTrusted": false,
+    "acceptedTerms": true,
+    "termsVersion": "2026-01-08",
+    "termsAcceptedAt": {
+      "$date": "2026-11-03T19:34:23.845Z"
+    },
+    "skills": [],
+    "earnings": 0,
+    "spending": 0,
+    "accountStatus": "active",
+    "deactivatedAt": null,
+    "deactivatedBy": null,
+    "averageRating": 0,
+    "reviewCount": 0,
+    "completedJobs": 0,
+    "favorites": [],
+    "blockedUsers": [],
+    "pointsBalance": 0,
+    "monthlyContactUsage": 0,
+    "payoutOnboardingStatus": "none",
+    "payoutEnabled": false,
+    "chargesEnabled": false,
+    "detailsSubmitted": false,
+    "payoutMethod": null,
+    "payoutVerified": false,
+    "isDeleted": false,
+    "deletedAt": null,
+    "experience": [],
+    "availability": [],
+    "portfolio": [],
+    "previousProjects": [],
+    "certifications": [],
+    "oauthProviders": [],
+    "pointsHistory": [],
+    "lastContactReset": {
+      "$date": "2026-11-03T19:34:23.845Z"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:34:23.846Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:08.540Z"
+    },
+    "__v": 0,
+    "address": "Storgata 30",
+    "bio": "Småbarnsmor i Lillestrøm.",
+    "country": "Norge",
+    "postNumber": "2000",
+    "postSted": "Lillestrøm",
+    "avatarUrl": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop&q=80",
+    "emailVerifiedAt": {
+      "$date": "2026-11-03T19:34:23.883Z"
+    }
+  },
+  {
+    "_id": {
+      "$oid": "6aea3740f112ab8acd7e9b53"
+    },
+    "name": "Daniel",
+    "lastName": "Ahmadi",
+    "email": "customer8@jobblo.no",
+    "password": "$2a$12$1uXD8p/2S6vjcf7ZX1HDE.4Ms.U6EOoNGRJeLm6SCmVE2JhQ/L7mi",
+    "role": "user",
+    "developerAccess": "readonly",
+    "locations": [],
+    "subscription": "Standard",
+    "planType": "private",
+    "verified": false,
+    "isTrusted": false,
+    "acceptedTerms": true,
+    "termsVersion": "2026-01-08",
+    "termsAcceptedAt": {
+      "$date": "2026-11-03T19:34:24.590Z"
+    },
+    "skills": [],
+    "earnings": 0,
+    "spending": 0,
+    "accountStatus": "active",
+    "deactivatedAt": null,
+    "deactivatedBy": null,
+    "averageRating": 0,
+    "reviewCount": 0,
+    "completedJobs": 0,
+    "favorites": [],
+    "blockedUsers": [],
+    "pointsBalance": 0,
+    "monthlyContactUsage": 0,
+    "payoutOnboardingStatus": "none",
+    "payoutEnabled": false,
+    "chargesEnabled": false,
+    "detailsSubmitted": false,
+    "payoutMethod": null,
+    "payoutVerified": false,
+    "isDeleted": false,
+    "deletedAt": null,
+    "experience": [],
+    "availability": [],
+    "portfolio": [],
+    "previousProjects": [],
+    "certifications": [],
+    "oauthProviders": [],
+    "pointsHistory": [],
+    "lastContactReset": {
+      "$date": "2026-11-03T19:34:24.591Z"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:34:24.592Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T20:17:38.620Z"
+    },
+    "__v": 0,
+    "address": "Nordstrandveien 50",
+    "bio": "Har nettopp kjøpt rekkehus på Nordstrand. Mye å fikse, lite tid. Rask på svar her inne.",
+    "country": "Norge",
+    "phone": "+47 41063352",
+    "postNumber": "1170",
+    "postSted": "Oslo",
+    "avatarUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&q=80",
+    "emailVerifiedAt": {
+      "$date": "2026-11-03T19:34:24.622Z"
+    },
+    "stripeCustomerIdTest": "cus_VYvNAydoFDehJZ"
+  },
+  {
+    "_id": {
+      "$oid": "6aea3741f112ab8acd7e9b61"
+    },
+    "name": "Jonas",
+    "lastName": "Berg",
+    "email": "helper1@jobblo.no",
+    "password": "$2a$12$d69SUlHyM.eCPql.hEMdHeE2JaTPNGoJRHu.P0rmDha2FapgvxJEG",
+    "role": "user",
+    "developerAccess": "readonly",
+    "locations": [],
+    "subscription": "Standard",
+    "planType": "private",
+    "verified": false,
+    "isTrusted": false,
+    "acceptedTerms": true,
+    "termsVersion": "2026-01-08",
+    "termsAcceptedAt": {
+      "$date": "2026-11-03T19:34:25.387Z"
+    },
+    "skills": ["Flyttehjelp", "Bæring", "Montering av møbler", "Rydding"],
+    "earnings": 776,
+    "spending": 0,
+    "accountStatus": "active",
+    "deactivatedAt": null,
+    "deactivatedBy": null,
+    "averageRating": 5,
+    "reviewCount": 1,
+    "completedJobs": 1,
+    "favorites": [],
+    "blockedUsers": [],
+    "pointsBalance": 0,
+    "monthlyContactUsage": 0,
+    "payoutOnboardingStatus": "enabled",
+    "payoutEnabled": true,
+    "chargesEnabled": true,
+    "detailsSubmitted": true,
+    "payoutMethod": null,
+    "payoutVerified": false,
+    "isDeleted": false,
+    "deletedAt": null,
+    "experience": [],
+    "availability": [],
+    "portfolio": [],
+    "previousProjects": [],
+    "certifications": [],
+    "oauthProviders": [],
+    "pointsHistory": [],
+    "lastContactReset": {
+      "$date": "2026-11-03T19:34:25.388Z"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:34:25.388Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:48:55.683Z"
+    },
+    "__v": 0,
+    "address": "Maridalsveien 120",
+    "availabilityText": "Hverdager etter kl. 15 og hele helgen",
+    "bio": "Student på OsloMet, 22 år. Sterk i ryggen og har god tid på ettermiddager og i helgene. Bærer, monterer og rydder.",
+    "country": "Norge",
+    "phone": "+47 41071271",
+    "postNumber": "0458",
+    "postSted": "Oslo",
+    "avatarUrl": "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&h=400&fit=crop&q=80",
+    "emailVerifiedAt": {
+      "$date": "2026-11-03T19:34:25.427Z"
+    },
+    "connectAccountCreatedAt": {
+      "$date": "2026-11-03T19:35:21.417Z"
+    },
+    "stripeConnectAccountIdTest": "acct_1UXnUH3zgOhnDqbP"
+  },
+  {
+    "_id": {
+      "$oid": "6aea3742f112ab8acd7e9b6f"
+    },
+    "name": "Emilie",
+    "lastName": "Strand",
+    "email": "helper2@jobblo.no",
+    "password": "$2a$12$iyh3RutpA36ez78ce9t2HeBIYjwmwLoJW2JovoZ0fq/GyOBuCP8IO",
+    "role": "user",
+    "developerAccess": "readonly",
+    "locations": [],
+    "subscription": "Standard",
+    "planType": "private",
+    "verified": false,
+    "isTrusted": false,
+    "acceptedTerms": true,
+    "termsVersion": "2026-01-08",
+    "termsAcceptedAt": {
+      "$date": "2026-11-03T19:34:26.188Z"
+    },
+    "skills": ["Rengjøring", "Flyttevask", "Vindusvask", "Storvask"],
+    "earnings": 1358,
+    "spending": 0,
+    "accountStatus": "active",
+    "deactivatedAt": null,
+    "deactivatedBy": null,
+    "averageRating": 5,
+    "reviewCount": 1,
+    "completedJobs": 1,
+    "favorites": [],
+    "blockedUsers": [],
+    "pointsBalance": 0,
+    "monthlyContactUsage": 0,
+    "payoutOnboardingStatus": "enabled",
+    "payoutEnabled": true,
+    "chargesEnabled": true,
+    "detailsSubmitted": true,
+    "payoutMethod": null,
+    "payoutVerified": false,
+    "isDeleted": false,
+    "deletedAt": null,
+    "experience": [],
+    "availability": [],
+    "portfolio": [],
+    "previousProjects": [],
+    "certifications": [],
+    "oauthProviders": [],
+    "pointsHistory": [],
+    "lastContactReset": {
+      "$date": "2026-11-03T19:34:26.189Z"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:34:26.191Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:08.626Z"
+    },
+    "__v": 0,
+    "address": "Ullevålsveien 39",
+    "availabilityText": "Man–fre 08–16, noen lørdager",
+    "bio": "Har jobbet tre år i renholdsbransjen ved siden av studiene. Grundig og punktlig, tar med eget utstyr hvis du vil.",
+    "country": "Norge",
+    "phone": "+47 41079190",
+    "postNumber": "0167",
+    "postSted": "Oslo",
+    "avatarUrl": "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&h=400&fit=crop&q=80",
+    "emailVerifiedAt": {
+      "$date": "2026-11-03T19:34:26.233Z"
+    },
+    "connectAccountCreatedAt": {
+      "$date": "2026-11-03T19:35:24.684Z"
+    },
+    "stripeConnectAccountIdTest": "acct_1UXnUL3HvyrETi0h"
+  },
+  {
+    "_id": {
+      "$oid": "6aea3742f112ab8acd7e9b7d"
+    },
+    "name": "Yusuf",
+    "lastName": "Karim",
+    "email": "helper3@jobblo.no",
+    "password": "$2a$12$6FCyr63bGNhy493Ek.Xv7.jJXc/5ArRt75DlnHwaIihaqSPuNZUWC",
+    "role": "user",
+    "developerAccess": "readonly",
+    "locations": [],
+    "subscription": "Standard",
+    "planType": "private",
+    "verified": false,
+    "isTrusted": false,
+    "acceptedTerms": true,
+    "termsVersion": "2026-01-08",
+    "termsAcceptedAt": {
+      "$date": "2026-11-03T19:34:26.904Z"
+    },
+    "skills": ["Transport", "Varebil", "Gjenvinning"],
+    "earnings": 0,
+    "spending": 0,
+    "accountStatus": "active",
+    "deactivatedAt": null,
+    "deactivatedBy": null,
+    "averageRating": 0,
+    "reviewCount": 0,
+    "completedJobs": 0,
+    "favorites": [],
+    "blockedUsers": [],
+    "pointsBalance": 0,
+    "monthlyContactUsage": 0,
+    "payoutOnboardingStatus": "enabled",
+    "payoutEnabled": true,
+    "chargesEnabled": true,
+    "detailsSubmitted": true,
+    "payoutMethod": null,
+    "payoutVerified": false,
+    "isDeleted": false,
+    "deletedAt": null,
+    "experience": [],
+    "availability": [],
+    "portfolio": [],
+    "previousProjects": [],
+    "certifications": [],
+    "oauthProviders": [],
+    "pointsHistory": [],
+    "lastContactReset": {
+      "$date": "2026-11-03T19:34:26.905Z"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:34:26.905Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:21.884Z"
+    },
+    "__v": 0,
+    "address": "Stovner senter 3",
+    "bio": "Har varebil (Ford Transit) og hjelper med henting og levering.",
+    "country": "Norge",
+    "postNumber": "0982",
+    "postSted": "Oslo",
+    "avatarUrl": "https://images.unsplash.com/photo-1564564321837-a57b7070ac4f?w=400&h=400&fit=crop&q=80",
+    "emailVerifiedAt": {
+      "$date": "2026-11-03T19:34:26.934Z"
+    },
+    "connectAccountCreatedAt": {
+      "$date": "2026-11-03T19:35:27.975Z"
+    },
+    "stripeConnectAccountIdTest": "acct_1UXnUOKMZMFDQtq2"
+  },
+  {
+    "_id": {
+      "$oid": "6aea3743f112ab8acd7e9ba6"
+    },
+    "name": "Nora",
+    "lastName": "Pettersen",
+    "email": "helper4@jobblo.no",
+    "password": "$2a$12$u02GJs2rv7Lz2zkafCupzedn3ktZqw3wxkKNvEu7g.x7wBOH85EHS",
+    "role": "user",
+    "developerAccess": "readonly",
+    "locations": [],
+    "subscription": "Standard",
+    "planType": "private",
+    "verified": false,
+    "isTrusted": false,
+    "acceptedTerms": true,
+    "termsVersion": "2026-01-08",
+    "termsAcceptedAt": {
+      "$date": "2026-11-03T19:34:27.638Z"
+    },
+    "skills": ["Hagearbeid", "Hekkeklipping", "Rengjøring", "Snømåking"],
+    "earnings": 291,
+    "spending": 0,
+    "accountStatus": "active",
+    "deactivatedAt": null,
+    "deactivatedBy": null,
+    "averageRating": 5,
+    "reviewCount": 1,
+    "completedJobs": 1,
+    "favorites": [],
+    "blockedUsers": [],
+    "pointsBalance": 0,
+    "monthlyContactUsage": 0,
+    "payoutOnboardingStatus": "enabled",
+    "payoutEnabled": true,
+    "chargesEnabled": true,
+    "detailsSubmitted": true,
+    "payoutMethod": null,
+    "payoutVerified": false,
+    "isDeleted": false,
+    "deletedAt": null,
+    "experience": [],
+    "availability": [],
+    "portfolio": [],
+    "previousProjects": [],
+    "certifications": [],
+    "oauthProviders": [],
+    "pointsHistory": [],
+    "lastContactReset": {
+      "$date": "2026-11-03T19:34:27.639Z"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:34:27.639Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:42.071Z"
+    },
+    "__v": 0,
+    "address": "Fanaveien 210",
+    "availabilityText": "Fleksibel, også kveld",
+    "bio": "Hagelaget og glad i å jobbe ute. Tar plen, hekk, løv og litt vask i Bergen-området.",
+    "country": "Norge",
+    "phone": "+47 41095028",
+    "postNumber": "5221",
+    "postSted": "Bergen",
+    "avatarUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop&q=80",
+    "emailVerifiedAt": {
+      "$date": "2026-11-03T19:34:27.670Z"
+    },
+    "connectAccountCreatedAt": {
+      "$date": "2026-11-03T19:35:31.048Z"
+    },
+    "stripeConnectAccountIdTest": "acct_1UXnUR3rhIMXkVBA"
+  },
+  {
+    "_id": {
+      "$oid": "6aea3744f112ab8acd7e9bb4"
+    },
+    "name": "Mats",
+    "lastName": "Olsen",
+    "email": "helper5@jobblo.no",
+    "password": "$2a$12$kIO18p5GNrt056Qf4ECgxO8mAKT3nC89LKCwumxXR/iJ4pcDhmqMK",
+    "role": "user",
+    "developerAccess": "readonly",
+    "locations": [],
+    "subscription": "Standard",
+    "planType": "private",
+    "verified": false,
+    "isTrusted": false,
+    "acceptedTerms": true,
+    "termsVersion": "2026-01-08",
+    "termsAcceptedAt": {
+      "$date": "2026-11-03T19:34:28.335Z"
+    },
+    "skills": ["Hjulskift", "Bilvask", "Polering", "Småreparasjoner"],
+    "earnings": 1164,
+    "spending": 0,
+    "accountStatus": "active",
+    "deactivatedAt": null,
+    "deactivatedBy": null,
+    "averageRating": 4,
+    "reviewCount": 1,
+    "completedJobs": 1,
+    "favorites": [],
+    "blockedUsers": [],
+    "pointsBalance": 0,
+    "monthlyContactUsage": 0,
+    "payoutOnboardingStatus": "enabled",
+    "payoutEnabled": true,
+    "chargesEnabled": true,
+    "detailsSubmitted": true,
+    "payoutMethod": null,
+    "payoutVerified": false,
+    "isDeleted": false,
+    "deletedAt": null,
+    "experience": [],
+    "availability": [],
+    "portfolio": [],
+    "previousProjects": [],
+    "certifications": [],
+    "oauthProviders": [],
+    "pointsHistory": [],
+    "lastContactReset": {
+      "$date": "2026-11-03T19:34:28.335Z"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:34:28.336Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:37:26.212Z"
+    },
+    "__v": 0,
+    "address": "Vogts gate 8",
+    "availabilityText": "Kvelder og helg",
+    "bio": "Bilinteressert og jobber deltid på verksted. Hjulskift, vask og polering – kommer til deg.",
+    "country": "Norge",
+    "phone": "+47 41102947",
+    "postNumber": "0476",
+    "postSted": "Oslo",
+    "avatarUrl": "https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=400&h=400&fit=crop&q=80",
+    "emailVerifiedAt": {
+      "$date": "2026-11-03T19:34:28.378Z"
+    },
+    "connectAccountCreatedAt": {
+      "$date": "2026-11-03T19:35:34.319Z"
+    },
+    "stripeConnectAccountIdTest": "acct_1UXnUU3crbZy42uf"
+  },
+  {
+    "_id": {
+      "$oid": "6aea3745f112ab8acd7e9bc2"
+    },
+    "name": "Linnea",
+    "lastName": "Dahl",
+    "email": "helper6@jobblo.no",
+    "password": "$2a$12$/YW5gSb4Ni84rE53dRpnm.ixphjUcW.kHQIEMandL3QlTrrxFasFa",
+    "role": "user",
+    "developerAccess": "readonly",
+    "locations": [],
+    "subscription": "Standard",
+    "planType": "private",
+    "verified": false,
+    "isTrusted": false,
+    "acceptedTerms": true,
+    "termsVersion": "2026-01-08",
+    "termsAcceptedAt": {
+      "$date": "2026-11-03T19:34:29.044Z"
+    },
+    "skills": ["Maling", "Hagearbeid"],
+    "earnings": 0,
+    "spending": 0,
+    "accountStatus": "active",
+    "deactivatedAt": null,
+    "deactivatedBy": null,
+    "averageRating": 0,
+    "reviewCount": 0,
+    "completedJobs": 0,
+    "favorites": [],
+    "blockedUsers": [],
+    "pointsBalance": 0,
+    "monthlyContactUsage": 0,
+    "payoutOnboardingStatus": "enabled",
+    "payoutEnabled": true,
+    "chargesEnabled": true,
+    "detailsSubmitted": true,
+    "payoutMethod": null,
+    "payoutVerified": false,
+    "isDeleted": false,
+    "deletedAt": null,
+    "experience": [],
+    "availability": [],
+    "portfolio": [],
+    "previousProjects": [],
+    "certifications": [],
+    "oauthProviders": [],
+    "pointsHistory": [],
+    "lastContactReset": {
+      "$date": "2026-11-03T19:34:29.044Z"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:34:29.044Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:11.052Z"
+    },
+    "__v": 0,
+    "address": "Gamle Drammensvei 102",
+    "country": "Norge",
+    "postNumber": "1357",
+    "postSted": "Bekkestua",
+    "emailVerifiedAt": {
+      "$date": "2026-11-03T19:34:29.083Z"
+    },
+    "connectAccountCreatedAt": {
+      "$date": "2026-11-03T19:35:37.547Z"
+    },
+    "stripeConnectAccountIdTest": "acct_1UXnUYKsPWHI7ult"
+  },
+  {
+    "_id": {
+      "$oid": "6aea3745f112ab8acd7e9bd0"
+    },
+    "name": "Ahmed",
+    "lastName": "Hassan",
+    "email": "helper7@jobblo.no",
+    "password": "$2a$12$P1vVGciS7nyn60XM0DyoKOgTmxixMaRoWbYevTRqKr2m.ZH7XxmO6",
+    "role": "user",
+    "developerAccess": "readonly",
+    "locations": [],
+    "subscription": "Standard",
+    "planType": "private",
+    "verified": false,
+    "isTrusted": false,
+    "acceptedTerms": true,
+    "termsVersion": "2026-01-08",
+    "termsAcceptedAt": {
+      "$date": "2026-11-03T19:34:29.762Z"
+    },
+    "skills": ["Flyttehjelp", "Transport", "Tilhenger", "Montering"],
+    "earnings": 0,
+    "spending": 0,
+    "accountStatus": "active",
+    "deactivatedAt": null,
+    "deactivatedBy": null,
+    "averageRating": 0,
+    "reviewCount": 0,
+    "completedJobs": 0,
+    "favorites": [],
+    "blockedUsers": [],
+    "pointsBalance": 0,
+    "monthlyContactUsage": 0,
+    "payoutOnboardingStatus": "enabled",
+    "payoutEnabled": true,
+    "chargesEnabled": true,
+    "detailsSubmitted": true,
+    "payoutMethod": null,
+    "payoutVerified": false,
+    "isDeleted": false,
+    "deletedAt": null,
+    "experience": [],
+    "availability": [],
+    "portfolio": [],
+    "previousProjects": [],
+    "certifications": [],
+    "oauthProviders": [],
+    "pointsHistory": [],
+    "lastContactReset": {
+      "$date": "2026-11-03T19:34:29.762Z"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:34:29.762Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:11.437Z"
+    },
+    "__v": 0,
+    "address": "Konnerudgata 12",
+    "availabilityText": "Helger og etter kl. 16",
+    "bio": "Bor i Drammen og tar flytte- og bærejobber. Har tilhenger og stropper.",
+    "country": "Norge",
+    "phone": "+47 41118785",
+    "postNumber": "3036",
+    "postSted": "Drammen",
+    "avatarUrl": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop&q=80",
+    "emailVerifiedAt": {
+      "$date": "2026-11-03T19:34:29.790Z"
+    },
+    "connectAccountCreatedAt": {
+      "$date": "2026-11-03T19:35:40.663Z"
+    },
+    "stripeConnectAccountIdTest": "acct_1UXnUb3EFGoBeoEL"
+  },
+  {
+    "_id": {
+      "$oid": "6aea3746f112ab8acd7e9bde"
+    },
+    "name": "Sara",
+    "lastName": "Lindqvist",
+    "email": "helper8@jobblo.no",
+    "password": "$2a$12$OgJ25UpVO9TW7zMdSBfBsu5mxGEXVUFo1t/jjqSHhyH3RWyODzZ02",
+    "role": "user",
+    "developerAccess": "readonly",
+    "locations": [],
+    "subscription": "Standard",
+    "planType": "private",
+    "verified": false,
+    "isTrusted": false,
+    "acceptedTerms": true,
+    "termsVersion": "2026-01-08",
+    "termsAcceptedAt": {
+      "$date": "2026-11-03T19:34:30.427Z"
+    },
+    "skills": [],
+    "earnings": 0,
+    "spending": 0,
+    "accountStatus": "active",
+    "deactivatedAt": null,
+    "deactivatedBy": null,
+    "averageRating": 0,
+    "reviewCount": 0,
+    "completedJobs": 0,
+    "favorites": [],
+    "blockedUsers": [],
+    "pointsBalance": 0,
+    "monthlyContactUsage": 0,
+    "payoutOnboardingStatus": "enabled",
+    "payoutEnabled": true,
+    "chargesEnabled": true,
+    "detailsSubmitted": true,
+    "payoutMethod": null,
+    "payoutVerified": false,
+    "isDeleted": false,
+    "deletedAt": null,
+    "experience": [],
+    "availability": [],
+    "portfolio": [],
+    "previousProjects": [],
+    "certifications": [],
+    "oauthProviders": [],
+    "pointsHistory": [],
+    "lastContactReset": {
+      "$date": "2026-11-03T19:34:30.428Z"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:34:30.428Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:38:34.434Z"
+    },
+    "__v": 0,
+    "address": "Kirkeveien 64",
+    "country": "Norge",
+    "postNumber": "0367",
+    "postSted": "Oslo",
+    "emailVerifiedAt": {
+      "$date": "2026-11-03T19:34:30.450Z"
+    },
+    "connectAccountCreatedAt": {
+      "$date": "2026-11-03T19:35:43.849Z"
+    },
+    "stripeConnectAccountIdTest": "acct_1UXnUeKflekKkQBC"
+  },
+  {
+    "_id": {
+      "$oid": "6aea3747f112ab8acd7e9bec"
+    },
+    "name": "Brekke Malerservice AS",
+    "email": "painter@jobblo.no",
+    "password": "$2a$12$8PrGn.ibg.Ur2DUI5idy2uFLMPNa.Q/gCNPubBiP./r5x9e2JYixe",
+    "role": "company",
+    "developerAccess": "readonly",
+    "companyName": "Brekke Malerservice AS",
+    "orgNumber": "921456783",
+    "locations": [],
+    "subscription": "Standard",
+    "planType": "business",
+    "verified": false,
+    "isTrusted": false,
+    "acceptedTerms": true,
+    "termsVersion": "2026-01-08",
+    "termsAcceptedAt": {
+      "$date": "2026-11-03T19:34:31.150Z"
+    },
+    "skills": ["Maling", "Sparkling", "Tapetsering", "Fasademaling"],
+    "earnings": 4365,
+    "spending": 0,
+    "accountStatus": "active",
+    "deactivatedAt": null,
+    "deactivatedBy": null,
+    "averageRating": 5,
+    "reviewCount": 1,
+    "completedJobs": 1,
+    "favorites": [],
+    "blockedUsers": [],
+    "pointsBalance": 0,
+    "monthlyContactUsage": 0,
+    "payoutOnboardingStatus": "enabled",
+    "payoutEnabled": true,
+    "chargesEnabled": true,
+    "detailsSubmitted": true,
+    "payoutMethod": null,
+    "payoutVerified": false,
+    "isDeleted": false,
+    "deletedAt": null,
+    "experience": [],
+    "availability": [],
+    "portfolio": [],
+    "previousProjects": [],
+    "certifications": [],
+    "oauthProviders": [],
+    "pointsHistory": [],
+    "lastContactReset": {
+      "$date": "2026-11-03T19:34:31.151Z"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:34:31.151Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:49:31.815Z"
+    },
+    "__v": 0,
+    "address": "Østensjøveien 79",
+    "availabilityText": "Man–fre 07–15",
+    "bio": "Malerbedrift med fire ansatte. Innvendig og utvendig maling, sparkling og tapetsering i Oslo og Akershus. Fast pris etter befaring.",
+    "country": "Norge",
+    "phone": "+47 41134623",
+    "postNumber": "0687",
+    "postSted": "Oslo",
+    "website": "https://brekke-maler.example.no",
+    "avatarUrl": "https://images.unsplash.com/photo-1552058544-f2b08422138a?w=400&h=400&fit=crop&q=80",
+    "emailVerifiedAt": {
+      "$date": "2026-11-03T19:34:31.181Z"
+    },
+    "connectAccountCreatedAt": {
+      "$date": "2026-11-03T19:35:47.063Z"
+    },
+    "stripeConnectAccountIdTest": "acct_1UXnUhKhuwoC2Pw9"
+  },
+  {
+    "_id": {
+      "$oid": "6aea3747f112ab8acd7e9bfa"
+    },
+    "name": "Skinnende Renhold AS",
+    "email": "cleaning@jobblo.no",
+    "password": "$2a$12$f.D6Ax92RhT7ALJX.ogSbezrumMkuapbv52u2ej4WHd7etTCDFwyS",
+    "role": "company",
+    "developerAccess": "readonly",
+    "companyName": "Skinnende Renhold AS",
+    "orgNumber": "918234567",
+    "locations": [],
+    "subscription": "Standard",
+    "planType": "business",
+    "verified": false,
+    "isTrusted": false,
+    "acceptedTerms": true,
+    "termsVersion": "2026-01-08",
+    "termsAcceptedAt": {
+      "$date": "2026-11-03T19:34:31.975Z"
+    },
+    "skills": ["Flyttevask", "Byggvask", "Fast renhold", "Vindusvask"],
+    "earnings": 0,
+    "spending": 0,
+    "accountStatus": "active",
+    "deactivatedAt": null,
+    "deactivatedBy": null,
+    "averageRating": 0,
+    "reviewCount": 0,
+    "completedJobs": 0,
+    "favorites": [],
+    "blockedUsers": [],
+    "pointsBalance": 0,
+    "monthlyContactUsage": 0,
+    "payoutOnboardingStatus": "enabled",
+    "payoutEnabled": true,
+    "chargesEnabled": true,
+    "detailsSubmitted": true,
+    "payoutMethod": null,
+    "payoutVerified": false,
+    "isDeleted": false,
+    "deletedAt": null,
+    "experience": [],
+    "availability": [],
+    "portfolio": [],
+    "previousProjects": [],
+    "certifications": [],
+    "oauthProviders": [],
+    "pointsHistory": [],
+    "lastContactReset": {
+      "$date": "2026-11-03T19:34:31.975Z"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:34:31.976Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:12.893Z"
+    },
+    "__v": 0,
+    "address": "Schweigaards gate 34",
+    "availabilityText": "Alle hverdager, helg etter avtale",
+    "bio": "Renholdsbyrå godkjent av Arbeidstilsynet. Flyttevask med garanti, fast vask og byggvask.",
+    "country": "Norge",
+    "phone": "+47 41142542",
+    "postNumber": "0655",
+    "postSted": "Oslo",
+    "website": "https://skinnende-renhold.example.no",
+    "avatarUrl": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop&q=80",
+    "emailVerifiedAt": {
+      "$date": "2026-11-03T19:34:32.014Z"
+    },
+    "connectAccountCreatedAt": {
+      "$date": "2026-11-03T19:35:50.137Z"
+    },
+    "stripeConnectAccountIdTest": "acct_1UXnUkKuJFGI44tA"
+  },
+  {
+    "_id": {
+      "$oid": "6aea3748f112ab8acd7e9c09"
+    },
+    "name": "Lunde Flytt & Transport AS",
+    "email": "moving@jobblo.no",
+    "password": "$2a$12$HXvkodhgmexDth0AZFfqmerhhTwOhXzYRltTbfqm1MQ7jkB42zgVa",
+    "role": "company",
+    "developerAccess": "readonly",
+    "companyName": "Lunde Flytt & Transport AS",
+    "orgNumber": "925678901",
+    "locations": [],
+    "subscription": "Standard",
+    "planType": "business",
+    "verified": false,
+    "isTrusted": false,
+    "acceptedTerms": true,
+    "termsVersion": "2026-01-08",
+    "termsAcceptedAt": {
+      "$date": "2026-11-03T19:34:32.999Z"
+    },
+    "skills": ["Flytting", "Pianoflytting", "Magasinering"],
+    "earnings": 0,
+    "spending": 0,
+    "accountStatus": "active",
+    "deactivatedAt": null,
+    "deactivatedBy": null,
+    "averageRating": 0,
+    "reviewCount": 0,
+    "completedJobs": 0,
+    "favorites": [],
+    "blockedUsers": [],
+    "pointsBalance": 0,
+    "monthlyContactUsage": 0,
+    "payoutOnboardingStatus": "enabled",
+    "payoutEnabled": true,
+    "chargesEnabled": true,
+    "detailsSubmitted": true,
+    "payoutMethod": null,
+    "payoutVerified": false,
+    "isDeleted": false,
+    "deletedAt": null,
+    "experience": [],
+    "availability": [],
+    "portfolio": [],
+    "previousProjects": [],
+    "certifications": [],
+    "oauthProviders": [],
+    "pointsHistory": [],
+    "lastContactReset": {
+      "$date": "2026-11-03T19:34:33Z"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:34:33Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:13.318Z"
+    },
+    "__v": 0,
+    "address": "Solheimveien 15",
+    "bio": "Flyttebyrå med to lastebiler. Hele Østlandet.",
+    "country": "Norge",
+    "postNumber": "1470",
+    "postSted": "Lørenskog",
+    "avatarUrl": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&h=400&fit=crop&q=80",
+    "emailVerifiedAt": {
+      "$date": "2026-11-03T19:34:33.034Z"
+    },
+    "connectAccountCreatedAt": {
+      "$date": "2026-11-03T19:35:53.499Z"
+    },
+    "stripeConnectAccountIdTest": "acct_1UXnUnQM45T2ZGa2"
+  },
+  {
+    "_id": {
+      "$oid": "6aea377521b49793625a805a"
+    },
+    "name": "Aas Tømrer og Bygg AS",
+    "email": "carpenter@jobblo.no",
+    "password": "$2a$12$EzFmMoKYqa2.o6dfsmeVaeLbEuJWmKH7l.EwgdLbmKjWjCNk93KTW",
+    "role": "company",
+    "developerAccess": "readonly",
+    "companyName": "Aas Tømrer og Bygg AS",
+    "orgNumber": "930112244",
+    "locations": [],
+    "subscription": "Standard",
+    "planType": "business",
+    "verified": false,
+    "isTrusted": false,
+    "acceptedTerms": true,
+    "termsVersion": "2026-01-08",
+    "termsAcceptedAt": {
+      "$date": "2026-11-03T19:35:17.684Z"
+    },
+    "skills": ["Tømrer", "Kjøkkenmontering", "Gulvlegging", "Dører og vinduer"],
+    "earnings": 0,
+    "spending": 0,
+    "accountStatus": "active",
+    "deactivatedAt": null,
+    "deactivatedBy": null,
+    "averageRating": 0,
+    "reviewCount": 0,
+    "completedJobs": 0,
+    "favorites": [],
+    "blockedUsers": [],
+    "pointsBalance": 0,
+    "monthlyContactUsage": 0,
+    "payoutOnboardingStatus": "enabled",
+    "payoutEnabled": true,
+    "chargesEnabled": true,
+    "detailsSubmitted": true,
+    "payoutMethod": null,
+    "payoutVerified": false,
+    "isDeleted": false,
+    "deletedAt": null,
+    "experience": [],
+    "availability": [],
+    "portfolio": [],
+    "previousProjects": [],
+    "certifications": [],
+    "oauthProviders": [],
+    "pointsHistory": [],
+    "lastContactReset": {
+      "$date": "2026-11-03T19:35:17.685Z"
+    },
+    "createdAt": {
+      "$date": "2026-11-03T19:35:17.686Z"
+    },
+    "updatedAt": {
+      "$date": "2026-11-03T19:36:13.744Z"
+    },
+    "__v": 0,
+    "address": "Tollbugata 3",
+    "availabilityText": "Man–fre 07–16",
+    "bio": "Tømrermester med svennebrev og mesterbrev. Kjøkkenmontering, gulv, dører og mindre tilbygg. Drammen og omegn.",
+    "country": "Norge",
+    "phone": "+47 41158380",
+    "postNumber": "3015",
+    "postSted": "Drammen",
+    "website": "https://aas-tomrer.example.no",
+    "avatarUrl": "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?w=400&h=400&fit=crop&q=80",
+    "emailVerifiedAt": {
+      "$date": "2026-11-03T19:35:17.828Z"
+    },
+    "connectAccountCreatedAt": {
+      "$date": "2026-11-03T19:35:57.018Z"
+    },
+    "stripeConnectAccountIdTest": "acct_1UXnUrKo2VDj1kj8"
+  }
+]

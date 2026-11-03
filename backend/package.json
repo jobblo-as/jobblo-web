@@ -13,7 +13,9 @@
     "check:payments": "node scripts/check-payment-config.js",
     "e2e:flow": "node scripts/e2e-job-flow.js",
     "dedupe:payments": "node scripts/dedupe-payment-records.js",
-    "merge:chats": "node scripts/merge-duplicate-chats.js"
+    "merge:chats": "node scripts/merge-duplicate-chats.js",
+    "db:wipe": "node seeds/wipe.js",
+    "db:seed": "node seeds/index.js"
   },
   "dependencies": {
     "@azure/storage-blob": "^12.34.0",

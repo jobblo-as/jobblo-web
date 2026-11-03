@@ -1,28 +1,7 @@
-const User = require('../models/User');
-const bcrypt = require('bcryptjs');
-const { avatars } = require('./constants/images');
+// Test users (~20): customer1–8@jobblo.no post jobs, helper1–8@jobblo.no are private helpers,
+// painter@ / cleaning@ / moving@ / carpenter@jobblo.no are businesses. Fictional names; photo,
+// about me, skills, availability and location, some profiles complete and some partial.
+// Passwords are in Bitwarden ("Jobblo Test"); the data holds only their bcrypt hashes.
+const { load } = require('./load');
 
-module.exports = async () => {
-  await User.deleteMany();
-
-  const users = [];
-
-  for (let i = 0; i < 12; i++) {
-    users.push({
-      name: `Bruker ${i + 1}`,
-      email: `user${i + 1}@jobblo.no`,
-      password: await bcrypt.hash('password123', 10),
-
-      phone: `+47900000${i + 1}`,
-
-      role: i === 0 ? 'superAdmin' : i < 5 ? 'provider' : 'user',
-      avatarUrl: avatars[i % avatars.length],
-      bio: 'Dette er en testprofil for Jobblo',
-      accountStatus: 'verified',
-      averageRating: Math.round((Math.random() * 2 + 3) * 10) / 10,
-      reviewCount: Math.floor(Math.random() * 20),
-    });
-  }
-
-  return await User.insertMany(users);
-};
+module.exports = () => load(['users']);
