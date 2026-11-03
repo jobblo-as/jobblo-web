@@ -137,6 +137,7 @@ describe('Subscription V2 checkout service', () => {
         customer: 'cus_test',
         client_reference_id: String(userId),
         line_items: [{ price: 'price_test', quantity: 1 }],
+        allow_promotion_codes: true,
         metadata: {
           subscriptionV2: 'true',
           userId: String(userId),
