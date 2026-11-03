@@ -8,6 +8,7 @@ import {
   useRemoveServiceFromFavoriteList,
 } from '../../../features/favoriteLists/hooks';
 import type { Jobs } from '../../../types/Jobs';
+import { jobImage } from '../../../assets/images/categories';
 
 interface AddToListModalProps {
   job: Jobs;
@@ -170,9 +171,10 @@ const AddToListModal: React.FC<AddToListModalProps> = ({ job, isOpen, onClose })
                     <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center text-gray-400 group-hover:bg-gray-200 transition-colors">
                       {(() => {
                         const firstService = list.services?.[0];
+                        // An empty list keeps the "+"; a job without a photo shows its category's.
                         const imageUrl =
                           firstService && typeof firstService !== 'string'
-                            ? firstService.images?.[0]
+                            ? jobImage(firstService)
                             : undefined;
                         return imageUrl ? (
                           <img

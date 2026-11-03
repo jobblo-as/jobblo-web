@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useFavoriteLists } from '../../features/favoriteLists/hooks';
 import { JobDetailCardSkeleton } from '../../components/Loading/JobDetailCardSkeleton.tsx';
 import type { FavoriteList } from '../../features/favoriteLists/types';
+import { jobImage } from '../../assets/images/categories';
 
 export function FavoritesPage() {
   const { data: lists = [], isLoading, isError } = useFavoriteLists();
@@ -16,8 +17,9 @@ export function FavoritesPage() {
         {lists.map((list: FavoriteList) => {
           // Get the latest service's image or fallback
           const latestService = list.services?.[list.services.length - 1];
+          // An empty list keeps "Ingen bilder"; a job without a photo shows its category's.
           const backgroundImage =
-            typeof latestService === 'object' ? latestService?.images?.[0] : '';
+            latestService && typeof latestService === 'object' ? jobImage(latestService) : '';
 
           return (
             <div

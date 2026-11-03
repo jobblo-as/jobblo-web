@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { MessagesSquare } from 'lucide-react';
 import { ConversationSkeleton } from '../Loading/ConversationSkeleton';
 import type { ChatMessage } from '../../api/chatAPI';
+import { jobImage } from '../../assets/images/categories';
 
 interface ConversationUser {
   _id: string;
@@ -18,6 +19,7 @@ interface ChatItem {
     images?: string[];
     image?: string;
     title?: string;
+    categories?: string[];
     isSold?: boolean;
   };
   lastMessage?: string;
@@ -90,7 +92,14 @@ const ConversationList: React.FC<ConversationListProps> = ({
           const hasUnread = isUnread(chat);
           const isActive = conversationId === chat._id;
           const isOnline = !!otherPerson?._id && onlineUsers.includes(otherPerson._id);
-          const photo = chat.serviceId?.images?.[0] || chat.serviceId?.image || undefined;
+          // Same picture as the job's card: its own photo, else its category's.
+          const job = chat.serviceId;
+          const photo = job
+            ? jobImage({
+                images: [...(job.images || []), ...(job.image ? [job.image] : [])],
+                categories: job.categories,
+              })
+            : undefined;
 
           return (
             <li key={chat._id}>
