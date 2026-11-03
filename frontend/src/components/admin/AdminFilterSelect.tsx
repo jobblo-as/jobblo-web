@@ -36,7 +36,7 @@ export function AdminFilterSelect({
       disabled={disabled}
     >
       <SelectTrigger
-        className={cn('h-9 min-w-[140px] bg-card shadow-xs', className)}
+        className={cn('min-w-[140px] bg-card', className)}
         aria-label={placeholder}
       >
         <SelectValue placeholder={placeholder} />

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Save, Settings, RefreshCw } from 'lucide-react';
+import { Loader2, Save, Settings, RefreshCw } from 'lucide-react';
 import { useAllConfigs, useUpdateConfig } from '../../hooks/admin/content';
 import { AdminPageHeader, AdminLoadingSkeleton, AdminErrorState } from '../../components/admin';
 import {
@@ -14,6 +14,10 @@ import {
 import { Input } from '../../components/developer/ui/input';
 import { Textarea } from '../../components/developer/ui/textarea';
 import { Button } from '../../components/developer/ui/button';
+import { Label } from '../../components/developer/ui/label';
+import { Badge } from '../../components/developer/ui/badge';
+import { EmptyState, Mono, Section } from '../../components/developer/kit';
+import { DataTable, type Column } from '../../components/developer/DataTable';
 import { toast } from 'react-hot-toast';
 
 interface ConfigEntry {
@@ -125,9 +129,49 @@ export default function GlobalSettingsPage() {
     }
   };
 
+  const columns: Column<ConfigEntry>[] = [
+    { key: 'key', header: 'Nøkkel', cell: (entry) => <Mono>{entry.key}</Mono> },
+    {
+      key: 'value',
+      header: 'Verdi',
+      className: 'max-w-[260px]',
+      cell: (entry) => (
+        <span
+          className="block truncate font-mono text-xs text-muted-foreground"
+          title={formatDisplayValue(entry.value)}
+        >
+          {formatDisplayValue(entry.value)}
+        </span>
+      ),
+    },
+    {
+      key: 'type',
+      header: 'Type',
+      cell: (entry) => <Badge variant="outline">{getValueType(entry.value)}</Badge>,
+    },
+    {
+      key: 'description',
+      header: 'Beskrivelse',
+      className: 'max-w-[200px]',
+      cell: (entry) => (
+        <span className="block truncate text-muted-foreground">{entry.description ?? '–'}</span>
+      ),
+    },
+    {
+      key: 'actions',
+      header: 'Handlinger',
+      align: 'right',
+      cell: (entry) => (
+        <Button variant="outline" size="xs" onClick={() => handleOpenEdit(entry)}>
+          Rediger
+        </Button>
+      ),
+    },
+  ];
+
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         <AdminPageHeader
           title="Globale innstillinger"
           description="Administrer systeminnstillinger og konfigurasjon"
@@ -139,7 +183,7 @@ export default function GlobalSettingsPage() {
 
   if (isError) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         <AdminPageHeader
           title="Globale innstillinger"
           description="Administrer systeminnstillinger og konfigurasjon"
@@ -151,139 +195,65 @@ export default function GlobalSettingsPage() {
 
   if (configs.length === 0) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         <AdminPageHeader
           title="Globale innstillinger"
           description="Administrer systeminnstillinger og konfigurasjon"
           actions={
-            <button
-              onClick={() => refetch()}
-              className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-foreground bg-muted hover:bg-accent rounded-md transition-colors"
-            >
-              <RefreshCw size={16} />
+            <Button variant="outline" size="sm" className="bg-card" onClick={() => refetch()}>
+              <RefreshCw />
               Oppdater
-            </button>
+            </Button>
           }
         />
-        <div className="bg-card rounded-lg border border-border p-8 text-center">
-          <div className="p-3 bg-muted/50 rounded-lg inline-flex mb-3">
-            <Settings size={28} className="text-muted-foreground/60" />
-          </div>
-          <p className="text-sm font-semibold text-foreground">Ingen innstillinger</p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Det er ingen konfigurasjonsinnstillinger tilgjengelig.
-          </p>
-        </div>
+        <Section title="Globale innstillinger">
+          <EmptyState
+            icon={<Settings />}
+            title="Ingen innstillinger"
+            description="Det er ingen konfigurasjonsinnstillinger tilgjengelig."
+          />
+        </Section>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <AdminPageHeader
         title="Globale innstillinger"
         description="Administrer systeminnstillinger og konfigurasjon"
         actions={
-          <button
-            onClick={() => refetch()}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-foreground bg-muted hover:bg-accent rounded-md transition-colors"
-          >
-            <RefreshCw size={16} />
+          <Button variant="outline" size="sm" className="bg-card" onClick={() => refetch()}>
+            <RefreshCw />
             Oppdater
-          </button>
+          </Button>
         }
       />
 
       {connectDeadline && (
-        <section className="rounded-lg border border-border bg-card p-5">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <h2 className="text-sm font-semibold text-foreground">SafePay</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Frist for at utføreren starter oppdraget etter bekreftet betaling. Startes det ikke
-                i tide, kanselleres oppdraget og kunden får full refusjon automatisk. Hver dag
-                tilsvarer 24 timer.
-              </p>
-              <p className="mt-2 text-sm font-medium text-foreground">
-                Nåværende frist: {formatDisplayValue(connectDeadline.value)} dager
-              </p>
-            </div>
-            <Button variant="outline" onClick={() => handleOpenEdit(connectDeadline)}>
+        <Section
+          title="SafePay"
+          description="Frist for at utføreren starter oppdraget etter bekreftet betaling. Startes det ikke i tide, kanselleres oppdraget og kunden får full refusjon automatisk. Hver dag tilsvarer 24 timer."
+          action={
+            <Button
+              variant="outline"
+              size="sm"
+              className="bg-card"
+              onClick={() => handleOpenEdit(connectDeadline)}
+            >
               Endre frist
             </Button>
-          </div>
-        </section>
+          }
+        >
+          <p className="text-sm font-medium text-foreground">
+            Nåværende frist: {formatDisplayValue(connectDeadline.value)} dager
+          </p>
+        </Section>
       )}
 
-      <div className="bg-card rounded-lg border border-border overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/50">
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Nøkkel
-                </th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Verdi
-                </th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Type
-                </th>
-                <th className="text-left px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Beskrivelse
-                </th>
-                <th className="text-right px-5 py-3.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Handlinger
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {visibleConfigs.map((entry) => (
-                <tr key={entry.key} className="hover:bg-muted/50 transition-colors">
-                  <td className="px-5 py-3.5">
-                    <code className="text-sm font-mono font-medium text-foreground">
-                      {entry.key}
-                    </code>
-                  </td>
-                  <td className="px-5 py-3.5 max-w-[260px]">
-                    <span
-                      className="block truncate text-sm text-muted-foreground font-mono"
-                      title={formatDisplayValue(entry.value)}
-                    >
-                      {formatDisplayValue(entry.value)}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-muted text-muted-foreground">
-                      {getValueType(entry.value)}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5 max-w-[200px]">
-                    <span className="block truncate text-sm text-muted-foreground">
-                      {entry.description ?? (
-                        <span className="text-muted-foreground/60 italic">–</span>
-                      )}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5 text-right">
-                    <button
-                      onClick={() => handleOpenEdit(entry)}
-                      className="px-3 py-1.5 text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors"
-                    >
-                      Rediger
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="px-5 py-3 border-t border-border bg-muted/50">
-          <p className="text-xs text-muted-foreground">
-            {visibleConfigs.length} innstillinger totalt
-          </p>
-        </div>
-      </div>
+      <Section title="Konfigurasjon" description={`${visibleConfigs.length} innstillinger totalt`}>
+        <DataTable columns={columns} rows={visibleConfigs} rowKey={(entry) => entry.key} />
+      </Section>
 
       <Dialog
         open={!!editingConfig}
@@ -302,17 +272,17 @@ export default function GlobalSettingsPage() {
           {editingConfig && (
             <div className="space-y-4 py-2">
               <div>
-                <label className="block mb-1 text-sm font-medium text-foreground">Nøkkel</label>
-                <Input value={editingConfig.key} disabled className="bg-muted/50" />
+                <Label className="mb-1.5">Nøkkel</Label>
+                <Input value={editingConfig.key} disabled className="font-mono" />
               </div>
 
               <div>
-                <label className="block mb-1 text-sm font-medium text-foreground">
+                <Label className="mb-1.5">
                   Verdi
-                  <span className="ml-1.5 text-xs text-muted-foreground font-normal">
+                  <span className="text-xs font-normal text-muted-foreground">
                     ({getValueType(editingConfig.value)})
                   </span>
-                </label>
+                </Label>
                 {typeof editingConfig.value === 'object' &&
                 editingConfig.value !== null &&
                 !Array.isArray(editingConfig.value) ? (
@@ -337,9 +307,7 @@ export default function GlobalSettingsPage() {
               </div>
 
               <div>
-                <label className="block mb-1 text-sm font-medium text-foreground">
-                  Beskrivelse
-                </label>
+                <Label className="mb-1.5">Beskrivelse</Label>
                 <Input
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
@@ -355,36 +323,9 @@ export default function GlobalSettingsPage() {
                 Avbryt
               </Button>
             </DialogClose>
-            <Button
-              onClick={handleSave}
-              disabled={saving}
-              className="bg-primary hover:bg-primary/90 text-white"
-            >
-              {saving ? (
-                <span className="flex items-center gap-2">
-                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                    />
-                  </svg>
-                  Lagrer...
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <Save size={15} />
-                  Lagre
-                </span>
-              )}
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? <Loader2 className="animate-spin" /> : <Save />}
+              {saving ? 'Lagrer...' : 'Lagre'}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -22,8 +22,8 @@ export function AdminSearchInput({
   return (
     <div className={cn('relative', className)}>
       <Search
-        size={16}
-        className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none z-10 text-muted-foreground"
+        size={14}
+        className="absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none z-10 text-muted-foreground"
         aria-hidden="true"
       />
       <Input
@@ -33,7 +33,7 @@ export function AdminSearchInput({
         placeholder={placeholder}
         disabled={disabled}
         className={cn(
-          'h-9 w-full rounded-md bg-card pl-9 pr-9 text-sm shadow-xs',
+          'h-8 w-full bg-card pl-8 pr-8',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
           'placeholder:text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed transition-all',
           inputClassName

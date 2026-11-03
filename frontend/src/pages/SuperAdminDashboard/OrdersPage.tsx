@@ -11,6 +11,8 @@ import {
   AdminPageHeader,
 } from '../../components/admin';
 import type { ColumnDef } from '../../components/admin/AdminDataTable';
+import { Mono } from '../../components/developer/kit';
+import { Button } from '../../components/developer/ui/button';
 
 const STATUS_OPTIONS = [
   { label: 'Venter', value: 'pending' },
@@ -53,9 +55,9 @@ export default function OrdersPage() {
       render: (o) => (
         <Link
           to={`/dashboard/orders/${o._id}`}
-          className="font-mono text-xs text-primary hover:underline"
+          className="hover:underline"
         >
-          {o._id.slice(-8).toUpperCase()}
+          <Mono>{o._id.slice(-8).toUpperCase()}</Mono>
         </Link>
       ),
     },
@@ -93,7 +95,7 @@ export default function OrdersPage() {
       header: 'Beløp',
       render: (o) =>
         o.agreedPrice != null ? (
-          <span className="font-semibold text-foreground">
+          <span className="tabular-nums text-foreground">
             {o.agreedPrice.toLocaleString('nb-NO')} NOK
           </span>
         ) : (
@@ -125,15 +127,16 @@ export default function OrdersPage() {
       header: 'Handlinger',
       render: (o) =>
         !['cancelled', 'completed', 'paid'].includes(o.status) ? (
-          <button
+          <Button
+            size="xs"
+            variant="destructive"
             onClick={() => setCancelTarget(o)}
-            className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
             aria-label={`Avbryt ordre ${o._id}`}
           >
             Avbryt
-          </button>
+          </Button>
         ) : (
-          <span className="text-xs text-muted-foreground/60">–</span>
+          <span className="text-xs text-muted-foreground">–</span>
         ),
     },
   ];
@@ -147,7 +150,7 @@ export default function OrdersPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <AdminPageHeader
         title="Ordrer"
         description="Alle plattformordrer med status og betalingsinformasjon"
@@ -167,7 +170,7 @@ export default function OrdersPage() {
         toolbar={
           <div className="flex flex-wrap gap-3 w-full">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <ShoppingCart size={16} />
+              <ShoppingCart className="size-4" />
               <span>{data?.pagination.total ?? 0} ordrer totalt</span>
             </div>
             <div className="flex flex-wrap gap-2 ml-auto">

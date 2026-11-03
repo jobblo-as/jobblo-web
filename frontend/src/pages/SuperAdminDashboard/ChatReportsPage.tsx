@@ -23,6 +23,8 @@ import {
   AdminStatCardSkeleton,
 } from '../../components/admin';
 import type { ColumnDef } from '../../components/admin/AdminDataTable';
+import { StatusBadge } from '../../components/developer/kit';
+import { Button } from '../../components/developer/ui/button';
 
 const STATUS_OPTIONS = [
   { label: 'Åpen', value: 'open' },
@@ -42,11 +44,11 @@ const PRIORITY_OPTIONS = [
   { label: 'Haster', value: 'urgent' },
 ];
 
-const PRIORITY_COLOR: Record<string, string> = {
-  low: 'text-muted-foreground bg-muted/50',
-  medium: 'text-yellow-600 bg-yellow-50',
-  high: 'text-orange-600 bg-orange-50',
-  urgent: 'text-red-700 bg-red-100',
+const PRIORITY_TONE: Record<string, 'neutral' | 'warning' | 'danger'> = {
+  low: 'neutral',
+  medium: 'warning',
+  high: 'danger',
+  urgent: 'danger',
 };
 
 const REPORT_TYPE_OPTIONS = [
@@ -172,13 +174,7 @@ export default function ChatReportsPage() {
       key: 'priority',
       header: 'Prioritet',
       render: (r) => (
-        <span
-          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
-            PRIORITY_COLOR[r.priority] ?? ''
-          }`}
-        >
-          {r.priority}
-        </span>
+        <StatusBadge status={r.priority} tone={PRIORITY_TONE[r.priority] ?? 'neutral'} />
       ),
     },
     {
@@ -188,7 +184,7 @@ export default function ChatReportsPage() {
         r.assignedAdminId ? (
           <span className="text-xs text-foreground">{r.assignedAdminId.name}</span>
         ) : (
-          <span className="text-xs text-orange-500">Ikke tildelt</span>
+          <span className="text-xs text-amber-600">Ikke tildelt</span>
         ),
     },
     {
@@ -210,28 +206,28 @@ export default function ChatReportsPage() {
         const isActive = !['resolved', 'dismissed', 'closed'].includes(r.status);
         return (
           <div className="flex items-center gap-1.5 flex-wrap">
-            <Link
-              to={`/dashboard/chat-reports/${r._id}`}
-              className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
-            >
-              <Eye size={11} aria-hidden="true" /> Detaljer
-            </Link>
-            {chatId && (
-              <Link
-                to={`/dashboard/chat-review?chatId=${chatId}&reportId=${r._id}&source=report`}
-                className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-primary bg-primary/10 hover:bg-primary/15 rounded-lg transition-colors"
-              >
-                <MessageSquare size={11} aria-hidden="true" /> Gjennomgå chat
+            <Button variant="outline" size="xs" asChild>
+              <Link to={`/dashboard/chat-reports/${r._id}`}>
+                <Eye aria-hidden="true" /> Detaljer
               </Link>
+            </Button>
+            {chatId && (
+              <Button variant="outline" size="xs" asChild>
+                <Link
+                  to={`/dashboard/chat-review?chatId=${chatId}&reportId=${r._id}&source=report`}
+                >
+                  <MessageSquare aria-hidden="true" /> Gjennomgå chat
+                </Link>
+              </Button>
             )}
             {isActive && !r.assignedAdminId && (
-              <button
+              <Button
+                size="xs"
                 onClick={() => assignMutation.mutate(r._id)}
                 disabled={assignMutation.isPending}
-                className="flex items-center gap-1 px-2 py-1.5 text-xs font-medium text-green-700 bg-green-50 hover:bg-green-100 rounded-lg transition-colors disabled:opacity-50"
               >
-                <UserCheck size={11} aria-hidden="true" /> Ta sak
-              </button>
+                <UserCheck aria-hidden="true" /> Ta sak
+              </Button>
             )}
           </div>
         );
@@ -242,14 +238,14 @@ export default function ChatReportsPage() {
   const summary = data?.summary;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <AdminPageHeader
         title="Chatrapporter"
         description="Administrer og behandle rapporter fra brukere om chatter og meldinger"
       />
 
       {/* Summary cards */}
-      <section className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-8 gap-3">
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {isLoading
           ? Array.from({ length: 8 }).map((_, i) => <AdminStatCardSkeleton key={i} />)
           : summary &&
@@ -287,7 +283,7 @@ export default function ChatReportsPage() {
         pagination={data?.pagination}
         onPageChange={(p) => setPage(p)}
         toolbar={
-          <div className="flex flex-wrap gap-3 w-full">
+          <div className="flex w-full flex-wrap gap-2">
             <AdminFilterSelect
               value={statusFilter}
               onChange={(v) => {

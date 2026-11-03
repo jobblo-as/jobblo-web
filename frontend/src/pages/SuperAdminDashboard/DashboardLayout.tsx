@@ -1,9 +1,9 @@
-import { useEffect } from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { Terminal } from 'lucide-react';
+import { Command as CommandIcon, Search, Terminal } from 'lucide-react';
 import { AdminSidebar } from '../../components/admin/AdminSidebar';
-import { useAdminNav } from '../../components/admin/adminNav';
+import { useAdminNav, type AdminNavGroup } from '../../components/admin/adminNav';
 import { LanguageSwitcher } from '../../components/admin/LanguageSwitcher';
 import { LanguageProvider } from '../../i18n/LanguageContext';
 import { Badge } from '../../components/developer/ui/badge';
@@ -18,6 +18,14 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '../../components/developer/ui/breadcrumb';
+import {
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '../../components/developer/ui/command';
 import {
   SidebarInset,
   SidebarProvider,
@@ -43,10 +51,61 @@ function useBodyTheme() {
   }, []);
 }
 
+/** Jump to any admin page (⌘K), as in the Developer Console. */
+function CommandPalette({
+  groups,
+  open,
+  setOpen,
+}: {
+  groups: AdminNavGroup[];
+  open: boolean;
+  setOpen: (v: boolean) => void;
+}) {
+  const navigate = useNavigate();
+  return (
+    <CommandDialog open={open} onOpenChange={setOpen} title="Gå til" description="Søk etter sider">
+      <CommandInput placeholder="Søk etter sider…" />
+      <CommandList>
+        <CommandEmpty>Ingen sider funnet.</CommandEmpty>
+        {groups.map((g) => (
+          <CommandGroup key={g.label} heading={g.label}>
+            {g.items.map((i) => (
+              <CommandItem
+                key={i.to}
+                value={`${g.label} ${i.label}`}
+                onSelect={() => {
+                  setOpen(false);
+                  navigate(i.to);
+                }}
+              >
+                <i.icon />
+                <span>{i.label}</span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
+        ))}
+      </CommandList>
+    </CommandDialog>
+  );
+}
+
 function AdminShell() {
   useBodyTheme();
   const { pathname } = useLocation();
-  const items = useAdminNav().flatMap((group) => group.items);
+  const groups = useAdminNav();
+  const items = groups.flatMap((group) => group.items);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setPaletteOpen((o) => !o);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
   // Longest matching nav path wins, so /dashboard/safepay/123 shows "SafePay".
   const current = items
     .filter((item) =>
@@ -79,7 +138,28 @@ function AdminShell() {
             </Breadcrumb>
 
             <div className="ml-auto flex items-center gap-2">
-              <Button variant="outline" size="sm" asChild className="hidden bg-card md:inline-flex">
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden w-56 justify-start bg-card text-muted-foreground md:inline-flex"
+                onClick={() => setPaletteOpen(true)}
+              >
+                <Search />
+                <span className="flex-1 text-left">Søk etter sider…</span>
+                <kbd className="pointer-events-none inline-flex h-5 items-center gap-0.5 rounded-sm border bg-muted px-1 font-mono text-[10px]">
+                  <CommandIcon className="size-3" />K
+                </kbd>
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                className="md:hidden"
+                onClick={() => setPaletteOpen(true)}
+                aria-label="Søk"
+              >
+                <Search />
+              </Button>
+              <Button variant="outline" size="sm" asChild className="hidden bg-card lg:inline-flex">
                 <Link to="/developer">
                   <Terminal /> Developer Console
                 </Link>
@@ -103,6 +183,7 @@ function AdminShell() {
           </main>
         </SidebarInset>
       </SidebarProvider>
+      <CommandPalette groups={groups} open={paletteOpen} setOpen={setPaletteOpen} />
     </TooltipProvider>
   );
 }

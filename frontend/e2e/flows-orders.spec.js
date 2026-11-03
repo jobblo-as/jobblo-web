@@ -413,7 +413,8 @@ test('admin sees the dispute and resolves it', async ({ page }) => {
   await page.getByRole('button', { name: 'Løs tvist' }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByRole('button', { name: 'Bekreft løsning' })).toBeDisabled();
-  await dialog.locator('select').selectOption('full_refund_to_customer');
+  await dialog.getByRole('combobox', { name: 'Utfall *' }).click();
+  await page.getByRole('option', { name: 'Full refusjon til kunde' }).click();
   await dialog.getByPlaceholder('Forklar beslutningen…').fill('Arbeidet ble ikke levert.');
   await dialog.getByRole('button', { name: 'Bekreft løsning' }).click();
   await expect

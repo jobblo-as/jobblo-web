@@ -18,6 +18,17 @@ import {
   AdminStatusBadge,
 } from '../../components/admin';
 import type { ColumnDef } from '../../components/admin/AdminDataTable';
+import { Mono } from '../../components/developer/kit';
+import { Button } from '../../components/developer/ui/button';
+import { Input } from '../../components/developer/ui/input';
+import { Label } from '../../components/developer/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '../../components/developer/ui/dialog';
 
 // The namespace also exports helpers (createLucideIcon, ...); only icon names are looked up.
 const lucideIcon = (name: string) =>
@@ -114,11 +125,14 @@ export default function CategoriesPage() {
       header: 'Navn',
       render: (c) => (
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-muted rounded-lg" aria-hidden="true">
-            <Tag size={14} className="text-muted-foreground" />
+          <div
+            className="flex size-7 items-center justify-center rounded-md border bg-muted/50"
+            aria-hidden="true"
+          >
+            <Tag className="size-3.5 text-muted-foreground" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-foreground">{c.name}</p>
+            <p className="text-sm font-medium text-foreground">{c.name}</p>
             <p className="text-xs text-muted-foreground font-mono">{c.slug}</p>
           </div>
         </div>
@@ -131,18 +145,18 @@ export default function CategoriesPage() {
         const IconComp = lucideIcon(c.icon ?? '');
         return IconComp ? (
           <span className="flex items-center gap-2">
-            <IconComp size={16} className="text-primary" />
-            <span className="text-xs text-muted-foreground font-mono">{c.icon}</span>
+            <IconComp className="size-4 text-muted-foreground" />
+            <Mono>{c.icon}</Mono>
           </span>
         ) : (
-          <span className="text-sm text-muted-foreground italic">–</span>
+          <span className="text-sm text-muted-foreground">–</span>
         );
       },
     },
     {
       key: 'sortOrder',
       header: 'Sortering',
-      render: (c) => <span className="text-sm text-muted-foreground">{c.sortOrder}</span>,
+      render: (c) => <span className="text-sm tabular-nums text-muted-foreground">{c.sortOrder}</span>,
     },
     {
       key: 'status',
@@ -164,29 +178,32 @@ export default function CategoriesPage() {
       header: 'Handlinger',
       className: 'whitespace-nowrap',
       render: (c) => (
-        <div className="flex items-center gap-1.5">
-          <button
+        <div className="flex items-center gap-1">
+          <Button
+            size="xs"
+            variant="outline"
             onClick={() => openEdit(c)}
-            className="px-2.5 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
             aria-label={`Rediger ${c.name}`}
           >
             Rediger
-          </button>
-          <button
+          </Button>
+          <Button
+            size="xs"
+            variant="outline"
             onClick={() => toggleMutation.mutate(c._id)}
             disabled={toggleMutation.isPending}
-            className="px-2.5 py-1.5 text-xs font-medium text-muted-foreground bg-muted hover:bg-accent rounded-lg transition-colors disabled:opacity-50"
             aria-label={`${c.isActive ? 'Deaktiver' : 'Aktiver'} ${c.name}`}
           >
             {c.isActive ? 'Deaktiver' : 'Aktiver'}
-          </button>
-          <button
+          </Button>
+          <Button
+            size="xs"
+            variant="destructive"
             onClick={() => setDeleteTarget(c)}
-            className="px-2.5 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
             aria-label={`Slett ${c.name}`}
           >
             Slett
-          </button>
+          </Button>
         </div>
       ),
     },
@@ -195,18 +212,15 @@ export default function CategoriesPage() {
   const isFormOpen = createOpen || !!editTarget;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <AdminPageHeader
         title="Kategorier"
         description="Administrer tjenestekategorier"
         actions={
-          <button
-            onClick={openCreate}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-ring/50"
-          >
-            <Plus size={16} />
+          <Button size="sm" onClick={openCreate}>
+            <Plus />
             Ny kategori
-          </button>
+          </Button>
         }
       />
 
@@ -243,106 +257,95 @@ export default function CategoriesPage() {
       />
 
       {/* Create / Edit dialog */}
-      {isFormOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="cat-form-title"
-        >
-          <div className="bg-card rounded-lg shadow-xl w-full max-w-md p-6 space-y-4">
-            <h2 id="cat-form-title" className="text-lg font-bold text-foreground">
-              {createOpen ? 'Ny kategori' : `Rediger: ${editTarget?.name}`}
-            </h2>
+      <Dialog
+        open={isFormOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setCreateOpen(false);
+            setEditTarget(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{createOpen ? 'Ny kategori' : `Rediger: ${editTarget?.name}`}</DialogTitle>
+          </DialogHeader>
 
-            <div>
-              <label htmlFor="cat-name" className="block text-sm font-medium text-foreground mb-1">
-                Navn *
-              </label>
-              <input
-                id="cat-name"
-                type="text"
-                value={form.name}
-                onChange={(e) => {
-                  setForm((f) => ({ ...f, name: e.target.value }));
-                  setFormError('');
-                }}
-                className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                aria-invalid={!!formError}
-                aria-describedby={formError ? 'cat-name-err' : undefined}
-              />
-              {formError && (
-                <p id="cat-name-err" className="text-xs text-red-600 mt-1">
-                  {formError}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor="cat-icon" className="block text-sm font-medium text-foreground mb-1">
-                Ikon (lucide-navn)
-              </label>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center justify-center w-10 h-10 bg-muted rounded-md shrink-0">
-                  {(() => {
-                    const PreviewIcon = lucideIcon(form.icon);
-                    return PreviewIcon ? (
-                      <PreviewIcon size={18} className="text-primary" />
-                    ) : (
-                      <Tag size={18} className="text-muted-foreground" />
-                    );
-                  })()}
-                </div>
-                <input
-                  id="cat-icon"
-                  type="text"
-                  value={form.icon}
-                  onChange={(e) => setForm((f) => ({ ...f, icon: e.target.value }))}
-                  placeholder="f.eks. Wrench, Truck, Hammer"
-                  className="w-full px-3 py-2.5 text-sm font-mono border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
-                />
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Navnet på et lucide-react-ikon, f.eks. <code className="font-mono">Wrench</code>
+          <div className="space-y-1.5">
+            <Label htmlFor="cat-name">Navn *</Label>
+            <Input
+              id="cat-name"
+              type="text"
+              value={form.name}
+              onChange={(e) => {
+                setForm((f) => ({ ...f, name: e.target.value }));
+                setFormError('');
+              }}
+              aria-invalid={!!formError}
+              aria-describedby={formError ? 'cat-name-err' : undefined}
+            />
+            {formError && (
+              <p id="cat-name-err" className="text-xs text-red-600">
+                {formError}
               </p>
-            </div>
+            )}
+          </div>
 
-            <div>
-              <label htmlFor="cat-sort" className="block text-sm font-medium text-foreground mb-1">
-                Sorteringsrekkefølge
-              </label>
-              <input
-                id="cat-sort"
-                type="number"
-                min="0"
-                value={form.sortOrder}
-                onChange={(e) => setForm((f) => ({ ...f, sortOrder: e.target.value }))}
-                className="w-full px-3 py-2.5 text-sm border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring/50"
+          <div className="space-y-1.5">
+            <Label htmlFor="cat-icon">Ikon (lucide-navn)</Label>
+            <div className="flex items-center gap-2">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-md border bg-muted/50">
+                {(() => {
+                  const PreviewIcon = lucideIcon(form.icon);
+                  return PreviewIcon ? (
+                    <PreviewIcon className="size-4 text-foreground" />
+                  ) : (
+                    <Tag className="size-4 text-muted-foreground" />
+                  );
+                })()}
+              </div>
+              <Input
+                id="cat-icon"
+                type="text"
+                value={form.icon}
+                onChange={(e) => setForm((f) => ({ ...f, icon: e.target.value }))}
+                placeholder="f.eks. Wrench, Truck, Hammer"
+                className="font-mono"
               />
             </div>
-
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                onClick={() => {
-                  setCreateOpen(false);
-                  setEditTarget(null);
-                }}
-                className="px-4 py-2.5 text-sm font-medium text-muted-foreground bg-muted hover:bg-accent rounded-md transition-colors"
-              >
-                Avbryt
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={isPending}
-                className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-md transition-colors disabled:opacity-60"
-              >
-                {isPending && <Loader2 size={14} className="animate-spin" />}
-                {createOpen ? 'Opprett' : 'Lagre'}
-              </button>
-            </div>
+            <p className="text-xs text-muted-foreground">
+              Navnet på et lucide-react-ikon, f.eks. <Mono>Wrench</Mono>
+            </p>
           </div>
-        </div>
-      )}
+
+          <div className="space-y-1.5">
+            <Label htmlFor="cat-sort">Sorteringsrekkefølge</Label>
+            <Input
+              id="cat-sort"
+              type="number"
+              min="0"
+              value={form.sortOrder}
+              onChange={(e) => setForm((f) => ({ ...f, sortOrder: e.target.value }))}
+            />
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setCreateOpen(false);
+                setEditTarget(null);
+              }}
+            >
+              Avbryt
+            </Button>
+            <Button onClick={handleSave} disabled={isPending}>
+              {isPending && <Loader2 className="animate-spin" />}
+              {createOpen ? 'Opprett' : 'Lagre'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AdminConfirmDialog
         title="Slett kategori?"

@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { CreditCard, CheckCircle2, XCircle, Clock, RotateCcw } from 'lucide-react';
+import { CreditCard, CheckCircle2, XCircle } from 'lucide-react';
 import { useAdminTransactions } from '../../hooks/admin';
 import type { AdminTransactionsQuery, AdminTransaction } from '../../api/admin';
 import {
@@ -10,6 +10,8 @@ import {
   AdminPageHeader,
 } from '../../components/admin';
 import type { ColumnDef } from '../../components/admin/AdminDataTable';
+import { StatCard } from '../../components/developer/kit';
+import { Badge } from '../../components/developer/ui/badge';
 
 const STATUS_OPTIONS = [
   { label: 'Venter', value: 'pending' },
@@ -22,13 +24,6 @@ const TYPE_OPTIONS = [
   { label: 'Ekstra kontakter', value: 'extra_contact' },
   { label: 'Hast', value: 'urgent' },
 ];
-
-function StatusIcon({ status }: { status: string }) {
-  if (status === 'succeeded') return <CheckCircle2 size={14} className="text-green-500" />;
-  if (status === 'failed') return <XCircle size={14} className="text-red-500" />;
-  if (status === 'refunded') return <RotateCcw size={14} className="text-purple-500" />;
-  return <Clock size={14} className="text-yellow-500" />;
-}
 
 export default function TransactionsPage() {
   const [page, setPage] = useState(1);
@@ -83,13 +78,13 @@ export default function TransactionsPage() {
       key: 'type',
       header: 'Type',
       render: (t) => (
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700">
+        <Badge variant="outline">
           {t.type === 'subscription'
             ? 'Abonnement'
             : t.type === 'urgent'
               ? 'Hast'
               : 'Ekstra kontakter'}
-        </span>
+        </Badge>
       ),
     },
     {
@@ -97,11 +92,11 @@ export default function TransactionsPage() {
       header: 'Beløp',
       render: (t) => (
         <div>
-          <p className="text-sm font-semibold text-foreground">
+          <p className="text-sm font-medium tabular-nums text-foreground">
             {t.amount.toLocaleString('nb-NO')} {t.currency.toUpperCase()}
           </p>
           {t.discountAmount > 0 && (
-            <p className="text-xs text-green-600">
+            <p className="text-xs text-emerald-600">
               -{t.discountAmount.toLocaleString('nb-NO')} rabatt
             </p>
           )}
@@ -111,19 +106,14 @@ export default function TransactionsPage() {
     {
       key: 'status',
       header: 'Status',
-      render: (t) => (
-        <div className="flex items-center gap-1.5">
-          <StatusIcon status={t.status} />
-          <AdminStatusBadge status={t.status} />
-        </div>
-      ),
+      render: (t) => <AdminStatusBadge status={t.status} />,
     },
     {
       key: 'refunded',
       header: 'Refundert',
       render: (t) => (
         <span
-          className={`text-xs font-medium ${t.refunded ? 'text-purple-600' : 'text-muted-foreground'}`}
+          className={`text-xs ${t.refunded ? 'text-foreground' : 'text-muted-foreground'}`}
         >
           {t.refunded ? 'Ja' : 'Nei'}
         </span>
@@ -142,11 +132,41 @@ export default function TransactionsPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <AdminPageHeader
         title="Transaksjoner"
         description="Alle betalingstransaksjoner — ingen sensitive betalingsdata vises"
       />
+
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          label="Totalt"
+          icon={<CreditCard />}
+          loading={isLoading}
+          value={data?.pagination.total ?? '–'}
+        />
+        <StatCard
+          label="Denne siden"
+          icon={<CreditCard />}
+          tone="info"
+          loading={isLoading}
+          value={data?.transactions.length ?? '–'}
+        />
+        <StatCard
+          label="Vellykket"
+          icon={<CheckCircle2 />}
+          tone="success"
+          loading={isLoading}
+          value={data?.transactions.filter((t) => t.status === 'succeeded').length ?? '–'}
+        />
+        <StatCard
+          label="Feilet"
+          icon={<XCircle />}
+          tone="danger"
+          loading={isLoading}
+          value={data?.transactions.filter((t) => t.status === 'failed').length ?? '–'}
+        />
+      </div>
 
       <AdminDataTable
         columns={columns}
@@ -160,7 +180,7 @@ export default function TransactionsPage() {
         pagination={data?.pagination}
         onPageChange={setPage}
         toolbar={
-          <div className="flex flex-wrap gap-3 w-full">
+          <div className="flex flex-wrap gap-2 w-full">
             <AdminSearchInput
               value={search}
               onChange={handleSearchChange}
@@ -189,48 +209,6 @@ export default function TransactionsPage() {
         }
       />
 
-      {/* Summary cards */}
-      {data && !isLoading && (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {[
-            {
-              label: 'Totalt',
-              value: data.pagination.total,
-              icon: <CreditCard size={16} />,
-              color: 'text-muted-foreground',
-            },
-            {
-              label: 'Denne siden',
-              value: data.transactions.length,
-              icon: <CreditCard size={16} />,
-              color: 'text-blue-600',
-            },
-            {
-              label: 'Vellykket',
-              value: data.transactions.filter((t) => t.status === 'succeeded').length,
-              icon: <CheckCircle2 size={16} />,
-              color: 'text-green-600',
-            },
-            {
-              label: 'Feilet',
-              value: data.transactions.filter((t) => t.status === 'failed').length,
-              icon: <XCircle size={16} />,
-              color: 'text-red-600',
-            },
-          ].map((s) => (
-            <div
-              key={s.label}
-              className="bg-card rounded-md border border-border p-4 flex items-center gap-3"
-            >
-              <span className={s.color}>{s.icon}</span>
-              <div>
-                <p className="text-lg font-bold text-foreground">{s.value}</p>
-                <p className="text-xs text-muted-foreground">{s.label}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

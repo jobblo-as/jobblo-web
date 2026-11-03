@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { StatusBadge } from '../developer/kit';
 
 type StatusVariant =
   | 'active'
@@ -25,44 +26,45 @@ type StatusVariant =
   | 'user'
   | string;
 
-const variantMap: Record<string, string> = {
-  active: 'bg-emerald-50 text-emerald-800 ring-emerald-700/10',
-  verified: 'bg-emerald-50 text-emerald-800 ring-emerald-700/10',
-  completed: 'bg-sky-50 text-sky-800 ring-sky-700/10',
-  ready_for_review: 'bg-sky-50 text-sky-800 ring-sky-700/10',
-  waiting_for_approval: 'bg-sky-50 text-sky-800 ring-sky-700/10',
-  paid: 'bg-emerald-50 text-emerald-800 ring-emerald-700/10',
-  succeeded: 'bg-emerald-50 text-emerald-800 ring-emerald-700/10',
-  open: 'bg-sky-50 text-sky-800 ring-sky-700/10',
-  in_progress: 'bg-amber-50 text-amber-800 ring-amber-700/10',
-  under_review: 'bg-amber-50 text-amber-800 ring-amber-700/10',
-  disputed: 'bg-rose-50 text-rose-800 ring-rose-700/10',
-  resolved: 'bg-emerald-50 text-emerald-800 ring-emerald-700/10',
-  dismissed: 'bg-rose-50 text-rose-800 ring-rose-700/10',
-  pending: 'bg-amber-50 text-amber-800 ring-amber-700/10',
-  processing: 'bg-amber-50 text-amber-800 ring-amber-700/10',
-  awaiting_payment: 'bg-orange-50 text-orange-800 ring-orange-700/10',
-  inactive: 'bg-muted text-slate-600 ring-slate-500/10',
-  cancelled: 'bg-rose-50 text-rose-800 ring-rose-700/10',
-  closed: 'bg-muted text-slate-600 ring-slate-500/10',
-  failed: 'bg-rose-50 text-rose-800 ring-rose-700/10',
-  partially_refunded: 'bg-violet-50 text-violet-800 ring-violet-700/10',
-  unpaid: 'bg-orange-50 text-orange-800 ring-orange-700/10',
-  refunded: 'bg-violet-50 text-violet-800 ring-violet-700/10',
-  reconciliation_required: 'bg-rose-50 text-rose-800 ring-rose-700/10',
-  manual_review: 'bg-rose-50 text-rose-800 ring-rose-700/10',
-  verification_retry: 'bg-amber-50 text-amber-800 ring-amber-700/10',
-  ready: 'bg-emerald-50 text-emerald-800 ring-emerald-700/10',
-  provider_ready: 'bg-emerald-50 text-emerald-800 ring-emerald-700/10',
-  deadline_expired: 'bg-rose-50 text-rose-800 ring-rose-700/10',
-  declined: 'bg-rose-50 text-rose-800 ring-rose-700/10',
-  accepted: 'bg-emerald-50 text-emerald-800 ring-emerald-700/10',
-  awaiting_provider_connect: 'bg-orange-50 text-orange-800 ring-orange-700/10',
-  superAdmin: 'bg-rose-50 text-rose-800 ring-rose-700/10',
-  developer: 'bg-sky-50 text-sky-800 ring-sky-700/10',
-  provider: 'bg-indigo-50 text-indigo-800 ring-indigo-700/10',
-  company: 'bg-violet-50 text-violet-800 ring-violet-700/10',
-  user: 'bg-muted text-slate-700 ring-slate-500/10',
+/** Tones of the Developer Console's StatusBadge (components/developer/kit.tsx). */
+const toneMap: Record<string, 'neutral' | 'success' | 'warning' | 'danger' | 'info'> = {
+  active: 'success',
+  verified: 'success',
+  completed: 'info',
+  ready_for_review: 'info',
+  waiting_for_approval: 'info',
+  paid: 'success',
+  succeeded: 'success',
+  open: 'info',
+  in_progress: 'warning',
+  under_review: 'warning',
+  disputed: 'danger',
+  resolved: 'success',
+  dismissed: 'danger',
+  pending: 'warning',
+  processing: 'warning',
+  awaiting_payment: 'warning',
+  inactive: 'neutral',
+  cancelled: 'danger',
+  closed: 'neutral',
+  failed: 'danger',
+  partially_refunded: 'info',
+  unpaid: 'warning',
+  refunded: 'info',
+  reconciliation_required: 'danger',
+  manual_review: 'danger',
+  verification_retry: 'warning',
+  ready: 'success',
+  provider_ready: 'success',
+  deadline_expired: 'danger',
+  declined: 'danger',
+  accepted: 'success',
+  awaiting_provider_connect: 'warning',
+  superAdmin: 'danger',
+  developer: 'info',
+  provider: 'info',
+  company: 'info',
+  user: 'neutral',
 };
 
 const labelMap: Record<string, string> = {
@@ -112,17 +114,13 @@ interface AdminStatusBadgeProps {
 }
 
 export function AdminStatusBadge({ status, className }: AdminStatusBadgeProps) {
-  const colorClass = variantMap[status] ?? 'bg-muted text-muted-foreground';
-  const label = labelMap[status] ?? status;
   return (
-    <span
-      className={cn(
-        'inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap ring-1 ring-inset',
-        colorClass,
-        className
-      )}
-    >
-      {label}
+    <span className={cn('inline-flex', className)}>
+      <StatusBadge
+        status={status}
+        label={labelMap[status] ?? status}
+        tone={toneMap[status] ?? 'neutral'}
+      />
     </span>
   );
 }

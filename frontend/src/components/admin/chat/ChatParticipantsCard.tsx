@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
-import { ExternalLink, ShieldCheck } from 'lucide-react';
+import { ArrowUpRight, ShieldCheck, Star } from 'lucide-react';
 import { AdminStatusBadge } from '../AdminStatusBadge';
+import { Section } from '../../developer/kit';
+import { Avatar, AvatarFallback, AvatarImage } from '../../developer/ui/avatar';
+import { Button } from '../../developer/ui/button';
 import type { AdminChatParticipants } from '../../../api/admin/chats';
 
 interface ChatParticipantsCardProps {
@@ -9,46 +12,36 @@ interface ChatParticipantsCardProps {
 
 function ParticipantRow({
   participant,
-  role,
 }: {
   participant: NonNullable<AdminChatParticipants['customer']>;
-  role: string;
 }) {
-  const avatarSrc =
-    participant.avatarUrl ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(participant.name ?? 'U')}&background=2d4a3e&color=fff&size=64`;
-
   return (
     <div className="flex items-start gap-3">
-      <img
-        src={avatarSrc}
-        alt={participant.name}
-        className="w-10 h-10 rounded-full object-cover shrink-0"
-      />
-      <div className="min-w-0 flex-1 space-y-0.5">
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-sm font-semibold text-foreground">{participant.name}</span>
+      <Avatar>
+        <AvatarImage src={participant.avatarUrl} alt={participant.name} />
+        <AvatarFallback>{(participant.name || '?').slice(0, 2).toUpperCase()}</AvatarFallback>
+      </Avatar>
+      <div className="min-w-0 flex-1 space-y-1">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="text-sm font-medium text-foreground">{participant.name}</span>
           {participant.verified && (
-            <ShieldCheck size={13} className="text-green-500" aria-label="Verifisert" />
+            <ShieldCheck className="size-3.5 text-emerald-600" aria-label="Verifisert" />
           )}
         </div>
-        <p className="text-xs text-muted-foreground">{participant.email}</p>
-        <p className="text-xs text-muted-foreground capitalize">{role}</p>
-        <div className="flex items-center gap-2 flex-wrap mt-1">
-          {participant.accountStatus && <AdminStatusBadge status={participant.accountStatus} />}
-        </div>
+        <p className="truncate text-xs text-muted-foreground">{participant.email}</p>
+        {participant.accountStatus && <AdminStatusBadge status={participant.accountStatus} />}
         {participant.averageRating !== undefined && (
-          <p className="text-xs text-muted-foreground">
-            ⭐ {participant.averageRating.toFixed(1)} · {participant.completedJobs ?? 0} jobber
+          <p className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Star className="size-3 fill-current text-amber-500" aria-hidden="true" />
+            {participant.averageRating.toFixed(1)} · {participant.completedJobs ?? 0} jobber
           </p>
         )}
         {participant.profileLink && (
-          <Link
-            to={participant.profileLink}
-            className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1"
-          >
-            Se profil <ExternalLink size={10} aria-hidden="true" />
-          </Link>
+          <Button variant="ghost" size="xs" className="-ml-2" asChild>
+            <Link to={participant.profileLink}>
+              Se profil <ArrowUpRight aria-hidden="true" />
+            </Link>
+          </Button>
         )}
       </div>
     </div>
@@ -57,32 +50,24 @@ function ParticipantRow({
 
 export function ChatParticipantsCard({ participants }: ChatParticipantsCardProps) {
   return (
-    <div className="bg-card rounded-lg border border-border p-5">
-      <h3 className="text-sm font-semibold text-foreground mb-4 border-b border-border pb-2">
-        Deltakere
-      </h3>
-      <div className="space-y-5">
-        <div>
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-            Kunde
-          </p>
-          {participants.customer ? (
-            <ParticipantRow participant={participants.customer} role="Kunde" />
-          ) : (
-            <p className="text-sm text-muted-foreground">Ikke tilgjengelig</p>
-          )}
-        </div>
-        <div className="border-t border-border pt-4">
-          <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
-            Tilbyder
-          </p>
-          {participants.provider ? (
-            <ParticipantRow participant={participants.provider} role="Tilbyder" />
-          ) : (
-            <p className="text-sm text-muted-foreground">Ikke tilgjengelig</p>
-          )}
-        </div>
+    <Section title="Deltakere">
+      <div className="divide-y">
+        {(
+          [
+            ['Kunde', participants.customer],
+            ['Tilbyder', participants.provider],
+          ] as const
+        ).map(([role, p]) => (
+          <div key={role} className="space-y-2 py-3 first:pt-0 last:pb-0">
+            <p className="text-xs text-muted-foreground">{role}</p>
+            {p ? (
+              <ParticipantRow participant={p} />
+            ) : (
+              <p className="text-sm text-muted-foreground">Ikke tilgjengelig</p>
+            )}
+          </div>
+        ))}
       </div>
-    </div>
+    </Section>
   );
 }

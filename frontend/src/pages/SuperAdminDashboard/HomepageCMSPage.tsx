@@ -1,7 +1,12 @@
 import { useState, useEffect } from 'react';
-import { Save, RefreshCw, Image, Link, Type, MessageSquare } from 'lucide-react';
+import { Save, RefreshCw } from 'lucide-react';
 import { useHomepageContent, useUpdateHomepageContent } from '../../hooks/admin/content';
 import { AdminPageHeader, AdminLoadingSkeleton, AdminErrorState } from '../../components/admin';
+import { Section } from '../../components/developer/kit';
+import { Button } from '../../components/developer/ui/button';
+import { Input } from '../../components/developer/ui/input';
+import { Label } from '../../components/developer/ui/label';
+import { Textarea } from '../../components/developer/ui/textarea';
 import { toast } from 'react-hot-toast';
 
 /** Content fields are untyped JSON; a missing one edits as empty. */
@@ -79,7 +84,7 @@ export default function HomepageCMSPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         <AdminPageHeader
           title="Hjemmeside CMS"
           description="Administrer innholdet på offentlige hjemmeside"
@@ -91,7 +96,7 @@ export default function HomepageCMSPage() {
 
   if (isError) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-5">
         <AdminPageHeader
           title="Hjemmeside CMS"
           description="Administrer innholdet på offentlige hjemmeside"
@@ -102,137 +107,107 @@ export default function HomepageCMSPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <AdminPageHeader
         title="Hjemmeside CMS"
         description="Administrer innholdet på offentlige hjemmeside"
         actions={
-          <button
-            onClick={() => refetch()}
-            className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-foreground bg-muted hover:bg-accent rounded-md transition-colors"
-          >
-            <RefreshCw size={16} />
+          <Button variant="outline" size="sm" className="bg-card" onClick={() => refetch()}>
+            <RefreshCw />
             Oppdater
-          </button>
+          </Button>
         }
       />
 
-      <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
-        <div className="bg-card rounded-lg border border-border p-5 space-y-5">
-          <div className="flex items-center gap-2 text-foreground font-semibold text-sm border-b border-border pb-3">
-            <Type size={16} />
-            Hero-seksjon
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-foreground">Hero-tittel</label>
-            <input
+      <form onSubmit={handleSubmit} className="max-w-2xl space-y-4">
+        <Section title="Hero-seksjon" contentClassName="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="cms-hero-title">Hero-tittel</Label>
+            <Input
+              id="cms-hero-title"
               value={form.heroTitle}
               onChange={handleChange('heroTitle')}
               placeholder="F.eks. Finn din neste jobb"
-              className="flex h-10 w-full rounded-md border border-border bg-card px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
 
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-foreground">Hero-underrubrikk</label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="cms-hero-subtitle">Hero-underrubrikk</Label>
+            <Input
+              id="cms-hero-subtitle"
               value={form.heroSubtitle}
               onChange={handleChange('heroSubtitle')}
               placeholder="F.eks. Utforsk tusenvis av stillinger"
-              className="flex h-10 w-full rounded-md border border-border bg-card px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
 
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-foreground">Hero-beskrivelse</label>
-            <textarea
+          <div className="space-y-1.5">
+            <Label htmlFor="cms-hero-description">Hero-beskrivelse</Label>
+            <Textarea
+              id="cms-hero-description"
               value={form.heroDescription}
               onChange={handleChange('heroDescription')}
               placeholder="F.eks. Bli med i dag og oppdag mulighetene"
               rows={3}
-              className="flex w-full rounded-md border border-border bg-card px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring disabled:cursor-not-allowed disabled:opacity-50 resize-y min-h-[80px]"
             />
           </div>
-        </div>
+        </Section>
 
-        <div className="bg-card rounded-lg border border-border p-5 space-y-5">
-          <div className="flex items-center gap-2 text-foreground font-semibold text-sm border-b border-border pb-3">
-            <Link size={16} />
-            CTA (Call to Action)
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-foreground">CTA-tekst</label>
-            <input
+        <Section title="CTA (Call to Action)" contentClassName="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="cms-cta-text">CTA-tekst</Label>
+            <Input
+              id="cms-cta-text"
               value={form.ctaText}
               onChange={handleChange('ctaText')}
               placeholder="F.eks. Se ledige stillinger"
-              className="flex h-10 w-full rounded-md border border-border bg-card px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
 
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-foreground">CTA-lenke</label>
-            <input
+          <div className="space-y-1.5">
+            <Label htmlFor="cms-cta-url">CTA-lenke</Label>
+            <Input
+              id="cms-cta-url"
               value={form.ctaUrl}
               onChange={handleChange('ctaUrl')}
               placeholder="F.eks. /jobs"
-              className="flex h-10 w-full rounded-md border border-border bg-card px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
-        </div>
+        </Section>
 
-        <div className="bg-card rounded-lg border border-border p-5 space-y-5">
-          <div className="flex items-center gap-2 text-foreground font-semibold text-sm border-b border-border pb-3">
-            <Image size={16} />
-            Fremhevede kategorier
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-foreground">
-              Kategorier (én JSON per linje)
-            </label>
-            <textarea
+        <Section
+          title="Fremhevede kategorier"
+          description="Hver linje må være gyldig JSON. Én kategori per linje."
+        >
+          <div className="space-y-1.5">
+            <Label htmlFor="cms-categories">Kategorier (én JSON per linje)</Label>
+            <Textarea
+              id="cms-categories"
               value={form.featuredCategories}
               onChange={handleChange('featuredCategories')}
               placeholder='{"name":"Design","slug":"design","count":42}'
               rows={4}
-              className="flex w-full rounded-md border border-border bg-card px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring disabled:cursor-not-allowed disabled:opacity-50 font-mono resize-y min-h-[100px]"
+              className="font-mono"
             />
-            <p className="text-xs text-muted-foreground">
-              Hver linje må være gyldig JSON. Én kategori per linje.
-            </p>
           </div>
-        </div>
+        </Section>
 
-        <div className="bg-card rounded-lg border border-border p-5 space-y-5">
-          <div className="flex items-center gap-2 text-foreground font-semibold text-sm border-b border-border pb-3">
-            <MessageSquare size={16} />
-            Kunngjøringsbanner
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-sm font-medium text-foreground">Bannertekst</label>
-            <input
+        <Section title="Kunngjøringsbanner">
+          <div className="space-y-1.5">
+            <Label htmlFor="cms-banner">Bannertekst</Label>
+            <Input
+              id="cms-banner"
               value={form.announcementBanner}
               onChange={handleChange('announcementBanner')}
               placeholder="F.eks. Ny funksjon: Søk med AI!"
-              className="flex h-10 w-full rounded-md border border-border bg-card px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
-        </div>
+        </Section>
 
-        <div className="flex items-center gap-3">
-          <button
-            type="submit"
-            disabled={updateMutation.isPending}
-            className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary/90 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Save size={16} />
-            {updateMutation.isPending ? 'Lagrer...' : 'Lagre innhold'}
-          </button>
-        </div>
+        <Button type="submit" size="sm" disabled={updateMutation.isPending}>
+          <Save />
+          {updateMutation.isPending ? 'Lagrer...' : 'Lagre innhold'}
+        </Button>
       </form>
     </div>
   );
