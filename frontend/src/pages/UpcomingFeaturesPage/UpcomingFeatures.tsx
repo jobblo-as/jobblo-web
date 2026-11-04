@@ -1,205 +1,233 @@
 import React, { useState } from 'react';
-import {
-  Rocket,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  ChevronRight,
-  LayoutGrid,
-  ShieldCheck,
-  Zap,
-} from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Check, LayoutGrid, Rocket, ShieldCheck, Sparkles, Wrench } from 'lucide-react';
 import { useRoadmapFeatures } from '../../features/roadMap/hooks/useRoadmap';
 import type { RoadmapFeature } from '../../features/roadMap/types/roadmap';
+import { CARD, CONTAINER, DISPLAY, MICRO_LABEL, PILL_SECONDARY } from '../../theme/brand';
+
+type Status = RoadmapFeature['status'];
+type Filter = 'all' | Status;
+
+const STATUS: Record<Status, { label: string; badge: string; dot: string }> = {
+  planned: { label: 'Planlagt', badge: 'bg-[#F2F3EE] text-[#63665F]', dot: 'bg-[#9B9E96]' },
+  'in-progress': {
+    label: 'Pågår',
+    badge: 'bg-[#EAF1E9] text-[#2E6641]',
+    dot: 'bg-[#2E6641] animate-pulse',
+  },
+  completed: { label: 'Lansert', badge: 'bg-[#2E6641] text-white', dot: 'bg-white' },
+};
+
+const TAG: Record<RoadmapFeature['tag'], { label: string; Icon: typeof Rocket }> = {
+  feature: { label: 'Ny funksjon', Icon: Sparkles },
+  improvement: { label: 'Forbedring', Icon: LayoutGrid },
+  bugfix: { label: 'Feilretting', Icon: Wrench },
+  security: { label: 'Sikkerhet', Icon: ShieldCheck },
+};
+
+const FILTERS: { key: Filter; label: string }[] = [
+  { key: 'all', label: 'Alle' },
+  { key: 'in-progress', label: 'Pågår' },
+  { key: 'planned', label: 'Planlagt' },
+  { key: 'completed', label: 'Lansert' },
+];
+
+const EMPTY_TEXT: Record<Filter, string> = {
+  all: 'Veikartet er tomt akkurat nå. Nye funksjoner dukker opp her så snart vi begynner på dem.',
+  'in-progress': 'Ingenting er under arbeid akkurat nå.',
+  planned: 'Ingenting er planlagt akkurat nå.',
+  completed: 'Ingenting er lansert herfra ennå.',
+};
+
+const monthYear = (iso?: string) =>
+  iso ? new Date(iso).toLocaleDateString('nb-NO', { month: 'long', year: 'numeric' }) : null;
+
+const FeatureCard = ({ feature }: { feature: RoadmapFeature }) => {
+  const status = STATUS[feature.status] ?? STATUS.planned;
+  const tag = TAG[feature.tag] ?? TAG.feature;
+  const done = feature.status === 'completed';
+  const when = monthYear(feature.releaseDate);
+  const progress = Math.min(100, Math.max(0, Math.round(feature.progress ?? 0)));
+
+  return (
+    <article className={`${CARD} flex flex-col p-6 sm:p-7`}>
+      <div className="flex items-center justify-between gap-3">
+        <span
+          className={`inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-[0.75rem] font-semibold ${status.badge}`}
+        >
+          {done ? (
+            <Check size={13} strokeWidth={2.6} aria-hidden="true" />
+          ) : (
+            <span aria-hidden="true" className={`size-1.5 rounded-full ${status.dot}`} />
+          )}
+          {status.label}
+        </span>
+        <span className="inline-flex items-center gap-1.5 text-[0.75rem] font-semibold text-[#9B9E96]">
+          <tag.Icon size={13} strokeWidth={2.2} aria-hidden="true" />
+          {tag.label}
+        </span>
+      </div>
+
+      <h2 className="mt-5 text-[1.1875rem] font-bold leading-snug tracking-[-0.02em] text-[#0B0B0B]">
+        {feature.title}
+      </h2>
+      <p className="mt-2 line-clamp-3 text-[0.9375rem] leading-relaxed text-[#63665F]">
+        {feature.description}
+      </p>
+
+      <div className="mt-auto pt-6">
+        {done ? (
+          <p className="text-[0.8125rem] font-semibold text-[#2E6641]">
+            {when ? `Lansert ${when}` : 'Lansert'}
+          </p>
+        ) : (
+          <>
+            <div className="flex items-baseline justify-between text-[0.8125rem] font-semibold">
+              <span className="text-[#63665F]">{when ? `Ventet ${when}` : 'Fremdrift'}</span>
+              <span className="tabular-nums text-[#0B0B0B]">{progress} %</span>
+            </div>
+            <div
+              role="progressbar"
+              aria-label={`${feature.title}: ${progress} % ferdig`}
+              aria-valuenow={progress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#EEF0E9]"
+            >
+              <div
+                className="h-full rounded-full bg-[#2E6641] transition-[width] duration-700"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </>
+        )}
+      </div>
+    </article>
+  );
+};
 
 const UpcomingFeatures: React.FC = () => {
+  const navigate = useNavigate();
   const { data: features = [], isLoading: loading } = useRoadmapFeatures();
-  const [filter, setFilter] = useState<'all' | 'planned' | 'in-progress' | 'completed'>('all');
+  const [filter, setFilter] = useState<Filter>('all');
 
+  const count = (key: Filter) =>
+    key === 'all' ? features.length : features.filter((f) => f.status === key).length;
   const filteredFeatures =
     filter === 'all' ? features : features.filter((f) => f.status === filter);
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle2 className="text-[#4CAF50]" size={20} />;
-      case 'in-progress':
-        return <Clock className="text-[#FF9800] animate-pulse" size={20} />;
-      default:
-        return <AlertCircle className="text-[#2196F3]" size={20} />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-[#4CAF501A] text-[#4CAF50]';
-      case 'in-progress':
-        return 'bg-[#FF98001A] text-[#FF9800]';
-      default:
-        return 'bg-[#2196F31A] text-[#2196F3]';
-    }
-  };
-
-  const getTagIcon = (tag: string) => {
-    switch (tag) {
-      case 'feature':
-        return <Rocket size={12} />;
-      case 'bugfix':
-        return <AlertCircle size={12} />;
-      case 'improvement':
-        return <LayoutGrid size={12} />;
-      case 'security':
-        return <ShieldCheck size={12} />;
-      default:
-        return <Zap size={12} />;
-    }
-  };
-
   return (
-    <div className="min-h-screen pb-16 px-4 md:px-8">
-      <div className="max-w-300 mx-auto">
-        {/* Header Section */}
-        <div className="text-center mb-20 space-y-6">
-          <div className="inline-flex items-center gap-2 px-5 py-2 bg-white border border-[#2F7E4720] text-custom-green rounded-full text-xs font-black tracking-widest uppercase shadow-sm">
-            <Rocket size={14} className="animate-bounce" />
-            Platform Roadmap
+    <div className="min-h-screen bg-[#EFF0EA]">
+      <div className={`${CONTAINER} pb-24 pt-10 sm:pt-16`}>
+        {/* ── Header ──────────────────────────────────────────────────────── */}
+        <header className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl">
+            <p className={MICRO_LABEL}>Veikart</p>
+            <h1 className={`${DISPLAY} mt-4 text-[#0B0B0B]`}>
+              Det vi bygger <span className="text-[#2E6641]">nå.</span>
+            </h1>
+            <p className="mt-5 max-w-xl text-[1.0625rem] leading-relaxed text-[#63665F]">
+              Nye funksjoner, forbedringer og sikkerhetsoppdateringer i Jobblo — og hvor langt vi
+              har kommet med dem.
+            </p>
           </div>
-          <h1 className="text-5xl md:text-7xl font-black text-[#0F172A] tracking-tighter leading-none">
-            Our Road{' '}
-            <span className="text-custom-green relative inline-block">
-              Ahead.
-              <span className="absolute bottom-2 left-0 w-full h-3 bg-[#2F7E471A] -z-10 rotate-1"></span>
-            </span>
-          </h1>
-          <p className="text-xl text-[#64748B] max-w-2xl mx-auto font-semibold leading-relaxed">
-            Stay updated on the new features, improvements, and security updates we are currently
-            working on.
-          </p>
-        </div>
 
-        {/* Filters */}
-        <div className="flex flex-wrap justify-center gap-4 mb-16">
-          {['all', 'planned', 'in-progress', 'completed'].map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f as 'all' | 'planned' | 'in-progress' | 'completed')}
-              className={`px-8 py-3.5 rounded-[20px] text-[13px] font-black tracking-wide transition-all duration-500 capitalize shadow-sm
-                                ${
-                                  filter === f
-                                    ? 'bg-custom-green text-white shadow-[#2F7E4740] shadow-2xl translate-y-[-2px]'
-                                    : 'bg-white text-[#64748B] hover:text-custom-green border border-[#E2E8F0] hover:border-[#2F7E4740]'
-                                }`}
-            >
-              {f === 'all'
-                ? 'All Updates'
-                : f === 'in-progress'
-                  ? 'In Progress'
-                  : f === 'planned'
-                    ? 'Planned'
-                    : 'Completed'}
-            </button>
-          ))}
-        </div>
-
-        {/* Grid Layout or Loading */}
-        {loading ? (
-          <div className="flex justify-center items-center py-24">
-            <div className="w-16 h-16 border-4 border-[#2F7E4720] border-t-[#2F7E47] rounded-full animate-spin"></div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredFeatures.length > 0 ? (
-              filteredFeatures.map((feature: RoadmapFeature) => (
-                <div
-                  key={feature._id}
-                  className="group bg-white rounded-[40px] p-10 border border-[#E2E8F0] hover:border-[#2F7E4720] transition-all duration-700 hover:shadow-[0_32px_64px_rgba(47,126,71,0.12)] flex flex-col items-start gap-6 relative overflow-hidden"
-                >
-                  <div
-                    className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#2F7E4705] to-transparent rounded-full -mr-16 -mt-16 transition-all duration-700 group-hover:scale-150 group-hover:from-[#2F7E4710]`}
-                  ></div>
-
-                  <div className="flex justify-between items-center w-full relative z-10">
-                    <div
-                      className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest ${getStatusColor(feature.status).replace('bg-', 'bg-opacity-10 bg-')}`}
-                    >
-                      <span
-                        className={`w-1.5 h-1.5 rounded-full ${feature.status === 'in-progress' ? 'animate-pulse' : ''} bg-current`}
-                      ></span>
-                      {feature.status === 'in-progress' ? 'In Progress' : feature.status}
-                    </div>
-                    <div className="flex items-center gap-1.5 text-[#94A3B8] text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-[#F8FAFC] rounded-lg border border-[#F1F5F9]">
-                      {getTagIcon(feature.tag)}
-                      {feature.tag}
-                    </div>
-                  </div>
-
-                  <div className="space-y-3 relative z-10 w-full">
-                    <h3 className="text-2xl font-black text-[#0F172A] leading-tight transition-all duration-300 group-hover:text-custom-green">
-                      {feature.title}
-                    </h3>
-                    <p className="text-[#64748B] text-[15px] font-medium leading-relaxed max-h-[72px] overflow-hidden transition-all duration-500 group-hover:text-[#475569]">
-                      {feature.description}
-                    </p>
-                  </div>
-
-                  <div className="w-full space-y-3 mt-auto relative z-10">
-                    <div className="flex justify-between items-end">
-                      <div className="space-y-1">
-                        <p className="text-[10px] font-black text-[#94A3B8] uppercase tracking-widest">
-                          Progress
-                        </p>
-                        <p className="text-xs font-black text-[#0F172A]">Upcoming update</p>
-                      </div>
-                      <div className="flex items-baseline gap-0.5">
-                        <span className="text-2xl font-black text-custom-green tabular-nums">
-                          {feature.progress}
-                        </span>
-                        <span className="text-xs font-black text-custom-green opacity-60">%</span>
-                      </div>
-                    </div>
-                    <div className="w-full h-3 bg-[#F1F5F9] rounded-full overflow-hidden p-0.5 ring-1 ring-[#F1F5F9]">
-                      <div
-                        className="h-full bg-gradient-to-r from-[#2F7E47] to-[#45B064] transition-all duration-[1500ms] cubic-bezier(0.4, 0, 0.2, 1) rounded-full shadow-[0_0_12px_rgba(47,126,71,0.2)]"
-                        style={{ width: `${feature.progress}%` }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-between w-full pt-6 border-t border-[#F1F5F9] relative z-10 mt-2">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2.5 bg-[#F8FAFC] rounded-2xl group-hover:bg-[#2F7E4708] transition-colors duration-500">
-                        {getStatusIcon(feature.status)}
-                      </div>
-                      <div className="space-y-0.5">
-                        <p className="text-[10px] font-black text-[#94A3B8] uppercase tracking-widest">
-                          Estimate
-                        </p>
-                        <p className="text-[11px] font-bold text-[#0F172A]">Q2 2024</p>
-                      </div>
-                    </div>
-                    <div className="p-2 rounded-full border border-[#F1F5F9] group-hover:border-[#2F7E4720] transition-all duration-500 group-hover:translate-x-1">
-                      <ChevronRight
-                        size={16}
-                        className="text-[#94A3B8] group-hover:text-custom-green"
-                      />
-                    </div>
-                  </div>
+          {/* The three counts at a glance. */}
+          {features.length > 0 && (
+            <dl className={`${CARD} grid grid-cols-3 divide-x divide-[#E6E7E1] lg:min-w-96`}>
+              {(['in-progress', 'planned', 'completed'] as Status[]).map((key) => (
+                <div key={key} className="px-5 py-4">
+                  <dt className={MICRO_LABEL}>{STATUS[key].label}</dt>
+                  <dd className="mt-1 text-[1.75rem] font-bold tabular-nums tracking-[-0.03em] text-[#0B0B0B]">
+                    {count(key)}
+                  </dd>
                 </div>
-              ))
-            ) : (
-              <div className="col-span-full py-32 text-center bg-white rounded-[40px] border-2 border-dashed border-[#E2E8F0]">
-                <LayoutGrid className="mx-auto text-[#CBD5E1] mb-4" size={48} />
-                <p className="text-xl font-bold text-[#64748B]">
-                  No planned updates at the moment.
-                </p>
-                <p className="text-[#94A3B8] mt-2 font-medium">
-                  We'll be back soon with more exciting news!
-                </p>
-              </div>
-            )}
-          </div>
-        )}
+              ))}
+            </dl>
+          )}
+        </header>
+
+        {/* ── Filters ─────────────────────────────────────────────────────── */}
+        <div className="no-scrollbar -mx-5 mt-10 flex gap-2 overflow-x-auto px-5 sm:mx-0 sm:flex-wrap sm:px-0">
+          {FILTERS.map(({ key, label }) => {
+            const on = filter === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                aria-pressed={on}
+                onClick={() => setFilter(key)}
+                className={`inline-flex h-10 shrink-0 items-center gap-2 rounded-full border px-4 text-[0.875rem] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15 ${
+                  on
+                    ? 'border-[#2E6641] bg-[#2E6641] text-white'
+                    : 'border-[#E6E7E1] bg-white text-[#63665F] hover:border-[#2E6641]/45 hover:text-[#2E6641]'
+                }`}
+              >
+                {label}
+                <span
+                  className={`rounded-full px-1.5 text-[0.75rem] tabular-nums ${
+                    on ? 'bg-white/20' : 'bg-[#F2F3EE] text-[#9B9E96]'
+                  }`}
+                >
+                  {count(key)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* ── List ────────────────────────────────────────────────────────── */}
+        <div className="mt-6">
+          {loading ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className={`${CARD} h-60 animate-pulse bg-white/70`} />
+              ))}
+            </div>
+          ) : filteredFeatures.length > 0 ? (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {filteredFeatures.map((feature) => (
+                <FeatureCard key={feature._id} feature={feature} />
+              ))}
+            </div>
+          ) : (
+            <div className={`${CARD} px-6 py-16 text-center sm:py-20`}>
+              <span
+                aria-hidden="true"
+                className="mx-auto flex size-28 items-center justify-center rounded-full bg-[#2E6641]/5"
+              >
+                <span className="flex size-20 items-center justify-center rounded-full bg-[#2E6641]/10">
+                  <span className="flex size-13 items-center justify-center rounded-full bg-white text-[#2E6641] shadow-[0_10px_24px_rgba(11,11,11,0.10)]">
+                    <Rocket size={24} strokeWidth={2} />
+                  </span>
+                </span>
+              </span>
+              <h2 className="mt-6 text-[1.5rem] font-bold tracking-[-0.02em] text-[#0B0B0B]">
+                {filter === 'all' ? 'Mer er på vei' : 'Ingenting her ennå'}
+              </h2>
+              <p className="mx-auto mt-2 max-w-md text-[0.9375rem] leading-relaxed text-[#63665F]">
+                {EMPTY_TEXT[filter]}
+              </p>
+              {filter !== 'all' ? (
+                <button
+                  type="button"
+                  onClick={() => setFilter('all')}
+                  className={`${PILL_SECONDARY} mt-7`}
+                >
+                  Vis alle
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => navigate('/')}
+                  className={`${PILL_SECONDARY} mt-7`}
+                >
+                  Til forsiden
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

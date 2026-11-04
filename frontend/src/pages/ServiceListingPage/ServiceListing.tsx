@@ -13,13 +13,15 @@ import {
   Locate,
   ArrowRight,
   Zap,
+  Plus,
 } from 'lucide-react';
 import { Slider } from 'antd';
 import { AntdTheme } from '../../theme/AntdTheme';
 import { JobCard } from '../../components/component/jobCard/JobCard';
 import { SortMenu } from '../../components/SortMenu';
 import { JobCardSkeleton } from '../../components/Loading/JobCardSkeleton';
-import { CARD, GREEN, LINE, MICRO_LABEL, PILL_PRIMARY } from '../../theme/brand';
+import { CARD, GREEN, LINE, MICRO_LABEL, PILL_PRIMARY, PILL_SECONDARY } from '../../theme/brand';
+import { JobsEmptyState } from '../../components/JobsEmptyState';
 const MapComponent = lazy(() =>
   import('../../components/component/map/MapComponent').then((module) => ({
     default: module.MapComponent,
@@ -51,6 +53,11 @@ const Box = ({ checked }: { checked: boolean }) => (
 
 const NO_LOCATIONS: LocationNode[] = [];
 
+/** How long the price filter waits after the last change before it asks the API. */
+const PRICE_DEBOUNCE_MS = 3000;
+/** A typed price above this is a slip of the keyboard, not a budget. */
+const MAX_TYPED_PRICE = 10_000_000;
+
 const ServiceListing = () => {
   const { categoryName } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -77,6 +84,14 @@ const ServiceListing = () => {
   );
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState({ min: 0, max: 100000 });
+  // The slider and the price boxes change on every step and key press; the jobs query
+  // only takes the range once it has been still for PRICE_DEBOUNCE_MS, so a drag or a typed
+  // number is one request, not one per step.
+  const [debouncedPrice, setDebouncedPrice] = useState(priceRange);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedPrice(priceRange), PRICE_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [priceRange]);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const [isUrgent, setIsUrgent] = useState(false);
   const [shouldUseLocation, setShouldUseLocation] = useState(true); // Track if we should use the initial location
@@ -159,8 +174,8 @@ const ServiceListing = () => {
     areaCodes: selectedAreaCodes,
     search: initialSearch,
     sort: selectedSort.value,
-    minPrice: priceRange.min,
-    maxPrice: priceRange.max,
+    minPrice: debouncedPrice.min,
+    maxPrice: debouncedPrice.max,
     urgent: isUrgent,
     limit: 16,
     lat: activeLocation?.lat,
@@ -464,6 +479,7 @@ const ServiceListing = () => {
     selectedCountyCodes.length + selectedMunicipalityCodes.length + selectedAreaCodes.length;
   const activeFilterCount =
     selectedCategories.length + areaCount + (isUrgent ? 1 : 0) + (hasPriceFilter ? 1 : 0);
+  const filtered = activeFilterCount > 0 || !!searchParams.get('search');
 
   /** Name for a county/municipality/area code, for the removable chips. */
   const areaName = (code: string) => {
@@ -882,7 +898,10 @@ const ServiceListing = () => {
                   type="number"
                   value={priceRange.min}
                   onChange={(e) => {
-                    const val = Math.max(0, parseInt(e.target.value) || 0);
+                    const val = Math.min(
+                      MAX_TYPED_PRICE,
+                      Math.max(0, parseInt(e.target.value) || 0)
+                    );
                     setPriceRange((prev) => ({ ...prev, min: val }));
                   }}
                   className="h-11 w-full rounded-xl border border-[#E6E7E1] bg-white pl-3 pr-8 text-[0.875rem] font-semibold tabular-nums text-[#0B0B0B] outline-none transition-colors focus:border-[#2E6641]/45 focus:ring-4 focus:ring-[#2E6641]/10 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
@@ -900,7 +919,9 @@ const ServiceListing = () => {
                   value={priceRange.max === 100000 ? '' : priceRange.max}
                   onChange={(e) => {
                     const val =
-                      e.target.value === '' ? 100000 : Math.max(0, parseInt(e.target.value) || 0);
+                      e.target.value === ''
+                        ? 100000
+                        : Math.min(MAX_TYPED_PRICE, Math.max(0, parseInt(e.target.value) || 0));
                     setPriceRange((prev) => ({ ...prev, max: val }));
                   }}
                   placeholder="∞"
@@ -1133,22 +1154,32 @@ const ServiceListing = () => {
                 </button>
               </div>
             ) : jobs.length === 0 ? (
-              <div className={`${CARD} mx-auto max-w-lg p-10 text-center`}>
-                <span className="mx-auto mb-4 flex size-11 items-center justify-center rounded-full bg-[#EAF1E9] text-[#2E6641]">
-                  <Search size={20} strokeWidth={2} />
-                </span>
-                <p className="text-[1.0625rem] font-semibold text-[#0B0B0B]">
-                  Ingen oppdrag funnet
-                </p>
-                <p className="mx-auto mt-2 max-w-sm text-[0.875rem] leading-relaxed text-[#63665F]">
-                  Prøv et annet søkeord, eller fjern noen av filtrene dine.
-                </p>
-                {activeFilterCount > 0 && (
-                  <button onClick={clearAllFilters} className={`${PILL_PRIMARY} mt-6`}>
-                    Nullstill filtre
-                  </button>
-                )}
-              </div>
+              <JobsEmptyState
+                className="mx-auto max-w-2xl"
+                title={filtered ? 'Ingen oppdrag funnet' : 'Ingen oppdrag ute akkurat nå'}
+                text={
+                  filtered
+                    ? 'Prøv et annet søkeord, eller fjern noen av filtrene dine. Eller legg ut oppdraget selv, gratis.'
+                    : 'Bli den første: legg ut oppdraget ditt gratis, og få tilbud fra folk i nærheten.'
+                }
+                actions={
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => navigate('/Publish-job')}
+                      className={PILL_PRIMARY}
+                    >
+                      <Plus size={17} strokeWidth={2.4} aria-hidden="true" />
+                      Legg ut oppdrag
+                    </button>
+                    {activeFilterCount > 0 && (
+                      <button type="button" onClick={clearAllFilters} className={PILL_SECONDARY}>
+                        Nullstill filtre
+                      </button>
+                    )}
+                  </>
+                }
+              />
             ) : (
               <>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-5 md:grid-cols-4">
