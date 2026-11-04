@@ -2829,6 +2829,12 @@ export interface TicketRow {
   createdAt: string;
   updatedAt: string;
   sla: { dueAt: string; breached: boolean; metAt: string | null };
+  /** 'bug': a "Rapporter en feil" report from the web or the app. */
+  kind?: 'support' | 'bug';
+  pageUrl?: string | null;
+  /** Signed (15 min) links to the reporter's screenshots. */
+  screenshots?: string[];
+  client?: { platform?: string; appVersion?: string; userAgent?: string; screen?: string };
 }
 export interface TicketsInfo {
   summary: {

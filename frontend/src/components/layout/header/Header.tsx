@@ -1,4 +1,5 @@
 import jobbloWordmark from '../../../assets/images/Login/jobblo-wordmark.png';
+import { useBugReport } from '../../../features/bugReport/store';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useUserStore } from '../../../stores/userStore';
 import { toast } from 'react-hot-toast';
@@ -17,6 +18,7 @@ import {
   Crown,
   Home,
   Menu,
+  Bug,
   MessageCircle,
   Plus,
   ShieldCheck,
@@ -569,6 +571,18 @@ export default function Header() {
               >
                 <Plus size={18} strokeWidth={2.4} />
                 Legg ut oppdrag
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  useBugReport.getState().openBugReport();
+                }}
+                className="flex h-11 items-center justify-center gap-2 rounded-full px-5 text-[0.875rem] font-medium text-[#63665F] transition hover:text-[#0B0B0B] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15"
+              >
+                <Bug size={16} strokeWidth={2} />
+                Rapporter en feil
               </button>
 
               {!Auth && (

@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useRouteError } from 'react-router-dom';
 import { postClientError } from '../api/publicAPI';
 import { reportProblem } from '../lib/rum';
+import { BugReportDialog } from '../features/bugReport/BugReportDialog';
 
 /** Best-effort report to the backend error log. Returns a reference id if one came back. */
 async function reportClientError(error: unknown, componentStack?: string | null) {
@@ -29,6 +30,8 @@ async function reportClientError(error: unknown, componentStack?: string | null)
 export function RouteErrorElement() {
   const error = useRouteError();
   const [referenceId, setReferenceId] = React.useState<string | null>(null);
+  // The App (and its report host) is not rendered on this screen: the dialog lives here.
+  const [reporting, setReporting] = React.useState(false);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -73,7 +76,19 @@ export function RouteErrorElement() {
             Til forsiden
           </Link>
         </div>
+        <button
+          type="button"
+          onClick={() => setReporting(true)}
+          className="mt-5 text-sm font-semibold text-custom-green underline-offset-4 hover:underline"
+        >
+          Rapporter feilen
+        </button>
       </div>
+      <BugReportDialog
+        open={reporting}
+        onClose={() => setReporting(false)}
+        errorRef={referenceId}
+      />
     </main>
   );
 }
