@@ -26,10 +26,16 @@ Subscription plans + the demo data:
 npm run db:seed -- --yes-wipe=jobblo-dev
 ```
 
-Plans only:
+Categories only (matched by name, so it also fits a database that already has categories):
 
 ```bash
-node seeds/run-plan.js --yes-wipe=jobblo-dev
+npm run db:seed:categories -- --yes-wipe=jobblo-dev
+```
+
+Plans only (adds the missing ones by name + type; an existing plan is never changed or deleted):
+
+```bash
+npm run db:seed:plans -- --yes-wipe=jobblo-dev
 ```
 
 Fresh start: `db:wipe`, then `db:seed`.
@@ -40,7 +46,7 @@ One seed per part, run in this order by `index.js`, all loaded through `load.js`
 
 | Seed                 | What                                                        |
 | -------------------- | ----------------------------------------------------------- |
-| `plan.seed.js`       | Subscription plans                                          |
+| `plan.seed.js`       | Subscription plans (missing ones only)                      |
 | `categories.seed.js` | The 9 job categories (icon and order)                       |
 | `reference.seed.js`  | Global config, homepage content (no location tree)          |
 | `users.seed.js`      | Test users (~20)                                            |

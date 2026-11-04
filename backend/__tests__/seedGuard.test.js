@@ -60,7 +60,7 @@ describe('seed entry points stop before connecting', () => {
       timeout: 15000,
     });
 
-  it.each(['seeds/index.js', 'seeds/run-plan.js', 'seeds/wipe.js'])(
+  it.each(['seeds/index.js', 'seeds/run-plan.js', 'seeds/run-categories.js', 'seeds/wipe.js'])(
     '%s refuses on production',
     (script) => {
       const r = run(script, { NODE_ENV: 'production' }, ['--yes-wipe=jobblo-dev']);
@@ -70,7 +70,7 @@ describe('seed entry points stop before connecting', () => {
     }
   );
 
-  it.each(['seeds/run-plan.js', 'seeds/wipe.js'])(
+  it.each(['seeds/run-plan.js', 'seeds/run-categories.js', 'seeds/wipe.js'])(
     '%s refuses without --yes-wipe outside production',
     (script) => {
       const r = run(script, { NODE_ENV: 'development' });

@@ -1,8 +1,10 @@
 const SubscriptionPlan = require('../models/SubscriptionPlan');
 
+// Adds the plans a database is missing, matched by name + type. An existing plan is never
+// changed or deleted: its _id is what subscriptions point at (subscription_v2.planId), and its
+// price and Stripe Price may have been set in the admin since. It used to delete every plan and
+// insert new ones with new ids, which cut a live subscription off its plan.
 module.exports = async () => {
-  await SubscriptionPlan.deleteMany();
-
   const plans = [
     // ===== BUSINESS =====
     {
@@ -121,6 +123,16 @@ module.exports = async () => {
     },
   ];
 
-  const created = await SubscriptionPlan.insertMany(plans);
-  console.log(`💳 SubscriptionPlans seeded: ${created.length}`);
+  const result = await SubscriptionPlan.bulkWrite(
+    plans.map((plan) => ({
+      updateOne: {
+        filter: { name: plan.name, type: plan.type },
+        update: { $setOnInsert: plan },
+        upsert: true,
+      },
+    }))
+  );
+  console.log(
+    `💳 SubscriptionPlans: ${result.upsertedCount} added, ${plans.length - result.upsertedCount} already there`
+  );
 };
