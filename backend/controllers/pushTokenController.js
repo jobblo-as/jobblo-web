@@ -15,6 +15,47 @@ function providerOf(token) {
 }
 const validToken = (token) => providerOf(token) !== null;
 
+const PUSH_GROUP_KEYS = ['messages', 'applications', 'orders', 'reviews', 'jobs'];
+const preferencesOf = (user) =>
+  Object.fromEntries(PUSH_GROUP_KEYS.map((k) => [k, user?.pushPreferences?.[k] !== false]));
+
+// GET /api/push-tokens/preferences — which push groups this user wants (missing = on).
+exports.getPreferences = async (req, res) => {
+  try {
+    const user = await require('../models/User')
+      .findById(req.userId)
+      .select('pushPreferences')
+      .lean();
+    if (!user) return res.status(404).json({ error: 'Bruker ikke funnet' });
+    res.json({ preferences: preferencesOf(user) });
+  } catch {
+    res.status(500).json({ error: 'Kunne ikke hente varslingsinnstillinger' });
+  }
+};
+
+// PUT /api/push-tokens/preferences — { messages?: boolean, … }; only the known groups, booleans.
+exports.updatePreferences = async (req, res) => {
+  const body = req.body || {};
+  const $set = {};
+  for (const key of PUSH_GROUP_KEYS) {
+    if (body[key] === undefined) continue;
+    if (typeof body[key] !== 'boolean')
+      return res.status(400).json({ error: `Ugyldig verdi for ${key}` });
+    $set[`pushPreferences.${key}`] = body[key];
+  }
+  if (!Object.keys($set).length) return res.status(400).json({ error: 'Ingen endringer' });
+  try {
+    const user = await require('../models/User')
+      .findByIdAndUpdate(req.userId, { $set }, { new: true })
+      .select('pushPreferences')
+      .lean();
+    if (!user) return res.status(404).json({ error: 'Bruker ikke funnet' });
+    res.json({ preferences: preferencesOf(user) });
+  } catch {
+    res.status(500).json({ error: 'Kunne ikke lagre varslingsinnstillinger' });
+  }
+};
+
 exports.register = async (req, res) => {
   const { token, platform, deviceId } = req.body || {};
   if (!validToken(token) || !['ios', 'android'].includes(platform)) {

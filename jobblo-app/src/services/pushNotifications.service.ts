@@ -225,3 +225,24 @@ export function subscribeToPushResponses(onNotification: (data: PushNotification
   });
   return () => subscription.remove();
 }
+
+/** The push groups a user can switch off (backend User.pushPreferences; missing = on). */
+export type PushPreferences = {
+  messages: boolean;
+  applications: boolean;
+  orders: boolean;
+  reviews: boolean;
+  jobs: boolean;
+};
+
+export async function getPushPreferences(): Promise<PushPreferences> {
+  return (await apiClient.get<{ preferences: PushPreferences }>('/push-tokens/preferences')).data
+    .preferences;
+}
+
+export async function updatePushPreferences(
+  patch: Partial<PushPreferences>
+): Promise<PushPreferences> {
+  return (await apiClient.put<{ preferences: PushPreferences }>('/push-tokens/preferences', patch))
+    .data.preferences;
+}

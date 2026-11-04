@@ -33,6 +33,16 @@ const userSchema = new mongoose.Schema(
     // Developer dashboard access for role 'developer': view only, or day-to-day operations.
     // Sensitive actions (IP blocks, flags, env, thresholds) always need step-up + Super Admin approval.
     developerAccess: { type: String, enum: ['readonly', 'operations'], default: 'readonly' },
+    // Which push notifications this user wants on their phone, per group (see PUSH_GROUPS in
+    // services/notifications). Off = still in Varsler, no push. Missing = on.
+    pushPreferences: {
+      _id: false,
+      messages: { type: Boolean, default: true },
+      applications: { type: Boolean, default: true },
+      orders: { type: Boolean, default: true },
+      reviews: { type: Boolean, default: true },
+      jobs: { type: Boolean, default: true },
+    },
     companyName: { type: String, trim: true },
     orgNumber: { type: String, trim: true },
     orgType: { type: String, trim: true },
