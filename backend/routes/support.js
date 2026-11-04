@@ -3,6 +3,7 @@ const router = express.Router();
 const { authenticate, optionalAuthenticate } = require('../middleware/auth');
 const supportController = require('../controllers/supportController');
 const { makeLimiter } = require('../middleware/rateLimiter');
+const upload = require('../middleware/upload');
 
 // Anonymous, and every ticket is a DB row plus staff work: its own budget beyond the global one.
 const ticketLimiter = makeLimiter('support-ticket', {
@@ -21,7 +22,14 @@ const ticketLimiter = makeLimiter('support-ticket', {
  * account address, so without this the ticket would be rejected for exactly the
  * users we can already identify.
  */
-router.post('/tickets', ticketLimiter, optionalAuthenticate, supportController.createTicket);
+// Multipart for a bug report's screenshots (up to 3 images, private); JSON still works.
+router.post(
+  '/tickets',
+  ticketLimiter,
+  optionalAuthenticate,
+  upload.array('screenshots', 3),
+  supportController.createTicket
+);
 router.get('/tickets/mine', authenticate, supportController.getMyTickets);
 
 module.exports = router;

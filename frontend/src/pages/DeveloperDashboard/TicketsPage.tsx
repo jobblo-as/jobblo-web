@@ -168,6 +168,62 @@ function TicketSheet({ id, onClose }: { id: string | null; onClose: () => void }
               <p className="text-sm whitespace-pre-wrap">{t.message}</p>
             </Section>
 
+            {t.kind === 'bug' && (
+              <Section title="Bug report" description="Sent with “Rapporter en feil”">
+                <KeyValue
+                  items={[
+                    [
+                      'Page',
+                      t.pageUrl ? (
+                        /^https?:/i.test(t.pageUrl) ? (
+                          <a
+                            key="p"
+                            href={t.pageUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="font-mono text-xs break-all text-primary hover:underline"
+                          >
+                            {t.pageUrl}
+                          </a>
+                        ) : (
+                          <Mono key="p">{t.pageUrl}</Mono>
+                        )
+                      ) : (
+                        '—'
+                      ),
+                    ],
+                    [
+                      'Device',
+                      [t.client?.platform, t.client?.appVersion, t.client?.screen]
+                        .filter(Boolean)
+                        .join(' · ') || '—',
+                    ],
+                    [
+                      'User agent',
+                      <span key="ua" className="text-xs break-all">
+                        {t.client?.userAgent || '—'}
+                      </span>,
+                    ],
+                  ]}
+                />
+                {t.screenshots?.length ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {t.screenshots.map((url, i) => (
+                      <a key={url} href={url} target="_blank" rel="noreferrer">
+                        <img
+                          src={url}
+                          alt={`Screenshot ${i + 1}`}
+                          className="h-32 w-auto rounded-md border object-cover"
+                        />
+                      </a>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-2 text-xs text-muted-foreground">No screenshots.</p>
+                )}
+              </Section>
+            )}
+
             <KeyValue
               items={[
                 [
@@ -317,13 +373,21 @@ function TicketSheet({ id, onClose }: { id: string | null; onClose: () => void }
 }
 
 export default function TicketsPage() {
-  const [f, setF] = useUrlFilters({ status: '', priority: '', assignee: '', q: '', page: '1' });
+  const [f, setF] = useUrlFilters({
+    status: '',
+    priority: '',
+    assignee: '',
+    kind: '',
+    q: '',
+    page: '1',
+  });
   const [search, setSearch] = useState(f.q);
   const [selected, setSelected] = useState<string | null>(null);
   const { data, isLoading, isFetching, error, refetch } = useDevTickets({
     status: f.status || undefined,
     priority: f.priority || undefined,
     assignee: f.assignee || undefined,
+    kind: f.kind || undefined,
     q: f.q || undefined,
     page: f.page,
   });
@@ -336,7 +400,10 @@ export default function TicketsPage() {
       className: 'max-w-[360px]',
       cell: (t) => (
         <div className="min-w-0">
-          <div className="truncate font-medium">{t.subject}</div>
+          <div className="flex items-center gap-1.5 truncate font-medium">
+            {t.kind === 'bug' && <StatusBadge status="bug" tone="danger" label="Bug" />}
+            <span className="truncate">{t.subject}</span>
+          </div>
           <div className="truncate text-xs text-muted-foreground">{t.email}</div>
         </div>
       ),
@@ -457,6 +524,13 @@ export default function TicketsPage() {
                 onClick={() => setF({ assignee: f.assignee === 'me' ? '' : 'me' })}
               >
                 Mine
+              </Button>
+              <Button
+                size="sm"
+                variant={f.kind === 'bug' ? 'secondary' : 'outline'}
+                onClick={() => setF({ kind: f.kind === 'bug' ? '' : 'bug' })}
+              >
+                Bug reports
               </Button>
               <form
                 className="relative"

@@ -15,12 +15,16 @@ import { useAuthStore } from '../src/store/authStore';
 import { loadThemePreference } from '../src/theme/themePreference';
 import { apiBaseUrl } from '../src/api/client';
 import { captureError, setScreen, startMonitoring } from '../src/monitoring/reporter';
+import { BugReportSheet } from '../src/features/bugReport/BugReportSheet';
+import { useBugReport } from '../src/features/bugReport/store';
 
 // Before the first render, so a crash while mounting is reported too.
 void startMonitoring(apiBaseUrl);
 
 /** Render crash anywhere below the root: report it and offer a retry instead of a white screen. */
 export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  // This screen replaces the layouts (and their report host): the sheet lives here.
+  const [reporting, setReporting] = useState(false);
   useEffect(() => {
     captureError(error, { kind: 'render' });
   }, [error]);
@@ -52,6 +56,18 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
       >
         <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>Prøv igjen</Text>
       </Pressable>
+      <Pressable
+        accessibilityRole="button"
+        onPress={() => setReporting(true)}
+        style={{ marginTop: 16, padding: 8 }}
+      >
+        <Text style={{ color: '#2D4A3E', fontWeight: '600' }}>Rapporter feilen</Text>
+      </Pressable>
+      <BugReportSheet
+        visible={reporting}
+        onClose={() => setReporting(false)}
+        pageUrl={useBugReport.getState().lastScreen}
+      />
     </View>
   );
 }
@@ -120,7 +136,11 @@ export default function RootLayout() {
     void loadThemePreference();
   }, []);
 
-  useEffect(() => setScreen(pathname), [pathname]);
+  useEffect(() => {
+    setScreen(pathname);
+    // The screen a "Rapporter en feil" report is about (the last one before Innstillinger).
+    useBugReport.getState().trackScreen(pathname);
+  }, [pathname]);
 
   useEffect(() => subscribeToPushResponses(routeNotification), [routeNotification]);
 

@@ -41,6 +41,7 @@ const getTickets = asyncHandler(async (req, res) => {
   const match = {};
   if (req.query.status) match.status = req.query.status;
   if (req.query.priority) match.priority = req.query.priority;
+  if (['bug', 'support'].includes(req.query.kind)) match.kind = req.query.kind;
   if (req.query.assignee === 'me') match.assignee = req.user._id;
   else if (isId(req.query.assignee)) match.assignee = req.query.assignee;
   if (req.query.escalated === 'true') match.escalated = true;

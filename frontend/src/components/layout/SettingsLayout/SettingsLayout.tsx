@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
+  Bug,
   ArrowLeft,
   AtSign,
   Ban,
@@ -25,6 +26,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useUserStore } from '../../../stores/userStore';
+import { useBugReport } from '../../../features/bugReport/store';
 import { CONTAINER, MICRO_LABEL } from '../../../theme/brand';
 
 /**
@@ -120,6 +122,8 @@ export function SettingsLayout() {
         { name: 'Lokasjon', path: '/settings/location', icon: MapPin },
         { name: 'Kommende', path: '/settings/upcoming', icon: EyeOff },
         { name: 'Om Jobblo', path: '/settings/about', icon: Info },
+        // Not a page: opens the report dialog here, with this page's URL.
+        { name: 'Rapporter en feil', path: '#bug-report', icon: Bug },
         {
           name: 'Slett profilen min',
           path: '/settings/delete-account',
@@ -175,7 +179,11 @@ export function SettingsLayout() {
                         <li key={link.path}>
                           <button
                             type="button"
-                            onClick={() => navigate(link.path)}
+                            onClick={() =>
+                              link.path === '#bug-report'
+                                ? useBugReport.getState().openBugReport()
+                                : navigate(link.path)
+                            }
                             aria-current={isActive ? 'page' : undefined}
                             className={`flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-[0.875rem] font-medium transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15 ${
                               isActive

@@ -10,10 +10,26 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
  * Open to logged-out visitors too — someone who cannot log in is exactly the
  * person who needs support most. Rate limited per IP in routes/support.js (10/hour).
  */
+const text = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
+
+/** Where a bug report was sent from: an http(s) URL or an app route ("/jobs/123"). */
+function cleanPageUrl(value) {
+  const url = text(value, 2000);
+  return /^https?:\/\/\S+$/i.test(url) || /^\/\S*$/.test(url) ? url : null;
+}
+
 exports.createTicket = async (req, res) => {
   try {
     const { subject, message } = req.body;
-    const trimmedSubject = typeof subject === 'string' ? subject.trim() : '';
+    const isBug = req.body.kind === 'bug';
+    const pageUrl = isBug ? cleanPageUrl(req.body.pageUrl) : null;
+    // A bug report has no subject field: it is named after the page it came from.
+    const trimmedSubject =
+      typeof subject === 'string' && subject.trim()
+        ? subject.trim()
+        : isBug
+          ? `Feilrapport: ${(pageUrl || 'ukjent side').replace(/^https?:\/\/[^/]+/i, '').slice(0, 180) || '/'}`
+          : '';
     const trimmedMessage = typeof message === 'string' ? message.trim() : '';
 
     if (!trimmedSubject || !trimmedMessage) {
@@ -44,6 +60,23 @@ exports.createTicket = async (req, res) => {
       subject: trimmedSubject,
       message: trimmedMessage,
       orderId: req.body.orderId || null,
+      ...(isBug
+        ? {
+            kind: 'bug',
+            pageUrl,
+            screenshots: (req.files || []).map((f) => f.path).filter(Boolean),
+            client: {
+              platform: ['web', 'ios', 'android'].includes(req.body.platform)
+                ? req.body.platform
+                : undefined,
+              appVersion: text(req.body.appVersion, 40) || undefined,
+              userAgent: text(req.get('user-agent'), 500) || undefined,
+              screen: text(req.body.screen, 40) || undefined,
+            },
+            // The ErrorLog reference shown on an error screen, so the dashboard links to it.
+            relatedErrorRef: text(req.body.errorRef, 64) || null,
+          }
+        : {}),
     });
 
     return res.status(201).json({

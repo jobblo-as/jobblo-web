@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import { useBugReport } from '../../../features/bugReport/store';
 import { ShieldCheck } from 'lucide-react';
 import jobbloWordmark from '../../../assets/images/Login/jobblo-wordmark.png';
 import { AppleMark, BankIdMark, StripeMark, VippsMark } from '../../landing/paymentMarks';
@@ -106,6 +107,18 @@ const Footer = () => {
               <nav key={column.title} aria-label={column.title}>
                 <h2 className={MICRO_LABEL}>{column.title}</h2>
                 <ul className="mt-4 space-y-2.5">
+                  {column.title === 'Selskap' && (
+                    <li>
+                      {/* Opens on the page you are on, so the report carries its URL. */}
+                      <button
+                        type="button"
+                        onClick={() => useBugReport.getState().openBugReport()}
+                        className="rounded text-left text-[0.875rem] leading-relaxed text-[#63665F] transition-colors hover:text-[#0B0B0B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E6641]/25"
+                      >
+                        Rapporter en feil
+                      </button>
+                    </li>
+                  )}
                   {column.links.map((link) => (
                     <li key={link.to}>
                       <NavLink

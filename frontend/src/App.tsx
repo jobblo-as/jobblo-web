@@ -1,4 +1,5 @@
 import './styles/App.css';
+import { BugReportHost } from './features/bugReport/BugReportDialog';
 import './styles/Jobblo.css';
 import { Outlet, useLocation } from 'react-router-dom';
 import Header from './components/layout/header/Header.tsx';
@@ -69,6 +70,8 @@ export default function App() {
           updates, reconnect and foreground recovery — lives here and is mounted exactly
           once. It renders nothing. */}
       <NotificationRealtime />
+      {/* "Rapporter en feil" from the footer, the menu or settings, on the page you are on. */}
+      <BugReportHost />
       <ScrollToTop />
       <CookieBanner />
       {!isAuthPage && <Header />}
