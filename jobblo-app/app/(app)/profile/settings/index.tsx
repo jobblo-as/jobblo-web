@@ -12,6 +12,7 @@ import {
   HelpCircle,
   Home,
   Info,
+  Bug,
   KeyRound,
   MapPin,
   Monitor,
@@ -27,6 +28,7 @@ import {
   Wallet,
   type LucideIcon,
 } from 'lucide-react-native';
+import { useBugReport } from '../../../../src/features/bugReport/store';
 import { useRouter, type Href } from 'expo-router';
 import { Card, SectionLabel } from '../../../../src/components/ui/Card';
 import { ListRow } from '../../../../src/components/ui/ListRow';
@@ -52,6 +54,7 @@ type Row = {
   icon: LucideIcon;
   href: Href;
   destructive?: boolean;
+  action?: 'bug-report';
 };
 
 const GROUPS: { title: string; rows: Row[] }[] = [
@@ -179,6 +182,14 @@ const GROUPS: { title: string; rows: Row[] }[] = [
         href: '/profile/settings/location',
       },
       { label: 'Om Jobblo', icon: Info, href: '/profile/settings/about' },
+      // Not a screen: opens the report sheet about the screen the user came from.
+      {
+        label: 'Rapporter en feil',
+        description: 'Send en feil med skjermbilde til utviklerne',
+        icon: Bug,
+        href: '/profile/settings' as Href,
+        action: 'bug-report',
+      },
     ],
   },
   {
@@ -306,7 +317,11 @@ export default function SettingsOverviewScreen() {
                   description={row.description}
                   destructive={row.destructive}
                   divider={index > 0}
-                  onPress={() => router.push(row.href)}
+                  onPress={() =>
+                    row.action === 'bug-report'
+                      ? useBugReport.getState().openBugReport()
+                      : router.push(row.href)
+                  }
                 />
               ))}
             </Card>
