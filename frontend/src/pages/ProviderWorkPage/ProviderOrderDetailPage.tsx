@@ -32,6 +32,8 @@ import {
   uploadOrderEvidence,
 } from '../../api/safePayAPI';
 import { createReview, getReviewByOrder } from '../../api/reviewsAPI';
+import { PartyContact } from '../../components/SafePay/PartyContact';
+import { fullAddress } from '../../utils/norwegianFormat';
 import { toast } from 'react-hot-toast';
 import { useUserStore } from '../../stores/userStore';
 import { Button } from '../../components/Ui/button/Button';
@@ -548,9 +550,20 @@ const ProviderOrderDetailPage: React.FC = () => {
           <h2 className="font-semibold text-[14px] text-gray-800 mb-3">Avtale mellom</h2>
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: 'Oppdragsgiver', u: order.customerId },
-              { label: 'Utfører', u: order.providerId },
-            ].map(({ label, u }) => (
+              {
+                label: 'Oppdragsgiver',
+                u: order.customerId,
+                // The job's own contact (its phone is required) before the profile's.
+                phone: order.serviceId?.contactPhone || order.customerId?.phone,
+                email: order.serviceId?.contactEmail || order.customerId?.email,
+              },
+              {
+                label: 'Utfører',
+                u: order.providerId,
+                phone: order.providerId?.phone,
+                email: order.providerId?.email,
+              },
+            ].map(({ label, u, phone, email }) => (
               <div key={label} className="bg-[#F4F6F0] rounded-xl p-3 text-center">
                 <div className="w-10 h-10 rounded-full bg-[#EAF1E9] mx-auto mb-2 overflow-hidden flex items-center justify-center text-[#122A1C] font-bold">
                   {u?.avatarUrl ? (
@@ -563,6 +576,7 @@ const ProviderOrderDetailPage: React.FC = () => {
                 <p className="text-[13px] font-medium">
                   {u?.name} {u?.lastName || ''}
                 </p>
+                <PartyContact phone={phone} email={email} center />
               </div>
             ))}
           </div>
@@ -575,7 +589,7 @@ const ProviderOrderDetailPage: React.FC = () => {
           </h2>
           <div className="space-y-2 text-[13px]">
             {[
-              ['Sted', order.serviceId?.location?.city || 'Ikke angitt'],
+              ['Sted', fullAddress(order.serviceId?.location) || 'Ikke angitt'],
               ['Avtalt pris', `${order.agreedPrice} kr`],
               ['Platform-gebyr 3%', `${calculation?.fee} kr`],
               ['Du mottar', `${calculation?.providerNet} kr`],

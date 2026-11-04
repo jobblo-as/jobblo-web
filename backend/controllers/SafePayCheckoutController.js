@@ -439,7 +439,10 @@ async function confirmPaidSession(session, io) {
       notify({
         userId: order.providerId,
         type: 'payment',
-        content: `Start oppdraget innen ${updatedOrder.providerConnectDeadlineAt.toLocaleDateString('nb-NO')}, ellers kanselleres det og kunden får full refusjon. Stripe Connect må være klart for å starte: ${(process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '')}/settings/payout`,
+        // No URL in the text: it showed as a raw "http://…/settings/payout" in Varsler and the
+        // push. The page is named instead (web and app call it Utbetalinger); `payload.url`
+        // still takes the push there.
+        content: `Start oppdraget innen ${updatedOrder.providerConnectDeadlineAt.toLocaleDateString('nb-NO')}, ellers kanselleres det og kunden får full refusjon. Stripe Connect må være klart for å starte: Innstillinger → Utbetalinger.`,
         orderId: order._id,
         senderId: order.customerId,
         event: 'provider_connect_deadline',
@@ -482,10 +485,13 @@ exports.getCheckoutDetails = async (req, res) => {
         path: 'serviceId',
         // (F-38) fromDate/toDate/duration added: the contract panel used to print a
         // hardcoded date and "Ca. 2 timer" because these were never sent.
-        select: 'title location price equipment userId checklist fromDate toDate duration',
+        // +contactPhone/+contactEmail (select: false): the job's own contact, shown to the
+        // two parties (below, only they get this response) with each other's email/phone.
+        select:
+          'title location price equipment userId checklist fromDate toDate duration +contactPhone +contactEmail',
       })
-      .populate('customerId', 'name lastName avatarUrl')
-      .populate('providerId', 'name lastName avatarUrl averageRating')
+      .populate('customerId', 'name lastName avatarUrl email phone')
+      .populate('providerId', 'name lastName avatarUrl averageRating email phone')
       .populate('checklist.checkedBy', 'name lastName avatarUrl');
 
     if (!order) {

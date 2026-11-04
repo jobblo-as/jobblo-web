@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { createCheckoutSession, getCheckoutDetails } from '../../api/safePayAPI';
+import { PartyContact } from '../../components/SafePay/PartyContact';
+import { fullAddress } from '../../utils/norwegianFormat';
 import { toast } from 'react-hot-toast';
 import SafePaySteps from '../../components/SafePay/SafePaySteps';
 import { useUserStore } from '../../stores/userStore';
@@ -79,11 +81,15 @@ const Party = ({
   name,
   avatarUrl,
   rating,
+  phone,
+  email,
 }: {
   role: string;
   name: string;
   avatarUrl?: string;
   rating?: number;
+  phone?: string;
+  email?: string;
 }) => (
   <div className="rounded-2xl bg-[#F4F6F0] p-4 text-center">
     <span className="mx-auto mb-2 flex size-11 items-center justify-center overflow-hidden rounded-full bg-[#EAF1E9] text-[0.9375rem] font-semibold text-[#2E6641]">
@@ -95,6 +101,7 @@ const Party = ({
     </span>
     <p className={MICRO_LABEL}>{role}</p>
     <p className="mt-1 line-clamp-1 text-[0.875rem] font-semibold text-[#0B0B0B]">{name}</p>
+    <PartyContact phone={phone} email={email} center />
     {rating !== undefined && (
       /* Was `averageRating || '4.9'` — an invented rating for every provider who had
          none, on the screen where the customer commits money. */
@@ -302,6 +309,8 @@ const SafePayCheckout: React.FC = () => {
               role="Oppdragsgiver"
               name={`${order.customerId?.name || 'Ukjent'} ${order.customerId?.lastName || ''}`.trim()}
               avatarUrl={order.customerId?.avatarUrl}
+              phone={service.contactPhone || order.customerId?.phone}
+              email={service.contactEmail || order.customerId?.email}
             />
             <div className="flex flex-col items-center gap-1 px-1">
               <ShieldCheck size={18} className="text-[#2E6641]" />
@@ -314,6 +323,8 @@ const SafePayCheckout: React.FC = () => {
               name={`${order.providerId?.name || 'Ukjent'} ${order.providerId?.lastName || ''}`.trim()}
               avatarUrl={order.providerId?.avatarUrl}
               rating={order.providerId?.averageRating ?? 0}
+              phone={order.providerId?.phone}
+              email={order.providerId?.email}
             />
           </div>
         </section>
@@ -331,7 +342,9 @@ const SafePayCheckout: React.FC = () => {
             </Row>
             {/* Every row renders real order data or is omitted. These previously showed a
                 hardcoded city, date and duration on a panel calling itself binding. */}
-            {service.location?.city && <Row label="Sted">{service.location.city}</Row>}
+            {fullAddress(service.location) && (
+              <Row label="Sted">{fullAddress(service.location)}</Row>
+            )}
             {contractDate && <Row label="Dato">{contractDate}</Row>}
             {contractDuration && <Row label="Estimert tid">{contractDuration}</Row>}
             <Row label="Oppdragsbeløp" strong>

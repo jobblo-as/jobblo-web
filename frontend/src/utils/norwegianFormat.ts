@@ -88,3 +88,13 @@ export const isValidPhone = (value: string): boolean => {
 
 /** Four digits, no grouping. Kept here so the cap lives with the other rules. */
 export const formatPostalCode = (value: string): string => digitsOnly(value, 4);
+
+// ── Address ──────────────────────────────────────────────────────────────────
+
+/** "Storgata 1, 0155 Oslo": a job's full address, as far as it is known. */
+export const fullAddress = (
+  location: { address?: string; postalCode?: string; city?: string } | undefined
+): string =>
+  [location?.address, [location?.postalCode, location?.city].filter(Boolean).join(' ')]
+    .filter(Boolean)
+    .join(', ');
