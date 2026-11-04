@@ -429,7 +429,7 @@ describe('Z5/I6 user image fields take only our public uploads', () => {
   });
 
   it('service body images (create): private, external and more than 6 refused', async () => {
-    User.findById.mockResolvedValue({ _id: 'u' });
+    User.findById.mockResolvedValue({ _id: 'u', phone: '41234567' });
     const { createService } = require('../controllers/services/manageController');
     const post = async (images) => {
       const r = mkRes();

@@ -23,7 +23,7 @@ import {
   type AiDraftKey,
 } from '../utils/aiFillSummary';
 import { scrollToFirstError } from '../utils/scrollToError';
-import { phoneDigits } from '../utils/norwegianFormat';
+import { isValidPhone, phoneDigits } from '../utils/norwegianFormat';
 
 /** Two pages: the job itself, then place, time and price (checklist and contact folded in). */
 const LAST_STEP = 2;
@@ -37,7 +37,7 @@ type JobFormErrors = Partial<
   Record<keyof JobFormValues | 'images' | 'coordinates' | 'countyCode' | 'municipalityCode', string>
 >;
 
-/** The schema keyed by every form field, so a field without rules (phone) reads as undefined. */
+/** The schema keyed by every form field, so a field without rules reads as undefined. */
 const fieldRules: Partial<
   Record<keyof JobFormValues, { test: (values: JobFormValues) => boolean; message: string }[]>
 > = jobValidationSchema;
@@ -851,7 +851,8 @@ export const useCreateJobForm = (
       }
     } else if (step === 4) {
       // Validate Step 4 fields (Contact Information)
-      const fieldsToValidate: (keyof JobFormValues)[] = ['email', 'phone'];
+      // The phone is required to post a new job; an old one edited without it is not blocked.
+      const fieldsToValidate: (keyof JobFormValues)[] = isEditMode ? ['email'] : ['email', 'phone'];
       fieldsToValidate.forEach((field) => {
         const rules = fieldRules[field];
         if (rules) {
@@ -978,7 +979,9 @@ export const useCreateJobForm = (
           missing.push('timepris');
       }
       if (!coordinates) missing.push('lokasjon på kartet');
-      // Contact is a folded section of this page: optional, only a malformed e-mail blocks.
+      // Contact is a folded section of this page: the phone is required, the e-mail is
+      // optional (only a malformed one blocks).
+      if (!isEditMode && !isValidPhone(values.phone || '')) missing.push(labels.phone);
       if (values.email) {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(String(values.email).trim())) missing.push(labels.email);
@@ -1006,8 +1009,11 @@ export const useCreateJobForm = (
   const validateAll = () => {
     // `loadFormData` restores `currentStep`, so a draft can reopen on the last page with an
     // empty title on the first. `find` stops at the first failing step, the one to go back to.
-    // validateStep(4) is the contact rules, which live on page 2 now.
-    const failed = [1, 2, 4].find((step) => !validateStep(step));
+    // validateStep(4) is the contact rules, which live on page 2 now. Every step is checked
+    // (map, not find), so each wrong field is marked at once — the phone too, when page 2
+    // also lacks an address.
+    const results = [1, 2, 4].map((step) => [step, validateStep(step)] as const);
+    const failed = results.find(([, ok]) => !ok)?.[0];
 
     if (failed) {
       const page = Math.min(failed, LAST_STEP);

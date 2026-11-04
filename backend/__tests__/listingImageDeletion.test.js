@@ -267,7 +267,7 @@ describe('owner image removal (updateService imagesToDelete)', () => {
 
 describe('metadata injection (create / update)', () => {
   it('4. createService ignores client imageMetadata', async () => {
-    User.findById.mockResolvedValue({ _id: OWNER });
+    User.findById.mockResolvedValue({ _id: OWNER, phone: '41234567' });
     Service.create.mockImplementation(async (data) => data);
     await serviceController.createService(
       {
@@ -302,7 +302,7 @@ describe('metadata injection (create / update)', () => {
   });
 
   it('11. uploads still create server-generated metadata with the OG derivative', async () => {
-    User.findById.mockResolvedValue({ _id: OWNER });
+    User.findById.mockResolvedValue({ _id: OWNER, phone: '41234567' });
     Service.create.mockImplementation(async (data) => data);
     await serviceController.createService(
       {

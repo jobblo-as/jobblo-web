@@ -491,6 +491,7 @@ export default function CreateJobForm({
                 email={email}
                 setEmail={setEmail}
                 errors={errors}
+                phoneRequired={!isEditMode}
               />
             </div>
           )}

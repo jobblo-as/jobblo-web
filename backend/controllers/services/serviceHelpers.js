@@ -89,6 +89,18 @@ const isValidId = (id) => typeof id === 'string' && mongoose.Types.ObjectId.isVa
  * empty strings. Assigning those would silently erase a saved phone number just
  * because the user edited the job from a screen that couldn't see it.
  */
+/**
+ * The eight-digit Norwegian number in `value` (`+47 412 34 567`, `004741234567` and
+ * `41234567` are one number), or null when it is not one. Same rule as the web form's
+ * isValidPhone (frontend/src/utils/norwegianFormat.ts).
+ */
+const norwegianPhone = (value) => {
+  let digits = String(value ?? '').replace(/\D/g, '');
+  if (digits.startsWith('0047')) digits = digits.slice(4);
+  else if (digits.startsWith('47') && digits.length > 8) digits = digits.slice(2);
+  return /^[2-9]\d{7}$/.test(digits) ? digits : null;
+};
+
 const pickContactUpdates = (body) => {
   const updates = {};
   for (const field of ['contactPhone', 'contactEmail']) {
@@ -100,6 +112,7 @@ const pickContactUpdates = (body) => {
 
 module.exports = {
   escapeRegex,
+  norwegianPhone,
   SERVICE_LIMITS,
   validateServiceFields,
   isValidId,

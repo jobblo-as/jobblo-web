@@ -62,7 +62,7 @@ function callCreate(body) {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  User.findById.mockResolvedValue({ _id: USER, subscription: 'Plus' });
+  User.findById.mockResolvedValue({ _id: USER, subscription: 'Plus', phone: '41234567' });
   Service.create.mockImplementation(async (doc) => ({ _id: 'svc_1', ...doc }));
 });
 
@@ -161,5 +161,38 @@ describe('mass assignment', () => {
 
     const created = Service.create.mock.calls[0][0];
     expect(String(created.userId)).toBe(String(USER));
+  });
+});
+
+describe('phone number required to post', () => {
+  const withProfilePhone = (phone) =>
+    User.findById.mockResolvedValue({ _id: USER, subscription: 'Plus', phone });
+
+  it('refuses a job when neither the form nor the profile has a number', async () => {
+    withProfilePhone(undefined);
+    const res = await callCreate(validBody());
+    expect(res.statusCode).toBe(400);
+    expect(res.body.code).toBe('PHONE_REQUIRED');
+    expect(Service.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses a number that is not eight Norwegian digits', async () => {
+    withProfilePhone(undefined);
+    expect((await callCreate(validBody({ contactPhone: '1234' }))).statusCode).toBe(400);
+    expect((await callCreate(validBody({ contactPhone: '01234567' }))).statusCode).toBe(400);
+  });
+
+  it("uses the form's number, stored as eight digits", async () => {
+    withProfilePhone(undefined);
+    const res = await callCreate(validBody({ contactPhone: '+47 412 34 567' }));
+    expect(res.statusCode).toBe(201);
+    expect(Service.create.mock.calls[0][0].contactPhone).toBe('41234567');
+  });
+
+  it("falls back to the profile's number", async () => {
+    withProfilePhone('+4798765432');
+    const res = await callCreate(validBody());
+    expect(res.statusCode).toBe(201);
+    expect(Service.create.mock.calls[0][0].contactPhone).toBe('98765432');
   });
 });

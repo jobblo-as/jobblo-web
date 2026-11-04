@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { AlertCircle, ChevronDown } from 'lucide-react';
 import { formatPhone, isValidPhone, phoneDigits } from '../../utils/norwegianFormat';
 
@@ -8,6 +8,8 @@ interface ContactInformationProps {
   email: string;
   setEmail: (val: string) => void;
   errors?: Partial<Record<string, string>>;
+  /** A new job needs the phone; editing an old one does not (it may predate the rule). */
+  phoneRequired?: boolean;
 }
 
 export const ContactInformation: React.FC<ContactInformationProps> = ({
@@ -16,23 +18,39 @@ export const ContactInformation: React.FC<ContactInformationProps> = ({
   email,
   setEmail,
   errors,
+  phoneRequired = true,
 }) => {
-  // The field is optional, so an empty one is not an error. Only complain once there is
-  // something in it that cannot be a Norwegian number — and not while it is half typed.
-  const showPhoneError = phone.length >= 8 && !isValidPhone(phone);
+  // Required. The form's own check (errors.phone, on publish) catches an empty field; while
+  // typing, complain only once eight digits are in and still cannot be a Norwegian number.
+  const phoneError =
+    errors?.phone ||
+    (phone.length >= 8 && !isValidPhone(phone) ? 'Et norsk nummer har åtte siffer.' : '');
+  const showPhoneError = !!phoneError;
+
+  // `open` below only applies when its value changes: if the section was closed by hand while
+  // the phone was empty, a later "Legg til telefonnummeret ditt" left the field hidden and
+  // the toast pointed at nothing. A new error opens it here, so scrollToFirstError can reach it.
+  const detailsRef = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    if ((errors?.phone || errors?.email) && detailsRef.current) detailsRef.current.open = true;
+    // On `errors` itself: every validation run sets a new object, so a second press of
+    // "Gå videre" reopens it even when the message is the same.
+  }, [errors]);
 
   return (
-    // Folded: filled from the profile, so most people never need to open it. A bad e-mail
-    // opens it, or publish would point at a hidden field.
+    // Folded when the profile filled it in. Open when the phone is missing (nothing to fill
+    // from) or an error points into it — publish must never point at a hidden field.
     <details
-      open={!!errors?.email || undefined}
+      ref={detailsRef}
+      open={(phoneRequired && !phone) || !!errors?.email || !!errors?.phone || undefined}
       className="group box-card-custom p-4 md:p-6 rounded-[14px]"
     >
       <summary className="flex cursor-pointer list-none items-center gap-3 group-open:mb-6 [&::-webkit-details-marker]:hidden">
         <span className="min-w-0">
-          <h2 className="font-bold text-lg md:text-xl">Kontaktinformasjon (Valgfritt)</h2>
+          <h2 className="font-bold text-lg md:text-xl">Kontaktinformasjon</h2>
           <span className="block truncate text-xs text-gray-500 md:text-sm">
-            {[phone && formatPhone(phone), email].filter(Boolean).join(' · ') || 'Ikke oppgitt'}
+            {[phone && formatPhone(phone), email].filter(Boolean).join(' · ') ||
+              (phoneRequired ? 'Telefonnummer mangler' : 'Ikke oppgitt')}
           </span>
         </span>
         <ChevronDown
@@ -46,7 +64,7 @@ export const ContactInformation: React.FC<ContactInformationProps> = ({
             htmlFor="job-phone"
             className="text-xs md:text-sm font-bold text-gray-700 uppercase tracking-wider"
           >
-            Telefonnummer
+            Telefonnummer {phoneRequired && <span className="text-red-500">*</span>}
           </label>
           {/*
               Was `type="number"`, which is wrong for a phone number in every way that
@@ -72,6 +90,8 @@ export const ContactInformation: React.FC<ContactInformationProps> = ({
               onChange={(e) => setPhone(phoneDigits(e.target.value))}
               placeholder="412 34 567"
               aria-invalid={showPhoneError || undefined}
+              aria-required={phoneRequired || undefined}
+              aria-describedby={showPhoneError ? 'job-phone-error' : undefined}
               className={`w-full rounded-xl border bg-white py-3 pl-14 pr-4 outline-none transition-all md:py-4 md:pl-18 md:pr-6 ${
                 showPhoneError
                   ? 'border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/5'
@@ -80,8 +100,11 @@ export const ContactInformation: React.FC<ContactInformationProps> = ({
             />
           </div>
           {showPhoneError && (
-            <p className="mt-1 flex items-center gap-1.5 text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 md:text-xs">
-              <AlertCircle size={12} /> Et norsk nummer har åtte siffer.
+            <p
+              id="job-phone-error"
+              className="mt-1 flex items-center gap-1.5 text-[10px] font-bold text-red-500 animate-in fade-in slide-in-from-top-1 md:text-xs"
+            >
+              <AlertCircle size={12} /> {phoneError}
             </p>
           )}
         </div>

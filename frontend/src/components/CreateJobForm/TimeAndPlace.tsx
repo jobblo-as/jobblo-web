@@ -1,7 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { MapPin, Calendar, Clock, Info, AlertCircle, Loader2 } from 'lucide-react';
 import { APIProvider } from '@vis.gl/react-google-maps';
-import { useLocationTree } from '../../features/locations/hooks';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../Ui/select';
 import { LocationPickerMap } from './LocationPickerMap';
 import { AddressSearchField } from './AddressSearchField';
@@ -57,7 +56,6 @@ export const TimeAndPlace: React.FC<TimeAndPlaceProps> = ({
   setToDate,
   errors,
 }) => {
-  const { data: locationTree = [] } = useLocationTree();
   const [lookingUp, setLookingUp] = useState(false);
   const [lookupError, setLookupError] = useState('');
   const lookup = useRef(0);
@@ -67,19 +65,14 @@ export const TimeAndPlace: React.FC<TimeAndPlaceProps> = ({
 
   /** A Kartverket hit fills address, postnummer, sted, fylke, kommune and the point (as in the app). */
   const pickAddress = (hit: AddressHit) => {
-    // kommunenummer → fylke in our tree (both are Kartverket codes); the name is a fallback.
-    const sameName = (name: string) => name.toLowerCase() === hit.municipalityName.toLowerCase();
-    const county =
-      locationTree.find((c) => c.children?.some((m) => m.code === hit.municipalityCode)) ??
-      locationTree.find((c) => c.children?.some((m) => sameName(m.name)));
-    const municipality = county?.children?.find(
-      (m) => m.code === hit.municipalityCode || sameName(m.name)
-    );
+    // Kartverket's kommunenummer is the code itself, and its first two digits are the fylke
+    // (0301 → 03). No lookup in the location tree (NorwayCounty/-Municipality): it is not
+    // seeded everywhere, and without it every address failed with "Fant ikke kommunen".
     setAddress(hit.address);
     setPostalCode?.(hit.postalCode);
     setCity(hit.city || hit.municipalityName);
-    setCountyCode?.(county?.code ?? '');
-    setMunicipalityCode?.(municipality?.code ?? '');
+    setCountyCode?.(hit.municipalityCode.slice(0, 2));
+    setMunicipalityCode?.(hit.municipalityCode);
     setAreaCode?.('');
     setCoordinates?.([hit.lat, hit.lng]);
   };

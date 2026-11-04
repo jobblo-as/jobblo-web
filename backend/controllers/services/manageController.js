@@ -2,7 +2,12 @@ const Service = require('../../models/Service');
 const Order = require('../../models/Order');
 const mongoose = require('mongoose');
 const { evaluateListingCapabilities } = require('../../utils/listingCapabilities');
-const { SERVICE_LIMITS, validateServiceFields, pickContactUpdates } = require('./serviceHelpers');
+const {
+  SERVICE_LIMITS,
+  validateServiceFields,
+  pickContactUpdates,
+  norwegianPhone,
+} = require('./serviceHelpers');
 const { inputOrServerError } = require('../../utils/serverError');
 const { isOurPublicBlobUrl } = require('../../utils/azureUpload');
 const { knownJobType } = require('../../utils/aiSmartFill');
@@ -133,6 +138,15 @@ exports.createService = async (req, res) => {
     const fieldError = validateServiceFields(req.body);
     if (fieldError) return res.status(400).json({ error: fieldError });
 
+    // A job needs a number to reach the poster on: the one typed in the form, else the
+    // profile's. Without either it is not posted (the web and app forms say so first).
+    const phone = norwegianPhone(contactPhone) || norwegianPhone(user.phone);
+    if (!phone)
+      return res.status(400).json({
+        error: 'Legg til et gyldig telefonnummer (8 siffer) før du legger ut oppdraget.',
+        code: 'PHONE_REQUIRED',
+      });
+
     // Validate paymentType & price (especially Anbud estimated budget)
     const priceNum = Number(serviceData.price);
     if (serviceData.paymentType === 'Anbud') {
@@ -253,6 +267,7 @@ exports.createService = async (req, res) => {
     const service = await Service.create({
       ...safeServiceData,
       ...pickContactUpdates(req.body),
+      contactPhone: phone,
       userId,
       countyCode,
       municipalityCode,
