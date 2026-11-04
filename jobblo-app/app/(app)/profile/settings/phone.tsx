@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { CheckCircle2, Info, Phone } from 'lucide-react-native';
+import { formatPhone, norwegianPhone, phoneDigits } from '../../../../src/utils/phone';
 import { useProfile, useUpdateProfile } from '../../../../src/hooks/useProfile';
 import { useAuthStore } from '../../../../src/store/authStore';
 import { ErrorState } from '../../../../src/components/ui/ErrorState';
@@ -69,8 +70,9 @@ export default function PhoneSettingsScreen() {
   const [draft, setDraft] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
 
+  // The draft holds the eight national digits; the field shows them grouped, "412 34 567".
   useEffect(() => {
-    if (profile && draft === null) setDraft(serverPhone);
+    if (profile && draft === null) setDraft(phoneDigits(serverPhone));
   }, [profile, draft, serverPhone]);
 
   if (isLoading || draft === null) {
@@ -94,15 +96,13 @@ export default function PhoneSettingsScreen() {
     );
   }
 
-  const trimmed = draft.trim();
-  const changed = trimmed !== serverPhone.trim();
-  // Accept anything that looks like a plausible phone number: at least a few
-  // digits, optionally starting with +, allowing spaces, dashes, parentheses.
-  const hasDigits = /\d{3,}/.test(trimmed);
-  const valid = trimmed === '' || hasDigits;
+  const trimmed = draft;
+  const changed = trimmed !== phoneDigits(serverPhone);
+  // A Norwegian number (eight digits, as the job form and the server want), or empty to clear.
+  const valid = trimmed === '' || norwegianPhone(trimmed) !== null;
   const disabled = !changed || !valid || update.isPending || !userId;
   const validationHint =
-    changed && trimmed !== '' && !hasDigits ? 'Skriv inn et gyldig telefonnummer.' : '';
+    changed && !valid && trimmed.length >= 8 ? 'Et norsk nummer har åtte siffer.' : '';
 
   const save = () => {
     if (disabled || !userId) return;
@@ -113,7 +113,7 @@ export default function PhoneSettingsScreen() {
       { userId, data: { phone: trimmed } },
       {
         onSuccess: (saved) => {
-          setDraft(phoneOf(saved) || trimmed);
+          setDraft(phoneDigits(phoneOf(saved)) || trimmed);
           setFeedback({
             tone: 'success',
             text: 'Telefonnummeret er oppdatert.',
@@ -144,12 +144,12 @@ export default function PhoneSettingsScreen() {
             <View className="mb-4">
               <Text className="mb-1.5 text-[0.8125rem] font-semibold text-ink">Telefonnummer</Text>
               <TextInput
-                value={draft}
+                value={formatPhone(draft)}
                 onChangeText={(value) => {
-                  setDraft(value);
+                  setDraft(phoneDigits(value));
                   setFeedback(null);
                 }}
-                placeholder="+47 912 34 567"
+                placeholder="912 34 567"
                 placeholderTextColor={TC.placeholder}
                 keyboardType="phone-pad"
                 autoComplete="tel"
@@ -157,7 +157,7 @@ export default function PhoneSettingsScreen() {
                 returnKeyType="done"
                 onSubmitEditing={save}
                 editable={!update.isPending}
-                maxLength={30}
+                maxLength={16}
                 accessibilityLabel="Telefonnummer"
                 className={[
                   inputClass,
@@ -170,11 +170,11 @@ export default function PhoneSettingsScreen() {
                 </Text>
               ) : changed ? (
                 <Text className="mt-1.5 text-[0.8125rem] leading-4 text-muted">
-                  Lagret nå: {serverPhone || 'ingen nummer'}
+                  Lagret nå: {formatPhone(serverPhone) || 'ingen nummer'}
                 </Text>
               ) : (
                 <Text className="mt-1.5 text-[0.8125rem] leading-4 text-muted">
-                  Mellomrom og tegn beholdes som du skriver dem.
+                  Norsk nummer, 8 siffer.
                 </Text>
               )}
             </View>

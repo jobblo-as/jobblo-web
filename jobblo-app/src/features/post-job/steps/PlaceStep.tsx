@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Keyboard, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import DateTimePicker, { type DateTimePickerChangeEvent } from '@expo/ui/community/datetime-picker';
 import { CalendarDays, X } from 'lucide-react-native';
@@ -7,8 +7,9 @@ import { AddressSearchField } from '../../../components/create-job/AddressSearch
 import { addressAt, type AddressHit } from '../../../services/geonorge.service';
 import { CreateJobLocationMap } from '../../../components/create-job/CreateJobLocationMap';
 import { Field } from '../../../components/ui/Field';
-import { useLocationTree } from '../../../hooks/useLocationTree';
 import { validateCreateJobStep } from '../../../utils/createJobValidation';
+import { formatPhone, norwegianPhone, phoneDigits } from '../../../utils/phone';
+import { useProfile } from '../../../hooks/useProfile';
 import { usePostJobStore } from '../store';
 import { StepFooter } from '../StepFooter';
 import { totalPrice, weekendOnly, WEEKEND_PERCENT } from '../price';
@@ -36,8 +37,7 @@ const label = (v: string) =>
 
 /** Where (one Kartverket address search fills address, sted, fylke and kommune) and when. */
 export function PlaceStep() {
-  const { values, update, next } = usePostJobStore();
-  const locations = useLocationTree().data ?? [];
+  const { values, update, next, editId } = usePostJobStore();
   const [picker, setPicker] = useState<'fromDate' | 'toDate' | null>(null);
   const [showErrors, setShowErrors] = useState(false);
   const [lookingUp, setLookingUp] = useState(false);
@@ -47,16 +47,22 @@ export function PlaceStep() {
   // The full-address fields sit under the map: typing there scrolls them up above the keyboard.
   const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const addressY = useRef(0);
-  const showAddressFields = () => {
-    const go = () =>
-      scrollRef.current?.scrollTo({ y: Math.max(0, addressY.current - 12), animated: true });
-    // Once the keyboard is up and the screen has shrunk; already up (next field) = nothing to do.
+  // Once the keyboard is up and the screen has shrunk; already up (next field) = nothing to do.
+  const onKeyboardUp = (go: () => void) => {
     const sub = Keyboard.addListener('keyboardDidShow', () => {
       sub.remove();
-      go();
+      // After the KeyboardAvoidingView has laid out its padding, or there is nothing to scroll.
+      setTimeout(go, 120);
     });
     setTimeout(() => sub.remove(), 1000);
   };
+  const showAddressFields = () =>
+    onKeyboardUp(() =>
+      scrollRef.current?.scrollTo({ y: Math.max(0, addressY.current - 12), animated: true })
+    );
+  // The contact fields are the last thing on the page: the keyboard covered them.
+  const showContactFields = () =>
+    onKeyboardUp(() => scrollRef.current?.scrollToEnd({ animated: true }));
 
   const errors = validateCreateJobStep(3, {
     values,
@@ -75,25 +81,54 @@ export function PlaceStep() {
         ? t('Postnummeret har 4 sifre.', 'The postal code has 4 digits.')
         : '',
   };
+  // Contact: the phone is required for a new job (the server refuses one without), the
+  // e-mail optional. Both filled from the profile once, as on the web; an old job edited
+  // without a phone is not blocked.
+  const { data: profile } = useProfile();
+  const me = profile as { phone?: string; email?: string } | undefined;
+  const profilePhone = norwegianPhone(me?.phone);
+  const profileEmail = me?.email?.trim() ?? '';
+  const contactPrefilled = useRef(false);
+  useEffect(() => {
+    if (contactPrefilled.current || editId || !me) return;
+    contactPrefilled.current = true;
+    const fill: { contactPhone?: string; contactEmail?: string } = {};
+    if (!values.contactPhone && profilePhone) fill.contactPhone = profilePhone;
+    if (!values.contactEmail && profileEmail) fill.contactEmail = profileEmail;
+    if (fill.contactPhone || fill.contactEmail) update(fill);
+  }, [editId, me, profilePhone, profileEmail, values.contactPhone, values.contactEmail, update]);
+  const emailRule = validateCreateJobStep(5, {
+    values,
+    imageCount: 0,
+    phone: '',
+    displayedPrice: 0,
+  }).email;
+  const emailError = emailRule && t(emailRule, 'Enter a valid e-mail address.');
+  const phoneError =
+    !editId && !norwegianPhone(values.contactPhone)
+      ? values.contactPhone
+        ? t('Et norsk nummer har åtte siffer.', 'A Norwegian number has eight digits.')
+        : t('Legg til telefonnummeret ditt.', 'Add your phone number.')
+      : '';
+
   const invalid = Boolean(
-    placeErrors.address || placeErrors.fromDate || placeErrors.toDate || placeErrors.postalCode
+    placeErrors.address ||
+    placeErrors.fromDate ||
+    placeErrors.toDate ||
+    placeErrors.postalCode ||
+    phoneError ||
+    emailError
   );
 
-  // Same lookup as the old form: kommunenummer → fylke in our location tree (name as a fallback).
+  // Kartverket's kommunenummer is the code itself, and its first two digits are the fylke
+  // (0301 → 03), as on the web. No lookup in the location tree: it is not seeded everywhere.
   const pickAddress = (hit: AddressHit) => {
-    const sameName = (name: string) => name.toLowerCase() === hit.municipalityName.toLowerCase();
-    const county =
-      locations.find((c) => c.children?.some((m) => m.code === hit.municipalityCode)) ??
-      locations.find((c) => c.children?.some((m) => sameName(m.name)));
-    const municipality = county?.children?.find(
-      (m) => m.code === hit.municipalityCode || sameName(m.name)
-    );
     update({
       address: hit.address,
       postalCode: hit.postalCode,
       city: hit.city || hit.municipalityName,
-      countyCode: county?.code ?? '',
-      municipalityCode: municipality?.code ?? '',
+      countyCode: hit.municipalityCode.slice(0, 2),
+      municipalityCode: hit.municipalityCode,
       areaCode: '',
       coordinates: [hit.lat, hit.lng],
     });
@@ -387,6 +422,41 @@ export function PlaceStep() {
             </Pressable>
           </View>
         ) : null}
+
+        <Text className="mt-8 text-[1.25rem] font-bold text-ink">{t('Kontakt', 'Contact')}</Text>
+        <Field
+          className="mt-3"
+          label={t('Telefonnummer', 'Phone number')}
+          required={!editId}
+          prefix="+47"
+          // State holds the eight digits; the field shows them grouped, "412 34 567". A pasted
+          // "+47 412 34 567" keeps its eight digits.
+          value={formatPhone(values.contactPhone)}
+          onChangeText={(v) => update({ contactPhone: phoneDigits(v) })}
+          onFocus={showContactFields}
+          placeholder="412 34 567"
+          keyboardType="phone-pad"
+          autoComplete="tel"
+          textContentType="telephoneNumber"
+          hint={t('Hentet fra profilen din.', 'From your profile.')}
+          error={showErrors ? phoneError || undefined : undefined}
+        />
+        <Field
+          className="mt-4"
+          label={t('E-post', 'E-mail')}
+          badge={t('Valgfritt', 'Optional')}
+          value={values.contactEmail}
+          onChangeText={(contactEmail) => update({ contactEmail: contactEmail.trim() })}
+          placeholder="din@epost.no"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+          autoComplete="email"
+          textContentType="emailAddress"
+          maxLength={254}
+          onFocus={showContactFields}
+          error={showErrors ? emailError || undefined : undefined}
+        />
       </ScrollView>
 
       {picker ? (
