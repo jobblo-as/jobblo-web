@@ -25,6 +25,18 @@ const supportTicketSchema = new mongoose.Schema(
       default: 'open',
       index: true,
     },
+    // 'bug': a "Rapporter en feil" report from the web or the app, with the page it was sent
+    // from, the reporter's screenshots (private container) and the device.
+    kind: { type: String, enum: ['support', 'bug'], default: 'support', index: true },
+    pageUrl: { type: String, trim: true, maxlength: 2000, default: null },
+    screenshots: { type: [String], default: [] },
+    client: {
+      _id: false,
+      platform: { type: String, enum: ['web', 'ios', 'android'] },
+      appVersion: { type: String, trim: true, maxlength: 40 },
+      userAgent: { type: String, trim: true, maxlength: 500 },
+      screen: { type: String, trim: true, maxlength: 40 },
+    },
     // Set when the request arrives from a specific order, so support has context.
     orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order', default: null },
 

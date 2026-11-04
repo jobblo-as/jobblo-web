@@ -71,14 +71,18 @@ const multerUpload = multer({
   },
 });
 
-// User routes mount under /users -> profile images; everything else is a job.
+// User routes mount under /users -> profile images; bug-report screenshots under /support;
+// everything else is a job.
 function folderFor(req) {
+  if (req.baseUrl.includes('support')) return 'bug_reports';
   return req.baseUrl.includes('users') ? 'profile_images' : 'job_images';
 }
 
 // Certifications are documents (PDF allowed) and private; every other user of this
 // middleware is a photo.
 const isCertification = (req) => req.path.startsWith('/certifications');
+// A bug-report screenshot shows the reporter's own screen: private, signed on read.
+const isPrivateUpload = (req) => isCertification(req) || req.baseUrl.includes('support');
 
 function filesOf(req) {
   const all = [];
@@ -134,7 +138,7 @@ function checkFileTypes(allowed) {
 // file.filename = blobName (what deletion needs).
 async function pushToAzure(req) {
   const folder = folderFor(req);
-  const priv = isCertification(req);
+  const priv = isPrivateUpload(req);
 
   for (const file of filesOf(req)) {
     const { url, blobName } = await uploadBufferToAzure(file, folder, { private: priv });
