@@ -1,5 +1,8 @@
 import { test } from '@playwright/test';
-import { expect, mockApi, shot, watchErrors, SERVICE } from './helpers/app.js';
+import { expect, mockApi, shot, watchErrors, SERVICE, USERS } from './helpers/app.js';
+
+/** The customer with a phone on the profile: a new job is not posted without one. */
+const POSTER = { ...USERS.user, phone: '41234567' };
 
 /** Search/filter, view a listing, save it, apply to it, and edit/publish a job, on a mocked API. */
 
@@ -115,10 +118,10 @@ test('landing hero: the photo frames are the categories from the API, the fixed 
   await shot(page, 'hero-1-fast-utvalg');
 
   // From the API: its order and names; an admin image wins; a category without a photo is
-  // left out ("Bil & Pleie" has none of ours).
+  // left out ("Snømåking" has none of ours).
   categories = [
     cat('Transport'),
-    cat('Bil & Pleie'),
+    cat('Snømåking'),
     cat('Rengjøring', { image: 'https://example.test/vask.jpg' }),
     cat('Maling'),
     cat('Flytting'),
@@ -137,7 +140,7 @@ test('landing hero: the photo frames are the categories from the API, the fixed 
   expect(names).toEqual(
     expect.arrayContaining(['Transport', 'Rengjøring', 'Maling', 'Flytting', 'Hagearbeid'])
   );
-  expect(names).not.toContain('Bil & Pleie');
+  expect(names).not.toContain('Snømåking');
   expect(names).not.toContain('Småjobber');
   await expect(page.locator('img[src="https://example.test/vask.jpg"]').first()).toBeAttached();
   await shot(page, 'hero-2-fra-api');
@@ -297,7 +300,7 @@ test('publish a job: step 1 validates, a complete draft (edit mode) is saved', a
   await expect(page.getByRole('button', { name: /Publiser oppdrag/ })).toBeVisible();
   await expect(page.getByText('Legg til sjekkliste')).toBeVisible();
   await expect(page.locator('#job-email')).toBeHidden();
-  await page.getByText('Kontaktinformasjon (Valgfritt)').click();
+  await page.getByText('Kontaktinformasjon', { exact: true }).click();
   await expect(page.locator('#job-email')).toBeVisible();
   await page.getByRole('button', { name: /Publiser oppdrag/ }).click();
   await expect
@@ -606,7 +609,7 @@ test('"Lager utkast": Avbryt stops the AI request and nothing reaches the form',
 test('photos: a row of tiles, reordered with the arrows, sent in that order', async ({ page }) => {
   const errors = watchErrors(page);
   const { calls } = await mockApi(page, {
-    as: 'user',
+    as: POSTER, // a new job needs a phone
     routes: {
       'GET /api/job-drafts': () => ({ drafts: [] }),
       'GET /api/job-drafts/d1': () => ({
@@ -716,7 +719,7 @@ test('"Dine utkast": photos are stored with the draft and come back with it', as
     draftImageUrls: { 'bod.png:120:1': DRAFT_PHOTO },
   };
   const { calls } = await mockApi(page, {
-    as: 'user',
+    as: POSTER, // a new job needs a phone
     routes: {
       'GET /api/job-drafts': () => ({ drafts: [] }),
       'POST /api/job-drafts': () => ({ status: 201, json: { draft: { _id: 'd2' } } }),
@@ -841,10 +844,7 @@ test('address: one Kartverket search fills postnummer, sted, fylke and kommune, 
     routes: {
       [`GET /api/services/${SERVICE._id}`]: () => full,
       [`PUT /api/services/${SERVICE._id}`]: () => full,
-      'GET /api/location-filter/tree': () => [
-        { code: '03', name: 'Oslo', children: [{ code: '0301', name: 'Oslo' }] },
-        { code: '46', name: 'Vestland', children: [{ code: '4601', name: 'Bergen' }] },
-      ],
+      // No location tree: fylke and kommune come from Kartverket's kommunenummer alone.
     },
   });
   // Kartverket's address register, answered locally.
@@ -906,7 +906,7 @@ test('"Nesten ferdig": Hast is paid on Stripe first, then back here to publish',
 }) => {
   const errors = watchErrors(page);
   const { calls } = await mockApi(page, {
-    as: 'user',
+    as: POSTER, // a new job needs a phone
     routes: {
       'GET /api/job-drafts': () => ({ drafts: [] }),
       'GET /api/job-drafts/d1': () => ({
@@ -999,7 +999,7 @@ test('"Betal 39 kr" again after paying (page reloaded): no second charge, paymen
 }) => {
   const errors = watchErrors(page);
   const { calls } = await mockApi(page, {
-    as: 'user',
+    as: POSTER, // a new job needs a phone
     routes: {
       'GET /api/job-drafts': () => ({ drafts: [] }),
       'GET /api/job-drafts/d1': () => ({
@@ -1133,4 +1133,60 @@ test('the apply modal is an accessible dialog with a labelled close button', asy
   const dialog = page.getByRole('dialog', { name: 'Send forespørsel' });
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole('button', { name: /Lukk/ })).toBeVisible();
+});
+
+test('a new job starts with the profile phone, stored as eight digits', async ({ page }) => {
+  await mockApi(page, { as: { ...USERS.user, phone: '+47 412 34 567' } });
+  await page.goto('/Publish-job');
+  await expect(page.getByRole('heading', { name: 'Legg ut et oppdrag' })).toBeVisible();
+  const draftPhone = () =>
+    page.evaluate(
+      () =>
+        new Promise((resolve) => {
+          const open = indexedDB.open('jobblo-form-db');
+          open.onerror = () => resolve(null);
+          open.onsuccess = () => {
+            const req = open.result
+              .transaction('job-form-data')
+              .objectStore('job-form-data')
+              .get('current-form');
+            req.onsuccess = () => resolve(req.result?.data?.phone ?? null);
+            req.onerror = () => resolve(null);
+          };
+        })
+    );
+  await expect.poll(draftPhone).toBe('41234567');
+});
+
+test('no phone on the profile: publishing a new job asks for one', async ({ page }) => {
+  const { calls } = await mockApi(page, {
+    as: 'user', // USERS.user has no phone
+    routes: { 'GET /api/categories': () => [{ _id: 'c1', name: 'Maling', isActive: true }] },
+  });
+  await page.goto('/Publish-job');
+  await page.locator('#job-title').fill('Male stue og gang');
+  await page.locator('#job-description').fill('Trenger hjelp til å male stue og gang, ca 30 kvm.');
+  await page.getByRole('button', { name: 'Maling', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Neste', exact: true }).click();
+  await expect(page.getByText(/Steg 2 av/)).toBeVisible();
+
+  // Open, required, and empty: nothing on the profile to fill it from.
+  await expect(page.getByText('Kontaktinformasjon', { exact: true })).toBeVisible();
+  await expect(page.locator('#job-phone')).toBeVisible();
+  await expect(page.locator('#job-phone')).toHaveValue('');
+
+  await page.getByRole('button', { name: 'Gå videre' }).click();
+  await expect(page.getByText('Legg til telefonnummeret ditt')).toBeVisible();
+  await shot(page, 'create-job-phone-required');
+  expect(calls.some((c) => c.pathname === '/api/services' && c.method === 'POST')).toBe(false);
+
+  // Closed by hand, then "Gå videre" again: the error opens it and the field is on screen.
+  await page.getByText('Kontaktinformasjon', { exact: true }).click();
+  await expect(page.locator('#job-phone')).toBeHidden();
+  await page.getByRole('button', { name: 'Gå videre' }).click();
+  await expect(page.locator('#job-phone')).toBeVisible();
+  await expect(page.locator('#job-phone')).toBeInViewport();
+
+  await page.locator('#job-phone').fill('41234567');
+  await expect(page.getByText('Legg til telefonnummeret ditt')).toHaveCount(0);
 });

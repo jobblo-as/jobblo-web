@@ -466,3 +466,59 @@ test('admin Transactions: a Hast payment shows as "Hast", and the type filter fi
     )
     .toBe(true);
 });
+
+test('contract and order page show both parties’ e-mail, phone and the full address', async ({
+  page,
+}) => {
+  const errors = watchErrors(page);
+  const withContact = order('cancelled', {
+    paymentStatus: 'refunded',
+    cancellationReason: 'provider_stripe_connect_timeout',
+    serviceId: {
+      ...SERVICE,
+      location: { ...SERVICE.location, address: 'Oslia 17', postalCode: '2460', city: 'Osen' },
+      contactPhone: '41234567', // the job's own number wins over the profile's
+      contactEmail: 'jobb@example.test',
+    },
+    customerId: { ...customer, phone: '99999999', email: 'kunde@example.test' },
+    providerId: { ...provider, phone: '+4792345678', email: 'utforer@example.test' },
+  });
+  await mockApi(page, {
+    as: 'provider',
+    routes: {
+      [`GET /api/safepay/orders/${ORDER_ID}`]: () => ({
+        order: withContact,
+        calculation,
+        isProvider: true,
+        isCustomer: false,
+        activeDispute: null,
+      }),
+      [`GET /api/safepay-checkout/details/${ORDER_ID}`]: () => ({
+        order: withContact,
+        calculation,
+        startDeadline: null,
+      }),
+    },
+  });
+  await page.goto(`/provider/orders/${ORDER_ID}`);
+  await expect(page.getByText('Oslia 17, 2460 Osen')).toBeVisible();
+  await expect(page.getByRole('link', { name: '412 34 567' })).toHaveAttribute(
+    'href',
+    'tel:41234567'
+  );
+  await expect(page.getByRole('link', { name: 'jobb@example.test' })).toHaveAttribute(
+    'href',
+    'mailto:jobb@example.test'
+  );
+  await expect(page.getByRole('link', { name: '923 45 678' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'utforer@example.test' })).toBeVisible();
+  await shot(page, 'order-page-contact');
+
+  await page.getByRole('button', { name: /Se kontrakt/ }).click();
+  const dialog = page.getByRole('dialog', { name: 'Kontrakt' });
+  await expect(dialog.getByText('Oslia 17, 2460 Osen')).toBeVisible();
+  await expect(dialog.getByRole('link', { name: '412 34 567' })).toBeVisible();
+  await expect(dialog.getByRole('link', { name: 'utforer@example.test' })).toBeVisible();
+  await shot(page, 'contract-contact');
+  expect(errors).toEqual([]);
+});

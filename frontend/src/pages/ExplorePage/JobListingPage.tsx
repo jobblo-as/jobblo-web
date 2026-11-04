@@ -12,7 +12,7 @@ const EXPLORE_SORT_OPTIONS = [
 ] as const;
 
 import { useLocation, useSearchParams, useNavigate } from 'react-router-dom';
-import { FileText, LayoutGrid, ShieldCheck, Star } from 'lucide-react';
+import { FileText, LayoutGrid, Plus, ShieldCheck, Star } from 'lucide-react';
 import type { IconName } from 'lucide-react/dynamic';
 import { CategoryIcon } from '../../components/CategoryIcon';
 import { SortMenu } from '../../components/SortMenu';
@@ -23,6 +23,7 @@ import { useTopUsers } from '../../features/profile/hooks';
 import { useUserStore } from '../../stores/userStore';
 import { JobCard } from '../../components/component/jobCard/JobCard';
 import { JobCardSkeleton } from '../../components/Loading/JobCardSkeleton';
+import { JobsEmptyState } from '../../components/JobsEmptyState';
 import { SERVICE_SHOWCASE } from '../../assets/images/categories';
 import {
   CARD,
@@ -31,6 +32,7 @@ import {
   HEADING,
   ICON_PLATE,
   MICRO_LABEL,
+  PILL_PRIMARY,
   PILL_SECONDARY,
   TEXT_LINK,
 } from '../../theme/brand';
@@ -238,6 +240,7 @@ export default function JobListingPage() {
     data: jobsData,
     isLoading: jobsLoading,
     isError: jobsError,
+    refetch: refetchJobs,
   } = useJobs({
     categories: selectedCategories,
     search: searchQuery,
@@ -501,25 +504,49 @@ export default function JobListingPage() {
             ) : (
               // Previously `null` for both failure and genuinely-empty, so a failed fetch
               // on the main browse page looked identical to "there are no jobs".
-              <div className={`${CARD} col-span-full p-10 text-center`}>
-                <p className="text-[0.9375rem] font-semibold text-[#0B0B0B]">
-                  {jobsError ? 'Kunne ikke laste oppdrag' : 'Ingen oppdrag å vise akkurat nå'}
-                </p>
-                <p className="mt-1.5 text-[0.875rem] text-[#63665F]">
-                  {jobsError
+              <JobsEmptyState
+                className="col-span-full"
+                reassure={!jobsError}
+                title={
+                  jobsError
+                    ? 'Kunne ikke laste oppdrag'
+                    : selectedCategories.length
+                      ? `Ingen oppdrag i ${selectedCategories[0]} ennå`
+                      : 'Ingen oppdrag å vise akkurat nå'
+                }
+                text={
+                  jobsError
                     ? 'Sjekk internettforbindelsen din og prøv igjen.'
-                    : 'Prøv en annen kategori, eller legg ut ditt eget oppdrag.'}
-                </p>
-                {!jobsError && (
-                  <button
-                    type="button"
-                    onClick={() => navigate('/Publish-job')}
-                    className={`mt-6 ${PILL_SECONDARY}`}
-                  >
-                    Legg ut oppdrag
-                  </button>
-                )}
-              </div>
+                    : 'Bli den første: legg ut oppdraget ditt gratis, og få tilbud fra folk i nærheten.'
+                }
+                actions={
+                  jobsError ? (
+                    <button type="button" onClick={() => refetchJobs()} className={PILL_PRIMARY}>
+                      Prøv igjen
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/Publish-job')}
+                        className={PILL_PRIMARY}
+                      >
+                        <Plus size={17} strokeWidth={2.4} aria-hidden="true" />
+                        Legg ut oppdrag
+                      </button>
+                      {selectedCategories.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => navigate('/search/job/all')}
+                          className={PILL_SECONDARY}
+                        >
+                          Se alle oppdrag
+                        </button>
+                      )}
+                    </>
+                  )
+                }
+              />
             )}
           </div>
         </div>

@@ -8,6 +8,8 @@ import type {
   SafePayStartDeadline,
 } from '../../types/SafePay';
 import { Button } from '../ui/Button';
+import { PartyContact } from './PartyContact';
+import { fullAddress } from '../../utils/address';
 import { TC, tc } from '../../theme/colors';
 
 function nameOf(party: SafePayOrder['customerId']) {
@@ -28,10 +30,14 @@ function Party({
   role,
   party,
   rating,
+  phone,
+  email,
 }: {
   role: string;
   party: SafePayOrder['customerId'];
   rating?: number;
+  phone?: string;
+  email?: string;
 }) {
   const name = nameOf(party);
   return (
@@ -54,6 +60,7 @@ function Party({
           {rating > 0 ? `★ ${rating}` : 'Ingen vurderinger ennå'}
         </Text>
       ) : null}
+      <PartyContact phone={phone} email={email} />
     </View>
   );
 }
@@ -66,7 +73,12 @@ export function SafePayPartiesCard({ order }: { order: SafePayOrder }) {
         <Text className="text-[0.9375rem] font-semibold text-ink">Avtale mellom</Text>
       </View>
       <View className="flex-row items-center gap-2">
-        <Party role="Oppdragsgiver" party={order.customerId} />
+        <Party
+          role="Oppdragsgiver"
+          party={order.customerId}
+          phone={order.serviceId?.contactPhone || order.customerId?.phone}
+          email={order.serviceId?.contactEmail || order.customerId?.email}
+        />
         <View className="w-12 items-center gap-1">
           <ShieldCheck size={18} color={TC.brandText} />
           <Text className="text-center text-[0.8125rem] font-bold uppercase tracking-[0.12em] text-brand-text">
@@ -77,6 +89,8 @@ export function SafePayPartiesCard({ order }: { order: SafePayOrder }) {
           role="Oppdragstaker"
           party={order.providerId}
           rating={order.providerId?.averageRating}
+          phone={order.providerId?.phone}
+          email={order.providerId?.email}
         />
       </View>
     </View>
@@ -138,7 +152,9 @@ export function DigitalContractCard({
       </View>
       <View className="rounded-2xl bg-surface-2 px-4">
         <Row label="Oppdrag" value={service.title} strong />
-        {service.location?.city ? <Row label="Sted" value={service.location.city} /> : null}
+        {fullAddress(service.location) ? (
+          <Row label="Sted" value={fullAddress(service.location)} />
+        ) : null}
         {contractDate ? <Row label="Dato" value={contractDate} /> : null}
         {duration ? <Row label="Estimert tid" value={duration} /> : null}
         <Row

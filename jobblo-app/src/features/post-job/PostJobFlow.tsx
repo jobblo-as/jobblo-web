@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { BackHandler, KeyboardAvoidingView, Platform, Text, View } from 'react-native';
+import { BackHandler, KeyboardAvoidingView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useIsFocused, useRouter } from 'expo-router';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -203,12 +203,10 @@ export function PostJobFlow() {
         </View>
       </View>
 
-      {/* iOS does not shrink the screen for the keyboard (Android does): without this it covered the
-          description, price and address fields and the "Continue" button of every step. */}
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      {/* Neither platform shrinks the screen for the keyboard any more (Android runs edge-to-edge
+          since Expo 54, so adjustResize does nothing): without this it covered the description,
+          price, address and contact fields and the "Continue" button of every step. */}
+      <KeyboardAvoidingView className="flex-1" behavior="padding">
         {/* 'photos' is the full-screen camera below. */}
         {Screen ? <Screen /> : null}
         {step === 'review' ? <ReviewStep onSaved={saved} /> : null}

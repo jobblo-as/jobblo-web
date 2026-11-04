@@ -15,7 +15,9 @@
     "dedupe:payments": "node scripts/dedupe-payment-records.js",
     "merge:chats": "node scripts/merge-duplicate-chats.js",
     "db:wipe": "node seeds/wipe.js",
-    "db:seed": "node seeds/index.js"
+    "db:seed": "node seeds/index.js",
+    "db:seed:categories": "node seeds/run-categories.js",
+    "db:seed:plans": "node seeds/run-plan.js"
   },
   "dependencies": {
     "@azure/storage-blob": "^12.34.0",

@@ -16,7 +16,6 @@ import * as Location from 'expo-location';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
-  Briefcase,
   ChevronRight,
   FileText,
   Locate,
@@ -27,6 +26,7 @@ import {
   Star,
 } from 'lucide-react-native';
 import { Card } from '../../src/components/ui/Card';
+import { JobsEmptyState } from '../../src/components/domain/JobsEmptyState';
 import { Button } from '../../src/components/ui/Button';
 import { useJobs } from '../../src/hooks/useJobs';
 import { useTopUsers } from '../../src/hooks/useTopUsers';
@@ -400,30 +400,24 @@ export default function HomeScreen() {
             </View>
           </Card>
         ) : jobs.length === 0 ? (
-          <Card className="items-center rounded-2xl p-6">
-            <View className="h-12 w-12 items-center justify-center rounded-full bg-tint">
-              <Briefcase size={22} color={TC.brandText} />
-            </View>
-            <Text className="mt-3 text-center text-[0.9375rem] font-semibold text-ink">
-              Ingen oppdrag å vise akkurat nå
-            </Text>
-            <Text className="mt-1 text-center text-[0.875rem] text-muted">
-              Prøv en annen kategori, eller legg ut ditt eget oppdrag.
-            </Text>
-            <View className="mt-4 flex-row gap-2">
-              <Button
-                label="Se alle oppdrag"
-                variant="secondary"
-                small
-                onPress={() => router.push('/(app)/explore')}
-              />
-              <Button
-                label="Legg ut oppdrag"
-                small
-                onPress={() => router.push('/(app)/create-job')}
-              />
-            </View>
-          </Card>
+          <JobsEmptyState
+            title="Ingen oppdrag å vise akkurat nå"
+            text="Bli den første: legg ut oppdraget ditt gratis, og få tilbud fra folk i nærheten."
+            actions={
+              <>
+                <Button
+                  label="Legg ut oppdrag"
+                  icon={<Plus size={17} color="#fff" />}
+                  onPress={() => router.push('/(app)/create-job')}
+                />
+                <Button
+                  label="Se alle oppdrag"
+                  variant="secondary"
+                  onPress={() => router.push('/(app)/explore')}
+                />
+              </>
+            }
+          />
         ) : (
           <View className="-mx-1.5 flex-row flex-wrap">
             {jobs.slice(0, 8).map((job) => (

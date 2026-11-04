@@ -38,13 +38,34 @@ async function load(entries, { now = Date.now() } = {}) {
   const counts = {};
 
   for (const entry of entries) {
-    const { file, collection: name } =
-      typeof entry === 'string' ? { file: entry, collection: entry } : entry;
+    const {
+      file,
+      collection: name,
+      key,
+    } = typeof entry === 'string' ? { file: entry, collection: entry } : entry;
     const docs = EJSON.parse(fs.readFileSync(path.join(DATA, `${file}.json`), 'utf8'));
     if (!docs.length) continue;
-    const ops = docs.map((doc) => ({
-      replaceOne: { filter: { _id: doc._id }, replacement: shiftDates(doc, shift), upsert: true },
-    }));
+    // `key`: match on that field instead of _id, so a database that already has these
+    // documents under other ids is updated in place (its ids, and what points at them, stay).
+    const ops = docs.map((doc) => {
+      if (!key) {
+        return {
+          replaceOne: {
+            filter: { _id: doc._id },
+            replacement: shiftDates(doc, shift),
+            upsert: true,
+          },
+        };
+      }
+      const { _id, ...fields } = shiftDates(doc, shift);
+      return {
+        updateOne: {
+          filter: { [key]: doc[key] },
+          update: { $set: fields, $setOnInsert: { _id } },
+          upsert: true,
+        },
+      };
+    });
     try {
       await mongoose.connection.db.collection(name).bulkWrite(ops, { ordered: false });
     } catch (err) {

@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { PartyContact } from '../../../../src/components/domain/PartyContact';
+import { fullAddress } from '../../../../src/utils/address';
 import { Alert, Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -136,7 +138,19 @@ function initials(name?: string) {
   );
 }
 
-function Party({ label, name, avatarUrl }: { label: string; name: string; avatarUrl?: string }) {
+function Party({
+  label,
+  name,
+  avatarUrl,
+  phone,
+  email,
+}: {
+  label: string;
+  name: string;
+  avatarUrl?: string;
+  phone?: string;
+  email?: string;
+}) {
   return (
     <View className="flex-1 rounded-2xl bg-surface-2 p-3">
       <View className="mx-auto h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-tint">
@@ -152,6 +166,7 @@ function Party({ label, name, avatarUrl }: { label: string; name: string; avatar
       <Text className="mt-1 text-center text-[0.8125rem] font-semibold text-ink" numberOfLines={2}>
         {name}
       </Text>
+      <PartyContact phone={phone} email={email} />
     </View>
   );
 }
@@ -477,15 +492,23 @@ export default function ProviderOrderScreen() {
             label="Oppdragsgiver"
             name={customerName}
             avatarUrl={order.customerId?.avatarUrl}
+            phone={order.serviceId?.contactPhone || order.customerId?.phone}
+            email={order.serviceId?.contactEmail || order.customerId?.email}
           />
-          <Party label="Utfører" name={providerName} avatarUrl={order.providerId?.avatarUrl} />
+          <Party
+            label="Utfører"
+            name={providerName}
+            avatarUrl={order.providerId?.avatarUrl}
+            phone={order.providerId?.phone}
+            email={order.providerId?.email}
+          />
         </View>
         <View className="mb-4 rounded-2xl bg-surface p-5">
           <Text className="mb-3 text-[0.9375rem] font-semibold text-ink">Oppdragsdetaljer</Text>
           <Text className="border-b border-line py-2 text-[0.8125rem] text-muted">
             Sted:{' '}
             <Text className="font-medium text-ink">
-              {order.serviceId?.location?.city ?? 'Ikke angitt'}
+              {fullAddress(order.serviceId?.location) || 'Ikke angitt'}
             </Text>
           </Text>
           <Text className="border-b border-line py-2 text-[0.8125rem] text-muted">

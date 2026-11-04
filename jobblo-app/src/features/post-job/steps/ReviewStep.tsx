@@ -27,6 +27,8 @@ import { useCreateJobMutation, useUpdateJobMutation } from '../../../hooks/useCr
 import { createUrgentPayment, getUrgentStatus } from '../../../services/createJob.service';
 import { runStripeCheckout } from '../../../utils/safepayCheckoutSession';
 import { validateCreateJobStep } from '../../../utils/createJobValidation';
+import { norwegianPhone } from '../../../utils/phone';
+import { useProfile } from '../../../hooks/useProfile';
 import { DURATION_OPTIONS, EQUIPMENT_OPTIONS, questionsFor } from '../details';
 import { editChanges, type PostJobStep } from '../flow';
 import { totalPrice } from '../price';
@@ -156,9 +158,26 @@ export function ReviewStep({ onSaved }: { onSaved: () => void }) {
       ? `${kr(Number(values.hourlyRate) || 0)}${t('/t', '/h')} · ≈ ${kr(total)}`
       : `${kr(total)}${values.paymentType === 'Anbud' ? t(' (antatt budsjett)', ' (estimated budget)') : ''}`;
 
+  // A new job needs a number to reach the poster on; the server refuses one without. It is
+  // the place step's phone field, else the profile's (a draft can open straight on review,
+  // before the place step has filled it in).
+  const { data: profile, isLoading: profileLoading } = useProfile();
+  const contactPhone =
+    norwegianPhone(values.contactPhone) ||
+    norwegianPhone((profile as { phone?: string } | undefined)?.phone);
+  const needsPhone = !editId && !profileLoading && !contactPhone;
+
   // The same rules the old form and the server use.
   const input = { values, imageCount: photos.length, phone: '', displayedPrice: total };
   const problems: { text: string; step: PostJobStep }[] = [
+    ...(needsPhone
+      ? [
+          {
+            text: t('Legg til telefonnummeret ditt.', 'Add your phone number.'),
+            step: 'place' as PostJobStep,
+          },
+        ]
+      : []),
     ...Object.entries(validateCreateJobStep(2, input)).map(([key, text]) => ({
       text: t(text as string, PROBLEM_EN[key] ?? (text as string)),
       step: (key === 'categories' ? 'category' : 'text') as PostJobStep,
@@ -167,6 +186,13 @@ export function ReviewStep({ onSaved }: { onSaved: () => void }) {
       text: t(text as string, PROBLEM_EN[key] ?? (text as string)),
       step: (key === 'price' || key === 'durationValue' ? 'price' : 'place') as PostJobStep,
     })),
+    // The contact e-mail (optional, on the place step): only a malformed one is a problem.
+    ...(() => {
+      const email = validateCreateJobStep(5, input).email;
+      return email
+        ? [{ text: t(email, 'Enter a valid e-mail address.'), step: 'place' as PostJobStep }]
+        : [];
+    })(),
   ];
 
   const rows: { label: string; value: string; step: PostJobStep }[] = [
@@ -201,6 +227,7 @@ export function ReviewStep({ onSaved }: { onSaved: () => void }) {
     if (problems.length || saving) return;
     const job = {
       ...values,
+      contactPhone: contactPhone ?? values.contactPhone,
       tags: [...new Set([...values.tags, ...detailTags])],
       // The server never takes `urgent` from the form: it marks the job only for a payment
       // it can confirm (`urgentPurchaseId`, paid before publishing).

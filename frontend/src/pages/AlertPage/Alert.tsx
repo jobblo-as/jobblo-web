@@ -10,6 +10,7 @@ import {
   Star,
   Briefcase,
   Loader2,
+  Plus,
 } from 'lucide-react';
 import {
   useNotifications,
@@ -29,7 +30,8 @@ import { NotificationSkeleton } from '../../components/Loading/NotificationSkele
 import ConfirmDialog from '../../components/Ui/ConfirmDialog';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { BackLink } from '../../components/Ui/BackLink';
-import { MICRO_LABEL } from '../../theme/brand';
+import { useNavigate } from 'react-router-dom';
+import { MICRO_LABEL, PILL_PRIMARY, PILL_SECONDARY } from '../../theme/brand';
 
 /**
  * The notifications page.
@@ -54,8 +56,15 @@ const CATEGORIES = [
   { key: 'job_update', label: 'Jobber', Icon: ClipboardCheck },
 ];
 
+/** The sample rows on the empty page: what a notification will look like. */
+const EMPTY_PREVIEW = [
+  { Icon: Briefcase, text: 'Ny søknad på «Male stue»', time: 'nå' },
+  { Icon: Banknote, text: 'Betaling mottatt · 2 400 kr', time: '2 t' },
+  { Icon: MessageSquare, text: 'Ny melding fra Kari', time: 'i går' },
+];
+
 const CHIP_BASE =
-  'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-[0.8125rem] font-medium transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15';
+  'inline-flex h-10 shrink-0 items-center gap-2 rounded-full border px-4 text-[0.875rem] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15';
 const CHIP_ON = 'border-[#2E6641] bg-[#2E6641] text-white';
 const CHIP_OFF =
   'border-[#E6E7E1] bg-white text-[#63665F] hover:border-[#2E6641]/45 hover:text-[#2E6641]';
@@ -122,19 +131,28 @@ export default function Alert() {
   };
 
   const hasFilter = showUnreadOnly || activeCategory !== 'all';
+  const resetFilters = () => {
+    setShowUnreadOnly(false);
+    setActiveCategory('all');
+  };
+  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen bg-[#EFF0EA]">
-      <div className="mx-auto w-full max-w-2xl px-4 pb-16 pt-8 sm:px-6">
+      <div className="mx-auto w-full max-w-5xl px-4 pb-20 pt-8 sm:px-6">
         <BackLink fallback="/home" />
 
         <header className="mb-6 mt-6 flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className={MICRO_LABEL}>Varsler</p>
-            <h1 className="mt-2 text-[clamp(1.75rem,4vw,2.25rem)] font-bold leading-tight tracking-[-0.04em] text-[#0B0B0B]">
-              {unreadCount > 0 ? `${unreadCount} uleste varsler` : 'Alt er lest'}
+            <h1 className="mt-2 text-[clamp(2rem,5vw,3rem)] font-bold leading-tight tracking-[-0.04em] text-[#0B0B0B]">
+              {unreadCount > 0
+                ? `${unreadCount} uleste varsler`
+                : all.length > 0
+                  ? 'Alt er lest'
+                  : 'Ingen varsler ennå'}
             </h1>
-            <p className="mt-1.5 text-[0.9375rem] text-[#63665F]">
+            <p className="mt-2 text-[1rem] text-[#63665F] sm:text-[1.0625rem]">
               Alt som skjer med oppdragene dine, samlet her.
             </p>
           </div>
@@ -152,20 +170,18 @@ export default function Alert() {
         </header>
 
         {/* Filters, on the surface instead of buried in a menu */}
-        <div className="-mx-4 mb-3 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
+        <div className="no-scrollbar -mx-4 mb-3 flex items-center gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
           {CATEGORIES.map(({ key, label, Icon }) => (
             <button
               key={key}
               onClick={() => setActiveCategory(key)}
               className={`${CHIP_BASE} ${activeCategory === key ? CHIP_ON : CHIP_OFF}`}
             >
-              <Icon size={14} strokeWidth={2} />
+              <Icon size={15} strokeWidth={2} />
               {label}
             </button>
           ))}
-        </div>
-
-        <div className="mb-6 flex flex-wrap items-center gap-2">
+          <span aria-hidden="true" className="mx-1 h-6 w-px shrink-0 bg-[#E6E7E1]" />
           <button
             onClick={() => setShowUnreadOnly((v) => !v)}
             aria-pressed={showUnreadOnly}
@@ -173,12 +189,12 @@ export default function Alert() {
           >
             Kun uleste
           </button>
+        </div>
+
+        <div className="mb-6 flex min-h-5 flex-wrap items-center gap-2">
           {hasFilter && (
             <button
-              onClick={() => {
-                setShowUnreadOnly(false);
-                setActiveCategory('all');
-              }}
+              onClick={resetFilters}
               className="text-[0.8125rem] font-semibold text-[#63665F] underline-offset-[3px] transition-colors hover:text-[#0B0B0B] hover:underline"
             >
               Nullstill
@@ -198,19 +214,86 @@ export default function Alert() {
         {isLoading ? (
           <NotificationSkeleton />
         ) : filtered.length === 0 ? (
-          <div className="rounded-3xl border border-[#E6E7E1] bg-white p-12 text-center">
-            <span className="mx-auto mb-4 flex size-11 items-center justify-center rounded-full bg-[#EAF1E9] text-[#2E6641]">
-              <Bell size={20} strokeWidth={2} />
-            </span>
-            <p className="text-[1.0625rem] font-semibold text-[#0B0B0B]">
-              {hasFilter ? 'Ingen treff' : 'Ingen varsler ennå'}
-            </p>
-            <p className="mx-auto mt-2 max-w-sm text-[0.875rem] leading-relaxed text-[#63665F]">
-              {hasFilter
-                ? 'Prøv en annen kategori, eller nullstill filtrene.'
-                : 'Du får beskjed her når noen søker på oppdraget ditt, betaler eller sender melding.'}
-            </p>
-          </div>
+          hasFilter ? (
+            <div className="rounded-3xl border border-[#E6E7E1] bg-white p-10 text-center">
+              <span className="mx-auto mb-4 flex size-11 items-center justify-center rounded-full bg-[#EAF1E9] text-[#2E6641]">
+                <Bell size={20} strokeWidth={2} />
+              </span>
+              <p className="text-[1.0625rem] font-semibold text-[#0B0B0B]">Ingen treff</p>
+              <p className="mx-auto mt-2 max-w-sm text-[0.875rem] leading-relaxed text-[#63665F]">
+                Prøv en annen kategori, eller nullstill filtrene.
+              </p>
+              <button type="button" onClick={resetFilters} className={`${PILL_SECONDARY} mt-6`}>
+                Nullstill filtre
+              </button>
+            </div>
+          ) : (
+            <div className="relative overflow-hidden rounded-3xl border border-[#E6E7E1] bg-white px-6 py-14 text-center sm:px-10 sm:py-20">
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute -top-40 left-1/2 size-120 -translate-x-1/2 rounded-full bg-[radial-gradient(circle,rgba(46,102,65,0.10),rgba(46,102,65,0)_68%)]"
+              />
+              {/* The bell, with two soft rings — "something will ring here". */}
+              <span
+                aria-hidden="true"
+                className="relative mx-auto flex size-36 items-center justify-center rounded-full bg-[#2E6641]/5"
+              >
+                <span className="flex size-26 items-center justify-center rounded-full bg-[#2E6641]/10">
+                  <span className="flex size-16 items-center justify-center rounded-full bg-white text-[#2E6641] shadow-[0_10px_24px_rgba(11,11,11,0.10)]">
+                    <Bell size={30} strokeWidth={2} />
+                  </span>
+                </span>
+              </span>
+              <h2 className="relative mt-6 text-[1.625rem] font-bold tracking-[-0.02em] text-[#0B0B0B] sm:text-[2rem]">
+                Her dukker varslene dine opp
+              </h2>
+              <p className="relative mx-auto mt-3 max-w-lg text-[1rem] leading-relaxed text-[#63665F] sm:text-[1.0625rem]">
+                Du får beskjed her når noen søker på oppdraget ditt, betaler eller sender melding.
+              </p>
+
+              {/* What a notification will look like, so the empty page explains itself. */}
+              <ul
+                aria-hidden="true"
+                className="relative mx-auto mt-9 max-w-lg space-y-2.5 text-left"
+              >
+                {EMPTY_PREVIEW.map(({ Icon, text, time }, i) => (
+                  <li
+                    key={text}
+                    className="flex items-center gap-3.5 rounded-2xl border border-[#E6E7E1] bg-[#F7F8F4] px-4 py-3.5"
+                    style={{ opacity: 1 - i * 0.25 }}
+                  >
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-[#EAF1E9] text-[#2E6641]">
+                      <Icon size={17} strokeWidth={2} />
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-[0.9375rem] font-semibold text-[#0B0B0B]">
+                      {text}
+                    </span>
+                    <span className="shrink-0 text-[0.8125rem] font-medium text-[#9B9E96]">
+                      {time}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="relative mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={() => navigate('/Publish-job')}
+                  className={PILL_PRIMARY}
+                >
+                  <Plus size={17} strokeWidth={2.4} aria-hidden="true" />
+                  Legg ut oppdrag
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate('/search/job/all')}
+                  className={PILL_SECONDARY}
+                >
+                  Finn oppdrag
+                </button>
+              </div>
+            </div>
+          )
         ) : (
           <ul className="space-y-2">
             {filtered.map((n) => {

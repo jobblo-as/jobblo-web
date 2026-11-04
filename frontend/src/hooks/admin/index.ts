@@ -187,6 +187,7 @@ export const useCreateAdminCategory = () => {
     mutationFn: adminApi.createAdminCategory,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: adminKeys.all });
+      qc.invalidateQueries({ queryKey: ['categories'] }); // the public list (home, filters)
       toast.success('Kategori opprettet.');
     },
     onError: (e: { response?: { data?: { message?: string } } }) =>
@@ -201,6 +202,7 @@ export const useUpdateAdminCategory = () => {
       adminApi.updateAdminCategory(id, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: adminKeys.all });
+      qc.invalidateQueries({ queryKey: ['categories'] }); // the public list (home, filters)
       toast.success('Kategori oppdatert.');
     },
     onError: () => toast.error('Kunne ikke oppdatere kategori.'),
@@ -213,6 +215,7 @@ export const useToggleAdminCategory = () => {
     mutationFn: (id: string) => adminApi.toggleAdminCategory(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: adminKeys.all });
+      qc.invalidateQueries({ queryKey: ['categories'] }); // the public list (home, filters)
     },
     onError: () => toast.error('Kunne ikke endre kategori.'),
   });
@@ -224,6 +227,7 @@ export const useDeleteAdminCategory = () => {
     mutationFn: (id: string) => adminApi.deleteAdminCategory(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: adminKeys.all });
+      qc.invalidateQueries({ queryKey: ['categories'] }); // the public list (home, filters)
       toast.success('Kategori slettet.');
     },
     onError: (e: { response?: { data?: { message?: string } } }) =>

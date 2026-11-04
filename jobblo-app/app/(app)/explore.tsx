@@ -8,6 +8,7 @@ import { useLocationTree } from '../../src/hooks/useLocationTree';
 import { useSearchFilters } from '../../src/hooks/useSearchFilters';
 import { JobCard } from '../../src/components/JobCard';
 import { Button } from '../../src/components/ui/Button';
+import { JobsEmptyState } from '../../src/components/domain/JobsEmptyState';
 import { SearchHeader } from '../../src/components/search/SearchHeader';
 import { SearchResultsHeader } from '../../src/components/search/SearchResultsHeader';
 import { ActiveFiltersDisplay } from '../../src/components/search/ActiveFiltersDisplay';
@@ -31,6 +32,16 @@ export default function ExploreScreen() {
   const initialSearch = (Array.isArray(params.search) ? params.search[0] : params.search) ?? '';
 
   const filters = useSearchFilters(initialSearch);
+  const hasFilters = Boolean(
+    filters.searchText ||
+    filters.selectedCategories.length > 0 ||
+    filters.minPrice !== 0 ||
+    filters.maxPrice !== 100000 ||
+    filters.isUrgent ||
+    filters.selectedCountyCodes.length > 0 ||
+    filters.selectedMunicipalityCodes.length > 0 ||
+    filters.userLocation
+  );
   const seededLocation = React.useRef(false);
   const routeLat = Array.isArray(params.lat) ? params.lat[0] : params.lat;
   const routeLng = Array.isArray(params.lng) ? params.lng[0] : params.lng;
@@ -327,32 +338,30 @@ export default function ExploreScreen() {
         }
         ListEmptyComponent={
           !isLoading && !isError && allJobs.length === 0 ? (
-            <View className="mx-4 rounded-[24px] bg-surface p-6">
-              <Text className="text-[1.0625rem] font-semibold text-ink">Ingen oppdrag funnet</Text>
-              <Text className="mt-2 text-[0.875rem] leading-relaxed text-muted">
-                {filters.searchText ||
-                filters.selectedCategories.length > 0 ||
-                filters.minPrice !== 0 ||
-                filters.maxPrice !== 100000 ||
-                filters.isUrgent ||
-                filters.selectedCountyCodes.length > 0 ||
-                filters.selectedMunicipalityCodes.length > 0 ||
-                filters.userLocation
-                  ? 'Prøv et annet søkeord eller fjern noen filtrer.'
-                  : 'Det finnes ingen tilgjengelige oppdrag akkurat nå.'}
-              </Text>
-              {(filters.searchText ||
-                filters.selectedCategories.length > 0 ||
-                filters.minPrice !== 0 ||
-                filters.maxPrice !== 100000 ||
-                filters.isUrgent ||
-                filters.selectedCountyCodes.length > 0 ||
-                filters.selectedMunicipalityCodes.length > 0 ||
-                filters.userLocation) && (
-                <View className="mt-4">
-                  <Button label="Nullstill filtre" onPress={filters.resetAll} />
-                </View>
-              )}
+            <View className="mx-4">
+              <JobsEmptyState
+                title={hasFilters ? 'Ingen oppdrag funnet' : 'Ingen oppdrag ute akkurat nå'}
+                text={
+                  hasFilters
+                    ? 'Prøv et annet søkeord eller fjern noen filtre. Eller legg ut oppdraget selv, gratis.'
+                    : 'Bli den første: legg ut oppdraget ditt gratis, og få tilbud fra folk i nærheten.'
+                }
+                actions={
+                  <>
+                    <Button
+                      label="Legg ut oppdrag"
+                      onPress={() => router.push('/(app)/create-job')}
+                    />
+                    {hasFilters ? (
+                      <Button
+                        label="Nullstill filtre"
+                        variant="secondary"
+                        onPress={filters.resetAll}
+                      />
+                    ) : null}
+                  </>
+                }
+              />
             </View>
           ) : undefined
         }

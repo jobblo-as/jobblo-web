@@ -11,7 +11,7 @@ import type {
   MessageConversation,
   MessageParticipant,
 } from '../../../src/services/messages.service';
-import { EmptyState } from '../../../src/components/ui/EmptyState';
+import { Button } from '../../../src/components/ui/Button';
 import { ErrorState } from '../../../src/components/ui/ErrorState';
 import { TC } from '../../../src/theme/colors';
 import { MessagesSkeleton } from '../../../src/components/skeletons/ScreenSkeletons';
@@ -188,11 +188,44 @@ export default function MessagesScreen() {
               Meldinger
             </Text>
             <Text className="mt-2 text-[1.9rem] font-bold text-ink">Meldinger</Text>
-            <View className="mt-8">
-              <EmptyState
-                title="Du har ingen meldinger ennå."
-                message="Når du starter en samtale, vises den her."
-              />
+            {/* As on the web's Meldinger: the chat icon in two soft rings, a sample exchange so
+                the empty page shows what it is for, and the way to a first conversation. */}
+            <View className="mt-8 items-center rounded-3xl bg-surface px-5 py-9">
+              <View className="h-28 w-28 items-center justify-center rounded-full bg-tint/50">
+                <View className="h-20 w-20 items-center justify-center rounded-full bg-tint">
+                  <View className="h-14 w-14 items-center justify-center rounded-full bg-page">
+                    <MessagesSquare size={24} color={TC.brandText} />
+                  </View>
+                </View>
+              </View>
+              <Text className="mt-5 text-center text-[1.25rem] font-bold text-ink">
+                Ingen samtaler ennå
+              </Text>
+              <Text className="mt-2 text-center text-[0.9375rem] leading-6 text-muted">
+                Når du søker på et oppdrag, eller noen søker på ditt, starter samtalen her.
+              </Text>
+              <View
+                className="mt-6 w-full gap-2"
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+              >
+                <View className="max-w-[85%] self-start rounded-2xl rounded-bl-md border border-line bg-page px-3.5 py-2.5">
+                  <Text className="text-[0.875rem] font-semibold text-ink">
+                    Hei! Jeg kan male stua di på lørdag.
+                  </Text>
+                </View>
+                <View className="max-w-[85%] self-end rounded-2xl rounded-br-md bg-brand px-3.5 py-2.5 opacity-80">
+                  <Text className="text-[0.875rem] font-semibold text-white">
+                    Supert, hva koster det?
+                  </Text>
+                </View>
+                <View className="self-start rounded-2xl rounded-bl-md border border-line bg-page px-3.5 py-2.5 opacity-60">
+                  <Text className="text-[0.875rem] font-semibold text-muted">Skriver …</Text>
+                </View>
+              </View>
+              <View className="mt-6 w-full">
+                <Button label="Finn oppdrag" onPress={() => router.push('/(app)/explore')} />
+              </View>
             </View>
           </View>
         </ScrollView>

@@ -15,6 +15,7 @@ import {
   Play,
   MapPin,
   Briefcase,
+  Plus,
 } from 'lucide-react';
 import {
   useMyApplicantsOverviewQuery,
@@ -25,6 +26,7 @@ import { ContractViewModal } from '../../components/SafePay/ContractViewModal';
 import { toast } from 'react-hot-toast';
 import { CARD, CARD_INTERACTIVE, MICRO_LABEL, PILL_PRIMARY } from '../../theme/brand';
 import { BackLink } from '../../components/Ui/BackLink';
+import { JobsEmptyState } from '../../components/JobsEmptyState';
 import { errorBody } from '../../utils/getErrorMessage';
 
 /**
@@ -433,17 +435,26 @@ const MyApplicantsOverview: React.FC = () => {
         ) : onOwnerTab ? (
           /* ══ TAB 1 — Mine søkere (job owner) ═══════════════════════════════ */
           <div className="space-y-3">
-            {filteredServices.length === 0 ? (
+            {filteredServices.length === 0 && !searchQuery ? (
+              <JobsEmptyState
+                title="Ingen søkere ennå"
+                text="Når noen søker på et av oppdragene dine, dukker det opp her. Legg ut et oppdrag gratis, så kommer søknadene."
+                actions={
+                  <button
+                    type="button"
+                    onClick={() => navigate('/Publish-job')}
+                    className={PILL_PRIMARY}
+                  >
+                    <Plus size={17} strokeWidth={2.4} aria-hidden="true" />
+                    Legg ut et oppdrag
+                  </button>
+                }
+              />
+            ) : filteredServices.length === 0 ? (
               <Notice
                 icon={<Users size={20} strokeWidth={2} />}
-                title={searchQuery ? 'Ingen treff' : 'Ingen søkere ennå'}
-                body={
-                  searchQuery
-                    ? 'Prøv et annet søkeord.'
-                    : 'Når noen søker på et av oppdragene dine, dukker det opp her.'
-                }
-                actionLabel={searchQuery ? undefined : 'Legg ut et oppdrag'}
-                onAction={searchQuery ? undefined : () => navigate('/Publish-job')}
+                title="Ingen treff"
+                body="Prøv et annet søkeord."
               />
             ) : (
               filteredServices.map((service: any) => {
@@ -559,19 +570,22 @@ const MyApplicantsOverview: React.FC = () => {
         ) : (
           /* ══ TAB 2 — Mine søknader (applicant) ═════════════════════════════ */
           <div className="space-y-3">
-            {filteredApps.length === 0 ? (
+            {filteredApps.length === 0 && !searchQuery && !appStatusFilter ? (
+              <JobsEmptyState
+                title="Du har ikke søkt på noe ennå"
+                text="Finn et oppdrag som passer deg, og send en søknad — det tar under ett minutt."
+                actions={
+                  <button type="button" onClick={() => navigate('/home')} className={PILL_PRIMARY}>
+                    <Search size={17} strokeWidth={2.4} aria-hidden="true" />
+                    Utforsk oppdrag
+                  </button>
+                }
+              />
+            ) : filteredApps.length === 0 ? (
               <Notice
                 icon={<ClipboardList size={20} strokeWidth={2} />}
-                title={
-                  searchQuery || appStatusFilter ? 'Ingen treff' : 'Du har ikke søkt på noe ennå'
-                }
-                body={
-                  searchQuery || appStatusFilter
-                    ? 'Prøv et annet søkeord eller filter.'
-                    : 'Finn et oppdrag som passer deg, og send en søknad — det tar under ett minutt.'
-                }
-                actionLabel={searchQuery || appStatusFilter ? undefined : 'Utforsk oppdrag'}
-                onAction={searchQuery || appStatusFilter ? undefined : () => navigate('/home')}
+                title="Ingen treff"
+                body="Prøv et annet søkeord eller filter."
               />
             ) : (
               filteredApps.map((app: any) => {

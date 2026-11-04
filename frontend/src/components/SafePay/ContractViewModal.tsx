@@ -13,6 +13,8 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { X, ShieldCheck, CheckCircle2, Circle, FileText, Calendar, Tag } from 'lucide-react';
 import { getCheckoutDetails } from '../../api/safePayAPI';
+import { PartyContact } from './PartyContact';
+import { fullAddress } from '../../utils/norwegianFormat';
 
 interface ContractViewModalProps {
   orderId: string;
@@ -180,7 +182,7 @@ export function ContractViewModal({ orderId, trigger }: ContractViewModalProps) 
                       Parter
                     </p>
                     <div className="grid grid-cols-2 gap-3">
-                      <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3.5">
+                      <div className="flex items-start gap-3 bg-gray-50 rounded-xl p-3.5">
                         <Avatar user={order.customerId} />
                         <div className="min-w-0">
                           <p className="text-[10px] text-gray-400 uppercase tracking-wider">
@@ -189,9 +191,13 @@ export function ContractViewModal({ orderId, trigger }: ContractViewModalProps) 
                           <p className="text-sm font-semibold text-gray-900 truncate">
                             {order.customerId.name} {order.customerId.lastName || ''}
                           </p>
+                          <PartyContact
+                            phone={order.serviceId?.contactPhone || order.customerId.phone}
+                            email={order.serviceId?.contactEmail || order.customerId.email}
+                          />
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3.5">
+                      <div className="flex items-start gap-3 bg-gray-50 rounded-xl p-3.5">
                         <Avatar user={order.providerId} />
                         <div className="min-w-0">
                           <p className="text-[10px] text-gray-400 uppercase tracking-wider">
@@ -200,6 +206,10 @@ export function ContractViewModal({ orderId, trigger }: ContractViewModalProps) 
                           <p className="text-sm font-semibold text-gray-900 truncate">
                             {order.providerId.name} {order.providerId.lastName || ''}
                           </p>
+                          <PartyContact
+                            phone={order.providerId.phone}
+                            email={order.providerId.email}
+                          />
                         </div>
                       </div>
                     </div>
@@ -217,9 +227,9 @@ export function ContractViewModal({ orderId, trigger }: ContractViewModalProps) 
                           {order.serviceId?.title || '—'}
                         </p>
                       </div>
-                      {order.serviceId?.location?.city && (
+                      {fullAddress(order.serviceId?.location) && (
                         <p className="text-xs text-gray-500 ml-5">
-                          📍 {order.serviceId.location.city}
+                          📍 {fullAddress(order.serviceId.location)}
                         </p>
                       )}
                       {order.createdAt && (

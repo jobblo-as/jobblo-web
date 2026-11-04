@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'react-hot-toast';
 import { initSocket } from '../../socket/socket';
 import { useUserStore } from '../../stores/userStore';
 import { listenForUnlock, playNotificationSound } from './sound';
@@ -19,7 +18,7 @@ import type { AlertType } from './types';
  * four sounds.
  *
  * Mounting this once in `App` and taking the handlers out of the components means one
- * event, one handler, one sound, one toast — and one place to change any of it.
+ * event, one handler, one sound — and one place to change any of it.
  *
  * It also does the two things nobody was doing:
  *
@@ -52,47 +51,12 @@ export function NotificationRealtime() {
   // inside a sound hook means it happens once, for one shared AudioContext.
   useEffect(() => listenForUnlock(), []);
 
-  const showToast = useCallback(
-    (notification: AlertType) => {
-      const { label, Icon } = notificationMeta(notification.type);
-
-      toast.custom(
-        (t) => (
-          <button
-            type="button"
-            onClick={() => {
-              toast.dismiss(t.id);
-              openNotification(notification);
-            }}
-            className={`flex w-full max-w-90 items-start gap-3 rounded-2xl border border-[#E6E7E1] bg-white p-3.5 text-left shadow-[0_18px_44px_rgba(11,11,11,0.16)] transition-all ${
-              t.visible ? 'animate-in fade-in slide-in-from-bottom-2' : 'opacity-0'
-            }`}
-          >
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-[#EAF1E9] text-[#2E6641]">
-              <Icon size={16} strokeWidth={2} />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-[#9B9E96]">
-                {label}
-              </span>
-              <span className="mt-0.5 line-clamp-2 block text-[0.875rem] leading-relaxed font-medium text-[#0B0B0B]">
-                {notification.content}
-              </span>
-            </span>
-          </button>
-        ),
-        { duration: 6000, position: 'bottom-center' }
-      );
-    },
-    [openNotification]
-  );
-
   const showSystemNotification = useCallback(
     (notification: AlertType) => {
       const { browserNotificationsEnabled } = useUserStore.getState();
       if (!browserNotificationsEnabled) return;
-      // iOS Safari has no Notification constructor outside an installed PWA. The in-app
-      // toast above is the channel that always works, which is why it is not conditional.
+      // iOS Safari has no Notification constructor outside an installed PWA; the bell and the
+      // Varsler page are the channels that always work.
       if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
 
       try {
@@ -155,8 +119,9 @@ export function NotificationRealtime() {
       const urgent = payload?.urgent !== false;
       if (urgent) {
         playNotificationSound();
+        // No in-app popup: the bell's badge and the Varsler page show it (the popups stacked
+        // over whatever page was open). A backgrounded tab still gets the OS notification.
         if (document.hidden) showSystemNotification(payload);
-        else showToast(payload);
       }
     };
 
@@ -192,7 +157,7 @@ export function NotificationRealtime() {
       document.removeEventListener('visibilitychange', handleVisibility);
       window.removeEventListener('online', handleVisibility);
     };
-  }, [userId, queryClient, navigate, refetchAll, showToast, showSystemNotification]);
+  }, [userId, queryClient, navigate, refetchAll, showSystemNotification]);
 
   return null;
 }

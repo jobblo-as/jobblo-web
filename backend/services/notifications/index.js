@@ -63,6 +63,29 @@ const TYPES = {
 
 const isKnownType = (type) => Object.prototype.hasOwnProperty.call(TYPES, type);
 
+/**
+ * The push groups a user can turn off in the app (User.pushPreferences). A type in none of
+ * them (system, alert, promotion…) is always pushed: account and security notices.
+ */
+const PUSH_GROUPS = {
+  messages: ['message'],
+  applications: ['application'],
+  orders: ['order', 'payment'],
+  reviews: ['review'],
+  jobs: ['job_update', 'favorite', 'follow'],
+};
+const pushGroupOf = (type) =>
+  Object.keys(PUSH_GROUPS).find((group) => PUSH_GROUPS[group].includes(type)) || null;
+
+/** False when the user has turned this type's group off. */
+async function pushWanted(userId, type) {
+  const group = pushGroupOf(type);
+  // No database (a unit test, a startup race): push rather than wait on a buffered query.
+  if (!group || require('mongoose').connection.readyState !== 1) return true;
+  const user = await require('../../models/User').findById(userId).select('pushPreferences').lean();
+  return user?.pushPreferences?.[group] !== false;
+}
+
 const PUSH_TITLES = {
   message: 'Ny melding på Jobblo',
   application: 'Ny forespørsel',
@@ -241,15 +264,17 @@ async function notify(input = {}) {
     if (count !== null) emitToUser(userId, 'notification_count', { count });
     if (event) emitToUser(userId, event, payload ?? {});
 
-    // Mongo is the source of truth; FCM is best-effort delivery of this same alert.
-    void sendPushToUser(userId, {
-      title: title || PUSH_TITLES[type],
-      body: content,
-      data: pushData({ type, event, payload, requestId, orderId, data }),
-      ...(channelId ? { channelId } : {}),
-      ...(priority ? { priority } : {}),
-      ...(imageUrl ? { imageUrl } : {}),
-    });
+    // Mongo is the source of truth; FCM is best-effort delivery of this same alert, and only
+    // for the groups the user still wants on their phone (Varslingsinnstillinger in the app).
+    if (await pushWanted(userId, type).catch(() => true))
+      void sendPushToUser(userId, {
+        title: title || PUSH_TITLES[type],
+        body: content,
+        data: pushData({ type, event, payload, requestId, orderId, data }),
+        ...(channelId ? { channelId } : {}),
+        ...(priority ? { priority } : {}),
+        ...(imageUrl ? { imageUrl } : {}),
+      });
 
     return populated;
   } catch (err) {
@@ -291,4 +316,14 @@ async function broadcast({ type, content }) {
   }
 }
 
-module.exports = { notify, broadcast, emitToUser, unreadCount, unreadQuery, forViewer, TYPES };
+module.exports = {
+  notify,
+  broadcast,
+  emitToUser,
+  unreadCount,
+  unreadQuery,
+  forViewer,
+  TYPES,
+  PUSH_GROUPS,
+  pushWanted,
+};

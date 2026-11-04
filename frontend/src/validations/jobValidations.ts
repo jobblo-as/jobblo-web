@@ -1,4 +1,5 @@
 import { required } from './rules';
+import { isValidPhone } from '../utils/norwegianFormat';
 
 export type JobFormValues = {
   title: string;
@@ -65,6 +66,15 @@ export const jobValidationSchema = {
   ],
   address: [required<JobFormValues>('address', 'Vennligst skriv inn en adresse')],
   city: [required<JobFormValues>('city', 'Vennligst skriv inn et sted/by')],
+  // Required: a job is not posted without a number to reach the poster on. Filled in from
+  // the profile when it has one (useCreateJobForm); the server checks the same rule.
+  phone: [
+    required<JobFormValues>('phone', 'Legg til telefonnummeret ditt'),
+    {
+      test: (values: JobFormValues) => isValidPhone(values.phone),
+      message: 'Et norsk nummer har åtte siffer.',
+    },
+  ],
   email: [
     {
       test: (values: JobFormValues) => {

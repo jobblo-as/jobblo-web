@@ -29,9 +29,14 @@ exports.getOrderDetail = async (req, res) => {
     const { orderId } = req.params;
     if (!isValidId(orderId)) return res.status(400).json({ error: 'Ugyldig orderId' });
     const order = await Order.findById(orderId)
-      .populate('serviceId', 'title description location price checklist fromDate')
-      .populate('customerId', 'name lastName avatarUrl averageRating')
-      .populate('providerId', 'name lastName avatarUrl averageRating completedJobs');
+      // Contact details (email, phone, the job's own contact) for the two parties only: the
+      // 403 below refuses anyone else.
+      .populate(
+        'serviceId',
+        'title description location price checklist fromDate +contactPhone +contactEmail'
+      )
+      .populate('customerId', 'name lastName avatarUrl averageRating email phone')
+      .populate('providerId', 'name lastName avatarUrl averageRating completedJobs email phone');
     if (!order) return res.status(404).json({ error: 'Ordre ikke funnet' });
     const isCustomer = String(order.customerId._id) === String(req.userId);
     const isProvider = String(order.providerId?._id) === String(req.userId);

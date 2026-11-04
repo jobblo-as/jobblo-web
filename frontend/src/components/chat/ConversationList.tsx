@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MessagesSquare } from 'lucide-react';
+import { ChatRings } from './ChatUiComponents';
 import { ConversationSkeleton } from '../Loading/ConversationSkeleton';
 import type { ChatMessage } from '../../api/chatAPI';
 import { jobImage } from '../../assets/images/categories';
@@ -73,13 +74,20 @@ const ConversationList: React.FC<ConversationListProps> = ({
   if (filteredChats.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center px-8 py-16 text-center">
-        <span className="mb-4 flex size-11 items-center justify-center rounded-full bg-[#EAF1E9] text-[#2E6641]">
-          <MessagesSquare size={20} strokeWidth={2} />
-        </span>
-        <p className="text-[0.9375rem] font-semibold text-[#0B0B0B]">Ingen samtaler</p>
-        <p className="mt-1.5 max-w-50 text-[0.8125rem] leading-relaxed text-[#63665F]">
-          Meldinger om oppdragene dine dukker opp her.
+        <ChatRings small />
+        <p className="mt-4 text-[1.0625rem] font-bold tracking-[-0.01em] text-[#0B0B0B]">
+          Ingen samtaler ennå
         </p>
+        <p className="mt-1.5 max-w-56 text-[0.875rem] font-medium leading-relaxed text-[#63665F]">
+          Når du søker på et oppdrag, eller noen søker på ditt, starter samtalen her.
+        </p>
+        <button
+          type="button"
+          onClick={() => navigate('/search/job/all')}
+          className="mt-5 inline-flex h-10 items-center justify-center rounded-full bg-[#2E6641] px-5 text-[0.875rem] font-semibold text-white transition hover:bg-[#255335] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/20"
+        >
+          Finn oppdrag
+        </button>
       </div>
     );
   }

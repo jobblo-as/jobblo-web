@@ -45,7 +45,11 @@ exports.createCategory = async (req, res) => {
 exports.getAllCategories = async (req, res) => {
   try {
     // lean + defaults: the same JSON as hydrated documents, without hydrating them.
-    const categories = withDefaults(Category, await Category.find({ isActive: true }).lean());
+    // Admin's order (sortOrder) — the home page lists them in this order.
+    const categories = withDefaults(
+      Category,
+      await Category.find({ isActive: true }).sort({ sortOrder: 1, name: 1 }).lean()
+    );
     res.json(categories);
   } catch (error) {
     res.status(500).json({ error: 'Server error' });

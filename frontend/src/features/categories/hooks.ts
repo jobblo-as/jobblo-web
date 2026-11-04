@@ -11,6 +11,7 @@ export const useCategories = () => {
     gcTime: 1000 * 60 * 60 * 5,
 
     refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    // No refetchOnMount: false — staleTime already stops refetches, and with it an admin
+    // edit (which invalidates ['categories']) never reached the home page until a reload.
   });
 };

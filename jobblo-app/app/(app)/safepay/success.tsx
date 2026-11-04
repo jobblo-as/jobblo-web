@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef } from 'react';
+import { fullAddress } from '../../../src/utils/address';
 import {
   AccessibilityInfo,
   Animated,
@@ -565,10 +566,12 @@ export default function SafePaySuccessScreen() {
             <Text className="text-[1.0625rem] font-bold text-ink" numberOfLines={2}>
               {order.serviceId?.title ?? 'Oppdrag'}
             </Text>
-            {order.serviceId?.location?.city ? (
+            {fullAddress(order.serviceId?.location) ? (
               <View className="mt-1.5 flex-row items-center gap-1.5">
                 <MapPin size={14} color={tc('#63665F', 'muted')} />
-                <Text className="text-[0.8125rem] text-muted">{order.serviceId.location.city}</Text>
+                <Text className="text-[0.8125rem] text-muted">
+                  {fullAddress(order.serviceId?.location)}
+                </Text>
               </View>
             ) : null}
           </View>

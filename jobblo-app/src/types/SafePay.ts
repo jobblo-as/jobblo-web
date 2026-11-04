@@ -4,6 +4,9 @@ export interface SafePayParty {
   lastName?: string;
   avatarUrl?: string;
   averageRating?: number;
+  /** Sent to the two parties of the order only. */
+  email?: string;
+  phone?: string;
 }
 
 export interface SafePayDuration {
@@ -14,6 +17,7 @@ export interface SafePayDuration {
 export interface SafePayLocation {
   city?: string;
   address?: string;
+  postalCode?: string;
   lat?: number;
   lng?: number;
 }
@@ -36,6 +40,9 @@ export interface SafePayService {
   fromDate?: string;
   toDate?: string;
   duration?: SafePayDuration | null;
+  /** The job's own contact (its phone is required); the two parties only. */
+  contactPhone?: string;
+  contactEmail?: string;
 }
 
 export interface SafePayOrder {

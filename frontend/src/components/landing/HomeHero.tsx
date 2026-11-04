@@ -30,10 +30,10 @@ import { SERVICE_SHOWCASE, categoryPhoto } from '../../assets/images/categories'
 /** Shown until the categories land, so the rotating line never starts empty. */
 const FALLBACK_WORDS = ['maling', 'flytting', 'hagearbeid', 'rørlegger', 'rengjøring'];
 
-/** The two still frames: which showcase entry each takes, and the shape it is cut to. */
+/** The two side frames: how far after the arch's photo each one is, and its shape. */
 const PLATE_FRAMES = [
-  { at: 4, frame: 'left-0 top-24 size-47.5 rounded-full bg-[#EAF1E9]' },
-  { at: 5, frame: 'bottom-24 left-9 h-45 w-62.5 rounded-3xl bg-white' },
+  { at: 1, frame: 'left-0 top-24 size-47.5 rounded-full bg-[#EAF1E9]' },
+  { at: 2, frame: 'bottom-24 left-9 h-45 w-62.5 rounded-3xl bg-white' },
 ];
 
 const WORD_MS = 2400;
@@ -69,13 +69,17 @@ export function HomeHero() {
     return src ? [{ name: cat.name, src }] : [];
   });
   const showcase = fromApi.length >= 6 ? fromApi : SERVICE_SHOWCASE;
-  // The arch cycles the first four; the plates hold the next two.
-  const CAROUSEL = showcase.slice(0, 4);
-  const PLATES = PLATE_FRAMES.map(({ at, frame }) => ({ ...showcase[at], frame }));
+  // The arch cycles every category; the plates show the next two, so all of them come
+  // round and no photo is on screen twice.
+  const CAROUSEL = showcase;
 
   // Both counters run unbounded and are read modulo their own list, so neither has to
   // know how long that list is — `words` in particular changes length as the API answers.
   const current = slide % CAROUSEL.length;
+  const PLATES = PLATE_FRAMES.map(({ at, frame }) => ({
+    ...CAROUSEL[(current + at) % CAROUSEL.length],
+    frame,
+  }));
 
   // Both rotators, unless the visitor has asked for less motion.
   useEffect(() => {
@@ -203,7 +207,7 @@ export function HomeHero() {
                 they scroll sideways rather than wrapping onto three stacked rows. */}
             {categories.length > 0 && (
               <div className="no-scrollbar -mx-5 mt-5 flex gap-2 overflow-x-auto px-5 sm:mx-0 sm:mt-6 sm:flex-wrap sm:px-0">
-                {categories.slice(0, 6).map((cat) => (
+                {categories.map((cat) => (
                   <button
                     key={cat._id}
                     type="button"
@@ -274,8 +278,8 @@ export function HomeHero() {
               ))}
             </button>
 
-            {/* Two more services, held still so only the arch animates. They are links
-                like the arch is — every frame in the collage goes somewhere. */}
+            {/* The next two services. They are links like the arch is — every frame in
+                the collage goes somewhere. */}
             {PLATES.map((plate) => (
               <button
                 key={plate.name}
