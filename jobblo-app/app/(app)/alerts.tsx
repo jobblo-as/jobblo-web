@@ -21,6 +21,7 @@ import {
   MessageSquare,
   Star,
   ClipboardCheck,
+  Check,
   CheckCheck,
   Settings2,
   Trash2,
@@ -38,6 +39,7 @@ import { useAuthStore } from '../../src/store/authStore';
 import { resolveOrderRoute } from '../../src/utils/orderRoute';
 import { ConfirmDialog } from '../../src/components/ui/ConfirmDialog';
 import { Button } from '../../src/components/ui/Button';
+import { Dialog } from '../../src/components/ui/Dialog';
 import { Chip } from '../../src/components/ui/Chip';
 import { EmptyState } from '../../src/components/ui/EmptyState';
 import { ErrorState } from '../../src/components/ui/ErrorState';
@@ -235,6 +237,13 @@ function NotificationRow({
 
 /* ── Screen ──────────────────────────────────────────────────────────────── */
 
+/** The sample rows on the empty page: what a notification will look like (as on the web). */
+const EMPTY_PREVIEW: { Icon: LucideIcon; text: string; time: string }[] = [
+  { Icon: Briefcase, text: 'Ny søknad på «Male stue»', time: 'nå' },
+  { Icon: Banknote, text: 'Betaling mottatt · 2 400 kr', time: '2 t' },
+  { Icon: MessageSquare, text: 'Ny melding fra Kari', time: 'i går' },
+];
+
 export default function AlertsScreen() {
   const tabBarSpace = useTabBarSpace();
   const router = useRouter();
@@ -245,6 +254,7 @@ export default function AlertsScreen() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
   const [deleteAllVisible, setDeleteAllVisible] = useState(false);
+  const [deletedAllVisible, setDeletedAllVisible] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -301,7 +311,12 @@ export default function AlertsScreen() {
 
   const handleDeleteAll = useCallback(() => {
     deleteAll.mutate(undefined, {
-      onSuccess: () => Alert.alert('Slettet', 'Alle personlige varsler er slettet.'),
+      // The app's own dialog, like the confirm before it (was a bare system Alert).
+      // iOS will not present a Modal while another is still closing: confirm first, then this.
+      onSuccess: () => {
+        setDeleteAllVisible(false);
+        setTimeout(() => setDeletedAllVisible(true), 350);
+      },
       onError: () => Alert.alert('Feil', 'Kunne ikke slette varslene.'),
       onSettled: () => setDeleteAllVisible(false),
     });
@@ -433,29 +448,64 @@ export default function AlertsScreen() {
 
   const empty = isLoading ? (
     <AlertsSkeleton />
-  ) : (
+  ) : hasFilter ? (
     <EmptyState
       icon={
         <View className="h-14 w-14 items-center justify-center rounded-full bg-tint">
-          {hasFilter ? (
-            <BellOff size={24} color={TC.brandText} />
-          ) : (
-            <Bell size={24} color={TC.brandText} />
-          )}
+          <BellOff size={24} color={TC.brandText} />
         </View>
       }
-      title={hasFilter ? 'Ingen treff' : 'Ingen varsler ennå'}
-      message={
-        hasFilter
-          ? 'Ingen varsler passer filteret ditt.'
-          : 'Du får beskjed her når det skjer noe med oppdragene, søknadene eller betalingene dine.'
-      }
-      action={
-        hasFilter ? (
-          <Button label="Nullstill filter" variant="secondary" small onPress={resetFilters} />
-        ) : undefined
-      }
+      title="Ingen treff"
+      message="Ingen varsler passer filteret ditt."
+      action={<Button label="Nullstill filter" variant="secondary" small onPress={resetFilters} />}
     />
+  ) : (
+    // As on the web's Varsler: the bell in two soft rings, what a notification will look
+    // like (sample rows, fading), and the two ways to get one.
+    <View className="items-center rounded-3xl bg-surface px-5 py-9">
+      <View className="h-28 w-28 items-center justify-center rounded-full bg-tint/50">
+        <View className="h-20 w-20 items-center justify-center rounded-full bg-tint">
+          <View className="h-14 w-14 items-center justify-center rounded-full bg-page">
+            <Bell size={24} color={TC.brandText} />
+          </View>
+        </View>
+      </View>
+      <Text className="mt-5 text-center text-[1.25rem] font-bold text-ink">
+        Her dukker varslene dine opp
+      </Text>
+      <Text className="mt-2 text-center text-[0.9375rem] leading-6 text-muted">
+        Du får beskjed her når noen søker på oppdraget ditt, betaler eller sender melding.
+      </Text>
+      <View
+        className="mt-6 w-full gap-2"
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
+        {EMPTY_PREVIEW.map(({ Icon, text, time }, i) => (
+          <View
+            key={text}
+            className="flex-row items-center gap-3 rounded-2xl border border-line bg-page px-3.5 py-3"
+            style={{ opacity: 1 - i * 0.25 }}
+          >
+            <View className="h-9 w-9 items-center justify-center rounded-full bg-tint">
+              <Icon size={16} color={TC.brandText} />
+            </View>
+            <Text className="flex-1 text-[0.875rem] font-semibold text-ink" numberOfLines={1}>
+              {text}
+            </Text>
+            <Text className="text-[0.8125rem] text-muted">{time}</Text>
+          </View>
+        ))}
+      </View>
+      <View className="mt-6 w-full gap-2.5">
+        <Button label="Legg ut oppdrag" onPress={() => router.push('/(app)/create-job')} />
+        <Button
+          label="Finn oppdrag"
+          variant="secondary"
+          onPress={() => router.push('/(app)/explore')}
+        />
+      </View>
+    </View>
   );
 
   const footer = isFetchingNextPage ? (
@@ -528,6 +578,29 @@ export default function AlertsScreen() {
         onConfirm={handleDeleteAll}
         onClose={() => setDeleteAllVisible(false)}
       />
+
+      <Dialog visible={deletedAllVisible} onClose={() => setDeletedAllVisible(false)}>
+        <View className="items-center">
+          <View className="h-20 w-20 items-center justify-center rounded-full bg-tint">
+            <View className="h-14 w-14 items-center justify-center rounded-full bg-brand">
+              <Check size={28} color="#fff" strokeWidth={2.6} />
+            </View>
+          </View>
+          <Text
+            accessibilityRole="header"
+            className="mt-5 text-center text-[1.25rem] font-bold text-ink"
+          >
+            Alle varsler er slettet
+          </Text>
+          <Text className="mt-2 text-center text-[0.9375rem] leading-6 text-muted">
+            Alle personlige varsler er fjernet. Nye varsler dukker opp her når noe skjer med
+            oppdragene dine.
+          </Text>
+          <View className="mt-6 w-full">
+            <Button label="Ok" onPress={() => setDeletedAllVisible(false)} />
+          </View>
+        </View>
+      </Dialog>
     </SafeAreaView>
   );
 }
