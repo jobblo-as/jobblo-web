@@ -23,6 +23,7 @@ import {
   type AiDraftKey,
 } from '../utils/aiFillSummary';
 import { scrollToFirstError } from '../utils/scrollToError';
+import { findAddress } from '../api/geonorge';
 import { isValidPhone, phoneDigits } from '../utils/norwegianFormat';
 
 /** Two pages: the job itself, then place, time and price (checklist and contact folded in). */
@@ -657,6 +658,48 @@ export const useCreateJobForm = (
     if (!values.email && currentUser.email) fill.email = currentUser.email;
     if (Object.keys(fill).length) setMultipleValues(fill);
   }, [isLoaded, isEditMode, currentUser, values.phone, values.email, setMultipleValues]);
+
+  // A new job also starts at the profile's address (Innstillinger → Mine adresser) when the
+  // form has none yet. It is looked up in Kartverket so it arrives confirmed — pin, kommune,
+  // postnummer — like a picked suggestion; every field stays editable. No match: only the text
+  // is filled and the map asks for a confirmation as usual.
+  const addressPrefilled = useRef(false);
+  const latestLocation = useRef({ address: values.address, coordinates });
+  latestLocation.current = { address: values.address, coordinates };
+  useEffect(() => {
+    if (!isLoaded || isEditMode || addressPrefilled.current || !currentUser) return;
+    addressPrefilled.current = true;
+    const { address: street, postNumber = '', postSted = '' } = currentUser;
+    if (!street || latestLocation.current.address || latestLocation.current.coordinates) return;
+    const untouched = () => !latestLocation.current.address && !latestLocation.current.coordinates;
+    findAddress(street, postNumber, postSted)
+      .catch(() => null)
+      .then((hit) => {
+        if (!untouched()) return; // the person started on an address meanwhile
+        if (!hit) {
+          setAddress(street);
+          if (/^\d{4}$/.test(postNumber)) setPostalCode(postNumber);
+          if (postSted) setCity(postSted);
+          return;
+        }
+        setAddress(hit.address);
+        setPostalCode(hit.postalCode);
+        setCity(hit.city || hit.municipalityName);
+        setCountyCode(hit.municipalityCode.slice(0, 2));
+        setMunicipalityCode(hit.municipalityCode);
+        setAreaCode('');
+        setCoordinates([hit.lat, hit.lng]);
+      });
+  }, [
+    isLoaded,
+    isEditMode,
+    currentUser,
+    setAddress,
+    setCity,
+    setCountyCode,
+    setMunicipalityCode,
+    setCoordinates,
+  ]);
 
   // Persistence - Save data whenever it changes (only after initial load)
   useEffect(() => {

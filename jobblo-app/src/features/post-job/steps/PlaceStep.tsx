@@ -4,7 +4,7 @@ import DateTimePicker, { type DateTimePickerChangeEvent } from '@expo/ui/communi
 import { CalendarDays, X } from 'lucide-react-native';
 import { TC, tc } from '../../../theme/colors';
 import { AddressSearchField } from '../../../components/create-job/AddressSearchField';
-import { addressAt, type AddressHit } from '../../../services/geonorge.service';
+import { addressAt, findAddress, type AddressHit } from '../../../services/geonorge.service';
 import { CreateJobLocationMap } from '../../../components/create-job/CreateJobLocationMap';
 import { Field } from '../../../components/ui/Field';
 import { validateCreateJobStep } from '../../../utils/createJobValidation';
@@ -133,6 +133,41 @@ export function PlaceStep() {
       coordinates: [hit.lat, hit.lng],
     });
   };
+  // A new job starts at the profile's address (Innstillinger → Mine adresser) when it has
+  // none yet, as on the web: looked up in Kartverket so it arrives confirmed (pin, kommune,
+  // postnummer); everything stays editable. No match: only the text, and the map asks.
+  const addressPrefilled = useRef(false);
+  useEffect(() => {
+    if (addressPrefilled.current || editId || !profile) return;
+    addressPrefilled.current = true;
+    const p = profile as { address?: string; postNumber?: string; postSted?: unknown };
+    const street = p.address?.trim() ?? '';
+    const postNumber = p.postNumber?.trim() ?? '';
+    const postSted =
+      typeof p.postSted === 'string'
+        ? p.postSted
+        : ((p.postSted as { city?: string } | undefined)?.city ?? '');
+    const untouched = () => {
+      const v = usePostJobStore.getState().values;
+      // An empty form's point is [0, 0], not null.
+      return !v.address && !v.coordinates?.[0] && !v.coordinates?.[1];
+    };
+    if (!street || !untouched()) return;
+    findAddress(street, postNumber, postSted)
+      .catch(() => null)
+      .then((hit) => {
+        if (!untouched()) return; // the person started on an address meanwhile
+        if (hit) pickAddress(hit);
+        else
+          update({
+            address: street,
+            ...(/^\d{4}$/.test(postNumber) ? { postalCode: postNumber } : {}),
+            ...(postSted ? { city: postSted } : {}),
+          });
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, when the profile arrives
+  }, [editId, profile]);
+
   // A point from the map (tap, dragged pin, GPS): the pin stays where it was put; the nearest
   // Kartverket address fills address, sted, fylke and kommune.
   const pickPoint = async ([lat, lng]: [number, number]) => {

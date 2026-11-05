@@ -1,7 +1,7 @@
 // Live check for geonorge.service.ts (Kartverket address API). Needs internet.
 // Run: node src/services/geonorge.check.mjs
 import assert from 'node:assert/strict';
-import { searchAddresses, addressAt } from './geonorge.service.ts';
+import { searchAddresses, addressAt, findAddress } from './geonorge.service.ts';
 
 // 1. Search returns real addresses with postal code, sted, kommune and coordinates.
 const borggata = await searchAddresses('Borggata 8');
@@ -37,3 +37,12 @@ assert.equal(await addressAt(64.0, 2.0), null);
 assert.deepEqual(await searchAddresses('qqqqzzzz'), []);
 
 console.log('geonorge: all checks passed');
+
+// 4. A saved profile address: one exact match, with its kommune and point.
+const saved = await findAddress('Borggata 8', '0650', 'Oslo');
+assert.equal(saved?.address, 'Borggata 8');
+assert.equal(saved?.municipalityCode, '0301');
+assert.equal(saved?.postalCode, '0650');
+// Never a near miss: "Bryggen 1" (no such address) is not turned into "Bryggen 11".
+assert.equal(await findAddress('Bryggen 1', '5003', 'Bergen'), null);
+console.log('findAddress: exact profile address ok, near miss refused');
