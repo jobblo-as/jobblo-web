@@ -143,7 +143,7 @@ function DependencyGraph({
   selected: string | null;
   onSelect: (n: DepNode) => void;
 }) {
-  const byId = Object.fromEntries(data.nodes.map((n) => [n.id, n]));
+  const byId = Object.fromEntries((data.nodes ?? []).map((n) => [n.id, n]));
   const related = (e: { from: string; to: string }) =>
     !selected || e.from === selected || e.to === selected;
   return (
@@ -178,7 +178,7 @@ function DependencyGraph({
           {label}
         </text>
       ))}
-      {data.edges.map((e) => {
+      {(data.edges ?? []).map((e) => {
         const d = edgePath(e.from, e.to);
         const target = byId[e.to];
         if (!d || !target) return null;
@@ -197,7 +197,7 @@ function DependencyGraph({
           />
         );
       })}
-      {data.nodes.map((n) => {
+      {(data.nodes ?? []).map((n) => {
         const p = POS[n.id];
         if (!p) return null;
         const tone = TONE[n.status];
@@ -205,7 +205,7 @@ function DependencyGraph({
         const dim =
           selected &&
           !active &&
-          !data.edges.some(
+          !(data.edges ?? []).some(
             (e) => (e.from === selected && e.to === n.id) || (e.to === selected && e.from === n.id)
           );
         return (
@@ -259,7 +259,7 @@ const msText = (v: number | null | undefined) =>
 function ExternalServices({ hours }: { hours: number }) {
   const { data, isLoading, error, refetch } = useDevExternalServices(hours);
   const [selected, setSelected] = useState('stripe');
-  const s = data?.services.find((x) => x.key === selected) || data?.services[0];
+  const s = data?.services?.find((x) => x.key === selected) || data?.services?.[0];
   const opCols: Column<ExternalService['ops'][number]>[] = [
     {
       key: 'o',
@@ -453,7 +453,7 @@ export default function DependencyMapPage() {
   const qc = useQueryClient();
   const [open, setOpen] = useState<DepNode | null>(null);
   const [checking, setChecking] = useState(false);
-  const count = (s: DepStatus) => data?.nodes.filter((n) => n.status === s).length ?? 0;
+  const count = (s: DepStatus) => data?.nodes?.filter((n) => n.status === s).length ?? 0;
   const neighbours = (id: string, dir: 'from' | 'to') =>
     (data?.edges || [])
       .filter((e) => e[dir] === id)
@@ -557,7 +557,7 @@ export default function DependencyMapPage() {
               value={count('down')}
               hint={
                 data?.nodes
-                  .filter((n) => n.status === 'down')
+                  ?.filter((n) => n.status === 'down')
                   .map((n) => n.name)
                   .join(', ') || 'none'
               }
@@ -570,7 +570,7 @@ export default function DependencyMapPage() {
               value={count('degraded')}
               hint={
                 data?.nodes
-                  .filter((n) => n.status === 'degraded')
+                  ?.filter((n) => n.status === 'degraded')
                   .map((n) => n.name)
                   .join(', ') || 'none'
               }
@@ -615,7 +615,7 @@ export default function DependencyMapPage() {
               columns={columns}
               rows={
                 data
-                  ? [...data.nodes].sort(
+                  ? [...(data.nodes ?? [])].sort(
                       (a, b) => order.indexOf(a.status) - order.indexOf(b.status)
                     )
                   : undefined

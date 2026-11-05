@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Activity, AlertTriangle, Download, Gauge, Search, Timer, Zap } from 'lucide-react';
 import { ago, compact, dateTime, downloadCsv, ms, num, pct, rate } from '@/lib/devFormat';
 import {
@@ -7,7 +8,6 @@ import {
   useDevEndpointClients,
   useUrlFilters,
 } from '../../features/developer/hooks';
-import { IpSheet } from '../../components/developer/IpSheet';
 import type { ApiClient, EndpointStat, RangeKey } from '../../api/developer';
 import {
   EmptyState,
@@ -147,7 +147,7 @@ function EndpointSheet({
                   Status codes
                 </h4>
                 <div className="grid grid-cols-6 gap-1.5">
-                  {Object.entries(endpoint.codes).map(([code, n]) => (
+                  {Object.entries(endpoint.codes ?? {}).map(([code, n]) => (
                     <div key={code} className="rounded-md border p-2 text-center">
                       <div
                         className={`font-mono text-xs ${Number(code) >= 500 ? 'text-red-600' : 'text-amber-600'}`}
@@ -171,7 +171,7 @@ function EndpointSheet({
                 </h4>
                 {isLoading ? (
                   <p className="text-sm text-muted-foreground">Loading…</p>
-                ) : data?.traces.length ? (
+                ) : data?.traces?.length ? (
                   <ul className="divide-y rounded-md border text-sm">
                     {data.traces.map((t) => (
                       <li key={t._id} className="space-y-1 p-2.5">
@@ -207,7 +207,9 @@ export default function ApiMonitoringPage() {
   const [f, setF] = useUrlFilters({ range: '24h', method: 'all', q: '', sort: 'count' });
   const [search, setSearch] = useState(f.q);
   const [selected, setSelected] = useState<EndpointStat | null>(null);
-  const [ip, setIp] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const openIp = (ip: string) =>
+    navigate(`/developer/ips/${encodeURIComponent(ip)}?range=${f.range}`);
   const { data, isLoading, isFetching, error, refetch } = useDevApiMetrics({
     range: f.range as '24h',
     method: f.method === 'all' ? undefined : f.method,
@@ -218,7 +220,7 @@ export default function ApiMonitoringPage() {
     const key = f.sort as keyof EndpointStat;
     return [...(data?.endpoints || [])].sort((a, b) => Number(b[key]) - Number(a[key]));
   }, [data, f.sort]);
-  const bucketMs = data?.range.bucketMs;
+  const bucketMs = data?.range?.bucketMs;
 
   const columns: Column<EndpointStat>[] = [
     {
@@ -380,8 +382,8 @@ export default function ApiMonitoringPage() {
           icon={<Zap />}
           tone="info"
           loading={isLoading}
-          value={rate(t?.live.rps)}
-          hint={`${t?.live.activeRequests ?? 0} in flight`}
+          value={rate(t?.live?.rps)}
+          hint={`${t?.live?.activeRequests ?? 0} in flight`}
         />
         <StatCard
           label="Success rate"
@@ -507,7 +509,7 @@ export default function ApiMonitoringPage() {
           rows={data?.clients}
           loading={isLoading}
           rowKey={(c) => c.ip}
-          onRowClick={(c) => setIp(c.ip)}
+          onRowClick={(c) => openIp(c.ip)}
           emptyTitle="No client IPs recorded yet"
           emptyDescription="IPs are recorded for traffic from this release onward (flushed every minute)."
         />
@@ -518,10 +520,9 @@ export default function ApiMonitoringPage() {
         onClose={() => setSelected(null)}
         onPickIp={(v) => {
           setSelected(null);
-          setIp(v);
+          openIp(v);
         }}
       />
-      <IpSheet ip={ip} range={f.range as RangeKey} onClose={() => setIp(null)} />
     </div>
   );
 }

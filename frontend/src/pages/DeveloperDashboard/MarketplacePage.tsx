@@ -222,23 +222,23 @@ export default function MarketplacePage() {
           icon={<Users />}
           loading={isLoading}
           value={num(t?.providers ?? 0)}
-          hint={data ? `${data.concentration.providersHired} got hired` : undefined}
+          hint={data ? `${data.concentration?.providersHired ?? 0} got hired` : undefined}
         />
         <StatCard
           label="Top provider share"
           icon={<UserCheck />}
           loading={isLoading}
           tone={
-            data?.concentration.topShare === null || data?.concentration.topShare === undefined
+            data?.concentration?.topShare === null || data?.concentration?.topShare === undefined
               ? 'neutral'
               : data.concentration.topShare > 50
                 ? 'warning'
                 : 'success'
           }
-          value={pct(data?.concentration.topShare)}
+          value={pct(data?.concentration?.topShare)}
           hint={
-            data?.concentration.top3Share !== null && data
-              ? `top 3: ${pct(data.concentration.top3Share)} of hires`
+            data?.concentration?.top3Share !== null && data
+              ? `top 3: ${pct(data.concentration?.top3Share)} of hires`
               : 'of hires'
           }
         />
@@ -275,7 +275,7 @@ export default function MarketplacePage() {
               rowKey={(s) => s.key}
               emptyTitle="No categories"
             />
-            {data && data.emptyCategories.length > 0 && (
+            {data && (data.emptyCategories?.length ?? 0) > 0 && (
               <p className="mt-3 text-xs text-muted-foreground">
                 No jobs posted in: {data.emptyCategories.join(', ')} — no demand, or a category
                 nobody finds.

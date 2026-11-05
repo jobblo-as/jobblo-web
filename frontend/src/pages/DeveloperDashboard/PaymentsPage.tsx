@@ -181,7 +181,7 @@ export default function PaymentsPage() {
           icon={<CreditCard />}
           loading={isLoading}
           value={num(s?.count)}
-          hint={`${num(s?.mode.live)} live · ${num(s?.mode.test)} test`}
+          hint={`${num(s?.mode?.live)} live · ${num(s?.mode?.test)} test`}
         />
         <StatCard
           label="Gross volume"
@@ -194,7 +194,7 @@ export default function PaymentsPage() {
           icon={<CheckCircle2 />}
           tone="success"
           loading={isLoading}
-          value={num((s?.byStatus.completed || 0) + (s?.byStatus.released || 0))}
+          value={num((s?.byStatus?.completed || 0) + (s?.byStatus?.released || 0))}
           hint="completed + released"
         />
         <StatCard
@@ -202,7 +202,7 @@ export default function PaymentsPage() {
           icon={<Undo2 />}
           loading={isLoading}
           value={money(s?.refunded)}
-          hint={`${num((s?.byStatus.refunded || 0) + (s?.byStatus.partially_refunded || 0))} payments`}
+          hint={`${num((s?.byStatus?.refunded || 0) + (s?.byStatus?.partially_refunded || 0))} payments`}
         />
         <StatCard
           label="Disputes"
@@ -210,7 +210,7 @@ export default function PaymentsPage() {
           tone={disputes ? 'danger' : 'neutral'}
           loading={isLoading}
           value={num(disputes)}
-          hint={`${num(s ? s.byStatus.disputed || 0 : undefined)} payments disputed`}
+          hint={`${num(s ? s.byStatus?.disputed || 0 : undefined)} payments disputed`}
         />
         <StatCard
           label="Needs review"
@@ -252,7 +252,7 @@ export default function PaymentsPage() {
         </Section>
       </div>
 
-      {data && data.failedOperations.length > 0 && (
+      {data && (data.failedOperations?.length ?? 0) > 0 && (
         <Section
           title="Failed financial operations"
           description="Refunds and transfer reversals that did not complete"

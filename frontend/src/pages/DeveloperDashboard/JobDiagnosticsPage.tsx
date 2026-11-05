@@ -456,7 +456,7 @@ export default function JobDiagnosticsPage() {
               title="Jobs needing attention"
               description="Orders that break a stuck or inconsistent-state rule"
             >
-              {data && !data.stuck.length ? (
+              {data && !data.stuck?.length ? (
                 <EmptyState
                   title="Nothing stuck"
                   description="Every recent paid order passes the health rules."

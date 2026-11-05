@@ -329,8 +329,8 @@ export default function FailureSimulatorPage() {
   const { data, isLoading, error, refetch } = useDevFailures();
   const qc = useQueryClient();
   const canAct = Boolean(me?.can.request || me?.can.execute);
-  const running = data?.experiments.filter((e) => e.status === 'running') || [];
-  const past = data?.experiments.filter((e) => e.status !== 'running') || [];
+  const running = data?.experiments?.filter((e) => e.status === 'running') || [];
+  const past = data?.experiments?.filter((e) => e.status !== 'running') || [];
   const tested = past.filter((e) => e.type !== 'http_latency');
   const detectedShare = tested.length
     ? Math.round((tested.filter((e) => e.impact.detected).length / tested.length) * 100)
@@ -361,13 +361,13 @@ export default function FailureSimulatorPage() {
       />
       {error && <ErrorState error={error} onRetry={() => refetch()} />}
 
-      {data && !data.availability.enabled && (
+      {data && !data.availability?.enabled && (
         <div className="rounded-md border border-sky-200 bg-sky-50 p-4 text-sm text-sky-900">
           <div className="flex items-center gap-2 font-medium">
             <ShieldAlert className="size-4" /> Simulator disabled on this instance
           </div>
           <ul className="mt-1 list-disc pl-5 text-sky-800">
-            {data.availability.reasons.map((r) => (
+            {data.availability?.reasons?.map((r) => (
               <li key={r}>{r}</li>
             ))}
           </ul>
@@ -399,17 +399,19 @@ export default function FailureSimulatorPage() {
           label="Experiments"
           icon={<FlaskConical />}
           loading={isLoading}
-          value={data?.experiments.length ?? 0}
+          value={data?.experiments?.length ?? 0}
           hint="last 20"
         />
         <StatCard
           label="Status"
           icon={<ShieldAlert />}
-          tone={data?.availability.enabled ? 'warning' : 'success'}
+          tone={data?.availability?.enabled ? 'warning' : 'success'}
           loading={isLoading}
-          value={data?.availability.enabled ? 'Armed' : 'Disabled'}
+          value={data?.availability?.enabled ? 'Armed' : 'Disabled'}
           hint={
-            data?.availability.enabled ? 'faults can be injected here' : 'safe — no faults possible'
+            data?.availability?.enabled
+              ? 'faults can be injected here'
+              : 'safe — no faults possible'
           }
         />
       </div>
@@ -421,10 +423,10 @@ export default function FailureSimulatorPage() {
         >
           {data && canAct ? (
             <StartForm
-              types={data.types}
-              jobs={data.schedulerJobs}
+              types={data.types ?? ({} as typeof data.types)}
+              jobs={data.schedulerJobs ?? []}
               maxMinutes={data.maxMinutes}
-              disabled={!data.availability.enabled}
+              disabled={!data.availability?.enabled}
             />
           ) : (
             <p className="text-sm text-muted-foreground">

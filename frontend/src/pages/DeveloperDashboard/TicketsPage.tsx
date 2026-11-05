@@ -471,8 +471,8 @@ export default function TicketsPage() {
           icon={<Inbox />}
           tone="info"
           loading={isLoading}
-          value={num((s?.byStatus.open || 0) + (s?.byStatus.in_progress || 0))}
-          hint={`${num(s?.byStatus.in_progress || 0)} in progress`}
+          value={num((s?.byStatus?.open || 0) + (s?.byStatus?.in_progress || 0))}
+          hint={`${num(s?.byStatus?.in_progress || 0)} in progress`}
         />
         <StatCard
           label="SLA breached"
@@ -480,7 +480,7 @@ export default function TicketsPage() {
           tone={s?.breached ? 'danger' : 'success'}
           loading={isLoading}
           value={num(s?.breached)}
-          hint={data ? `critical ${data.slaHours.critical}h · high ${data.slaHours.high}h` : ''}
+          hint={data ? `critical ${data.slaHours?.critical}h · high ${data.slaHours?.high}h` : ''}
         />
         <StatCard
           label="Escalated"
@@ -494,7 +494,7 @@ export default function TicketsPage() {
           icon={<LifeBuoy />}
           tone="success"
           loading={isLoading}
-          value={num((s?.byStatus.resolved || 0) + (s?.byStatus.closed || 0))}
+          value={num((s?.byStatus?.resolved || 0) + (s?.byStatus?.closed || 0))}
         />
       </div>
 

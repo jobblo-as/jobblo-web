@@ -175,7 +175,7 @@ export default function ChangeRiskPage() {
           <div className="truncate text-xs text-muted-foreground">
             {'direct' in r && r.direct
               ? 'Applied directly by a Super Admin — reasons at the time are in Audit'
-              : r.risk.factors
+              : (r.risk?.factors ?? [])
                   .slice(0, 2)
                   .map((f) => f.why)
                   .join(' · ') || 'no risk factors'}

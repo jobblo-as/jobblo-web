@@ -135,7 +135,7 @@ function Replay({ id, onBack }: { id: string; onBack: () => void }) {
         {isLoading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : (
-          <ol className="space-y-0.5">{data?.timeline.map(row)}</ol>
+          <ol className="space-y-0.5">{data?.timeline?.map(row)}</ol>
         )}
       </Section>
     </div>
@@ -248,7 +248,7 @@ export default function SessionsPage() {
       ),
     },
   ];
-  const k = (key: SessionProblemKind) => data?.kinds[key]?.sessions ?? 0;
+  const k = (key: SessionProblemKind) => data?.kinds?.[key]?.sessions ?? 0;
 
   return (
     <div className="space-y-5">

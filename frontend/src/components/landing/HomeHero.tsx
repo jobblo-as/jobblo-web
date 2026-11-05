@@ -68,7 +68,22 @@ export function HomeHero() {
     const src = categoryPhoto(cat);
     return src ? [{ name: cat.name, src }] : [];
   });
-  const showcase = fromApi.length >= 6 ? fromApi : SERVICE_SHOWCASE;
+  // When the API list replaces the fixed showcase, it is rotated once so the photo already on
+  // screen stays where it is: same key, so React keeps its <img> and nothing new is painted.
+  // Without this the arch swapped Maling for Rengjøring as the categories landed, and that
+  // second image became the page's LCP (~1.3 s later on a throttled phone).
+  // Set during render (React's "adjust state on a prop change"), once. The categories usually
+  // land before the first slide change, so the photo on screen is the showcase's first.
+  const [rotation, setRotation] = useState<number | null>(null);
+  const apiReady = fromApi.length >= 6;
+  if (apiReady && rotation === null) {
+    const i = fromApi.findIndex((s) => s.name === SERVICE_SHOWCASE[0].name);
+    setRotation(slide === 0 && i >= 0 ? i : 0);
+  }
+  const showcase =
+    apiReady && rotation !== null
+      ? [...fromApi.slice(rotation), ...fromApi.slice(0, rotation)]
+      : SERVICE_SHOWCASE;
   // The arch cycles every category; the plates show the next two, so all of them come
   // round and no photo is on screen twice.
   const CAROUSEL = showcase;
@@ -270,6 +285,7 @@ export function HomeHero() {
                   alt=""
                   // The first slide is the hero's own LCP candidate; the rest can wait.
                   loading={i === 0 ? 'eager' : 'lazy'}
+                  fetchPriority={i === 0 ? 'high' : 'auto'}
                   decoding="async"
                   className={`absolute inset-0 size-full object-cover transition-opacity duration-700 ${
                     i === current ? 'opacity-100' : 'opacity-0'

@@ -58,7 +58,7 @@ export default function WorkersPage() {
     <div className="space-y-5">
       <PageHeader
         title="Cluster (API workers)"
-        description={`Every API process (WEB_CONCURRENCY=${configured}). ${data?.primaries.length ? data.primaries.map((p) => `Primary pid ${p.pid} on ${p.host}: ${p.workers} workers, ${p.schedPolicy === 'rr' ? 'round-robin' : 'OS'} load balancing.`).join(' ') : 'Single process (no cluster primary).'} Each worker reports every ${data?.heartbeatSec ?? 5} s; one that stops reporting drops off after 20 s.`}
+        description={`Every API process (WEB_CONCURRENCY=${configured}). ${data?.primaries?.length ? data.primaries.map((p) => `Primary pid ${p.pid} on ${p.host}: ${p.workers} workers, ${p.schedPolicy === 'rr' ? 'round-robin' : 'OS'} load balancing.`).join(' ') : 'Single process (no cluster primary).'} Each worker reports every ${data?.heartbeatSec ?? 5} s; one that stops reporting drops off after 20 s.`}
         actions={<RefreshButton onClick={() => refetch()} spinning={isFetching} />}
       />
       {error && <ErrorState error={error} onRetry={() => refetch()} />}

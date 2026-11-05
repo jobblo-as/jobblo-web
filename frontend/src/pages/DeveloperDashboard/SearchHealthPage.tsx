@@ -23,7 +23,7 @@ export default function SearchHealthPage() {
   const { data, isLoading, error, refetch } = useDevSearchHealth(Number(f.days));
   const [open, setOpen] = useState<string | null>(null);
   const s = data?.search;
-  const broken = data ? data.listings.public - data.listings.findable : 0;
+  const broken = data ? (data.listings?.public ?? 0) - (data.listings?.findable ?? 0) : 0;
 
   const issueCols: Column<SearchHealthInfo['issues'][number]>[] = [
     {
@@ -97,7 +97,7 @@ export default function SearchHealthPage() {
       ),
     },
   ];
-  const selected = data?.issues.find((i) => i.key === open);
+  const selected = data?.issues?.find((i) => i.key === open);
 
   return (
     <div className="space-y-5">
@@ -156,7 +156,7 @@ export default function SearchHealthPage() {
           icon={<MapPinned />}
           loading={isLoading}
           tone={broken ? 'danger' : 'success'}
-          value={data ? `${data.listings.findable} / ${data.listings.public}` : '—'}
+          value={data ? `${data.listings?.findable ?? 0} / ${data.listings?.public ?? 0}` : '—'}
           hint="open listings with valid coordinates in Norway"
         />
         <StatCard
@@ -186,9 +186,9 @@ export default function SearchHealthPage() {
             ]}
           />
           <p className="mt-2 text-xs text-muted-foreground">
-            Job list: {num(s?.byKind.list.searches)} searches, {s?.byKind.list.zeroRate ?? '—'}%
-            empty · Nearby jobs: {num(s?.byKind.nearby.searches)} searches,{' '}
-            {s?.byKind.nearby.zeroRate ?? '—'}% empty
+            Job list: {num(s?.byKind?.list?.searches)} searches, {s?.byKind?.list?.zeroRate ?? '—'}%
+            empty · Nearby jobs: {num(s?.byKind?.nearby?.searches)} searches,{' '}
+            {s?.byKind?.nearby?.zeroRate ?? '—'}% empty
           </p>
         </Section>
         <Section title="Distance filters used">
@@ -200,7 +200,7 @@ export default function SearchHealthPage() {
         title="Searches that found nothing"
         description="Words, categories, radius and regions combined. Recurring ones are demand Jobblo cannot serve — or listings that exist but cannot be found."
       >
-        {s?.topZero.length ? (
+        {s?.topZero?.length ? (
           <ul className="divide-y text-sm">
             {s.topZero.map((z) => (
               <li key={z.query} className="flex justify-between py-1.5">

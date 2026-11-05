@@ -344,7 +344,7 @@ export const useDevFailures = () =>
     queryKey: ['dev', 'failures'],
     queryFn: devApi.failures,
     refetchInterval: (q) =>
-      q.state.data?.experiments.some((e) => e.status === 'running') ? 5000 : 30_000,
+      q.state.data?.experiments?.some((e) => e.status === 'running') ? 5000 : 30_000,
     ...opts,
   });
 export const useDevConfigDrift = () =>
@@ -443,7 +443,7 @@ export const useDevBackups = () =>
     queryKey: ['dev', 'backups'],
     queryFn: devApi.backups,
     refetchInterval: (q) =>
-      q.state.data?.runs.some((r) => r.status === 'running') ? 3000 : 60_000,
+      q.state.data?.runs?.some((r) => r.status === 'running') ? 3000 : 60_000,
     ...opts,
   });
 export const useDevIntegrity = () =>
@@ -521,13 +521,16 @@ export const useDevUser = (id?: string) =>
   });
 
 // Phase 3
-export const useDevLogs = (q: Query) =>
-  useQuery({
+export const useDevLogs = (q: Query, { live = false }: { live?: boolean } = {}) => {
+  const interval = useInterval();
+  return useQuery({
     queryKey: ['dev', 'logs', q],
     queryFn: () => devApi.logs(q),
-    refetchInterval: useInterval(),
+    // Live tail: every 5 s, whatever the page-wide auto-refresh says.
+    refetchInterval: live ? 5000 : interval,
     ...opts,
   });
+};
 export const useDevLive = () =>
   useQuery({
     queryKey: ['dev', 'live'],

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Pressable, View, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { Modal, Pressable, View, ScrollView, KeyboardAvoidingView } from 'react-native';
 
 interface DialogProps {
   visible: boolean;
@@ -33,10 +33,7 @@ export function Dialog({
         accessibilityLabel="Close dialog"
       >
         <Pressable onPress={() => undefined} className="w-full max-w-[420px]">
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-            className="w-full"
-          >
+          <KeyboardAvoidingView behavior="padding" className="w-full">
             <ScrollView
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}

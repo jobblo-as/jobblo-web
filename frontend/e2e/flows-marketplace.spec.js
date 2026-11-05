@@ -335,6 +335,67 @@ test('a new job starts with the profile e-mail as contact', async ({ page }) => 
   await expect.poll(draftEmail).toBe('customer@example.test');
 });
 
+test('a new job starts at the profile address, confirmed through Kartverket and editable', async ({
+  page,
+}) => {
+  await mockApi(page, {
+    as: { ...USERS.user, address: 'Borggata 8', postNumber: '0650', postSted: 'Oslo' },
+  });
+  const searched = [];
+  await page.route('https://ws.geonorge.no/**', (route) => {
+    const q = new URL(route.request().url()).searchParams;
+    searched.push([q.get('sok'), q.get('postnummer'), q.get('fuzzy')]);
+    return route.fulfill({
+      json: {
+        adresser: [
+          {
+            adressetekst: 'Borggata 8',
+            postnummer: '0650',
+            poststed: 'OSLO',
+            kommunenummer: '0301',
+            kommunenavn: 'OSLO',
+            representasjonspunkt: { lat: 59.909, lon: 10.778 },
+          },
+          {
+            // A near miss Kartverket may list too: never taken for "Borggata 8".
+            adressetekst: 'Borggata 18',
+            postnummer: '0650',
+            poststed: 'OSLO',
+            kommunenummer: '0301',
+            kommunenavn: 'OSLO',
+            representasjonspunkt: { lat: 59.91, lon: 10.779 },
+          },
+        ],
+      },
+    });
+  });
+  await page.goto('/Publish-job');
+  await expect(page.getByRole('heading', { name: 'Legg ut et oppdrag' })).toBeVisible();
+  const draft = () =>
+    page.evaluate(
+      () =>
+        new Promise((resolve) => {
+          const open = indexedDB.open('jobblo-form-db');
+          open.onerror = () => resolve(null);
+          open.onsuccess = () => {
+            const req = open.result
+              .transaction('job-form-data')
+              .objectStore('job-form-data')
+              .get('current-form');
+            req.onsuccess = () => {
+              const d = req.result?.data;
+              resolve(d && [d.address, d.postalCode, d.city, d.municipalityCode, d.latitude]);
+            };
+            req.onerror = () => resolve(null);
+          };
+        })
+    );
+  // The address from Innstillinger, looked up once, arrives with its kommune and point.
+  await expect.poll(draft).toEqual(['Borggata 8', '0650', 'Oslo', '0301', 59.909]);
+  // The postnummer is its own parameter, and the search is exact, not fuzzy.
+  expect(searched).toEqual([['Borggata 8', '0650', null]]);
+});
+
 test('AI draft is reviewed in a popup and never replaces typed text unless ticked', async ({
   page,
 }) => {
@@ -1189,4 +1250,56 @@ test('no phone on the profile: publishing a new job asks for one', async ({ page
 
   await page.locator('#job-phone').fill('41234567');
   await expect(page.getByText('Legg til telefonnummeret ditt')).toHaveCount(0);
+});
+
+test('the address search offers "Mine adresser" first, and picking it confirms the place', async ({
+  page,
+}) => {
+  const full = {
+    ...SERVICE,
+    countyCode: '03',
+    municipalityCode: '0301',
+    images: ['https://example.test/a.jpg'],
+    fromDate: '2026-11-01',
+    toDate: '2026-11-02',
+    duration: { value: 2, unit: 'hours' },
+  };
+  await mockApi(page, {
+    as: { ...USERS.user, address: 'Borggata 8', postNumber: '0650', postSted: 'Oslo' },
+    routes: { [`GET /api/services/${SERVICE._id}`]: () => full },
+  });
+  await page.route('https://ws.geonorge.no/**', (route) =>
+    route.fulfill({
+      json: {
+        adresser: [
+          {
+            adressetekst: 'Borggata 8',
+            postnummer: '0650',
+            poststed: 'OSLO',
+            kommunenummer: '0301',
+            kommunenavn: 'OSLO',
+            representasjonspunkt: { lat: 59.909, lon: 10.778 },
+          },
+        ],
+      },
+    })
+  );
+  await page.goto(`/Publish-job/${SERVICE._id}`);
+  await page.getByRole('button', { name: 'Neste', exact: true }).click();
+  await expect(page.getByText('Steg 2 av 2')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Tøm adresse' }).click();
+  await page.locator('#job-address').focus();
+  // Before anything is typed, and while the typing still matches it.
+  await expect(page.getByText('Mine adresser')).toBeVisible();
+  await page.locator('#job-address').fill('borg');
+  await expect(page.getByText('Mine adresser')).toBeVisible();
+  await page.locator('#job-address').fill('storgata');
+  await expect(page.getByText('Mine adresser')).toHaveCount(0);
+
+  await page.locator('#job-address').fill('');
+  await page.getByRole('option').filter({ hasText: 'Mine adresser' }).getByRole('button').click();
+  await expect(page.getByText(/Lokasjon bekreftet · 0650 Oslo/)).toBeVisible();
+  await expect(page.locator('#job-address')).toHaveValue('Borggata 8');
+  await shot(page, 'address-mine-adresser');
 });

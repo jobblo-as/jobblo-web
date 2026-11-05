@@ -109,6 +109,101 @@ const getApiMetrics = asyncHandler(async (req, res) => {
 });
 
 /** Who calls one endpoint (top IPs), or what one IP calls (top endpoints + series). */
+const maskEmail = (e) => require('../../services/monitoring/securityEvents').maskEmail(e);
+
+/** A signed-in user as the IP sheet shows them: name, role, masked e-mail, id for the link. */
+const accountOf = (u) => ({
+  _id: u._id,
+  name: [u.name, u.lastName].filter(Boolean).join(' ') || null,
+  role: u.role || null,
+  email: maskEmail(u.email),
+});
+
+const kindOf = (device) =>
+  /Mobile/.test(device) ? 'mobile' : /Tablet/.test(device) ? 'tablet' : 'desktop';
+
+const known = (v) => (v && !/^unknown$/i.test(v) ? v : null);
+// The Jobblo app's requests: Expo Go, okhttp (Android), CFNetwork (iOS), Dalvik.
+const APP_AGENT = /expo|okhttp|Dalvik|CFNetwork/i;
+
+/** A session's device, as stored at sign-in (tokenUtils.createSession). */
+const deviceOfSession = (s) => {
+  const app = APP_AGENT.test(`${s.browser || ''} ${s.userAgent || ''}`);
+  const model = s.deviceName || null; // the app's X-Device-Name, e.g. "iPhone 15 Pro"
+  return {
+    browser: app
+      ? /expo\s?go/i.test(`${s.browser} ${s.userAgent}`)
+        ? 'Expo Go'
+        : 'Jobblo app'
+      : known(s.browser),
+    os: known(s.os),
+    // express-useragent calls the app "Desktop"; a reported model or an app agent is a phone.
+    kind:
+      model || app
+        ? kindOf(s.device || '') === 'tablet'
+          ? 'tablet'
+          : 'mobile'
+        : kindOf(s.device || ''),
+    model,
+  };
+};
+
+/** A sign-in event's device, parsed from its user agent the same way sessions are. */
+function deviceOfAgent(ua) {
+  if (!ua) return null;
+  const a = new (require('express-useragent').UserAgent)().parse(String(ua));
+  const app = APP_AGENT.test(ua);
+  return {
+    browser: app ? 'Jobblo app' : a.browser && a.browser !== 'unknown' ? a.browser : null,
+    os: a.os && a.os !== 'unknown' ? a.os : null,
+    kind: a.isTablet ? 'tablet' : a.isMobile || app ? 'mobile' : 'desktop',
+    model: null,
+  };
+}
+
+/**
+ * The devices seen on this IP (from open sessions and sign-in events) and the accounts that
+ * used them. One row per browser + OS + model, with how often, when last and by whom.
+ */
+function devicesAndAccounts(sessions, auth) {
+  const devices = new Map();
+  const accounts = new Map();
+  const add = (device, at, who, source) => {
+    if (!device) return;
+    const key = [device.browser, device.os, device.kind, device.model].join('|');
+    const row = devices.get(key) || {
+      ...device,
+      seen: 0,
+      lastSeen: at,
+      accounts: new Set(),
+      sources: new Set(),
+    };
+    row.seen += 1;
+    if (at && (!row.lastSeen || new Date(at) > new Date(row.lastSeen))) row.lastSeen = at;
+    if (who) row.accounts.add(who);
+    row.sources.add(source);
+    devices.set(key, row);
+  };
+  for (const s of sessions) {
+    const at = s.lastUsed || s.createdAt;
+    const who = s.userId ? String(s.userId._id) : null;
+    add(deviceOfSession(s), at, s.userId ? maskEmail(s.userId.email) : null, 'session');
+    if (who) {
+      const acc = accounts.get(who) || { ...accountOf(s.userId), sessions: 0, lastSeen: at };
+      acc.sessions += 1;
+      if (new Date(at) > new Date(acc.lastSeen)) acc.lastSeen = at;
+      accounts.set(who, acc);
+    }
+  }
+  for (const a of auth) add(deviceOfAgent(a.userAgent), a.at, a.email || null, 'sign-in');
+  return {
+    devices: [...devices.values()]
+      .map((d) => ({ ...d, accounts: [...d.accounts], sources: [...d.sources] }))
+      .sort((x, y) => new Date(y.lastSeen) - new Date(x.lastSeen)),
+    accounts: [...accounts.values()].sort((x, y) => new Date(y.lastSeen) - new Date(x.lastSeen)),
+  };
+}
+
 const getApiClients = asyncHandler(async (req, res) => {
   const { from, to, bucketMs } = parseRange(req.query);
   const match = { minute: { $gte: from, $lte: to } };
@@ -116,7 +211,7 @@ const getApiClients = asyncHandler(async (req, res) => {
     .trim()
     .slice(0, 64);
   if (ip) {
-    const [endpoints, series, security, auth] = await Promise.all([
+    const [endpoints, series, security, auth, sessions, network] = await Promise.all([
       ApiMetricMinute.aggregate([
         { $match: { ...match, 'ips.ip': ip } },
         { $unwind: '$ips' },
@@ -130,7 +225,9 @@ const getApiClients = asyncHandler(async (req, res) => {
           },
         },
         { $sort: { requests: -1 } },
-        { $limit: 100 },
+        // ponytail: the IP page pages these lists in the browser; past these caps the oldest
+        // / quietest rows are cut (server-side paging per list is the upgrade).
+        { $limit: 200 },
       ]),
       ApiMetricMinute.aggregate([
         { $match: { ...match, 'ips.ip': ip } },
@@ -153,10 +250,22 @@ const getApiClients = asyncHandler(async (req, res) => {
       require('../../models/AuthEvent')
         .find({ ip, at: { $gte: from, $lte: to } })
         .sort({ at: -1 })
-        .limit(50)
+        .limit(200)
         .select('-_id type email at userAgent')
         .lean(),
+      // Signed-in sessions still open from this IP: who, on what device, MFA or not.
+      require('../../models/Session')
+        .find({ ip })
+        .sort({ lastUsed: -1 })
+        .limit(100)
+        .populate('userId', 'name lastName email role')
+        .select(
+          'userId device deviceName browser os userAgent location lastUsed createdAt mfaVerifiedAt'
+        )
+        .lean(),
+      require('../../services/monitoring/ipGeo').networkFor(ip),
     ]);
+    const { devices, accounts } = devicesAndAccounts(sessions, auth);
     return sendSuccess(res, {
       ip,
       range: { from, to, bucketMs },
@@ -169,7 +278,20 @@ const getApiClients = asyncHandler(async (req, res) => {
       })),
       series: series.map((s) => ({ t: s._id, requests: s.requests, failed: s.failed })),
       security: Object.fromEntries(security.map((s) => [s._id, s.n])),
-      auth,
+      // Each sign-in with its device, parsed as sessions are (the raw agent stays for detail).
+      auth: auth.map((a) => ({ ...a, device: deviceOfAgent(a.userAgent) })),
+      network,
+      devices,
+      accounts,
+      sessions: sessions.map((x) => ({
+        _id: x._id,
+        user: x.userId ? accountOf(x.userId) : null,
+        device: deviceOfSession(x),
+        location: x.location || null,
+        lastUsed: x.lastUsed || x.createdAt,
+        createdAt: x.createdAt,
+        mfaVerified: Boolean(x.mfaVerifiedAt),
+      })),
     });
   }
   if (!req.query.route) return sendError(res, 'ip or route is required.', 400);
@@ -217,4 +339,4 @@ const getApiTraces = asyncHandler(async (req, res) => {
   return sendSuccess(res, { traces });
 });
 
-module.exports = { getApiMetrics, getApiClients, getApiTraces };
+module.exports = { getApiMetrics, getApiClients, getApiTraces, devicesAndAccounts };

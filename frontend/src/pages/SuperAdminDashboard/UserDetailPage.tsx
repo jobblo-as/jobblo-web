@@ -281,6 +281,7 @@ export default function UserDetailPage() {
               rows={[
                 ['Betalt som kunde', money(s.asCustomer.paidValue)],
                 ['Utbetalt som tilbyder', money(s.paidOut)],
+                ['Under utbetaling', money(s.payoutInProgress ?? 0)],
                 [
                   'Mislykkede utbetalinger',
                   s.payoutsFailed ? <span className="text-red-600">{s.payoutsFailed}</span> : '0',
@@ -684,7 +685,13 @@ export default function UserDetailPage() {
           icon={<Banknote />}
           tone={s.payoutsFailed ? 'danger' : 'neutral'}
           value={money(s.paidOut)}
-          hint={s.payoutsFailed ? `${s.payoutsFailed} mislykket` : 'til tilbyder'}
+          hint={
+            s.payoutsFailed
+              ? `${s.payoutsFailed} mislykket`
+              : s.payoutInProgress
+                ? `${money(s.payoutInProgress)} under utbetaling`
+                : 'til tilbyder'
+          }
         />
         <StatCard
           label="Chatter"

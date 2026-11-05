@@ -226,10 +226,10 @@ export default function CostsPage() {
   const overBudget =
     data?.budgetNok !== null && data?.budgetNok !== undefined && data.projectedNok > data.budgetNok;
   const delta =
-    data && data.previous.totalNok
+    data && data.previous?.totalNok
       ? ((data.totalNok - data.previous.totalNok) / data.previous.totalNok) * 100
       : null;
-  const margin = data ? data.income.platformFeesNok - data.totalNok : null;
+  const margin = data?.income ? data.income.platformFeesNok - data.totalNok : null;
 
   const columns: Column<CostLine>[] = [
     {
@@ -325,8 +325,8 @@ export default function CostsPage() {
           value={money(data?.totalNok)}
           hint={
             delta === null
-              ? `${data?.previous.month ?? ''}: ${money(data?.previous.totalNok)}`
-              : `${delta >= 0 ? '+' : ''}${delta.toFixed(0)}% vs ${data?.previous.month}`
+              ? `${data?.previous?.month ?? ''}: ${money(data?.previous?.totalNok)}`
+              : `${delta >= 0 ? '+' : ''}${delta.toFixed(0)}% vs ${data?.previous?.month}`
           }
         />
         <StatCard
@@ -346,7 +346,7 @@ export default function CostsPage() {
           icon={<PiggyBank />}
           tone={margin !== null && margin < 0 ? 'warning' : 'success'}
           loading={isLoading}
-          value={money(data?.income.platformFeesNok)}
+          value={money(data?.income?.platformFeesNok)}
           hint={
             margin === null
               ? ''
@@ -357,15 +357,15 @@ export default function CostsPage() {
           label="Cost per order"
           icon={<ShoppingCart />}
           loading={isLoading}
-          value={money(data?.units.costPerOrder)}
-          hint={`${data?.units.ordersCompleted ?? 0} completed orders`}
+          value={money(data?.units?.costPerOrder)}
+          hint={`${data?.units?.ordersCompleted ?? 0} completed orders`}
         />
         <StatCard
           label="Cost per active user"
           icon={<Users />}
           loading={isLoading}
-          value={money(data?.units.costPerActiveUser)}
-          hint={`${data?.units.activeUsers ?? 0} users active`}
+          value={money(data?.units?.costPerActiveUser)}
+          hint={`${data?.units?.activeUsers ?? 0} users active`}
         />
         <StatCard
           label="Database size"
@@ -382,7 +382,7 @@ export default function CostsPage() {
         />
       </div>
 
-      {data && !data.config.fixed.length && (
+      {data && !data.config?.fixed?.length && (
         <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
           <Calculator className="mr-1.5 inline size-4" />
           No fixed costs entered yet — add the VPS, domains, app-store fees and any Atlas tier under{' '}
@@ -416,10 +416,10 @@ export default function CostsPage() {
               )}
             />
           </Section>
-          <Section title="Last month" description={data?.previous.month}>
+          <Section title="Last month" description={data?.previous?.month}>
             <CountBars
               counts={Object.fromEntries(
-                Object.entries(data?.previous.byCategory || {})
+                Object.entries(data?.previous?.byCategory || {})
                   .filter(([, v]) => v > 0)
                   .map(([k, v]) => [k, Math.round(v)])
               )}
@@ -428,7 +428,9 @@ export default function CostsPage() {
         </div>
       </div>
 
-      {data && <SettingsDialog config={data.config} open={editing} onOpenChange={setEditing} />}
+      {data?.config && (
+        <SettingsDialog config={data.config} open={editing} onOpenChange={setEditing} />
+      )}
     </div>
   );
 }

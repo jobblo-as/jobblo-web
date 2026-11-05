@@ -123,7 +123,7 @@ export default function CapacityPage() {
   const [busy, setBusy] = useState(false);
   const t = data?.traffic;
   const soonest = data?.resources
-    .filter((r) => r.daysToLimit !== null)
+    ?.filter((r) => r.daysToLimit !== null)
     .sort((a, b) => a.daysToLimit! - b.daysToLimit!)[0];
 
   const recompute = async () => {
@@ -267,15 +267,13 @@ export default function CapacityPage() {
         <StatCard
           label="CPU load"
           icon={<Cpu />}
-          tone={(data?.host.loadPerCpu ?? 0) > 0.8 ? 'warning' : 'neutral'}
+          tone={(data?.host?.loadPerCpu ?? 0) > 0.8 ? 'warning' : 'neutral'}
           loading={isLoading}
           value={
-            data?.host.loadPerCpu === null || !data
-              ? '—'
-              : `${Math.round(data.host.loadPerCpu * 100)}%`
+            data?.host?.loadPerCpu == null ? '—' : `${Math.round(data.host.loadPerCpu * 100)}%`
           }
           hint={
-            data
+            data?.host
               ? data.host.loadPerCpu === null
                 ? `not available on Windows · ${data.host.cpus} cores`
                 : `1-min load per core · ${data.host.cpus} cores`
@@ -286,7 +284,7 @@ export default function CapacityPage() {
           label="History"
           icon={<Database />}
           loading={isLoading}
-          value={data ? `${data.snapshots.days} d` : '—'}
+          value={data?.snapshots ? `${data.snapshots.days} d` : '—'}
           hint="of hourly snapshots (forecasts need ≥ 3)"
         />
       </div>
@@ -299,7 +297,7 @@ export default function CapacityPage() {
         </div>
       ) : (
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {data?.resources.map((r) => (
+          {data?.resources?.map((r) => (
             <ResourceCard key={r.key} r={r} />
           ))}
         </div>

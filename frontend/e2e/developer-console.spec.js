@@ -190,6 +190,7 @@ async function mockApi(
             email: 'k***@example.test',
             at: minutesAgo(5),
             userAgent: 'Mozilla/5.0 (Windows NT 10.0) Chrome/130',
+            device: { browser: 'Chrome', os: 'Windows', kind: 'desktop', model: null },
           },
           { type: 'login_failed', email: 'k***@example.test', at: minutesAgo(6), userAgent: null },
           {
@@ -197,6 +198,61 @@ async function mockApi(
             email: 'o***@example.test',
             at: minutesAgo(30),
             userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0) Safari/605',
+          },
+        ],
+        network: {
+          country: 'Norway',
+          countryCode: 'NO',
+          city: 'Oslo',
+          isp: 'Telia Norge',
+          org: 'Telia Norge',
+          as: 'AS12929 Telia Norge AS',
+          mobile: true,
+          proxy: false,
+          hosting: false,
+        },
+        devices: [
+          {
+            browser: 'Jobblo app',
+            os: 'iOS',
+            kind: 'mobile',
+            model: 'iPhone 15 Pro',
+            seen: 3,
+            lastSeen: minutesAgo(2),
+            accounts: ['k***@example.test'],
+            sources: ['session', 'sign-in'],
+          },
+          // Eleven more, so the devices table has a second page.
+          ...Array.from({ length: 11 }, (_, i) => ({
+            browser: 'Chrome',
+            os: `Windows ${i + 1}`,
+            kind: 'desktop',
+            model: null,
+            seen: 1,
+            lastSeen: minutesAgo(60 + i),
+            accounts: [],
+            sources: ['sign-in'],
+          })),
+        ],
+        accounts: [
+          {
+            _id: 'u1',
+            name: 'Kari Nordmann',
+            role: 'user',
+            email: 'k***@example.test',
+            sessions: 1,
+            lastSeen: minutesAgo(2),
+          },
+        ],
+        sessions: [
+          {
+            _id: 's1',
+            user: { _id: 'u1', name: 'Kari Nordmann', role: 'user', email: 'k***@example.test' },
+            device: { browser: 'Jobblo app', os: 'iOS', kind: 'mobile', model: 'iPhone 15 Pro' },
+            location: 'Oslo, Norway',
+            lastUsed: minutesAgo(2),
+            createdAt: minutesAgo(120),
+            mfaVerified: true,
           },
         ],
       });
@@ -341,12 +397,31 @@ test('IP page: each IP shows its country, and who is signed in from it and since
   await expect(row.getByText('2 logins · 1 failed · 1 reset asked')).toBeVisible();
   await shot(page, 'developer-ips');
   // …and listed, with what happened, for which email and when, in the IP's panel.
+  // The IP opens its own page (no side panel), with every list paged.
   await row.click();
-  const panel = page.getByRole('dialog');
+  await expect(page).toHaveURL(/\/developer\/ips\/84\.210\.1\.2\?range=/);
+  const panel = page.getByRole('main');
   await expect(panel.getByText('Logged in')).toBeVisible();
   await expect(panel.getByText('Login failed')).toBeVisible();
   await expect(panel.getByText('Forgot password: code sent')).toBeVisible();
   await expect(panel.getByText('o***@example.test')).toBeVisible();
-  await expect(panel.getByText('· Chrome · Windows')).toBeVisible();
+  await expect(panel.getByText('Chrome · Windows', { exact: true })).toBeVisible();
+  // Network: ISP and what kind of network; devices, accounts and open sessions on the IP.
+  await expect(panel.getByText('Mobile network')).toBeVisible();
+  await expect(panel.getByText('Telia Norge', { exact: true })).toBeVisible();
+  await expect(panel.getByText('AS12929 Telia Norge AS')).toBeVisible();
+  await expect(panel.getByText('Jobblo app · iOS · iPhone 15 Pro').first()).toBeVisible();
+  await expect(panel.getByRole('link', { name: 'Kari Nordmann' }).first()).toHaveAttribute(
+    'href',
+    '/developer/users?id=u1'
+  );
+  await expect(panel.getByText('MFA', { exact: true })).toBeVisible();
+  // 12 devices: 10 on page 1, the rest on page 2.
+  const devices = panel.getByText('Page 1 of 2 · 12 total');
+  await expect(devices).toBeVisible();
+  await expect(panel.getByText('Chrome · Windows 11')).toHaveCount(0);
+  await panel.getByRole('button', { name: 'Next page' }).first().click();
+  await expect(panel.getByText('Chrome · Windows 11')).toBeVisible();
+  await expect(panel.getByText('Page 2 of 2 · 12 total')).toBeVisible();
   await shot(page, 'developer-ip-login-activity');
 });

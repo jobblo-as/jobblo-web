@@ -48,8 +48,8 @@ export default function MigrationsPage() {
       setBusy(false);
     }
   };
-  const pending = data?.migrations.filter((m) => m.pending) || [];
-  const ready = data ? data.rollback.filter((r) => r.state === 'pass').length : 0;
+  const pending = data?.migrations?.filter((m) => m.pending) || [];
+  const ready = data?.rollback ? data.rollback.filter((r) => r.state === 'pass').length : 0;
 
   const migCols: Column<MigrationsInfo['migrations'][number]>[] = [
     {
@@ -239,7 +239,7 @@ export default function MigrationsPage() {
           icon={<FileCode2 />}
           loading={isLoading}
           tone={pending.length ? 'warning' : 'success'}
-          value={data ? `${pending.length} / ${data.migrations.length}` : '—'}
+          value={data ? `${pending.length} / ${data.migrations?.length ?? 0}` : '—'}
           hint={data ? `${pending.filter((m) => m.destructive).length} destructive` : undefined}
         />
         <StatCard
@@ -247,42 +247,46 @@ export default function MigrationsPage() {
           icon={<KeyRound />}
           loading={isLoading}
           tone={
-            data?.indexChanges.some((i) => i.unique)
+            data?.indexChanges?.some((i) => i.unique)
               ? 'danger'
-              : data?.indexChanges.length
+              : data?.indexChanges?.length
                 ? 'warning'
                 : 'success'
           }
-          value={num(data?.indexChanges.length)}
+          value={num(data?.indexChanges?.length)}
         />
         <StatCard
           label="Schema rules broken"
           icon={<TableProperties />}
           loading={isLoading}
-          tone={data?.schema.length ? 'warning' : 'success'}
-          value={num(data?.schema.length)}
-          hint={data ? `${num(data.schema.reduce((a, s) => a + s.count, 0))} documents` : undefined}
+          tone={data?.schema?.length ? 'warning' : 'success'}
+          value={num(data?.schema?.length)}
+          hint={
+            data?.schema
+              ? `${num(data.schema.reduce((a, s) => a + s.count, 0))} documents`
+              : undefined
+          }
         />
         <StatCard
           label="Rollback readiness"
           icon={<ShieldCheck />}
           loading={isLoading}
           tone={
-            data?.rollback.some((r) => r.state === 'fail')
+            data?.rollback?.some((r) => r.state === 'fail')
               ? 'danger'
-              : data?.rollback.some((r) => r.state === 'warn')
+              : data?.rollback?.some((r) => r.state === 'warn')
                 ? 'warning'
                 : 'success'
           }
-          value={data ? `${ready} / ${data.rollback.length}` : '—'}
+          value={data ? `${ready} / ${data.rollback?.length ?? 0}` : '—'}
         />
         <StatCard
           label="At-risk app versions"
           icon={<Smartphone />}
           loading={isLoading}
-          tone={data?.clients.some((c) => c.breakingSince) ? 'danger' : 'success'}
-          value={num(data?.clients.filter((c) => c.breakingSince).length)}
-          hint={data ? `${data.clients.length} versions active` : undefined}
+          tone={data?.clients?.some((c) => c.breakingSince) ? 'danger' : 'success'}
+          value={num(data?.clients?.filter((c) => c.breakingSince).length)}
+          hint={data ? `${data.clients?.length ?? 0} versions active` : undefined}
         />
       </div>
 
@@ -302,7 +306,7 @@ export default function MigrationsPage() {
             rowKey={(m) => m.script}
             emptyTitle="No migration scripts"
           />
-          {data && data.unregistered.length > 0 && (
+          {data?.unregistered && data.unregistered.length > 0 && (
             <p className="mt-3 text-xs text-amber-700">
               New script(s) without a detector: {data.unregistered.join(', ')} — add one to
               services/monitoring/migrations.js so their state is visible.
@@ -311,7 +315,7 @@ export default function MigrationsPage() {
         </Section>
         <Section title="Rollback readiness" description="Can the last change be undone safely?">
           <ul className="space-y-3">
-            {data?.rollback.map((r) => (
+            {data?.rollback?.map((r) => (
               <li key={r.key} className="flex gap-2.5">
                 <span className="mt-0.5">{STATE_ICON[r.state]}</span>
                 <div className="min-w-0">

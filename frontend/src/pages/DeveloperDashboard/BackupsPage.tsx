@@ -62,8 +62,8 @@ export default function BackupsPage() {
   const [open, setOpen] = useState<BackupRunRow | null>(null);
   const [drillOf, setDrillOf] = useState<BackupRunRow | 'latest' | null>(null);
   const canAct = Boolean(me?.can.request || me?.can.execute);
-  const running = data?.runs.find((r) => r.status === 'running');
-  const ready = Boolean(data?.config.configured && data.config.tools.mongodump);
+  const running = data?.runs?.find((r) => r.status === 'running');
+  const ready = Boolean(data?.config?.configured && data.config.tools?.mongodump);
   const refresh = () => qc.invalidateQueries({ queryKey: ['dev', 'backups'] });
 
   const startBackup = async () => {
@@ -230,8 +230,8 @@ export default function BackupsPage() {
 
   const c = data?.config;
   const drill = data?.lastDrill;
-  const lastBackup = data?.runs.find((r) => r.kind === 'backup' && r.status === 'succeeded');
-  const disk = data?.storage.disk;
+  const lastBackup = data?.runs?.find((r) => r.kind === 'backup' && r.status === 'succeeded');
+  const disk = data?.storage?.disk;
   return (
     <div className="space-y-5">
       <PageHeader
@@ -265,7 +265,7 @@ export default function BackupsPage() {
       />
       {error && <ErrorState error={error} onRetry={() => refetch()} />}
 
-      {c && (!c.configured || !c.tools.mongodump || !c.tools.mongorestore) && (
+      {c && (!c.configured || !c.tools?.mongodump || !c.tools?.mongorestore) && (
         <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
           <p className="font-medium">
             {!c.configured
@@ -290,8 +290,8 @@ export default function BackupsPage() {
           label="Last backup"
           icon={<DatabaseBackup />}
           loading={isLoading}
-          tone={data?.rpo.ok ? 'success' : 'danger'}
-          value={data?.rpo.lastBackupAt ? `${hours(data.rpo.ageHours)} ago` : 'Never'}
+          tone={data?.rpo?.ok ? 'success' : 'danger'}
+          value={data?.rpo?.lastBackupAt ? `${hours(data.rpo.ageHours)} ago` : 'Never'}
           hint={c ? `Target: every ${c.maxAgeHours} h or less (RPO)` : ''}
         />
         <StatCard
@@ -310,8 +310,8 @@ export default function BackupsPage() {
           label="Retained backups"
           icon={<Archive />}
           loading={isLoading}
-          value={num(data?.storage.retained)}
-          hint={c ? `${bytes(data?.storage.bytes)} · kept ${c.retentionDays} days` : ''}
+          value={num(data?.storage?.retained)}
+          hint={c ? `${bytes(data?.storage?.bytes)} · kept ${c.retentionDays} days` : ''}
         />
         <StatCard
           label="Backup disk free"
@@ -357,7 +357,7 @@ export default function BackupsPage() {
         title="History"
         description={
           c
-            ? `Database ${c.database || '—'} · tools ${c.tools.mongodump || 'missing'} · ${c.scheduleHours ? `in-app schedule every ${c.scheduleHours} h` : 'scheduled by host cron'}. Click a row for details.`
+            ? `Database ${c.database || '—'} · tools ${c.tools?.mongodump || 'missing'} · ${c.scheduleHours ? `in-app schedule every ${c.scheduleHours} h` : 'scheduled by host cron'}. Click a row for details.`
             : undefined
         }
         action={<History className="size-4 text-muted-foreground" />}
@@ -375,13 +375,13 @@ export default function BackupsPage() {
       <Section
         title="MongoDB Atlas snapshots"
         description={
-          data?.atlas.configured
+          data?.atlas?.configured
             ? `Cluster ${data.atlas.cluster} · cloud backups managed by Atlas`
             : 'Shown after the move to Atlas: set ATLAS_CLIENT_ID, ATLAS_CLIENT_SECRET (read-only service account), ATLAS_GROUP_ID and ATLAS_CLUSTER_NAME.'
         }
       >
-        {data?.atlas.error && <ErrorState error={new Error(data.atlas.error)} />}
-        {data?.atlas.configured ? (
+        {data?.atlas?.error && <ErrorState error={new Error(data.atlas.error)} />}
+        {data?.atlas?.configured ? (
           <DataTable
             columns={atlasColumns}
             rows={data.atlas.snapshots}

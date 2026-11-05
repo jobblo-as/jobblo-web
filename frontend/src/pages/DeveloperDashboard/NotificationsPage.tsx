@@ -118,22 +118,22 @@ export default function NotificationsPage() {
           label="Email latency"
           icon={<Timer />}
           loading={isLoading}
-          value={ms(data?.latency.email?.avg)}
-          hint={`P95 ${ms(data?.latency.email?.p95)}`}
+          value={ms(data?.latency?.email?.avg)}
+          hint={`P95 ${ms(data?.latency?.email?.p95)}`}
         />
         <StatCard
           label="Push latency"
           icon={<Timer />}
           loading={isLoading}
-          value={ms(data?.latency.push?.avg)}
-          hint={`P95 ${ms(data?.latency.push?.p95)}`}
+          value={ms(data?.latency?.push?.avg)}
+          hint={`P95 ${ms(data?.latency?.push?.p95)}`}
         />
         <StatCard
           label="In-app"
           icon={<Bell />}
           loading={isLoading}
-          value={num(data?.inApp.total)}
-          hint={`read rate ${pct(data?.inApp.readRate)}`}
+          value={num(data?.inApp?.total)}
+          hint={`read rate ${pct(data?.inApp?.readRate)}`}
         />
       </div>
 
@@ -141,7 +141,7 @@ export default function NotificationsPage() {
         <Section title="Deliveries over time" className="lg:col-span-2">
           <TimeSeriesChart
             data={data?.series}
-            bucketMs={data?.range.bucketMs}
+            bucketMs={data?.range?.bucketMs}
             variant="bar"
             series={[
               { key: 'sent', label: 'Sent', color: 'var(--chart-2)' },
@@ -196,13 +196,13 @@ export default function NotificationsPage() {
                 </span>
               </li>
             ))}
-            {!data?.templates.length && (
+            {!data?.templates?.length && (
               <li className="text-muted-foreground">No sends recorded yet.</li>
             )}
           </ul>
         </Section>
         <Section title="Failure reasons">
-          {data?.failures.length ? (
+          {data?.failures?.length ? (
             <ul className="space-y-2 text-sm">
               {data.failures.map((x, i) => (
                 <li key={i} className="rounded-md border p-2">
@@ -223,7 +223,7 @@ export default function NotificationsPage() {
           )}
         </Section>
         <Section title="In-app notifications" description="By type">
-          <CountBars counts={data?.inApp.byType || {}} />
+          <CountBars counts={data?.inApp?.byType || {}} />
         </Section>
       </div>
 

@@ -68,7 +68,10 @@ export interface AdminUserOverview {
     averageRating: number | null;
     chats: number;
     disputes: number;
+    /** Payouts that reached the provider (status `transferred`). */
     paidOut: number;
+    /** Released or being transferred — not paid out yet, can still fail. */
+    payoutInProgress: number;
     payoutsFailed: number;
     activeSessions: number;
   };

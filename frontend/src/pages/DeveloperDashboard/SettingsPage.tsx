@@ -48,7 +48,9 @@ export default function SettingsPage() {
   const [draft, setDraft] = useState<Record<string, string>>({});
   useEffect(() => {
     if (data)
-      setDraft(Object.fromEntries(Object.entries(data.thresholds).map(([k, v]) => [k, String(v)])));
+      setDraft(
+        Object.fromEntries(Object.entries(data.thresholds ?? {}).map(([k, v]) => [k, String(v)]))
+      );
   }, [data]);
   const submit = useSensitiveAction(['settings']);
   const [confirmThresholds, setConfirmThresholds] = useState(false);
@@ -58,9 +60,9 @@ export default function SettingsPage() {
     access: DevAccess;
   } | null>(null);
   const changed = data
-    ? Object.entries(draft).filter(([k, v]) => Number(v) !== data.thresholds[k])
+    ? Object.entries(draft).filter(([k, v]) => Number(v) !== data.thresholds?.[k])
     : [];
-  const canAct = Boolean(me?.can.execute || me?.can.request);
+  const canAct = Boolean(me?.can?.execute || me?.can?.request);
 
   type Dev = NonNullable<typeof data>['developers'][number];
   const columns: Column<Dev>[] = [
@@ -144,7 +146,7 @@ export default function SettingsPage() {
           label="Developers"
           icon={<Users />}
           loading={isLoading}
-          value={data?.developers.length ?? '—'}
+          value={data?.developers?.length ?? '—'}
         />
         <StatCard
           label="Integrations"
@@ -152,7 +154,7 @@ export default function SettingsPage() {
           loading={isLoading}
           value={
             data
-              ? `${data.integrations.filter((i) => i.configured).length}/${data.integrations.length}`
+              ? `${data.integrations?.filter((i) => i.configured).length}/${data.integrations?.length}`
               : '—'
           }
           hint="configured"
@@ -195,7 +197,7 @@ export default function SettingsPage() {
                 disabled={!changed.length}
                 onClick={() => setConfirmThresholds(true)}
               >
-                <Save /> {me?.can.execute ? 'Save' : 'Request change'}{' '}
+                <Save /> {me?.can?.execute ? 'Save' : 'Request change'}{' '}
                 {changed.length ? `(${changed.length})` : ''}
               </Button>
             )
@@ -216,7 +218,7 @@ export default function SettingsPage() {
                   onChange={(e) => setDraft({ ...draft, [k]: e.target.value })}
                   className="h-8"
                 />
-                {data && data.defaultThresholds[k] !== Number(draft[k]) && (
+                {data?.defaultThresholds && data.defaultThresholds[k] !== Number(draft[k]) && (
                   <p className="text-[11px] text-muted-foreground">
                     default {data.defaultThresholds[k]}
                   </p>
@@ -227,7 +229,7 @@ export default function SettingsPage() {
         </Section>
         <Section title="Log retention">
           <ul className="space-y-1.5 text-sm">
-            {data?.retention.map((r) => (
+            {data?.retention?.map((r) => (
               <li key={r.data} className="flex justify-between gap-2">
                 <span>{r.data}</span>
                 <span className="text-muted-foreground">{r.days ? `${r.days} days` : 'kept'}</span>
@@ -246,7 +248,7 @@ export default function SettingsPage() {
           description="Presence only — values never leave the server"
         >
           <ul className="divide-y rounded-md border text-sm">
-            {data?.integrations.map((i) => (
+            {data?.integrations?.map((i) => (
               <li
                 key={i.key}
                 className="flex flex-wrap items-center justify-between gap-2 px-3 py-2"
@@ -272,7 +274,7 @@ export default function SettingsPage() {
         </Section>
         <Section title="Sensitive action policies">
           <ul className="divide-y rounded-md border text-sm">
-            {data?.policies.map((p) => (
+            {data?.policies?.map((p) => (
               <li key={p.action} className="flex justify-between gap-3 px-3 py-2">
                 <span className="font-medium">{p.action}</span>
                 <span className="text-right text-xs text-muted-foreground">{p.rule}</span>
@@ -287,7 +289,7 @@ export default function SettingsPage() {
         onOpenChange={setConfirmThresholds}
         title="Change alert thresholds"
         description={changed
-          .map(([k, v]) => `${THRESHOLD_LABELS[k] || k}: ${data?.thresholds[k]} → ${v}`)
+          .map(([k, v]) => `${THRESHOLD_LABELS[k] || k}: ${data?.thresholds?.[k]} → ${v}`)
           .join(' · ')}
         confirmLabel="Save thresholds"
         onConfirm={(reason) =>
@@ -314,10 +316,10 @@ export default function SettingsPage() {
       />
 
       <Section title="Developer access audit" description="Developer role grants and removals">
-        {data?.accessAudit.length ? (
+        {data?.accessAudit?.length ? (
           <Timeline
             reverse
-            events={data.accessAudit.map((a) => ({
+            events={data.accessAudit?.map((a) => ({
               at: a.createdAt,
               source: 'access',
               title: a.description,

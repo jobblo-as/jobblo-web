@@ -146,6 +146,55 @@ export interface IpActivity {
   security: Record<string, number>;
   /** Sign-ins and password resets from this IP, newest first (email masked). */
   auth?: AuthEventRow[];
+  /** Where the IP is and what kind of network (ip-api, cached 24 h); nulls when unknown. */
+  network?: IpNetwork;
+  /** Devices seen on this IP (open sessions + sign-in events), newest first. */
+  devices?: IpDevice[];
+  /** Accounts with an open session from this IP. */
+  accounts?: IpAccount[];
+  sessions?: IpSession[];
+}
+export interface IpNetwork {
+  country: string | null;
+  countryCode: string | null;
+  city: string | null;
+  isp: string | null;
+  org: string | null;
+  as: string | null;
+  mobile: boolean | null;
+  proxy: boolean | null;
+  hosting: boolean | null;
+}
+export interface IpDeviceInfo {
+  browser: string | null;
+  os: string | null;
+  kind: 'desktop' | 'mobile' | 'tablet';
+  /** The app's reported model, e.g. "iPhone 15 Pro" (web: null). */
+  model: string | null;
+}
+export interface IpDevice extends IpDeviceInfo {
+  seen: number;
+  lastSeen: string;
+  /** Masked e-mails of the accounts on it. */
+  accounts: string[];
+  sources: ('session' | 'sign-in')[];
+}
+export interface IpAccount {
+  _id: string;
+  name: string | null;
+  role: string | null;
+  email: string | null;
+  sessions: number;
+  lastSeen: string;
+}
+export interface IpSession {
+  _id: string;
+  user: { _id: string; name: string | null; role: string | null; email: string | null } | null;
+  device: IpDeviceInfo;
+  location: string | null;
+  lastUsed: string;
+  createdAt: string;
+  mfaVerified: boolean;
 }
 export type AuthEventType =
   | 'login'
@@ -158,6 +207,8 @@ export interface AuthEventRow {
   email: string | null;
   at: string;
   userAgent: string | null;
+  /** Parsed from userAgent on the server (null when there was none). */
+  device?: IpDeviceInfo | null;
 }
 export interface ApiMetrics {
   range: RangeInfo;

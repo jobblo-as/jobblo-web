@@ -49,12 +49,14 @@ export function RiskBadge({
 }
 
 /** Why a change is risky, and what lowers the risk. */
-export function RiskFactors({ risk }: { risk: RiskAssessment }) {
+export function RiskFactors({ risk }: { risk: RiskAssessment | null | undefined }) {
+  const factors = risk?.factors ?? [];
+  const mitigations = risk?.mitigations ?? [];
   return (
     <div className="space-y-3 text-sm">
-      {risk.factors.length ? (
+      {factors.length ? (
         <ul className="space-y-1.5">
-          {risk.factors.map((f) => (
+          {factors.map((f) => (
             <li key={f.key} className="flex gap-2">
               <span className="w-9 shrink-0 text-right font-mono text-xs tabular-nums text-muted-foreground">
                 +{f.points}
@@ -68,13 +70,13 @@ export function RiskFactors({ risk }: { risk: RiskAssessment }) {
           Nothing in this change or the current situation adds risk.
         </p>
       )}
-      {risk.mitigations.length > 0 && (
+      {mitigations.length > 0 && (
         <div>
           <div className="mb-1 text-xs font-medium uppercase text-muted-foreground">
             To lower the risk
           </div>
           <ul className="list-disc space-y-0.5 pl-5">
-            {risk.mitigations.map((m) => (
+            {mitigations.map((m) => (
               <li key={m}>{m}</li>
             ))}
           </ul>

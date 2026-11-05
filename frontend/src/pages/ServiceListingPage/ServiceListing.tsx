@@ -15,12 +15,12 @@ import {
   Zap,
   Plus,
 } from 'lucide-react';
-import { Slider } from 'antd';
+import { ConfigProvider, Slider } from 'antd';
 import { AntdTheme } from '../../theme/AntdTheme';
 import { JobCard } from '../../components/component/jobCard/JobCard';
 import { SortMenu } from '../../components/SortMenu';
 import { JobCardSkeleton } from '../../components/Loading/JobCardSkeleton';
-import { CARD, GREEN, LINE, MICRO_LABEL, PILL_PRIMARY, PILL_SECONDARY } from '../../theme/brand';
+import { CARD, GREEN, LINE, PILL_PRIMARY, PILL_SECONDARY } from '../../theme/brand';
 import { JobsEmptyState } from '../../components/JobsEmptyState';
 const MapComponent = lazy(() =>
   import('../../components/component/map/MapComponent').then((module) => ({
@@ -53,10 +53,34 @@ const Box = ({ checked }: { checked: boolean }) => (
 
 const NO_LOCATIONS: LocationNode[] = [];
 
-/** How long the price filter waits after the last change before it asks the API. */
-const PRICE_DEBOUNCE_MS = 3000;
+/** How long the sidebar filters wait after the last change before they ask the API. */
+const FILTER_DEBOUNCE_MS = 2500;
 /** A typed price above this is a slip of the keyboard, not a budget. */
 const MAX_TYPED_PRICE = 10_000_000;
+
+/** The search price slider in the site's green (antd's primary here is the orange). */
+const SLIDER_THEME = {
+  components: {
+    Slider: {
+      railBg: LINE,
+      railHoverBg: '#D4D6CD',
+      trackBg: GREEN,
+      trackHoverBg: GREEN,
+      handleColor: GREEN,
+      handleActiveColor: GREEN,
+      handleActiveOutlineColor: 'rgba(46, 102, 65, 0.2)',
+      dotActiveBorderColor: GREEN,
+    },
+  },
+};
+
+/** One-tap price ranges; 100 000 is the slider's "no upper limit". */
+const PRICE_PRESETS: Array<[string, number, number]> = [
+  ['Under 1 000', 0, 1000],
+  ['1 000–5 000', 1000, 5000],
+  ['5 000–20 000', 5000, 20000],
+  ['Over 20 000', 20000, 100000],
+];
 
 const ServiceListing = () => {
   const { categoryName } = useParams();
@@ -84,14 +108,6 @@ const ServiceListing = () => {
   );
   const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState({ min: 0, max: 100000 });
-  // The slider and the price boxes change on every step and key press; the jobs query
-  // only takes the range once it has been still for PRICE_DEBOUNCE_MS, so a drag or a typed
-  // number is one request, not one per step.
-  const [debouncedPrice, setDebouncedPrice] = useState(priceRange);
-  useEffect(() => {
-    const t = setTimeout(() => setDebouncedPrice(priceRange), PRICE_DEBOUNCE_MS);
-    return () => clearTimeout(t);
-  }, [priceRange]);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
   const [isUrgent, setIsUrgent] = useState(false);
   const [shouldUseLocation, setShouldUseLocation] = useState(true); // Track if we should use the initial location
@@ -148,9 +164,36 @@ const ServiceListing = () => {
     initialSearch,
   ]);
 
+  // The sidebar filters reach the jobs query only once they have been still for
+  // FILTER_DEBOUNCE_MS: a drag, a typed price or a few quick taps is one request, not one per
+  // change. Until then the results show the loading state. Compared by value, so a re-set to
+  // the same values (the URL effect on mount) does not wait; a category from the URL is applied
+  // at once.
+  const filtersKey = JSON.stringify({
+    categories: selectedCategories,
+    countyCodes: selectedCountyCodes,
+    municipalityCodes: selectedMunicipalityCodes,
+    areaCodes: selectedAreaCodes,
+    price: priceRange,
+    urgent: isUrgent,
+  });
+  const [appliedKey, setAppliedKey] = useState(filtersKey);
+  const urlCategory = useRef(decodedCategoryName);
+  useEffect(() => {
+    if (urlCategory.current !== decodedCategoryName) {
+      urlCategory.current = decodedCategoryName;
+      setAppliedKey(filtersKey);
+      return;
+    }
+    const t = setTimeout(() => setAppliedKey(filtersKey), FILTER_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [filtersKey, decodedCategoryName]);
+  const applied = useMemo(() => JSON.parse(appliedKey), [appliedKey]);
+  const filtersPending = appliedKey !== filtersKey;
+
   const {
     data,
-    isLoading,
+    isLoading: isQueryLoading,
     isError,
     error,
     refetch,
@@ -158,31 +201,32 @@ const ServiceListing = () => {
     hasNextPage,
     isFetchingNextPage,
   } = useJobs({
-    categories: selectedCategories,
+    categories: applied.categories,
     locations: selectedLocations,
     // Smart county/municipality filter: if specific municipalities are selected under a county,
     // only send municipalityCodes (not the broad county), to avoid showing all county jobs.
-    countyCodes: selectedCountyCodes.filter((countyCode) => {
+    countyCodes: (applied.countyCodes as string[]).filter((countyCode) => {
       // Only send county code if NO municipalities from that county are individually selected
       const county = locationTree.find((c) => c.code === countyCode);
       if (!county?.children) return true;
       const munCodes = county.children.map((m) => m.code);
-      const hasSpecificMun = munCodes.some((mc) => selectedMunicipalityCodes.includes(mc));
+      const hasSpecificMun = munCodes.some((mc) => applied.municipalityCodes.includes(mc));
       return !hasSpecificMun; // exclude county if user drilled down to specific municipalities
     }),
-    municipalityCodes: selectedMunicipalityCodes,
-    areaCodes: selectedAreaCodes,
+    municipalityCodes: applied.municipalityCodes,
+    areaCodes: applied.areaCodes,
     search: initialSearch,
     sort: selectedSort.value,
-    minPrice: debouncedPrice.min,
-    maxPrice: debouncedPrice.max,
-    urgent: isUrgent,
+    minPrice: applied.price.min,
+    maxPrice: applied.price.max,
+    urgent: applied.urgent,
     limit: 16,
     lat: activeLocation?.lat,
     lng: activeLocation?.lng,
     radius: activeLocation ? 5000 : undefined,
   });
 
+  const isLoading = isQueryLoading || filtersPending;
   const jobs = data?.pages.flatMap((page) => page.data) || [];
 
   // Norwegian county/municipality center coordinates [lng, lat]
@@ -589,7 +633,9 @@ const ServiceListing = () => {
 
       {/* ── Kategorier ─────────────────────────────────────────────────────── */}
       <section className={FILTER_SECTION}>
-        <h3 className={`${MICRO_LABEL} mb-3`}>Kategorier</h3>
+        <h3 className="mb-3 text-[0.9375rem] font-semibold tracking-[-0.01em] text-[#0B0B0B]">
+          Kategorier
+        </h3>
         <div className="space-y-0.5">
           {isFiltersLoading ? (
             <div className="space-y-2 py-1">
@@ -701,7 +747,7 @@ const ServiceListing = () => {
       {/* ── Kart ───────────────────────────────────────────────────────────── */}
       <section className={FILTER_SECTION}>
         <div className="mb-3 flex items-center justify-between gap-2">
-          <h3 className={MICRO_LABEL}>Kart</h3>
+          <h3 className="text-[0.9375rem] font-semibold tracking-[-0.01em] text-[#0B0B0B]">Kart</h3>
           <button
             onClick={handleUseCurrentLocation}
             disabled={isLocating}
@@ -726,135 +772,141 @@ const ServiceListing = () => {
         </div>
       </section>
 
-      {/* ── Område ─────────────────────────────────────────────────────────── */}
-      <section className={FILTER_SECTION}>
-        <h3 className={`${MICRO_LABEL} mb-3`}>Område</h3>
-        <div className="custom-scrollbar max-h-96 space-y-0.5 overflow-y-auto pr-1">
-          {isLoadingLocations ? (
-            <div className="space-y-2 py-1">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="jb-skeleton h-7 rounded-lg" />
-              ))}
-            </div>
-          ) : locationTree.length === 0 ? (
-            <p className="text-[0.875rem] text-[#9B9E96]">Ingen områder funnet</p>
-          ) : (
-            locationTree.map((county) => (
-              <div key={county.code}>
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => toggleCounty(county.code)}
-                    className={`${TREE_ROW} flex items-center gap-2.5 ${
-                      selectedCountyCodes.includes(county.code)
-                        ? 'font-semibold text-[#2E6641]'
-                        : 'text-[#0B0B0B] hover:bg-[#F4F6F0]'
-                    }`}
-                  >
-                    <Box checked={selectedCountyCodes.includes(county.code)} />
-                    <span className="truncate">{county.name}</span>
-                    {locationStats && (
-                      <span className={`${COUNT_PILL} text-[#9B9E96]`}>
-                        {locationStats.counties[county.code] || 0}
-                      </span>
-                    )}
-                  </button>
-                  {county.children && county.children.length > 0 ? (
+      {/* ── Område ──────────────────────────────────────────────────────────
+          Hidden when there is no location tree to pick from (an unseeded database):
+          an empty "Ingen områder funnet" block only took space. */}
+      {(isLoadingLocations || locationTree.length > 0) && (
+        <section className={FILTER_SECTION}>
+          <h3 className="mb-3 text-[0.9375rem] font-semibold tracking-[-0.01em] text-[#0B0B0B]">
+            Område
+          </h3>
+          <div className="custom-scrollbar max-h-96 space-y-0.5 overflow-y-auto pr-1">
+            {isLoadingLocations ? (
+              <div className="space-y-2 py-1">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="jb-skeleton h-7 rounded-lg" />
+                ))}
+              </div>
+            ) : (
+              locationTree.map((county) => (
+                <div key={county.code}>
+                  <div className="flex items-center gap-1">
                     <button
-                      onClick={() => toggleCountyExpand(county.code)}
-                      aria-label={`Vis kommuner i ${county.name}`}
-                      aria-expanded={expandedCounties.includes(county.code)}
-                      className="flex size-7 shrink-0 items-center justify-center rounded-lg text-[#9B9E96] transition-colors hover:bg-[#F4F6F0] hover:text-[#0B0B0B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E6641]/25"
+                      onClick={() => toggleCounty(county.code)}
+                      className={`${TREE_ROW} flex items-center gap-2.5 ${
+                        selectedCountyCodes.includes(county.code)
+                          ? 'font-semibold text-[#2E6641]'
+                          : 'text-[#0B0B0B] hover:bg-[#F4F6F0]'
+                      }`}
                     >
-                      {expandedCounties.includes(county.code) ? (
-                        <ChevronDown size={15} />
-                      ) : (
-                        <ChevronRight size={15} />
+                      <Box checked={selectedCountyCodes.includes(county.code)} />
+                      <span className="truncate">{county.name}</span>
+                      {locationStats && (
+                        <span className={`${COUNT_PILL} text-[#9B9E96]`}>
+                          {locationStats.counties[county.code] || 0}
+                        </span>
                       )}
                     </button>
-                  ) : (
-                    <div className="size-7 shrink-0" />
-                  )}
-                </div>
+                    {county.children && county.children.length > 0 ? (
+                      <button
+                        onClick={() => toggleCountyExpand(county.code)}
+                        aria-label={`Vis kommuner i ${county.name}`}
+                        aria-expanded={expandedCounties.includes(county.code)}
+                        className="flex size-7 shrink-0 items-center justify-center rounded-lg text-[#9B9E96] transition-colors hover:bg-[#F4F6F0] hover:text-[#0B0B0B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E6641]/25"
+                      >
+                        {expandedCounties.includes(county.code) ? (
+                          <ChevronDown size={15} />
+                        ) : (
+                          <ChevronRight size={15} />
+                        )}
+                      </button>
+                    ) : (
+                      <div className="size-7 shrink-0" />
+                    )}
+                  </div>
 
-                {/* Municipalities */}
-                {expandedCounties.includes(county.code) && county.children && (
-                  <div className="ml-3.5 space-y-0.5 border-l border-[#E6E7E1] pl-2.5">
-                    {county.children.map((municipality) => (
-                      <div key={municipality.code}>
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => toggleMunicipality(municipality.code)}
-                            className={`${TREE_ROW} flex items-center gap-2.5 ${
-                              selectedMunicipalityCodes.includes(municipality.code)
-                                ? 'font-semibold text-[#2E6641]'
-                                : 'text-[#63665F] hover:bg-[#F4F6F0] hover:text-[#0B0B0B]'
-                            }`}
-                          >
-                            <Box checked={selectedMunicipalityCodes.includes(municipality.code)} />
-                            <span className="truncate">{municipality.name}</span>
-                            {locationStats && (
-                              <span className={`${COUNT_PILL} text-[#9B9E96]`}>
-                                {locationStats.municipalities[municipality.code] || 0}
-                              </span>
-                            )}
-                          </button>
-                          {municipality.children && municipality.children.length > 0 ? (
+                  {/* Municipalities */}
+                  {expandedCounties.includes(county.code) && county.children && (
+                    <div className="ml-3.5 space-y-0.5 border-l border-[#E6E7E1] pl-2.5">
+                      {county.children.map((municipality) => (
+                        <div key={municipality.code}>
+                          <div className="flex items-center gap-1">
                             <button
-                              onClick={() => toggleMunicipalityExpand(municipality.code)}
-                              aria-label={`Vis områder i ${municipality.name}`}
-                              aria-expanded={expandedMunicipalities.includes(municipality.code)}
-                              className="flex size-7 shrink-0 items-center justify-center rounded-lg text-[#9B9E96] transition-colors hover:bg-[#F4F6F0] hover:text-[#0B0B0B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E6641]/25"
+                              onClick={() => toggleMunicipality(municipality.code)}
+                              className={`${TREE_ROW} flex items-center gap-2.5 ${
+                                selectedMunicipalityCodes.includes(municipality.code)
+                                  ? 'font-semibold text-[#2E6641]'
+                                  : 'text-[#63665F] hover:bg-[#F4F6F0] hover:text-[#0B0B0B]'
+                              }`}
                             >
-                              {expandedMunicipalities.includes(municipality.code) ? (
-                                <ChevronDown size={14} />
-                              ) : (
-                                <ChevronRight size={14} />
+                              <Box
+                                checked={selectedMunicipalityCodes.includes(municipality.code)}
+                              />
+                              <span className="truncate">{municipality.name}</span>
+                              {locationStats && (
+                                <span className={`${COUNT_PILL} text-[#9B9E96]`}>
+                                  {locationStats.municipalities[municipality.code] || 0}
+                                </span>
                               )}
                             </button>
-                          ) : (
-                            <div className="size-7 shrink-0" />
-                          )}
-                        </div>
+                            {municipality.children && municipality.children.length > 0 ? (
+                              <button
+                                onClick={() => toggleMunicipalityExpand(municipality.code)}
+                                aria-label={`Vis områder i ${municipality.name}`}
+                                aria-expanded={expandedMunicipalities.includes(municipality.code)}
+                                className="flex size-7 shrink-0 items-center justify-center rounded-lg text-[#9B9E96] transition-colors hover:bg-[#F4F6F0] hover:text-[#0B0B0B] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E6641]/25"
+                              >
+                                {expandedMunicipalities.includes(municipality.code) ? (
+                                  <ChevronDown size={14} />
+                                ) : (
+                                  <ChevronRight size={14} />
+                                )}
+                              </button>
+                            ) : (
+                              <div className="size-7 shrink-0" />
+                            )}
+                          </div>
 
-                        {/* Areas */}
-                        {expandedMunicipalities.includes(municipality.code) &&
-                          municipality.children && (
-                            <div className="ml-3.5 space-y-0.5 border-l border-[#E6E7E1] pl-2.5">
-                              {municipality.children.map((area) => (
-                                <button
-                                  key={area.code}
-                                  onClick={() => toggleArea(area.code)}
-                                  className={`${TREE_ROW} flex w-full items-center gap-2.5 ${
-                                    selectedAreaCodes.includes(area.code)
-                                      ? 'font-semibold text-[#2E6641]'
-                                      : 'text-[#63665F] hover:bg-[#F4F6F0] hover:text-[#0B0B0B]'
-                                  }`}
-                                >
-                                  <Box checked={selectedAreaCodes.includes(area.code)} />
-                                  <span className="truncate">{area.name}</span>
-                                  {locationStats && (
-                                    <span className={`${COUNT_PILL} text-[#9B9E96]`}>
-                                      {locationStats.areas[area.code] || 0}
-                                    </span>
-                                  )}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-      </section>
+                          {/* Areas */}
+                          {expandedMunicipalities.includes(municipality.code) &&
+                            municipality.children && (
+                              <div className="ml-3.5 space-y-0.5 border-l border-[#E6E7E1] pl-2.5">
+                                {municipality.children.map((area) => (
+                                  <button
+                                    key={area.code}
+                                    onClick={() => toggleArea(area.code)}
+                                    className={`${TREE_ROW} flex w-full items-center gap-2.5 ${
+                                      selectedAreaCodes.includes(area.code)
+                                        ? 'font-semibold text-[#2E6641]'
+                                        : 'text-[#63665F] hover:bg-[#F4F6F0] hover:text-[#0B0B0B]'
+                                    }`}
+                                  >
+                                    <Box checked={selectedAreaCodes.includes(area.code)} />
+                                    <span className="truncate">{area.name}</span>
+                                    {locationStats && (
+                                      <span className={`${COUNT_PILL} text-[#9B9E96]`}>
+                                        {locationStats.areas[area.code] || 0}
+                                      </span>
+                                    )}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </section>
+      )}
 
       {/* ── Pris ───────────────────────────────────────────────────────────── */}
       <section className={FILTER_SECTION}>
         <div className="mb-4 flex items-center justify-between gap-2">
-          <h3 className={MICRO_LABEL}>Pris</h3>
+          <h3 className="text-[0.9375rem] font-semibold tracking-[-0.01em] text-[#0B0B0B]">Pris</h3>
           {hasPriceFilter && (
             <button
               onClick={handlePriceReset}
@@ -867,32 +919,45 @@ const ServiceListing = () => {
 
         <div className="px-1">
           <AntdTheme>
-            <Slider
-              range
-              min={0}
-              max={50000}
-              step={100}
-              value={[priceRange.min, priceRange.max > 50000 ? 50000 : priceRange.max]}
-              onChange={(value: number[]) => {
-                setPriceRange({
-                  min: value[0],
-                  max: value[1] === 50000 ? 100000 : value[1],
-                });
-              }}
-              styles={{
-                rail: { background: LINE },
-                track: { background: GREEN },
-                handle: {
-                  borderColor: GREEN,
-                  backgroundColor: '#fff',
-                  boxShadow: `0 0 0 2px ${GREEN}`,
-                },
-              }}
-            />
+            <ConfigProvider theme={SLIDER_THEME}>
+              <Slider
+                range
+                min={0}
+                max={50000}
+                step={100}
+                value={[priceRange.min, priceRange.max > 50000 ? 50000 : priceRange.max]}
+                onChange={(value: number[]) => {
+                  setPriceRange({
+                    min: value[0],
+                    max: value[1] === 50000 ? 100000 : value[1],
+                  });
+                }}
+              />
+            </ConfigProvider>
           </AntdTheme>
+          <div className="mt-4 flex flex-wrap gap-1.5">
+            {PRICE_PRESETS.map(([label, min, max]) => {
+              const on = priceRange.min === min && priceRange.max === max;
+              return (
+                <button
+                  key={label}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => setPriceRange(on ? { min: 0, max: 100000 } : { min, max })}
+                  className={`h-8 rounded-full border px-3 text-[0.8125rem] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E6641]/25 ${
+                    on
+                      ? 'border-[#2E6641] bg-[#EAF1E9] text-[#2E6641]'
+                      : 'border-[#E6E7E1] bg-white text-[#3F423C] hover:border-[#B9BDB2]'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
           <div className="mt-5 flex gap-3">
             <label className="flex-1">
-              <span className={`${MICRO_LABEL} mb-1.5 block`}>Fra</span>
+              <span className="mb-1.5 block text-[0.75rem] font-medium text-[#63665F]">Fra</span>
               <span className="relative block">
                 <input
                   type="number"
@@ -912,7 +977,7 @@ const ServiceListing = () => {
               </span>
             </label>
             <label className="flex-1">
-              <span className={`${MICRO_LABEL} mb-1.5 block`}>Til</span>
+              <span className="mb-1.5 block text-[0.75rem] font-medium text-[#63665F]">Til</span>
               <span className="relative block">
                 <input
                   type="number"
@@ -1077,7 +1142,7 @@ const ServiceListing = () => {
           {/* ── Sidebar, desktop ─────────────────────────────────────────── */}
           <aside className="hidden w-70 shrink-0 lg:block">
             {/* Clears the 72 px header and the 72 px search bar stacked above it. */}
-            <div className="sticky top-40 max-h-[calc(100vh-12rem)] overflow-y-auto pr-1">
+            <div className="sticky top-40 max-h-[calc(100vh-12rem)] overflow-y-auto pr-2 [scrollbar-color:#D4D6CD_transparent] [scrollbar-width:thin]">
               <div className="mb-6 flex items-center justify-between gap-2">
                 <h2 className="text-[1.0625rem] font-semibold tracking-[-0.02em] text-[#0B0B0B]">
                   Filtrer

@@ -119,7 +119,6 @@ export function SettingsLayout() {
     {
       title: 'Annet',
       links: [
-        { name: 'Lokasjon', path: '/settings/location', icon: MapPin },
         { name: 'Kommende', path: '/settings/upcoming', icon: EyeOff },
         { name: 'Om Jobblo', path: '/settings/about', icon: Info },
         // Not a page: opens the report dialog here, with this page's URL.

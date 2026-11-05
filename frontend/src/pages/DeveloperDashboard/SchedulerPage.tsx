@@ -228,7 +228,7 @@ export default function SchedulerPage() {
           </div>
         }
       >
-        {data && !totalRuns && !data.runs.length ? (
+        {data && !totalRuns && !data.runs?.length ? (
           <NotConfigured
             title="No runs recorded yet"
             description="Runs are recorded from now on. The first jobs start a few minutes after the API boots."

@@ -21,24 +21,24 @@ const WARN = { cpu: 80, ram: 85, disk: 85 };
 
 export default function ServerPage() {
   const { data, isLoading, isFetching, error, refetch, dataUpdatedAt } = useDevServer();
-  const ramPct = data ? Math.round((data.memory.used / data.memory.total) * 100) : 0;
+  const ramPct = data?.memory ? Math.round((data.memory.used / data.memory.total) * 100) : 0;
   // Rolling in-browser history of the 5s polls (session only, not persisted).
   const [hist, setHist] = useState<Sample[]>([]);
   useEffect(() => {
     if (!data) return;
     const point = {
       t: dataUpdatedAt,
-      cpu: data.cpu.percent,
+      cpu: data.cpu?.percent ?? null,
       ram: ramPct,
-      heap: Math.round(data.process.heapUsed / 1048576),
-      rps: data.live.rps,
+      heap: Math.round((data.process?.heapUsed ?? 0) / 1048576),
+      rps: data.live?.rps ?? 0,
     };
     setHist((h) => [...h.slice(-119), point]);
   }, [dataUpdatedAt]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const warnings = data
     ? [
-        data.cpu.percent !== null && data.cpu.percent >= WARN.cpu && `CPU at ${data.cpu.percent}%`,
+        data.cpu?.percent != null && data.cpu.percent >= WARN.cpu && `CPU at ${data.cpu.percent}%`,
         ramPct >= WARN.ram && `Memory at ${ramPct}%`,
         data.disk?.percent != null &&
           data.disk.percent >= WARN.disk &&
@@ -64,10 +64,12 @@ export default function ServerPage() {
         <StatCard
           label="CPU"
           icon={<Cpu />}
-          tone={data?.cpu.percent != null && data.cpu.percent >= WARN.cpu ? 'danger' : 'neutral'}
+          tone={data?.cpu?.percent != null && data.cpu.percent >= WARN.cpu ? 'danger' : 'neutral'}
           loading={isLoading}
-          value={data?.cpu.percent == null ? 'n/a' : `${data.cpu.percent}%`}
-          hint={data ? `load ${data.cpu.loadavg.map((l) => l.toFixed(2)).join(' / ')}` : ''}
+          value={data?.cpu?.percent == null ? 'n/a' : `${data.cpu.percent}%`}
+          hint={
+            data ? `load ${(data.cpu?.loadavg ?? []).map((l) => l.toFixed(2)).join(' / ')}` : ''
+          }
         />
         <StatCard
           label="Memory"
@@ -75,7 +77,7 @@ export default function ServerPage() {
           tone={ramPct >= WARN.ram ? 'danger' : 'neutral'}
           loading={isLoading}
           value={`${ramPct}%`}
-          hint={data ? `${bytes(data.memory.used)} / ${bytes(data.memory.total)}` : ''}
+          hint={data?.memory ? `${bytes(data.memory.used)} / ${bytes(data.memory.total)}` : ''}
         />
         <StatCard
           label="Disk"
@@ -88,22 +90,22 @@ export default function ServerPage() {
           label="Heap used"
           icon={<Activity />}
           loading={isLoading}
-          value={bytes(data?.process.heapUsed)}
-          hint={`of ${bytes(data?.process.heapTotal)}`}
+          value={bytes(data?.process?.heapUsed)}
+          hint={`of ${bytes(data?.process?.heapTotal)}`}
         />
         <StatCard
           label="Process uptime"
           icon={<ServerIcon />}
           loading={isLoading}
-          value={duration(data?.process.uptime)}
-          hint={`host ${duration(data?.host.uptime)}`}
+          value={duration(data?.process?.uptime)}
+          hint={`host ${duration(data?.host?.uptime)}`}
         />
         <StatCard
           label="Sockets"
           icon={<Plug />}
           loading={isLoading}
           value={data?.sockets ?? 'n/a'}
-          hint={`${data?.live.activeRequests ?? 0} active requests`}
+          hint={`${data?.live?.activeRequests ?? 0} active requests`}
         />
       </div>
 
@@ -139,18 +141,24 @@ export default function ServerPage() {
           {data ? (
             <KeyValue
               items={[
-                ['Hostname', data.host.hostname],
+                ['Hostname', data.host?.hostname],
                 [
                   'Environment',
                   <StatusBadge
                     key="e"
-                    status={data.host.environment}
-                    tone={data.host.environment === 'production' ? 'danger' : 'info'}
+                    status={data.host?.environment}
+                    tone={data.host?.environment === 'production' ? 'danger' : 'info'}
                   />,
                 ],
-                ['OS', `${data.host.type} ${data.host.release} (${data.host.arch})`],
-                ['CPU', `${data.host.cpus} × ${data.host.cpuModel || 'unknown'}`],
-                ['Network', data.network.map((n) => `${n.name} (${n.family})`).join(', ') || '—'],
+                [
+                  'OS',
+                  data.host ? `${data.host.type} ${data.host.release} (${data.host.arch})` : '—',
+                ],
+                ['CPU', data.host ? `${data.host.cpus} × ${data.host.cpuModel || 'unknown'}` : '—'],
+                [
+                  'Network',
+                  (data.network ?? []).map((n) => `${n.name} (${n.family})`).join(', ') || '—',
+                ],
               ]}
             />
           ) : (
@@ -161,12 +169,12 @@ export default function ServerPage() {
           {data ? (
             <KeyValue
               items={[
-                ['Node', data.process.nodeVersion],
-                ['PID', data.process.pid],
-                ['RSS', bytes(data.process.rss)],
-                ['External', bytes(data.process.external)],
-                ['P95 (last min)', ms(data.live.p95LastMin)],
-                ['Errors (last min)', data.live.errorsLastMin],
+                ['Node', data.process?.nodeVersion],
+                ['PID', data.process?.pid],
+                ['RSS', bytes(data.process?.rss)],
+                ['External', bytes(data.process?.external)],
+                ['P95 (last min)', ms(data.live?.p95LastMin)],
+                ['Errors (last min)', data.live?.errorsLastMin],
               ]}
             />
           ) : (
@@ -174,7 +182,7 @@ export default function ServerPage() {
           )}
         </Section>
         <Section title="Process manager">
-          {data?.process.pm2 ? (
+          {data?.process?.pm2 ? (
             <KeyValue
               items={[
                 ['PM2 id', data.process.pm2.id],
@@ -197,7 +205,7 @@ export default function ServerPage() {
           description={`Warnings at CPU ${WARN.cpu}%, memory ${WARN.ram}%, disk ${WARN.disk}%`}
         >
           <div className="grid gap-5 md:grid-cols-3">
-            <Meter label="CPU" value={data.cpu.percent} />
+            <Meter label="CPU" value={data.cpu?.percent ?? null} />
             <Meter label="Memory" value={ramPct} />
             <Meter label="Disk" value={data.disk?.percent ?? null} />
           </div>

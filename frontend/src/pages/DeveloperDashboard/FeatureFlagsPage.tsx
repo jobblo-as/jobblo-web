@@ -24,7 +24,7 @@ export default function FeatureFlagsPage() {
   const submit = useSensitiveAction(['flags']);
   const [pending, setPending] = useState<{ flag: FlagRow; enabled: boolean } | null>(null);
   const production = data?.environment === 'production';
-  const canAct = Boolean(me?.can.execute || me?.can.request);
+  const canAct = Boolean(me?.can?.execute || me?.can?.request);
 
   return (
     <div className="space-y-5">
@@ -45,10 +45,10 @@ export default function FeatureFlagsPage() {
       <div className="grid gap-4 lg:grid-cols-3">
         <Section
           title="Flags"
-          description={`${data?.flags.length ?? 0} registered`}
+          description={`${data?.flags?.length ?? 0} registered`}
           className="lg:col-span-2"
         >
-          {isLoading ? null : data?.flags.length ? (
+          {isLoading ? null : data?.flags?.length ? (
             <ul className="divide-y rounded-md border">
               {data.flags.map((flag) => (
                 <li key={flag.key} className="flex items-center gap-4 px-3 py-3">
@@ -100,7 +100,7 @@ export default function FeatureFlagsPage() {
       </div>
 
       <Section title="Change history" description="From the audit log — the rollback reference">
-        {data?.history.length ? (
+        {data?.history?.length ? (
           <Timeline
             reverse
             events={data.history.map((h) => ({
@@ -122,7 +122,7 @@ export default function FeatureFlagsPage() {
         title={
           <>
             {pending?.enabled ? 'Enable' : 'Disable'}{' '}
-            <span className="font-mono">{pending?.flag.key}</span>
+            <span className="font-mono">{pending?.flag?.key}</span>
           </>
         }
         description={`Takes effect for every user in ${data?.environment}.`}

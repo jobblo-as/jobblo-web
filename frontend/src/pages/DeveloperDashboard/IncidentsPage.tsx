@@ -458,9 +458,9 @@ export default function IncidentsPage() {
         <StatCard
           label="Repeat incidents"
           icon={<Repeat />}
-          tone={data?.repeats.length ? 'warning' : 'neutral'}
+          tone={data?.repeats?.length ? 'warning' : 'neutral'}
           loading={isLoading}
-          value={num(data?.repeats.length)}
+          value={num(data?.repeats?.length)}
           hint="same alert reopened, 30d"
         />
       </div>
@@ -471,7 +471,7 @@ export default function IncidentsPage() {
             items={[
               [
                 'Slack',
-                data?.notifications.slack ? (
+                data?.notifications?.slack ? (
                   <StatusBadge key="s" status="ok" label="connected" />
                 ) : (
                   <span key="s" className="text-xs text-muted-foreground">
@@ -481,7 +481,7 @@ export default function IncidentsPage() {
               ],
               [
                 'Email',
-                data?.notifications.email ? (
+                data?.notifications?.email ? (
                   <StatusBadge key="e" status="ok" label="connected" />
                 ) : (
                   <span key="e" className="text-xs text-muted-foreground">
@@ -503,7 +503,7 @@ export default function IncidentsPage() {
           <CountBars counts={data?.byService || {}} />
         </Section>
         <Section title="Repeat offenders" description="Alerts that reopened after resolution">
-          {data?.repeats.length ? (
+          {data?.repeats?.length ? (
             <ul className="space-y-1.5 text-sm">
               {data.repeats.map((r) => (
                 <li key={r.fingerprint} className="flex justify-between gap-2">

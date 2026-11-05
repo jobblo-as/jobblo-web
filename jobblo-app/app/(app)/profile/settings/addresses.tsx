@@ -4,7 +4,6 @@ import {
   Alert,
   Keyboard,
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -12,11 +11,12 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Check, Crosshair, MapPinHouse } from 'lucide-react-native';
+import { Check, Crosshair } from 'lucide-react-native';
 import MapView, {
   LatLng,
   MapPressEvent,
   Marker,
+  PoiClickEvent,
   MarkerDragStartEndEvent,
   Region,
 } from 'react-native-maps';
@@ -33,8 +33,11 @@ import { FormRow } from '../../../../src/components/ui/FormRow';
 import type { CurrentProfile } from '../../../../src/services/profile.service';
 import { TC } from '../../../../src/theme/colors';
 import { AddressesSkeleton } from '../../../../src/components/skeletons/ScreenSkeletons';
+import { AddressSearchField } from '../../../../src/components/create-job/AddressSearchField';
+import { findAddress, type AddressHit } from '../../../../src/services/geonorge.service';
 
-type Draft = { address: string; postNumber: string; postSted: string };
+/** `country` is never typed: a picked or typed address is Norwegian, a map tap brings its own. */
+type Draft = { address: string; postNumber: string; postSted: string; country: string };
 
 const text = (value: unknown) => (typeof value === 'string' ? value : '');
 const draftFrom = (profile: CurrentProfile): Draft => ({
@@ -46,11 +49,13 @@ const draftFrom = (profile: CurrentProfile): Draft => ({
     typeof profile.postSted.city === 'string'
       ? profile.postSted.city
       : text(profile.postSted),
+  country: text((profile as { country?: unknown }).country),
 });
 const same = (a: Draft, b: Draft) =>
   a.address.trim() === b.address.trim() &&
   a.postNumber === b.postNumber &&
-  a.postSted.trim() === b.postSted.trim();
+  a.postSted.trim() === b.postSted.trim() &&
+  a.country === b.country;
 
 const digitsOnly = (value: string, max?: number): string => {
   const digits = (value || '').replace(/\D/g, '');
@@ -102,6 +107,26 @@ export default function AddressesSettingsScreen() {
   const [selectedCoordinate, setSelectedCoordinate] = useState<LatLng | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const [isGeocoding, setIsGeocoding] = useState(false);
+  const [picked, setPicked] = useState(false);
+  /** A pin from the saved address, a suggestion or a tap: GPS no longer moves it. */
+  const pinSet = useRef(false);
+  // The keyboard covered the search's suggestions and the fields under the map. The screen
+  // pads for it (KeyboardAvoidingView); this then scrolls the focused field into the space left.
+  const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
+  const searchY = useRef(0);
+  const afterKeyboard = (go: () => void) => {
+    const sub = Keyboard.addListener('keyboardDidShow', () => {
+      sub.remove();
+      setTimeout(go, 120); // once the padding is laid out
+    });
+    setTimeout(() => sub.remove(), 1000);
+    setTimeout(go, 350); // keyboard already up (moving between fields)
+  };
+  const showSearch = () =>
+    afterKeyboard(() =>
+      scrollRef.current?.scrollTo({ y: Math.max(0, searchY.current - 12), animated: true })
+    );
+  const showFields = () => afterKeyboard(() => scrollRef.current?.scrollToEnd({ animated: true }));
 
   useEffect(() => {
     if (profile && !draft) {
@@ -124,7 +149,8 @@ export default function AddressesSettingsScreen() {
             });
             const coord = { latitude: now.coords.latitude, longitude: now.coords.longitude };
             setCurrentDeviceLocation(coord);
-            if (!selectedCoordinate) {
+            // Only when no pin is set yet: the saved address (or a tap) wins over the GPS spot.
+            if (!pinSet.current) {
               setSelectedCoordinate(coord);
               animateTo(coord);
             }
@@ -166,6 +192,24 @@ export default function AddressesSettingsScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // The pin starts on the saved address (looked up once in Kartverket), not on the GPS spot:
+  // without it the map showed no pin, or one where the phone was, over a saved address.
+  const savedPinned = useRef(false);
+  useEffect(() => {
+    if (savedPinned.current || !original?.address.trim()) return;
+    savedPinned.current = true;
+    findAddress(original.address, original.postNumber, original.postSted)
+      .then((hit) => {
+        if (!hit || pinSet.current) return;
+        pinSet.current = true;
+        const coord = { latitude: hit.lat, longitude: hit.lng };
+        setSelectedCoordinate(coord);
+        animateTo(coord);
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, when the profile arrives
+  }, [original]);
+
   const dirty = !!draft && !!original && !same(draft, original);
   const postNumberProvidedButInvalid =
     !!draft && draft.postNumber.length > 0 && !isValidPostalCode(draft.postNumber);
@@ -198,7 +242,13 @@ export default function AddressesSettingsScreen() {
     }
   };
 
-  const applyReverseGeocodeResult = async (coord: LatLng) => {
+  /**
+   * A map tap / dragged pin / "Min posisjon" replaces the whole address. Every field is set from
+   * the new result, empty where it has none, so a postnummer from the last address never stays
+   * behind next to a new place. A tapped place's name leads the street.
+   */
+  const applyReverseGeocodeResult = async (coord: LatLng, placeName = '') => {
+    pinSet.current = true;
     setIsGeocoding(true);
     try {
       const results = await Location.reverseGeocodeAsync(coord);
@@ -209,14 +259,23 @@ export default function AddressesSettingsScreen() {
         ).trim();
         const post = formatPostalCode(hit.postalCode || '');
         const city = (hit.subregion || hit.city || hit.region || '').trim();
-        setDraft((current) => {
-          if (!current) return current;
-          const next: Draft = { ...current };
-          if (street) next.address = street;
-          if (post) next.postNumber = post;
-          if (city) next.postSted = city;
-          return next;
-        });
+        const country = (hit.country || '').trim();
+        const named =
+          placeName && !street.toLowerCase().includes(placeName.toLowerCase())
+            ? [placeName, street].filter(Boolean).join(', ')
+            : street;
+        setDraft((current) =>
+          current
+            ? {
+                ...current,
+                address: named,
+                postNumber: /^\d{4}$/.test(post) ? post : '',
+                postSted: city,
+                country,
+              }
+            : current
+        );
+        setPicked(true);
       }
     } catch {
       // reverse geocode failure is silent; manual entry still works
@@ -266,6 +325,15 @@ export default function AddressesSettingsScreen() {
     void applyReverseGeocodeResult(coord);
   };
 
+  // A tap on a place's icon (a school, a shop): its name comes with it.
+  const handlePoiClick = (e: PoiClickEvent) => {
+    Keyboard.dismiss();
+    const { coordinate, name } = e.nativeEvent;
+    setSelectedCoordinate({ latitude: coordinate.latitude, longitude: coordinate.longitude });
+    // Android puts extra lines after the name; the first line is the name.
+    void applyReverseGeocodeResult(coordinate, (name || '').split(/\r?\n/)[0].trim());
+  };
+
   const handleMarkerDragEnd = (e: MarkerDragStartEndEvent) => {
     const coord = e.nativeEvent.coordinate;
     setSelectedCoordinate({ latitude: coord.latitude, longitude: coord.longitude });
@@ -289,6 +357,35 @@ export default function AddressesSettingsScreen() {
 
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) =>
     setDraft((current) => (current ? { ...current, [key]: value } : current));
+  /** A typed street or postnummer is a Norwegian one (the postnummer takes Norway's 4 digits). */
+  const setTyped = (key: 'address' | 'postNumber', value: string) =>
+    setDraft((current) =>
+      current
+        ? { ...current, [key]: value, country: current.country || (value ? 'Norge' : '') }
+        : current
+    );
+
+  // The street is searched in Kartverket, as when posting a job: a suggestion fills gate,
+  // postnummer and sted, and moves the pin there. The fields below stay editable.
+  const addressConfirmed = !!draft.address && (picked || draft.address === original?.address);
+  const pickAddress = (hit: AddressHit) => {
+    setDraft((current) =>
+      current
+        ? {
+            ...current,
+            address: hit.address,
+            postNumber: hit.postalCode,
+            postSted: hit.city || hit.municipalityName,
+            country: 'Norge', // Kartverket only has Norwegian addresses
+          }
+        : current
+    );
+    setPicked(true);
+    const coord = { latitude: hit.lat, longitude: hit.lng };
+    pinSet.current = true;
+    setSelectedCoordinate(coord);
+    animateTo(coord);
+  };
 
   const save = () => {
     if (!userId || !original || !canSave) return;
@@ -299,6 +396,7 @@ export default function AddressesSettingsScreen() {
     if (trimmedAddress !== original.address.trim()) changed.address = trimmedAddress;
     if (normalizedPostNumber !== original.postNumber) changed.postNumber = normalizedPostNumber;
     if (trimmedPostSted !== original.postSted.trim()) changed.postSted = trimmedPostSted;
+    if (draft.country !== original.country) changed.country = draft.country;
     if (Object.keys(changed).length === 0) return;
 
     update.mutate(
@@ -309,6 +407,7 @@ export default function AddressesSettingsScreen() {
             address: trimmedAddress,
             postNumber: normalizedPostNumber,
             postSted: trimmedPostSted,
+            country: draft.country,
           };
           setOriginal(next);
           setDraft(next);
@@ -351,18 +450,40 @@ export default function AddressesSettingsScreen() {
         </Pressable>
       </View>
 
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
+      <KeyboardAvoidingView className="flex-1" behavior="padding">
         <ScrollView
+          ref={scrollRef}
           keyboardShouldPersistTaps="handled"
           nestedScrollEnabled
           contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
         >
           <Text className="mb-5 px-1 text-[0.875rem] leading-5 text-muted">
-            Velg på kartet eller skriv inn adressen. Den lagres på Jobblo-kontoen din.
+            Søk etter adressen, velg på kartet eller skriv den inn. Den lagres på Jobblo-kontoen
+            din.
           </Text>
+
+          <View
+            className="mb-6"
+            onLayout={(e) => {
+              searchY.current = e.nativeEvent.layout.y;
+            }}
+          >
+            <AddressSearchField
+              onFocus={showSearch}
+              // The whole address on one line ("Borggata 8, 0650 Oslo"); Gateadresse below
+              // holds only the street.
+              value={[draft.address, [draft.postNumber, draft.postSted].filter(Boolean).join(' ')]
+                .filter(Boolean)
+                .join(', ')}
+              confirmed={addressConfirmed}
+              offerSaved={false}
+              confirmedText="Adressen er funnet"
+              idleText="Skriv adressen og velg et forslag, eller trykk i kartet."
+              onSelect={pickAddress}
+              // A new search leaves the fields below alone until a suggestion is picked.
+              onClear={() => setPicked(false)}
+            />
+          </View>
 
           {/* Map */}
           <SectionLabel>Velg på kartet</SectionLabel>
@@ -388,21 +509,18 @@ export default function AddressesSettingsScreen() {
                   pitchEnabled={false}
                   moveOnMarkerPress={false}
                   onPress={handleMapPress}
+                  onPoiClick={handlePoiClick}
                 >
                   {selectedCoordinate ? (
+                    // The platform's own pin, as on the job map: a custom view with
+                    // tracksViewChanges={false} was snapshotted before it laid out on Android
+                    // and showed nothing.
                     <Marker
                       coordinate={selectedCoordinate}
                       draggable
                       onDragEnd={handleMarkerDragEnd}
-                      tracksViewChanges={false}
-                    >
-                      <View className="items-center">
-                        <View className="h-10 w-10 items-center justify-center rounded-full border-2 border-white bg-brand">
-                          <MapPinHouse size={18} color="#FFFFFF" />
-                        </View>
-                        <View className="h-2 w-2 rounded-full bg-brand" />
-                      </View>
-                    </Marker>
+                      pinColor={TC.brandText}
+                    />
                   ) : null}
                 </MapView>
               ) : (
@@ -447,17 +565,22 @@ export default function AddressesSettingsScreen() {
           <SectionLabel>Adresse</SectionLabel>
           <Card className="overflow-hidden">
             <FormRow
+              onFocus={showFields}
               label="Gateadresse"
               value={draft.address}
-              onChangeText={(v) => set('address', v)}
+              onChangeText={(v) => {
+                setTyped('address', v);
+                setPicked(false);
+              }}
               placeholder="Karl Johans gate 10"
               autoComplete="street-address"
             />
             <FormRow
+              onFocus={showFields}
               divider
-              label="Postnummer"
+              label="Postnr."
               value={draft.postNumber}
-              onChangeText={(v) => set('postNumber', formatPostalCode(v))}
+              onChangeText={(v) => setTyped('postNumber', formatPostalCode(v))}
               placeholder="0150"
               maxLength={4}
               keyboardType="number-pad"
@@ -465,6 +588,7 @@ export default function AddressesSettingsScreen() {
               error={validation || undefined}
             />
             <FormRow
+              onFocus={showFields}
               divider
               label="Sted"
               value={draft.postSted}
@@ -474,8 +598,7 @@ export default function AddressesSettingsScreen() {
           </Card>
 
           <Text className="mt-4 px-1 text-[0.8125rem] leading-5 text-muted">
-            Alle feltene er valgfrie, og tomme felt lagres som tomme. Landet på profilen endrer du
-            under Innstillinger → Lokasjon.
+            Alle feltene er valgfrie, og tomme felt lagres som tomme.
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>

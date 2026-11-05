@@ -23,10 +23,16 @@ test('home chips are every category from the real API, by sortOrder', async ({ p
     // The photo carousel comes round to every category too (one dot each).
     await expect(page.getByRole('button', { name: `Vis ${name}`, exact: true })).toBeVisible();
   }
-  // "Neste" walks the arch through them in the same order.
+  // "Neste" moves the arch to the next dot. (The list is rotated so the photo first on
+  // screen stays put when the categories land — the LCP fix — so it need not start at [0].)
+  const dots = page.getByRole('button', { name: /^Vis / });
+  const names = await dots.evaluateAll((els) => els.map((e) => e.getAttribute('aria-label')));
+  const at = await dots.evaluateAll((els) =>
+    els.findIndex((e) => e.getAttribute('aria-current') === 'true')
+  );
   await page.getByRole('button', { name: 'Neste tjeneste' }).click();
   await expect(
-    page.getByRole('button', { name: `Vis ${expected[1 % expected.length]}` })
+    page.getByRole('button', { name: names[(at + 1) % names.length], exact: true })
   ).toHaveAttribute('aria-current', 'true');
   await shot(page, 'home-categories-real');
 });

@@ -64,7 +64,7 @@ export default function PerformancePage() {
     heapMb: Math.round(h.heapUsed / 1048576),
     rssMb: Math.round(h.rss / 1048576),
   }));
-  const heapPct = data ? Math.round((data.heap.used / data.heap.limit) * 100) : null;
+  const heapPct = data?.heap ? Math.round((data.heap.used / data.heap.limit) * 100) : null;
   const loopTone =
     data?.eventLoop && data.eventLoop.p99 > 100
       ? 'danger'
@@ -100,37 +100,37 @@ export default function PerformancePage() {
           icon={<MemoryStick />}
           tone={heapPct && heapPct > 85 ? 'danger' : 'neutral'}
           loading={isLoading}
-          value={bytes(data?.heap.used)}
-          hint={`${heapPct ?? '—'}% of ${bytes(data?.heap.limit)} limit`}
+          value={bytes(data?.heap?.used)}
+          hint={`${heapPct ?? '—'}% of ${bytes(data?.heap?.limit)} limit`}
         />
         <StatCard
           label="GC (last min)"
           icon={<Recycle />}
           loading={isLoading}
-          value={data?.gc.lastMinuteCount ?? '—'}
-          hint={`${ms(data?.gc.lastMinuteMs)} paused`}
+          value={data?.gc?.lastMinuteCount ?? '—'}
+          hint={`${ms(data?.gc?.lastMinuteMs)} paused`}
         />
         <StatCard
           label="Throughput"
           icon={<Zap />}
           loading={isLoading}
-          value={rate(data?.live.rps)}
-          hint={`P95 ${ms(data?.live.p95LastMin)} last min`}
+          value={rate(data?.live?.rps)}
+          hint={`P95 ${ms(data?.live?.p95LastMin)} last min`}
         />
         <StatCard
           label="Slow queries"
           icon={<Database />}
-          tone={data?.slowQueries.length ? 'warning' : 'success'}
+          tone={data?.slowQueries?.length ? 'warning' : 'success'}
           loading={isLoading}
-          value={data?.slowQueries.length ?? '—'}
+          value={data?.slowQueries?.length ?? '—'}
           hint={`≥ ${data?.slowQueryMs ?? 100} ms or failed`}
         />
         <StatCard
           label="Uptime"
           icon={<Cpu />}
           loading={isLoading}
-          value={duration(data?.process.uptime)}
-          hint={data?.process.node}
+          value={duration(data?.process?.uptime)}
+          hint={data?.process?.node}
         />
       </div>
 
@@ -164,7 +164,7 @@ export default function PerformancePage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Section title="Slowest endpoints" description="Last 60 minutes, by P95">
-          {data?.slowestEndpoints.length ? (
+          {data?.slowestEndpoints?.length ? (
             <ul className="divide-y rounded-md border text-sm">
               {data.slowestEndpoints.map((e) => (
                 <li key={`${e.method} ${e.route}`} className="flex items-center gap-2 px-3 py-2">
@@ -188,10 +188,10 @@ export default function PerformancePage() {
             <Meter
               label="Heap used of V8 limit"
               value={heapPct}
-              detail={`${bytes(data?.heap.used)} used · ${bytes(data?.heap.total)} allocated · ${bytes(data?.heap.external)} external`}
+              detail={`${bytes(data?.heap?.used)} used · ${bytes(data?.heap?.total)} allocated · ${bytes(data?.heap?.external)} external`}
             />
             <div className="flex flex-wrap gap-2">
-              {Object.entries(data?.gc.byKindSinceStart || {}).map(([k, n]) => (
+              {Object.entries(data?.gc?.byKindSinceStart || {}).map(([k, n]) => (
                 <StatusBadge
                   key={k}
                   status={k}
@@ -222,7 +222,7 @@ export default function PerformancePage() {
           title="Slow & failed queries"
           description="Filter keys only — values are never captured"
         >
-          {data?.slowQueries.length ? (
+          {data?.slowQueries?.length ? (
             <ul className="space-y-2">
               {data.slowQueries.map((q, i) => (
                 <li key={i} className="rounded-md border p-2.5 text-sm">

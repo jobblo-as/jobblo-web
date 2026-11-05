@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   AlertTriangle,
   Ban,
@@ -24,7 +24,6 @@ import {
   StatusBadge,
 } from '../../components/developer/kit';
 import { DataTable, type Column } from '../../components/developer/DataTable';
-import { IpSheet } from '../../components/developer/IpSheet';
 import { BlockIpDialog } from '../../components/developer/BlockIpDialog';
 import { BlockedIpsTable } from '../../components/developer/BlockedIpsTable';
 import { Button } from '../../components/developer/ui/button';
@@ -76,7 +75,10 @@ export default function IpsPage() {
     tab: 'ips',
   });
   const [search, setSearch] = useState(f.q);
-  const [selected, setSelected] = useState<string | null>(null);
+  const navigate = useNavigate();
+  // An IP opens its own page (was a side panel that cut the lists short).
+  const openIp = (ip: string) =>
+    navigate(`/developer/ips/${encodeURIComponent(ip)}?range=${f.range}`);
   const [blockTarget, setBlockTarget] = useState<string | null>(null);
   const { data: me } = useDevMe();
   const { data, isLoading, isFetching, error, refetch } = useDevIps({
@@ -87,7 +89,7 @@ export default function IpsPage() {
     page: f.page,
   });
   const s = data?.summary;
-  const canBlock = Boolean(me?.can.execute || me?.can.request);
+  const canBlock = Boolean(me?.can?.execute || me?.can?.request);
 
   const columns: Column<IpRow>[] = [
     {
@@ -259,7 +261,7 @@ export default function IpsPage() {
               variant="outline"
               size="sm"
               className="bg-card"
-              disabled={!data?.ips.length}
+              disabled={!data?.ips?.length}
               onClick={() =>
                 downloadCsv(
                   `ips-${f.range}.csv`,
@@ -396,7 +398,7 @@ export default function IpsPage() {
               rows={data?.ips}
               loading={isLoading}
               rowKey={(r) => r.ip}
-              onRowClick={(r) => setSelected(r.ip)}
+              onRowClick={(r) => openIp(r.ip)}
               pagination={data?.pagination}
               onPageChange={(p) => setF({ page: String(p) })}
               emptyTitle="No IPs match"
@@ -410,12 +412,11 @@ export default function IpsPage() {
             title="Active blocks"
             description="Click a row to see what that IP did. Expired blocks are removed automatically; every change is audited."
           >
-            <BlockedIpsTable onPick={(target) => !target.includes('/') && setSelected(target)} />
+            <BlockedIpsTable onPick={(target) => !target.includes('/') && openIp(target)} />
           </Section>
         </TabsContent>
       </Tabs>
 
-      <IpSheet ip={selected} range={f.range as RangeKey} onClose={() => setSelected(null)} />
       <BlockIpDialog
         ip={blockTarget || ''}
         open={blockTarget !== null}

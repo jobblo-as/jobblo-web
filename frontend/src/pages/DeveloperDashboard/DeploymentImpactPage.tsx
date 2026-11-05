@@ -78,7 +78,7 @@ function ReleaseDetail({ id, hours, onBack }: { id: string; hours: number; onBac
     <div className="space-y-4">
       <Section
         title={`Release ${d.version} · ${short(d.commit)}`}
-        description={`Deployed ${dateTime(d.deployedAt)} on ${d.host || 'unknown host'} · ${d.boots} boot${d.boots === 1 ? '' : 's'} · compared over ${data.windowHours} h before vs after${data.next ? ` (next release ${data.next.version} cuts the window)` : ''}`}
+        description={`Deployed ${dateTime(d.deployedAt)} on ${d.host || 'unknown host'} · ${d.boots} boot${d.boots === 1 ? '' : 's'} · compared over ${data.windowHours} h before vs after${data.next ? ` (next release ${data.next?.version} cuts the window)` : ''}`}
         action={
           <Button size="sm" variant="outline" onClick={onBack}>
             <ArrowLeft /> All releases
@@ -105,7 +105,7 @@ function ReleaseDetail({ id, hours, onBack }: { id: string; hours: number; onBac
             )}
           </div>
           <ul className="mt-2 list-disc space-y-0.5 pl-5">
-            {data.reasons.map((r) => (
+            {data.reasons?.map((r) => (
               <li key={r}>{r}</li>
             ))}
           </ul>
@@ -114,8 +114,8 @@ function ReleaseDetail({ id, hours, onBack }: { id: string; hours: number; onBac
           <div>
             <div className="text-xs text-muted-foreground">Requests</div>
             <Delta
-              before={data.before.requests}
-              after={data.after.requests}
+              before={data.before?.requests}
+              after={data.after?.requests}
               unit=""
               lowerIsBetter={false}
             />
@@ -126,13 +126,13 @@ function ReleaseDetail({ id, hours, onBack }: { id: string; hours: number; onBac
           </div>
           <div>
             <div className="text-xs text-muted-foreground">p95 latency</div>
-            <Delta before={data.before.p95} after={data.after.p95} unit=" ms" />
+            <Delta before={data.before?.p95} after={data.after?.p95} unit=" ms" />
           </div>
           <div>
             <div className="text-xs text-muted-foreground">Slow requests</div>
             <Delta
-              before={data.before.slowShare === null ? null : data.before.slowShare * 100}
-              after={data.after.slowShare === null ? null : data.after.slowShare * 100}
+              before={data.before?.slowShare === null ? null : data.before?.slowShare * 100}
+              after={data.after?.slowShare === null ? null : data.after?.slowShare * 100}
               unit="%"
               digits={1}
             />
@@ -140,8 +140,8 @@ function ReleaseDetail({ id, hours, onBack }: { id: string; hours: number; onBac
           <div>
             <div className="text-xs text-muted-foreground">Synthetic failures</div>
             <Delta
-              before={data.synthetic.before.failed}
-              after={data.synthetic.after.failed}
+              before={data.synthetic?.before?.failed}
+              after={data.synthetic?.after?.failed}
               unit=""
             />
           </div>
@@ -231,9 +231,9 @@ function ReleaseDetail({ id, hours, onBack }: { id: string; hours: number; onBac
       </Section>
 
       <Section title="Error types first seen after the release">
-        {data.newErrors.length ? (
+        {data.newErrors?.length ? (
           <ul className="divide-y">
-            {data.newErrors.map((e) => (
+            {data.newErrors?.map((e) => (
               <li key={e.id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 py-2 text-sm">
                 <div className="min-w-0">
                   <Link
@@ -411,10 +411,10 @@ export default function DeploymentImpactPage() {
               label="Running release"
               icon={<Rocket />}
               loading={isLoading}
-              value={data?.current.version ?? '—'}
+              value={data?.current?.version ?? '—'}
               hint={
                 data
-                  ? `${short(data.current.commit)}${data.current.branch ? ` · ${data.current.branch}` : ''}`
+                  ? `${short(data.current?.commit)}${data.current?.branch ? ` · ${data.current?.branch}` : ''}`
                   : ''
               }
             />
@@ -444,7 +444,7 @@ export default function DeploymentImpactPage() {
               label="Mobile versions"
               icon={<Smartphone />}
               loading={isLoading}
-              value={data?.mobile.length ?? 0}
+              value={data?.mobile?.length ?? 0}
               hint="seen in app telemetry"
             />
           </div>

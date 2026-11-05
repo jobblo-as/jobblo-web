@@ -15,7 +15,7 @@ export function BlockedIpsTable({ onPick }: { onPick?: (target: string) => void 
   const { data, isLoading } = useDevBlocks();
   const submit = useSensitiveAction(['blocks', 'security', 'ips']);
   const [unblocking, setUnblocking] = useState<IpBlockRow | null>(null);
-  const canAct = Boolean(me?.can.execute || me?.can.request);
+  const canAct = Boolean(me?.can?.execute || me?.can?.request);
 
   const columns: Column<IpBlockRow>[] = [
     {
@@ -84,7 +84,7 @@ export function BlockedIpsTable({ onPick }: { onPick?: (target: string) => void 
     },
   ];
 
-  if (!isLoading && !data?.blocks.length) {
+  if (!isLoading && !data?.blocks?.length) {
     return (
       <EmptyState
         title="No blocked IPs"

@@ -69,3 +69,31 @@ export async function addressAt(lat: number, lng: number): Promise<AddressHit | 
   );
   return hits[0] ?? null;
 }
+
+const norm = (value = '') => value.toLowerCase().replace(/\s+/g, ' ').trim();
+
+/**
+ * A saved address (e.g. the profile's "Mine adresser") as one exact Kartverket address, or
+ * null. Not fuzzy, and only an exact match counts: "Bryggen 1" must not become "Bryggen 11".
+ * The postnummer narrows the search (it is its own parameter — Kartverket finds nothing when
+ * it is part of the search text); the sted breaks a tie between towns.
+ */
+export async function findAddress(
+  street: string,
+  postNumber = '',
+  postSted = ''
+): Promise<AddressHit | null> {
+  if (!street.trim()) return null;
+  const params = new URLSearchParams({
+    sok: street.trim(),
+    treffPerSide: '10',
+    utkoordsys: '4258',
+  });
+  if (/^\d{4}$/.test(postNumber)) params.set('postnummer', postNumber);
+  const exact = (await fetchHits(`${BASE}/sok?${params}`)).filter(
+    (hit) => norm(hit.address) === norm(street)
+  );
+  const inTown = postSted ? exact.filter((hit) => norm(hit.city) === norm(postSted)) : exact;
+  const candidates = inTown.length ? inTown : exact;
+  return candidates.length === 1 ? candidates[0] : null;
+}

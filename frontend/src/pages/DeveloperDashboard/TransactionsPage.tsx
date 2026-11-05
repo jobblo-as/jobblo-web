@@ -242,7 +242,7 @@ function Journeys({ data, onOpen }: { data: TxJourneys; onOpen: (id: string) => 
           description={`${num(data.jobs)} jobs posted in the last ${data.days} days`}
         >
           <ul className="space-y-2">
-            {data.funnel.map((f) => (
+            {data.funnel?.map((f) => (
               <li key={f.key} className="text-sm">
                 <div className="mb-0.5 flex justify-between gap-2">
                   <span>{f.label}</span>
@@ -261,7 +261,7 @@ function Journeys({ data, onOpen }: { data: TxJourneys; onOpen: (id: string) => 
           </ul>
           <p className="mt-3 text-xs text-muted-foreground">
             Ended in a branch:{' '}
-            {Object.entries(data.branches)
+            {Object.entries(data.branches ?? {})
               .filter(([, n]) => n)
               .map(([k, n]) => `${n} ${k}`)
               .join(' · ') || 'none'}
@@ -281,7 +281,7 @@ function Journeys({ data, onOpen }: { data: TxJourneys; onOpen: (id: string) => 
               </tr>
             </thead>
             <tbody className="divide-y">
-              {data.steps.map((s) => (
+              {data.steps?.map((s) => (
                 <tr key={s.to}>
                   <td className="py-1.5 text-xs">{s.label}</td>
                   <td className="py-1.5 text-right tabular-nums text-xs">{s.count}</td>
@@ -299,7 +299,7 @@ function Journeys({ data, onOpen }: { data: TxJourneys; onOpen: (id: string) => 
       >
         <DataTable
           columns={stuckCols}
-          rows={data.stuck}
+          rows={data.stuck ?? []}
           rowKey={(s) => s.serviceId}
           onRowClick={(s) => onOpen(s.serviceId)}
           emptyTitle="Nothing stuck"
@@ -370,22 +370,22 @@ export default function TransactionsPage() {
               icon={<CircleCheck />}
               tone="success"
               loading={isLoading}
-              value={data ? `${data.funnel.find((x) => x.key === 'completed')?.share ?? 0}%` : '—'}
+              value={data ? `${data.funnel?.find((x) => x.key === 'completed')?.share ?? 0}%` : '—'}
               hint="of posted jobs"
             />
             <StatCard
               label="Paid out"
               icon={<Workflow />}
               loading={isLoading}
-              value={data ? num(data.funnel.find((x) => x.key === 'paid_out')?.reached) : '—'}
+              value={data ? num(data.funnel?.find((x) => x.key === 'paid_out')?.reached) : '—'}
               hint="providers paid"
             />
             <StatCard
               label="Stuck"
-              icon={data?.stuck.length ? <AlertTriangle /> : <Clock />}
-              tone={data?.stuck.length ? 'danger' : 'success'}
+              icon={data?.stuck?.length ? <AlertTriangle /> : <Clock />}
+              tone={data?.stuck?.length ? 'danger' : 'success'}
               loading={isLoading}
-              value={data?.stuck.length ?? '—'}
+              value={data?.stuck?.length ?? '—'}
               hint="waiting longer than expected"
             />
           </div>

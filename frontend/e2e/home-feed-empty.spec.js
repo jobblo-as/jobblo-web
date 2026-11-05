@@ -95,3 +95,20 @@ test('messages, no chats yet: both panes explain themselves', async ({ page }) =
   await page.getByRole('button', { name: 'Finn oppdrag' }).click();
   await expect(page).toHaveURL(/\/search\/job\/all$/);
 });
+
+test('mine annonser with nothing posted: a sized button, the three steps, and posting', async ({
+  page,
+}) => {
+  await mockApi(page, { as: 'user' });
+  await page.goto('/mine-annonser');
+  await expect(
+    page.getByRole('heading', { name: 'Du har ingen aktive annonser ennå' })
+  ).toBeVisible();
+  await expect(page.getByText('Velg og betal trygt')).toBeVisible();
+  const cta = page.getByRole('button', { name: 'Opprett annonse' });
+  // It used to stretch across the whole page.
+  expect((await cta.boundingBox()).width).toBeLessThan(300);
+  await shot(page, 'mine-annonser-empty');
+  await cta.click();
+  await expect(page).toHaveURL(/\/Publish-job$/);
+});

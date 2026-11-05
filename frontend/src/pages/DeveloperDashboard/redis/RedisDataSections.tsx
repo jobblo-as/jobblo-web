@@ -172,7 +172,7 @@ export function KeysSection() {
           action={
             <Tabs value={group} onValueChange={reset}>
               <TabsList>
-                {d.groups.map((g) => (
+                {d.groups?.map((g) => (
                   <TabsTrigger key={g.id} value={g.id}>
                     {g.label}
                   </TabsTrigger>
@@ -201,7 +201,7 @@ export function KeysSection() {
             </Button>
           </form>
           <p className="mb-2 text-xs text-muted-foreground">
-            Prefix <Mono>{d.groups.find((g) => g.id === group)?.match}</Mono>
+            Prefix <Mono>{d.groups?.find((g) => g.id === group)?.match}</Mono>
           </p>
           <DataTable
             rows={d.keys}

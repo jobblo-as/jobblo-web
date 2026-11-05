@@ -314,7 +314,7 @@ export default function ConnectHealthPage() {
   const { data: me } = useDevMe();
   const { data, isLoading, isFetching, error, refetch } = useDevConnectHealth();
   const qc = useQueryClient();
-  const canAct = Boolean(me?.can.request || me?.can.execute);
+  const canAct = Boolean(me?.can?.request || me?.can?.execute);
   const s = data?.summary;
 
   const rescan = async () => {
@@ -475,9 +475,9 @@ export default function ConnectHealthPage() {
         <StatCard
           label="Working without account"
           icon={<CircleSlash />}
-          tone={data?.withoutAccount.length ? 'warning' : 'success'}
+          tone={data?.withoutAccount?.length ? 'warning' : 'success'}
           loading={isLoading}
-          value={data?.withoutAccount.length ?? '—'}
+          value={data?.withoutAccount?.length ?? '—'}
           hint="providers with orders, no Connect"
         />
         <StatCard
@@ -491,10 +491,12 @@ export default function ConnectHealthPage() {
         <StatCard
           label="Failed payouts"
           icon={<Landmark />}
-          tone={s && s.failedPayouts + s.bankFailures ? 'danger' : 'success'}
+          tone={s && (s.failedPayouts ?? 0) + (s.bankFailures ?? 0) ? 'danger' : 'success'}
           loading={isLoading}
-          value={s ? s.failedPayouts + s.bankFailures : '—'}
-          hint={s ? `${s.failedPayouts} transfers · ${s.bankFailures} to bank (90 d)` : ''}
+          value={s ? (s.failedPayouts ?? 0) + (s.bankFailures ?? 0) : '—'}
+          hint={
+            s ? `${s.failedPayouts ?? 0} transfers · ${s.bankFailures ?? 0} to bank (90 d)` : ''
+          }
         />
       </div>
 
@@ -517,7 +519,7 @@ export default function ConnectHealthPage() {
           title="Providers working without a Connect account"
           description="They have orders in the last 90 days but can never receive a payout."
         >
-          {data?.withoutAccount.length ? (
+          {data?.withoutAccount?.length ? (
             <ul className="divide-y text-sm">
               {data.withoutAccount.map((p) => (
                 <li key={p.userId} className="flex items-center justify-between gap-2 py-2">
@@ -543,7 +545,7 @@ export default function ConnectHealthPage() {
           title="Stripe accounts not linked to any user"
           description="Created in this Stripe mode but no Jobblo user points at them — abandoned onboarding or a lost link."
         >
-          {data?.orphanAccounts.length ? (
+          {data?.orphanAccounts?.length ? (
             <ul className="divide-y text-xs">
               {data.orphanAccounts.map((a) => (
                 <li key={a.id} className="flex items-center justify-between gap-2 py-1.5">
@@ -563,10 +565,10 @@ export default function ConnectHealthPage() {
         </Section>
       </div>
 
-      {data?.failedPayouts.length || data?.bankFailures.length ? (
+      {data?.failedPayouts?.length || data?.bankFailures?.length ? (
         <Section title="Failed money movement">
           <ul className="divide-y text-sm">
-            {data!.failedPayouts.map((p) => (
+            {(data!.failedPayouts ?? []).map((p) => (
               <li key={p._id} className="flex items-center justify-between gap-2 py-2">
                 <span className="truncate">
                   Transfer to {p.providerId?.name || '—'} · {money(p.netProviderAmount)} ·{' '}
@@ -575,7 +577,7 @@ export default function ConnectHealthPage() {
                 <StatusBadge status={p.status} tone="danger" />
               </li>
             ))}
-            {data!.bankFailures.map((b) => (
+            {(data!.bankFailures ?? []).map((b) => (
               <li key={b._id} className="flex items-center justify-between gap-2 py-2">
                 <span className="truncate">
                   Bank payout {b.providerId?.name || b.stripeAccountId} · {money(b.amount / 100)}{' '}

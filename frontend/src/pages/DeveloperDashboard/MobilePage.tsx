@@ -87,7 +87,7 @@ function ErrorSheet({ group, onClose }: { group: MobileErrorGroup | null; onClos
               Occurrences
             </h4>
             <ul className="divide-y rounded-md border">
-              {data?.events.map((e) => (
+              {data?.events?.map((e) => (
                 <li
                   key={e._id}
                   className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 px-3 py-2 text-xs"
@@ -278,7 +278,7 @@ function MobileReleases() {
           </div>
         ))}
       </div>
-      {data && !data.versions.length ? (
+      {data && !data.versions?.length ? (
         <EmptyState
           title="No app sessions in the last 7 days"
           description="Versions appear once the app (with the built-in reporter) is used."
@@ -293,7 +293,7 @@ function MobileReleases() {
               data={(() => {
                 const byT: Record<string, { t: string; ios?: number; android?: number }> = {};
                 for (const [platform, a] of Object.entries(data?.adoption || {}))
-                  for (const s of a.series)
+                  for (const s of a?.series ?? [])
                     (byT[s.t] ||= { t: s.t })[platform as 'ios' | 'android'] = s.share;
                 // A day without sessions on one platform keeps that platform's last known share.
                 const rows = Object.values(byT).sort((a, b) => a.t.localeCompare(b.t));
@@ -309,12 +309,12 @@ function MobileReleases() {
               series={[
                 {
                   key: 'ios',
-                  label: `iOS ${data?.adoption.ios?.latest || ''}`,
+                  label: `iOS ${data?.adoption?.ios?.latest || ''}`,
                   color: 'var(--chart-1)',
                 },
                 {
                   key: 'android',
-                  label: `Android ${data?.adoption.android?.latest || ''}`,
+                  label: `Android ${data?.adoption?.android?.latest || ''}`,
                   color: 'var(--chart-2)',
                 },
               ]}
@@ -494,7 +494,7 @@ export default function MobilePage() {
       header: 'Status',
       cell: (a) => (
         <span className="flex flex-wrap gap-1">
-          {Object.entries(a.codes).map(([c, n]) => (
+          {Object.entries(a.codes ?? {}).map(([c, n]) => (
             <Badge key={c} variant={c === '0' || Number(c) >= 500 ? 'destructive' : 'secondary'}>
               {c === '0' ? 'network' : c} × {n}
             </Badge>
@@ -603,7 +603,7 @@ export default function MobilePage() {
         ) : (
           <TimeSeriesChart
             data={data?.series}
-            bucketMs={data?.range.bucketMs}
+            bucketMs={data?.range?.bucketMs}
             height={200}
             variant="bar"
             series={[
@@ -674,7 +674,7 @@ export default function MobilePage() {
       </Section>
 
       <Section title="Recent crashes">
-        {data?.recentCrashes.length ? (
+        {data?.recentCrashes?.length ? (
           <ul className="divide-y">
             {data.recentCrashes.map((c) => (
               <li key={c._id} className="grid grid-cols-[minmax(0,1fr)_auto] gap-3 py-2 text-sm">
@@ -682,7 +682,7 @@ export default function MobilePage() {
                   type="button"
                   className="min-w-0 text-left"
                   onClick={() =>
-                    setOpen(data.errorGroups.find((g) => g.fingerprint === c.fingerprint) || null)
+                    setOpen(data.errorGroups?.find((g) => g.fingerprint === c.fingerprint) || null)
                   }
                 >
                   <div className="truncate font-medium hover:underline">

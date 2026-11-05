@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { AlertCircle, CheckCircle2, Loader2, MapPin, Search, X } from 'lucide-react';
-import { searchAddresses, type AddressHit } from '../../api/geonorge';
+import { AlertCircle, CheckCircle2, Home, Loader2, MapPin, Search, X } from 'lucide-react';
+import { findAddress, searchAddresses, type AddressHit } from '../../api/geonorge';
+import { useUserStore } from '../../stores/userStore';
 
 interface AddressSearchFieldProps {
   id?: string;
@@ -12,6 +13,11 @@ interface AddressSearchFieldProps {
   error?: string;
   onSelect: (hit: AddressHit) => void;
   onClear: () => void;
+  /** Offer the profile's saved address first. Off where that address is being edited. */
+  offerSaved?: boolean;
+  /** The line under the field: once confirmed, and before. */
+  confirmedText?: string;
+  idleText?: string;
 }
 
 /**
@@ -26,6 +32,9 @@ export function AddressSearchField({
   error,
   onSelect,
   onClear,
+  offerSaved = true,
+  confirmedText = 'Lokasjon bekreftet',
+  idleText = 'Velg et forslag fra listen, eller klikk i kartet.',
 }: AddressSearchFieldProps) {
   const [query, setQuery] = useState(value);
   const [hits, setHits] = useState<AddressHit[]>([]);
@@ -33,6 +42,21 @@ export function AddressSearchField({
   const [failed, setFailed] = useState(false);
   const [focused, setFocused] = useState(false);
   const skipSearch = useRef(true);
+  const [savedBusy, setSavedBusy] = useState(false);
+
+  // "Mine adresser": the address saved in Innstillinger, offered first in the list.
+  const me = useUserStore((state) => state.user);
+  const saved = me?.address?.trim()
+    ? {
+        street: me.address.trim(),
+        postNumber: me.postNumber?.trim() ?? '',
+        postSted: me.postSted?.trim() ?? '',
+      }
+    : null;
+  const savedLine = saved ? [saved.postNumber, saved.postSted].filter(Boolean).join(' ') : '';
+  const q = query.trim().toLowerCase();
+  const showSaved =
+    offerSaved && !!saved && (!q || `${saved.street} ${savedLine}`.toLowerCase().includes(q));
 
   // Follow the form (draft restore, map click, GPS) without searching for it. An emptied value
   // is ignored: that is the user typing over a confirmed address, and their text must stay.
@@ -81,13 +105,24 @@ export function AddressSearchField({
     onSelect(hit);
   };
 
+  /** The saved address, made exact through Kartverket; else it is searched like typed text. */
+  const pickSaved = async () => {
+    if (!saved) return;
+    setSavedBusy(true);
+    const hit = await findAddress(saved.street, saved.postNumber, saved.postSted).catch(() => null);
+    setSavedBusy(false);
+    if (hit) pick(hit);
+    else setQuery(saved.street);
+  };
+
   const clear = () => {
     setQuery('');
     setHits([]);
     onClear();
   };
 
-  const showList = focused && query.trim().length >= 3 && !confirmed;
+  const showList = focused && !confirmed && (query.trim().length >= 3 || showSaved);
+  const showHits = query.trim().length >= 3;
   const listId = id ? `${id}-suggestions` : undefined;
 
   return (
@@ -146,7 +181,36 @@ export function AddressSearchField({
           role="listbox"
           className="absolute left-0 right-0 z-20 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg"
         >
-          {hits.length ? (
+          {showSaved ? (
+            <li role="option" aria-selected={false}>
+              <p className="bg-gray-50 px-4 pt-2.5 pb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                Mine adresser
+              </p>
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  void pickSaved();
+                }}
+                className="flex w-full items-center gap-2.5 bg-gray-50 px-4 pt-1 pb-3 text-left hover:bg-gray-100"
+              >
+                {savedBusy ? (
+                  <Loader2 size={16} className="shrink-0 animate-spin text-[#2D7A4D]" />
+                ) : (
+                  <Home size={16} className="shrink-0 text-[#2D7A4D]" />
+                )}
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium text-gray-900">
+                    {saved?.street}
+                  </span>
+                  {savedLine ? (
+                    <span className="block truncate text-xs text-gray-500">{savedLine}</span>
+                  ) : null}
+                </span>
+              </button>
+            </li>
+          ) : null}
+          {!showHits ? null : hits.length ? (
             hits.map((hit, index) => (
               <li
                 key={`${hit.address}-${hit.postalCode}-${index}`}
@@ -160,7 +224,7 @@ export function AddressSearchField({
                     e.preventDefault();
                     pick(hit);
                   }}
-                  className={`flex w-full items-center gap-2.5 px-4 py-3 text-left hover:bg-gray-50 ${index ? 'border-t border-gray-100' : ''}`}
+                  className={`flex w-full items-center gap-2.5 px-4 py-3 text-left hover:bg-gray-50 ${index || showSaved ? 'border-t border-gray-100' : ''}`}
                 >
                   <MapPin size={16} className="shrink-0 text-[#2D7A4D]" />
                   <span className="min-w-0 flex-1">
@@ -193,12 +257,11 @@ export function AddressSearchField({
         </p>
       ) : confirmed ? (
         <p className="ml-1 text-[11px] font-medium text-[#2D7A4D] md:text-xs">
-          Lokasjon bekreftet{detail ? ` · ${detail}` : ''}
+          {confirmedText}
+          {detail ? ` · ${detail}` : ''}
         </p>
       ) : (
-        <p className="ml-1 text-[11px] text-gray-500 md:text-xs">
-          Velg et forslag fra listen, eller klikk i kartet.
-        </p>
+        <p className="ml-1 text-[11px] text-gray-500 md:text-xs">{idleText}</p>
       )}
     </div>
   );

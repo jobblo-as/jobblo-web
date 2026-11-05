@@ -27,6 +27,21 @@ const PROFILE_FIELDS = [
 
 const PAID = ['paid', 'partially_refunded'];
 
+/**
+ * Payout totals by state (Payout.js state machine: released_internal -> processing -> transferred).
+ * Only `transferred` has reached the provider; released_internal and processing are still on
+ * their way and can still fail, so they are reported apart instead of as paid out.
+ */
+const payoutSums = (totals) => {
+  const sum = (states, key) =>
+    totals.filter((p) => states.includes(p._id)).reduce((a, p) => a + (p[key] || 0), 0);
+  return {
+    paidOut: sum(['transferred'], 'net'),
+    payoutInProgress: sum(['released_internal', 'processing'], 'net'),
+    payoutsFailed: sum(['failed', 'reconciliation_required'], 'n'),
+  };
+};
+
 const getUserOverview = asyncHandler(async (req, res) => {
   const id = parseObjectId(req.params.id);
   if (!id) return sendError(res, 'Ugyldig bruker-ID.', 400);
@@ -155,9 +170,7 @@ const getUserOverview = asyncHandler(async (req, res) => {
       active: 0,
       paidValue: 0,
     };
-  const transferred = payoutTotals.filter((p) =>
-    ['transferred', 'released_internal', 'processing'].includes(p._id)
-  );
+  const payoutStats = payoutSums(payoutTotals);
   const now = Date.now();
 
   return sendSuccess(res, {
@@ -171,10 +184,7 @@ const getUserOverview = asyncHandler(async (req, res) => {
       averageRating: user.averageRating ?? null,
       chats: chatCount,
       disputes: disputes.length,
-      paidOut: transferred.reduce((a, p) => a + p.net, 0),
-      payoutsFailed: payoutTotals
-        .filter((p) => ['failed', 'reconciliation_required'].includes(p._id))
-        .reduce((a, p) => a + p.n, 0),
+      ...payoutStats,
       activeSessions: sessions.filter((s) => !s.expiresAt || new Date(s.expiresAt).getTime() > now)
         .length,
     },
@@ -222,4 +232,4 @@ const getUserOverview = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { getUserOverview };
+module.exports = { getUserOverview, payoutSums };

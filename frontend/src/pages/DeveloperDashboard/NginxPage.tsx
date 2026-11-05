@@ -22,9 +22,9 @@ import type { NginxPath } from '../../api/developer';
  */
 export default function NginxPage() {
   const { data, isLoading, isFetching, error, refetch } = useDevNginx();
-  const st = data?.status.available ? data.status : null;
-  const log = data?.accessLog.available ? data.accessLog : null;
-  const dir = data?.cacheDir.available ? data.cacheDir : null;
+  const st = data?.status?.available ? data.status : null;
+  const log = data?.accessLog?.available ? data.accessLog : null;
+  const dir = data?.cacheDir?.available ? data.cacheDir : null;
   const five = log?.statuses['5xx'] ?? 0;
 
   return (
@@ -90,13 +90,13 @@ export default function NginxPage() {
       {data && !st && (
         <NotConfigured
           title="Live counters unavailable"
-          description={(data.status as { reason: string }).reason}
+          description={(data.status as { reason: string } | undefined)?.reason ?? ''}
         />
       )}
       {data && !log && (
         <NotConfigured
           title="Access log unavailable"
-          description={(data.accessLog as { reason: string }).reason}
+          description={(data.accessLog as { reason: string } | undefined)?.reason ?? ''}
         />
       )}
 
@@ -142,7 +142,7 @@ export default function NginxPage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Section title="Processes" description="nginx master and workers on this host.">
-          {data?.processes.available ? (
+          {data?.processes?.available ? (
             <DataTable
               rows={data.processes.list}
               rowKey={(p) => String(p.pid)}
@@ -154,7 +154,7 @@ export default function NginxPage() {
               ]}
             />
           ) : (
-            <p className="text-sm text-muted-foreground">{data?.processes.reason ?? '—'}</p>
+            <p className="text-sm text-muted-foreground">{data?.processes?.reason ?? '—'}</p>
           )}
         </Section>
         <Section
@@ -163,9 +163,9 @@ export default function NginxPage() {
         >
           <KeyValue
             items={[
-              ['Live counters (NGINX_STATUS_URL)', <Mono>{data?.config.statusUrl ?? '—'}</Mono>],
-              ['Access log (NGINX_ACCESS_LOG)', <Mono>{data?.config.accessLog ?? '—'}</Mono>],
-              ['Cache folder (NGINX_CACHE_DIR)', <Mono>{data?.config.cacheDir ?? '—'}</Mono>],
+              ['Live counters (NGINX_STATUS_URL)', <Mono>{data?.config?.statusUrl ?? '—'}</Mono>],
+              ['Access log (NGINX_ACCESS_LOG)', <Mono>{data?.config?.accessLog ?? '—'}</Mono>],
+              ['Cache folder (NGINX_CACHE_DIR)', <Mono>{data?.config?.cacheDir ?? '—'}</Mono>],
               [
                 'Config files',
                 <Mono>deploy/nginx/*.conf · check: deploy/nginx/check-cache.sh</Mono>,

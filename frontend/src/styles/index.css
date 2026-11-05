@@ -278,6 +278,39 @@ body.dev-theme {
   }
 }
 
+/* The full-page loader's sprout (components/Loading/PageLoader.tsx), as the app's BootSplash:
+   the stem grows from its foot, the leaves pop (back-out easing), then it sways ±3°. */
+@keyframes jb-sprout-stem {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+@keyframes jb-sprout-leaf {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes jb-sprout-sway {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(3deg);
+  }
+  75% {
+    transform: rotate(-3deg);
+  }
+}
+
 /* The sweep across a skeleton block. `translateX` only — animating a gradient's
    position repaints the whole element on every frame. */
 @keyframes jb-shimmer {

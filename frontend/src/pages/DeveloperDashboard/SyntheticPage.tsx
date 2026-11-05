@@ -63,7 +63,7 @@ const uptimeTone = (v: number | null) =>
 
 /** Status-page strip: one bar per run, height = latency, red = failed. */
 function RunStrip({ series }: { series: SyntheticCheckRow['series'] }) {
-  const runs = series.slice(-60);
+  const runs = (series ?? []).slice(-60);
   const max = Math.max(1, ...runs.map((r) => r.ms || 0));
   if (!runs.length)
     return (
@@ -239,7 +239,7 @@ function RunsSheet({ check, onClose }: { check: SyntheticCheckRow | null; onClos
         </SheetHeader>
         <div className="space-y-2 overflow-y-auto p-4">
           {isLoading && <Skeleton className="h-40 w-full" />}
-          {data?.runs.map((r) => (
+          {data?.runs?.map((r) => (
             <div
               key={r._id}
               className={cn('rounded-md border p-3', !r.ok && 'border-red-200 bg-red-50/50')}
@@ -271,7 +271,7 @@ function RunsSheet({ check, onClose }: { check: SyntheticCheckRow | null; onClos
               {r.error && <p className="mt-1 text-xs text-red-700">{r.error}</p>}
             </div>
           ))}
-          {data && !data.runs.length && <EmptyState title="No runs yet" />}
+          {data && !data.runs?.length && <EmptyState title="No runs yet" />}
         </div>
       </SheetContent>
     </Sheet>
@@ -321,7 +321,7 @@ export default function SyntheticPage() {
       toast.error(errMessage(e));
     }
   };
-  const customOf = (key: string) => data?.customs.find((c) => c._id === key) || null;
+  const customOf = (key: string) => data?.customs?.find((c) => c._id === key) || null;
 
   return (
     <div className="space-y-5">
@@ -375,17 +375,19 @@ export default function SyntheticPage() {
           label="Interval"
           icon={<Clock />}
           loading={isLoading}
-          value={data ? `${data.config.intervalMin} min` : '—'}
-          hint={data?.config.enabled ? 'runs on this server' : 'disabled (ENABLE_SYNTHETIC=false)'}
+          value={data?.config ? `${data.config.intervalMin} min` : '—'}
+          hint={data?.config?.enabled ? 'runs on this server' : 'disabled (ENABLE_SYNTHETIC=false)'}
         />
         <StatCard
           label="Login journey"
           icon={<CircleCheck />}
-          tone={data?.config.loginJourney ? 'success' : 'warning'}
+          tone={data?.config?.loginJourney ? 'success' : 'warning'}
           loading={isLoading}
-          value={data?.config.loginJourney ? 'Enabled' : 'Not configured'}
+          value={data?.config?.loginJourney ? 'Enabled' : 'Not configured'}
           hint={
-            data?.config.loginJourney ? 'synthetic account' : 'set SYNTHETIC_USER_EMAIL / _PASSWORD'
+            data?.config?.loginJourney
+              ? 'synthetic account'
+              : 'set SYNTHETIC_USER_EMAIL / _PASSWORD'
           }
         />
       </div>
@@ -393,7 +395,7 @@ export default function SyntheticPage() {
       <Section
         title="Checks"
         description={
-          data
+          data?.config
             ? `API ${data.config.api}${data.config.web ? ` · web ${data.config.web}` : ''}. Set SYNTHETIC_API_URL to the public https URL to also cover nginx and TLS. Click a check for its run history.`
             : undefined
         }
@@ -527,7 +529,7 @@ export default function SyntheticPage() {
             })}
           </div>
         )}
-        {data?.customs.some((c) => !c.enabled) && (
+        {data?.customs?.some((c) => !c.enabled) && (
           <p className="mt-3 text-xs text-muted-foreground">
             Disabled custom checks:{' '}
             {data.customs
@@ -554,7 +556,7 @@ export default function SyntheticPage() {
         initial={editing}
         open={dialog}
         onOpenChange={setDialog}
-        hosts={data?.config.allowedHosts || []}
+        hosts={data?.config?.allowedHosts || []}
       />
     </div>
   );
