@@ -3052,6 +3052,187 @@ export interface SettingsInfo {
 }
 
 // ─── Calls ───────────────────────────────────────────────────────────────────
+// ─── Security Intelligence (installations, IP intelligence, risk alerts) ─────
+export type RiskBand = 'low' | 'medium' | 'high' | 'critical';
+export type AlertStatus = 'open' | 'investigating' | 'resolved' | 'false_positive' | 'escalated';
+export type AlertConfidence = 'confirmed' | 'likely' | 'possible';
+export type NetworkClass =
+  'tor' | 'vpn_proxy' | 'hosting' | 'mobile' | 'residential' | 'private' | 'unknown';
+export interface IpNetworkIntel {
+  class: NetworkClass;
+  country?: string | null;
+  countryCode?: string | null;
+  asn?: string | null;
+  isp?: string | null;
+  confidence: 'high' | 'medium' | 'low';
+  sources: string[];
+  checkedAt: string | null;
+}
+export interface SecurityAlertRow {
+  _id: string;
+  ruleId: string;
+  title: string;
+  summary: string | null;
+  severity: RiskBand;
+  confidence: AlertConfidence;
+  status: AlertStatus;
+  deviceKey: string | null;
+  device: string | null;
+  userIds: string[];
+  ips: string[];
+  count: number;
+  firstSeen: string;
+  lastSeen: string;
+}
+export interface SecurityUserRef {
+  _id: string;
+  name?: string | null;
+  email?: string | null;
+  role?: string;
+  deleted?: boolean;
+}
+export interface SecurityDeviceRow {
+  deviceKey: string;
+  device: string;
+  platform: 'web' | 'app';
+  uaFamily: string | null;
+  accounts: number;
+  ips: number;
+  maskedIps: number;
+  countries: string[];
+  riskScore: number | null;
+  riskBand: RiskBand | null;
+  firstSeen: string;
+  lastSeen: string;
+}
+export interface SecurityOverview {
+  range: RangeInfo;
+  totals: {
+    openAlerts: number;
+    bySeverity: Partial<Record<RiskBand, number>>;
+    activeDevices: number;
+    riskyDevices: number;
+    maskedObservations: number;
+    multiIpDevices: number;
+    multiAccountDevices: number;
+    newIpEvents: number;
+  };
+  byRule: Record<string, number>;
+  trend: { t: string; low: number; medium: number; high: number; critical: number }[];
+  recentAlerts: SecurityAlertRow[];
+  riskyDevices: Pick<
+    SecurityDeviceRow,
+    | 'deviceKey'
+    | 'device'
+    | 'platform'
+    | 'uaFamily'
+    | 'riskScore'
+    | 'riskBand'
+    | 'accounts'
+    | 'lastSeen'
+  >[];
+}
+export interface DeviceObservationRow {
+  ip: string;
+  ipPrefix: string | null;
+  userId: string | null;
+  firstSeen: string;
+  lastSeen: string;
+  hits: number;
+  events: Record<string, number>;
+  network: IpNetworkIntel | null;
+}
+export interface SecIntelEventRow {
+  _id: string;
+  at: string;
+  type: string;
+  ip: string | null;
+  method?: string | null;
+  route?: string | null;
+  status?: number | null;
+  code?: string | null;
+  userId?: string | null;
+  email?: string | null;
+  deviceKey?: string | null;
+  device?: string | null;
+}
+export interface SecurityDeviceDetail {
+  device: {
+    deviceKey: string;
+    device: string;
+    platform: 'web' | 'app';
+    uaFamily: string | null;
+    firstSeen: string;
+    lastSeen: string;
+    riskScore: number | null;
+    riskBand: RiskBand | null;
+    identity: string;
+  };
+  score: {
+    score: number;
+    band: RiskBand;
+    rules: number;
+    reasons: string[];
+    recommendation: string;
+  };
+  accounts: SecurityUserRef[];
+  observations: DeviceObservationRow[];
+  alerts: SecurityAlertRow[];
+  events: SecIntelEventRow[];
+  sessions: {
+    _id: string;
+    userId: string;
+    ip: string;
+    location?: string;
+    device?: string;
+    browser?: string;
+    os?: string;
+    deviceName?: string | null;
+    lastUsed?: string;
+    createdAt: string;
+    expiresAt?: string;
+  }[];
+  users: Record<string, SecurityUserRef>;
+}
+export interface SecurityAlertDetail {
+  alert: SecurityAlertRow & {
+    weight: number;
+    evidence: { label: string; at: string | null; ref?: { type?: string; id?: string } }[];
+    notes: { at: string; by: string | null; text: string; status: string | null }[];
+    closedAt: string | null;
+  };
+  device: Pick<
+    SecurityDeviceRow,
+    'deviceKey' | 'device' | 'platform' | 'uaFamily' | 'riskScore' | 'riskBand'
+  > | null;
+  recommendation: string;
+  siblings: SecurityAlertRow[];
+  fraudCases: { userId: string; status: string; reviewedAt: string | null }[];
+  users: Record<string, SecurityUserRef>;
+}
+export interface SecurityAnalytics {
+  range: RangeInfo;
+  alerts: { t: string; low: number; medium: number; high: number; critical: number }[];
+  events: Record<string, number | string>[];
+  masked: { t: string; vpn_proxy: number; tor: number }[];
+  byRule: { ruleId: string; n: number; falsePositive: number }[];
+  resolution: { closed: number; falsePositive: number; medianHours: number | null };
+}
+export interface SecurityIpIntel {
+  ip: string;
+  network: IpNetworkIntel;
+  devices: (Pick<
+    SecurityDeviceRow,
+    'deviceKey' | 'device' | 'platform' | 'uaFamily' | 'accounts' | 'riskBand'
+  > & {
+    hits: number;
+    firstSeen: string;
+    lastSeen: string;
+  })[];
+  alerts: SecurityAlertRow[];
+}
+export type RiskConfig = Record<string, Record<string, number>>;
+
 export const devApi = {
   overview: (q: Query) => get<Overview>('/overview', q),
   apiMetrics: (q: Query) => get<ApiMetrics>('/api-metrics', q),
@@ -3146,6 +3327,29 @@ export const devApi = {
     get<ContractDetail>('/contracts/endpoint', { method, route, status }),
   ackContract: (id: string, note: string) =>
     mainLink.post(`/api/developer/contracts/events/${id}/ack`, { note }),
+  securityOverview: (q: Query) => get<SecurityOverview>('/security-intel/overview', q),
+  securityDevices: (q: Query) => get<{ rows: SecurityDeviceRow[] }>('/security-intel/devices', q),
+  securityDevice: (key: string) => get<SecurityDeviceDetail>(`/security-intel/devices/${key}`),
+  securityEvents: (q: Query) =>
+    get<{ types: string[]; byType: Record<string, number>; rows: SecIntelEventRow[] }>(
+      '/security-intel/events',
+      q
+    ),
+  securityAlerts: (q: Query) =>
+    get<{ rules: string[]; statuses: AlertStatus[]; rows: SecurityAlertRow[] }>(
+      '/security-intel/alerts',
+      q
+    ),
+  securityAlert: (id: string) => get<SecurityAlertDetail>(`/security-intel/alerts/${id}`),
+  updateSecurityAlert: (id: string, status: AlertStatus, note: string) =>
+    mainLink.patch(`/api/developer/security-intel/alerts/${id}`, { status, note }),
+  escalateSecurityAlert: (id: string, note: string) =>
+    mainLink.post(`/api/developer/security-intel/alerts/${id}/escalate`, { note }),
+  securityAnalytics: (q: Query) => get<SecurityAnalytics>('/security-intel/analytics', q),
+  securityIp: (ip: string) => get<SecurityIpIntel>(`/security-intel/ips/${encodeURIComponent(ip)}`),
+  securityConfig: () => get<{ config: RiskConfig; defaults: RiskConfig }>('/security-intel/config'),
+  updateSecurityConfig: (config: RiskConfig) =>
+    mainLink.put('/api/developer/security-intel/config', config),
   fraud: (refresh?: boolean) => get<FraudInfo>('/fraud', refresh ? { refresh: 'true' } : undefined),
   fraudCase: (userId: string) => get<FraudCaseDetail>(`/fraud/${userId}`),
   updateFraudCase: (userId: string, status: FraudStatus, note: string) =>

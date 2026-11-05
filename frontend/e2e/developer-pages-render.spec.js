@@ -71,6 +71,12 @@ const ROUTES = [
   'nginx',
   'pm2',
   'caching',
+  'security-intel',
+  'security-intel/devices',
+  'security-intel/devices/cccccccccccccccccccccccccccccccc',
+  'security-intel/alerts',
+  'security-intel/events',
+  'security-intel/analytics',
 ];
 const CHUNKS = 4;
 test.describe.configure({ timeout: 600_000 });
