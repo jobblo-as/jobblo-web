@@ -48,7 +48,6 @@ const PhoneView = settingsView('PhoneView');
 const AddressesView = settingsView('AddressesView');
 const PasswordView = settingsView('PasswordView');
 const DeleteAccountView = settingsView('DeleteAccountView');
-const LocationView = settingsView('LocationView');
 const UpcomingPreviewView = settingsView('UpcomingPreviewView');
 const VisibilityView = settingsView('VisibilityView');
 const BlockedUsersView = settingsView('BlockedUsersView');
@@ -372,7 +371,6 @@ export const routes: RouteObject[] = [
               { path: 'payout', element: withSuspense(PayoutSettingsView) },
               { path: 'password', element: withSuspense(PasswordView) },
               { path: 'delete-account', element: withSuspense(DeleteAccountView) },
-              { path: 'location', element: withSuspense(LocationView) },
               { path: 'upcoming', element: withSuspense(UpcomingPreviewView) },
               { path: 'visibility', element: withSuspense(VisibilityView) },
               { path: 'blocked', element: withSuspense(BlockedUsersView) },

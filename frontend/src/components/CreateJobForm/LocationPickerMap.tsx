@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Map, Marker, useMap } from '@vis.gl/react-google-maps';
+import { Map, Marker, useMap, useMapsLibrary } from '@vis.gl/react-google-maps';
 import { Locate, Loader2, MapPin, Crosshair } from 'lucide-react';
 import { reverseGeocode, type ReverseGeocodeResult } from '../../utils/reverseGeocode';
 
@@ -11,7 +11,9 @@ const DEFAULT_LOCATION = { lat: 59.9127, lng: 10.7461 }; // Oslo
 interface LocationPickerMapProps {
   coordinates?: [number, number] | null;
   onCoordinatesChange?: (coords: [number, number]) => void;
-  onReverseGeocode?: (result: ReverseGeocodeResult & { manual?: boolean }) => void;
+  onReverseGeocode?: (
+    result: ReverseGeocodeResult & { manual?: boolean; placeName?: string }
+  ) => void;
 }
 
 export function LocationPickerMap({
@@ -27,21 +29,49 @@ export function LocationPickerMap({
   const [panTarget, setPanTarget] = useState<{ lat: number; lng: number } | null>(null);
   const [panVersion, setPanVersion] = useState(0);
 
+  // A click on a place's icon (a school, a shop) brings its placeId: its name comes from Places,
+  // since the geocoder only knows the nearest street. Needs the Places API on the key; without
+  // it the name is simply left out.
+  const places = useMapsLibrary('places');
+  const placeName = useCallback(
+    async (placeId?: string) => {
+      if (!placeId || !places) return '';
+      try {
+        const place = new places.Place({ id: placeId });
+        await place.fetchFields({ fields: ['displayName'] });
+        return place.displayName || '';
+      } catch {
+        return '';
+      }
+    },
+    [places]
+  );
+
   const setLocation = useCallback(
-    (lat: number, lng: number, { geocode = true, pan = false, manual = false } = {}) => {
+    (
+      lat: number,
+      lng: number,
+      {
+        geocode = true,
+        pan = false,
+        manual = false,
+        placeId,
+      }: { geocode?: boolean; pan?: boolean; manual?: boolean; placeId?: string } = {}
+    ) => {
       setPosition({ lat, lng });
       onCoordinatesChange?.([lat, lng]);
       if (pan) {
         setPanTarget({ lat, lng });
         setPanVersion((v) => v + 1);
       }
-      if (geocode) {
-        reverseGeocode(lat, lng).then((result) => {
-          if (result && onReverseGeocode) onReverseGeocode({ ...result, manual });
+      if (geocode && onReverseGeocode) {
+        Promise.all([reverseGeocode(lat, lng), placeName(placeId)]).then(([result, name]) => {
+          if (result || name)
+            onReverseGeocode({ address: '', city: '', ...result, placeName: name, manual });
         });
       }
     },
-    [onCoordinatesChange, onReverseGeocode]
+    [onCoordinatesChange, onReverseGeocode, placeName]
   );
 
   const getCurrentLocation = useCallback(
@@ -113,7 +143,9 @@ export function LocationPickerMap({
           mapId="jobblo-map"
           onClick={(e) => {
             const latLng = e.detail.latLng;
-            if (latLng) setLocation(latLng.lat, latLng.lng, { manual: true });
+            const placeId = e.detail.placeId ?? undefined;
+            if (placeId) e.stop(); // our pin and its name, not Google's own info window
+            if (latLng) setLocation(latLng.lat, latLng.lng, { manual: true, placeId });
           }}
         >
           {position && (

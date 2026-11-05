@@ -8,7 +8,6 @@ export * from './PhoneView';
 export * from './AddressesView';
 export * from './PasswordView';
 export * from './DeleteAccountView';
-export * from './LocationView';
 export * from './UpcomingPreviewView';
 export * from './VisibilityView';
 export * from './BlockedUsersView';

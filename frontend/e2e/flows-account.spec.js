@@ -28,6 +28,99 @@ test('profile edit: only the changed field is sent', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
+test('addresses: the land is saved by itself with a typed address, no Land field', async ({
+  page,
+}) => {
+  const errors = watchErrors(page);
+  const { calls } = await mockApi(page, {
+    as: { ...USERS.user, address: '', postNumber: '', postSted: '', country: '' },
+    routes: {
+      [`PUT /api/users/${USERS.user._id}`]: ({ body, state }) => {
+        Object.assign(state.session, body);
+        return state.session;
+      },
+    },
+  });
+  await page.goto('/settings/addresses');
+  // The four fields: Adresse (search), Gateadresse, Postnr., Sted — and no Land.
+  await expect(page.locator('#address-search')).toBeVisible();
+  await expect(page.getByLabel('Gateadresse')).toBeVisible();
+  await expect(page.getByLabel('Land')).toHaveCount(0);
+
+  await page.getByLabel('Postnr.').fill('0150');
+  await page.getByLabel('Sted').fill('Oslo');
+  await page.getByRole('button', { name: 'Lagre adresser' }).click();
+  await expect
+    .poll(() => calls.find((c) => c.method === 'PUT')?.body)
+    .toEqual({ postNumber: '0150', postSted: 'Oslo', country: 'Norge' });
+  expect(errors).toEqual([]);
+
+  // The separate "Lokasjon" page is gone.
+  await expect(page.getByRole('link', { name: 'Lokasjon' })).toHaveCount(0);
+});
+
+test('addresses: the street is searched in Kartverket and a suggestion fills the rest', async ({
+  page,
+}) => {
+  const { calls } = await mockApi(page, {
+    as: { ...USERS.user, address: '', postNumber: '', postSted: '', country: '' },
+    routes: {
+      [`PUT /api/users/${USERS.user._id}`]: ({ body, state }) => {
+        Object.assign(state.session, body);
+        return state.session;
+      },
+    },
+  });
+  await page.route('https://ws.geonorge.no/**', (route) =>
+    route.fulfill({
+      json: {
+        adresser: [
+          {
+            adressetekst: 'Borggata 8',
+            postnummer: '0650',
+            poststed: 'OSLO',
+            kommunenummer: '0301',
+            kommunenavn: 'OSLO',
+            representasjonspunkt: { lat: 59.909, lon: 10.778 },
+          },
+        ],
+      },
+    })
+  );
+  await page.goto('/settings/addresses');
+  await page.locator('#address-search').fill('Borg');
+  await page.getByRole('option').getByText('Borggata 8').click();
+  await expect(page.getByLabel('Gateadresse')).toHaveValue('Borggata 8');
+  await expect(page.getByLabel('Postnr.')).toHaveValue('0650');
+  await expect(page.getByLabel('Sted')).toHaveValue('Oslo');
+  await expect(page.getByText('Adressen er funnet', { exact: true })).toBeVisible();
+  // The search shows the whole address, Gateadresse only the street — not the same text twice.
+  await expect(page.locator('#address-search')).toHaveValue('Borggata 8, 0650 Oslo');
+  // Not offered its own address back as "Mine adresser".
+  await page.locator('#address-search').fill('Borggata');
+  await expect(page.getByRole('option').filter({ hasText: 'Mine adresser' })).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Lagre adresser' }).click();
+  await expect
+    .poll(() => calls.find((c) => c.method === 'PUT')?.body)
+    .toEqual({ address: 'Borggata 8', postNumber: '0650', postSted: 'Oslo', country: 'Norge' });
+});
+
+test('addresses: a saved address is looked up once for the map pin', async ({ page }) => {
+  await mockApi(page, {
+    as: { ...USERS.user, address: 'Rolf Hofmos gate 30', postNumber: '0655', postSted: 'Oslo' },
+  });
+  const searched = [];
+  await page.route('https://ws.geonorge.no/**', (route) => {
+    const q = new URL(route.request().url()).searchParams;
+    searched.push([q.get('sok'), q.get('postnummer')]);
+    return route.fulfill({ json: { adresser: [] } });
+  });
+  await page.goto('/settings/addresses');
+  await expect(page.locator('#address-search')).toHaveValue('Rolf Hofmos gate 30, 0655 Oslo');
+  await expect.poll(() => searched).toContainEqual(['Rolf Hofmos gate 30', '0655']);
+});
+
 test('notifications: listed, and "mark all as read" clears the unread count', async ({ page }) => {
   const errors = watchErrors(page);
   const items = [

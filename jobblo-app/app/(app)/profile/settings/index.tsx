@@ -14,7 +14,6 @@ import {
   Info,
   Bug,
   KeyRound,
-  MapPin,
   Monitor,
   Moon,
   Smartphone,
@@ -174,12 +173,6 @@ const GROUPS: { title: string; rows: Row[] }[] = [
         description: 'FAQ, e-post og saksregistrering',
         icon: HelpCircle,
         href: '/profile/support',
-      },
-      {
-        label: 'Lokasjon',
-        description: 'Landet som vises på profilen din',
-        icon: MapPin,
-        href: '/profile/settings/location',
       },
       { label: 'Om Jobblo', icon: Info, href: '/profile/settings/about' },
       // Not a screen: opens the report sheet about the screen the user came from.

@@ -8,6 +8,8 @@ export interface ReverseGeocodeResult {
   county?: string;
   /** Kommune — administrative_area_level_2. */
   municipality?: string;
+  /** Land, in Norwegian ("Norge") — `country`. */
+  country?: string;
 }
 
 export const reverseGeocode = async (
@@ -48,6 +50,7 @@ export const reverseGeocode = async (
       // job was filed under one kommune while its coordinates sat in another.
       county: pick(['administrative_area_level_1']),
       municipality: pick(['administrative_area_level_2']) || pick(['locality']),
+      country: pick(['country']),
     };
   } catch {
     return null;
