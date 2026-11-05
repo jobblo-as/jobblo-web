@@ -50,7 +50,9 @@ function CommandDialog({
         className={cn('top-1/3 translate-y-0 overflow-hidden rounded-xl! p-0', className)}
         showCloseButton={showCloseButton}
       >
-        {children}
+        {/* cmdk's Input/List/Item read their store from <Command>: without it, opening the
+            palette (⌘K, both dashboards) crashed with "reading 'subscribe'". */}
+        <Command className="**:data-[slot=command-input-wrapper]:h-12">{children}</Command>
       </DialogContent>
     </Dialog>
   );
