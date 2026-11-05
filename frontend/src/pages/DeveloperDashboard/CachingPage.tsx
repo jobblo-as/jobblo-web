@@ -86,7 +86,7 @@ export default function CachingPage() {
       {data && !ng && (
         <NotConfigured
           title="nginx layer not visible"
-          description={(data.nginx as { reason?: string } | undefined)?.reason}
+          description={(data.nginx as { reason?: string } | undefined)?.reason ?? ''}
         />
       )}
       {ng && (

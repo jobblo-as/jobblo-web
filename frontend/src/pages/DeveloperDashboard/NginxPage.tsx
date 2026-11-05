@@ -90,13 +90,13 @@ export default function NginxPage() {
       {data && !st && (
         <NotConfigured
           title="Live counters unavailable"
-          description={(data.status as { reason: string } | undefined)?.reason}
+          description={(data.status as { reason: string } | undefined)?.reason ?? ''}
         />
       )}
       {data && !log && (
         <NotConfigured
           title="Access log unavailable"
-          description={(data.accessLog as { reason: string } | undefined)?.reason}
+          description={(data.accessLog as { reason: string } | undefined)?.reason ?? ''}
         />
       )}
 
