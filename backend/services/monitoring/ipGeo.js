@@ -62,4 +62,52 @@ async function geoFor(ips, { post = axios.post } = {}) {
   return out;
 }
 
-module.exports = { geoFor, isLocal };
+/**
+ * One IP's network, for the IP sheet: where, which ISP / organisation / AS, and whether it is a
+ * mobile network, a proxy or VPN, or a hosting (datacenter) address — what tells a phone on 4G
+ * from a script on a server. Same provider and free tier as geoFor, cached 24 h. Never throws.
+ */
+async function networkFor(ip, { get = axios.get } = {}) {
+  const empty = {
+    country: null,
+    countryCode: null,
+    city: null,
+    isp: null,
+    org: null,
+    as: null,
+    mobile: null,
+    proxy: null,
+    hosting: null,
+  };
+  if (!ip) return empty;
+  if (isLocal(ip)) return { ...empty, country: 'Local network' };
+  const hit = await cache.get(`ipnet:${ip}`);
+  if (hit) return hit;
+  try {
+    const { data: r } = await get(
+      `http://ip-api.com/json/${encodeURIComponent(ip)}?fields=status,country,countryCode,city,isp,org,as,mobile,proxy,hosting`,
+      { timeout: 2500 }
+    );
+    const net =
+      r?.status === 'success'
+        ? {
+            country: r.country || null,
+            countryCode: r.countryCode || null,
+            city: r.city || null,
+            isp: r.isp || null,
+            org: r.org || null,
+            as: r.as || null,
+            mobile: Boolean(r.mobile),
+            proxy: Boolean(r.proxy),
+            hosting: Boolean(r.hosting),
+          }
+        : empty;
+    await cache.set(`ipnet:${ip}`, net, net.country ? TTL_SEC : MISS_TTL_SEC);
+    return net;
+  } catch (err) {
+    console.error('[ip-geo] network lookup failed:', err.code || err.message);
+    return empty;
+  }
+}
+
+module.exports = { geoFor, networkFor, isLocal };

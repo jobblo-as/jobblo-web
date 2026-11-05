@@ -181,6 +181,7 @@ const DevTicketsPage = lazy(() => import('../pages/DeveloperDashboard/TicketsPag
 const DevDeploymentsPage = lazy(() => import('../pages/DeveloperDashboard/DeploymentsPage.tsx'));
 const DevIncidentsPage = lazy(() => import('../pages/DeveloperDashboard/IncidentsPage.tsx'));
 const DevReportsPage = lazy(() => import('../pages/DeveloperDashboard/ReportsPage.tsx'));
+const DevIpDetailPage = lazy(() => import('../pages/DeveloperDashboard/IpDetailPage.tsx'));
 const DevSettingsPage = lazy(() => import('../pages/DeveloperDashboard/SettingsPage.tsx'));
 const DevIpsPage = lazy(() => import('../pages/DeveloperDashboard/IpsPage.tsx'));
 const DevApprovalsPage = lazy(() => import('../pages/DeveloperDashboard/ApprovalsPage.tsx'));
@@ -551,6 +552,7 @@ export const routes: RouteObject[] = [
       { path: 'reports', element: withSuspense(DevReportsPage) },
       { path: 'settings', element: withSuspense(DevSettingsPage) },
       { path: 'ips', element: withSuspense(DevIpsPage) },
+      { path: 'ips/:ip', element: withSuspense(DevIpDetailPage) },
       { path: 'approvals', element: withSuspense(DevApprovalsPage) },
       { path: 'investigate', element: withSuspense(DevInvestigatePage) },
       { path: 'integrity', element: withSuspense(DevIntegrityPage) },
