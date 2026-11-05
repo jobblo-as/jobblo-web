@@ -1,14 +1,7 @@
 import React, { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AlertTriangle, ShieldAlert, Trash2 } from 'lucide-react-native';
-import {
-  KeyboardAvoidingView,
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../../../src/store/authStore';
@@ -81,10 +74,7 @@ export default function DeleteAccountScreen() {
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior="padding"
-      >
+      <KeyboardAvoidingView className="flex-1" behavior="padding">
         <ScrollView
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{ padding: 16, paddingBottom: 40 }}

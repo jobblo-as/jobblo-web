@@ -73,10 +73,7 @@ export default function MfaGate({ children }: { children: ReactNode }) {
 
   return (
     <SafeAreaView className="flex-1 bg-page">
-      <KeyboardAvoidingView
-        behavior="padding"
-        className="flex-1"
-      >
+      <KeyboardAvoidingView behavior="padding" className="flex-1">
         <ScrollView
           contentContainerClassName="flex-grow justify-center px-6 py-10"
           keyboardShouldPersistTaps="handled"

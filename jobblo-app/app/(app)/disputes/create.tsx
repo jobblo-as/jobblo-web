@@ -203,10 +203,7 @@ export default function CreateDisputeScreen() {
 
   return (
     <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
-      <KeyboardAvoidingView
-        className="flex-1"
-        behavior="padding"
-      >
+      <KeyboardAvoidingView className="flex-1" behavior="padding">
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ padding: 16, paddingBottom: 40 }}

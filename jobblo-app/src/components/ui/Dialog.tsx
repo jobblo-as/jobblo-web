@@ -33,10 +33,7 @@ export function Dialog({
         accessibilityLabel="Close dialog"
       >
         <Pressable onPress={() => undefined} className="w-full max-w-[420px]">
-          <KeyboardAvoidingView
-            behavior="padding"
-            className="w-full"
-          >
+          <KeyboardAvoidingView behavior="padding" className="w-full">
             <ScrollView
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}

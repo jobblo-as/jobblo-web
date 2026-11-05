@@ -415,10 +415,7 @@ export default function SeekerScreen() {
         </Pressable>
       </View>
 
-      <KeyboardAvoidingView
-        behavior="padding"
-        className="flex-1"
-      >
+      <KeyboardAvoidingView behavior="padding" className="flex-1">
         <ScrollView
           contentContainerStyle={{ padding: 16, paddingBottom: 48 }}
           keyboardShouldPersistTaps="handled"

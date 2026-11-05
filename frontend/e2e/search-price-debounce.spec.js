@@ -40,7 +40,10 @@ test('a filter tap waits too, shows loading, then sends one request', async ({ p
   await page.goto('/search/job/all');
   await expect(page.getByRole('heading', { name: 'Ingen oppdrag ute akkurat nå' })).toBeVisible();
 
-  await page.locator('aside').getByRole('switch', { name: /Vis kun hasteoppdrag/ }).click();
+  await page
+    .locator('aside')
+    .getByRole('switch', { name: /Vis kun hasteoppdrag/ })
+    .click();
   await expect(page.getByText('Henter oppdrag…')).toBeVisible();
   await page.waitForTimeout(1200);
   expect(urgent()).toEqual([]);
