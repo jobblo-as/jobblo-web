@@ -1,18 +1,15 @@
 import { useUserStore } from '../../stores/userStore.ts';
 import { type ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import { PageLoader } from '../Loading/PageLoader';
 
-/** Shown while the page-load bootstrap asks the server who is signed in. */
+/**
+ * Shown while the page-load bootstrap asks the server who is signed in. The same sprout
+ * loader as a lazy route (PageLoader), so a protected page shows one loader, not a plain
+ * "Laster …" line and then the sprout.
+ */
 export function AuthPending() {
-  return (
-    <div
-      role="status"
-      aria-live="polite"
-      className="flex min-h-[50vh] items-center justify-center text-sm text-gray-500"
-    >
-      Laster …
-    </div>
-  );
+  return <PageLoader />;
 }
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
