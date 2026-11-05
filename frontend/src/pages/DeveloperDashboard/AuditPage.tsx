@@ -103,7 +103,7 @@ export default function AuditPage() {
               variant="outline"
               size="sm"
               className="bg-card"
-              disabled={!data?.logs.length}
+              disabled={!data?.logs?.length}
               onClick={() =>
                 downloadCsv(
                   `audit-${f.range}.csv`,

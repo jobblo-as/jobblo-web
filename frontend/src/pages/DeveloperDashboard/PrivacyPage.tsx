@@ -96,8 +96,8 @@ export default function PrivacyPage() {
   const { data: me } = useDevMe();
   const isSuperAdmin = me?.access === 'superAdmin';
   const r = data?.retention || [];
-  const dirty = data?.deletions.filter((d) => !d.clean) || [];
-  const openRequests = data?.requests.filter((q) => q.daysLeft !== null) || [];
+  const dirty = data?.deletions?.filter((d) => !d.clean) || [];
+  const openRequests = data?.requests?.filter((q) => q.daysLeft !== null) || [];
 
   const retentionCols: Column<PrivacyInfo['retention'][number]>[] = [
     { key: 's', header: '', cell: (x) => STATE_ICON[x.state] },
@@ -277,7 +277,7 @@ export default function PrivacyPage() {
           loading={isLoading}
           tone={dirty.length ? 'danger' : 'success'}
           value={num(data ? dirty.length : undefined)}
-          hint={data ? `of ${data.deletions.length} deleted accounts` : undefined}
+          hint={data ? `of ${data.deletions?.length} deleted accounts` : undefined}
         />
         <StatCard
           label="Open requests"
@@ -301,15 +301,15 @@ export default function PrivacyPage() {
           label="On current terms"
           icon={<FileCheck2 />}
           loading={isLoading}
-          tone={data && data.consent.onCurrent < data.consent.active ? 'warning' : 'success'}
-          value={data ? `${data.consent.onCurrent} / ${data.consent.active}` : '—'}
-          hint={data ? `version ${data.consent.currentVersion}` : undefined}
+          tone={data && data.consent?.onCurrent < data.consent?.active ? 'warning' : 'success'}
+          value={data ? `${data.consent?.onCurrent} / ${data.consent?.active}` : '—'}
+          hint={data ? `version ${data.consent?.currentVersion}` : undefined}
         />
         <StatCard
           label="Newsletter subscribers"
           icon={<CheckCircle2 />}
           loading={isLoading}
-          value={num(data?.consent.newsletterSubscribers)}
+          value={num(data?.consent?.newsletterSubscribers)}
           hint="opted in"
         />
       </div>
@@ -354,9 +354,9 @@ export default function PrivacyPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Section title="Consent" description={data?.consent.cookieConsent}>
+        <Section title="Consent" description={data?.consent?.cookieConsent}>
           <ul className="divide-y text-sm">
-            {data?.consent.versions.map((v) => (
+            {data?.consent?.versions?.map((v) => (
               <li key={v.version || 'none'} className="flex items-center justify-between py-2">
                 <span>
                   {v.version ? `Terms ${v.version}` : 'Never accepted any terms version'}

@@ -183,7 +183,7 @@ export default function WebhooksPage() {
         <Section title="Deliveries over time" className="lg:col-span-2">
           <TimeSeriesChart
             data={data?.series}
-            bucketMs={data?.range.bucketMs}
+            bucketMs={data?.range?.bucketMs}
             variant="bar"
             height={180}
             series={[

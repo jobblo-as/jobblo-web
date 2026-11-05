@@ -145,7 +145,7 @@ function ErrorSheet({ id, onClose }: { id: string | null; onClose: () => void })
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value={UNASSIGNED}>Unassigned</SelectItem>
-                    {devs?.developers.map((d) => (
+                    {devs?.developers?.map((d) => (
                       <SelectItem key={d._id} value={d._id}>
                         {d.name}
                       </SelectItem>
@@ -160,9 +160,9 @@ function ErrorSheet({ id, onClose }: { id: string | null; onClose: () => void })
                 <TabsTrigger value="details">Details</TabsTrigger>
                 <TabsTrigger value="stack">Stack trace</TabsTrigger>
                 <TabsTrigger value="occurrences">
-                  Occurrences ({data.occurrences.length})
+                  Occurrences ({data.occurrences?.length ?? 0})
                 </TabsTrigger>
-                <TabsTrigger value="notes">Notes ({data.notes.length})</TabsTrigger>
+                <TabsTrigger value="notes">Notes ({data.notes?.length ?? 0})</TabsTrigger>
               </TabsList>
 
               <TabsContent value="details" className="space-y-4 pt-3">
@@ -235,7 +235,7 @@ function ErrorSheet({ id, onClose }: { id: string | null; onClose: () => void })
 
               <TabsContent value="occurrences" className="pt-3">
                 <ul className="divide-y rounded-md border text-sm">
-                  {data.occurrences.map((o) => (
+                  {data.occurrences?.map((o) => (
                     <li key={o._id} className="flex items-center justify-between gap-3 px-3 py-2">
                       <Mono>{o.requestId || o.referenceId}</Mono>
                       <span className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -266,7 +266,7 @@ function ErrorSheet({ id, onClose }: { id: string | null; onClose: () => void })
                   </Button>
                 </div>
                 <Separator />
-                {data.notes.length ? (
+                {data.notes?.length ? (
                   <ol className="space-y-3">
                     {[...data.notes].reverse().map((n, i) => (
                       <li key={i} className="rounded-md border bg-card p-3 text-sm">
@@ -383,7 +383,7 @@ export default function ErrorsPage() {
               variant="outline"
               size="sm"
               className="bg-card"
-              disabled={!data?.groups.length}
+              disabled={!data?.groups?.length}
               onClick={() =>
                 downloadCsv(
                   `errors-${f.range}.csv`,

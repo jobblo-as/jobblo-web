@@ -37,9 +37,9 @@ export default function SafePayPage() {
   const s = data?.summary;
   const open = (orderId: string) => navigate(`/developer/jobs?id=${orderId}`);
   const funded =
-    (s?.byStatus.payment_received || 0) +
-    (s?.byStatus.in_progress || 0) +
-    (s?.byStatus.waiting_connect || 0);
+    (s?.byStatus?.payment_received || 0) +
+    (s?.byStatus?.in_progress || 0) +
+    (s?.byStatus?.waiting_connect || 0);
   const critical = (data?.stuck || []).filter((x) =>
     x.issues.some((i) => i.severity === 'critical')
   ).length;
@@ -165,7 +165,7 @@ export default function SafePayPage() {
               variant="outline"
               size="sm"
               className="bg-card"
-              disabled={!data?.stuck.length}
+              disabled={!data?.stuck?.length}
               onClick={() =>
                 downloadCsv(
                   'safepay-stuck.csv',
@@ -221,14 +221,14 @@ export default function SafePayPage() {
           icon={<Undo2 />}
           loading={isLoading}
           value={money(s?.amounts?.refunded)}
-          hint={`${num(s?.byStatus.refunded)} refunded jobs`}
+          hint={`${num(s?.byStatus?.refunded)} refunded jobs`}
         />
         <StatCard
           label="Stuck / inconsistent"
           icon={<AlertTriangle />}
-          tone={critical ? 'danger' : data?.stuck.length ? 'warning' : 'success'}
+          tone={critical ? 'danger' : data?.stuck?.length ? 'warning' : 'success'}
           loading={isLoading}
-          value={num(data?.stuck.length)}
+          value={num(data?.stuck?.length)}
           hint={`${critical} critical`}
         />
       </div>
@@ -256,7 +256,7 @@ export default function SafePayPage() {
         title="Stuck & inconsistent transactions"
         description={
           data
-            ? `Same rules as the scheduler: review auto-release after ${data.rules.autoReleaseDays}d, abandoned checkout after ${data.rules.abandonedOrderHours}h, 5-min payout lock lease`
+            ? `Same rules as the scheduler: review auto-release after ${data.rules?.autoReleaseDays ?? '–'}d, abandoned checkout after ${data.rules?.abandonedOrderHours ?? '–'}h, 5-min payout lock lease`
             : undefined
         }
       >

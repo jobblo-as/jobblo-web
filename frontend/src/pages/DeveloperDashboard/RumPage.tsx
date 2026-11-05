@@ -103,7 +103,7 @@ export default function RumPage() {
       align: 'right' as const,
       cell: (p: RumInfo['pages'][number]) => {
         const v = p.vitals[metric]?.p75;
-        const r = data?.metrics.find((x) => x.metric === metric);
+        const r = data?.metrics?.find((x) => x.metric === metric);
         const rating: VitalRating | null =
           v === undefined || !r
             ? null
@@ -236,13 +236,13 @@ export default function RumPage() {
           label="Passing vitals"
           icon={<Gauge />}
           tone={
-            data && data.metrics.filter((m) => m.rating && m.rating !== 'good').length
+            data?.metrics?.filter((m) => m.rating && m.rating !== 'good').length
               ? 'warning'
               : 'success'
           }
           loading={isLoading}
           value={
-            data
+            data?.metrics
               ? `${data.metrics.filter((m) => m.rating === 'good').length} / ${data.metrics.filter((m) => m.rating).length}`
               : '—'
           }
@@ -258,7 +258,7 @@ export default function RumPage() {
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
-            {data?.metrics.map((m) => (
+            {data?.metrics?.map((m) => (
               <VitalCard key={m.metric} m={m} />
             ))}
           </div>

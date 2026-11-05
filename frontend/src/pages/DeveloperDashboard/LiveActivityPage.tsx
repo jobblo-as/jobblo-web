@@ -52,9 +52,9 @@ export default function LiveActivityPage() {
         ...s.slice(-119),
         {
           t: dataUpdatedAt,
-          rps: data.traffic.rps,
-          active: data.traffic.activeRequests,
-          p95: data.traffic.p95LastMin,
+          rps: data.traffic?.rps ?? 0,
+          active: data.traffic?.activeRequests ?? 0,
+          p95: data.traffic?.p95LastMin ?? 0,
         },
       ]);
   }, [dataUpdatedAt]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -82,14 +82,14 @@ export default function LiveActivityPage() {
           icon={<Users />}
           tone="info"
           loading={!data}
-          value={data?.sessions.online ?? '—'}
+          value={data?.sessions?.online ?? '—'}
           hint="active in 5 min"
         />
         <StatCard
           label="Logged-in users"
           icon={<Users />}
           loading={!data}
-          value={data?.sessions.loggedInUsers ?? '—'}
+          value={data?.sessions?.loggedInUsers ?? '—'}
         />
         <StatCard
           label="Sockets"
@@ -102,8 +102,8 @@ export default function LiveActivityPage() {
           label="Traffic"
           icon={<Activity />}
           loading={!data}
-          value={rate(data?.traffic.rps)}
-          hint={`${data?.traffic.activeRequests ?? 0} in flight · P95 ${ms(data?.traffic.p95LastMin)}`}
+          value={rate(data?.traffic?.rps)}
+          hint={`${data?.traffic?.activeRequests ?? 0} in flight · P95 ${ms(data?.traffic?.p95LastMin)}`}
         />
         <StatCard
           label="New jobs"

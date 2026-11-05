@@ -138,7 +138,7 @@ export default function ReconciliationPage() {
           />
         </Section>
         <Section title="Reconciliation jobs" description="Latest scheduler runs">
-          {data?.lastRuns.length ? (
+          {data?.lastRuns?.length ? (
             <ul className="space-y-2 text-sm">
               {data.lastRuns.map((r, i) => (
                 <li key={i} className="flex items-center justify-between gap-2">

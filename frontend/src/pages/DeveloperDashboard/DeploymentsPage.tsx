@@ -55,7 +55,7 @@ export default function DeploymentsPage() {
   const { data, isLoading, isFetching, error, refetch } = useDevDeployments();
   const c = data?.current;
   const cmp = data?.comparison;
-  const runs = data?.github.runs || [];
+  const runs = data?.github?.runs || [];
   const lastRun = runs[0];
 
   const columns: Column<GithubRun>[] = [
@@ -157,9 +157,9 @@ export default function DeploymentsPage() {
         <StatCard
           label="New errors since deploy"
           icon={<ShieldAlert />}
-          tone={data?.newErrors.length ? 'danger' : 'success'}
+          tone={data?.newErrors?.length ? 'danger' : 'success'}
           loading={isLoading}
-          value={num(data?.newErrors.length)}
+          value={num(data?.newErrors?.length)}
           hint="error groups first seen after deploy"
         />
       </div>
@@ -210,25 +210,25 @@ export default function DeploymentsPage() {
               {[
                 [
                   'Errors logged',
-                  <Delta key="a" before={cmp.before.errors} after={cmp.after.errors} />,
+                  <Delta key="a" before={cmp.before?.errors} after={cmp.after?.errors} />,
                 ],
                 [
                   'API 5xx rate',
                   <Delta
                     key="b"
-                    before={cmp.before.errorRate}
-                    after={cmp.after.errorRate}
+                    before={cmp.before?.errorRate}
+                    after={cmp.after?.errorRate}
                     unit="%"
                   />,
                 ],
                 [
                   'P95 latency',
-                  <Delta key="c" before={cmp.before.p95} after={cmp.after.p95} unit="ms" />,
+                  <Delta key="c" before={cmp.before?.p95} after={cmp.after?.p95} unit="ms" />,
                 ],
                 [
                   'Requests',
                   <span key="d" className="tabular-nums">
-                    {num(cmp.before.requests)} → {num(cmp.after.requests)}
+                    {num(cmp.before?.requests)} → {num(cmp.after?.requests)}
                   </span>,
                 ],
               ].map(([label, value]) => (
@@ -242,7 +242,7 @@ export default function DeploymentsPage() {
           <p className="mt-3 text-xs text-muted-foreground">
             Uptime since deploy:{' '}
             {duration((Date.now() - new Date(c?.deployedAt || Date.now()).getTime()) / 1000)} ·
-            rollbacks: {data?.rollback.reason}
+            rollbacks: {data?.rollback?.reason}
           </p>
         </Section>
       </div>
@@ -251,7 +251,7 @@ export default function DeploymentsPage() {
         title="Errors introduced by this release"
         description="Error groups whose first occurrence is after the deploy time"
       >
-        {data?.newErrors.length ? (
+        {data?.newErrors?.length ? (
           <ul className="divide-y rounded-md border text-sm">
             {data.newErrors.map((e) => (
               <li key={e.id} className="flex items-center justify-between gap-3 px-3 py-2">
@@ -281,9 +281,9 @@ export default function DeploymentsPage() {
         )}
       </Section>
 
-      <Section title="GitHub Actions" description={data?.github.repo}>
-        {!data ? null : !data.github.configured ? (
-          <NotConfigured title="GitHub not connected" description={data.github.reason || ''} />
+      <Section title="GitHub Actions" description={data?.github?.repo}>
+        {!data ? null : !data.github?.configured ? (
+          <NotConfigured title="GitHub not connected" description={data.github?.reason || ''} />
         ) : data.github.error ? (
           <ErrorState error={{ message: data.github.error }} />
         ) : (

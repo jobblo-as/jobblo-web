@@ -89,7 +89,7 @@ export default function OverviewPage() {
       <div className="grid gap-4 lg:grid-cols-3">
         <Section title="System health score" description="100 minus explained deductions">
           {data ? (
-            <HealthScore score={data.healthScore} deductions={data.deductions} />
+            <HealthScore score={data.healthScore ?? 0} deductions={data.deductions ?? []} />
           ) : (
             <Skeleton className="h-24 w-full" />
           )}
@@ -106,7 +106,7 @@ export default function OverviewPage() {
         >
           <TimeSeriesChart
             data={data?.trafficSeries}
-            bucketMs={data?.range.bucketMs}
+            bucketMs={data?.range?.bucketMs}
             height={150}
             series={[
               { key: 'requests', label: 'Requests', color: 'var(--chart-1)' },
@@ -121,45 +121,45 @@ export default function OverviewPage() {
           label="Requests"
           icon={<Activity />}
           loading={isLoading}
-          value={compact(data?.api.count)}
-          hint={`${rate(data?.api.rps)} avg · ${rate(data?.api.live.rps)} now`}
+          value={compact(data?.api?.count)}
+          hint={`${rate(data?.api?.rps)} avg · ${rate(data?.api?.live?.rps)} now`}
         />
         <StatCard
           label="Success rate"
           icon={<Zap />}
-          tone={data?.api.successRate != null && data.api.successRate < 99 ? 'warning' : 'success'}
+          tone={data?.api?.successRate != null && data.api.successRate < 99 ? 'warning' : 'success'}
           loading={isLoading}
-          value={pct(data?.api.successRate, 2)}
-          hint={`Error rate ${pct(data?.api.errorRate, 2)}`}
+          value={pct(data?.api?.successRate, 2)}
+          hint={`Error rate ${pct(data?.api?.errorRate, 2)}`}
         />
         <StatCard
           label="Latency"
           icon={<Gauge />}
           loading={isLoading}
-          value={ms(data?.api.avgMs)}
-          hint={`P95 ${ms(data?.api.p95)} · P99 ${ms(data?.api.p99)}`}
+          value={ms(data?.api?.avgMs)}
+          hint={`P95 ${ms(data?.api?.p95)} · P99 ${ms(data?.api?.p99)}`}
         />
         <StatCard
           label="Critical errors"
           icon={<AlertOctagon />}
-          tone={data?.errors.openCritical ? 'danger' : 'success'}
+          tone={data?.errors?.openCritical ? 'danger' : 'success'}
           loading={isLoading}
-          value={num(data?.errors.openCritical)}
-          hint={`${num(data?.errors.inRange)} errors in range`}
+          value={num(data?.errors?.openCritical)}
+          hint={`${num(data?.errors?.inRange)} errors in range`}
         />
         <StatCard
           label="Users"
           icon={<Users />}
           loading={isLoading}
-          value={compact(data?.users.total)}
-          hint={`+${num(data?.users.new)} new · ${num(data?.users.activeSessions)} online`}
+          value={compact(data?.users?.total)}
+          hint={`+${num(data?.users?.new)} new · ${num(data?.users?.activeSessions)} online`}
         />
         <StatCard
           label="Jobs"
           icon={<Briefcase />}
           loading={isLoading}
-          value={compact(data?.jobs.listings)}
-          hint={`${num(data?.jobs.active)} active orders`}
+          value={compact(data?.jobs?.listings)}
+          hint={`${num(data?.jobs?.active)} active orders`}
         />
       </div>
 
@@ -172,37 +172,37 @@ export default function OverviewPage() {
                   'MongoDB',
                   <StatusBadge
                     key="m"
-                    status={data.integrations.mongo.ok ? 'connected' : 'disconnected'}
+                    status={data.integrations?.mongo?.ok ? 'connected' : 'disconnected'}
                   />,
-                  data.integrations.mongo.ms != null ? `${data.integrations.mongo.ms} ms` : '',
+                  data.integrations?.mongo?.ms != null ? `${data.integrations.mongo.ms} ms` : '',
                 ],
                 [
                   'Stripe webhook',
-                  <StatusBadge key="s" status={data.integrations.stripeWebhook.status} />,
-                  data.integrations.stripeWebhook.mode || '',
+                  <StatusBadge key="s" status={data.integrations?.stripeWebhook?.status} />,
+                  data.integrations?.stripeWebhook?.mode || '',
                 ],
                 [
                   'Webhook backlog',
                   <StatusBadge
                     key="w"
-                    status={data.integrations.webhookEvents.failed ? 'failing' : 'healthy'}
-                    label={`${data.integrations.webhookEvents.failed} failed`}
+                    status={data.integrations?.webhookEvents?.failed ? 'failing' : 'healthy'}
+                    label={`${data.integrations?.webhookEvents?.failed ?? 0} failed`}
                   />,
-                  `${data.integrations.webhookEvents.pending} pending`,
+                  `${data.integrations?.webhookEvents?.pending ?? 0} pending`,
                 ],
                 [
                   'Scheduler',
                   <StatusBadge
                     key="c"
                     status={
-                      !data.scheduler.enabled
+                      !data.scheduler?.enabled
                         ? 'disabled'
-                        : data.scheduler.failing
+                        : data.scheduler?.failing
                           ? 'failing'
                           : 'healthy'
                     }
                   />,
-                  `${data.scheduler.jobs} jobs`,
+                  `${data.scheduler?.jobs ?? 0} jobs`,
                 ],
                 [
                   'SafePay records',
@@ -210,7 +210,7 @@ export default function OverviewPage() {
                     key="p"
                     status="healthy"
                     tone="info"
-                    label={num(data.integrations.safePay.total)}
+                    label={num(data.integrations?.safePay?.total)}
                   />,
                   '',
                 ],
@@ -245,27 +245,27 @@ export default function OverviewPage() {
             <div className="space-y-4">
               <Meter
                 label="CPU"
-                value={data.server.cpuPercent}
+                value={data.server?.cpuPercent ?? null}
                 detail={
-                  data.server.cpuPercent === null
+                  data.server?.cpuPercent === null
                     ? 'Load average unavailable on this OS'
                     : undefined
                 }
               />
-              <Meter label="Memory" value={data.server.ramPercent} />
+              <Meter label="Memory" value={data.server?.ramPercent ?? null} />
               <Meter
                 label="Disk"
-                value={data.server.disk?.percent ?? null}
+                value={data.server?.disk?.percent ?? null}
                 detail={
-                  data.server.disk
+                  data.server?.disk
                     ? `${bytes(data.server.disk.free)} free of ${bytes(data.server.disk.total)}`
                     : undefined
                 }
               />
               <KeyValue
                 items={[
-                  ['Process uptime', duration(data.server.processUptime)],
-                  ['Host uptime', duration(data.server.uptime)],
+                  ['Process uptime', duration(data.server?.processUptime)],
+                  ['Host uptime', duration(data.server?.uptime)],
                 ]}
               />
             </div>
@@ -278,18 +278,18 @@ export default function OverviewPage() {
           {data ? (
             <KeyValue
               items={[
-                ['Job listings', num(data.jobs.listings)],
-                ['Orders total', num(data.jobs.orders)],
-                ['Active', num(data.jobs.active)],
-                ['Completed', num(data.jobs.completed)],
-                ['Cancelled / declined', num(data.jobs.cancelled)],
+                ['Job listings', num(data.jobs?.listings)],
+                ['Orders total', num(data.jobs?.orders)],
+                ['Active', num(data.jobs?.active)],
+                ['Completed', num(data.jobs?.completed)],
+                ['Cancelled / declined', num(data.jobs?.cancelled)],
                 [
                   'Disputed',
-                  <span key="d" className={data.jobs.disputed ? 'text-amber-600' : undefined}>
-                    {num(data.jobs.disputed)}
+                  <span key="d" className={data.jobs?.disputed ? 'text-amber-600' : undefined}>
+                    {num(data.jobs?.disputed)}
                   </span>,
                 ],
-                ['Active users (range)', num(data.users.active)],
+                ['Active users (range)', num(data.users?.active)],
               ]}
             />
           ) : (
@@ -308,7 +308,7 @@ export default function OverviewPage() {
             </Button>
           }
         >
-          {data?.recentActivity.length ? (
+          {data?.recentActivity?.length ? (
             <ul className="divide-y text-sm">
               {data.recentActivity.map((a) => (
                 <li

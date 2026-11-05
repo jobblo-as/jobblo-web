@@ -23,10 +23,10 @@ type Ns = CachingInfo['api']['namespaces'][number];
  */
 export default function CachingPage() {
   const { data, isLoading, isFetching, error, refetch } = useDevCaching();
-  const ng = data?.nginx.available ? data.nginx : null;
+  const ng = data?.nginx?.available ? data.nginx : null;
   const api = data?.api;
-  const hits = api?.namespaces.reduce((a, n) => a + n.hits, 0) ?? 0;
-  const misses = api?.namespaces.reduce((a, n) => a + n.misses, 0) ?? 0;
+  const hits = api?.namespaces?.reduce((a, n) => a + n.hits, 0) ?? 0;
+  const misses = api?.namespaces?.reduce((a, n) => a + n.misses, 0) ?? 0;
   const apiRate = hits + misses ? Math.round((hits / (hits + misses)) * 1000) / 10 : null;
 
   return (
@@ -65,9 +65,9 @@ export default function CachingPage() {
           label="3 · Redis keys"
           icon={<Database />}
           loading={isLoading}
-          value={num(api?.namespaces.reduce((a, n) => a + (n.redisKeys ?? 0), 0))}
+          value={num(api?.namespaces?.reduce((a, n) => a + (n.redisKeys ?? 0), 0))}
           hint={
-            data?.redisKeys.available
+            data?.redisKeys?.available
               ? 'cached responses (upper bound; exact on Cache Manager)'
               : (data?.redisKeys as { reason?: string })?.reason
           }
@@ -86,7 +86,7 @@ export default function CachingPage() {
       {data && !ng && (
         <NotConfigured
           title="nginx layer not visible"
-          description={(data.nginx as { reason: string }).reason}
+          description={(data.nginx as { reason?: string } | undefined)?.reason}
         />
       )}
       {ng && (

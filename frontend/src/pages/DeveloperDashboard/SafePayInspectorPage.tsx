@@ -90,13 +90,13 @@ function StateDiagram({
   selected: string;
   onSelect: (s: string) => void;
 }) {
-  const observed = new Map(data.edges.map((e) => [`${e.from}>${e.to}`, e]));
-  const allowed = data.states.flatMap((s) => s.next.map((to) => ({ from: s.status, to })));
-  const illegal = data.edges.filter((e) => !e.legal);
-  const max = Math.max(1, ...data.edges.map((e) => e.n));
+  const observed = new Map((data.edges ?? []).map((e) => [`${e.from}>${e.to}`, e]));
+  const allowed = (data.states ?? []).flatMap((s) => s.next.map((to) => ({ from: s.status, to })));
+  const illegal = (data.edges ?? []).filter((e) => !e.legal);
+  const max = Math.max(1, ...(data.edges ?? []).map((e) => e.n));
   const touches = (e: { from: string; to: string }) =>
     !selected || e.from === selected || e.to === selected;
-  const violating = new Set(data.violations.map((v) => v.status));
+  const violating = new Set((data.violations ?? []).map((v) => v.status));
 
   return (
     <svg
@@ -191,7 +191,7 @@ function StateDiagram({
           </g>
         );
       })}
-      {data.states.map((s) => {
+      {(data.states ?? []).map((s) => {
         const pos = POS[s.status];
         if (!pos) return null;
         const active = selected === s.status;
@@ -387,8 +387,8 @@ export default function SafePayInspectorPage() {
     () => (data?.violations || []).filter((v) => !f.state || v.status === f.state),
     [data, f.state]
   );
-  const illegal = data?.edges.filter((e) => !e.legal).reduce((a, e) => a + e.n, 0) || 0;
-  const totalMoves = data?.edges.reduce((a, e) => a + e.n, 0) || 0;
+  const illegal = data?.edges?.filter((e) => !e.legal).reduce((a, e) => a + e.n, 0) || 0;
+  const totalMoves = data?.edges?.reduce((a, e) => a + e.n, 0) || 0;
 
   const columns: Column<MachineViolation>[] = [
     { key: 'sev', header: 'Severity', cell: (v) => <StatusBadge status={v.severity} /> },
@@ -478,7 +478,7 @@ export default function SafePayInspectorPage() {
               icon={<ArrowRight />}
               loading={isLoading}
               value={num(totalMoves)}
-              hint={`${data?.edges.length ?? 0} distinct`}
+              hint={`${data?.edges?.length ?? 0} distinct`}
             />
             <StatCard
               label="Illegal transitions"
@@ -509,7 +509,7 @@ export default function SafePayInspectorPage() {
             ) : (
               <Skeleton className="h-80 w-full" />
             )}
-            {data?.unknownStates.length ? (
+            {data?.unknownStates?.length ? (
               <p className="mt-2 text-xs text-red-600">
                 Statuses outside the machine:{' '}
                 {data.unknownStates.map((s) => `${s.status} (${s.count})`).join(', ')}

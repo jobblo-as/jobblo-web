@@ -256,7 +256,7 @@ export default function FraudPage() {
   const { data: me } = useDevMe();
   const { data, isLoading, isFetching, error, refetch } = useDevFraud();
   const qc = useQueryClient();
-  const canAct = Boolean(me?.can.request || me?.can.execute);
+  const canAct = Boolean(me?.can?.request || me?.can?.execute);
   const rows = (data?.flagged || []).filter((x) =>
     f.view === 'all'
       ? true
@@ -306,7 +306,7 @@ export default function FraudPage() {
           <div className="flex flex-wrap gap-1">
             {x.rules.map((r) => (
               <Badge key={r} variant="secondary" className="text-[10px]">
-                {data?.ruleStats.find((s) => s.key === r)?.title || r}
+                {data?.ruleStats?.find((s) => s.key === r)?.title || r}
               </Badge>
             ))}
           </div>
@@ -358,31 +358,31 @@ export default function FraudPage() {
         <StatCard
           label="High risk"
           icon={<ShieldAlert />}
-          tone={data?.summary.high ? 'danger' : 'success'}
+          tone={data?.summary?.high ? 'danger' : 'success'}
           loading={isLoading}
-          value={data?.summary.high ?? '—'}
+          value={data?.summary?.high ?? '—'}
           hint="open, score ≥ 60"
         />
         <StatCard
           label="Medium risk"
           icon={<ShieldAlert />}
-          tone={data?.summary.medium ? 'warning' : 'success'}
+          tone={data?.summary?.medium ? 'warning' : 'success'}
           loading={isLoading}
-          value={data?.summary.medium ?? '—'}
+          value={data?.summary?.medium ?? '—'}
           hint="open, score 30–59"
         />
         <StatCard
           label="Investigating"
           icon={<ShieldQuestion />}
           loading={isLoading}
-          value={data?.summary.investigating ?? '—'}
+          value={data?.summary?.investigating ?? '—'}
         />
         <StatCard
           label="Confirmed"
           icon={<UserX />}
-          tone={data?.summary.confirmed ? 'danger' : 'neutral'}
+          tone={data?.summary?.confirmed ? 'danger' : 'neutral'}
           loading={isLoading}
-          value={data?.summary.confirmed ?? '—'}
+          value={data?.summary?.confirmed ?? '—'}
         />
         <StatCard
           label="Scanned"
@@ -422,7 +422,7 @@ export default function FraudPage() {
         description="Accounts each rule currently flags. Private and local IP addresses are ignored by the network rules."
       >
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-          {data?.ruleStats.map((r) => (
+          {data?.ruleStats?.map((r) => (
             <div
               key={r.key}
               className="flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm"

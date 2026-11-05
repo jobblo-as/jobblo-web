@@ -85,8 +85,8 @@ export default function IntegrityPage() {
       ),
     [data, f.view]
   );
-  const indexRows = data?.indexes.filter((i) => i.severity !== 'info') || [];
-  const undeclared = data?.indexes.filter((i) => i.severity === 'info') || [];
+  const indexRows = data?.indexes?.filter((i) => i.severity !== 'info') || [];
+  const undeclared = data?.indexes?.filter((i) => i.severity === 'info') || [];
 
   const run = async () => {
     setBusy(true);
@@ -232,16 +232,16 @@ export default function IntegrityPage() {
         <StatCard
           label="Critical"
           icon={<AlertOctagon />}
-          tone={s?.bySeverity.critical ? 'danger' : 'success'}
+          tone={s?.bySeverity?.critical ? 'danger' : 'success'}
           loading={isLoading}
-          value={num(s?.bySeverity.critical || 0)}
+          value={num(s?.bySeverity?.critical || 0)}
         />
         <StatCard
           label="High"
           icon={<ShieldAlert />}
-          tone={s?.bySeverity.high ? 'warning' : 'neutral'}
+          tone={s?.bySeverity?.high ? 'warning' : 'neutral'}
           loading={isLoading}
-          value={num(s?.bySeverity.high || 0)}
+          value={num(s?.bySeverity?.high || 0)}
         />
         <StatCard
           label="Affected records"

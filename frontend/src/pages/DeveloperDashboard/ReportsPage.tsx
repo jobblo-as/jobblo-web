@@ -146,7 +146,7 @@ export default function ReportsPage() {
             className="flex flex-col gap-0.5 rounded-md border bg-card p-1.5"
             aria-label="Report types"
           >
-            {types?.types.map((t) => (
+            {types?.types?.map((t) => (
               <button
                 key={t.key}
                 type="button"
@@ -179,11 +179,11 @@ export default function ReportsPage() {
                 <h2 className="text-lg font-semibold">{data.title} report</h2>
                 <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <CalendarClock className="size-3.5" />
-                  {dateTime(data.range.from)} – {dateTime(data.range.to)} · {data.environment} ·
+                  {dateTime(data.range?.from)} – {dateTime(data.range?.to)} · {data.environment} ·
                   generated {dateTime(data.generatedAt)}
                 </p>
               </div>
-              {data.sections.map((s) => (
+              {data.sections?.map((s) => (
                 <SectionView key={s.title} s={s} />
               ))}
             </>

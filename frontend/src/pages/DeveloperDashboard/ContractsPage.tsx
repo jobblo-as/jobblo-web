@@ -124,7 +124,7 @@ function EndpointSheet({
                       </tr>
                     </thead>
                     <tbody className="divide-y">
-                      {data.fields.map((f) => (
+                      {data.fields?.map((f) => (
                         <tr key={f.path}>
                           <td className="px-2 py-1 font-mono">
                             {f.path}
@@ -157,7 +157,7 @@ function EndpointSheet({
                   Shape variants
                 </h4>
                 <ul className="space-y-1 text-xs">
-                  {data.variants.map((v) => (
+                  {data.variants?.map((v) => (
                     <li key={v.sig} className="flex justify-between gap-2">
                       <span className="font-mono">
                         {v.sig.slice(0, 8)} · {v.fieldCount} fields
@@ -174,7 +174,7 @@ function EndpointSheet({
                 <h4 className="mb-2 text-xs font-medium text-muted-foreground uppercase">
                   Changes
                 </h4>
-                {data.events.length ? (
+                {data.events?.length ? (
                   <ul className="divide-y">
                     {data.events.map((e) => (
                       <EventRow key={e._id} e={e} canAck={canAck} onAck={onAck} showRoute={false} />
@@ -325,7 +325,9 @@ export default function ContractsPage() {
           loading={isLoading}
           value={s?.undocumented ?? '—'}
           hint={
-            data ? `of ${data.docs.used} with traffic · ${data.docs.documented} documented` : ''
+            data?.docs
+              ? `of ${data.docs.used} with traffic · ${data.docs.documented} documented`
+              : ''
           }
         />
       </div>
@@ -375,7 +377,7 @@ export default function ContractsPage() {
           description="Endpoints with traffic in the last 30 days that Swagger does not describe."
         >
           <ul className="max-h-80 space-y-1 overflow-y-auto text-xs">
-            {data?.docs.undocumented.map((u) => (
+            {data?.docs?.undocumented?.map((u) => (
               <li key={u.key} className="flex justify-between gap-2">
                 <span className="truncate font-mono">{u.key}</span>
                 <span className="shrink-0 tabular-nums text-muted-foreground">{num(u.n)} req</span>
@@ -388,7 +390,7 @@ export default function ContractsPage() {
           description="In the Swagger docs with no traffic in 30 days — stale docs or dead endpoints."
         >
           <ul className="max-h-80 space-y-1 overflow-y-auto font-mono text-xs">
-            {data?.docs.unused.map((u) => (
+            {data?.docs?.unused?.map((u) => (
               <li key={u} className="truncate">
                 {u}
               </li>

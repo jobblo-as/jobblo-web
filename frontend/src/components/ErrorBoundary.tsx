@@ -27,7 +27,7 @@ async function reportClientError(error: unknown, componentStack?: string | null)
  * fails to load. Without it the user gets React Router's unstyled English
  * "Unexpected Application Error!" screen with no way back.
  */
-export function RouteErrorElement() {
+export function RouteErrorElement({ home = '/' }: { home?: string }) {
   const error = useRouteError();
   const [referenceId, setReferenceId] = React.useState<string | null>(null);
   // The App (and its report host) is not rendered on this screen: the dialog lives here.
@@ -53,7 +53,9 @@ export function RouteErrorElement() {
   }, [error]);
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6">
+    <main
+      className={`${home === '/' ? 'min-h-screen' : 'min-h-[60vh]'} flex items-center justify-center p-6`}
+    >
       <div className="max-w-xl text-center">
         <h1 className="text-2xl font-bold text-custom-black">Noe gikk galt</h1>
         <p className="mt-2 text-base text-gray-500">
@@ -70,10 +72,10 @@ export function RouteErrorElement() {
             Prøv igjen
           </button>
           <Link
-            to="/"
+            to={home}
             className="rounded-2xl border border-black/15 px-6 py-3 font-bold text-custom-black! transition-colors hover:bg-gray-50"
           >
-            Til forsiden
+            {home === '/' ? 'Til forsiden' : 'Til oversikten'}
           </Link>
         </div>
         <button

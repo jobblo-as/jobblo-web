@@ -74,7 +74,7 @@ function StepRow({
   canAct: boolean;
   onDone: (i: number, note: string) => Promise<void>;
 }) {
-  const done = run?.steps.find((s) => s.index === i);
+  const done = run?.steps?.find((s) => s.index === i);
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const qc = useQueryClient();
@@ -192,12 +192,12 @@ function Detail({
 }) {
   const { data, isLoading, error, refetch } = useDevRunbook(runbookKey);
   const { data: me } = useDevMe();
-  const canAct = Boolean(me?.can.request || me?.can.execute);
+  const canAct = Boolean(me?.can?.request || me?.can?.execute);
   const qc = useQueryClient();
   const [running, setRunning] = useState(false);
   const [outcome, setOutcome] = useState('');
   const r = data?.runbook;
-  const current = data?.runs.find(
+  const current = data?.runs?.find(
     (x) => !x.closedAt && (!incidentId || x.incidentId?._id === incidentId)
   );
   const refresh = () => qc.invalidateQueries({ queryKey: ['dev', 'runbook', runbookKey] });
@@ -249,7 +249,7 @@ function Detail({
             to={`/developer/incidents?id=${incidentId}`}
             className="text-primary hover:underline"
           >
-            {data?.runs.find((x) => x.incidentId?._id === incidentId)?.incidentId?.title ||
+            {data?.runs?.find((x) => x.incidentId?._id === incidentId)?.incidentId?.title ||
               incidentId}
           </Link>
           . Runs, ticked steps and notes are added to its timeline.
@@ -268,7 +268,7 @@ function Detail({
           <ul className="space-y-3">
             {(
               current?.checks ||
-              r?.checks.map((c) => ({ ...c, state: null, detail: '', ms: 0 })) ||
+              r?.checks?.map((c) => ({ ...c, state: null, detail: '', ms: 0 })) ||
               []
             ).map((c) => (
               <li key={c.key} className="flex gap-2.5">
@@ -294,7 +294,7 @@ function Detail({
           description="Investigate first, then recover. Recovery only uses existing gated workflows — the badge says what each needs."
         >
           <ol className="space-y-2">
-            {r?.steps.map((s, i) => (
+            {r?.steps?.map((s, i) => (
               <StepRow
                 key={i}
                 step={s}
@@ -326,15 +326,15 @@ function Detail({
         </Section>
       </div>
       <Section title="History">
-        {data?.runs.length ? (
+        {data?.runs?.length ? (
           <ul className="divide-y text-sm">
-            {data.runs.map((x) => (
+            {data.runs?.map((x) => (
               <li key={x._id} className="flex flex-wrap items-center gap-3 py-2">
                 <StatusBadge status={x.state} />
                 <span>{dateTime(x.createdAt)}</span>
                 <span className="text-muted-foreground">by {x.startedBy?.name || '—'}</span>
                 <span className="text-muted-foreground">
-                  {x.steps.length}/{r?.steps.length} steps
+                  {x.steps.length}/{r?.steps?.length} steps
                 </span>
                 {x.incidentId && (
                   <span className="text-xs text-muted-foreground">
@@ -374,10 +374,10 @@ export default function RunbooksPage() {
         description="What to do when something breaks: live diagnostic checks, where to look, and the approved way to recover. Runbooks are matched to alerts, so an open incident links straight to its runbook. Recovery steps only point at workflows that are already gated (operations access, step-up, Super Admin approval, or a human with shell access) — nothing here moves money."
       />
       {error && <ErrorState error={error} onRetry={() => refetch()} />}
-      {data && data.incidents.length > 0 && (
+      {data && data.incidents?.length > 0 && (
         <Section title="Open incidents" description="Pick the runbook to work the incident with.">
           <ul className="divide-y">
-            {data.incidents.map((i) => (
+            {data.incidents?.map((i) => (
               <li key={i._id} className="flex flex-wrap items-center gap-3 py-2 text-sm">
                 <StatusBadge status={i.severity} />
                 <span className="font-medium">{i.title}</span>
@@ -391,7 +391,7 @@ export default function RunbooksPage() {
                         variant="outline"
                         onClick={() => setF({ key: k, incident: i._id })}
                       >
-                        {data.runbooks.find((r) => r.key === k)?.title}
+                        {data.runbooks?.find((r) => r.key === k)?.title}
                       </Button>
                     ))
                   ) : (

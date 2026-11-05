@@ -44,7 +44,7 @@ export default function SecurityPage() {
   const { data: me } = useDevMe();
   const { data: blockData } = useDevBlocks();
   const [blockIp, setBlockIp] = useState<string | null>(null);
-  const canBlock = Boolean(me?.can.execute || me?.can.request);
+  const canBlock = Boolean(me?.can?.execute || me?.can?.request);
   const blocked = new Set((blockData?.blocks || []).map((x) => x.target));
 
   const columns: Column<SecurityEventRow>[] = [
@@ -120,7 +120,7 @@ export default function SecurityPage() {
       />
       {error && <ErrorState error={error} onRetry={() => refetch()} />}
 
-      {data?.alerts.length ? (
+      {data?.alerts?.length ? (
         <div className="space-y-2">
           {data.alerts.map((a, i) => (
             <div
@@ -175,17 +175,17 @@ export default function SecurityPage() {
         <StatCard
           label="Blocked IPs"
           icon={<Ban />}
-          tone={blockData?.blocks.length ? 'warning' : 'neutral'}
+          tone={blockData?.blocks?.length ? 'warning' : 'neutral'}
           loading={!blockData}
-          value={num(blockData?.blocks.length)}
+          value={num(blockData?.blocks?.length)}
           hint={`${num(b.ip_blocked || 0)} requests refused`}
         />
         <StatCard
           label="Alerts"
           icon={<ShieldX />}
-          tone={data?.alerts.length ? 'danger' : 'success'}
+          tone={data?.alerts?.length ? 'danger' : 'success'}
           loading={isLoading}
-          value={num(data?.alerts.length)}
+          value={num(data?.alerts?.length)}
           hint="stuffing / brute force"
         />
       </div>
@@ -194,7 +194,7 @@ export default function SecurityPage() {
         <Section title="Security events over time" className="lg:col-span-2">
           <TimeSeriesChart
             data={data?.series}
-            bucketMs={data?.range.bucketMs}
+            bucketMs={data?.range?.bucketMs}
             variant="bar"
             series={SERIES}
           />
@@ -236,7 +236,7 @@ export default function SecurityPage() {
                 </span>
               </li>
             ))}
-            {!data?.topIps.length && (
+            {!data?.topIps?.length && (
               <li className="px-3 py-6 text-center text-sm text-muted-foreground">
                 No rejected requests in range.
               </li>
@@ -262,7 +262,7 @@ export default function SecurityPage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Section title="Privileged role changes" description="From the audit log">
-          {data?.roleChanges.length ? (
+          {data?.roleChanges?.length ? (
             <Timeline
               reverse
               events={data.roleChanges.map((r) => ({
@@ -286,7 +286,7 @@ export default function SecurityPage() {
             </Link>
           }
         >
-          {data?.developerActions.length ? (
+          {data?.developerActions?.length ? (
             <Timeline
               reverse
               events={data.developerActions.map((r) => ({

@@ -42,7 +42,7 @@ const VERDICT = {
 export default function QualityPage() {
   const [f, setF] = useUrlFilters({ days: '30' });
   const { data, isLoading, error, refetch } = useDevQuality(Number(f.days));
-  const backend = data?.suites.find((s) => s.suite === 'backend');
+  const backend = data?.suites?.find((s) => s.suite === 'backend');
 
   const runCols: Column<QualityInfo['runs'][number]>[] = [
     { key: 's', header: '', cell: (r) => (r.failed ? STATE_ICON.fail : STATE_ICON.pass) },
@@ -241,7 +241,7 @@ export default function QualityPage() {
         }
       />
       {error && <ErrorState error={error} onRetry={() => refetch()} />}
-      {data && (
+      {data?.verdict && (
         <div className={cn('rounded-lg border p-4', VERDICT[data.verdict].className)}>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-lg font-semibold">
@@ -255,7 +255,7 @@ export default function QualityPage() {
             )}
           </div>
           <ul className="mt-3 grid gap-x-6 gap-y-1.5 md:grid-cols-2">
-            {data.gates.map((g) => (
+            {data.gates?.map((g) => (
               <li key={g.key} className="flex items-start gap-2 text-sm">
                 <span className="mt-0.5">{STATE_ICON[g.state]}</span>
                 <span>
@@ -287,7 +287,7 @@ export default function QualityPage() {
           icon={<CheckCircle2 />}
           loading={isLoading}
           value={
-            backend?.latest.coverage?.lines != null ? `${backend.latest.coverage.lines}%` : '—'
+            backend?.latest?.coverage?.lines != null ? `${backend.latest.coverage.lines}%` : '—'
           }
           hint={
             backend?.coverageDelta != null
@@ -307,8 +307,8 @@ export default function QualityPage() {
           label="Flaky tests"
           icon={<Repeat />}
           loading={isLoading}
-          tone={data?.flaky.length ? 'warning' : 'success'}
-          value={num(data?.flaky.length)}
+          tone={data?.flaky?.length ? 'warning' : 'success'}
+          value={num(data?.flaky?.length)}
           hint="failed and passed on one commit"
         />
         <StatCard
@@ -316,22 +316,22 @@ export default function QualityPage() {
           icon={<ShieldCheck />}
           loading={isLoading}
           tone={
-            data?.ci.successRate == null
+            data?.ci?.successRate == null
               ? 'neutral'
-              : data.ci.successRate >= 90
+              : data.ci?.successRate >= 90
                 ? 'success'
                 : 'warning'
           }
-          value={data?.ci.successRate == null ? '—' : `${data.ci.successRate}%`}
+          value={data?.ci?.successRate == null ? '—' : `${data.ci?.successRate}%`}
           hint={
-            data?.ci.configured
-              ? `${data.ci.reruns} re-runs in the last 25`
+            data?.ci?.configured
+              ? `${data.ci?.reruns} re-runs in the last 25`
               : 'GitHub not connected'
           }
         />
       </div>
 
-      {data && !data.runs.length ? (
+      {data && !data.runs?.length ? (
         <EmptyState
           title="No test runs reported yet"
           description="CI sends them after each backend run once the secrets are set; locally: npm run test:quality, then node scripts/quality-report.js backend jest-results.json coverage/coverage-summary.json"
@@ -343,7 +343,7 @@ export default function QualityPage() {
             description="Line, branch and function coverage per reported run."
           >
             <TimeSeriesChart
-              data={data?.coverage.map((c) => ({
+              data={data?.coverage?.map((c) => ({
                 t: c.t,
                 lines: c.lines,
                 branches: c.branches,
@@ -371,9 +371,9 @@ export default function QualityPage() {
               title="Flaky tests"
               description="Failed in one run and passed in another on the same commit — the code did not change, the result did."
             >
-              {data?.flaky.length ? (
+              {data?.flaky?.length ? (
                 <ul className="divide-y text-sm">
-                  {data.flaky.map((x) => (
+                  {data.flaky?.map((x) => (
                     <li key={x.id} className="py-2">
                       <div className="font-medium">{x.id}</div>
                       <div className="text-xs text-muted-foreground">
@@ -398,7 +398,7 @@ export default function QualityPage() {
               rowKey={(r) => r._id}
             />
           </Section>
-          {backend?.latest.slowest?.length ? (
+          {backend?.latest?.slowest?.length ? (
             <Section title="Slowest test files (latest backend run)">
               <ul className="divide-y text-sm">
                 {backend.latest.slowest.map((s) => (
@@ -417,17 +417,17 @@ export default function QualityPage() {
       <Section
         title="CI checks (GitHub Actions)"
         description={
-          data?.ci.configured
+          data?.ci?.configured
             ? 'Last 25 workflow runs. Attempt > 1 = someone re-ran it.'
-            : data?.ci.reason || undefined
+            : data?.ci?.reason || undefined
         }
       >
         <DataTable
           columns={ciCols}
-          rows={data?.ci.runs}
+          rows={data?.ci?.runs}
           loading={isLoading}
           rowKey={(r) => String(r.id)}
-          emptyTitle={data?.ci.configured ? 'No workflow runs' : 'GitHub not connected'}
+          emptyTitle={data?.ci?.configured ? 'No workflow runs' : 'GitHub not connected'}
         />
       </Section>
     </div>

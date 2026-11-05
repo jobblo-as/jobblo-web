@@ -278,17 +278,17 @@ export default function LedgerPage() {
           label="Escrow liability"
           icon={<Vault />}
           loading={isLoading}
-          value={kr(data?.escrow.held)}
+          value={kr(data?.escrow?.held)}
           hint={
-            data ? `${data.escrow.orders} open orders · oldest ${data.escrow.oldestDays} d` : ''
+            data ? `${data.escrow?.orders} open orders · oldest ${data.escrow?.oldestDays} d` : ''
           }
         />
         <StatCard
           label="Discrepancies"
           icon={<BookOpenCheck />}
-          tone={data?.issues.length ? 'danger' : 'success'}
+          tone={data?.issues?.length ? 'danger' : 'success'}
           loading={isLoading}
-          value={data?.issues.length ?? '—'}
+          value={data?.issues?.length ?? '—'}
           hint={
             Object.entries(data?.issueCounts || {})
               .map(([k, n]) => `${n} ${k.replace(/_/g, ' ')}`)
@@ -301,7 +301,7 @@ export default function LedgerPage() {
         title="Discrepancies"
         description="Orders whose money does not add up. Click for the order's journal."
       >
-        {data?.issues.length ? (
+        {data?.issues?.length ? (
           <ul className="divide-y">
             {data.issues.map((i, n) => (
               <li key={n}>

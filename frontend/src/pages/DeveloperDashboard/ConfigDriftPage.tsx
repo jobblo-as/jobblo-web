@@ -231,13 +231,17 @@ export default function ConfigDriftPage() {
           tone={s?.dependencyProblems ? 'danger' : 'success'}
           loading={isLoading}
           value={s?.dependencyProblems ? `${s.dependencyProblems} off` : 'In range'}
-          hint={data ? `${data.current.packages} packages · Node ${data.current.nodeVersion}` : ''}
+          hint={
+            data?.current
+              ? `${data.current.packages} packages · Node ${data.current.nodeVersion}`
+              : ''
+          }
         />
         <StatCard
           label="Env vars set"
           icon={<FileDiff />}
           loading={isLoading}
-          value={data ? `${data.current.envSet} / ${data.current.envDeclared}` : '—'}
+          value={data?.current ? `${data.current.envSet} / ${data.current.envDeclared}` : '—'}
           hint="declared in .env.example"
         />
       </div>
@@ -246,7 +250,7 @@ export default function ConfigDriftPage() {
         title="Changes since the baseline"
         description={
           data?.baseline
-            ? `Baseline ${dateTime(data.baseline.at)}${data.baseline.note ? ` — “${data.baseline.note}”` : ''} · release ${data.current.version}@${data.current.commit?.slice(0, 7) ?? '?'}`
+            ? `Baseline ${dateTime(data.baseline.at)}${data.baseline.note ? ` — “${data.baseline.note}”` : ''} · release ${data.current?.version}@${data.current?.commit?.slice(0, 7) ?? '?'}`
             : 'No baseline yet. Review the policy checks below, then accept the running configuration as the baseline.'
         }
       >
@@ -275,15 +279,15 @@ export default function ConfigDriftPage() {
           <Section
             title="Stripe webhook subscriptions"
             description={
-              data
+              data?.stripeWebhooks
                 ? `${data.stripeWebhooks.handled} event types handled in code (services/stripe/webhookDispatcher.js)`
                 : undefined
             }
           >
-            {data && !data.stripeWebhooks.ok && (
+            {data?.stripeWebhooks && !data.stripeWebhooks.ok && (
               <ErrorState error={new Error(data.stripeWebhooks.error)} />
             )}
-            {data?.stripeWebhooks.endpoints.map((e) => (
+            {data?.stripeWebhooks?.endpoints?.map((e) => (
               <div key={e.id} className="mb-2 flex items-center justify-between gap-2 text-xs">
                 <span className="truncate font-mono">{e.url}</span>
                 <StatusBadge
@@ -295,32 +299,32 @@ export default function ConfigDriftPage() {
             <div className="mt-3 space-y-3">
               <div>
                 <div className="mb-1 text-xs font-medium text-red-700">
-                  Handled but not subscribed ({data?.stripeWebhooks.missing.length ?? 0}) — these
+                  Handled but not subscribed ({data?.stripeWebhooks?.missing?.length ?? 0}) — these
                   events never arrive
                 </div>
                 <div className="flex flex-wrap gap-1">
-                  {data?.stripeWebhooks.missing.map((m) => (
+                  {data?.stripeWebhooks?.missing?.map((m) => (
                     <Badge key={m} variant="destructive" className="font-mono text-[10px]">
                       {m}
                     </Badge>
                   ))}
-                  {data && !data.stripeWebhooks.missing.length && (
+                  {data && !data.stripeWebhooks?.missing?.length && (
                     <span className="text-xs text-muted-foreground">none</span>
                   )}
                 </div>
               </div>
               <div>
                 <div className="mb-1 text-xs font-medium text-muted-foreground">
-                  Subscribed but not handled ({data?.stripeWebhooks.unhandled.length ?? 0}) —
+                  Subscribed but not handled ({data?.stripeWebhooks?.unhandled?.length ?? 0}) —
                   delivered and ignored
                 </div>
                 <div className="flex flex-wrap gap-1">
-                  {data?.stripeWebhooks.unhandled.map((m) => (
+                  {data?.stripeWebhooks?.unhandled?.map((m) => (
                     <Badge key={m} variant="secondary" className="font-mono text-[10px]">
                       {m}
                     </Badge>
                   ))}
-                  {data && !data.stripeWebhooks.unhandled.length && (
+                  {data && !data.stripeWebhooks?.unhandled?.length && (
                     <span className="text-xs text-muted-foreground">none</span>
                   )}
                 </div>
@@ -328,7 +332,7 @@ export default function ConfigDriftPage() {
             </div>
           </Section>
           <Section title="Dependencies" description="package.json ranges vs installed versions.">
-            {data?.dependencies.length ? (
+            {data?.dependencies?.length ? (
               <ul className="space-y-1 text-sm">
                 {data.dependencies.map((d) => (
                   <li key={d.name} className="flex justify-between gap-2">
@@ -352,7 +356,7 @@ export default function ConfigDriftPage() {
             description="Env vars in .env.example with no value here. Many are optional features."
           >
             <div className="flex flex-wrap gap-1">
-              {data?.unsetEnv.map((k) => (
+              {data?.unsetEnv?.map((k) => (
                 <Badge key={k} variant="outline" className="font-mono text-[10px]">
                   {k}
                 </Badge>
@@ -366,7 +370,7 @@ export default function ConfigDriftPage() {
         title="Configuration history"
         description="Recorded on each boot whose configuration differs from the previous one."
       >
-        {data?.history.length ? (
+        {data?.history?.length ? (
           <ol className="space-y-3">
             {data.history.map((h, i) => (
               <li key={i} className="rounded-md border p-3">

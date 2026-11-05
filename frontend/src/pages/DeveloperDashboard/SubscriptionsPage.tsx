@@ -183,7 +183,7 @@ export default function SubscriptionsPage() {
     page: f.page,
   });
   const s = data?.summary;
-  const problems = data?.operations.problems || [];
+  const problems = data?.operations?.problems || [];
   const reconRequired = problems.filter((p) => p.status === 'reconciliation_required').length;
 
   const columns: Column<SubscriptionRow>[] = [
@@ -288,22 +288,22 @@ export default function SubscriptionsPage() {
           icon={<Users />}
           tone="success"
           loading={isLoading}
-          value={num(s?.byStatus.active)}
-          hint={`${num(s?.byStatus.pending)} pending checkout`}
+          value={num(s?.byStatus?.active)}
+          hint={`${num(s?.byStatus?.pending)} pending checkout`}
         />
         <StatCard
           label="Past due"
           icon={<AlertTriangle />}
-          tone={s?.byStatus.past_due ? 'warning' : 'neutral'}
+          tone={s?.byStatus?.past_due ? 'warning' : 'neutral'}
           loading={isLoading}
-          value={num(s?.byStatus.past_due)}
-          hint={`${num(s?.byRecovery.retrying)} retrying`}
+          value={num(s?.byStatus?.past_due)}
+          hint={`${num(s?.byRecovery?.retrying)} retrying`}
         />
         <StatCard
           label="Canceling / canceled"
           icon={<CircleSlash />}
           loading={isLoading}
-          value={num((s?.byStatus.canceling || 0) + (s?.byStatus.canceled || 0))}
+          value={num((s?.byStatus?.canceling || 0) + (s?.byStatus?.canceled || 0))}
           hint={`${num(s?.autoRenewOff)} auto-renew off`}
         />
         <StatCard
@@ -354,9 +354,9 @@ export default function SubscriptionsPage() {
         </Section>
         <Section
           title="Webhook sync"
-          description={`${data?.webhooks.failed.length ?? 0} failed events`}
+          description={`${data?.webhooks?.failed?.length ?? 0} failed events`}
         >
-          <CountBars counts={data?.webhooks.byStatus || {}} />
+          <CountBars counts={data?.webhooks?.byStatus || {}} />
         </Section>
       </div>
 
