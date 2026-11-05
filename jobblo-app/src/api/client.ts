@@ -2,6 +2,7 @@ import axios, { type InternalAxiosRequestConfig } from 'axios';
 import * as Device from 'expo-device';
 import { authStorage as storage } from '../utils/authStorage';
 import { monitorAxios } from '../monitoring/reporter';
+import { getInstallId } from '../utils/installId';
 
 /**
  * This phone's model for the "Aktive økter" list, e.g. "iPhone 15 Pro" or "Samsung SM-S911B".
@@ -60,6 +61,9 @@ const apiClient = axios.create({
 
 apiClient.interceptors.request.use(async (config) => {
   if (DEVICE_NAME && config.headers) config.headers['X-Device-Name'] = DEVICE_NAME;
+  // Pseudonymous install id for security monitoring (utils/installId); none = no header.
+  const installId = await getInstallId();
+  if (installId && config.headers) config.headers['X-Install-Id'] = installId;
 
   // With the default JSON Content-Type, axios turns a FormData body into JSON, so files
   // never arrive (the server saw no fields: 400 on avatar upload). Uploads are multipart,
