@@ -2,7 +2,6 @@ import { useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -75,7 +74,7 @@ export default function MfaGate({ children }: { children: ReactNode }) {
   return (
     <SafeAreaView className="flex-1 bg-page">
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior="padding"
         className="flex-1"
       >
         <ScrollView

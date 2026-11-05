@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import {
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -185,7 +184,7 @@ export default function RegisterScreen() {
     <SafeAreaView className="flex-1 bg-page">
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior="padding"
       >
         <ScrollView
           className="flex-1"

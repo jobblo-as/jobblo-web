@@ -1,7 +1,6 @@
 import { type ComponentRef, useEffect, useMemo, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -220,7 +219,7 @@ export default function ForgotPasswordScreen() {
     <SafeAreaView className="flex-1 bg-page">
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior="padding"
       >
         <ScrollView
           className="flex-1"
