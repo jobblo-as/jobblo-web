@@ -466,13 +466,37 @@ export const DEV_NAV: { label: string; items: DevNavItem[] }[] = [
     ],
   },
   {
-    label: 'Security & Tools',
+    label: 'Security Intelligence',
     items: [
       {
-        path: 'approvals',
-        label: 'Approvals',
-        icon: ClipboardCheck,
-        description: 'Sensitive changes awaiting Super Admin approval.',
+        path: 'security-intel',
+        label: 'Security Overview',
+        icon: Radar,
+        description: 'Open findings, high-risk installations, VPN/proxy and multi-account signals.',
+      },
+      {
+        path: 'security-intel/devices',
+        label: 'Device Explorer',
+        icon: Fingerprint,
+        description: 'Browser and app installations: accounts, IP history, networks, risk.',
+      },
+      {
+        path: 'security-intel/alerts',
+        label: 'Investigations',
+        icon: ClipboardList,
+        description: 'Risk findings with evidence: review, mark false positive, resolve, escalate.',
+      },
+      {
+        path: 'security-intel/events',
+        label: 'Security Events',
+        icon: ScanSearch,
+        description: 'Every security signal, searchable by type, installation, IP and route.',
+      },
+      {
+        path: 'security-intel/analytics',
+        label: 'Security Analytics',
+        icon: BarChart3,
+        description: 'Trends, resolution performance and the rule thresholds.',
       },
       {
         path: 'ips',
@@ -492,6 +516,17 @@ export const DEV_NAV: { label: string; items: DevNavItem[] }[] = [
         label: 'Security Center',
         icon: ShieldAlert,
         description: 'Auth failures, rate limits and suspicious activity.',
+      },
+    ],
+  },
+  {
+    label: 'Security & Tools',
+    items: [
+      {
+        path: 'approvals',
+        label: 'Approvals',
+        icon: ClipboardCheck,
+        description: 'Sensitive changes awaiting Super Admin approval.',
       },
       {
         path: 'audit',

@@ -183,6 +183,24 @@ const DevReportsPage = lazy(() => import('../pages/DeveloperDashboard/ReportsPag
 const DevSettingsPage = lazy(() => import('../pages/DeveloperDashboard/SettingsPage.tsx'));
 const DevIpsPage = lazy(() => import('../pages/DeveloperDashboard/IpsPage.tsx'));
 const DevIpDetailPage = lazy(() => import('../pages/DeveloperDashboard/IpDetailPage.tsx'));
+const DevSecurityIntelPage = lazy(
+  () => import('../pages/DeveloperDashboard/SecurityIntelOverviewPage.tsx')
+);
+const DevSecurityDevicesPage = lazy(
+  () => import('../pages/DeveloperDashboard/SecurityDevicesPage.tsx')
+);
+const DevSecurityDevicePage = lazy(
+  () => import('../pages/DeveloperDashboard/SecurityDevicePage.tsx')
+);
+const DevSecurityAlertsPage = lazy(
+  () => import('../pages/DeveloperDashboard/SecurityAlertsPage.tsx')
+);
+const DevSecurityEventsIntelPage = lazy(
+  () => import('../pages/DeveloperDashboard/SecurityEventsIntelPage.tsx')
+);
+const DevSecurityAnalyticsPage = lazy(
+  () => import('../pages/DeveloperDashboard/SecurityAnalyticsPage.tsx')
+);
 const DevApprovalsPage = lazy(() => import('../pages/DeveloperDashboard/ApprovalsPage.tsx'));
 const DevInvestigatePage = lazy(() => import('../pages/DeveloperDashboard/InvestigatePage.tsx'));
 const DevIntegrityPage = lazy(() => import('../pages/DeveloperDashboard/IntegrityPage.tsx'));
@@ -555,6 +573,12 @@ export const routes: RouteObject[] = [
           { path: 'settings', element: withSuspense(DevSettingsPage) },
           { path: 'ips', element: withSuspense(DevIpsPage) },
           { path: 'ips/:ip', element: withSuspense(DevIpDetailPage) },
+          { path: 'security-intel', element: withSuspense(DevSecurityIntelPage) },
+          { path: 'security-intel/devices', element: withSuspense(DevSecurityDevicesPage) },
+          { path: 'security-intel/devices/:key', element: withSuspense(DevSecurityDevicePage) },
+          { path: 'security-intel/alerts', element: withSuspense(DevSecurityAlertsPage) },
+          { path: 'security-intel/events', element: withSuspense(DevSecurityEventsIntelPage) },
+          { path: 'security-intel/analytics', element: withSuspense(DevSecurityAnalyticsPage) },
           { path: 'approvals', element: withSuspense(DevApprovalsPage) },
           { path: 'investigate', element: withSuspense(DevInvestigatePage) },
           { path: 'integrity', element: withSuspense(DevIntegrityPage) },

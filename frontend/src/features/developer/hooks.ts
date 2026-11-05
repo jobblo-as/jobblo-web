@@ -325,6 +325,66 @@ export const useDevContract = (key: { method: string; route: string; status: str
     enabled: Boolean(key),
     retry: false,
   });
+export const useSecurityOverview = (q: Query) =>
+  useQuery({
+    queryKey: ['dev', 'security-intel', 'overview', q],
+    queryFn: () => devApi.securityOverview(q),
+    refetchInterval: useInterval(60_000),
+    ...opts,
+  });
+export const useSecurityDevices = (q: Query) =>
+  useQuery({
+    queryKey: ['dev', 'security-intel', 'devices', q],
+    queryFn: () => devApi.securityDevices(q),
+    ...opts,
+  });
+export const useSecurityDevice = (key?: string) =>
+  useQuery({
+    queryKey: ['dev', 'security-intel', 'device', key],
+    queryFn: () => devApi.securityDevice(key!),
+    enabled: Boolean(key),
+    retry: false,
+  });
+export const useSecurityEvents = (q: Query) =>
+  useQuery({
+    queryKey: ['dev', 'security-intel', 'events', q],
+    queryFn: () => devApi.securityEvents(q),
+    refetchInterval: useInterval(60_000),
+    ...opts,
+  });
+export const useSecurityAlerts = (q: Query) =>
+  useQuery({
+    queryKey: ['dev', 'security-intel', 'alerts', q],
+    queryFn: () => devApi.securityAlerts(q),
+    refetchInterval: useInterval(60_000),
+    ...opts,
+  });
+export const useSecurityAlert = (id?: string | null) =>
+  useQuery({
+    queryKey: ['dev', 'security-intel', 'alert', id],
+    queryFn: () => devApi.securityAlert(id!),
+    enabled: Boolean(id),
+    retry: false,
+  });
+export const useSecurityAnalytics = (q: Query) =>
+  useQuery({
+    queryKey: ['dev', 'security-intel', 'analytics', q],
+    queryFn: () => devApi.securityAnalytics(q),
+    ...opts,
+  });
+export const useSecurityIp = (ip?: string) =>
+  useQuery({
+    queryKey: ['dev', 'security-intel', 'ip', ip],
+    queryFn: () => devApi.securityIp(ip!),
+    enabled: Boolean(ip),
+    retry: false,
+  });
+export const useSecurityConfig = () =>
+  useQuery({
+    queryKey: ['dev', 'security-intel', 'config'],
+    queryFn: () => devApi.securityConfig(),
+    retry: false,
+  });
 export const useDevFraud = () =>
   useQuery({
     queryKey: ['dev', 'fraud'],

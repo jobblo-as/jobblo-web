@@ -110,6 +110,7 @@ function record(req, res) {
     email: type === 'login_failed' ? maskEmail(req.body?.email) : null,
     emailHash: type === 'login_failed' ? emailHash(req.body?.email) : null,
     userAgent: String(req.get('user-agent') || '').slice(0, 200) || null,
+    deviceKey: require('../security/deviceId').fromRequest(req)?.deviceKey || null,
   });
 }
 

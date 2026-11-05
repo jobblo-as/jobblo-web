@@ -1,5 +1,6 @@
 const ApiMetricMinute = require('../models/ApiMetricMinute');
 const securityEvents = require('../services/monitoring/securityEvents');
+const deviceObservations = require('../services/security/observations');
 
 /**
  * Per-route request metrics for the developer dashboard.
@@ -160,6 +161,7 @@ function requestMetrics(req, res, next) {
       securityEvents.clientIp(req)
     );
     securityEvents.record(req, res);
+    deviceObservations.record(req, res);
   };
   res.on('finish', finish);
   res.on('close', finish);

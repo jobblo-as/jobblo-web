@@ -96,6 +96,7 @@ app.use('/api/errors/client', express.json({ limit: '32kb', type: () => true }))
 app.use(express.json({ limit: '256kb' }));
 app.use(express.urlencoded({ extended: false, limit: '256kb' }));
 app.use(cookieParser());
+app.use(require('./services/security/deviceId').deviceCookie); // pseudonymous jb_did installation id
 // cookie-parser turns `j:{...}` values into objects: `refreshToken=j:{"$ne":null}` became a
 // Mongo operator in Session queries. Every cookie we read is a plain string, so keep only those.
 app.use((req, _res, next) => {

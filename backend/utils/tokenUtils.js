@@ -162,6 +162,7 @@ const createSession = async (req, userId) => {
       userAgent: req.headers['user-agent'] || 'Unknown',
       device: `${os} ${device}`,
       deviceName: deviceNameFrom(req),
+      deviceKey: require('../services/security/deviceId').fromRequest(req)?.deviceKey || null,
       browser: browser || 'Unknown',
       os: os || 'Unknown',
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
@@ -173,6 +174,9 @@ const createSession = async (req, userId) => {
     // Update session with real refresh token
     session.refreshToken = refreshToken;
     await session.save();
+    // Who signed in, for the installation observation of this response (req.user is not set yet).
+    req.securityUserId = userId;
+    req.securitySessionId = session._id;
 
     // Update lastLogin for the user
     await User.findByIdAndUpdate(userId, { lastLogin: new Date() });

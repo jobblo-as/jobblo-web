@@ -14,8 +14,15 @@ import {
   useDevBlocks,
   useDevIpActivity,
   useDevMe,
+  useSecurityIp,
   useUrlFilters,
 } from '../../features/developer/hooks';
+import {
+  NetworkBadge,
+  SeverityBadge,
+  DeviceLink,
+} from '../../components/developer/security/SecurityUi';
+import { RULE_LABEL } from '../../components/developer/security/labels';
 import type {
   AuthEventRow,
   AuthEventType,
@@ -37,11 +44,10 @@ import {
   StatusBadge,
 } from '../../components/developer/kit';
 import { DataTable, type Column } from '../../components/developer/DataTable';
+import { useLocalPaging } from '../../components/developer/useLocalPaging';
 import { BlockIpDialog } from '../../components/developer/BlockIpDialog';
 import { TimeSeriesChart } from '../../components/developer/TimeSeriesChart';
 import { Button } from '../../components/developer/ui/button';
-
-const PAGE_SIZE = 10;
 
 const AUTH_LABEL: Record<AuthEventType, { text: string; tone: 'success' | 'danger' | 'warning' }> =
   {
@@ -77,26 +83,6 @@ const when = (iso: string) => (
     {ago(iso)}
   </span>
 );
-
-/** One page of a list the server sent whole, in DataTable's pagination shape. */
-function usePaged<T>(rows: T[] | undefined) {
-  const [page, setPage] = useState(1);
-  const total = rows?.length || 0;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const p = Math.min(page, totalPages);
-  return {
-    rows: rows?.slice((p - 1) * PAGE_SIZE, p * PAGE_SIZE),
-    pagination: {
-      page: p,
-      limit: PAGE_SIZE,
-      total,
-      totalPages,
-      hasNextPage: p < totalPages,
-      hasPreviousPage: p > 1,
-    },
-    onPageChange: setPage,
-  };
-}
 
 /** Where the IP is and what kind of network: a phone on 4G reads differently from a datacenter. */
 function NetworkCard({ net }: { net?: IpNetwork }) {
@@ -255,6 +241,55 @@ const endpointColumns: Column<Endpoint>[] = [
  * Everything one IP did in a range, as a page (it was a side panel that cut lists short):
  * network, devices, accounts, open sessions, sign-ins, traffic and endpoints, each list paged.
  */
+/** The security layer's view of this IP: its stored classification and the installations seen on it. */
+function SecurityIntelCard({ ip }: { ip: string }) {
+  const { data, isLoading } = useSecurityIp(ip);
+  const installs = useLocalPaging(data?.devices);
+  return (
+    <Section
+      title={`Installations on this IP (${data?.devices?.length ?? 0})`}
+      description="Pseudonymous browser and app installations, and what the IP intelligence says (hover the badge for source and time)."
+      action={data ? <NetworkBadge network={data.network} /> : null}
+    >
+      <DataTable
+        columns={[
+          {
+            key: 'd',
+            header: 'Installation',
+            cell: (d) => <DeviceLink deviceKey={d.deviceKey} label={d.device} />,
+          },
+          {
+            key: 'p',
+            header: 'Kind',
+            cell: (d) => `${d.platform === 'app' ? 'App' : 'Browser'} · ${d.uaFamily || 'unknown'}`,
+          },
+          { key: 'a', header: 'Accounts', align: 'right', cell: (d) => d.accounts },
+          { key: 'r', header: 'Risk', cell: (d) => <SeverityBadge value={d.riskBand} /> },
+          { key: 'h', header: 'Sightings', align: 'right', cell: (d) => d.hits },
+          { key: 'l', header: 'Last seen', align: 'right', cell: (d) => ago(d.lastSeen) },
+        ]}
+        loading={isLoading}
+        rowKey={(d) => d.deviceKey}
+        emptyTitle="No installation seen on this IP"
+        {...installs}
+      />
+      {data?.alerts?.length ? (
+        <div className="mt-3 flex flex-wrap gap-2 text-sm">
+          {data.alerts.map((a) => (
+            <Link
+              key={a._id}
+              to={`/developer/security-intel/alerts?open=${a._id}`}
+              className="inline-flex items-center gap-1.5 rounded-md border px-2 py-1 hover:bg-muted"
+            >
+              <SeverityBadge value={a.severity} /> {RULE_LABEL[a.ruleId] || a.ruleId}
+            </Link>
+          ))}
+        </div>
+      ) : null}
+    </Section>
+  );
+}
+
 export default function IpDetailPage() {
   const ip = decodeURIComponent(useParams().ip || '');
   const [f, setF] = useUrlFilters({ range: '24h' });
@@ -271,11 +306,11 @@ export default function IpDetailPage() {
   const failed = data?.endpoints?.reduce((a, e) => a + e.failed, 0) || 0;
   const security = Object.entries(data?.security || {});
 
-  const devices = usePaged(data?.devices);
-  const accounts = usePaged(data?.accounts);
-  const sessions = usePaged(data?.sessions);
-  const auth = usePaged(data?.auth);
-  const endpoints = usePaged(data?.endpoints);
+  const devices = useLocalPaging(data?.devices);
+  const accounts = useLocalPaging(data?.accounts);
+  const sessions = useLocalPaging(data?.sessions);
+  const auth = useLocalPaging(data?.auth);
+  const endpoints = useLocalPaging(data?.endpoints);
 
   return (
     <div className="space-y-4">
@@ -332,6 +367,8 @@ export default function IpDetailPage() {
           />
         </Section>
       </div>
+
+      <SecurityIntelCard ip={ip} />
 
       <Section
         title={`Devices (${data?.devices?.length ?? 0})`}
