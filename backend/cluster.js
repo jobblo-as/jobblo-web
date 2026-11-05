@@ -31,6 +31,7 @@ const PER_WORKER_STARTERS = [
   'request metrics', // each worker flushes its own minute rows; readers $sum them
   'external calls',
   'security events',
+  'device observations', // each worker buffers and flushes its own sightings (upserts)
   'apm', // event loop / GC are per process
   'ip blocks', // each worker refreshes its block list from MongoDB
   'failure simulator', // each worker reads the active experiments

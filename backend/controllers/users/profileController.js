@@ -517,6 +517,21 @@ exports.deleteUser = async (req, res) => {
       console.error('PushToken cleanup on delete failed:', pushErr.message);
     }
 
+    // Installation history: this account's IP sightings go, and it leaves the installations.
+    try {
+      await require('../../models/DeviceObservation').deleteMany({ userId: id });
+      await require('../../models/DeviceInstallation').updateMany(
+        { userIds: id },
+        { $pull: { userIds: id } }
+      );
+      await require('../../models/SecurityAlert').updateMany(
+        { userIds: id },
+        { $pull: { userIds: id } }
+      );
+    } catch (deviceErr) {
+      console.error('Device history cleanup on delete failed:', deviceErr.message);
+    }
+
     try {
       const IdentityClaim = require('../../models/IdentityClaim');
       await IdentityClaim.deleteMany({ userId: id });

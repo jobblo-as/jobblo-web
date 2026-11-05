@@ -21,6 +21,9 @@ const securityEventSchema = new mongoose.Schema(
         'token_invalid',
         'session_revoked',
         'otp_failed',
+        // Installation signals (services/security/observations)
+        'device_new_ip',
+        'device_new_account',
       ],
     },
     ip: { type: String, default: null },
@@ -32,6 +35,8 @@ const securityEventSchema = new mongoose.Schema(
     email: { type: String, default: null },
     emailHash: { type: String, default: null }, // HMAC of the full email: counts distinct accounts without storing them
     userAgent: { type: String, default: null },
+    /** Pseudonymous installation (services/security/deviceId), when the request had one. */
+    deviceKey: { type: String, default: null },
   },
   { versionKey: false }
 );
@@ -39,5 +44,9 @@ const securityEventSchema = new mongoose.Schema(
 securityEventSchema.index({ at: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 });
 securityEventSchema.index({ type: 1, at: -1 });
 securityEventSchema.index({ ip: 1, at: -1 });
+securityEventSchema.index(
+  { deviceKey: 1, at: -1 },
+  { partialFilterExpression: { deviceKey: { $type: 'string' } } }
+);
 
 module.exports = mongoose.model('SecurityEvent', securityEventSchema);

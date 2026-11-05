@@ -38,6 +38,27 @@ const POLICY = [
     timeField: 'at',
   },
   {
+    collection: 'deviceobservations',
+    personal: 'IP, installation key (pseudonymous), account',
+    purpose: 'Security: which installations an account uses, from which networks',
+    retentionDays: 90,
+    timeField: 'lastSeen',
+  },
+  {
+    collection: 'deviceinstallations',
+    personal: 'Installation key (pseudonymous), browser/OS family, accounts',
+    purpose: 'Security: multiple accounts on one installation',
+    retentionDays: 180,
+    timeField: 'lastSeen',
+  },
+  {
+    collection: 'securityalerts',
+    personal: 'Installation key, IPs, accounts, investigation notes',
+    purpose: 'Security: risk findings under investigation',
+    retentionDays: 365,
+    timeField: 'closedAt',
+  },
+  {
     collection: 'deliverylogs',
     personal: 'Recipient address',
     purpose: 'Email/push delivery debugging',
@@ -462,6 +483,8 @@ async function exportUser(userId) {
     applications,
     subscriptions,
     favorites,
+    devices,
+    deviceObservations,
   ] = await Promise.all([
     find('services', { userId: id }, { contactPhone: 0, contactEmail: 0 }),
     find(
@@ -505,6 +528,8 @@ async function exportUser(userId) {
     find('jobrequests', { providerId: id }),
     find('subscription_v2', { userId: id }),
     find('favorites', { user: id }),
+    find('deviceinstallations', { userIds: id }, { userIds: 0 }),
+    find('deviceobservations', { userId: id }),
   ]);
   return {
     generatedAt: new Date(),
@@ -523,6 +548,9 @@ async function exportUser(userId) {
     supportTickets: tickets,
     subscriptions,
     favorites,
+    // Installations this account was seen on, and from which IPs (without other accounts).
+    devices,
+    deviceObservations,
   };
 }
 

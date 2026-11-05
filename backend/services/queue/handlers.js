@@ -35,6 +35,22 @@ const HANDLERS = {
     send: async ({ userId, message }) =>
       require('../pushNotifications').deliverPush(userId, message),
   },
+  security: {
+    /** Classify an IP and write it onto every observation of it (idempotent: same result twice). */
+    enrich: async ({ ip }) => {
+      const network = await require('../security/ipIntel').classify(ip);
+      const DeviceObservation = require('../../models/DeviceObservation');
+      const res = await DeviceObservation.updateMany({ ip }, { $set: { network } });
+      // The classification can change what the rules see (VPN transition): re-evaluate the
+      // installations on this IP (bounded).
+      const { evaluateDevice } = require('../security/risk/engine');
+      const devices = (await DeviceObservation.distinct('deviceKey', { ip })).slice(0, 50);
+      for (const deviceKey of devices) await evaluateDevice(deviceKey);
+      return { ip, class: network.class, updated: res.modifiedCount, evaluated: devices.length };
+    },
+    /** Risk rules for one installation (services/security/risk/engine). Idempotent. */
+    evaluate: async ({ deviceKey }) => require('../security/risk/engine').evaluateDevice(deviceKey),
+  },
   scheduler: {
     /** One run of a scheduled lifecycle job (services/scheduler). One worker picks it up — fleet-wide. */
     run: async ({ job }) => {

@@ -12,6 +12,10 @@ const STARTERS = [
   ['request metrics', () => require('../middleware/requestMetrics').startMetricsFlush()],
   ['external calls', () => require('../services/monitoring/externalCalls').startExternalFlush()],
   ['security events', () => require('../services/monitoring/securityEvents').startSecurityFlush()],
+  [
+    'device observations',
+    () => require('../services/security/observations').startObservationFlush(),
+  ],
   ['apm', () => require('../services/monitoring/apm').startApm(require('mongoose'))],
   ['alerts', () => require('../services/monitoring/alerts').startAlerts()],
   ['ip blocks', () => require('../services/monitoring/ipBlocks').startIpBlocks()],

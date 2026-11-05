@@ -40,6 +40,11 @@ const sessionSchema = new mongoose.Schema(
     },
     // Model reported by the mobile app (X-Device-Name), e.g. 'iPhone 15 Pro'. Browsers
     // do not expose one, so web sessions keep this null. Display only, never trusted.
+    /** Pseudonymous installation the session was created on (services/security/deviceId). */
+    deviceKey: {
+      type: String,
+      default: null,
+    },
     deviceName: {
       type: String,
       default: null,

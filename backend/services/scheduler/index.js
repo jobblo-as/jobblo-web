@@ -96,6 +96,13 @@ const SCHEDULE = [
     everyMs: 5 * MINUTE,
     delayMs: 9 * MINUTE,
   },
+  {
+    // Device risk rules over installations active in the last 20 min (services/security/risk).
+    name: 'securityRiskSweep',
+    fn: () => require('../security/risk/engine').sweep(),
+    everyMs: 15 * MINUTE,
+    delayMs: 10 * MINUTE,
+  },
 ];
 
 // In-app backups only when asked for (BACKUP_SCHEDULE_HOURS); host cron with scripts/backup.js is the default.

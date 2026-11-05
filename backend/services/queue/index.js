@@ -25,6 +25,13 @@ const QUEUES = {
     backoff: { type: 'exponential', delay: 10_000 },
     keepCompleted: { age: 3600, count: 1000 },
   },
+  security: {
+    // IP intelligence lookups for new installation/IP pairs (services/security/ipIntel).
+    concurrency: 5,
+    attempts: 2,
+    backoff: { type: 'exponential', delay: 60_000 },
+    keepCompleted: { age: 3600, count: 1000 },
+  },
   scheduler: {
     concurrency: 2,
     attempts: 1,
