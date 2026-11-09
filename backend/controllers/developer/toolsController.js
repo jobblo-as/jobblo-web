@@ -53,9 +53,6 @@ const ENV_KEYS = [
     name: 'DEVICE_ID_SECRET',
     note: 'Security Intelligence: installation tracking is off without it',
   },
-  { name: 'MAXMIND_CITY_DB', optional: true, note: 'Local location lookup (free GeoLite2)' },
-  { name: 'MAXMIND_ASN_DB', optional: true, note: 'Local network lookup (free GeoLite2)' },
-  { name: 'MAXMIND_ANONYMOUS_IP_DB', optional: true, note: 'VPN/proxy detection (paid)' },
   {
     name: 'IPINTEL_IPAPI',
     optional: true,
