@@ -6,6 +6,10 @@ const fs = require('fs');
 const path = require('path');
 const m = require('../services/maintenance');
 
+// The guard reads the DB only while Mongoose is connected; tests pretend it is.
+let dbState = 1;
+beforeEach(() => jest.spyOn(m, 'dbReady').mockImplementation(() => dbState === 1));
+
 const state = (over = {}) => m.normalize({ enabled: false, message: '', areas: {}, ...over });
 const off = (...keys) => Object.fromEntries(keys.map((k) => [k, { enabled: true, message: '' }]));
 
@@ -118,6 +122,16 @@ describe('the guard', () => {
     expect(
       (await run({ originalUrl: '/api/services', headers: { authorization: 'Bearer t2' } })).status
     ).toBe(503);
+  });
+
+  test('no database connection: the guard never waits on a query (CI took 10 s a request)', async () => {
+    dbState = 0;
+    const spy = jest.spyOn(GlobalConfig, 'findOne');
+    const t = Date.now();
+    expect((await run({ originalUrl: '/api/services' })).passed).toBe(true);
+    expect(spy).not.toHaveBeenCalled();
+    expect(Date.now() - t).toBeLessThan(500);
+    dbState = 1;
   });
 
   test('a database error never blocks the site', async () => {

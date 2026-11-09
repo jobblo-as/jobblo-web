@@ -122,6 +122,9 @@ let cached = null;
 let cachedAt = 0;
 async function getState({ fresh = false } = {}) {
   if (!fresh && cached && Date.now() - cachedAt < CACHE_MS) return cached;
+  // Not connected: Mongoose would buffer the query for 10 s on every request (seen in CI and
+  // before the DB is up). Keep the last known state, or "open", and never wait for the DB.
+  if (!module.exports.dbReady()) return cached || normalize(null);
   try {
     const doc = await require('../models/GlobalConfig').findOne({ key: CONFIG_KEY }).lean();
     cached = normalize(doc?.value);
@@ -215,6 +218,8 @@ module.exports = {
   invalidate,
   maintenanceGuard,
   publicStatus,
+  /** Mongoose connected? (a function so tests can stub it) */
+  dbReady: () => require('mongoose').connection.readyState === 1,
   _clear: () => {
     invalidate();
     roles.clear();
