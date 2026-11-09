@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   fetchAllConfigs,
   updateConfig,
+  deleteConfig,
   fetchHomepageContent,
   updateHomepageContent,
   fetchNavigation,
@@ -18,15 +19,41 @@ import { toast } from 'react-hot-toast';
 export const useAllConfigs = () =>
   useQuery({ queryKey: ['admin', 'config'], queryFn: fetchAllConfigs });
 
+/** The server's own message (e.g. "Denne nøkkelen finnes allerede"), else a fallback. */
+const apiMessage = (err: unknown, fallback: string) =>
+  (err as { response?: { data?: { message?: string } } })?.response?.data?.message || fallback;
+
 export const useUpdateConfig = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ key, value }: { key: string; value: unknown }) => updateConfig(key, value),
+    mutationFn: ({
+      key,
+      value,
+      description,
+      create,
+    }: {
+      key: string;
+      value: unknown;
+      description?: string;
+      create?: boolean;
+    }) => updateConfig(key, value, description, create),
+    onSuccess: (_d, v) => {
+      qc.invalidateQueries({ queryKey: ['admin', 'config'] });
+      toast.success(v.create ? 'Innstilling opprettet.' : 'Konfigurasjon oppdatert.');
+    },
+    onError: (err) => toast.error(apiMessage(err, 'Kunne ikke lagre innstillingen.')),
+  });
+};
+
+export const useDeleteConfig = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (key: string) => deleteConfig(key),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin', 'config'] });
-      toast.success('Konfigurasjon oppdatert.');
+      toast.success('Innstilling slettet.');
     },
-    onError: () => toast.error('Kunne ikke oppdatere konfigurasjon.'),
+    onError: (err) => toast.error(apiMessage(err, 'Kunne ikke slette innstillingen.')),
   });
 };
 

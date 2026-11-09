@@ -3,22 +3,52 @@ import type { ApiResponse } from '../../types/admin';
 
 // ── Global Config ────────────────────────────────────────────────────────────────
 
-export const fetchAllConfigs = async (): Promise<Record<string, unknown>> => {
+export interface ConfigEntry {
+  key: string;
+  value: unknown;
+  description: string | null;
+  updatedAt: string | null;
+}
+
+/** Every setting (secret-looking keys are never sent), with description and last change. */
+export const fetchAllConfigs = async (): Promise<ConfigEntry[]> => {
   const res =
-    await mainLink.get<ApiResponse<{ configs: Record<string, unknown> }>>('/api/admin/config');
-  return res.data.data.configs;
+    await mainLink.get<ApiResponse<{ configs: Record<string, unknown>; entries?: ConfigEntry[] }>>(
+      '/api/admin/config'
+    );
+  const { entries, configs } = res.data.data;
+  // An older API sends only key → value.
+  return (
+    entries ??
+    Object.entries(configs || {}).map(([key, value]) => ({
+      key,
+      value,
+      description: null,
+      updatedAt: null,
+    }))
+  );
 };
 
+/** Save a setting. `create` refuses (409) a key that already exists. */
 export const updateConfig = async (
   key: string,
   value: unknown,
-  description?: string
+  description?: string,
+  create?: boolean
 ): Promise<unknown> => {
   const res = await mainLink.put<ApiResponse<unknown>>('/api/admin/config', {
     key,
     value,
-    description,
+    ...(description !== undefined ? { description } : {}),
+    ...(create ? { create: true } : {}),
   });
+  return res.data.data;
+};
+
+export const deleteConfig = async (key: string): Promise<unknown> => {
+  const res = await mainLink.delete<ApiResponse<unknown>>(
+    `/api/admin/config/${encodeURIComponent(key)}`
+  );
   return res.data.data;
 };
 
