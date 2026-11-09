@@ -122,14 +122,21 @@ export default function ToolsPage() {
             <ul className="space-y-1.5">
               {result.env.map((e) => (
                 <li key={e.name} className="flex items-center justify-between gap-2 text-xs">
-                  <span className="flex items-center gap-1.5 truncate font-mono">
-                    <KeyRound className="size-3 text-muted-foreground" />
-                    {e.name}
+                  <span className="min-w-0" title={e.note || undefined}>
+                    <span className="flex items-center gap-1.5 truncate font-mono">
+                      <KeyRound className="size-3 shrink-0 text-muted-foreground" />
+                      {e.name}
+                    </span>
+                    {e.note ? (
+                      <span className="block truncate pl-[18px] text-[11px] text-muted-foreground">
+                        {e.note}
+                      </span>
+                    ) : null}
                   </span>
                   <StatusBadge
                     status={e.present ? 'ok' : 'n/a'}
-                    label={e.present ? 'set' : 'missing'}
-                    tone={e.present ? 'success' : 'warning'}
+                    label={e.present ? 'set' : e.optional ? 'not set' : 'missing'}
+                    tone={e.present ? 'success' : e.optional ? 'neutral' : 'warning'}
                   />
                 </li>
               ))}
