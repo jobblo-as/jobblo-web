@@ -355,34 +355,59 @@ const updateAnnouncement = asyncHandler(async (req, res) => {
 });
 
 const getMaintenanceMode = asyncHandler(async (req, res) => {
-  const config = await GlobalConfig.findOne({ key: 'maintenance_mode' }).lean();
+  const maintenance = require('../../services/maintenance');
   return sendSuccess(
     res,
     {
-      maintenanceMode: config ? config.value : { enabled: false, message: '' },
+      maintenanceMode: await maintenance.getState({ fresh: true }),
+      // What can be switched off one by one (services/maintenance.js AREAS).
+      areas: maintenance.AREAS.map(({ key, label, description, writesOnly }) => ({
+        key,
+        label,
+        description: description || null,
+        writesOnly: Boolean(writesOnly),
+      })),
+      defaultMessage: maintenance.DEFAULT_MESSAGE,
     },
     'Maintenance mode retrieved.'
   );
 });
 
 const toggleMaintenanceMode = asyncHandler(async (req, res) => {
-  const { enabled, message } = req.body;
+  const maintenance = require('../../services/maintenance');
+  const { enabled, message, areas } = req.body || {};
   if (typeof enabled !== 'boolean') {
     return sendError(res, 'Enabled must be a boolean.', 400);
   }
-  const value = { enabled, message: message || '' };
+  if (message !== undefined && typeof message !== 'string')
+    return sendError(res, 'Meldingen må være tekst.', 400);
+  if (areas !== undefined && (typeof areas !== 'object' || areas === null || Array.isArray(areas)))
+    return sendError(res, 'Ugyldige områder.', 400);
+  const before = await maintenance.getState({ fresh: true });
+  // Only known areas survive; an area not sent keeps its current setting.
+  const value = maintenance.normalize({
+    enabled,
+    message: message ?? before.message,
+    areas: { ...before.areas, ...(areas || {}) },
+  });
   const config = await GlobalConfig.findOneAndUpdate(
-    { key: 'maintenance_mode' },
-    { value },
+    { key: maintenance.CONFIG_KEY },
+    { value, description: 'Vedlikeholdsmodus: hele siden eller enkeltområder' },
     { new: true, upsert: true }
   ).lean();
+  maintenance.invalidate();
+  const on = (s) => Object.keys(s.areas).filter((k) => s.areas[k].enabled);
   await logActivity({
     ...getLogBase(req),
     action: 'settings_updated',
     targetModel: 'GlobalConfig',
     targetId: config._id,
-    description: `Toggled maintenance mode: ${enabled}`,
-    metadata: { enabled },
+    description: `Maintenance: site ${value.enabled ? 'off' : 'on'}${on(value).length ? `, areas off: ${on(value).join(', ')}` : ''}`,
+    metadata: {
+      enabled: value.enabled,
+      areasOff: on(value),
+      before: { enabled: before.enabled, areasOff: on(before) },
+    },
   });
   return sendSuccess(res, { maintenanceMode: value }, 'Maintenance mode updated.');
 });

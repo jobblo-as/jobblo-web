@@ -1,4 +1,5 @@
 import { apiUrl } from '../../config/env';
+import { useMaintenanceStatus } from '../../hooks/useMaintenanceStatus';
 
 /**
  * Vipps first, and in Vipps' own orange.
@@ -85,13 +86,23 @@ export default function SocialAuthButtons() {
   const go = (path: string) => () => {
     window.location.href = apiUrl(path);
   };
+  // Vedlikeholdsmodus: a sign-in method switched off by a Super Admin is disabled here.
+  const { off } = useMaintenanceStatus();
+  const closed = (
+    APPLE_SIGNIN_ENABLED
+      ? ['login_vipps', 'login_google', 'login_apple']
+      : ['login_vipps', 'login_google']
+  )
+    .map((k) => off(k))
+    .filter((m): m is string => Boolean(m));
 
   return (
     <div className="flex flex-col gap-2.5">
       <button
         type="button"
         onClick={go('/api/auth/web/vipps')}
-        className="flex h-11.5 items-center justify-center gap-2.5 rounded-xl bg-[#FF5B24] px-4 text-[0.9375rem] font-semibold text-white transition duration-150 hover:bg-[#F04E17] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#FF5B24]/25 active:scale-[0.995]"
+        disabled={Boolean(off('login_vipps'))}
+        className="flex h-11.5 items-center justify-center gap-2.5 rounded-xl bg-[#FF5B24] px-4 text-[0.9375rem] font-semibold text-white transition duration-150 hover:bg-[#F04E17] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#FF5B24]/25 active:scale-[0.995] disabled:cursor-not-allowed disabled:opacity-50"
       >
         <span>Fortsett med</span>
         <VippsWordmark />
@@ -116,7 +127,7 @@ export default function SocialAuthButtons() {
       <button
         type="button"
         onClick={go('/api/auth/idura')}
-        className="flex h-11.5 items-center justify-center gap-2.5 rounded-xl border border-[#E6E7E1] bg-white px-4 text-[0.9375rem] font-semibold text-[#0B0B0B] transition duration-150 hover:border-[#D4D6CD] hover:bg-[#FAFBF7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15 active:scale-[0.995]"
+        className="flex h-11.5 items-center justify-center gap-2.5 rounded-xl border border-[#E6E7E1] bg-white px-4 text-[0.9375rem] font-semibold text-[#0B0B0B] transition duration-150 hover:border-[#D4D6CD] hover:bg-[#FAFBF7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15 active:scale-[0.995] disabled:cursor-not-allowed disabled:opacity-50"
       >
         <ShieldCheck size={18} strokeWidth={2.2} className="text-[#2E6641]" />
         <span>Fortsett med BankID</span>
@@ -126,7 +137,8 @@ export default function SocialAuthButtons() {
       <button
         type="button"
         onClick={go('/api/auth/web/google')}
-        className="flex h-11.5 items-center justify-center gap-2.5 rounded-xl border border-[#E6E7E1] bg-white px-4 text-[0.9375rem] font-semibold text-[#0B0B0B] transition duration-150 hover:border-[#D4D6CD] hover:bg-[#FAFBF7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15 active:scale-[0.995]"
+        disabled={Boolean(off('login_google'))}
+        className="flex h-11.5 items-center justify-center gap-2.5 rounded-xl border border-[#E6E7E1] bg-white px-4 text-[0.9375rem] font-semibold text-[#0B0B0B] transition duration-150 hover:border-[#D4D6CD] hover:bg-[#FAFBF7] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15 active:scale-[0.995] disabled:cursor-not-allowed disabled:opacity-50"
       >
         <GoogleMark />
         <span>Fortsett med Google</span>
@@ -136,12 +148,19 @@ export default function SocialAuthButtons() {
         <button
           type="button"
           onClick={go('/api/auth/web/apple')}
-          className="flex h-11.5 items-center justify-center gap-2.5 rounded-xl bg-black px-4 text-[0.9375rem] font-semibold text-white transition duration-150 hover:bg-[#1a1a1a] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-black/25 active:scale-[0.995]"
+          disabled={Boolean(off('login_apple'))}
+          className="flex h-11.5 items-center justify-center gap-2.5 rounded-xl bg-black px-4 text-[0.9375rem] font-semibold text-white transition duration-150 hover:bg-[#1a1a1a] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-black/25 active:scale-[0.995] disabled:cursor-not-allowed disabled:opacity-50"
         >
           <AppleMark />
           <span>Fortsett med Apple</span>
         </button>
       )}
+
+      {[...new Set(closed)].map((m) => (
+        <p key={m} role="status" className="text-center text-[0.8125rem] text-[#B0453B]">
+          {m}
+        </p>
+      ))}
     </div>
   );
 }

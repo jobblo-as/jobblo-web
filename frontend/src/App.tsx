@@ -11,6 +11,7 @@ import { NotificationRealtime } from './features/notifications/NotificationRealt
 import { useUserStore } from './stores/userStore';
 import { Toaster } from 'react-hot-toast';
 import { lazy, Suspense } from 'react';
+import { useMaintenanceStatus } from './hooks/useMaintenanceStatus';
 
 // Below the fold (min-h-screen keeps it there), so it loads after the page, not with it.
 const Footer = lazy(() => import('./components/layout/footer/Footer.tsx'));
@@ -29,6 +30,16 @@ export default function App() {
   // Rendering the site header and footer around them stacked three full-height
   // regions on top of each other, which is what forced the login page to scroll.
   const isAuthPage = ['/login', '/register', '/forgot-password'].includes(location.pathname);
+
+  // Vedlikeholdsmodus for the whole site: users see the message; staff, sign-in and the
+  // admin/developer consoles stay usable (the API enforces the same in services/maintenance.js).
+  const { siteOff } = useMaintenanceStatus();
+  const isStaff = user?.role === 'superAdmin' || user?.role === 'developer';
+  const siteClosed =
+    Boolean(siteOff) &&
+    !isStaff &&
+    !isAuthPage &&
+    !/^\/(dashboard|developer)(\/|$)/.test(location.pathname);
 
   return (
     <>
@@ -79,7 +90,17 @@ export default function App() {
           sat right under a redirect, the session check or a short skeleton, then jumped down
           when the page arrived — the main source of layout shift (CLS 0.2–1.8 per load). */}
       <div className={isMessagesPage || isAuthPage ? undefined : 'min-h-screen'}>
-        <Outlet />
+        {siteClosed ? (
+          <main
+            role="status"
+            className="mx-auto flex max-w-md flex-col items-center px-4 py-24 text-center"
+          >
+            <h1 className="text-2xl font-bold text-[#0B0B0B]">Vedlikehold</h1>
+            <p className="mt-3 text-[0.9375rem] leading-relaxed text-[#3F5A46]">{siteOff}</p>
+          </main>
+        ) : (
+          <Outlet />
+        )}
       </div>
       {!isMessagesPage && !isAuthPage && (
         <Suspense fallback={null}>

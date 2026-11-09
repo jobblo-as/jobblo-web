@@ -17,6 +17,7 @@ import { apiBaseUrl } from '../src/api/client';
 import { captureError, setScreen, startMonitoring } from '../src/monitoring/reporter';
 import { BugReportSheet } from '../src/features/bugReport/BugReportSheet';
 import { useBugReport } from '../src/features/bugReport/store';
+import { useMaintenanceStatus } from '../src/hooks/useMaintenanceStatus';
 
 // Before the first render, so a crash while mounting is reported too.
 void startMonitoring(apiBaseUrl);
@@ -84,6 +85,48 @@ const JOBBLO_DARK = {
     primary: '#7DBE92',
   },
 };
+
+/**
+ * Vedlikeholdsmodus for the whole app: users see the message; staff and the sign-in screens are
+ * not covered (the API enforces the same in backend services/maintenance.js).
+ */
+function MaintenanceScreen({ pathname, dark }: { pathname: string; dark: boolean }) {
+  const { siteOff } = useMaintenanceStatus();
+  const role = useAuthStore((state) => state.user?.role);
+  const open =
+    !siteOff ||
+    role === 'superAdmin' ||
+    role === 'developer' ||
+    /^\/(login|register|forgot-password|oauth-success|welcome|terms)/.test(pathname);
+  if (open) return null;
+  return (
+    <View
+      accessibilityRole="alert"
+      style={{
+        position: 'absolute',
+        inset: 0,
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: 24,
+        backgroundColor: dark ? '#121411' : '#F8FAFC',
+      }}
+    >
+      <Text
+        style={{
+          fontSize: 22,
+          fontWeight: '700',
+          color: dark ? '#F2F3EE' : '#0B0B0B',
+          marginBottom: 10,
+        }}
+      >
+        Vedlikehold
+      </Text>
+      <Text style={{ fontSize: 15, color: dark ? '#B8BCB3' : '#3F5A46', textAlign: 'center' }}>
+        {siteOff}
+      </Text>
+    </View>
+  );
+}
 
 export default function RootLayout() {
   const { colorScheme } = useColorScheme();
@@ -164,6 +207,7 @@ export default function RootLayout() {
             contentStyle: { backgroundColor: dark ? '#121411' : '#F8FAFC' },
           }}
         />
+        <MaintenanceScreen pathname={pathname} dark={dark} />
         {!splashDone ? <BootSplash ready={hydrated} onDone={hideSplash} /> : null}
       </ThemeProvider>
     </AppProviders>

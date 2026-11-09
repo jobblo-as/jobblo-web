@@ -123,7 +123,11 @@ export const useMaintenanceMode = () =>
 export const useToggleMaintenanceMode = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (payload: { enabled: boolean; message?: string }) => toggleMaintenanceMode(payload),
+    mutationFn: (payload: {
+      enabled: boolean;
+      message?: string;
+      areas?: Record<string, { enabled: boolean; message: string }>;
+    }) => toggleMaintenanceMode(payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin', 'maintenance'] });
       toast.success('Vedlikeholdsmodus oppdatert.');

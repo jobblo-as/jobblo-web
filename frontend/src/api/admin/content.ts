@@ -105,17 +105,42 @@ export const updateAnnouncement = async (payload: Record<string, unknown>): Prom
 };
 
 // ── Maintenance Mode ─────────────────────────────────────────────────────────────
-export const fetchMaintenanceMode = async (): Promise<{ enabled: boolean; message?: string }> => {
-  const res =
-    await mainLink.get<ApiResponse<{ maintenanceMode: { enabled: boolean; message?: string } }>>(
-      '/api/admin/maintenance'
-    );
-  return res.data.data.maintenanceMode;
+export interface MaintenanceArea {
+  key: string;
+  label: string;
+  description: string | null;
+  /** Only changes are blocked; reading keeps working. */
+  writesOnly: boolean;
+}
+export interface MaintenanceState {
+  enabled: boolean;
+  message: string;
+  areas: Record<string, { enabled: boolean; message: string }>;
+}
+export interface MaintenanceInfo {
+  maintenanceMode: MaintenanceState;
+  areas: MaintenanceArea[];
+  defaultMessage: string;
+}
+
+export const fetchMaintenanceMode = async (): Promise<MaintenanceInfo> => {
+  const res = await mainLink.get<ApiResponse<MaintenanceInfo>>('/api/admin/maintenance');
+  const d = res.data.data;
+  return {
+    maintenanceMode: {
+      enabled: d.maintenanceMode?.enabled ?? false,
+      message: d.maintenanceMode?.message ?? '',
+      areas: d.maintenanceMode?.areas ?? {},
+    },
+    areas: d.areas ?? [],
+    defaultMessage: d.defaultMessage ?? '',
+  };
 };
 
 export const toggleMaintenanceMode = async (payload: {
   enabled: boolean;
   message?: string;
+  areas?: Record<string, { enabled: boolean; message: string }>;
 }): Promise<unknown> => {
   const res = await mainLink.put<ApiResponse<unknown>>('/api/admin/maintenance', payload);
   return res.data.data;

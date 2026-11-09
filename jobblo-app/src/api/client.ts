@@ -1,4 +1,5 @@
 import axios, { type InternalAxiosRequestConfig } from 'axios';
+import { Alert } from 'react-native';
 import * as Device from 'expo-device';
 import { authStorage as storage } from '../utils/authStorage';
 import { monitorAxios } from '../monitoring/reporter';
@@ -214,9 +215,20 @@ async function handleAuthFailure() {
 
 type RetriableConfig = InternalAxiosRequestConfig & { _retriedAfterRefresh?: boolean };
 
+// Vedlikeholdsmodus (backend services/maintenance.js): say why, at most once a minute per area.
+const maintenanceShownAt = new Map<string, number>();
+function showMaintenance(data: { area?: string; message?: string }) {
+  const area = data.area ?? 'site';
+  if (Date.now() - (maintenanceShownAt.get(area) ?? 0) < 60_000) return;
+  maintenanceShownAt.set(area, Date.now());
+  Alert.alert('Vedlikehold', data.message || 'Vi utfører vedlikehold. Prøv igjen om litt.');
+}
+
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
+    if (error?.response?.status === 503 && error.response.data?.code === 'MAINTENANCE')
+      showMaintenance(error.response.data);
     if (error?.response?.status !== 401) return Promise.reject(error);
 
     const config = error.config as RetriableConfig | undefined;
