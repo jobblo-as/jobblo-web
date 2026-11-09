@@ -28,14 +28,12 @@ function getBubbleStyle(message: AdminChatMessage, customerId?: string): string 
   return 'bg-card border border-border text-foreground';
 }
 
-function getRoleLabel(role?: string): string {
-  const map: Record<string, string> = {
-    user: 'Kunde',
-    provider: 'Tilbyder',
-    company: 'Bedrift',
-    superAdmin: 'Admin',
-  };
-  return role ? (map[role] ?? role) : '';
+// Every marketplace account has role "user", so the side in this chat decides the label.
+function getRoleLabel(message: AdminChatMessage, customerId?: string): string {
+  const role = message.sender?.role;
+  if (role === 'superAdmin' || role === 'developer') return 'Admin';
+  if (!message.sender) return '';
+  return message.sender._id === customerId ? 'Kunde' : 'Tilbyder';
 }
 
 export function AdminMessageBubble({
@@ -83,9 +81,9 @@ export function AdminMessageBubble({
         {/* Meta */}
         <div className="flex items-center gap-2 mb-1 flex-wrap">
           <span className="text-xs font-medium text-foreground">{senderName}</span>
-          {message.sender?.role && (
-            <span className="text-xs text-muted-foreground capitalize">
-              {getRoleLabel(message.sender.role)}
+          {message.sender && (
+            <span className="text-xs text-muted-foreground">
+              {getRoleLabel(message, customerId)}
             </span>
           )}
           {message.isReported && <ReportedMessageBadge />}

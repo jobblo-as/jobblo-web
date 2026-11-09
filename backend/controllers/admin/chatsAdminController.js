@@ -149,7 +149,7 @@ const getChats = asyncHandler(async (req, res) => {
       .sort(sort)
       .skip(skip)
       .limit(limit)
-      .select('-deletedFor')
+      .select('-deletedFor -messages')
       .populate('clientId', 'name email avatarUrl accountStatus verified role')
       .populate('providerId', 'name email avatarUrl accountStatus verified role')
       .populate('serviceId', 'title status price')
@@ -223,42 +223,111 @@ const getChats = asyncHandler(async (req, res) => {
 });
 
 // ── Chat detail ────────────────────────────────────────────────────────────────
+// One call for the admin chat viewer: metadata, both parties, linked order/payment/dispute,
+// the messages and the reports. Reading messages is private, so an access reason is required
+// and every open is written to the admin activity log.
+const PERSON = 'name email avatarUrl accountStatus verified role averageRating completedJobs';
+const person = (u) =>
+  u && typeof u === 'object' && u.name !== undefined
+    ? { ...u, profileLink: `/dashboard/users/${u._id}` }
+    : null;
+
 const getChatById = asyncHandler(async (req, res) => {
   const id = parseObjectId(req.params.chatId);
   if (!id) return sendError(res, 'Ugyldig Chat ID.', 400);
 
+  const reason = typeof req.query.accessReason === 'string' ? req.query.accessReason.trim() : '';
+  if (reason.length < 5 || reason.length > 500) {
+    return sendError(res, 'Tilgangsgrunn er påkrevd (5–500 tegn).', 400);
+  }
+
   const chat = await Chat.findById(id)
     .select('-deletedFor')
-    .populate('clientId', 'name email avatarUrl accountStatus verified role')
-    .populate('providerId', 'name email avatarUrl accountStatus verified role')
+    .populate('clientId', PERSON)
+    .populate('providerId', PERSON)
     .populate('serviceId', 'title status price categories')
     .populate('orderId', 'status paymentStatus agreedPrice scheduledDate createdAt')
+    .populate({ path: 'messages.senderId', select: 'name role', strictPopulate: false })
     .lean();
 
   if (!chat) return sendError(res, 'Chat ikke funnet.', 404);
 
-  const [reportCount, payment, dispute] = await Promise.all([
-    ChatReport.countDocuments({ chatId: id }),
-    chat.orderId
-      ? Payment.findOne({ orderId: chat.orderId._id ?? chat.orderId })
-          .select('status amount stripePaymentIntentId')
-          .lean()
+  const orderRef = chat.orderId?._id ?? chat.orderId ?? null;
+  const [reports, payment, dispute] = await Promise.all([
+    ChatReport.find({ chatId: id })
+      .sort({ createdAt: -1 })
+      .select('scope reportType title status priority messageId reportedBy reportedUser createdAt')
+      .populate('reportedBy', 'name email')
+      .populate('reportedUser', 'name email')
+      .lean(),
+    orderRef
+      ? Payment.findOne({ orderId: orderRef }).select('status amount stripePaymentIntentId').lean()
       : null,
-    chat.orderId
-      ? Dispute.findOne({ orderId: chat.orderId._id ?? chat.orderId })
-          .select('status priority _id')
-          .lean()
-      : null,
+    orderRef ? Dispute.findOne({ orderId: orderRef }).select('status priority _id').lean() : null,
   ]);
 
-  // Count attachments across messages
-  const attachmentCount = (chat.messages || []).reduce(
-    (s, m) => s + (m.attachments?.length ?? 0),
-    0
+  await logActivity({
+    adminId: req.user._id,
+    action: 'other',
+    targetModel: 'other',
+    targetId: id,
+    description: `Admin åpnet chat-meldinger. Årsak: ${reason}`,
+    metadata: { chatId: id, orderId: orderRef, reason },
+    ip: req.ip,
+    userAgent: req.headers['user-agent'],
+  });
+
+  const reported = new Set(
+    (reports || [])
+      .map((r) => r.messageId)
+      .filter(Boolean)
+      .map(String)
   );
+  const raw = chat.messages || [];
+  const messages = raw.map((m) => ({
+    _id: m._id,
+    type: m.type ?? 'text',
+    text: m.text,
+    attachments: m.attachments ?? [],
+    systemData: m.systemData ?? null,
+    sender:
+      m.senderId && typeof m.senderId === 'object' && m.senderId.name !== undefined
+        ? { _id: m.senderId._id, name: m.senderId.name, role: m.senderId.role }
+        : null,
+    isReported: reported.has(String(m._id)),
+    createdAt: m.createdAt,
+  }));
+  const order = chat.orderId && typeof chat.orderId === 'object' ? chat.orderId : null;
 
   return sendSuccess(res, {
-    chat: { ...chat, reportCount, attachmentCount },
+    chat: {
+      _id: chat._id,
+      status: chat.status,
+      agreedPrice: chat.agreedPrice,
+      createdAt: chat.createdAt,
+      updatedAt: chat.updatedAt,
+      messageCount: raw.length,
+      attachmentCount: raw.reduce((s, m) => s + (m.attachments?.length ?? 0), 0),
+      reportCount: (reports || []).length,
+      lastMessageAt: raw.at(-1)?.createdAt ?? null,
+    },
+    participants: { customer: person(chat.clientId), provider: person(chat.providerId) },
+    relatedRecords: {
+      serviceId: chat.serviceId?._id ?? null,
+      serviceTitle: chat.serviceId?.title ?? null,
+      orderId: orderRef,
+      safePayOrderId: orderRef,
+      paymentStatus: order?.paymentStatus ?? payment?.status ?? null,
+      orderStatus: order?.status ?? null,
+      disputeStatus: dispute?.status ?? null,
+      agreedPrice: order?.agreedPrice ?? chat.agreedPrice ?? null,
+      safePayDetailLink: orderRef ? `/dashboard/safepay/${orderRef}` : null,
+      reportDetailLink: reports?.[0] ? `/dashboard/chat-reports/${reports[0]._id}` : null,
+      disputeId: dispute?._id ?? null,
+    },
+    messages,
+    reports: reports || [],
+    accessLogged: true,
     payment: payment ? { status: payment.status, amount: payment.amount } : null,
     dispute: dispute
       ? { _id: dispute._id, status: dispute.status, priority: dispute.priority }
@@ -343,7 +412,8 @@ const logChatAccess = asyncHandler(async (req, res) => {
   if (!id) return sendError(res, 'Ugyldig Chat ID.', 400);
 
   const { accessReason, orderId } = req.body;
-  if (!accessReason?.trim()) return sendError(res, 'Tilgangsgrunn er påkrevd.', 400);
+  if (typeof accessReason !== 'string' || !accessReason.trim())
+    return sendError(res, 'Tilgangsgrunn er påkrevd.', 400);
 
   await logActivity({
     adminId: req.user._id,

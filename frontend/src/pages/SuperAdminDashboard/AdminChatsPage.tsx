@@ -73,7 +73,9 @@ export default function AdminChatsPage() {
       fetchAdminChats({
         page,
         limit: 20,
-        ...(search && { chatId: search }),
+        ...(/^[a-f\d]{24}$/i.test(search.trim())
+          ? { chatId: search.trim() }
+          : search.trim() && { search: search.trim() }),
         ...(statusFilter && { status: statusFilter }),
         ...(reportedFilter && { reported: reportedFilter as 'true' | 'false' }),
         ...(safePayFilter && { safePayLinked: safePayFilter as 'true' | 'false' }),
@@ -226,7 +228,7 @@ export default function AdminChatsPage() {
                 setSearch(v);
                 setPage(1);
               }}
-              placeholder="Søk på Chat ID…"
+              placeholder="Søk på Chat ID, oppdrag, navn eller e-post…"
               className="flex-1 min-w-[200px]"
             />
             <AdminFilterSelect
