@@ -26,6 +26,7 @@ const adminActivitySchema = new mongoose.Schema(
         'assigned',
         'priority_changed',
         'internal_note_added',
+        'official_message_sent',
         'resolved',
         'reopened',
         'safepay_dispute_opened',

@@ -9,6 +9,20 @@ function toParams(q: Record<string, unknown>): string {
   return p.toString();
 }
 
+/** Report reason → Norwegian label (same set as models/JobReport.js). */
+export const REPORT_TYPE_LABELS: Record<string, string> = {
+  fake_job: 'Falsk annonse',
+  scam_or_fraud: 'Svindel',
+  spam: 'Spam',
+  duplicate: 'Duplikat',
+  inappropriate_content: 'Upassende innhold',
+  wrong_category: 'Feil kategori',
+  misleading_info: 'Villedende informasjon',
+  expired_job: 'Utløpt annonse',
+  payment_issue: 'Betalingsproblem',
+  other: 'Annet',
+};
+
 export interface AdminJobReportItem {
   _id: string;
   serviceId: {
@@ -42,7 +56,7 @@ export interface AdminJobReportItem {
   updatedAt: string;
 }
 
-interface AdminJobReportDetail extends AdminJobReportItem {
+export interface AdminJobReportDetail extends AdminJobReportItem {
   serviceId: {
     _id: string;
     title: string;
@@ -50,7 +64,8 @@ interface AdminJobReportDetail extends AdminJobReportItem {
     price?: number;
     status?: string;
     images?: string[];
-    location?: unknown;
+    location?: { address?: string; city?: string };
+    categories?: string[];
     createdAt?: string;
   } | null;
   resolvedBy: { _id: string; name: string; email: string } | null;
@@ -58,7 +73,7 @@ interface AdminJobReportDetail extends AdminJobReportItem {
   resolvedAt: string | null;
 }
 
-interface AdminJobReportsSummary {
+export interface AdminJobReportsSummary {
   open: number;
   under_review: number;
   resolved: number;
@@ -83,27 +98,41 @@ interface AdminJobReportsQuery {
 
 export const fetchAdminJobReports = async (
   q: AdminJobReportsQuery = {}
-): Promise<{
-  reports: AdminJobReportItem[];
-  summary: AdminJobReportsSummary;
-  pagination: Pagination;
-}> => {
-  const res = await mainLink.get<
-    ApiResponse<{ reports: AdminJobReportItem[]; summary: AdminJobReportsSummary }>
-  >(`/api/admin/job-reports?${toParams(q as Record<string, unknown>)}`);
-  return {
-    reports: res.data.data.reports,
-    summary: res.data.data.summary,
-    pagination: res.data.pagination!,
-  };
+): Promise<{ reports: AdminJobReportItem[]; pagination: Pagination }> => {
+  const res = await mainLink.get<ApiResponse<{ reports: AdminJobReportItem[] }>>(
+    `/api/admin/job-reports?${toParams(q as Record<string, unknown>)}`
+  );
+  return { reports: res.data.data.reports, pagination: res.data.pagination! };
 };
 
-export const fetchAdminJobReportById = async (reportId: string): Promise<AdminJobReportDetail> => {
-  const res = await mainLink.get<ApiResponse<{ report: AdminJobReportDetail }>>(
-    `/api/admin/job-reports/${reportId}`
-  );
-  return res.data.data.report;
-};
+export const fetchAdminJobReportsSummary = async (): Promise<AdminJobReportsSummary> =>
+  (await mainLink.get<ApiResponse<AdminJobReportsSummary>>('/api/admin/job-reports/summary')).data
+    .data;
+
+export interface RelatedJobReport {
+  _id: string;
+  reportType: string;
+  status: string;
+  createdAt: string;
+  reportedBy: { _id: string; name: string; email: string } | null;
+}
+
+export const fetchAdminJobReportById = async (
+  reportId: string
+): Promise<{
+  report: AdminJobReportDetail;
+  related: RelatedJobReport[];
+  reportedUserReports: number;
+}> =>
+  (
+    await mainLink.get<
+      ApiResponse<{
+        report: AdminJobReportDetail;
+        related: RelatedJobReport[];
+        reportedUserReports: number;
+      }>
+    >(`/api/admin/job-reports/${reportId}`)
+  ).data.data;
 
 export const assignJobReport = async (reportId: string): Promise<AdminJobReportItem> => {
   const res = await mainLink.patch<ApiResponse<{ report: AdminJobReportItem }>>(

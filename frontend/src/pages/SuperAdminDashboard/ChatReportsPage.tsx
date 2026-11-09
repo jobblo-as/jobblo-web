@@ -2,74 +2,67 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  Eye,
-  MessageSquare,
-  UserCheck,
   AlertTriangle,
-  Shield,
-  Clock,
   CheckCircle2,
-  XCircle,
+  Eye,
+  Flag,
+  MessageSquare,
+  Shield,
+  Siren,
+  UserCheck,
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { fetchAdminChatReports, assignChatReport } from '../../api/admin/chats';
-import type { AdminChatReportItem } from '../../api/admin/chats';
 import {
-  AdminDataTable,
-  AdminFilterSelect,
-  AdminStatusBadge,
-  AdminPageHeader,
-  AdminStatCard,
-  AdminStatCardSkeleton,
-} from '../../components/admin';
+  assignChatReport,
+  CHAT_REPORT_PRIORITY_LABELS,
+  CHAT_REPORT_TYPE_LABELS,
+  fetchAdminChatReports,
+  fetchAdminChatReportsSummary,
+  type AdminChatReportItem,
+} from '../../api/admin/chats';
+import { AdminDataTable, AdminFilterSelect, AdminPageHeader } from '../../components/admin';
 import type { ColumnDef } from '../../components/admin/AdminDataTable';
-import { StatusBadge } from '../../components/developer/kit';
+import { StatCard } from '../../components/developer/kit';
 import { Button } from '../../components/developer/ui/button';
+import { dateTime } from '@/lib/devFormat';
+import { getErrorMessage } from '../../utils/getErrorMessage';
+import { cn } from '@/lib/utils';
+import { Priority, ReportStatus, ReportType } from './reportBadges';
 
-const STATUS_OPTIONS = [
-  { label: 'Åpen', value: 'open' },
-  { label: 'Under behandling', value: 'under_review' },
-  { label: 'Venter reporter', value: 'waiting_for_reporter' },
-  { label: 'Venter rapportert bruker', value: 'waiting_for_reported_user' },
-  { label: 'Handling kreves', value: 'action_required' },
-  { label: 'Løst', value: 'resolved' },
-  { label: 'Avvist', value: 'dismissed' },
-  { label: 'Lukket', value: 'closed' },
-];
+const STATUS_TABS = [
+  { label: 'Alle', value: '', count: 'total' },
+  { label: 'Åpne', value: 'open', count: 'open' },
+  { label: 'Under behandling', value: 'under_review', count: 'under_review' },
+  { label: 'Handling kreves', value: 'action_required', count: 'action_required' },
+  { label: 'Venter på rapportør', value: 'waiting_for_reporter', count: 'waiting_for_reporter' },
+  {
+    label: 'Venter på rapportert',
+    value: 'waiting_for_reported_user',
+    count: 'waiting_for_reported_user',
+  },
+  { label: 'Løst', value: 'resolved', count: 'resolved' },
+  { label: 'Avvist', value: 'dismissed', count: 'dismissed' },
+] as const;
 
-const PRIORITY_OPTIONS = [
-  { label: 'Lav', value: 'low' },
-  { label: 'Middels', value: 'medium' },
-  { label: 'Høy', value: 'high' },
-  { label: 'Haster', value: 'urgent' },
-];
+const options = (m: Record<string, string>) =>
+  Object.entries(m).map(([value, label]) => ({ value, label }));
+const TYPE_OPTIONS = options(CHAT_REPORT_TYPE_LABELS);
+const PRIORITY_OPTIONS = options(CHAT_REPORT_PRIORITY_LABELS);
 
-const PRIORITY_TONE: Record<string, 'neutral' | 'warning' | 'danger'> = {
-  low: 'neutral',
-  medium: 'warning',
-  high: 'danger',
-  urgent: 'danger',
-};
-
-const REPORT_TYPE_OPTIONS = [
-  { label: 'Trakassering', value: 'harassment' },
-  { label: 'Krenkende språk', value: 'abusive_language' },
-  { label: 'Trusler', value: 'threats' },
-  { label: 'Spam', value: 'spam' },
-  { label: 'Svindel', value: 'scam_or_fraud' },
-  { label: 'Betalingsproblem', value: 'payment_issue' },
-  { label: 'SafePay-problem', value: 'safepay_issue' },
-  { label: 'Jobb ikke fullført', value: 'work_not_completed' },
-  { label: 'Dårlig kvalitet', value: 'poor_quality' },
-  { label: 'Avvik fra avtale', value: 'different_from_agreement' },
-  { label: 'Upassende innhold', value: 'inappropriate_content' },
-  { label: 'Falsk profil', value: 'fake_profile' },
-  { label: 'Identitetsproblem', value: 'identity_issue' },
-  { label: 'Mistenkelig lenke', value: 'suspicious_link' },
-  { label: 'Personvernbrudd', value: 'privacy_violation' },
-  { label: 'Betaling utenfor SafePay', value: 'off_platform_payment_request' },
-  { label: 'Annet', value: 'other' },
-];
+function PersonCell({ p }: { p: AdminChatReportItem['reportedBy'] }) {
+  if (!p) return <span className="text-xs text-muted-foreground">Slettet bruker</span>;
+  return (
+    <div className="min-w-0">
+      <Link
+        to={`/dashboard/users/${p._id}`}
+        className="block truncate text-sm font-medium text-foreground hover:text-primary hover:underline"
+      >
+        {p.name}
+      </Link>
+      <p className="truncate text-xs text-muted-foreground">{p.email}</p>
+    </div>
+  );
+}
 
 export default function ChatReportsPage() {
   const qc = useQueryClient();
@@ -90,6 +83,12 @@ export default function ChatReportsPage() {
       }),
     staleTime: 30_000,
   });
+  const summaryQuery = useQuery({
+    queryKey: ['admin-chat-reports', 'summary'],
+    queryFn: fetchAdminChatReportsSummary,
+    staleTime: 30_000,
+  });
+  const summary = summaryQuery.data;
 
   const assignMutation = useMutation({
     mutationFn: (id: string) => assignChatReport(id),
@@ -97,129 +96,76 @@ export default function ChatReportsPage() {
       toast.success('Rapport tildelt til deg.');
       qc.invalidateQueries({ queryKey: ['admin-chat-reports'] });
     },
-    onError: () => toast.error('Tildeling mislyktes.'),
+    onError: (e) => toast.error(getErrorMessage(e, 'Tildeling mislyktes.')),
   });
 
   const columns: ColumnDef<AdminChatReportItem>[] = [
     {
-      key: 'reportId',
-      header: 'Rapport-ID',
+      key: 'title',
+      header: 'Rapport',
       render: (r) => (
-        <Link
-          to={`/dashboard/chat-reports/${r._id}`}
-          className="font-mono text-xs text-primary hover:underline"
-        >
-          {r._id.slice(-8).toUpperCase()}
-        </Link>
-      ),
-    },
-    {
-      key: 'chatId',
-      header: 'Chat ID',
-      render: (r) => {
-        const cid = typeof r.chatId === 'object' ? r.chatId._id : r.chatId;
-        return cid ? (
-          <span className="font-mono text-xs text-muted-foreground">
-            {cid.slice(0, 8)}…{cid.slice(-4)}
+        <div className="flex min-w-[240px] items-start gap-3">
+          <span
+            className={cn(
+              'mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg [&_svg]:size-4',
+              r.scope === 'message' ? 'bg-sky-50 text-sky-600' : 'bg-violet-50 text-violet-600'
+            )}
+            title={r.scope === 'message' ? 'Én melding' : 'Hele chatten'}
+          >
+            {r.scope === 'message' ? <MessageSquare /> : <Flag />}
           </span>
-        ) : (
-          <span className="text-muted-foreground">–</span>
-        );
-      },
-    },
-    {
-      key: 'reportedBy',
-      header: 'Rapportert av',
-      render: (r) =>
-        r.reportedBy ? (
-          <div>
-            <p className="text-sm text-foreground">{r.reportedBy.name}</p>
-            <p className="text-xs text-muted-foreground">{r.reportedBy.email}</p>
+          <div className="min-w-0">
+            <Link
+              to={`/dashboard/chat-reports/${r._id}`}
+              className="line-clamp-1 text-sm font-medium text-foreground hover:text-primary hover:underline"
+            >
+              {r.title}
+            </Link>
+            <p className="line-clamp-1 max-w-[280px] text-xs text-muted-foreground">
+              {r.scope === 'message' ? 'Én melding · ' : 'Hele chatten · '}
+              {r.description}
+            </p>
           </div>
-        ) : (
-          <span className="text-muted-foreground">–</span>
-        ),
-    },
-    {
-      key: 'reportedUser',
-      header: 'Rapportert bruker',
-      render: (r) =>
-        r.reportedUser ? (
-          <div>
-            <p className="text-sm text-foreground">{r.reportedUser.name}</p>
-            <p className="text-xs text-muted-foreground">{r.reportedUser.email}</p>
-          </div>
-        ) : (
-          <span className="text-muted-foreground">–</span>
-        ),
+        </div>
+      ),
     },
     {
       key: 'reportType',
-      header: 'Type',
-      render: (r) => (
-        <span className="text-xs text-muted-foreground">{r.reportType.replace(/_/g, ' ')}</span>
-      ),
+      header: 'Årsak',
+      render: (r) => <ReportType type={r.reportType} chat />,
     },
+    { key: 'priority', header: 'Prioritet', render: (r) => <Priority p={r.priority} /> },
+    { key: 'reportedBy', header: 'Rapportert av', render: (r) => <PersonCell p={r.reportedBy} /> },
     {
-      key: 'scope',
-      header: 'Omfang',
-      render: (r) => <span className="text-xs capitalize text-muted-foreground">{r.scope}</span>,
+      key: 'reportedUser',
+      header: 'Rapportert bruker',
+      render: (r) => <PersonCell p={r.reportedUser} />,
     },
-    {
-      key: 'status',
-      header: 'Status',
-      render: (r) => <AdminStatusBadge status={r.status} />,
-    },
-    {
-      key: 'priority',
-      header: 'Prioritet',
-      render: (r) => (
-        <StatusBadge status={r.priority} tone={PRIORITY_TONE[r.priority] ?? 'neutral'} />
-      ),
-    },
+    { key: 'status', header: 'Status', render: (r) => <ReportStatus s={r.status} /> },
     {
       key: 'assigned',
-      header: 'Tildelt',
+      header: 'Saksbehandler',
       render: (r) =>
         r.assignedAdminId ? (
           <span className="text-xs text-foreground">{r.assignedAdminId.name}</span>
         ) : (
-          <span className="text-xs text-amber-600">Ikke tildelt</span>
+          <span className="text-xs font-medium text-amber-600">Ikke tildelt</span>
         ),
     },
     {
       key: 'createdAt',
-      header: 'Opprettet',
-      render: (r) =>
-        new Date(r.createdAt).toLocaleDateString('nb-NO', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric',
-        }),
+      header: 'Mottatt',
+      className: 'whitespace-nowrap text-xs text-muted-foreground',
+      render: (r) => dateTime(r.createdAt),
     },
     {
       key: 'actions',
-      header: 'Handlinger',
+      header: '',
       className: 'whitespace-nowrap',
       render: (r) => {
-        const chatId = typeof r.chatId === 'object' ? r.chatId._id : r.chatId;
         const isActive = !['resolved', 'dismissed', 'closed'].includes(r.status);
         return (
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <Button variant="outline" size="xs" asChild>
-              <Link to={`/dashboard/chat-reports/${r._id}`}>
-                <Eye aria-hidden="true" /> Detaljer
-              </Link>
-            </Button>
-            {chatId && (
-              <Button variant="outline" size="xs" asChild>
-                <Link
-                  to={`/dashboard/chat-review?chatId=${chatId}&reportId=${r._id}&source=report`}
-                >
-                  <MessageSquare aria-hidden="true" /> Gjennomgå chat
-                </Link>
-              </Button>
-            )}
+          <div className="flex items-center justify-end gap-1.5">
             {isActive && !r.assignedAdminId && (
               <Button
                 size="xs"
@@ -229,46 +175,59 @@ export default function ChatReportsPage() {
                 <UserCheck aria-hidden="true" /> Ta sak
               </Button>
             )}
+            <Button variant="outline" size="xs" asChild>
+              <Link to={`/dashboard/chat-reports/${r._id}`} aria-label={`Åpne rapport ${r.title}`}>
+                <Eye aria-hidden="true" /> Åpne
+              </Link>
+            </Button>
           </div>
         );
       },
     },
   ];
 
-  const summary = data?.summary;
-
   return (
     <div className="space-y-5">
       <AdminPageHeader
         title="Chatrapporter"
-        description="Administrer og behandle rapporter fra brukere om chatter og meldinger"
+        description="Brukere som har rapportert en melding eller en hel chat. Ta saken, les chatten og avgjør."
       />
 
-      {/* Summary cards */}
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {isLoading
-          ? Array.from({ length: 8 }).map((_, i) => <AdminStatCardSkeleton key={i} />)
-          : summary &&
-            [
-              { title: 'Åpne', value: summary.open, icon: <AlertTriangle size={16} /> },
-              {
-                title: 'Under behandling',
-                value: summary.under_review,
-                icon: <Shield size={16} />,
-              },
-              { title: 'Ikke tildelt', value: summary.unassigned, icon: <Clock size={16} /> },
-              { title: 'Haster', value: summary.urgent, icon: <AlertTriangle size={16} /> },
-              { title: 'Høy prioritet', value: summary.high, icon: <AlertTriangle size={16} /> },
-              {
-                title: 'Løst denne mnd',
-                value: summary.resolvedThisMonth,
-                icon: <CheckCircle2 size={16} />,
-              },
-              { title: 'Totalt løst', value: summary.resolved, icon: <CheckCircle2 size={16} /> },
-              { title: 'Avvist', value: summary.dismissed, icon: <XCircle size={16} /> },
-            ].map((c) => (
-              <AdminStatCard key={c.title} title={c.title} value={c.value} icon={c.icon} />
-            ))}
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <StatCard
+          label="Åpne"
+          value={summary?.open ?? 0}
+          icon={<AlertTriangle />}
+          tone="warning"
+          loading={summaryQuery.isLoading}
+          hint={summary ? `${summary.unassigned} ikke tildelt` : undefined}
+        />
+        <StatCard
+          label="Haster"
+          value={summary?.urgent ?? 0}
+          icon={<Siren />}
+          tone="danger"
+          loading={summaryQuery.isLoading}
+          hint={summary ? `${summary.high} med høy prioritet` : undefined}
+        />
+        <StatCard
+          label="Under behandling"
+          value={summary?.under_review ?? 0}
+          icon={<Shield />}
+          tone="info"
+          loading={summaryQuery.isLoading}
+          hint={summary ? `${summary.action_required} krever handling` : undefined}
+        />
+        <StatCard
+          label="Avgjort denne mnd"
+          value={summary?.resolvedThisMonth ?? 0}
+          icon={<CheckCircle2 />}
+          tone="success"
+          loading={summaryQuery.isLoading}
+          hint={
+            summary ? `${summary.resolved} løst · ${summary.dismissed} avvist totalt` : undefined
+          }
+        />
       </section>
 
       <AdminDataTable
@@ -283,34 +242,63 @@ export default function ChatReportsPage() {
         pagination={data?.pagination}
         onPageChange={(p) => setPage(p)}
         toolbar={
-          <div className="flex w-full flex-wrap gap-2">
-            <AdminFilterSelect
-              value={statusFilter}
-              onChange={(v) => {
-                setStatusFilter(v);
-                setPage(1);
-              }}
-              options={STATUS_OPTIONS}
-              placeholder="Alle statuser"
-            />
-            <AdminFilterSelect
-              value={priorityFilter}
-              onChange={(v) => {
-                setPriorityFilter(v);
-                setPage(1);
-              }}
-              options={PRIORITY_OPTIONS}
-              placeholder="Alle prioriteter"
-            />
-            <AdminFilterSelect
-              value={typeFilter}
-              onChange={(v) => {
-                setTypeFilter(v);
-                setPage(1);
-              }}
-              options={REPORT_TYPE_OPTIONS}
-              placeholder="Alle rapporttyper"
-            />
+          <div className="flex w-full flex-col gap-2">
+            <div role="tablist" aria-label="Status" className="flex flex-wrap gap-1.5">
+              {STATUS_TABS.map((t) => {
+                const active = statusFilter === t.value;
+                const n = summary?.[t.count];
+                return (
+                  <button
+                    key={t.value}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => {
+                      setStatusFilter(t.value);
+                      setPage(1);
+                    }}
+                    className={cn(
+                      'inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors',
+                      active
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : 'bg-card text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    {t.label}
+                    {n != null && (
+                      <span
+                        className={cn(
+                          'rounded-full px-1.5 tabular-nums',
+                          active ? 'bg-white/20' : 'bg-muted'
+                        )}
+                      >
+                        {n}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <AdminFilterSelect
+                value={priorityFilter}
+                onChange={(v) => {
+                  setPriorityFilter(v);
+                  setPage(1);
+                }}
+                options={PRIORITY_OPTIONS}
+                placeholder="Alle prioriteter"
+              />
+              <AdminFilterSelect
+                value={typeFilter}
+                onChange={(v) => {
+                  setTypeFilter(v);
+                  setPage(1);
+                }}
+                options={TYPE_OPTIONS}
+                placeholder="Alle årsaker"
+              />
+            </div>
           </div>
         }
       />

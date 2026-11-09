@@ -174,7 +174,11 @@ const JobListingDetailPage = () => {
       setIsReportModalOpen(false);
     },
     onError: (err) => {
-      toast.error(errorBody(err)?.message || 'Kunne ikke sende rapporten. Prøv igjen.');
+      toast.error(
+        errorBody(err)?.error ||
+          errorBody(err)?.message ||
+          'Kunne ikke sende rapporten. Prøv igjen.'
+      );
     },
   });
 
@@ -1089,12 +1093,21 @@ const JobListingDetailPage = () => {
               >
                 <Share2 size={15} strokeWidth={2} /> Del
               </button>
-              <button
-                onClick={() => setIsReportModalOpen(true)}
-                className="inline-flex h-10 flex-1 items-center justify-center rounded-full text-[0.875rem] font-medium text-[#63665F] transition-colors hover:text-[#0B0B0B]"
-              >
-                Rapporter
-              </button>
+              {!isOwnJob && (
+                <button
+                  onClick={() => {
+                    if (!isAuth) {
+                      toast.error('Logg inn for å rapportere annonsen');
+                      navigate('/login');
+                      return;
+                    }
+                    setIsReportModalOpen(true);
+                  }}
+                  className="inline-flex h-10 flex-1 items-center justify-center rounded-full text-[0.875rem] font-medium text-[#63665F] transition-colors hover:text-[#0B0B0B]"
+                >
+                  Rapporter
+                </button>
+              )}
             </div>
           </div>
         </div>

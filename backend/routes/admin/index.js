@@ -152,6 +152,7 @@ router.get('/chats/:chatId/reports', chatsAdminController.getChatReports);
 router.post('/chats/:chatId/access-log', chatsAdminController.logChatAccess);
 // ── Admin Chat Reports ─────────────────────────────────────────────────────
 router.get('/chat-reports', chatReportsAdminController.getReports);
+router.get('/chat-reports/summary', chatReportsAdminController.getReportsSummary);
 router.get('/chat-reports/:reportId', chatReportsAdminController.getReportById);
 router.patch('/chat-reports/:reportId/assign', chatReportsAdminController.assignReport);
 router.patch('/chat-reports/:reportId/priority', chatReportsAdminController.updatePriority);
@@ -166,7 +167,7 @@ router.post(
   chatReportsAdminController.addOfficialMessage
 );
 router.post('/chat-reports/:reportId/resolve', chatReportsAdminController.resolveReport);
-router.post('/chat-reports/:reportId/dismiss', chatReportsAdminController.resolveReport); // dismiss via resolve with no_violation outcome
+router.post('/chat-reports/:reportId/dismiss', chatReportsAdminController.dismissReport);
 router.post('/chat-reports/:reportId/reopen', chatReportsAdminController.reopenReport);
 
 // ── Job Reports ───────────────────────────────────────────────────────────────
