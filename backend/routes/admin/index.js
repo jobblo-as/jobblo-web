@@ -95,6 +95,7 @@ router.put('/orders/:id/status', ordersAdminController.updateOrderStatus);
 // ── Services ───────────────────────────────────────────────────────────────
 router.get('/services', servicesAdminController.getServices);
 router.get('/services/:id', servicesAdminController.getServiceById);
+router.get('/services/:id/activity', servicesAdminController.getServiceActivity);
 router.put('/services/:id', upload.array('images', 6), servicesAdminController.updateService);
 router.put('/services/:id/status', servicesAdminController.updateServiceStatus);
 router.delete('/services/:id', servicesAdminController.deleteService);

@@ -249,6 +249,7 @@ const DashboardOverviewPage = lazy(
 const UsersPage = lazy(() => import('../pages/SuperAdminDashboard/UsersPage.tsx'));
 const ServicesPage = lazy(() => import('../pages/SuperAdminDashboard/ServicesPage.tsx'));
 const AdminEditJobPage = lazy(() => import('../pages/SuperAdminDashboard/AdminEditJobPage.tsx'));
+const ServiceDetailPage = lazy(() => import('../pages/SuperAdminDashboard/ServiceDetailPage.tsx'));
 const OrdersPage = lazy(() => import('../pages/SuperAdminDashboard/OrdersPage.tsx'));
 const OrderDetailPage = lazy(() => import('../pages/SuperAdminDashboard/OrderDetailPage.tsx'));
 const UserDetailPage = lazy(() => import('../pages/SuperAdminDashboard/UserDetailPage.tsx'));
@@ -485,6 +486,7 @@ export const routes: RouteObject[] = [
       { path: 'users', element: withSuspense(UsersPage) },
       { path: 'users/:id', element: withSuspense(UserDetailPage) },
       { path: 'services', element: withSuspense(ServicesPage) },
+      { path: 'services/:id', element: withSuspense(ServiceDetailPage) },
       { path: 'services/:id/edit', element: withSuspense(AdminEditJobPage) },
       { path: 'orders', element: withSuspense(OrdersPage) },
       { path: 'orders/:id', element: withSuspense(OrderDetailPage) },

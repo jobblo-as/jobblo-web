@@ -196,3 +196,110 @@ export const fetchUserOverview = async (id: string) =>
   (await mainLink.get(`/api/admin/users/${id}/overview`)).data.data as AdminUserOverview;
 export const fetchOrderDetail = async (id: string) =>
   (await mainLink.get(`/api/admin/orders/${id}/details`)).data.data as AdminOrderDetail;
+
+/* One job (service): everything that happened on it. Backend: servicesAdminController.getServiceActivity. */
+export type ActivityPerson = {
+  _id: string;
+  name?: string;
+  lastName?: string;
+  email?: string;
+  avatarUrl?: string;
+  role?: string;
+} | null;
+
+export interface ServiceActivity {
+  service: {
+    _id: string;
+    title: string;
+    status: string;
+    price?: number;
+    hourlyRate?: number;
+    paymentType?: string;
+    categories?: string[];
+    images?: string[];
+    location?: { address?: string; city?: string };
+    urgent?: boolean;
+    createdAt: string;
+    updatedAt?: string;
+    userId: ActivityPerson;
+  };
+  stats: {
+    requests: number;
+    pending: number;
+    accepted: number;
+    declined: number;
+    withdrawn: number;
+    orders: number;
+    paid: number;
+    favorites: number;
+    reports: number;
+    disputes: number;
+  };
+  requests: {
+    _id: string;
+    providerId: ActivityPerson;
+    status: string;
+    message?: string;
+    withdrawnAt?: string | null;
+    createdAt: string;
+  }[];
+  orders: {
+    _id: string;
+    providerId: ActivityPerson;
+    customerId: ActivityPerson;
+    status: string;
+    paymentStatus?: string;
+    agreedPrice?: number;
+    price?: number;
+    paymentConfirmedAt?: string;
+    startedAt?: string;
+    completedAt?: string;
+    cancellationReason?: string;
+    createdAt: string;
+  }[];
+  payouts: {
+    _id: string;
+    orderId: string;
+    status: string;
+    grossAmount: number;
+    platformFee: number;
+    netProviderAmount: number;
+    transferCompletedAt?: string;
+    failureReason?: string;
+  }[];
+  urgent: {
+    _id: string;
+    status: string;
+    amountMinor: number;
+    paidAt?: string;
+    createdAt: string;
+  }[];
+  extraContacts: {
+    _id: string;
+    userId: ActivityPerson;
+    status: string;
+    amountMinor: number;
+    paidAt?: string;
+  }[];
+  reviews: {
+    _id: string;
+    reviewerId: ActivityPerson;
+    revieweeRole: string;
+    rating: number;
+    comment?: string;
+    createdAt: string;
+  }[];
+  reports: {
+    _id: string;
+    reportedBy: ActivityPerson;
+    reportType: string;
+    description: string;
+    status: string;
+    createdAt: string;
+  }[];
+  disputes: { _id: string; orderId: string; status: string; title: string; createdAt: string }[];
+  timeline: { at: string; kind: string; text: string; orderId?: string }[];
+}
+
+export const fetchServiceActivity = async (id: string): Promise<ServiceActivity> =>
+  (await mainLink.get(`/api/admin/services/${id}/activity`)).data.data;

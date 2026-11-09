@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { Briefcase } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAdminServices, useUpdateServiceStatus, useDeleteAdminService } from '../../hooks/admin';
 import type { AdminServicesQuery, AdminService } from '../../api/admin';
 import {
@@ -81,7 +81,12 @@ export default function ServicesPage() {
       header: 'Tittel',
       render: (s) => (
         <div className="min-w-0">
-          <p className="text-sm font-medium text-foreground truncate max-w-[200px]">{s.title}</p>
+          <Link
+            to={`/dashboard/services/${s._id}`}
+            className="block text-sm font-medium text-primary hover:underline truncate max-w-[200px]"
+          >
+            {s.title}
+          </Link>
           <p className="text-xs text-muted-foreground truncate max-w-[200px]">
             {s.categories.slice(0, 2).join(', ')}
           </p>
@@ -131,6 +136,14 @@ export default function ServicesPage() {
       className: 'whitespace-nowrap',
       render: (s) => (
         <div className="flex items-center gap-1">
+          <Button
+            size="xs"
+            variant="outline"
+            onClick={() => navigate(`/dashboard/services/${s._id}`)}
+            aria-label={`Detaljer ${s.title}`}
+          >
+            Detaljer
+          </Button>
           <Button
             size="xs"
             variant="outline"
