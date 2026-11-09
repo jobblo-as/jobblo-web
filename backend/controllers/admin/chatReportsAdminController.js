@@ -20,6 +20,8 @@ const {
 const { notify } = require('../../services/notifications');
 
 const SORT_FIELDS = ['createdAt', 'updatedAt'];
+/** A trimmed, non-empty string of at most `max` chars, or null (also for non-strings). */
+const text = (v, max) => (typeof v === 'string' && v.trim() && v.length <= max ? v.trim() : null);
 const TERMINAL_STATUSES = ['resolved', 'dismissed', 'closed'];
 
 // ── Reports list ──────────────────────────────────────────────────────────────
@@ -38,7 +40,8 @@ const getReports = asyncHandler(async (req, res) => {
   ) {
     query.priority = req.query.priority;
   }
-  if (req.query.reportType) query.reportType = req.query.reportType;
+  if (ChatReport.VALID_REPORT_TYPES.includes(req.query.reportType))
+    query.reportType = req.query.reportType;
   if (req.query.assignedToMe === 'true') query.assignedAdminId = req.user._id;
   if (req.query.unassigned === 'true') query.assignedAdminId = null;
 
@@ -78,12 +81,19 @@ const getReportsSummary = asyncHandler(async (req, res) => {
   const now = new Date();
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  const [statusCounts, resolvedThisMonth, unassigned, safePayLinked] = await Promise.all([
-    ChatReport.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
-    ChatReport.countDocuments({ status: 'resolved', updatedAt: { $gte: startOfMonth } }),
-    ChatReport.countDocuments({ assignedAdminId: null, status: { $nin: TERMINAL_STATUSES } }),
-    ChatReport.countDocuments({ safePayOrderId: { $ne: null } }),
-  ]);
+  const active = { $nin: TERMINAL_STATUSES };
+  const [statusCounts, resolvedThisMonth, unassigned, safePayLinked, urgent, high] =
+    await Promise.all([
+      ChatReport.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
+      ChatReport.countDocuments({
+        status: { $in: ['resolved', 'dismissed'] },
+        'resolution.resolvedAt': { $gte: startOfMonth },
+      }),
+      ChatReport.countDocuments({ assignedAdminId: null, status: active }),
+      ChatReport.countDocuments({ safePayOrderId: { $ne: null } }),
+      ChatReport.countDocuments({ priority: 'urgent', status: active }),
+      ChatReport.countDocuments({ priority: 'high', status: active }),
+    ]);
 
   const byStatus = {};
   statusCounts.forEach((s) => {
@@ -97,13 +107,14 @@ const getReportsSummary = asyncHandler(async (req, res) => {
     waiting_for_reporter: byStatus['waiting_for_reporter'] ?? 0,
     waiting_for_reported_user: byStatus['waiting_for_reported_user'] ?? 0,
     resolved: byStatus['resolved'] ?? 0,
+    dismissed: byStatus['dismissed'] ?? 0,
+    closed: byStatus['closed'] ?? 0,
+    total: statusCounts.reduce((n, x) => n + x.count, 0),
     resolvedThisMonth,
     unassigned,
     safePayLinked,
-    urgent: await ChatReport.countDocuments({
-      priority: 'urgent',
-      status: { $nin: TERMINAL_STATUSES },
-    }),
+    urgent,
+    high,
   });
 });
 
@@ -199,7 +210,7 @@ const updateStatus = asyncHandler(async (req, res) => {
   report.timeline.push({
     action: `status_changed_to_${status}`,
     actorId: req.user._id,
-    description: note ?? `Status: ${status}`,
+    description: text(note, 500) ?? `Status: ${status}`,
   });
   await report.save();
   return sendSuccess(res, { report }, 'Status oppdatert.');
@@ -209,12 +220,12 @@ const updateStatus = asyncHandler(async (req, res) => {
 const addInternalNote = asyncHandler(async (req, res) => {
   const id = parseObjectId(req.params.reportId);
   if (!id) return sendError(res, 'Ugyldig rapport-ID.', 400);
-  const { note } = req.body;
-  if (!note?.trim()) return sendError(res, 'Notat er påkrevd.', 400);
+  const note = text(req.body.note, 2000);
+  if (!note) return sendError(res, 'Notat er påkrevd (maks 2000 tegn).', 400);
 
   const report = await ChatReport.findById(id);
   if (!report) return sendError(res, 'Rapport ikke funnet.', 404);
-  report.internalNotes.push({ adminId: req.user._id, note: note.trim() });
+  report.internalNotes.push({ adminId: req.user._id, note });
   report.timeline.push({
     action: 'internal_note_added',
     actorId: req.user._id,
@@ -228,10 +239,11 @@ const addInternalNote = asyncHandler(async (req, res) => {
 const requestInformation = asyncHandler(async (req, res) => {
   const id = parseObjectId(req.params.reportId);
   if (!id) return sendError(res, 'Ugyldig rapport-ID.', 400);
-  const { from, message } = req.body;
+  const { from } = req.body;
+  const message = text(req.body.message, 2000);
   if (!from || !['reporter', 'reported_user'].includes(from))
     return sendError(res, 'Spesifiser "from": reporter eller reported_user.', 400);
-  if (!message?.trim()) return sendError(res, 'Melding er påkrevd.', 400);
+  if (!message) return sendError(res, 'Melding er påkrevd (maks 2000 tegn).', 400);
 
   const report = await ChatReport.findById(id);
   if (!report) return sendError(res, 'Rapport ikke funnet.', 404);
@@ -241,7 +253,7 @@ const requestInformation = asyncHandler(async (req, res) => {
   report.officialMessages.push({
     senderId: req.user._id,
     recipientId: from === 'reporter' ? report.reportedBy : report.reportedUser,
-    message: message.trim(),
+    message,
   });
   report.status = from === 'reporter' ? 'waiting_for_reporter' : 'waiting_for_reported_user';
   report.timeline.push({
@@ -266,27 +278,42 @@ const requestInformation = asyncHandler(async (req, res) => {
 const addOfficialMessage = asyncHandler(async (req, res) => {
   const id = parseObjectId(req.params.reportId);
   if (!id) return sendError(res, 'Ugyldig rapport-ID.', 400);
-  const { recipientId, message } = req.body;
-  if (!message?.trim()) return sendError(res, 'Melding er påkrevd.', 400);
-  const rId = parseObjectId(recipientId);
-  if (!rId) return sendError(res, 'Ugyldig mottaker-ID.', 400);
-
+  const message = text(req.body.message, 2000);
+  if (!message) return sendError(res, 'Melding er påkrevd (maks 2000 tegn).', 400);
   const report = await ChatReport.findById(id);
   if (!report) return sendError(res, 'Rapport ikke funnet.', 404);
-  report.officialMessages.push({
-    senderId: req.user._id,
-    recipientId: rId,
-    message: message.trim(),
+  // The admin page sends recipientType ('reporter' | 'reported_user'); an explicit id also works.
+  const { recipientType } = req.body;
+  const rId =
+    recipientType === 'reporter'
+      ? report.reportedBy
+      : recipientType === 'reported_user'
+        ? report.reportedUser
+        : parseObjectId(req.body.recipientId);
+  // Only the two people in the report can receive an official message.
+  if (!rId || ![report.reportedBy, report.reportedUser].some((u) => u && String(u) === String(rId)))
+    return sendError(res, 'Mottakeren må være den som rapporterte eller den rapporterte.', 400);
+  report.officialMessages.push({ senderId: req.user._id, recipientId: rId, message });
+  report.timeline.push({
+    action: 'official_message_sent',
+    actorId: req.user._id,
+    description: 'Offisiell melding sendt',
   });
   await report.save();
+  await notify({
+    userId: rId,
+    type: 'alert',
+    content: 'Du har fått en melding fra Jobblo support om en rapport.',
+  });
   return sendSuccess(res, {}, 'Melding sendt.');
 });
 
 // ── Resolve ───────────────────────────────────────────────────────────────────
-const resolveReport = asyncHandler(async (req, res) => {
+async function closeReport(req, res, status) {
   const id = parseObjectId(req.params.reportId);
   if (!id) return sendError(res, 'Ugyldig rapport-ID.', 400);
-  const { outcome, reason } = req.body;
+  const outcome = status === 'dismissed' ? 'no_violation' : req.body.outcome;
+  const reason = text(req.body.reason, 1000);
 
   const VALID_OUTCOMES = [
     'no_violation',
@@ -302,24 +329,22 @@ const resolveReport = asyncHandler(async (req, res) => {
     'other',
   ];
   if (!outcome || !VALID_OUTCOMES.includes(outcome)) return sendError(res, 'Ugyldig utfall.', 400);
-  if (!reason?.trim()) return sendError(res, 'Begrunnelse er påkrevd.', 400);
+  if (!reason) return sendError(res, 'Begrunnelse er påkrevd (maks 1000 tegn).', 400);
 
   const report = await ChatReport.findById(id);
   if (!report) return sendError(res, 'Rapport ikke funnet.', 404);
   if (TERMINAL_STATUSES.includes(report.status))
-    return sendError(res, 'Rapporten er allerede løst.', 409);
+    return sendError(res, 'Rapporten er allerede avsluttet.', 409);
 
-  report.status = 'resolved';
-  report.resolution = {
-    outcome,
-    reason: reason.trim(),
-    resolvedBy: req.user._id,
-    resolvedAt: new Date(),
-  };
+  report.status = status;
+  report.resolution = { outcome, reason, resolvedBy: req.user._id, resolvedAt: new Date() };
   report.timeline.push({
-    action: 'resolved',
+    action: status,
     actorId: req.user._id,
-    description: `Løst: ${outcome}. ${reason.trim()}`,
+    description: `${status === 'dismissed' ? 'Avvist.' : `Løst: ${outcome}.`} ${reason}`.slice(
+      0,
+      500
+    ), // timeline cap
   });
   await report.save();
 
@@ -328,31 +353,33 @@ const resolveReport = asyncHandler(async (req, res) => {
     action: 'other',
     targetModel: 'other',
     targetId: id,
-    description: `Rapport løst: ${outcome}`,
+    description: `Rapport ${status === 'dismissed' ? 'avvist' : `løst: ${outcome}`}`,
     ip: req.ip,
     userAgent: req.headers['user-agent'],
   });
 
-  return sendSuccess(res, { report }, 'Rapport løst.');
-});
+  return sendSuccess(res, { report }, status === 'dismissed' ? 'Rapport avvist.' : 'Rapport løst.');
+}
+const resolveReport = asyncHandler((req, res) => closeReport(req, res, 'resolved'));
+const dismissReport = asyncHandler((req, res) => closeReport(req, res, 'dismissed'));
 
 // ── Reopen ────────────────────────────────────────────────────────────────────
 const reopenReport = asyncHandler(async (req, res) => {
   const id = parseObjectId(req.params.reportId);
   if (!id) return sendError(res, 'Ugyldig rapport-ID.', 400);
-  const { reason } = req.body;
-  if (!reason?.trim()) return sendError(res, 'Årsak er påkrevd.', 400);
+  const reason = text(req.body.reason, 2000);
+  if (!reason) return sendError(res, 'Årsak er påkrevd.', 400);
 
   const report = await ChatReport.findById(id);
   if (!report) return sendError(res, 'Rapport ikke funnet.', 404);
-  if (!['resolved', 'dismissed', 'closed'].includes(report.status))
+  if (!TERMINAL_STATUSES.includes(report.status))
     return sendError(res, 'Kun avsluttede rapporter kan gjenåpnes.', 400);
 
   report.status = 'under_review';
   report.timeline.push({
     action: 'reopened',
     actorId: req.user._id,
-    description: `Gjenåpnet: ${reason.trim()}`,
+    description: `Gjenåpnet: ${reason}`.slice(0, 500), // timeline cap
   });
   await report.save();
   return sendSuccess(res, { report }, 'Rapport gjenåpnet.');
@@ -428,6 +455,7 @@ module.exports = {
   requestInformation,
   addOfficialMessage,
   resolveReport,
+  dismissReport,
   reopenReport,
   createDisputeFromReport,
 };

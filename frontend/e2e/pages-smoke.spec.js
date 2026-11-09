@@ -48,7 +48,6 @@ const settings = [
   'payout',
   'password',
   'delete-account',
-  'location',
   'upcoming',
   'visibility',
   'blocked',

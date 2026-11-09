@@ -2,7 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'react-hot-toast';
-import { fetchAdminChatById, fetchAdminChatReportById } from '../../api/admin/chats';
+import {
+  CHAT_REPORT_TYPE_LABELS,
+  fetchAdminChatById,
+  fetchAdminChatReportById,
+} from '../../api/admin/chats';
 import type { AdminChatDetailResponse, AdminChatReportDetail } from '../../api/admin/chats';
 import { ChatIdSearchForm } from '../../components/admin/chat/ChatIdSearchForm';
 import { ChatAccessReasonDialog } from '../../components/admin/chat/ChatAccessReasonDialog';
@@ -25,7 +29,10 @@ function ReportSummaryPanel({ report }: { report: AdminChatReportDetail }) {
     <div className="space-y-3">
       <KeyValue
         items={[
-          ['Type', report.reportType.replace(/_/g, ' ')],
+          [
+            'Type',
+            CHAT_REPORT_TYPE_LABELS[report.reportType] ?? report.reportType.replace(/_/g, ' '),
+          ],
           ['Tittel', report.title],
           ['Status', <AdminStatusBadge key="s" status={report.status} />],
           ['Rapportert av', report.reportedBy?.name ?? '–'],
@@ -93,13 +100,7 @@ export default function ChatReviewPage() {
       setShowDialog(false);
       setConfirmedReason(reason);
       setSubmittedChatId(pendingChatId);
-
-      // Trigger the query after state settles
-      setTimeout(() => {
-        chatQuery.refetch().catch(() => {
-          // errors handled via chatQuery.isError below
-        });
-      }, 0);
+      // The effect below fetches once both are set.
     },
     [pendingChatId]
   );

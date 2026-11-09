@@ -97,6 +97,12 @@ app.use(express.json({ limit: '256kb' }));
 app.use(express.urlencoded({ extended: false, limit: '256kb' }));
 app.use(cookieParser());
 app.use(require('./services/security/deviceId').deviceCookie); // pseudonymous jb_did installation id
+// Maintenance mode (whole site or one area). After cookies (staff are recognised by their token),
+// before every API route; Stripe webhooks are mounted above and never blocked.
+app.get('/api/maintenance', async (req, res) =>
+  res.json({ success: true, data: await require('./services/maintenance').publicStatus() })
+);
+app.use(require('./services/maintenance').maintenanceGuard);
 // cookie-parser turns `j:{...}` values into objects: `refreshToken=j:{"$ne":null}` became a
 // Mongo operator in Session queries. Every cookie we read is a plain string, so keep only those.
 app.use((req, _res, next) => {

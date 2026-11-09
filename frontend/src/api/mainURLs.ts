@@ -2,6 +2,7 @@ import axios from 'axios';
 import { setupInterceptors } from '../lib/axios';
 import { API_BASE_URL } from '../config/env';
 import { trackApi } from '../lib/rum';
+import { toast } from 'react-hot-toast';
 
 const BASE_URL = API_BASE_URL;
 
@@ -42,6 +43,9 @@ mainLink.interceptors.response.use(
     if (data && data.error) {
       err.apiError = data.error;
     }
+    // Vedlikeholdsmodus (backend services/maintenance.js): say why, once per area.
+    if (err?.response?.status === 503 && data?.code === 'MAINTENANCE')
+      toast.error(data.message, { id: `maintenance-${data.area}` });
     return Promise.reject(err);
   }
 );

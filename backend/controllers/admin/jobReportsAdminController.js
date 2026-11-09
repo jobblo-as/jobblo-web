@@ -20,7 +20,8 @@ const getReports = asyncHandler(async (req, res) => {
   if (req.query.status && JobReport.schema.path('status').enumValues.includes(req.query.status)) {
     query.status = req.query.status;
   }
-  if (req.query.reportType) query.reportType = req.query.reportType;
+  if (JobReport.VALID_REPORT_TYPES.includes(req.query.reportType))
+    query.reportType = req.query.reportType;
   if (req.query.assignedToMe === 'true') query.assignedAdminId = req.user._id;
 
   const serviceId = parseObjectId(req.query.serviceId);
@@ -57,7 +58,7 @@ const getReportsSummary = asyncHandler(async (req, res) => {
 
   const [statusCounts, resolvedThisMonth, unassigned] = await Promise.all([
     JobReport.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
-    JobReport.countDocuments({ status: 'resolved', updatedAt: { $gte: startOfMonth } }),
+    JobReport.countDocuments({ status: 'resolved', resolvedAt: { $gte: startOfMonth } }),
     JobReport.countDocuments({ assignedAdminId: null, status: { $nin: TERMINAL_STATUSES } }),
   ]);
 
@@ -83,7 +84,7 @@ const getReportById = asyncHandler(async (req, res) => {
   if (!id) return sendError(res, 'Ugyldig rapport-ID.', 400);
 
   const report = await JobReport.findById(id)
-    .populate('serviceId', 'title description price status images location createdAt')
+    .populate('serviceId', 'title description price status images location categories createdAt')
     .populate('reportedBy', 'name email role avatarUrl accountStatus verified')
     .populate('reportedUser', 'name email role avatarUrl accountStatus verified')
     .populate('assignedAdminId', 'name email')
@@ -92,7 +93,18 @@ const getReportById = asyncHandler(async (req, res) => {
 
   if (!report) return sendError(res, 'Rapport ikke funnet.', 404);
 
-  return sendSuccess(res, { report });
+  // Context for the decision: other reports on the same ad, and how often this user is reported.
+  const [related, reportedUserReports] = await Promise.all([
+    JobReport.find({ serviceId: report.serviceId?._id ?? report.serviceId, _id: { $ne: id } })
+      .select('reportType status createdAt reportedBy')
+      .populate('reportedBy', 'name email')
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean(),
+    report.reportedUser ? JobReport.countDocuments({ reportedUser: report.reportedUser._id }) : 0,
+  ]);
+
+  return sendSuccess(res, { report, related, reportedUserReports });
 });
 
 // ── Assign ────────────────────────────────────────────────────────────────────
@@ -123,13 +135,16 @@ const updateStatus = asyncHandler(async (req, res) => {
   if (!status || !JobReport.schema.path('status').enumValues.includes(status)) {
     return sendError(res, 'Ugyldig status.', 400);
   }
+  if (note != null && (typeof note !== 'string' || note.length > 1000)) {
+    return sendError(res, 'Notatet kan være maks 1000 tegn.', 400);
+  }
 
   const report = await JobReport.findById(id);
   if (!report) return sendError(res, 'Rapport ikke funnet.', 404);
 
   report.status = status;
   if (TERMINAL_STATUSES.includes(status)) {
-    report.resolutionNote = note || report.resolutionNote || null;
+    report.resolutionNote = note?.trim() || report.resolutionNote || null;
     report.resolvedBy = req.user._id;
     report.resolvedAt = new Date();
   } else {

@@ -16,6 +16,11 @@ const { schedulerSummary } = require('../../services/monitoring/summaries');
 /** Developer console — health checks, trace lookup and the developer list. Read-only unless noted; no exec, no arbitrary queries, no secrets. */
 
 // ── 21. Developer tools ─────────────────────────────────────────────────────
+/**
+ * The variables the readiness check reports, by the names the code actually reads. A string is
+ * required; { optional } shows "not set" instead of "missing"; { anyOf } is present when one of
+ * them is; `note` says what it is for. Presence only — values never leave the server.
+ */
 const ENV_KEYS = [
   'NODE_ENV',
   'MONGO_URI',
@@ -31,11 +36,37 @@ const ENV_KEYS = [
   'GOOGLE_CLIENT_ID',
   'GOOGLE_CLIENT_SECRET',
   'OPENAI_API_KEY',
-  'EMAIL_HOST',
-  'EMAIL_USER',
-  'FIREBASE_SERVICE_ACCOUNT',
+  // utils/emailService.js
+  { name: 'SMTP_USER', note: 'Email sender (OTP, password reset, alerts)' },
+  { name: 'SMTP_PASS', note: 'Email sender password' },
+  { name: 'SMTP_HOST', optional: true, note: 'Defaults to smtp.gmail.com' },
+  // services/firebaseAdmin.js — Android push; iOS goes through Expo
+  {
+    name: 'GOOGLE_APPLICATION_CREDENTIALS / FIREBASE_CONFIG',
+    anyOf: ['GOOGLE_APPLICATION_CREDENTIALS', 'FIREBASE_CONFIG'],
+    note: 'Android push (Firebase); iOS push goes through Expo',
+  },
+  { name: 'EXPO_ACCESS_TOKEN', optional: true, note: 'Only with Expo enhanced push security' },
   'ENABLE_SCHEDULER',
+  // Security Intelligence (docs/SECURITY-INTELLIGENCE.md)
+  {
+    name: 'DEVICE_ID_SECRET',
+    note: 'Security Intelligence: installation tracking is off without it',
+  },
+  {
+    name: 'IPINTEL_IPAPI',
+    optional: true,
+    note: 'on = use ip-api (needs a paid plan in production)',
+  },
+  { name: 'REDIS_URL', optional: true, note: 'Queues and cache; without it jobs run in-process' },
 ];
+
+/** Pure: one ENV_KEYS entry → what the page shows. Unit-tested. */
+function envStatus(entry, env = process.env) {
+  const e = typeof entry === 'string' ? { name: entry } : entry;
+  const present = (e.anyOf || [e.name]).some((k) => Boolean(env[k]));
+  return { name: e.name, present, optional: Boolean(e.optional), note: e.note || null };
+}
 
 function sslExpiry(host) {
   return new Promise((resolve) => {
@@ -103,7 +134,8 @@ const runChecks = asyncHandler(async (req, res) => {
       : { ok: null, skipped: 'FRONTEND_URL not set or local' },
   ]);
 
-  const env = ENV_KEYS.map((name) => ({ name, present: Boolean(process.env[name]) }));
+  const env = ENV_KEYS.map((entry) => envStatus(entry));
+  const redis = await require('../../config/redis').pingRedis();
   const schedulerJobs = await schedulerSummary(new Date(Date.now() - DAY));
 
   const checks = [
@@ -158,15 +190,35 @@ const runChecks = asyncHandler(async (req, res) => {
           : `${host} — set HOST=127.0.0.1 in production so only nginx can reach port ${process.env.PORT || 5001}`,
       };
     })(),
-    { key: 'queue', label: 'Queue workers', ok: null, detail: 'No queue system configured' },
-    { key: 'cache', label: 'Cache', ok: null, detail: 'No cache configured' },
+    // Redis serves both: BullMQ queues and the response cache (config/redis.js).
+    {
+      key: 'queue',
+      label: 'Queue workers',
+      ok: redis.enabled ? redis.ok : null,
+      ms: redis.ms,
+      detail: !redis.enabled
+        ? 'No Redis (REDIS_URL): jobs run in this process (security jobs bounded)'
+        : redis.ok
+          ? 'Redis reachable: BullMQ queues'
+          : `Redis unreachable: ${redis.error} — jobs fall back to in-process`,
+    },
+    {
+      key: 'cache',
+      label: 'Cache',
+      ok: redis.enabled ? redis.ok : null,
+      detail: !redis.enabled
+        ? 'No Redis: in-memory cache per process'
+        : redis.ok
+          ? 'Redis cache'
+          : 'Redis unreachable: in-memory cache per process',
+    },
     {
       key: 'config',
       label: 'Configuration',
       ok: env
         .filter((e) => ['MONGO_URI', 'JWT_SECRET', 'FRONTEND_URL'].includes(e.name))
         .every((e) => e.present),
-      detail: `${env.filter((e) => e.present).length}/${env.length} known env vars present`,
+      detail: `${env.filter((e) => e.present).length}/${env.length} known env vars set · ${env.filter((e) => !e.present && !e.optional).length} required missing`,
     },
   ];
 
@@ -225,4 +277,10 @@ const getDevelopers = asyncHandler(async (req, res) => {
   return sendSuccess(res, { developers });
 });
 
-module.exports = { runChecks, traceLookup, getDevelopers };
+module.exports = {
+  envStatus,
+  ENV_KEYS,
+  runChecks,
+  traceLookup,
+  getDevelopers,
+};

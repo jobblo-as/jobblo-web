@@ -10,6 +10,50 @@ function toParams(q: Record<string, unknown>): string {
   return p.toString();
 }
 
+// ── Labels ────────────────────────────────────────────────────────────────────
+
+/** Chat report reason → Norwegian label (same set as models/ChatReport.js). */
+export const CHAT_REPORT_TYPE_LABELS: Record<string, string> = {
+  harassment: 'Trakassering',
+  abusive_language: 'Krenkende språk',
+  threats: 'Trusler',
+  spam: 'Spam',
+  scam_or_fraud: 'Svindel',
+  payment_issue: 'Betalingsproblem',
+  safepay_issue: 'SafePay-problem',
+  work_not_completed: 'Jobb ikke fullført',
+  poor_quality: 'Dårlig kvalitet',
+  different_from_agreement: 'Avvik fra avtale',
+  inappropriate_content: 'Upassende innhold',
+  fake_profile: 'Falsk profil',
+  identity_issue: 'Identitetsproblem',
+  suspicious_link: 'Mistenkelig lenke',
+  privacy_violation: 'Personvernbrudd',
+  off_platform_payment_request: 'Betaling utenfor SafePay',
+  other: 'Annet',
+};
+
+export const CHAT_REPORT_PRIORITY_LABELS: Record<string, string> = {
+  low: 'Lav',
+  medium: 'Middels',
+  high: 'Høy',
+  urgent: 'Haster',
+};
+
+export const CHAT_REPORT_OUTCOME_LABELS: Record<string, string> = {
+  no_violation: 'Ingen overtredelse',
+  warning_issued: 'Advarsel utstedt',
+  content_violation: 'Innholdsbrudd',
+  user_restricted: 'Bruker begrenset',
+  user_suspended: 'Bruker suspendert',
+  chat_restricted: 'Chat begrenset',
+  safepay_dispute_opened: 'SafePay-tvist åpnet',
+  payment_review_required: 'Betalingsgjennomgang kreves',
+  fraud_escalated: 'Svindel eskalert',
+  resolved_between_users: 'Løst mellom brukerne',
+  other: 'Annet',
+};
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface AdminChatParticipant {
@@ -108,6 +152,8 @@ export interface AdminChatSummary {
 interface AdminChatsQuery {
   page?: number;
   limit?: number;
+  /** Job title, user name or e-mail. */
+  search?: string;
   chatId?: string;
   orderId?: string;
   serviceId?: string;
@@ -137,6 +183,7 @@ export interface AdminChatReportItem {
   reportedBy: { _id: string; name: string; email: string; avatarUrl?: string } | null;
   reportedUser: { _id: string; name: string; email: string; avatarUrl?: string } | null;
   assignedAdminId: { _id: string; name: string; email: string } | null;
+  serviceId?: { _id: string; title: string } | string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -177,15 +224,21 @@ export interface AdminChatReportDetail extends AdminChatReportItem {
   };
 }
 
-interface AdminChatReportsSummary {
+export interface AdminChatReportsSummary {
   open: number;
   under_review: number;
+  action_required: number;
+  waiting_for_reporter: number;
+  waiting_for_reported_user: number;
   resolved: number;
   dismissed: number;
+  closed: number;
+  total: number;
   urgent: number;
   high: number;
   resolvedThisMonth: number;
   unassigned: number;
+  safePayLinked: number;
 }
 
 interface AdminChatReportsQuery {
@@ -231,20 +284,16 @@ export const fetchAdminChatById = async (
 
 export const fetchAdminChatReports = async (
   q: AdminChatReportsQuery = {}
-): Promise<{
-  reports: AdminChatReportItem[];
-  summary: AdminChatReportsSummary;
-  pagination: Pagination;
-}> => {
-  const res = await mainLink.get<
-    ApiResponse<{ reports: AdminChatReportItem[]; summary: AdminChatReportsSummary }>
-  >(`/api/admin/chat-reports?${toParams(q as Record<string, unknown>)}`);
-  return {
-    reports: res.data.data.reports,
-    summary: res.data.data.summary,
-    pagination: res.data.pagination!,
-  };
+): Promise<{ reports: AdminChatReportItem[]; pagination: Pagination }> => {
+  const res = await mainLink.get<ApiResponse<{ reports: AdminChatReportItem[] }>>(
+    `/api/admin/chat-reports?${toParams(q as Record<string, unknown>)}`
+  );
+  return { reports: res.data.data.reports, pagination: res.data.pagination! };
 };
+
+export const fetchAdminChatReportsSummary = async (): Promise<AdminChatReportsSummary> =>
+  (await mainLink.get<ApiResponse<AdminChatReportsSummary>>('/api/admin/chat-reports/summary')).data
+    .data;
 
 export const fetchAdminChatReportById = async (
   reportId: string
@@ -307,10 +356,13 @@ export const dismissChatReport = async (
   return res.data.data.report;
 };
 
-export const reopenChatReport = async (reportId: string): Promise<AdminChatReportItem> => {
+export const reopenChatReport = async (
+  reportId: string,
+  reason: string
+): Promise<AdminChatReportItem> => {
   const res = await mainLink.post<ApiResponse<{ report: AdminChatReportItem }>>(
     `/api/admin/chat-reports/${reportId}/reopen`,
-    {}
+    { reason }
   );
   return res.data.data.report;
 };
@@ -332,4 +384,8 @@ export const postChatReport = async (
 ) => {
   const res = await mainLink.post(`/api/chats/${chatId}/reports`, payload);
   return res.data;
+};
+
+export const updateChatReportPriority = async (reportId: string, priority: string) => {
+  await mainLink.patch(`/api/admin/chat-reports/${reportId}/priority`, { priority });
 };

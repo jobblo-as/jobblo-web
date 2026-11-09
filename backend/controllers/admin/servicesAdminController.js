@@ -280,4 +280,199 @@ const updateService = asyncHandler(async (req, res) => {
   return sendSuccess(res, { service }, 'Tjeneste oppdatert.');
 });
 
-module.exports = { getServices, getServiceById, updateServiceStatus, updateService, deleteService };
+/**
+ * GET /api/admin/services/:id/activity
+ * Everything that happened on one job, for the admin detail page: who applied, the awards
+ * (orders) with their payment and payout, Hast / extra-contact purchases, reviews, reports and
+ * a single timeline. Each order links to /dashboard/orders/:id for the full money lifecycle.
+ * Only display fields are selected — no Stripe secrets, URLs or contact details of applicants.
+ */
+const PERSON = 'name lastName email avatarUrl role';
+const getServiceActivity = asyncHandler(async (req, res) => {
+  const id = parseObjectId(req.params.id);
+  if (!id) return sendError(res, 'Ugyldig tjeneste-ID.', 400);
+  const m = (name) => require(`../../models/${name}`);
+
+  const service = await Service.findById(id)
+    .select(
+      'title status price hourlyRate paymentType categories images location createdAt updatedAt userId urgent'
+    )
+    .populate('userId', PERSON)
+    .lean();
+  if (!service) return sendError(res, 'Tjeneste ikke funnet.', 404);
+
+  const [
+    requests,
+    orders,
+    payouts,
+    safePay,
+    urgent,
+    extraContacts,
+    reviews,
+    reports,
+    favorites,
+    disputes,
+  ] = await Promise.all([
+    m('JobRequest')
+      .find({ serviceId: id })
+      .select('providerId status message withdrawnAt createdAt updatedAt')
+      .populate('providerId', PERSON)
+      .sort({ createdAt: 1 })
+      .lean(),
+    m('Order')
+      .find({ serviceId: id })
+      .select(
+        'customerId providerId status paymentStatus initialPrice agreedPrice price paymentConfirmedAt startedAt readyForReviewAt completedAt cancellationReason createdAt updatedAt'
+      )
+      .populate('providerId', PERSON)
+      .populate('customerId', PERSON)
+      .sort({ createdAt: 1 })
+      .lean(),
+    m('Payout')
+      .find({ serviceId: id })
+      .select(
+        'orderId providerId status grossAmount platformFee netProviderAmount currency transferCompletedAt failureReason createdAt'
+      )
+      .lean(),
+    m('SafePayHistory')
+      .find({ serviceId: id })
+      .select('orderId status amounts paymentDate refundStatus refundCompletedAt createdAt')
+      .lean(),
+    m('UrgentPurchase')
+      .find({ serviceId: id })
+      .select('userId status amountMinor currency paidAt refundedAt createdAt')
+      .lean(),
+    m('ExtraContactPurchase')
+      .find({ serviceId: id })
+      .select('userId status amountMinor currency paidAt createdAt')
+      .populate('userId', PERSON)
+      .lean(),
+    m('Review')
+      .find({ serviceId: id })
+      .select('reviewerId revieweeId revieweeRole rating comment createdAt')
+      .populate('reviewerId', PERSON)
+      .lean(),
+    m('JobReport')
+      .find({ serviceId: id })
+      .select('reportedBy reportType description status createdAt')
+      .populate('reportedBy', PERSON)
+      .lean(),
+    m('Favorite').countDocuments({ service: id }),
+    m('Dispute').find({ serviceId: id }).select('orderId status title createdAt').lean(),
+  ]);
+
+  const kr = (n) => (Number.isFinite(n) ? `${Math.round(n).toLocaleString('nb-NO')} kr` : '? kr');
+  const name = (u) => (u ? [u.name, u.lastName].filter(Boolean).join(' ') : 'Ukjent');
+  const events = [
+    {
+      at: service.createdAt,
+      kind: 'created',
+      text: `Oppdraget ble lagt ut av ${name(service.userId)}`,
+    },
+    ...requests.map((r) => ({
+      at: r.createdAt,
+      kind: 'request',
+      text: `${name(r.providerId)} sendte forespørsel`,
+    })),
+    ...requests
+      .filter((r) => r.withdrawnAt)
+      .map((r) => ({
+        at: r.withdrawnAt,
+        kind: 'withdrawn',
+        text: `${name(r.providerId)} trakk forespørselen`,
+      })),
+    ...orders.flatMap((o) => [
+      { at: o.createdAt, kind: 'order', text: `Tildelt ${name(o.providerId)}`, orderId: o._id },
+      o.paymentConfirmedAt && {
+        at: o.paymentConfirmedAt,
+        kind: 'paid',
+        text: `Betaling mottatt (${kr(o.agreedPrice ?? o.price)})`,
+        orderId: o._id,
+      },
+      o.startedAt && { at: o.startedAt, kind: 'started', text: 'Arbeidet startet', orderId: o._id },
+      o.readyForReviewAt && {
+        at: o.readyForReviewAt,
+        kind: 'review',
+        text: 'Levert til godkjenning',
+        orderId: o._id,
+      },
+      o.completedAt && { at: o.completedAt, kind: 'completed', text: 'Fullført', orderId: o._id },
+    ]),
+    ...payouts
+      .filter((p) => p.transferCompletedAt)
+      .map((p) => ({
+        at: p.transferCompletedAt,
+        kind: 'payout',
+        text: `Utbetalt ${kr(p.netProviderAmount)} til utfører`,
+        orderId: p.orderId,
+      })),
+    ...urgent
+      .filter((u) => u.paidAt)
+      .map((u) => ({
+        at: u.paidAt,
+        kind: 'urgent',
+        text: `Hast kjøpt (${kr(u.amountMinor / 100)})`,
+      })),
+    ...extraContacts
+      .filter((x) => x.paidAt)
+      .map((x) => ({
+        at: x.paidAt,
+        kind: 'extra_contact',
+        text: `${name(x.userId)} kjøpte ekstra kontakt (${kr(x.amountMinor / 100)})`,
+      })),
+    ...disputes.map((d) => ({
+      at: d.createdAt,
+      kind: 'dispute',
+      text: `Tvist åpnet: ${d.title}`,
+      orderId: d.orderId,
+    })),
+    ...reviews.map((r) => ({
+      at: r.createdAt,
+      kind: 'review_given',
+      text: `${name(r.reviewerId)} ga ${r.rating}/5`,
+    })),
+    ...reports.map((r) => ({
+      at: r.createdAt,
+      kind: 'report',
+      text: `Rapportert av ${name(r.reportedBy)} (${r.reportType})`,
+    })),
+  ]
+    .filter((e) => e && e.at)
+    .sort((a, b) => new Date(a.at) - new Date(b.at));
+
+  const count = (status) => requests.filter((r) => r.status === status && !r.withdrawnAt).length;
+  return sendSuccess(res, {
+    service,
+    stats: {
+      requests: requests.length,
+      pending: count('pending'),
+      accepted: count('accepted'),
+      declined: count('declined'),
+      withdrawn: requests.filter((r) => r.withdrawnAt).length,
+      orders: orders.length,
+      paid: orders.filter((o) => o.paymentConfirmedAt || o.paymentStatus === 'paid').length,
+      favorites,
+      reports: reports.length,
+      disputes: disputes.length,
+    },
+    requests,
+    orders,
+    payouts,
+    safePay,
+    urgent,
+    extraContacts,
+    reviews,
+    reports,
+    disputes,
+    timeline: events,
+  });
+});
+
+module.exports = {
+  getServices,
+  getServiceById,
+  getServiceActivity,
+  updateServiceStatus,
+  updateService,
+  deleteService,
+};

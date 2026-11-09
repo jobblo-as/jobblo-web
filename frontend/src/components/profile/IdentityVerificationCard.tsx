@@ -4,6 +4,7 @@ import { BadgeCheck, Loader2, ShieldCheck } from 'lucide-react';
 import { apiUrl } from '../../config/env';
 import { oauthErrorMessage } from '../../features/auth/oauthErrors';
 import type { User } from '../../types/userTypes';
+import { useMaintenanceStatus } from '../../hooks/useMaintenanceStatus';
 
 /**
  * BankID identity verification, on the profile.
@@ -53,6 +54,7 @@ export function IdentityVerificationCard({
   const [isStarting, setIsStarting] = useState(false);
 
   const isVerified = user?.identityVerified === true;
+  const bankIdOff = useMaintenanceStatus().off('bankid');
 
   // Read-only, so it is safe for this component to be mounted at two breakpoints.
   const errorMessage = oauthErrorMessage(searchParams.get('error'));
@@ -97,7 +99,7 @@ export function IdentityVerificationCard({
     // A second click would start a second OIDC transaction; the server keeps one per
     // session, so the first callback would then fail its state check — a confusing
     // failure for somebody who simply double-tapped.
-    if (isStarting) return;
+    if (isStarting || bankIdOff) return;
     setIsStarting(true);
     window.location.href = apiUrl('/api/auth/idura');
   };
@@ -112,6 +114,15 @@ export function IdentityVerificationCard({
             Bekreft identiteten din med BankID for å skape mer trygghet på Jobblo.
           </p>
 
+          {bankIdOff && (
+            <p
+              role="status"
+              className="mt-3 rounded-xl bg-[#FCF4F3] px-3 py-2 text-[0.8125rem] leading-snug text-[#B0453B]"
+            >
+              {bankIdOff}
+            </p>
+          )}
+
           {errorMessage && (
             <p
               role="alert"
@@ -124,7 +135,7 @@ export function IdentityVerificationCard({
           <button
             type="button"
             onClick={startVerification}
-            disabled={isStarting}
+            disabled={isStarting || Boolean(bankIdOff)}
             aria-busy={isStarting}
             data-testid="bankid-verify-button"
             // h-11 is the 44px touch target; full width so it is easy to hit on a phone

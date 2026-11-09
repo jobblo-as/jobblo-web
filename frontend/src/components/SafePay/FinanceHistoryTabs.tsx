@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import {
   AlertCircle,
+  ArrowLeftRight,
   ArrowUpRight,
   Banknote,
   CalendarDays,
@@ -16,7 +17,25 @@ import {
 import { Popover } from 'radix-ui';
 import { nb } from 'date-fns/locale';
 import { Calendar } from '../Ui/calendar';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../Ui/select';
+// Header controls use the admin shadcn kit, same as the rest of the dashboard.
+import { Button as DevButton } from '../developer/ui/button';
+import { Badge as DevBadge } from '../developer/ui/badge';
+import { Input as DevInput } from '../developer/ui/input';
+import {
+  Table as DevTable,
+  TableBody as DevTableBody,
+  TableCell as DevTableCell,
+  TableHead as DevTableHead,
+  TableHeader as DevTableHeader,
+  TableRow as DevTableRow,
+} from '../developer/ui/table';
+import {
+  Select as DevSelect,
+  SelectContent as DevSelectContent,
+  SelectItem as DevSelectItem,
+  SelectTrigger as DevSelectTrigger,
+  SelectValue as DevSelectValue,
+} from '../developer/ui/select';
 import { Link } from 'react-router-dom';
 import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
 import { getFinanceList, getFinanceSummary, reconcileFinance } from '../../api/safePayAPI';
@@ -468,7 +487,14 @@ export default function FinanceHistoryTabs({ admin = false }: Props) {
 
   return (
     <section className="space-y-6 rounded-2xl border border-[#e6e7e1] bg-white p-4 sm:p-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      {/* Admin has four controls: they sit beside the title only when there is room (xl), else below it. */}
+      <div
+        className={
+          admin
+            ? 'flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between'
+            : 'flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'
+        }
+      >
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-xl font-semibold tracking-tight text-[#17211a]">
@@ -484,59 +510,52 @@ export default function FinanceHistoryTabs({ admin = false }: Props) {
             Følg overføringer til Stripe Connect og utbetalinger til bankkontoen din.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
           {admin && (
-            <select
-              aria-label="Stripe-modus"
+            <DevSelect
               value={mode}
-              onChange={(event) => {
-                setMode(event.target.value as Mode);
+              onValueChange={(value) => {
+                setMode(value as Mode);
                 setPage(1);
               }}
-              className="min-h-10 rounded-xl border border-[#dfe3dc] bg-white px-3 py-2 text-sm text-[#26332a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2e6641]"
             >
-              <option value="all">Test + live</option>
-              <option value="test">Test</option>
-              <option value="live">Live</option>
-            </select>
+              <DevSelectTrigger aria-label="Stripe-modus" className="w-[130px]">
+                <DevSelectValue />
+              </DevSelectTrigger>
+              <DevSelectContent>
+                <DevSelectItem value="all">Test + live</DevSelectItem>
+                <DevSelectItem value="test">Test</DevSelectItem>
+                <DevSelectItem value="live">Live</DevSelectItem>
+              </DevSelectContent>
+            </DevSelect>
           )}
-          <button
-            type="button"
-            onClick={refresh}
-            disabled={loading}
-            aria-busy={loading}
-            className="inline-flex min-h-10 items-center gap-2 rounded-xl border border-[#dfe3dc] px-3 py-2 text-sm font-semibold text-[#26332a] transition-colors hover:bg-[#f6f8f4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2e6641] disabled:cursor-wait disabled:opacity-60"
-          >
-            <RefreshCw
-              size={15}
-              className={loading ? 'animate-spin motion-reduce:animate-none' : ''}
-            />
+          <DevButton variant="outline" onClick={refresh} disabled={loading} aria-busy={loading}>
+            <RefreshCw className={loading ? 'animate-spin motion-reduce:animate-none' : ''} />
             {loading ? 'Oppdaterer…' : 'Oppdater'}
-          </button>
+          </DevButton>
           {admin && (
             <div className="inline-flex items-center gap-2">
-              <select
-                aria-label="Modus for avstemming"
+              <DevSelect
                 value={reconcileMode}
-                onChange={(event) => {
-                  setReconcileMode(event.target.value as 'test' | 'live');
+                onValueChange={(value) => {
+                  setReconcileMode(value as 'test' | 'live');
                   reconcileModeInitialized.current = true;
                   setReconcileCursor(null);
                   setReconcileMessage('');
                 }}
-                className="min-h-10 rounded-xl border border-[#dfe3dc] bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2e6641]"
               >
-                <option value="test">Test</option>
-                <option value="live">Live</option>
-              </select>
-              <button
-                type="button"
-                onClick={reconcile}
-                disabled={reconciling}
-                className="min-h-10 rounded-xl bg-[#2e6641] px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#255335] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2e6641] focus-visible:ring-offset-2 disabled:opacity-60"
-              >
+                <DevSelectTrigger aria-label="Modus for avstemming" className="w-[96px]">
+                  <DevSelectValue />
+                </DevSelectTrigger>
+                <DevSelectContent>
+                  <DevSelectItem value="test">Test</DevSelectItem>
+                  <DevSelectItem value="live">Live</DevSelectItem>
+                </DevSelectContent>
+              </DevSelect>
+              <DevButton onClick={reconcile} disabled={reconciling} aria-busy={reconciling}>
+                <ArrowLeftRight />
                 {reconciling ? 'Avstemmer…' : 'Synkroniser'}
-              </button>
+              </DevButton>
             </div>
           )}
         </div>
@@ -748,46 +767,44 @@ export default function FinanceHistoryTabs({ admin = false }: Props) {
         aria-labelledby={`finance-tab-${tab}`}
         className="space-y-4"
       >
-        <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_180px_150px_150px_auto]">
           <label className="relative min-w-0">
             <span className="sr-only">Søk etter ordre eller Stripe-ID</span>
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#858c83]" />
-            <input
+            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+            <DevInput
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Søk etter ordre eller Stripe-ID"
-              className="min-h-11 min-w-0 w-full rounded-xl border border-[#dfe3dc] bg-white py-2 pl-9 pr-9 text-sm text-[#26332a] placeholder:text-[#858c83] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2e6641]"
+              className="h-9 bg-card pr-9 pl-8"
             />
             {search && (
-              <button
-                type="button"
+              <DevButton
+                variant="ghost"
+                size="icon-xs"
                 aria-label="Tøm søk"
                 onClick={() => {
                   setSearch('');
                   setDebouncedSearch('');
                   setPage(1);
                 }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-[#747b72] hover:bg-[#f0f2ee] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2e6641]"
+                className="absolute top-1/2 right-1.5 -translate-y-1/2"
               >
-                <X size={15} />
-              </button>
+                <X />
+              </DevButton>
             )}
           </label>
-          <Select
+          <DevSelect
             value={status || 'all'}
             onValueChange={(value) => {
               setStatus(value === 'all' ? '' : value);
               setPage(1);
             }}
           >
-            <SelectTrigger
-              aria-label="Status"
-              className="min-h-11 min-w-0 w-full rounded-xl border-[#dfe3dc] bg-white px-3 py-2 text-sm text-[#26332a] focus:ring-2 focus:ring-[#2e6641]"
-            >
-              <SelectValue placeholder="Alle statuser" />
-            </SelectTrigger>
-            <SelectContent className="rounded-xl border-[#dfe3dc] bg-white text-[#26332a]">
-              <SelectItem value="all">Alle statuser</SelectItem>
+            <DevSelectTrigger aria-label="Status" className="h-9 w-full min-w-0 bg-card">
+              <DevSelectValue placeholder="Alle statuser" />
+            </DevSelectTrigger>
+            <DevSelectContent>
+              <DevSelectItem value="all">Alle statuser</DevSelectItem>
               {(tab === 'transfers'
                 ? [
                     'transferred',
@@ -801,31 +818,31 @@ export default function FinanceHistoryTabs({ admin = false }: Props) {
                   ]
                 : ['pending', 'in_transit', 'paid', 'failed', 'canceled']
               ).map((value) => (
-                <SelectItem key={value} value={value}>
+                <DevSelectItem key={value} value={value}>
                   {STATUS_LABELS[value]}
-                </SelectItem>
+                </DevSelectItem>
               ))}
-            </SelectContent>
-          </Select>
+            </DevSelectContent>
+          </DevSelect>
           <Popover.Root open={fromDateOpen} onOpenChange={setFromDateOpen}>
             <Popover.Trigger asChild>
-              <button
-                type="button"
+              <DevButton
+                variant="outline"
                 aria-label="Fra dato"
-                className="inline-flex min-h-11 min-w-0 w-full items-center justify-between gap-2 rounded-xl border border-[#dfe3dc] bg-white px-3 py-2 text-left text-sm text-[#26332a] transition-colors hover:bg-[#fbfcfa] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2e6641]"
+                className="h-9 w-full min-w-0 justify-between bg-card font-normal"
               >
-                <span className={dateFrom ? '' : 'text-[#858c83]'}>
+                <span className={dateFrom ? '' : 'text-muted-foreground'}>
                   {dateLabel(dateFrom, 'Fra dato')}
                 </span>
-                <CalendarDays size={16} className="shrink-0 text-[#747b72]" />
-              </button>
+                <CalendarDays className="text-muted-foreground" />
+              </DevButton>
             </Popover.Trigger>
             <Popover.Portal>
               <Popover.Content
                 align="start"
                 sideOffset={6}
                 collisionPadding={12}
-                className="z-50 rounded-2xl border border-[#e6e7e1] bg-white p-2 shadow-lg"
+                className="z-50 rounded-lg border bg-popover p-2 text-popover-foreground shadow-md"
               >
                 <Calendar
                   mode="single"
@@ -843,23 +860,23 @@ export default function FinanceHistoryTabs({ admin = false }: Props) {
           </Popover.Root>
           <Popover.Root open={toDateOpen} onOpenChange={setToDateOpen}>
             <Popover.Trigger asChild>
-              <button
-                type="button"
+              <DevButton
+                variant="outline"
                 aria-label="Til dato"
-                className="inline-flex min-h-11 min-w-0 w-full items-center justify-between gap-2 rounded-xl border border-[#dfe3dc] bg-white px-3 py-2 text-left text-sm text-[#26332a] transition-colors hover:bg-[#fbfcfa] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2e6641]"
+                className="h-9 w-full min-w-0 justify-between bg-card font-normal"
               >
-                <span className={dateTo ? '' : 'text-[#858c83]'}>
+                <span className={dateTo ? '' : 'text-muted-foreground'}>
                   {dateLabel(dateTo, 'Til dato')}
                 </span>
-                <CalendarDays size={16} className="shrink-0 text-[#747b72]" />
-              </button>
+                <CalendarDays className="text-muted-foreground" />
+              </DevButton>
             </Popover.Trigger>
             <Popover.Portal>
               <Popover.Content
                 align="start"
                 sideOffset={6}
                 collisionPadding={12}
-                className="z-50 rounded-2xl border border-[#e6e7e1] bg-white p-2 shadow-lg"
+                className="z-50 rounded-lg border bg-popover p-2 text-popover-foreground shadow-md"
               >
                 <Calendar
                   mode="single"
@@ -875,37 +892,23 @@ export default function FinanceHistoryTabs({ admin = false }: Props) {
               </Popover.Content>
             </Popover.Portal>
           </Popover.Root>
-          <button
-            type="button"
+          <DevButton
+            variant="outline"
             onClick={clearFilters}
             disabled={!filtersActive}
-            className="min-h-11 min-w-0 rounded-xl border border-[#dfe3dc] px-3 py-2 text-sm font-semibold text-[#59645b] transition-colors hover:bg-[#f6f8f4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2e6641] disabled:cursor-not-allowed disabled:opacity-45"
+            className="h-9 bg-card"
           >
-            Nullstill filtre
-          </button>
+            <X /> Nullstill filtre
+          </DevButton>
         </div>
         {filtersActive && (
           <div className="flex flex-wrap items-center gap-2" aria-label="Aktive filtre">
-            {search.trim() && (
-              <span className="rounded-full bg-[#f0f2ee] px-3 py-1 text-xs text-[#465249]">
-                Søk: {search.trim()}
-              </span>
-            )}
+            {search.trim() && <DevBadge variant="secondary">Søk: {search.trim()}</DevBadge>}
             {status && (
-              <span className="rounded-full bg-[#f0f2ee] px-3 py-1 text-xs text-[#465249]">
-                Status: {STATUS_LABELS[status] || status}
-              </span>
+              <DevBadge variant="secondary">Status: {STATUS_LABELS[status] || status}</DevBadge>
             )}
-            {dateFrom && (
-              <span className="rounded-full bg-[#f0f2ee] px-3 py-1 text-xs text-[#465249]">
-                Fra: {dateFrom}
-              </span>
-            )}
-            {dateTo && (
-              <span className="rounded-full bg-[#f0f2ee] px-3 py-1 text-xs text-[#465249]">
-                Til: {dateTo}
-              </span>
-            )}
+            {dateFrom && <DevBadge variant="secondary">Fra: {dateFrom}</DevBadge>}
+            {dateTo && <DevBadge variant="secondary">Til: {dateTo}</DevBadge>}
           </div>
         )}
         {invalidDateRange && (
@@ -917,8 +920,9 @@ export default function FinanceHistoryTabs({ admin = false }: Props) {
         {reconcileMessage && (
           <p
             role="status"
-            className="rounded-xl border border-[#dfe3dc] bg-[#f6f8f4] px-3 py-2 text-sm text-[#465249]"
+            className="flex items-start gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300"
           >
+            <Check className="mt-0.5 size-4 shrink-0" />
             {reconcileMessage}
           </p>
         )}
@@ -993,36 +997,37 @@ export default function FinanceHistoryTabs({ admin = false }: Props) {
         ) : (
           rows.length > 0 && (
             <>
-              <div className="hidden overflow-x-auto rounded-2xl border border-[#e6e7e1] md:block">
-                <table className="w-full min-w-[880px] text-left text-sm">
-                  <thead className="bg-[#f6f8f4] text-[11px] font-semibold uppercase tracking-wide text-[#747b72]">
-                    <tr>
-                      <th className="px-4 py-3">Dato</th>
-                      {tab === 'transfers' && <th className="px-4 py-3">Oppdrag</th>}
-                      {admin && <th className="px-4 py-3">Tilbyder / kunde</th>}
-                      <th className="px-4 py-3 text-right">Beløp</th>
-                      {tab === 'transfers' && <th className="px-4 py-3 text-right">Gebyr</th>}
-                      {tab === 'bank-payouts' && <th className="px-4 py-3">Ankomst</th>}
-                      {tab === 'bank-payouts' && <th className="px-4 py-3">Bankdestinasjon</th>}
-                      <th className="px-4 py-3">Stripe-referanse</th>
-                      <th className="px-4 py-3">Status</th>
-                      <th className="px-4 py-3">Modus</th>
-                      <th className="px-4 py-3 text-right">Detaljer</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#edf0eb]">
+              <div className="hidden overflow-hidden rounded-lg border md:block">
+                <DevTable className="min-w-[880px]">
+                  <DevTableHeader className="bg-muted/50">
+                    <DevTableRow>
+                      <DevTableHead>Dato</DevTableHead>
+                      {tab === 'transfers' && <DevTableHead>Oppdrag</DevTableHead>}
+                      {admin && <DevTableHead>Tilbyder / kunde</DevTableHead>}
+                      <DevTableHead className="text-right">Beløp</DevTableHead>
+                      {tab === 'transfers' && (
+                        <DevTableHead className="text-right">Gebyr</DevTableHead>
+                      )}
+                      {tab === 'bank-payouts' && <DevTableHead>Ankomst</DevTableHead>}
+                      {tab === 'bank-payouts' && <DevTableHead>Bankdestinasjon</DevTableHead>}
+                      <DevTableHead>Stripe-referanse</DevTableHead>
+                      <DevTableHead>Status</DevTableHead>
+                      <DevTableHead>Modus</DevTableHead>
+                      <DevTableHead className="text-right">
+                        <span className="sr-only">Detaljer</span>
+                      </DevTableHead>
+                    </DevTableRow>
+                  </DevTableHeader>
+                  <DevTableBody>
                     {rows.map((item) => (
-                      <tr
-                        key={item.id}
-                        className="transition-colors hover:bg-[#fbfcfa] focus-within:bg-[#fbfcfa]"
-                      >
-                        <td className="whitespace-nowrap px-4 py-3.5 text-[#59645b]">
+                      <DevTableRow key={item.id}>
+                        <DevTableCell className="text-muted-foreground">
                           {date(item.stripeCreatedAt)}
-                        </td>
+                        </DevTableCell>
                         {tab === 'transfers' && (
-                          <td className="max-w-48 px-4 py-3.5">
+                          <DevTableCell className="max-w-56">
                             <p
-                              className="truncate font-medium text-[#26332a]"
+                              className="truncate font-medium"
                               title={item.orderTitle || undefined}
                             >
                               {item.orderId ? (
@@ -1032,7 +1037,7 @@ export default function FinanceHistoryTabs({ admin = false }: Props) {
                                       ? `/dashboard/orders/${item.orderId}`
                                       : `/provider/orders/${item.orderId}`
                                   }
-                                  className="rounded-sm hover:text-[#2e6641] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2e6641]"
+                                  className="hover:text-primary hover:underline"
                                 >
                                   {item.orderTitle || 'SafePay-oppdrag'}
                                 </Link>
@@ -1041,98 +1046,101 @@ export default function FinanceHistoryTabs({ admin = false }: Props) {
                               )}
                             </p>
                             <p
-                              className="mt-0.5 font-mono text-[11px] text-[#858c83]"
+                              className="mt-0.5 font-mono text-[11px] text-muted-foreground"
                               title={item.orderId || undefined}
                             >
                               {item.orderId ? `#${item.orderId.slice(-8)}` : 'Ingen ordre koblet'}
                             </p>
-                          </td>
+                          </DevTableCell>
                         )}
                         {admin && (
-                          <td className="px-4 py-3.5 text-[#26332a]">
-                            {item.provider?.name || 'Ukjent tilbyder'}
+                          <DevTableCell>
+                            <p className="font-medium">
+                              {item.provider?.name || 'Ukjent tilbyder'}
+                            </p>
                             {item.customer?.name ? (
-                              <span className="mt-0.5 block text-xs text-[#747b72]">
+                              <p className="mt-0.5 text-xs text-muted-foreground">
                                 Kunde: {item.customer.name}
-                              </span>
+                              </p>
                             ) : null}
-                          </td>
+                          </DevTableCell>
                         )}
-                        <td className="whitespace-nowrap px-4 py-3.5 text-right font-semibold tabular-nums text-[#26332a]">
+                        <DevTableCell className="text-right font-semibold tabular-nums">
                           {money(item.amount, item.currency)}
-                        </td>
+                        </DevTableCell>
                         {tab === 'transfers' && (
-                          <td className="whitespace-nowrap px-4 py-3.5 text-right tabular-nums text-[#59645b]">
+                          <DevTableCell className="text-right text-muted-foreground tabular-nums">
                             {item.jobbloFee == null ? '–' : money(item.jobbloFee, item.currency)}
-                          </td>
+                          </DevTableCell>
                         )}
                         {tab === 'bank-payouts' && (
-                          <td className="whitespace-nowrap px-4 py-3.5 text-[#59645b]">
+                          <DevTableCell className="text-muted-foreground">
                             {date(item.arrivalDate)}
-                          </td>
+                          </DevTableCell>
                         )}
                         {tab === 'bank-payouts' && (
-                          <td className="px-4 py-3.5 text-[#59645b]">
+                          <DevTableCell className="text-muted-foreground">
                             {item.destination
                               ? `${item.destination.bankName || 'Bankkonto'} ···· ${item.destination.last4}`
                               : 'Ikke tilgjengelig'}
-                          </td>
+                          </DevTableCell>
                         )}
-                        <td className="px-4 py-3.5">
-                          <div className="flex max-w-40 items-center gap-1">
+                        <DevTableCell>
+                          <div className="flex max-w-44 items-center gap-1">
                             <span
-                              className="truncate font-mono text-xs text-[#59645b]"
+                              className="truncate font-mono text-xs text-muted-foreground"
                               title={item.stripeTransferId || item.stripePayoutId || undefined}
                             >
                               {shortReference(item.stripeTransferId || item.stripePayoutId)}
                             </span>
                             {(item.stripeTransferId || item.stripePayoutId) && (
-                              <button
-                                type="button"
+                              <DevButton
+                                variant="ghost"
+                                size="icon-xs"
                                 aria-label="Kopier Stripe-referanse"
                                 title="Kopier full Stripe-referanse"
                                 onClick={() =>
                                   void copyReference(item.stripeTransferId || item.stripePayoutId)
                                 }
-                                className="rounded-md p-1.5 text-[#747b72] transition-colors hover:bg-[#eaf1e9] hover:text-[#2e6641] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2e6641]"
                               >
                                 {copiedReference ===
                                 (item.stripeTransferId || item.stripePayoutId) ? (
-                                  <Check size={14} />
+                                  <Check />
                                 ) : (
-                                  <Copy size={14} />
+                                  <Copy />
                                 )}
-                              </button>
+                              </DevButton>
                             )}
                           </div>
-                        </td>
-                        <td className="px-4 py-3.5">
+                        </DevTableCell>
+                        <DevTableCell>
                           <StatusBadge value={item.status} />
-                        </td>
-                        <td className="px-4 py-3.5">
-                          <span
-                            className={`text-[11px] font-semibold uppercase tracking-wide ${item.mode === 'live' ? 'text-[#2e6641]' : 'text-[#747b72]'}`}
+                        </DevTableCell>
+                        <DevTableCell>
+                          <DevBadge
+                            variant="outline"
+                            className={
+                              item.mode === 'live'
+                                ? 'border-emerald-200 text-emerald-700 dark:border-emerald-900 dark:text-emerald-300'
+                                : 'text-muted-foreground'
+                            }
                           >
                             {item.mode === 'unknown'
                               ? 'Ukjent'
                               : item.mode === 'test'
                                 ? 'Test'
                                 : 'Live'}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3.5 text-right">
-                          <button
-                            type="button"
-                            onClick={() => openDetails(item)}
-                            className="rounded-lg px-2.5 py-1.5 text-sm font-semibold text-[#2e6641] transition-colors hover:bg-[#eaf1e9] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2e6641]"
-                          >
+                          </DevBadge>
+                        </DevTableCell>
+                        <DevTableCell className="text-right">
+                          <DevButton variant="ghost" size="sm" onClick={() => openDetails(item)}>
                             Vis detaljer
-                          </button>
-                        </td>
-                      </tr>
+                          </DevButton>
+                        </DevTableCell>
+                      </DevTableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </DevTableBody>
+                </DevTable>
               </div>
               <div className="space-y-3 md:hidden">
                 {rows.map((item) => (

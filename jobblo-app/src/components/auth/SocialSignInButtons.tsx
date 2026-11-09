@@ -6,6 +6,7 @@ import { apiBaseUrl } from '@/api/client';
 import { AppleMark, GoogleMark, VippsWordmark } from '@/components/auth/SocialAuthLogos';
 import { APPLE_SIGNIN_MODE } from '@/config/features';
 import { completeOAuthSignIn } from '@/hooks/useOAuthLoginCompletion';
+import { useMaintenanceStatus } from '@/hooks/useMaintenanceStatus';
 import { signInWithApple } from '@/utils/appleSignIn';
 import { runOAuthSession, type OAuthProvider } from '@/utils/oauthAuthSession';
 
@@ -94,9 +95,23 @@ export default function SocialSignInButtons({
   const { colorScheme } = useColorScheme();
   /** Which provider's attempt is in flight, so a second tap cannot start another. */
   const [busy, setBusy] = useState<OAuthProvider | null>(null);
+  // Vedlikeholdsmodus: a sign-in method switched off by a Super Admin is disabled here.
+  const { off } = useMaintenanceStatus();
+  const closedFor = (p: OAuthProvider) => off(`login_${p}`);
+  const shown: OAuthProvider[] = appleOnly ? ['apple'] : ['vipps', 'google', 'apple'];
+  const closed = [
+    ...new Set(
+      shown
+        .filter(
+          (p) => p !== 'apple' || APPLE_SIGNIN_MODE === 'native' || APPLE_SIGNIN_MODE === 'web'
+        )
+        .map(closedFor)
+        .filter((m): m is string => Boolean(m))
+    ),
+  ];
 
   const attempt = async (provider: OAuthProvider, run: () => Promise<string>) => {
-    if (busy) return;
+    if (busy || closedFor(provider)) return;
     setBusy(provider);
     onError('');
     onStart?.();
@@ -130,12 +145,12 @@ export default function SocialSignInButtons({
         <>
           <SocialButton
             provider="vipps"
-            disabled={busy !== null}
+            disabled={busy !== null || Boolean(closedFor('vipps'))}
             onPress={() => void browser('vipps')}
           />
           <SocialButton
             provider="google"
-            disabled={busy !== null}
+            disabled={busy !== null || Boolean(closedFor('google'))}
             onPress={() => void browser('google')}
           />
         </>
@@ -150,16 +165,21 @@ export default function SocialSignInButtons({
               : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
           }
           cornerRadius={12}
-          style={{ height: 46, width: '100%', opacity: busy ? 0.6 : 1 }}
+          style={{ height: 46, width: '100%', opacity: busy || closedFor('apple') ? 0.6 : 1 }}
           onPress={() => void nativeApple()}
         />
       ) : APPLE_SIGNIN_MODE === 'web' ? (
         <SocialButton
           provider="apple"
-          disabled={busy !== null}
+          disabled={busy !== null || Boolean(closedFor('apple'))}
           onPress={() => void browser('apple')}
         />
       ) : null}
+      {closed.map((m) => (
+        <Text key={m} accessibilityRole="alert" className="text-center text-[13px] text-[#B0453B]">
+          {m}
+        </Text>
+      ))}
     </>
   );
 }

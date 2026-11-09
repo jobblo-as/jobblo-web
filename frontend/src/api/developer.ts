@@ -422,7 +422,7 @@ export interface Check {
 export interface ChecksResult {
   ranAt: string;
   checks: Check[];
-  env: { name: string; present: boolean }[];
+  env: { name: string; present: boolean; optional?: boolean; note?: string | null }[];
 }
 export interface TraceResult {
   id: string;

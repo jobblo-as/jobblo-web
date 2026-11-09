@@ -769,6 +769,47 @@ describe('Chat Report System', () => {
       adminChats = require('../controllers/admin/chatsAdminController');
     });
 
+    test('no access reason is a 400 and nothing is read or logged', async () => {
+      req.params = { chatId: String(new mongoose.Types.ObjectId()) };
+      req.query = { accessReason: 'x' };
+      await adminChats.getChatById(req, res);
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(Chat.findById).not.toHaveBeenCalled();
+    });
+
+    test('returns the viewer shape (participants, records, messages) and logs the access', async () => {
+      const chatId = new mongoose.Types.ObjectId();
+      const msgId = new mongoose.Types.ObjectId();
+      const chat = makeChat({
+        _id: chatId,
+        clientId: { _id: 'c1', name: 'Kunde' },
+        providerId: { _id: 'p1', name: 'Tilbyder' },
+        messages: [
+          { _id: msgId, text: 'Hei', senderId: { _id: 'c1', name: 'Kunde', role: 'user' } },
+        ],
+      });
+      req.params = { chatId: String(chatId) };
+      req.query = { accessReason: 'Chat report investigation' };
+      Chat.findById.mockReturnValue(mockQuery(chat));
+      ChatReport.find.mockReturnValue(mockQuery([{ _id: 'r1', messageId: String(msgId) }]));
+      Payment.findOne.mockReturnValue(mockQuery(null));
+      Dispute.findOne.mockReturnValue(mockQuery(null));
+      await adminChats.getChatById(req, res);
+      const data = res.json.mock.calls[0][0].data;
+      expect(data.participants.customer.profileLink).toBe('/dashboard/users/c1');
+      expect(data.messages).toHaveLength(1);
+      expect(data.messages[0]).toMatchObject({ text: 'Hei', isReported: true });
+      expect(data.messages[0].sender.name).toBe('Kunde');
+      expect(data.chat.messages).toBeUndefined();
+      expect(data.chat.messageCount).toBe(1);
+      expect(data.relatedRecords.reportDetailLink).toBe('/dashboard/chat-reports/r1');
+      expect(logActivity).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: expect.stringContaining('Chat report investigation'),
+        })
+      );
+    });
+
     test('invalid Chat ID returns 400', async () => {
       req.params = { chatId: 'badid' };
       await adminChats.getChatById(req, res);
@@ -778,6 +819,7 @@ describe('Chat Report System', () => {
     test('chat not found returns 404', async () => {
       const chatId = new mongoose.Types.ObjectId();
       req.params = { chatId: String(chatId) };
+      req.query = { accessReason: 'Chat report investigation' };
       Chat.findById.mockReturnValue(mockQuery(null));
       await adminChats.getChatById(req, res);
       expect(res.status).toHaveBeenCalledWith(404);
@@ -796,8 +838,9 @@ describe('Chat Report System', () => {
         ],
       });
       req.params = { chatId: String(chatId) };
+      req.query = { accessReason: 'Chat report investigation' };
       Chat.findById.mockReturnValue(mockQuery(chat));
-      ChatReport.countDocuments.mockReturnValue(mockQuery(2));
+      ChatReport.find.mockReturnValue(mockQuery([{ _id: 'r1' }, { _id: 'r2' }]));
       Payment.findOne.mockReturnValue(mockQuery(null));
       Dispute.findOne.mockReturnValue(mockQuery(null));
       await adminChats.getChatById(req, res);
@@ -815,8 +858,9 @@ describe('Chat Report System', () => {
       const orderId = new mongoose.Types.ObjectId();
       const chat = makeChat({ orderId });
       req.params = { chatId: String(chat._id) };
+      req.query = { accessReason: 'Chat report investigation' };
       Chat.findById.mockReturnValue(mockQuery(chat));
-      ChatReport.countDocuments.mockReturnValue(mockQuery(0));
+      ChatReport.find.mockReturnValue(mockQuery([]));
       Payment.findOne.mockReturnValue(
         mockQuery({ status: 'completed', amount: 1500, stripePaymentIntentId: 'pi_xxx' })
       );
@@ -833,8 +877,9 @@ describe('Chat Report System', () => {
       const orderId = new mongoose.Types.ObjectId();
       const chat = makeChat({ orderId });
       req.params = { chatId: String(chat._id) };
+      req.query = { accessReason: 'Chat report investigation' };
       Chat.findById.mockReturnValue(mockQuery(chat));
-      ChatReport.countDocuments.mockReturnValue(mockQuery(0));
+      ChatReport.find.mockReturnValue(mockQuery([]));
       Payment.findOne.mockReturnValue(
         mockQuery({ status: 'completed', amount: 1500, stripePaymentIntentId: 'pi_xxx' })
       );
@@ -848,8 +893,9 @@ describe('Chat Report System', () => {
       const orderId = new mongoose.Types.ObjectId();
       const chat = makeChat({ orderId });
       req.params = { chatId: String(chat._id) };
+      req.query = { accessReason: 'Chat report investigation' };
       Chat.findById.mockReturnValue(mockQuery(chat));
-      ChatReport.countDocuments.mockReturnValue(mockQuery(0));
+      ChatReport.find.mockReturnValue(mockQuery([]));
       Payment.findOne.mockReturnValue(mockQuery(null));
       Dispute.findOne.mockReturnValue(
         mockQuery({ _id: new mongoose.Types.ObjectId(), status: 'open', priority: 'high' })
@@ -1612,15 +1658,26 @@ describe('Chat Report System', () => {
     test('adds official moderation message', async () => {
       const reportId = new mongoose.Types.ObjectId();
       req.params = { reportId: String(reportId) };
+      const report = makeReport({ _id: reportId, officialMessages: [], timeline: [] });
       req.body = {
-        recipientId: new mongoose.Types.ObjectId(),
+        recipientId: String(report.reportedUser),
         message: 'This is an official warning.',
       };
-      const report = makeReport({ _id: reportId, officialMessages: [], timeline: [] });
       ChatReport.findById.mockReturnValue(mockQuery(report));
       await reportAdmin.addOfficialMessage(req, res);
       expect(report.officialMessages.length).toBe(1);
       expect(report.officialMessages[0].message).toBe('This is an official warning.');
+    });
+
+    test('a recipient outside the report is refused', async () => {
+      const reportId = new mongoose.Types.ObjectId();
+      req.params = { reportId: String(reportId) };
+      req.body = { recipientId: String(new mongoose.Types.ObjectId()), message: 'Hei' };
+      const report = makeReport({ _id: reportId, officialMessages: [], timeline: [] });
+      ChatReport.findById.mockReturnValue(mockQuery(report));
+      await reportAdmin.addOfficialMessage(req, res);
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(report.officialMessages).toHaveLength(0);
     });
 
     test('missing message returns 400', async () => {
