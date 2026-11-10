@@ -149,6 +149,7 @@ standards, safety, and response style.
     Add-Rule -FileName "quality.md" -Sections $Sections
     Add-Rule -FileName "security.md" -Sections $Sections
     Add-Rule -FileName "response-style.md" -Sections $Sections
+    Add-Rule -FileName "jobblo.md" -Sections $Sections
 
     # --------------------------------------------------------
     # Build final content
@@ -197,6 +198,7 @@ standards, safety, and response style.
     Write-Host "  rules\always\quality.md"
     Write-Host "  rules\always\security.md"
     Write-Host "  rules\always\response-style.md"
+    Write-Host "  rules\always\jobblo.md"
     Write-Host ""
 
     Write-Host "Scoped rules were not copied:"
