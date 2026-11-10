@@ -1,6 +1,6 @@
 /**
  * Duplicate Payment records block the unique { orderId } index, so the database cannot
- * enforce "one Payment per order". Follow docs/runbooks/duplicate-payments-archive.md —
+ * enforce "one Payment per order". Follow docs/ARCHITECTURE.md §9.2 —
  * this script is one step of that runbook, never a shortcut around it.
  *
  * Root cause (seen locally, 2026-06-01): commit ff7eaab8's job-completion path did

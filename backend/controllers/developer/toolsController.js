@@ -48,7 +48,7 @@ const ENV_KEYS = [
   },
   { name: 'EXPO_ACCESS_TOKEN', optional: true, note: 'Only with Expo enhanced push security' },
   'ENABLE_SCHEDULER',
-  // Security Intelligence (docs/SECURITY-INTELLIGENCE.md)
+  // Security Intelligence (docs/ARCHITECTURE.md §3.9)
   {
     name: 'DEVICE_ID_SECRET',
     note: 'Security Intelligence: installation tracking is off without it',

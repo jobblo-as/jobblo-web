@@ -279,8 +279,8 @@ export default function BackupsPage() {
             <code className="rounded bg-amber-100 px-1 font-mono text-xs">
               node scripts/backup.js backup
             </code>{' '}
-            from cron — see docs/runbooks/disaster-recovery.md. Works the same for the VPS database
-            and MongoDB Atlas.
+            from cron — see docs/ARCHITECTURE.md §9.1. Works the same for the VPS database and
+            MongoDB Atlas.
           </p>
         </div>
       )}

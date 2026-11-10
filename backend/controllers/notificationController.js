@@ -154,7 +154,7 @@ exports.deleteNotification = async (req, res) => {
     if (!notification.userId) {
       // A system broadcast is one shared document; deleting it would remove the
       // admin's announcement for every user. Per-user dismissal would need a
-      // `deletedFor` array on the model — tracked separately, see B2C-FIXLOG.
+      // `deletedFor` array on the model — tracked separately, see docs/TASKS.md.
       return res.status(403).json({ error: 'Systemvarsler kan ikke slettes.' });
     }
 
