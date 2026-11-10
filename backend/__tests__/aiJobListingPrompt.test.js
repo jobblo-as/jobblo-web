@@ -4,7 +4,7 @@
  * Everything here runs offline. No OpenAI call is made, nothing is asserted
  * about the wording the model produces, and nothing depends on sampling. The
  * live quality evaluation lives in backend/evals/ and is run by hand — see
- * evals/README.md — precisely so CI stays free and repeatable.
+ * docs/PRD.md §9 — precisely so CI stays free and repeatable.
  */
 
 const {

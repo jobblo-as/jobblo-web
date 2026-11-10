@@ -14,10 +14,7 @@ export default function PlannedPage() {
   return (
     <div className="space-y-5">
       <PageHeader title={item?.label || 'Not found'} description={item?.description} />
-      <Section
-        title="Planned"
-        description="See docs/DEVELOPER-DASHBOARD-PLAN.md for the phase this page belongs to"
-      >
+      <Section title="Planned" description="See docs/TASKS.md for the phase this page belongs to">
         <div className="flex flex-col items-center gap-3 py-10 text-center">
           <div className="flex size-10 items-center justify-center rounded-md border bg-muted/50 text-muted-foreground">
             <Icon className="size-5" />

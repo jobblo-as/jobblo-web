@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Database backup / restore drill for host cron (see docs/runbooks/disaster-recovery.md).
+ * Database backup / restore drill for host cron (see docs/ARCHITECTURE.md §9.1).
  *
  *   node scripts/backup.js backup         dump the database to BACKUP_DIR (+ offsite copy)
  *   node scripts/backup.js drill [runId]  restore the latest (or given) backup into a scratch DB and verify

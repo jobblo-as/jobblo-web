@@ -116,7 +116,7 @@ const MIGRATIONS = [
     kind: 'data',
     reversible: true,
     destructive: true,
-    run: 'Follow docs/runbooks/duplicate-payments-archive.md (backup, manual review, Stripe verification, maintenance window).',
+    run: 'Follow docs/ARCHITECTURE.md §9.2 (backup, manual review, Stripe verification, maintenance window).',
     async detect() {
       const rows = await db()
         .collection('payments')

@@ -461,7 +461,7 @@ const RUNBOOKS = [
       {
         kind: 'recover',
         text: 'If data is damaged, follow the disaster-recovery runbook (restore from the last verified backup).',
-        manual: 'docs/runbooks/disaster-recovery.md',
+        manual: 'docs/ARCHITECTURE.md §9.1',
         approval: 'human',
       },
     ],

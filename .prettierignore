@@ -6,3 +6,6 @@ coverage
 package-lock.json
 pnpm-lock.yaml
 yarn.lock
+# Agent.md rule set (github.com/ahmadghouri/Agent.md), kept byte-for-byte as published
+AGENTS.md
+rules/
