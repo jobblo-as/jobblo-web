@@ -316,6 +316,9 @@ export default function ChatDetailScreen() {
   const sendMutation = useSendChatMessage(chatId);
   const listRef = useRef<FlatList<ChatItem<ChatMessage>>>(null);
   const [text, setText] = useState('');
+  // Composer height follows its text (40 px = the send button, up to 112 px = max-h-28).
+  // Measured, because react-native-web never grows a multiline input on its own.
+  const [inputHeight, setInputHeight] = useState(40);
   const [reporting, setReporting] = useState(false);
   const [creatingContract, setCreatingContract] = useState(false);
 
@@ -661,8 +664,17 @@ export default function ChatDetailScreen() {
               placeholder="Skriv melding …"
               placeholderTextColor={TC.placeholder}
               multiline
+              // Same height as the send button when empty, text centred on it. (No
+              // numberOfLines: on Android it fixes the line count and the box stops growing.)
+              textAlignVertical="center"
+              onContentSizeChange={(e) =>
+                setInputHeight(
+                  Math.min(112, Math.max(40, Math.ceil(e.nativeEvent.contentSize.height)))
+                )
+              }
+              style={{ height: text ? inputHeight : 40 }}
               accessibilityLabel="Skriv melding"
-              className="max-h-28 flex-1 py-2.5 text-[0.9375rem] text-ink"
+              className="mb-0.5 flex-1 py-2.5 text-[0.9375rem] leading-5 text-ink"
             />
             <Pressable
               onPress={send}

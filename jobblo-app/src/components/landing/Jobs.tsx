@@ -4,25 +4,7 @@ import { MapPin, ShieldCheck } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useJobs } from '../../hooks/useJobs';
 import { TC, tc } from '../../theme/colors';
-
-const FallbackImages: Record<string, string> = {
-  Maling:
-    'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=900&q=80',
-  Rengjøring:
-    'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=900&q=80',
-  Rørlegger:
-    'https://images.unsplash.com/photo-1621905251918-48416bd8575a?auto=format&fit=crop&w=900&q=80',
-  Flytting:
-    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80',
-  Hagearbeid:
-    'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=900&q=80',
-  Montering:
-    'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=900&q=80',
-  Oppussing:
-    'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80',
-  Transport:
-    'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=900&q=80',
-};
+import { jobImageSource } from '../../utils/categoryImage';
 
 export function Jobs() {
   const router = useRouter();
@@ -107,10 +89,7 @@ export function Jobs() {
       ) : (
         <View style={{ gap: 14 }}>
           {jobs.slice(0, 6).map((job, index) => {
-            const imageUri =
-              job.images?.[0] ||
-              FallbackImages[job.categories?.[0] ?? 'Maling'] ||
-              FallbackImages.Maling;
+            const imageSource = jobImageSource(job, index);
             const location = job.location?.city || job.location?.address || 'Norge';
             const price =
               typeof job.price === 'number'
@@ -133,7 +112,7 @@ export function Jobs() {
                 }}
               >
                 <Image
-                  source={{ uri: imageUri }}
+                  source={imageSource}
                   style={{ width: '100%', height: 200, borderRadius: 18, backgroundColor: TC.tint }}
                   resizeMode="cover"
                 />

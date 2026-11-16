@@ -235,9 +235,32 @@ export default function HomeScreen() {
       .toUpperCase() || '?';
   const avatarUrl = typeof user?.avatarUrl === 'string' ? user.avatarUrl : undefined;
 
+  // Picking a category in the grid changes the feed below it, so bring the feed into view
+  // (just past the line where the compact header with chips + sort fades in).
+  const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
+  const selectCategoryFromGrid = (name: string) => {
+    setSelectedCategory(name);
+    if (jobsTop.current > 0) {
+      scrollRef.current?.scrollTo({
+        y: Math.max(0, jobsTop.current - insets.top - 100),
+        animated: true,
+      });
+    }
+  };
+
+  // The compact header's chip row scrolls to the active chip, so the selection is always in
+  // view (a category picked in the grid was often off-screen to the right).
+  const chipsRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
+  const chipX = useRef<Record<string, number>>({});
+  useEffect(() => {
+    const x = chipX.current[selectedCategory];
+    if (x !== undefined) chipsRef.current?.scrollTo({ x: Math.max(0, x - 16), animated: true });
+  }, [selectedCategory]);
+
   return (
     <SafeAreaView edges={['left', 'right']} className="flex-1 bg-page">
       <ScrollView
+        ref={scrollRef}
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={32}
         onScroll={(event) => {
@@ -348,7 +371,7 @@ export default function HomeScreen() {
               ...categories.filter((cat) => cat.name !== seasonalCategory),
             ]}
             selected={selectedCategory}
-            onSelect={setSelectedCategory}
+            onSelect={selectCategoryFromGrid}
           />
         )}
 
@@ -569,6 +592,7 @@ export default function HomeScreen() {
             </Text>
           </Pressable>
           <ScrollView
+            ref={chipsRef}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10, gap: 8 }}
@@ -578,6 +602,9 @@ export default function HomeScreen() {
               return (
                 <Pressable
                   key={name || 'alle'}
+                  onLayout={(event) => {
+                    chipX.current[name] = event.nativeEvent.layout.x;
+                  }}
                   onPress={() => setSelectedCategory(active && name ? '' : name)}
                   accessibilityRole="button"
                   accessibilityState={{ selected: active }}

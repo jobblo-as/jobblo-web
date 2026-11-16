@@ -275,9 +275,9 @@ export default function ProfileScreen() {
                   <Text className="text-[0.9375rem] text-ink-2">Verifisert med BankID</Text>
                 </View>
               ) : (
-                <Text className="mt-1 text-[0.9375rem] font-medium text-brand-text">
-                  Verifiser med BankID
-                </Text>
+                // A status line, like its verified twin above. "Verifiser med BankID" in green
+                // read as a verified badge next to the name on an account that was not verified.
+                <Text className="mt-1 text-[0.9375rem] text-muted">Ikke verifisert med BankID</Text>
               )}
               {profile.email ? (
                 <Text className="mt-0.5 text-[0.9375rem] text-muted" numberOfLines={1}>
