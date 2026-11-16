@@ -14,7 +14,7 @@ interface CategoryGridProps {
 /**
  * FINN-style category grid: always two rows, four columns on screen, a line icon over its
  * name, no boxes. More categories continue to the right and scroll sideways. The selected
- * one gets a soft green circle behind the icon.
+ * one gets a solid green circle with a white icon.
  */
 export function CategoryGrid({ categories, selected, onSelect }: CategoryGridProps) {
   const { width } = useWindowDimensions();
@@ -50,10 +50,24 @@ export function CategoryGrid({ categories, selected, onSelect }: CategoryGridPro
                 accessibilityLabel={isAll ? 'Alle kategorier' : category.name}
                 className="h-[104px] items-center px-1 pt-2 active:opacity-60"
               >
+                {/* Android dropped the rounded corners when the background colour changed on
+                    an existing view (a square showed instead of a circle), with a className
+                    and with inline style alike. Keyed on `active`, the view is created anew
+                    with its colour and radius together, which Android does draw round. */}
                 <View
-                  className={`h-12 w-12 items-center justify-center rounded-full ${active ? 'bg-tint' : ''}`}
+                  key={active ? 'on' : 'off'}
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 24,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    // Solid brand green: the soft tint was almost the page colour in light
+                    // mode, so the selected category could not be told apart.
+                    backgroundColor: active ? TC.brand : 'transparent',
+                  }}
                 >
-                  <Icon size={26} color={TC.brandText} strokeWidth={1.75} />
+                  <Icon size={24} color={active ? '#FFFFFF' : TC.brandText} strokeWidth={1.75} />
                 </View>
                 <Text
                   className={`mt-1.5 text-center text-[0.8125rem] leading-4 ${active ? 'font-semibold text-brand-text' : 'text-ink'}`}
