@@ -668,7 +668,9 @@ export default function ChatDetailScreen() {
               // numberOfLines: on Android it fixes the line count and the box stops growing.)
               textAlignVertical="center"
               onContentSizeChange={(e) =>
-                setInputHeight(Math.min(112, Math.max(40, Math.ceil(e.nativeEvent.contentSize.height))))
+                setInputHeight(
+                  Math.min(112, Math.max(40, Math.ceil(e.nativeEvent.contentSize.height)))
+                )
               }
               style={{ height: text ? inputHeight : 40 }}
               accessibilityLabel="Skriv melding"

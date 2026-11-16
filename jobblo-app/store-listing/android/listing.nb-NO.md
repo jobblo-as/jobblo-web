@@ -44,18 +44,18 @@ Jobblo er en norsk tjeneste for småjobber. Les mer på jobblo.no.
 
 ## Other fields
 
-| Field | Value |
-|---|---|
-| Category | Lifestyle (or House & Home) |
-| Contact email | (company support email) |
-| Website | https://jobblo.no |
-| Privacy policy | https://jobblo.no/cookies (the personvernerklæring lives on this page) |
-| Account deletion (web) | https://jobblo.no/delete-account |
+| Field                  | Value                                                                  |
+| ---------------------- | ---------------------------------------------------------------------- |
+| Category               | Lifestyle (or House & Home)                                            |
+| Contact email          | (company support email)                                                |
+| Website                | https://jobblo.no                                                      |
+| Privacy policy         | https://jobblo.no/cookies (the personvernerklæring lives on this page) |
+| Account deletion (web) | https://jobblo.no/delete-account                                       |
 
 ## Graphics in this folder
 
-| File | Play Console field | Size |
-|---|---|---|
-| icon-512.png | App icon | 512 x 512 PNG |
-| feature-graphic-1024x500.png | Feature graphic | 1024 x 500 PNG, no transparency |
-| screenshots/*.png | Phone screenshots | see screenshots/README |
+| File                         | Play Console field | Size                            |
+| ---------------------------- | ------------------ | ------------------------------- |
+| icon-512.png                 | App icon           | 512 x 512 PNG                   |
+| feature-graphic-1024x500.png | Feature graphic    | 1024 x 500 PNG, no transparency |
+| screenshots/*.png            | Phone screenshots  | see screenshots/README          |
