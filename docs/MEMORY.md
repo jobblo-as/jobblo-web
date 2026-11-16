@@ -24,6 +24,8 @@
 
 ## Log (naya upar)
 
+- **2026-11-16** — App (`fix/app-store-polish`): chat ka box text ke saath barhta hai; landing photos `categoryImage` se aur hero cards backend categories se; landing dark mode text; iPad band (`supportsTablet: false`); Hjem category: gehra hara active, gol (Android), list tak scroll, chips active tak scroll; Min Jobblo "Ikke verifisert med BankID"; Rediger profil header Adresse jaisa; Play Store listing (`jobblo-app/store-listing/android`). Phone par test baqi.
+
 - **2026-11-10** — Docs: saari purani `.md` files hata kar `docs/` me 6 files (PRD, ARCHITECTURE, RULES, DESIGN, TASKS, MEMORY); Agent.md rule set RULES me mila.
 - **2026-11-10** — PR #19 (`feat/admin-reports-maintenance`): Global settings page; maintenance mode (poori site ya area, web + app + API); readiness env list; Tjenester job detail; Ordre detail redesign; Jobbrapporter + Chatrapporter fixes aur naya design; chat viewer fix + har open ka access log; Stripe-historikk shadcn; maintenance guard DB ka intezar nahi karta (CI 10s timeouts); `MAXMIND_*` readiness se hataye.
 - **2026-11-06** — PR #18 Security Intelligence (install ids, IP intel, risk rules A–F, developer pages; app `X-Install-Id`). PR #17: Kartverket address search (web + app), alag Lokasjon page khatam, filter loading, Logs Explorer, IP page, landing LCP 3.7s → 2.7s, ek hi loader.
