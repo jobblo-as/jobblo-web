@@ -52,11 +52,15 @@ export const SERVICE_SHOWCASE: Array<{ name: string; src: ImageSourcePropType }>
 const normalise = (name: string) =>
   name.toLowerCase().trim().replace(/ø/g, 'o').replace(/æ/g, 'a').replace(/å/g, 'a');
 
+/** The bundled photo for one category name, or undefined when there is none. */
+export function categoryPhoto(name: string): ImageSourcePropType | undefined {
+  return BY_CATEGORY[normalise(name)];
+}
+
 /** Category photo for a job; `index` spreads uncategorised jobs over the rotation. */
 export function categoryImage(categories: string[] | undefined, index = 0): ImageSourcePropType {
   return (
-    categories?.map((name) => BY_CATEGORY[normalise(name)]).find(Boolean) ??
-    ROTATION[Math.abs(index) % ROTATION.length]
+    categories?.map(categoryPhoto).find(Boolean) ?? ROTATION[Math.abs(index) % ROTATION.length]
   );
 }
 

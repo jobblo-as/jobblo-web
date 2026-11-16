@@ -6,41 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useCategories } from '../../hooks/useCategories';
 import apiClient from '../../api/client';
 import { TC, tc } from '../../theme/colors';
-
-const SERVICE_SHOWCASE = [
-  {
-    name: 'Maling',
-    src: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    name: 'Rengjøring',
-    src: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    name: 'Rørlegger',
-    src: 'https://images.unsplash.com/photo-1621905251918-48416bd8575a?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    name: 'Flytting',
-    src: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    name: 'Hagearbeid',
-    src: 'https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    name: 'Montering',
-    src: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    name: 'Oppussing',
-    src: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=80',
-  },
-  {
-    name: 'Transport',
-    src: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=900&q=80',
-  },
-];
+import { SERVICE_SHOWCASE, categoryPhoto } from '../../utils/categoryImage';
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -75,6 +41,22 @@ export function HomeHero() {
   });
 
   const categoryShortcuts = categories.slice(0, 6);
+
+  // Photo cards follow the backend's categories (admin order): the category's own image,
+  // else the bundled photo for its name. A category with neither is left out rather than
+  // shown with an unrelated photo. Until categories load, the bundled list.
+  const showcase = useMemo(() => {
+    const fromApi = categories
+      .map((cat: { _id?: string; name: string; image?: string }) => ({
+        key: cat._id ?? cat.name,
+        name: cat.name,
+        src: cat.image ? { uri: cat.image } : categoryPhoto(cat.name),
+      }))
+      .filter((card: { src?: unknown }) => card.src);
+    return fromApi.length
+      ? fromApi
+      : SERVICE_SHOWCASE.map((service) => ({ key: service.name, ...service }));
+  }, [categories]);
 
   return (
     <View style={{ backgroundColor: TC.page, paddingBottom: 10 }}>
@@ -250,9 +232,9 @@ export function HomeHero() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ gap: 12 }}
         >
-          {SERVICE_SHOWCASE.map((service) => (
+          {showcase.map((service) => (
             <Pressable
-              key={service.name}
+              key={service.key}
               onPress={() => router.push('/(auth)/register')}
               style={{
                 width: 150,
@@ -265,7 +247,7 @@ export function HomeHero() {
               }}
             >
               <Image
-                source={{ uri: service.src }}
+                source={service.src}
                 style={{ width: '100%', height: '100%' }}
                 resizeMode="cover"
               />
