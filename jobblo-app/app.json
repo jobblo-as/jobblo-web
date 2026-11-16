@@ -8,7 +8,7 @@
     "userInterfaceStyle": "automatic",
     "scheme": "jobblo",
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.jobblo.app",
       "usesAppleSignIn": true,
       "config": {
