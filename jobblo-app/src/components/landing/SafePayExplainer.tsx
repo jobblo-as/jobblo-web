@@ -2,6 +2,10 @@ import React from 'react';
 import { Text, View } from 'react-native';
 import { TC, tc } from '../../theme/colors';
 
+// The panel is dark green in both themes, so its headings stay light. TC.page turned
+// near-black in dark mode and the headings vanished.
+const ON_DEEP = '#EFF0EA';
+
 const STAGES = [
   {
     step: '01',
@@ -41,7 +45,7 @@ export function SafePayExplainer() {
         <Text
           style={{
             marginTop: 18,
-            color: TC.page,
+            color: ON_DEEP,
             fontSize: 38,
             fontWeight: '700',
             lineHeight: 42,
@@ -105,7 +109,7 @@ export function SafePayExplainer() {
               <View>
                 <Text
                   style={{
-                    color: TC.page,
+                    color: ON_DEEP,
                     fontSize: 22,
                     fontWeight: '700',
                     letterSpacing: -0.8,

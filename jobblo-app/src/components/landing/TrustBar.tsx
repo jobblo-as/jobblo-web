@@ -1,11 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import { Animated, Easing, Text, View } from 'react-native';
 import { Apple, Landmark, CreditCard, ShieldCheck } from 'lucide-react-native';
-import { TC } from '../../theme/colors';
+import { TC, tc } from '../../theme/colors';
 
+// `dark`: the black and deep-purple marks disappear on the dark surface, so they use the ink colour there.
 const SYSTEMS = [
-  { name: 'Apple Pay', color: '#000000', Icon: Apple },
-  { name: 'BankID', color: '#39134C', Icon: Landmark },
+  { name: 'Apple Pay', color: '#000000', dark: true, Icon: Apple },
+  { name: 'BankID', color: '#39134C', dark: true, Icon: Landmark },
   { name: 'Vipps', color: '#FF5B24', Icon: CreditCard },
   { name: 'Stripe', color: '#635BFF', Icon: ShieldCheck },
 ] as const;
@@ -17,13 +18,14 @@ function Track() {
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 18, paddingRight: 18 }}>
       {MARQUEE_ITEMS.map((system, index) => {
         const Icon = system.Icon;
+        const color = 'dark' in system ? tc(system.color, 'ink') : system.color;
         return (
           <View
             key={`${system.name}-${index}`}
             style={{ alignItems: 'center', justifyContent: 'center', minWidth: 94 }}
           >
-            <Icon size={26} color={system.color} />
-            <Text style={{ color: system.color, fontSize: 13, fontWeight: '700', marginTop: 4 }}>
+            <Icon size={26} color={color} />
+            <Text style={{ color, fontSize: 13, fontWeight: '700', marginTop: 4 }}>
               {system.name}
             </Text>
           </View>
