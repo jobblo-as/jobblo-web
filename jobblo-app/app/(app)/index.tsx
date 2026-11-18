@@ -32,7 +32,7 @@ import { useJobs } from '../../src/hooks/useJobs';
 import { useTopUsers } from '../../src/hooks/useTopUsers';
 import { useCategories } from '../../src/hooks/useCategories';
 import { useAuthStore } from '../../src/store/authStore';
-import { JobCard } from '../../src/components/JobCard';
+import { JobCard, JOB_PHOTO_RATIO } from '../../src/components/JobCard';
 import { CategoryGrid } from '../../src/components/CategoryGrid';
 import { HomeHero } from '../../src/components/HomeHero';
 import { SaveToListSheet } from '../../src/components/domain/SaveToListSheet';
@@ -404,7 +404,7 @@ export default function HomeScreen() {
           >
             {Array.from({ length: 4 }).map((_, i) => (
               <View key={i} style={{ width: '48%' }} className="gap-2">
-                <Skeleton className="w-full rounded-2xl" style={{ aspectRatio: 4 / 5 }} />
+                <Skeleton className="w-full rounded-2xl" style={{ aspectRatio: JOB_PHOTO_RATIO }} />
                 <Skeleton className="h-4 w-4/5" />
                 <Skeleton className="h-3 w-1/2" />
               </View>
