@@ -15,6 +15,8 @@ interface JobButtonProps {
   hasRequested?: boolean;
   isTimerActive?: boolean; // Added for cooldown state
   wasDeclined?: boolean;
+  /** The owner accepted this user's request (hasRequested is true as well). */
+  wasAccepted?: boolean;
 }
 
 const JobButton: React.FC<JobButtonProps> = ({
@@ -25,6 +27,7 @@ const JobButton: React.FC<JobButtonProps> = ({
   hasRequested,
   isTimerActive,
   wasDeclined,
+  wasAccepted,
 }) => {
   const isLimitReached = job?.isLimitReached;
 
@@ -56,7 +59,9 @@ const JobButton: React.FC<JobButtonProps> = ({
               : isOwnJob
                 ? 'Se søkere'
                 : hasRequested
-                  ? 'Forespørsel sendt'
+                  ? wasAccepted
+                    ? 'Forespørsel godkjent'
+                    : 'Forespørsel sendt'
                   : isLimitReached
                     ? 'Fulltegnet'
                     : isTimerActive

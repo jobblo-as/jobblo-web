@@ -395,12 +395,22 @@ const JobListingDetailPage = () => {
   // Without the status filter, applicants who were mass-declined when someone
   // else won the contract stayed stuck on a disabled "Forespørsel sendt"
   // forever, with no notification and no way to apply again.
-  const hasRequested = jobRequests?.some(
+  // An accepted request blocks too: accepting leaves the job open until payment, and the
+  // backend now refuses a second request from an accepted applicant (it used to take it).
+  const wasAccepted = jobRequests?.some(
     (req) =>
       req.serviceId?._id === id &&
       req.customerId?._id === currentUser?._id &&
-      req.status === 'pending'
+      req.status === 'accepted'
   );
+  const hasRequested =
+    wasAccepted ||
+    jobRequests?.some(
+      (req) =>
+        req.serviceId?._id === id &&
+        req.customerId?._id === currentUser?._id &&
+        req.status === 'pending'
+    );
 
   const wasDeclined = jobRequests?.some(
     (req) =>
@@ -964,6 +974,7 @@ const JobListingDetailPage = () => {
                       isOwnJob={isOwnJob}
                       isMsgLoading={isMessageLoading}
                       hasRequested={hasRequested}
+                      wasAccepted={wasAccepted}
                       wasDeclined={wasDeclined}
                       isTimerActive={isTimerActive}
                     />

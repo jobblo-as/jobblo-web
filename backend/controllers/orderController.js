@@ -121,15 +121,20 @@ exports.createJobRequest = async (req, res) => {
         .json({ error: 'Du kan ikke søke på dette oppdraget.', code: 'user_blocked' });
     }
 
-    // Check if a request already exists
+    // A pending or an accepted request blocks a new one. Accepting does not change the job's
+    // status (it stays open until payment), so an accepted applicant could apply again: a
+    // second request, a second contact used, and the owner saw the same person twice.
     const existingRequest = await JobRequest.findOne({
       serviceId,
       customerId,
-      status: 'pending',
+      status: { $in: ['pending', 'accepted'] },
     });
     if (existingRequest) {
       return res.status(400).json({
-        error: 'Du har allerede sendt en forespørsel på dette oppdraget',
+        error:
+          existingRequest.status === 'accepted'
+            ? 'Søknaden din er allerede godkjent. Fortsett i chatten med oppdragsgiveren.'
+            : 'Du har allerede sendt en forespørsel på dette oppdraget',
       });
     }
 
