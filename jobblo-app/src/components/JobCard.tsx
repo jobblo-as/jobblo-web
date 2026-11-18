@@ -22,10 +22,16 @@ interface JobCardProps {
 }
 
 /**
+ * The photo's width / height. Square (it was 4:5): the card is a fifth shorter, so more jobs
+ * fit on the screen. The loading skeletons use the same value.
+ */
+export const JOB_PHOTO_RATIO = 1;
+
+/**
  * Mobile job card component — matches the web frontend JobCard design.
  *
  * Shows job photo, title, price, location, and status badges.
- * Photo is 4:5 aspect ratio. Card uses brand colors from theme.
+ * Photo is square (JOB_PHOTO_RATIO). Card uses brand colors from theme.
  *
  * Pressing the card navigates to the job detail page.
  *
@@ -64,14 +70,14 @@ export const JobCard: React.FC<JobCardProps> = ({
       activeOpacity={0.7}
       className="flex-1 focus-visible:outline-none"
     >
-      {/* Photo container — 4:5 aspect ratio, rounded 2xl, brand bg */}
+      {/* Photo container — square, rounded 2xl, brand bg */}
       <View
         className="relative overflow-hidden rounded-2xl bg-tint"
-        style={{ aspectRatio: 4 / 5, minHeight: 130 }}
+        style={{ aspectRatio: JOB_PHOTO_RATIO, minHeight: 110 }}
       >
         <Image
           source={imageSource}
-          style={{ width: '100%', height: '100%', aspectRatio: 4 / 5 }}
+          style={{ width: '100%', height: '100%', aspectRatio: JOB_PHOTO_RATIO }}
           resizeMode="cover"
           onError={() => setImageFailed(true)}
         />

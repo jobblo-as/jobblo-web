@@ -1,5 +1,13 @@
 import React, { useMemo, useState } from 'react';
-import { Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { ArrowRight, Search, ShieldCheck } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
@@ -17,6 +25,7 @@ function getGreeting() {
 
 export function HomeHero() {
   const router = useRouter();
+  const narrow = useWindowDimensions().width < 360;
   const [query, setQuery] = useState('');
   const [wordIndex, setWordIndex] = useState(0);
   const { data } = useCategories();
@@ -174,14 +183,17 @@ export function HomeHero() {
             onChangeText={setQuery}
             placeholder="Hva gjelder det?"
             placeholderTextColor={TC.placeholder}
-            style={{ flex: 1, fontSize: 15, color: TC.ink, paddingVertical: 10 }}
+            // minWidth 0: the input may shrink, so the button stays inside the pill on a
+            // 320 pt phone (it was pushed past the edge and its arrow cut off).
+            style={{ flex: 1, minWidth: 0, fontSize: 15, color: TC.ink, paddingVertical: 10 }}
           />
           <Pressable
             onPress={() => router.push('/(auth)/register')}
             style={{
+              flexShrink: 0,
               backgroundColor: TC.brandDeep,
               borderRadius: 999,
-              paddingHorizontal: 18,
+              paddingHorizontal: narrow ? 14 : 18,
               paddingVertical: 10,
               flexDirection: 'row',
               alignItems: 'center',

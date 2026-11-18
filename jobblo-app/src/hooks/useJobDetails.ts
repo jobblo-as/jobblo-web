@@ -40,6 +40,9 @@ export function useJobDetails(jobId: string) {
     queryFn: () => jobsService.getJob(jobId),
     enabled: !!jobId,
     placeholderData: () => jobFromListCache(client, jobId),
+    // A 404 (job gone or no longer public) will not change on a retry; show it at once.
+    retry: (failures, error) =>
+      (error as { response?: { status?: number } })?.response?.status !== 404 && failures < 1,
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
   });

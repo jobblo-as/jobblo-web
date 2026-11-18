@@ -208,6 +208,23 @@ describe('contact usage is tied only to successful JobRequests', () => {
     expect(consumeApplicationContact).not.toHaveBeenCalled();
   });
 
+  test('an accepted applicant cannot apply again: no second request, no second contact', async () => {
+    JobRequest.findOne.mockResolvedValueOnce({
+      _id: new mongoose.Types.ObjectId(),
+      status: 'accepted',
+    });
+    const res = response();
+    await orderController.createJobRequest(request(), res);
+
+    expect(JobRequest.findOne).toHaveBeenCalledWith(
+      expect.objectContaining({ status: { $in: ['pending', 'accepted'] } })
+    );
+    expect(res.statusCode).toBe(400);
+    expect(res.body.error).toMatch(/allerede godkjent/);
+    expect(JobRequest.create).not.toHaveBeenCalled();
+    expect(consumeApplicationContact).not.toHaveBeenCalled();
+  });
+
   test('an interrupted transaction can retry without retaining an orphaned contact charge', async () => {
     const events = [];
     consumeApplicationContact.mockImplementationOnce(async () => {

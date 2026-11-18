@@ -369,11 +369,19 @@ export function CameraStep({ visible, onCancel }: CameraStepProps) {
               accessibilityLabel={t('Ta bilde', 'Take photo')}
               className={`h-[74px] w-[74px] items-center justify-center rounded-full border-4 border-white ${full ? 'opacity-40' : ''}`}
             >
-              {busy ? (
-                <ActivityIndicator color="#FFFFFF" />
-              ) : (
-                <View className="h-[58px] w-[58px] rounded-full bg-white active:bg-white/70" />
-              )}
+              {/* The pressed look comes from the shutter itself. An `active:` class on this inner
+                  View made NativeWind turn it into its own Pressable, which took the tap: the
+                  first press on the white circle did nothing. */}
+              {({ pressed }) =>
+                busy ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
+                  <View
+                    pointerEvents="none"
+                    className={`h-[58px] w-[58px] rounded-full ${pressed ? 'bg-white/70' : 'bg-white'}`}
+                  />
+                )
+              }
             </Pressable>
             <Pressable
               onPress={() => void upload()}

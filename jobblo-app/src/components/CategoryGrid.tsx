@@ -19,6 +19,8 @@ interface CategoryGridProps {
 export function CategoryGrid({ categories, selected, onSelect }: CategoryGridProps) {
   const { width } = useWindowDimensions();
   const tileWidth = (width - 32) / 4; // 16 px screen padding each side
+  // Under 80 pt a tile (320 pt phones) split "Hagearbeid" mid-word: smaller label, less padding.
+  const narrow = tileWidth < 80;
   const tiles = [{ name: 'Alle' }, ...categories];
   // Reads left to right per row: the first half fills the top row, the rest the bottom row.
   const perRow = Math.max(4, Math.ceil(tiles.length / 2));
@@ -48,7 +50,7 @@ export function CategoryGrid({ categories, selected, onSelect }: CategoryGridPro
                 accessibilityRole="button"
                 accessibilityState={{ selected: active }}
                 accessibilityLabel={isAll ? 'Alle kategorier' : category.name}
-                className="h-[104px] items-center px-1 pt-2 active:opacity-60"
+                className={`h-[104px] items-center ${narrow ? 'px-0.5' : 'px-1'} pt-2 active:opacity-60`}
               >
                 {/* Android dropped the rounded corners when the background colour changed on
                     an existing view (a square showed instead of a circle), with a className
@@ -70,8 +72,10 @@ export function CategoryGrid({ categories, selected, onSelect }: CategoryGridPro
                   <Icon size={24} color={active ? '#FFFFFF' : TC.brandText} strokeWidth={1.75} />
                 </View>
                 <Text
-                  className={`mt-1.5 text-center text-[0.8125rem] leading-4 ${active ? 'font-semibold text-brand-text' : 'text-ink'}`}
+                  className={`mt-1.5 text-center ${narrow ? 'text-[0.75rem]' : 'text-[0.8125rem]'} leading-4 ${active ? 'font-semibold text-brand-text' : 'text-ink'}`}
                   numberOfLines={2}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.85}
                 >
                   {category.name}
                 </Text>

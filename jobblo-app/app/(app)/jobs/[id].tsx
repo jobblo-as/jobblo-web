@@ -55,6 +55,7 @@ import { ReportJobSheet } from '../../../src/components/domain/ReportJobSheet';
 import { JobAreaMap } from '../../../src/components/domain/JobAreaMap';
 import { ImageViewer } from '../../../src/components/ui/ImageViewer';
 import { categoryImage } from '../../../src/utils/categoryImage';
+import { applyBlockReason } from '../../../src/utils/applyBlock';
 import { serviceStatusLabel } from '../../../src/components/domain/ServiceStatusBadge';
 import { MEMBERSHIP_ENABLED } from '../../../src/config/features';
 import { EQUIPMENT_LABELS, type Job } from '../../../src/types/Jobs';
@@ -142,14 +143,31 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
         actionLabel="Prøv igjen"
         onAction={() => void retry()}
       />
-      <Pressable
-        onPress={() => router.back()}
-        accessibilityRole="button"
-        className="mb-8 items-center py-3"
-      >
-        <Text className="text-[0.9375rem] font-semibold text-brand-text">Tilbake</Text>
-      </Pressable>
+      <BackLink onPress={() => goBack(router)} />
     </SafeAreaView>
+  );
+}
+
+/**
+ * Back, or Hjem when there is nothing to go back to (the page opened straight from a
+ * jobblo://jobs/<id> link, where back used to do nothing).
+ */
+function goBack(router: ReturnType<typeof useRouter>) {
+  if (router.canGoBack()) router.back();
+  else router.replace('/');
+}
+
+/** A 404 from the API: the job is gone or not public, not a network problem. */
+function isNotFound(error: unknown) {
+  return (error as { response?: { status?: number } } | null)?.response?.status === 404;
+}
+
+/** "Tilbake" under an error or empty page, which has no header of its own. */
+function BackLink({ onPress }: { onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" className="mb-8 items-center py-3">
+      <Text className="text-[0.9375rem] font-semibold text-brand-text">Tilbake</Text>
+    </Pressable>
   );
 }
 
@@ -159,12 +177,20 @@ export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
  * box → key facts → description → job owner card → area → "Om annonsen" → breadcrumb.
  * "Kjøp nå" is "Søk på oppdraget", "Fiks ferdig" is SafePay, the seller card is the job owner.
  */
-export default function JobDetailsScreen() {
+export default function JobDetailsRoute() {
+  const params = useLocalSearchParams<{ id: string | string[] }>();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
+  // The jobs stack keeps one job screen and reuses it for the next job (jobs/_layout.tsx), so a
+  // new id gets a fresh page: no scroll position, photo index or open sheet from the last job.
+  return <JobDetailsScreen key={id} />;
+}
+
+function JobDetailsScreen() {
   const params = useLocalSearchParams<{ id: string | string[] }>();
   const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const router = useRouter();
   const { user, isAuthenticated } = useAuthStore();
-  const { data: job, isLoading, isError, refetch } = useJobDetails(id ?? '');
+  const { data: job, isLoading, isError, error, refetch } = useJobDetails(id ?? '');
   const requestsQuery = useMyJobRequests(isAuthenticated && !!id);
   const connectStatusQuery = useConnectStatus(isAuthenticated);
   useFocusEffect(
@@ -223,12 +249,14 @@ export default function JobDetailsScreen() {
       })
     : null;
 
+  /** Shown under the button after a successful application (the modal just closed before). */
+  const [justApplied, setJustApplied] = React.useState(false);
   const { mutate: applyToJob, isPending: isApplyLoading } = useApplyMutation({
     onSuccess: () => {
       setIsApplyModalOpen(false);
       setApplyError(null);
+      setJustApplied(true);
       void entitlementsQuery.refetch();
-      // Modal closes, success toast is shown by parent if needed
     },
     onError: (error: any) => {
       const errorData = error.response?.data;
@@ -264,33 +292,33 @@ export default function JobDetailsScreen() {
     !!poster &&
     !!user &&
     String((user as any)._id ?? (user as any).id) === String(poster._id ?? '');
-  const isClosed =
-    job?.status === 'closed' ||
-    job?.status === 'completed' ||
-    job?.status === 'cancelled' ||
-    job?.status === 'expired';
-  const hasPendingRequest = (requestsQuery.data ?? []).some((request) => {
-    const serviceId =
-      typeof request.serviceId === 'object' ? request.serviceId?._id : request.serviceId;
-    const customerId =
-      typeof request.customerId === 'object' ? request.customerId?._id : request.customerId;
-    if (!serviceId || !customerId) return false;
-    return (
-      String(serviceId) === String(id) &&
-      String(customerId) === currentUserId &&
-      request.status === 'pending'
-    );
-  });
+  // My requests on this job: an accepted one wins over a pending one (both block a new one).
+  const myRequestStatuses = new Set(
+    (requestsQuery.data ?? [])
+      .filter((request) => {
+        const serviceId =
+          typeof request.serviceId === 'object' ? request.serviceId?._id : request.serviceId;
+        const customerId =
+          typeof request.customerId === 'object' ? request.customerId?._id : request.customerId;
+        if (!serviceId || !customerId) return false;
+        return String(serviceId) === String(id) && String(customerId) === currentUserId;
+      })
+      .map((request) => request.status)
+  );
+  const blockReason = applyBlockReason(
+    job,
+    myRequestStatuses.has('accepted')
+      ? 'accepted'
+      : myRequestStatuses.has('pending')
+        ? 'pending'
+        : null
+  );
   const imageList = Array.isArray(job?.images) && job.images.length > 0 ? job.images : [];
 
   const primaryCtaLabel = !isAuthenticated
     ? 'Logg inn for å søke'
-    : isClosed
-      ? 'Oppdraget er lukket'
-      : hasPendingRequest
-        ? 'Forespørsel sendt'
-        : 'Søk på oppdraget';
-  const primaryDisabled = isAuthenticated && (isClosed || hasPendingRequest);
+    : (blockReason ?? 'Søk på oppdraget');
+  const primaryDisabled = isAuthenticated && !!blockReason;
 
   const handleShare = async () => {
     if (!job) return;
@@ -309,7 +337,7 @@ export default function JobDetailsScreen() {
 
   const handlePrimaryAction = () =>
     requireLogin(() => {
-      if (isOwner || isClosed || hasPendingRequest) return;
+      if (isOwner || blockReason) return;
       setApplyError(null);
       setIsApplyModalOpen(true);
     });
@@ -330,7 +358,21 @@ export default function JobDetailsScreen() {
     );
   }
 
-  if (isError) {
+  // The API answers 404 for a job that is gone or no longer public (taken by someone else,
+  // finished, expired, deleted). That is not a network problem, and retrying cannot fix it.
+  if ((isError && isNotFound(error)) || (!isError && !job)) {
+    return (
+      <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
+        <EmptyState
+          title="Oppdraget er ikke tilgjengelig"
+          message="Det er fjernet, fullført eller tildelt noen andre."
+        />
+        <BackLink onPress={() => goBack(router)} />
+      </SafeAreaView>
+    );
+  }
+
+  if (isError || !job) {
     return (
       <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
         <ErrorState
@@ -339,17 +381,7 @@ export default function JobDetailsScreen() {
           actionLabel="Prøv igjen"
           onAction={() => refetch()}
         />
-      </SafeAreaView>
-    );
-  }
-
-  if (!job) {
-    return (
-      <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-page">
-        <EmptyState
-          title="Oppdraget finnes ikke"
-          message="Annonsen er kanskje fjernet, eller lenken er feil."
-        />
+        <BackLink onPress={() => goBack(router)} />
       </SafeAreaView>
     );
   }
@@ -560,7 +592,21 @@ export default function JobDetailsScreen() {
               </Text>
             </TouchableOpacity>
           )}
-          {usage ? (
+          {justApplied ? (
+            <View
+              testID="apply-success"
+              accessibilityLiveRegion="polite"
+              className="flex-row items-start gap-2 rounded-xl bg-tint px-4 py-3"
+            >
+              <BadgeCheck size={18} color={TC.brandText} style={{ marginTop: 1 }} />
+              <Text className="flex-1 text-[0.875rem] leading-5 text-ink">
+                Forespørselen er sendt. Oppdragsgiveren får beskjed, og dere kan skrive sammen i
+                Meldinger.
+              </Text>
+            </View>
+          ) : null}
+          {/* Only where the user can still apply: on their own job or a closed one it says nothing. */}
+          {usage && !isOwner && !blockReason ? (
             <Text
               testID="contact-usage-summary"
               className="rounded-xl bg-surface-2 px-4 py-3 text-[0.875rem] text-muted"
@@ -645,7 +691,7 @@ export default function JobDetailsScreen() {
             <Pressable
               onPress={() =>
                 router.push({
-                  pathname: '/(app)/profile/[userId]',
+                  pathname: '/(app)/users/[userId]',
                   params: { userId: String(poster._id) },
                 })
               }
@@ -778,7 +824,7 @@ export default function JobDetailsScreen() {
           shadowColor: 'transparent',
         }}
       >
-        <GlassButton label="Tilbake" onPress={() => router.back()}>
+        <GlassButton label="Tilbake" onPress={() => goBack(router)}>
           <ArrowLeft size={19} color={TC.ink} />
         </GlassButton>
         <View className="flex-row gap-2.5">

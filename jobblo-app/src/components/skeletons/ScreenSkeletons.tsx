@@ -2,6 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Skeleton } from '../ui/Skeleton';
+import { JOB_PHOTO_RATIO } from '../JobCard';
 
 /**
  * Loading skeletons that mirror each screen's loaded layout: same header, cards, rows,
@@ -149,7 +150,7 @@ export function SkJobGrid({ count = 4 }: { count?: number }) {
     <View className="flex-row flex-wrap justify-between gap-y-5">
       {Array.from({ length: count }).map((_, i) => (
         <View key={i} style={{ width: '48%' }} className="gap-2">
-          <Skeleton className="w-full rounded-2xl" style={{ aspectRatio: 4 / 5 }} />
+          <Skeleton className="w-full rounded-2xl" style={{ aspectRatio: JOB_PHOTO_RATIO }} />
           <Skeleton className="mt-0.5 h-4 w-4/5" />
           <Skeleton className="h-3 w-1/2" />
         </View>

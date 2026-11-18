@@ -172,13 +172,15 @@ export default function RecommendedTaskersScreen() {
                   key={worker._id}
                   onPress={() =>
                     router.push({
-                      pathname: '/(app)/profile/[userId]',
+                      pathname: '/(app)/users/[userId]',
                       params: { userId: worker._id },
                     })
                   }
                   accessibilityRole="button"
                   accessibilityLabel={`${name}, se profil`}
-                  className="rounded-2xl border border-line bg-surface p-4 active:bg-[#FAFAF7] dark:bg-surface-2"
+                  // Dark mode: the card was surface-2, the same colour as its skill chips (they
+                  // vanished), and the press colour was near-white under light text.
+                  className="rounded-2xl border border-line bg-surface p-4 active:bg-surface-2"
                 >
                   <View className="flex-row items-center gap-3">
                     <Avatar uri={worker.avatarUrl} label={initials(worker.name, worker.lastName)} />
@@ -233,7 +235,7 @@ export default function RecommendedTaskersScreen() {
                     </View>
                   ) : null}
 
-                  <View className="mt-3 flex-row items-center justify-between border-t border-line-soft pt-3">
+                  <View className="mt-3 flex-row items-center justify-between border-t border-line-soft pt-3 dark:border-line">
                     <View className="min-w-0 flex-1 flex-row items-center gap-1">
                       <MapPin size={13} color={tc('#63665F', 'muted')} />
                       <Text className="shrink text-[0.8125rem] text-muted" numberOfLines={1}>

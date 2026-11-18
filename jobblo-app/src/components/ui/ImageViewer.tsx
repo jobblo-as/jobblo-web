@@ -13,6 +13,7 @@ import {
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { X } from 'lucide-react-native';
+import { shouldClose } from '../../utils/swipeToClose';
 
 interface ImageViewerProps {
   images: string[];
@@ -33,32 +34,53 @@ export function ImageViewer({ images, index, onClose }: ImageViewerProps) {
   const [current, setCurrent] = useState(index ?? 0);
   const [zoomed, setZoomed] = useState(false);
   const dragY = useRef(new Animated.Value(0)).current;
+  const dragX = useRef(new Animated.Value(0)).current;
+  // With one photo there is nothing to swipe to, so a sideways swipe closes it too.
+  const single = images.length <= 1;
 
   useEffect(() => {
     if (index !== null) {
       setCurrent(index);
       setZoomed(false);
       dragY.setValue(0);
+      dragX.setValue(0);
     }
-  }, [index, dragY]);
+  }, [index, dragY, dragX]);
 
-  // Pull down to close; disabled while zoomed so panning a zoomed photo does not close it.
-  const swipeDown = Gesture.Pan()
+  // Swipe up or down to close (sideways too with one photo; with several, sideways changes the
+  // photo). Off while zoomed, so panning a zoomed photo does not close it.
+  const swipeAway = Gesture.Pan()
     .runOnJS(true)
     .enabled(!zoomed)
-    .activeOffsetY(15)
-    .failOffsetX([-15, 15])
-    .onUpdate((event) => dragY.setValue(Math.max(0, event.translationY)))
+    .activeOffsetY([-15, 15])
+    .activeOffsetX(single ? [-15, 15] : [-1000, 1000])
+    .failOffsetX(single ? [-1000, 1000] : [-15, 15])
+    .onUpdate((event) => {
+      dragY.setValue(event.translationY);
+      if (single) dragX.setValue(event.translationX);
+    })
     .onEnd((event) => {
-      if (event.translationY > 120 || event.velocityY > 900) onClose();
-      else Animated.spring(dragY, { toValue: 0, useNativeDriver: true }).start();
+      if (shouldClose(event, single)) onClose();
+      else
+        Animated.parallel([
+          Animated.spring(dragY, { toValue: 0, useNativeDriver: true }),
+          Animated.spring(dragX, { toValue: 0, useNativeDriver: true }),
+        ]).start();
     });
 
-  const backdrop = dragY.interpolate({
-    inputRange: [0, 300],
-    outputRange: [1, 0.3],
-    extrapolate: 'clamp',
-  });
+  // Fades as the photo is dragged away, whichever way.
+  const backdrop = Animated.add(
+    dragY.interpolate({
+      inputRange: [-300, 0, 300],
+      outputRange: [300, 0, 300],
+      extrapolate: 'clamp',
+    }),
+    dragX.interpolate({
+      inputRange: [-300, 0, 300],
+      outputRange: [300, 0, 300],
+      extrapolate: 'clamp',
+    })
+  ).interpolate({ inputRange: [0, 300], outputRange: [1, 0.3], extrapolate: 'clamp' });
 
   return (
     <Modal
@@ -70,13 +92,16 @@ export function ImageViewer({ images, index, onClose }: ImageViewerProps) {
     >
       <GestureHandlerRootView style={{ flex: 1 }}>
         <Animated.View style={{ flex: 1, backgroundColor: 'black', opacity: backdrop }}>
-          <GestureDetector gesture={swipeDown}>
-            <Animated.View style={{ flex: 1, transform: [{ translateY: dragY }] }}>
+          <GestureDetector gesture={swipeAway}>
+            <Animated.View
+              style={{ flex: 1, transform: [{ translateX: dragX }, { translateY: dragY }] }}
+            >
               <FlatList
                 data={images}
                 horizontal
                 pagingEnabled
-                scrollEnabled={!zoomed}
+                // One photo: the sideways swipe belongs to closing, not to this list.
+                scrollEnabled={!zoomed && !single}
                 showsHorizontalScrollIndicator={false}
                 initialScrollIndex={index ?? 0}
                 getItemLayout={(_, i) => ({ length: width, offset: width * i, index: i })}
@@ -88,6 +113,11 @@ export function ImageViewer({ images, index, onClose }: ImageViewerProps) {
                   <ScrollView
                     style={{ width, height }}
                     contentContainerStyle={{ width, height }}
+                    // Only pans once zoomed: unzoomed, its vertical drag took the gesture, so
+                    // swiping the photo away did nothing and only the X closed the viewer.
+                    // Pinch-zoom still works with scrolling off.
+                    scrollEnabled={zoomed}
+                    bounces={zoomed}
                     maximumZoomScale={4}
                     minimumZoomScale={1}
                     centerContent

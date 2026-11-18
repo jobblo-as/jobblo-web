@@ -359,7 +359,7 @@ export default function AlertsScreen() {
       }
 
       if (n.senderId?._id) {
-        router.push({ pathname: '/(app)/profile/[userId]', params: { userId: n.senderId._id } });
+        router.push({ pathname: '/(app)/users/[userId]', params: { userId: n.senderId._id } });
       }
     },
     [markAsRead, userId, router]

@@ -584,7 +584,7 @@ export default function ChatDetailScreen() {
                   onOpenProfile={() =>
                     other?._id &&
                     router.push({
-                      pathname: '/(app)/profile/[userId]',
+                      pathname: '/(app)/users/[userId]',
                       params: { userId: String(other._id) },
                     })
                   }
@@ -713,7 +713,7 @@ export default function ChatDetailScreen() {
               onPress={() =>
                 other?._id &&
                 router.push({
-                  pathname: '/(app)/profile/[userId]',
+                  pathname: '/(app)/users/[userId]',
                   params: { userId: String(other._id) },
                 })
               }

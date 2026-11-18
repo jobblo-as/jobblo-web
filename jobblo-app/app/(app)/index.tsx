@@ -32,9 +32,10 @@ import { useJobs } from '../../src/hooks/useJobs';
 import { useTopUsers } from '../../src/hooks/useTopUsers';
 import { useCategories } from '../../src/hooks/useCategories';
 import { useAuthStore } from '../../src/store/authStore';
-import { JobCard } from '../../src/components/JobCard';
+import { JobCard, JOB_PHOTO_RATIO } from '../../src/components/JobCard';
 import { CategoryGrid } from '../../src/components/CategoryGrid';
 import { HomeHero } from '../../src/components/HomeHero';
+import { useLocationPermission } from '../../src/components/LocationPermissionSheet';
 import { SaveToListSheet } from '../../src/components/domain/SaveToListSheet';
 import { SearchResultsHeader } from '../../src/components/search/SearchResultsHeader';
 import { useTabBarSpace } from '../../src/components/GlassTabBar';
@@ -112,6 +113,7 @@ export default function HomeScreen() {
     }).start();
   }, [compact, headerFade]);
   const router = useRouter();
+  const { ask: askLocation, sheet: locationSheet } = useLocationPermission('nearby');
   const { user } = useAuthStore();
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [sortValue, setSortValue] = useState('newest');
@@ -208,8 +210,7 @@ export default function HomeScreen() {
 
   const handleNearbyJobs = async () => {
     try {
-      const permission = await Location.requestForegroundPermissionsAsync();
-      if (permission.granted) {
+      if (await askLocation()) {
         const position = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced,
         });
@@ -404,7 +405,7 @@ export default function HomeScreen() {
           >
             {Array.from({ length: 4 }).map((_, i) => (
               <View key={i} style={{ width: '48%' }} className="gap-2">
-                <Skeleton className="w-full rounded-2xl" style={{ aspectRatio: 4 / 5 }} />
+                <Skeleton className="w-full rounded-2xl" style={{ aspectRatio: JOB_PHOTO_RATIO }} />
                 <Skeleton className="h-4 w-4/5" />
                 <Skeleton className="h-3 w-1/2" />
               </View>
@@ -467,7 +468,7 @@ export default function HomeScreen() {
                   onPress={() => {
                     if (worker._id)
                       router.push({
-                        pathname: '/(app)/profile/[userId]',
+                        pathname: '/(app)/users/[userId]',
                         params: { userId: worker._id },
                       });
                   }}
@@ -635,6 +636,7 @@ export default function HomeScreen() {
         onClose={() => setSaveSheetServiceId(null)}
         serviceId={saveSheetServiceId ?? ''}
       />
+      {locationSheet}
     </SafeAreaView>
   );
 }
