@@ -9,6 +9,7 @@ import { GlassTabBar, isChatThread, useTabBarSpace } from '@/components/GlassTab
 import { TC } from '../../src/theme/colors';
 import MfaGate from '@/components/auth/MfaGate';
 import { BugReportHost } from '@/features/bugReport/BugReportSheet';
+import { EdgeSwipeBack } from '@/components/EdgeSwipeBack';
 
 // Feed screens scroll under the glass bar (they pad their own lists); every other screen
 // ends above it, so no fixed button or last row is ever hidden behind the bar.
@@ -181,6 +182,8 @@ export default function AppLayout() {
         <Tabs.Screen name="safepay" />
         <Tabs.Screen name="disputes" />
       </Tabs>
+      {/* Swipe from the left edge = back, where the native stack has nothing to pop. */}
+      <EdgeSwipeBack />
       {/* Innstillinger → "Rapporter en feil", about the screen the user came from. */}
       <BugReportHost />
     </MfaGate>
