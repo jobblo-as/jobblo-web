@@ -106,7 +106,15 @@ function ItemList({ items }: { items: { _id: string; title?: string; description
   );
 }
 
-export default function PublicProfileScreen() {
+export default function PublicProfileRoute() {
+  const params = useLocalSearchParams<{ userId: string | string[] }>();
+  const userId = Array.isArray(params.userId) ? params.userId[0] : params.userId;
+  // The users stack keeps one profile screen and reuses it for the next person
+  // (users/_layout.tsx), so a new id gets a fresh page: no scroll or state from the last one.
+  return <PublicProfileScreen key={userId} />;
+}
+
+function PublicProfileScreen() {
   const params = useLocalSearchParams<{ userId: string | string[] }>();
   const userId = Array.isArray(params.userId) ? params.userId[0] : params.userId;
   const router = useRouter();
@@ -218,7 +226,8 @@ export default function PublicProfileScreen() {
           user={user}
           fullName={fullName}
           topInset={insets.top}
-          onBack={() => router.back()}
+          // Hjem when there is nothing to go back to (opened straight from a link).
+          onBack={() => (router.canGoBack() ? router.back() : router.replace('/'))}
           chips={profileChips(user, view)}
         />
 

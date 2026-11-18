@@ -467,7 +467,7 @@ export default function HomeScreen() {
                   onPress={() => {
                     if (worker._id)
                       router.push({
-                        pathname: '/(app)/profile/[userId]',
+                        pathname: '/(app)/users/[userId]',
                         params: { userId: worker._id },
                       });
                   }}

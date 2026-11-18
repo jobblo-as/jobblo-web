@@ -645,7 +645,7 @@ export default function JobDetailsScreen() {
             <Pressable
               onPress={() =>
                 router.push({
-                  pathname: '/(app)/profile/[userId]',
+                  pathname: '/(app)/users/[userId]',
                   params: { userId: String(poster._id) },
                 })
               }

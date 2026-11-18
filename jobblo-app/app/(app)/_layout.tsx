@@ -174,6 +174,7 @@ export default function AppLayout() {
         <Tabs.Screen name="my-jobs" />
         {/* Folder-based sections each have their own _layout.tsx (Stack). */}
         <Tabs.Screen name="jobs" />
+        <Tabs.Screen name="users" />
         <Tabs.Screen name="favorites" />
         <Tabs.Screen name="job-applicants" />
         <Tabs.Screen name="provider" />

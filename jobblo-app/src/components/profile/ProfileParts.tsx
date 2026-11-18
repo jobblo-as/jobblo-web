@@ -18,7 +18,7 @@ import type { PublicUser, Review } from '../../types/UserProfile';
 
 /**
  * The building blocks of a profile, shared by your own profile (profile/me.tsx) and other users'
- * (profile/[userId].tsx), so both look like the website's ProfilePage (client review P2: "Use
+ * (users/[userId].tsx), so both look like the website's ProfilePage (client review P2: "Use
  * one profile component for both"). Own-only bits (edit, BankID button, earnings) stay in me.tsx.
  */
 

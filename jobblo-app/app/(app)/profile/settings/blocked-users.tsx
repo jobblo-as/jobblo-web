@@ -107,7 +107,9 @@ export default function BlockedUsersScreen() {
           users.map((user) => (
             <View key={user._id} className="mb-3 flex-row items-center rounded-2xl bg-surface p-3">
               <Pressable
-                onPress={() => router.push(`/profile/${user._id}`)}
+                onPress={() =>
+                  router.push({ pathname: '/(app)/users/[userId]', params: { userId: user._id } })
+                }
                 className="flex-1 flex-row items-center gap-3"
               >
                 <View className="relative h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-line bg-tint">

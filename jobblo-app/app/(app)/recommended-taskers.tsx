@@ -172,7 +172,7 @@ export default function RecommendedTaskersScreen() {
                   key={worker._id}
                   onPress={() =>
                     router.push({
-                      pathname: '/(app)/profile/[userId]',
+                      pathname: '/(app)/users/[userId]',
                       params: { userId: worker._id },
                     })
                   }
