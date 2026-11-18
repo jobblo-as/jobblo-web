@@ -24,6 +24,11 @@
 
 ## Log (naya upar)
 
+- **2026-11-18** — App UI: doosron ki profile ab `users/[userId]` (alag section, singular) — profile A→back→B→back aur job→owner→back ab sahi jagah; photo viewer upar/neeche swipe se band (ek photo ho to daayein/baayein bhi); baayein kinare se swipe = back un pages par jahan native stack nahi (`EdgeSwipeBack`, `edgeSwipe.ts`); Anbefalte oppdragstakere dark mode chips/line; job card 1:1; 320 px hero/welcome/category; location permission sheet (`LocationPermissionSheet`); profile par "versjon 1.0.0 (build)". Branch `fix/job-page-profile-ui`. Web build par check; phone par baqi.
+- **2026-11-18** — Job page 2: detail API ab `isLimitReached` bhejta hai (Fulltegnet asal me dikhta hai); gayab/band job par "Oppdraget er ikke tilgjengelig" + Tilbake (pehle "internet check karo"), 404 par retry nahi; apply ke baad tasdeeq note; contacts line sirf jahan apply ho sake; Tilbake bina history ke Hjem. Responsive: 6 mixed + 11 iPhone sizes web par record, koi overflow nahi; 320 px par welcome "Finn hjelp" aur "Hagearbeid" label tang.
+- **2026-11-18** — Legg ut kamera: shutter ab ek tap par photo leta hai (andar wale View ka `active:` class NativeWind ko alag Pressable bana deta tha jo tap kha jata tha); check `activeClass.check.mjs`.
+- **2026-11-18** — Job page fixes: (1) app ka "Søk på oppdraget" ab chosen-provider statuses, `draft` aur `isLimitReached` par band (`jobblo-app/src/utils/applyBlock.ts`); (2) accepted applicant dobara apply nahi kar sakta (backend `createJobRequest` + app + web "Forespørsel godkjent"); (3) app: job A → back → job B → back ab Hjem par, purani job par nahi (`jobs/_layout.tsx` me `[id]` singular, page `key={id}` se remount). Web build par check kiya; phone par test baqi.
+
 - **2026-11-16** — App (`fix/app-store-polish`): chat ka box text ke saath barhta hai; landing photos `categoryImage` se aur hero cards backend categories se; landing dark mode text; iPad band (`supportsTablet: false`); Hjem category: gehra hara active, gol (Android), list tak scroll, chips active tak scroll; Min Jobblo "Ikke verifisert med BankID"; Rediger profil header Adresse jaisa; Play Store listing (`jobblo-app/store-listing/android`). Phone par test baqi.
 
 - **2026-11-10** — Docs: saari purani `.md` files hata kar `docs/` me 6 files (PRD, ARCHITECTURE, RULES, DESIGN, TASKS, MEMORY); Agent.md rule set RULES me mila.
