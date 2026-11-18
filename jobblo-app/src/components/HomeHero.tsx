@@ -1,5 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, Animated, Image, Pressable, Text, View } from 'react-native';
+import {
+  AccessibilityInfo,
+  Animated,
+  Image,
+  Pressable,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import { Locate, Plus, ShieldCheck } from 'lucide-react-native';
 import { SERVICE_SHOWCASE } from '../utils/categoryImage';
 import { useColorScheme } from 'nativewind';
@@ -28,6 +36,8 @@ interface HomeHeroProps {
  */
 export function HomeHero({ eyebrow, categories, onPost, onNearby }: HomeHeroProps) {
   const dark = useColorScheme().colorScheme === 'dark';
+  // Phones under 360 pt wide (small Androids): the two actions get a smaller label.
+  const narrow = useWindowDimensions().width < 360;
   const onCard = dark ? TC.brandText : '#FFFFFF';
   const words = categories.length
     ? categories.slice(0, 6).map((name) => name.toLowerCase())
@@ -142,16 +152,25 @@ export function HomeHero({ eyebrow, categories, onPost, onNearby }: HomeHeroProp
           className="h-11 flex-1 flex-row items-center justify-center gap-1.5 rounded-full bg-white dark:bg-brand active:opacity-90"
         >
           <Plus size={17} color={dark ? '#FFFFFF' : TC.brand} />
-          <Text className="text-[0.9375rem] font-semibold text-brand dark:text-white">
+          {/* One line in the 44 px pill: on a 320 px phone it wrapped and overflowed it. */}
+          <Text
+            className={`${narrow ? 'text-[0.8125rem]' : 'text-[0.9375rem]'} font-semibold text-brand dark:text-white`}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.85}
+          >
             Legg ut oppdrag
           </Text>
         </Pressable>
         <Pressable
           onPress={onNearby}
-          className="h-11 flex-row items-center justify-center gap-1.5 rounded-full border border-white/40 bg-white/10 px-4 dark:border-transparent dark:bg-surface active:opacity-90"
+          className={`h-11 flex-row items-center justify-center gap-1.5 rounded-full border border-white/40 bg-white/10 ${narrow ? 'px-3' : 'px-4'} dark:border-transparent dark:bg-surface active:opacity-90`}
         >
           <Locate size={16} color={onCard} />
-          <Text className="text-[0.9375rem] font-semibold text-white dark:text-brand-text">
+          <Text
+            className={`${narrow ? 'text-[0.8125rem]' : 'text-[0.9375rem]'} font-semibold text-white dark:text-brand-text`}
+            numberOfLines={1}
+          >
             Nær meg
           </Text>
         </Pressable>
