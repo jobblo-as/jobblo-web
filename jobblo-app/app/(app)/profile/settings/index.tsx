@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import Constants from 'expo-constants';
+import * as Application from 'expo-application';
+import { appVersionLabel } from '../../../../src/utils/appVersion';
 import {
   AtSign,
   Bell,
@@ -213,7 +215,7 @@ export default function SettingsOverviewScreen() {
     .map((part) => part[0])
     .join('')
     .toUpperCase();
-  const version = Constants.expoConfig?.version;
+  const version = appVersionLabel(Constants.expoConfig?.version, Application.nativeBuildVersion);
   const [theme, setTheme] = useState<ThemePreference>('system');
   useEffect(() => {
     void loadThemePreference().then(setTheme);
