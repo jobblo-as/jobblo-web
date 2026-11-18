@@ -35,6 +35,7 @@ import { useAuthStore } from '../../src/store/authStore';
 import { JobCard, JOB_PHOTO_RATIO } from '../../src/components/JobCard';
 import { CategoryGrid } from '../../src/components/CategoryGrid';
 import { HomeHero } from '../../src/components/HomeHero';
+import { useLocationPermission } from '../../src/components/LocationPermissionSheet';
 import { SaveToListSheet } from '../../src/components/domain/SaveToListSheet';
 import { SearchResultsHeader } from '../../src/components/search/SearchResultsHeader';
 import { useTabBarSpace } from '../../src/components/GlassTabBar';
@@ -112,6 +113,7 @@ export default function HomeScreen() {
     }).start();
   }, [compact, headerFade]);
   const router = useRouter();
+  const { ask: askLocation, sheet: locationSheet } = useLocationPermission('nearby');
   const { user } = useAuthStore();
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [sortValue, setSortValue] = useState('newest');
@@ -208,8 +210,7 @@ export default function HomeScreen() {
 
   const handleNearbyJobs = async () => {
     try {
-      const permission = await Location.requestForegroundPermissionsAsync();
-      if (permission.granted) {
+      if (await askLocation()) {
         const position = await Location.getCurrentPositionAsync({
           accuracy: Location.Accuracy.Balanced,
         });
@@ -635,6 +636,7 @@ export default function HomeScreen() {
         onClose={() => setSaveSheetServiceId(null)}
         serviceId={saveSheetServiceId ?? ''}
       />
+      {locationSheet}
     </SafeAreaView>
   );
 }

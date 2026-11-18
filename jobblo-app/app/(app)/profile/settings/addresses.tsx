@@ -23,6 +23,7 @@ import MapView, {
 import * as Location from 'expo-location';
 import { MAP_PROVIDER, MAPS_AVAILABLE } from '../../../../src/utils/mapProvider';
 import { MapUnavailable } from '../../../../src/components/ui/MapUnavailable';
+import { useLocationPermission } from '../../../../src/components/LocationPermissionSheet';
 import { useRouter } from 'expo-router';
 import { useProfile, useUpdateProfile } from '../../../../src/hooks/useProfile';
 import { useAuthStore } from '../../../../src/store/authStore';
@@ -89,6 +90,7 @@ type PermissionState =
 
 export default function AddressesSettingsScreen() {
   const router = useRouter();
+  const { ask: askLocation, sheet: locationSheet } = useLocationPermission('place');
   const { data: profile, isLoading, isError, refetch } = useProfile();
   const update = useUpdateProfile();
   const userId = useAuthStore((state: { user?: { _id?: unknown } | null }) =>
@@ -291,8 +293,7 @@ export default function AddressesSettingsScreen() {
     try {
       if (permission.status !== 'granted') {
         setPermission({ status: 'checking' });
-        const asked = await Location.requestForegroundPermissionsAsync();
-        if (!asked.granted) {
+        if (!(await askLocation())) {
           setPermission({ status: 'denied' });
           return;
         }
@@ -602,6 +603,7 @@ export default function AddressesSettingsScreen() {
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
+      {locationSheet}
     </SafeAreaView>
   );
 }

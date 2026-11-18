@@ -5,6 +5,7 @@ import MapView, { Marker, type LatLng, type MapPressEvent } from 'react-native-m
 import * as Location from 'expo-location';
 import { MAP_PROVIDER, MAPS_AVAILABLE } from '@/utils/mapProvider';
 import { MapUnavailable } from '@/components/ui/MapUnavailable';
+import { useLocationPermission } from '../LocationPermissionSheet';
 import { TC } from '../../theme/colors';
 import { t } from '../../features/post-job/i18n';
 
@@ -41,6 +42,7 @@ export function CreateJobLocationMap({
   onTouchingChange,
 }: CreateJobLocationMapProps) {
   const mapRef = useRef<MapView | null>(null);
+  const { ask: askLocation, sheet: locationSheet } = useLocationPermission('place');
   const [isLocating, setIsLocating] = useState(false);
   const [locationError, setLocationError] = useState('');
   const [satellite, setSatellite] = useState(false);
@@ -69,7 +71,7 @@ export function CreateJobLocationMap({
     setIsLocating(true);
     setLocationError('');
     try {
-      if (!(await Location.requestForegroundPermissionsAsync()).granted) {
+      if (!(await askLocation())) {
         setLocationError(
           t(
             'Posisjon er ikke tillatt. Trykk på kartet eller søk etter adressen.',
@@ -190,6 +192,7 @@ export function CreateJobLocationMap({
             : t('Bruk min posisjon', 'Use my location')}
         </Text>
       </Pressable>
+      {locationSheet}
     </View>
   );
 }
