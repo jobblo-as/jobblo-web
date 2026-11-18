@@ -24,7 +24,11 @@ jest.mock('../models/Service', () => ({
   updateOne: jest.fn(),
 }));
 jest.mock('../utils/viewCounter', () => ({ count: jest.fn() }));
-jest.mock('../models/JobRequest', () => ({ findById: jest.fn(), findOne: jest.fn() }));
+jest.mock('../models/JobRequest', () => ({
+  findById: jest.fn(),
+  findOne: jest.fn(),
+  countDocuments: jest.fn(),
+}));
 jest.mock('../models/Dispute', () => ({ findOne: jest.fn() }));
 jest.mock('../models/Notification', () => ({ create: jest.fn() }));
 jest.mock('../models/Payment', () => ({ findOne: jest.fn() }));
@@ -199,6 +203,34 @@ describe('non-public listings are not readable by id', () => {
     const res = makeRes();
     await serviceController.getServiceById({ params: { id: 'nope' }, query: {} }, res);
     expect(res.statusCode).toBe(400);
+  });
+
+  it('marks a full listing (maxApplicants reached) so the apply button can say so', async () => {
+    const full = { ...service('open'), maxApplicants: 2 };
+    Service.findById.mockReturnValue({ populate: () => ({ lean: async () => full }) });
+    JobRequest.countDocuments.mockResolvedValue(2);
+
+    const res = makeRes();
+    await serviceController.getServiceById(
+      { params: { id: String(SERVICE) }, query: {}, userId: String(WORKER) },
+      res
+    );
+
+    expect(JobRequest.countDocuments).toHaveBeenCalledWith({
+      serviceId: SERVICE,
+      status: { $in: ['pending', 'accepted'] },
+    });
+    expect(res.body).toMatchObject({ isLimitReached: true, currentApplicants: 2 });
+  });
+
+  it('does not count applicants for a listing without a limit', async () => {
+    Service.findById.mockReturnValue({ populate: () => ({ lean: async () => service('open') }) });
+
+    const res = makeRes();
+    await serviceController.getServiceById({ params: { id: String(SERVICE) }, query: {} }, res);
+
+    expect(JobRequest.countDocuments).not.toHaveBeenCalled();
+    expect(res.body.isLimitReached).toBeUndefined();
   });
 });
 

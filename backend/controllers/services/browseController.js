@@ -1,5 +1,6 @@
 const Service = require('../../models/Service');
 const Order = require('../../models/Order');
+const JobRequest = require('../../models/JobRequest');
 const { evaluateListingCapabilities } = require('../../utils/listingCapabilities');
 const { PUBLIC_SERVICE_STATUSES } = require('../../constants/serviceVisibility');
 const { recordSearch } = require('../../services/monitoring/searchHealth');
@@ -334,6 +335,19 @@ exports.getServiceById = async (req, res) => {
     ) {
       void viewCounter.count(service._id); // buffered: one bulkWrite per 15 s (utils/viewCounter)
       service.views = (service.views || 0) + 1;
+    }
+
+    // Web and app turn the apply button into "Fulltegnet" from this flag, and createJobRequest
+    // refuses at the same count. Only the old location endpoint sent it, so a full job kept an
+    // enabled button that ended in an error. ponytail: cached with the listing (30 s), so it can
+    // lag a new application by that much; the backend refusal stays the real check.
+    if (service.maxApplicants > 0) {
+      const applicantCount = await JobRequest.countDocuments({
+        serviceId: service._id,
+        status: { $in: ['pending', 'accepted'] },
+      });
+      service.currentApplicants = applicantCount;
+      service.isLimitReached = applicantCount >= service.maxApplicants;
     }
 
     const serviceData = service;
