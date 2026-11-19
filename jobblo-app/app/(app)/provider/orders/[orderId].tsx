@@ -11,6 +11,7 @@ import {
   CheckSquare,
   Clock,
   FileText,
+  ImagePlus,
   MessageCircle,
   Play,
   ShieldCheck,
@@ -39,6 +40,7 @@ import type { ProviderOrderHistoryItem } from '../../../../src/types/ProviderOrd
 import { TC, tc } from '../../../../src/theme/colors';
 import { ProviderOrderSkeleton } from '../../../../src/components/skeletons/ScreenSkeletons';
 import { isPdfUrl, openDocument } from '../../../../src/utils/evidenceFile';
+import { ImageViewer } from '../../../../src/components/ui/ImageViewer';
 
 const STATUS: Record<string, { label: string; tone: string; note: string }> = {
   awaiting_payment: {
@@ -176,11 +178,14 @@ function EvidenceGrid({
   type,
   canDelete,
   onDelete,
+  onOpenImage,
 }: {
   urls: string[];
   type: EvidenceType;
   canDelete: boolean;
   onDelete: (url: string, type: EvidenceType) => void;
+  /** Opens a photo full screen. */
+  onOpenImage: (url: string) => void;
 }) {
   return (
     <View className="flex-row flex-wrap gap-2">
@@ -200,12 +205,22 @@ function EvidenceGrid({
               <Text className="mt-1 text-[0.8125rem] text-brand-text">PDF #{index + 1}</Text>
             </Pressable>
           ) : (
-            <>
-              <Image source={{ uri: url }} className="h-full w-full" resizeMode="cover" />
+            <Pressable
+              onPress={() => onOpenImage(url)}
+              accessibilityRole="imagebutton"
+              accessibilityLabel={`Åpne bilde ${index + 1}`}
+              className="h-full w-full"
+            >
+              <Image
+                source={{ uri: url }}
+                className="h-full w-full"
+                resizeMode="cover"
+                resizeMethod="resize"
+              />
               <Text className="absolute bottom-1 left-1 rounded bg-black/60 px-1 text-[0.8125rem] text-white">
                 Bilde
               </Text>
-            </>
+            </Pressable>
           )}
           {canDelete ? (
             <Pressable
@@ -227,6 +242,10 @@ export default function ProviderOrderScreen() {
   const orderId = Array.isArray(params.orderId) ? params.orderId[0] : params.orderId;
   const [evidenceType, setEvidenceType] = useState<EvidenceType>('after');
   const [assets, setAssets] = useState<UploadAsset[]>([]);
+  // Full-screen photo: the uploaded evidence or a photo picked for upload.
+  const [viewer, setViewer] = useState<{ images: string[]; index: number } | null>(null);
+  const openImage = (images: string[], url: string) =>
+    setViewer({ images, index: Math.max(0, images.indexOf(url)) });
   const [completionNote, setCompletionNote] = useState('');
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
@@ -292,6 +311,33 @@ export default function ProviderOrderScreen() {
       setAssets((current) => [...current, ...selected]);
     }
   };
+  const takePhoto = async () => {
+    const limit = availableSlots();
+    if (!limit) {
+      Alert.alert('Maks antall filer nådd', 'Du kan laste opp maksimalt 10 filer per type.');
+      return;
+    }
+    const permission = await ImagePicker.requestCameraPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert(
+        'Kameraet er ikke tilgjengelig',
+        'Gi Jobblo tilgang til kameraet i Innstillinger, eller velg bilder fra biblioteket.'
+      );
+      return;
+    }
+    const result = await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.85 });
+    const photo = result.canceled ? null : result.assets[0];
+    if (!photo) return;
+    setAssets((current) => [
+      ...current,
+      {
+        uri: photo.uri,
+        name: photo.fileName ?? `bevis-${Date.now()}.jpg`,
+        type: photo.mimeType ?? 'image/jpeg',
+        size: photo.fileSize,
+      },
+    ]);
+  };
   const choosePdf = async () => {
     const limit = availableSlots();
     if (!limit) {
@@ -324,7 +370,11 @@ export default function ProviderOrderScreen() {
   };
   const upload = () => {
     if (!assets.length && !completionNote.trim()) return;
-    const oversized = assets.find((asset) => asset.size != null && asset.size > MAX_EVIDENCE_SIZE);
+    // Photos are made smaller before the upload (utils/uploadPhotos); only a PDF keeps its size.
+    const oversized = assets.find(
+      (asset) =>
+        !asset.type.startsWith('image/') && asset.size != null && asset.size > MAX_EVIDENCE_SIZE
+    );
     if (oversized) {
       Alert.alert('Filen er for stor', 'Hver fil kan være maksimalt 10 MB.');
       return;
@@ -405,7 +455,12 @@ export default function ProviderOrderScreen() {
               eller starte oppdrag.
             </Text>
             <Pressable
-              onPress={() => router.push('/profile/settings/payout')}
+              onPress={() =>
+                router.push(
+                  { pathname: '/profile/settings/payout', params: { from: 'order' } },
+                  { withAnchor: true }
+                )
+              }
               className="mt-3 rounded-full bg-brand px-4 py-3"
             >
               <Text className="text-center text-sm font-semibold text-white">
@@ -620,15 +675,28 @@ export default function ProviderOrderScreen() {
               type={evidenceType}
               canDelete={canUpload}
               onDelete={(url, type) => deleteEvidenceMutation.mutate({ url, evidenceType: type })}
+              onOpenImage={(url) =>
+                openImage(
+                  (evidenceType === 'before' ? before : after).filter((u) => !isPdfUrl(u)),
+                  url
+                )
+              }
             />
             {canUpload ? (
               <>
-                <View className="mt-3 flex-row gap-2">
+                <View className="mt-3 flex-row flex-wrap gap-2">
+                  <Button
+                    label="Ta bilde"
+                    onPress={() => void takePhoto()}
+                    small
+                    icon={<Camera size={15} color="#FFFFFF" />}
+                  />
                   <Button
                     label="Velg bilder"
                     onPress={() => void chooseAssets()}
                     small
-                    icon={<Camera size={15} color="#FFFFFF" />}
+                    variant="secondary"
+                    icon={<ImagePlus size={15} color={TC.ink} />}
                   />
                   <Button
                     label="Velg PDF"
@@ -639,9 +707,66 @@ export default function ProviderOrderScreen() {
                   />
                 </View>
                 {assets.length ? (
-                  <Text className="mt-2 text-[0.8125rem] text-muted">
-                    {assets.length} fil(er) klare for opplasting
-                  </Text>
+                  <>
+                    <Text className="mt-3 text-[0.8125rem] font-medium text-muted">
+                      {assets.length === 1 ? '1 fil klar' : `${assets.length} filer klare`} for
+                      opplasting
+                    </Text>
+                    {/* What will be uploaded, before it is: a photo or the PDF's name, removable. */}
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      className="mt-2"
+                      contentContainerStyle={{ gap: 8, paddingTop: 6, paddingRight: 6 }}
+                    >
+                      {assets.map((asset, index) => (
+                        <View key={`${asset.uri}-${index}`} className="relative">
+                          {asset.type.startsWith('image/') ? (
+                            <Pressable
+                              onPress={() =>
+                                openImage(
+                                  assets
+                                    .filter((a) => a.type.startsWith('image/'))
+                                    .map((a) => a.uri),
+                                  asset.uri
+                                )
+                              }
+                              accessibilityRole="imagebutton"
+                              accessibilityLabel={`Åpne bilde ${index + 1}`}
+                            >
+                              <Image
+                                source={{ uri: asset.uri }}
+                                style={{ width: 76, height: 76, borderRadius: 12 }}
+                                resizeMode="cover"
+                                resizeMethod="resize"
+                              />
+                            </Pressable>
+                          ) : (
+                            <View className="h-[76px] w-[76px] items-center justify-center gap-1 rounded-xl border border-line bg-surface-2 px-1.5">
+                              <FileText size={22} color={TC.brandText} />
+                              <Text
+                                numberOfLines={2}
+                                className="text-center text-[0.6875rem] text-muted"
+                              >
+                                {asset.name}
+                              </Text>
+                            </View>
+                          )}
+                          <Pressable
+                            onPress={() =>
+                              setAssets((current) => current.filter((_, i) => i !== index))
+                            }
+                            accessibilityRole="button"
+                            accessibilityLabel={`Fjern ${asset.name}`}
+                            hitSlop={6}
+                            className="absolute -right-1.5 -top-1.5 h-6 w-6 items-center justify-center rounded-full bg-black/70"
+                          >
+                            <X size={13} color="#FFFFFF" />
+                          </Pressable>
+                        </View>
+                      ))}
+                    </ScrollView>
+                  </>
                 ) : null}
                 <TextInput
                   value={completionNote}
@@ -650,9 +775,12 @@ export default function ProviderOrderScreen() {
                   placeholderTextColor={TC.placeholder}
                   multiline
                   className="mt-3 min-h-[80px] rounded-xl border border-line bg-surface p-3 text-[0.8125rem] text-ink"
+                  style={{ textAlignVertical: 'top' }}
                 />
+                <View className="mt-3" />
                 <Button
-                  label={evidenceMutation.isPending ? 'Laster opp...' : 'Last opp bevis'}
+                  label={evidenceMutation.isPending ? 'Laster opp…' : 'Last opp bevis'}
+                  loading={evidenceMutation.isPending}
                   onPress={upload}
                   disabled={
                     evidenceMutation.isPending || (!assets.length && !completionNote.trim())
@@ -794,6 +922,11 @@ export default function ProviderOrderScreen() {
           </View>
         ) : null}
       </ScrollView>
+      <ImageViewer
+        images={viewer?.images ?? []}
+        index={viewer?.index ?? null}
+        onClose={() => setViewer(null)}
+      />
     </SafeAreaView>
   );
 }

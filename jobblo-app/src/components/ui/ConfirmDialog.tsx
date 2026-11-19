@@ -2,6 +2,7 @@ import React from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { Dialog } from './Dialog';
 import { TC } from '../../theme/colors';
+import { stackButtons } from '../../utils/dialogButtons';
 
 interface ConfirmDialogProps {
   visible: boolean;
@@ -41,6 +42,28 @@ export function ConfirmDialog({
   onConfirm,
   onClose,
 }: ConfirmDialogProps) {
+  // Two long labels ("Fortsett å redigere" + "Forkast") wrap side by side into tall, uneven
+  // pills; then the buttons stack, full width, the action on top (iOS alert style).
+  const stacked = !hideCancel && stackButtons(cancelLabel, confirmLabel);
+  const confirmButton = (
+    <Pressable
+      onPress={onConfirm}
+      disabled={isPending}
+      className={`${stacked ? 'w-full' : 'flex-1'} flex-row items-center justify-center gap-2 rounded-full px-4 py-3.5 ${
+        isPending ? 'bg-tint' : destructive ? 'bg-danger-solid' : 'bg-brand'
+      }`}
+      accessibilityRole="button"
+    >
+      {isPending ? <ActivityIndicator size="small" color={TC.brandText} /> : null}
+      <Text
+        numberOfLines={1}
+        className={`text-[0.9375rem] font-semibold ${isPending ? 'text-muted' : 'text-white'}`}
+      >
+        {isPending ? (pendingLabel ?? confirmLabel) : confirmLabel}
+      </Text>
+    </Pressable>
+  );
+
   return (
     <Dialog visible={visible} onClose={isPending ? () => undefined : onClose}>
       <View className="w-full">
@@ -58,35 +81,23 @@ export function ConfirmDialog({
           </View>
         ) : null}
 
-        <View className="mt-6 flex-row gap-3">
+        <View className={stacked ? 'mt-6 gap-2.5' : 'mt-6 flex-row gap-3'}>
+          {stacked ? confirmButton : null}
           {hideCancel ? null : (
             <Pressable
               onPress={onClose}
               disabled={isPending}
-              className={`flex-1 items-center justify-center rounded-full border border-line bg-surface px-4 py-3.5 ${
+              className={`${stacked ? 'w-full' : 'flex-1'} items-center justify-center rounded-full border border-line bg-surface px-4 py-3.5 ${
                 isPending ? 'opacity-60' : ''
               }`}
               accessibilityRole="button"
             >
-              <Text className="text-[0.9375rem] font-semibold text-ink">{cancelLabel}</Text>
+              <Text numberOfLines={1} className="text-[0.9375rem] font-semibold text-ink">
+                {cancelLabel}
+              </Text>
             </Pressable>
           )}
-
-          <Pressable
-            onPress={onConfirm}
-            disabled={isPending}
-            className={`flex-1 flex-row items-center justify-center gap-2 rounded-full px-4 py-3.5 ${
-              isPending ? 'bg-tint' : destructive ? 'bg-danger-solid' : 'bg-brand'
-            }`}
-            accessibilityRole="button"
-          >
-            {isPending ? <ActivityIndicator size="small" color={TC.brandText} /> : null}
-            <Text
-              className={`text-[0.9375rem] font-semibold ${isPending ? 'text-muted' : 'text-white'}`}
-            >
-              {isPending ? (pendingLabel ?? confirmLabel) : confirmLabel}
-            </Text>
-          </Pressable>
+          {stacked ? null : confirmButton}
         </View>
       </View>
     </Dialog>
