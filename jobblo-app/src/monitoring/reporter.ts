@@ -3,6 +3,7 @@ import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import type { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { authStorage } from '../utils/authStorage';
+import { nativeBuildVersion } from '../utils/nativeBuildVersion';
 import { templatePath } from './paths';
 
 /**
@@ -53,10 +54,14 @@ let started = false;
 const sessionId = randomId();
 
 const appVersion = Constants.expoConfig?.version ?? null;
+// The installed build number. EAS sets it remotely (appVersionSource "remote"), so app.json
+// has none and the config fallback is null in store builds; the native value is the real one.
 const build =
+  nativeBuildVersion() ??
   (Platform.OS === 'ios'
     ? Constants.expoConfig?.ios?.buildNumber
-    : Constants.expoConfig?.android?.versionCode?.toString()) ?? null;
+    : Constants.expoConfig?.android?.versionCode?.toString()) ??
+  null;
 
 function randomId() {
   return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`;

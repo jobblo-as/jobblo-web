@@ -10,6 +10,7 @@ const SupportTicket = require('../../models/SupportTicket');
 const AdminActivity = require('../../models/AdminActivity');
 const SubscriptionV2 = require('../../models/SubscriptionV2');
 const SubscriptionBillingOperationV2 = require('../../models/SubscriptionBillingOperationV2');
+const { appInstallsOf } = require('../../services/monitoring/mobileTelemetry');
 const { escapeRegex, isId } = require('../../utils/devQuery');
 const { USER_SAFE_FIELDS } = require('../../services/monitoring/orderHealth');
 const { groupCount } = require('../../utils/devQuery');
@@ -55,6 +56,7 @@ const getUserDiagnostics = asyncHandler(async (req, res) => {
     auditOn,
     roleChanges,
     disputes,
+    appInstalls,
   ] = await Promise.all([
     Session.find({ userId: id })
       .sort({ lastUsed: -1 })
@@ -137,6 +139,8 @@ const getUserDiagnostics = asyncHandler(async (req, res) => {
       .limit(10)
       .select('orderId status title openedAt')
       .lean(),
+    // The app version on each phone this user signed in on (telemetry is kept 30 days).
+    appInstallsOf([id], { scan: 2000 }),
   ]);
 
   const timeline = [
@@ -190,6 +194,7 @@ const getUserDiagnostics = asyncHandler(async (req, res) => {
     errors,
     tickets,
     roleChanges,
+    appInstalls,
     timeline: timeline.slice(0, 100),
   });
 });

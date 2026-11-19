@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, KeyRound, Lock, Monitor, Search } from 'lucide-react';
-import { ago, dateTime } from '@/lib/devFormat';
+import { ago, appLabel, dateTime } from '@/lib/devFormat';
 import { useDevUser, useDevUsers, useUrlFilters } from '../../features/developer/hooks';
 import type { UserHit } from '../../api/developer';
 import {
@@ -29,6 +29,7 @@ function UserDetail({ id }: { id: string }) {
   if (!data) return null;
   const u = data.user;
   const status = u.isDeleted ? 'deleted' : String(u.accountStatus);
+  const apps = data.appInstalls ?? [];
 
   return (
     <div className="space-y-4">
@@ -80,6 +81,19 @@ function UserDetail({ id }: { id: string }) {
             items={[
               ['Last login', data.auth.lastLogin ? `${ago(data.auth.lastLogin)}` : 'never'],
               ['Active sessions', data.auth.activeSessions],
+              [
+                'Mobile app',
+                apps[0] ? (
+                  <span key="app" title={dateTime(apps[0].lastSeen)}>
+                    {appLabel(apps[0])}{' '}
+                    <span className="text-muted-foreground">({ago(apps[0].lastSeen)})</span>
+                  </span>
+                ) : (
+                  <span key="app" className="text-muted-foreground">
+                    not used in the last 30 days
+                  </span>
+                ),
+              ],
               ['Sign-in methods', ['password', ...data.auth.oauth].join(', ')],
               [
                 'MFA',
@@ -191,7 +205,23 @@ function UserDetail({ id }: { id: string }) {
             )}
           </Section>
         </TabsContent>
-        <TabsContent value="sessions" className="pt-3">
+        <TabsContent value="sessions" className="space-y-4 pt-3">
+          <Section title="App versions" description="Per phone, from the app's telemetry (30 days)">
+            {apps.length ? (
+              <ul className="divide-y rounded-md border text-sm">
+                {apps.map((a) => (
+                  <li key={a._id} className="flex items-center justify-between gap-2 px-3 py-2">
+                    <span>{appLabel(a)}</span>
+                    <span className="text-xs text-muted-foreground" title={dateTime(a.lastSeen)}>
+                      last seen {ago(a.lastSeen)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">No app use in the last 30 days.</p>
+            )}
+          </Section>
           <Section title="Sessions" description="Device and last activity only">
             <ul className="divide-y rounded-md border text-sm">
               {data.auth.sessions.map((s) => (

@@ -86,3 +86,18 @@ export function downloadCsv(filename: string, rows: Record<string, unknown>[]) {
   a.click();
   URL.revokeObjectURL(url);
 }
+
+/** One phone's app version, e.g. "iOS 1.0.0 (15) · iPhone 15 Pro · OS 18.2". */
+export function appLabel(a: {
+  platform: string | null;
+  appVersion: string | null;
+  build: string | null;
+  device: string | null;
+  osVersion: string | null;
+}) {
+  const platform = a.platform === 'ios' ? 'iOS' : a.platform === 'android' ? 'Android' : '';
+  const version = `${a.appVersion || '?'}${a.build ? ` (${a.build})` : ''}`;
+  return [`${platform} ${version}`.trim(), a.device, a.osVersion && `OS ${a.osVersion}`]
+    .filter(Boolean)
+    .join(' · ');
+}

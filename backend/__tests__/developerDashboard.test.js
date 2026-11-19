@@ -649,6 +649,20 @@ describe('mobile telemetry intake', () => {
     });
     expect(docs[0].$where).toBeUndefined();
   });
+  test('an iOS build without a build number gets it from the User-Agent', () => {
+    const ua = 'Jobblo/15 CFNetwork/3896.200.61 Darwin/27.2.0';
+    const ev = { events: [{ type: 'session' }] };
+    expect(normalize({ ...ctx, build: null, ...ev }, null, now, ua).docs[0].build).toBe('15');
+    // A sent build wins; Android and other agents are never parsed.
+    expect(normalize({ ...ctx, ...ev }, null, now, ua).docs[0].build).toBe('42');
+    expect(
+      normalize({ ...ctx, platform: 'android', build: null, ...ev }, null, now, ua).docs[0].build
+    ).toBeNull();
+    expect(
+      normalize({ ...ctx, build: null, ...ev }, null, now, 'okhttp/4.12.0').docs[0].build
+    ).toBeNull();
+    expect(normalize({ ...ctx, build: null, ...ev }, null, now).docs[0].build).toBeNull();
+  });
   test('caps batch size, string lengths and timestamps', () => {
     const many = Array.from({ length: MAX_BATCH + 10 }, () => ({
       type: 'session',

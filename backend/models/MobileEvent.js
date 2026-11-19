@@ -39,6 +39,11 @@ const mobileEventSchema = new mongoose.Schema(
 mobileEventSchema.index({ type: 1, at: -1 });
 mobileEventSchema.index({ fingerprint: 1, at: -1 });
 mobileEventSchema.index({ installId: 1, at: -1 });
+// User Diagnostics → "App installs": only signed-in events carry a userId.
+mobileEventSchema.index(
+  { userId: 1, at: -1 },
+  { partialFilterExpression: { userId: { $type: 'objectId' } } }
+);
 mobileEventSchema.index({ at: 1 }, { expireAfterSeconds: 30 * 24 * 60 * 60 });
 
 module.exports = mongoose.model('MobileEvent', mobileEventSchema);

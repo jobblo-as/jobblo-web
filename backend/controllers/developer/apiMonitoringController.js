@@ -266,6 +266,15 @@ const getApiClients = asyncHandler(async (req, res) => {
       require('../../services/monitoring/ipGeo').networkFor(ip),
     ]);
     const { devices, accounts } = devicesAndAccounts(sessions, auth);
+    // Each account's newest phone and its app version (mobile telemetry, 30 days).
+    const installs = await require('../../services/monitoring/mobileTelemetry').appInstallsOf(
+      accounts.map((a) => a._id),
+      { limit: 500 }
+    );
+    for (const a of accounts) {
+      const app = installs.find((i) => String(i.userId) === String(a._id));
+      a.app = app ? { ...app, userId: undefined } : null;
+    }
     return sendSuccess(res, {
       ip,
       range: { from, to, bucketMs },
