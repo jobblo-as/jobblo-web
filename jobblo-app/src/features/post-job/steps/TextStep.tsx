@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 
 import { useMutation } from '@tanstack/react-query';
 import { RefreshCw, Sparkles } from 'lucide-react-native';
 import { TC, tc } from '../../../theme/colors';
+import { Skeleton } from '../../../components/ui/Skeleton';
 import { writeListing } from '../../../services/ai.service';
 import { DURATION_OPTIONS, EQUIPMENT_OPTIONS, describeForAi } from '../details';
 import { photosForText } from '../flow';
@@ -113,6 +114,9 @@ export function TextStep() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // AI is filling empty fields: show where the text will appear instead of two blank boxes.
+  const drafting = write.isPending && !hasText;
+
   const proceed = () => {
     if (errors.title || errors.description) return setShowErrors(true);
     next();
@@ -128,100 +132,120 @@ export function TextStep() {
           {t('Tittel og beskrivelse', 'Title and description')}
         </Text>
 
-        {aiOn ? (
-          <>
+        <View className="mt-4 rounded-2xl border border-line bg-surface p-4">
+          <View className="flex-row items-center gap-2.5">
+            <View className="h-8 w-8 items-center justify-center rounded-full bg-tint">
+              <Sparkles size={16} color={TC.brandText} />
+            </View>
+            <Text className="flex-1 text-[0.9375rem] font-semibold text-ink">
+              {t('AI-hjelper', 'AI helper')}
+            </Text>
+            {/* Change the AI answer given before the camera (App Store 5.1.2(i)). */}
             <Pressable
-              onPress={() => write.mutate()}
-              disabled={write.isPending}
-              accessibilityRole="button"
-              className={`mt-4 flex-row items-center justify-center gap-2 rounded-full ${hasText ? 'h-11 self-start border border-line bg-surface px-4' : 'h-12 bg-brand'} ${write.isPending ? 'opacity-70' : ''}`}
+              onPress={() => consent.set(!aiOn)}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: aiOn }}
+              accessibilityLabel={t('AI-hjelper', 'AI helper')}
+              hitSlop={8}
+              className={`rounded-full px-3 py-1.5 ${aiOn ? 'bg-tint' : 'bg-surface-2'}`}
             >
-              {write.isPending ? (
-                <ActivityIndicator color={hasText ? TC.brandText : '#FFFFFF'} />
-              ) : hasText ? (
-                <RefreshCw size={16} color={TC.brandText} />
-              ) : (
-                <Sparkles size={18} color="#FFFFFF" />
-              )}
               <Text
-                className={`font-semibold ${hasText ? 'text-[0.875rem] text-brand-text' : 'text-[0.9375rem] text-white'}`}
+                className={`text-[0.8125rem] font-semibold ${aiOn ? 'text-brand-text' : 'text-muted'}`}
               >
-                {write.isPending
-                  ? t('Skriver…', 'Writing…')
-                  : hasText
-                    ? t('Skriv på nytt med AI', 'Rewrite with AI')
-                    : t('Generer tittel og beskrivelse', 'Generate title and description')}
+                {aiOn ? t('På', 'On') : t('Av', 'Off')}
               </Text>
             </Pressable>
-            <Text className="mt-2 text-[0.8125rem] leading-5 text-muted">
-              {textPhotos.length
-                ? t(
-                    'AI bruker bildene, kategorien og detaljene dine.',
-                    'AI uses your photos, category and details.'
-                  )
-                : t(
-                    'AI bruker beskrivelsen, kategorien og detaljene dine.',
-                    'AI uses your description, category and details.'
-                  )}{' '}
-              {t('Du kan endre alt.', 'You can change everything.')}
-            </Text>
-            {skipped ? (
-              <Text className="mt-1 text-[0.8125rem] leading-5 text-[#B7791F]">
-                {skipped === 1
+          </View>
+
+          {aiOn ? (
+            <>
+              <Text className="mt-2 text-[0.8125rem] leading-5 text-muted">
+                {textPhotos.length
                   ? t(
-                      '1 bilde ble ikke brukt fordi AI-hjelperen ba om et nytt.',
-                      '1 photo was not used because the AI helper asked for a new one.'
+                      'AI bruker bildene, kategorien og detaljene dine.',
+                      'AI uses your photos, category and details.'
                     )
                   : t(
-                      `${skipped} bilder ble ikke brukt fordi AI-hjelperen ba om nye.`,
-                      `${skipped} photos were not used because the AI helper asked for new ones.`
-                    )}
+                      'AI bruker beskrivelsen, kategorien og detaljene dine.',
+                      'AI uses your description, category and details.'
+                    )}{' '}
+                {t('Du kan endre alt.', 'You can change everything.')}
               </Text>
-            ) : null}
-            {write.isError ? (
-              <Text className="mt-2 text-[0.875rem] font-medium text-danger">
-                {t(
-                  'AI fikk ikke skrevet annonsen akkurat nå. Skriv selv, eller prøv igjen.',
-                  'AI could not write the listing right now. Write it yourself, or try again.'
+              <Pressable
+                onPress={() => write.mutate()}
+                disabled={write.isPending}
+                accessibilityRole="button"
+                className={`mt-3 h-11 flex-row items-center justify-center gap-2 rounded-full ${hasText ? 'border border-line bg-page' : 'bg-brand'} ${write.isPending ? 'opacity-70' : ''}`}
+              >
+                {write.isPending ? (
+                  <ActivityIndicator color={hasText ? TC.brandText : '#FFFFFF'} />
+                ) : hasText ? (
+                  <RefreshCw size={16} color={TC.brandText} />
+                ) : (
+                  <Sparkles size={18} color="#FFFFFF" />
                 )}
-              </Text>
-            ) : null}
-          </>
-        ) : (
-          <Text className="mt-2 text-[0.9375rem] leading-6 text-muted">
-            {t(
-              'Skriv en tittel og en beskrivelse av jobben.',
-              'Write a title and a description of the job.'
-            )}
-          </Text>
-        )}
-        {/* Change the AI answer given before the camera (App Store 5.1.2(i)). */}
-        <Pressable
-          onPress={() => consent.set(!aiOn)}
-          accessibilityRole="button"
-          hitSlop={8}
-          className="mt-2 self-start"
-        >
-          <Text className="text-[0.8125rem] font-semibold text-brand-text underline">
-            {aiOn
-              ? t('Slå av AI-hjelperen', 'Turn the AI helper off')
-              : t(
-                  'Slå på AI-hjelperen (bildene og svarene sendes til OpenAI)',
-                  'Turn the AI helper on (photos and answers are sent to OpenAI)'
-                )}
-          </Text>
-        </Pressable>
+                <Text
+                  className={`text-[0.9375rem] font-semibold ${hasText ? 'text-brand-text' : 'text-white'}`}
+                >
+                  {write.isPending
+                    ? t('AI skriver annonsen…', 'AI is writing the listing…')
+                    : hasText
+                      ? t('Skriv på nytt med AI', 'Rewrite with AI')
+                      : t('Generer tittel og beskrivelse', 'Generate title and description')}
+                </Text>
+              </Pressable>
+              {skipped ? (
+                <Text className="mt-2 text-[0.8125rem] leading-5 text-warn">
+                  {skipped === 1
+                    ? t(
+                        '1 bilde ble ikke brukt fordi AI-hjelperen ba om et nytt.',
+                        '1 photo was not used because the AI helper asked for a new one.'
+                      )
+                    : t(
+                        `${skipped} bilder ble ikke brukt fordi AI-hjelperen ba om nye.`,
+                        `${skipped} photos were not used because the AI helper asked for new ones.`
+                      )}
+                </Text>
+              ) : null}
+              {write.isError ? (
+                <Text className="mt-2 text-[0.875rem] font-medium text-danger">
+                  {t(
+                    'AI fikk ikke skrevet annonsen akkurat nå. Skriv selv, eller prøv igjen.',
+                    'AI could not write the listing right now. Write it yourself, or try again.'
+                  )}
+                </Text>
+              ) : null}
+            </>
+          ) : (
+            <Text className="mt-2 text-[0.8125rem] leading-5 text-muted">
+              {t(
+                'Skriv tittel og beskrivelse selv, eller slå på AI-hjelperen. Bildene og svarene sendes da til OpenAI.',
+                'Write the title and description yourself, or turn the AI helper on. Photos and answers are then sent to OpenAI.'
+              )}
+            </Text>
+          )}
+        </View>
 
         <Text className="mt-6 text-[0.875rem] font-semibold text-ink">{t('Tittel', 'Title')}</Text>
-        <TextInput
-          value={values.title}
-          onChangeText={(title) => update({ title: title.slice(0, TITLE_MAX) })}
-          placeholder={t('F.eks. Male to vegger i stua', 'E.g. Paint two walls in the living room')}
-          placeholderTextColor={tc('#9B9E96', 'placeholder')}
-          maxLength={TITLE_MAX}
-          accessibilityLabel={t('Tittel', 'Title')}
-          className="mt-2 h-12 rounded-xl border border-line bg-surface px-4 text-[1.0625rem] text-ink"
-        />
+        {drafting ? (
+          <View className="mt-2 h-12 justify-center rounded-xl border border-line bg-surface px-4">
+            <Skeleton className="h-4 w-3/5 rounded-md" />
+          </View>
+        ) : (
+          <TextInput
+            value={values.title}
+            onChangeText={(title) => update({ title: title.slice(0, TITLE_MAX) })}
+            placeholder={t(
+              'F.eks. Male to vegger i stua',
+              'E.g. Paint two walls in the living room'
+            )}
+            placeholderTextColor={tc('#9B9E96', 'placeholder')}
+            maxLength={TITLE_MAX}
+            editable={!write.isPending}
+            accessibilityLabel={t('Tittel', 'Title')}
+            className={`mt-2 h-12 rounded-xl border bg-surface px-4 text-[1.0625rem] text-ink ${showErrors && errors.title ? 'border-danger' : 'border-line'} ${write.isPending ? 'opacity-60' : ''}`}
+          />
+        )}
         <View className="mt-1 flex-row justify-between">
           <Text className="text-[0.8125rem] font-medium text-danger">
             {showErrors ? errors.title : ''}
@@ -234,22 +258,35 @@ export function TextStep() {
         <Text className="mt-4 text-[0.875rem] font-semibold text-ink">
           {t('Beskrivelse', 'Description')}
         </Text>
-        <TextInput
-          value={values.description}
-          onChangeText={(description) =>
-            update({ description: description.slice(0, DESCRIPTION_MAX) })
-          }
-          placeholder={t(
-            'Hva skal gjøres, hvor stort er det, og er det noe fagfolk bør vite?',
-            'What needs doing, how big is it, and is there anything pros should know?'
-          )}
-          placeholderTextColor={tc('#9B9E96', 'placeholder')}
-          multiline
-          maxLength={DESCRIPTION_MAX}
-          accessibilityLabel={t('Beskrivelse', 'Description')}
-          className="mt-2 min-h-[180px] rounded-xl border border-line bg-surface px-4 py-3 text-[1.0625rem] leading-6 text-ink"
-          style={{ textAlignVertical: 'top' }}
-        />
+        {drafting ? (
+          <View
+            className="mt-2 min-h-[180px] gap-3 rounded-xl border border-line bg-surface px-4 py-4"
+            accessibilityRole="progressbar"
+            accessibilityLabel={t('AI skriver annonsen', 'AI is writing the listing')}
+          >
+            {['w-full', 'w-11/12', 'w-full', 'w-4/5', 'w-2/3'].map((width, index) => (
+              <Skeleton key={index} className={`h-3.5 ${width} rounded-md`} />
+            ))}
+          </View>
+        ) : (
+          <TextInput
+            value={values.description}
+            onChangeText={(description) =>
+              update({ description: description.slice(0, DESCRIPTION_MAX) })
+            }
+            placeholder={t(
+              'Hva skal gjøres, hvor stort er det, og er det noe fagfolk bør vite?',
+              'What needs doing, how big is it, and is there anything pros should know?'
+            )}
+            placeholderTextColor={tc('#9B9E96', 'placeholder')}
+            multiline
+            maxLength={DESCRIPTION_MAX}
+            editable={!write.isPending}
+            accessibilityLabel={t('Beskrivelse', 'Description')}
+            className={`mt-2 min-h-[180px] rounded-xl border bg-surface px-4 py-3 text-[1.0625rem] leading-6 text-ink ${showErrors && errors.description ? 'border-danger' : 'border-line'} ${write.isPending ? 'opacity-60' : ''}`}
+            style={{ textAlignVertical: 'top' }}
+          />
+        )}
         <View className="mt-1 flex-row justify-between">
           <Text className="text-[0.8125rem] font-medium text-danger">
             {showErrors ? errors.description : ''}
@@ -260,7 +297,7 @@ export function TextStep() {
         </View>
       </ScrollView>
 
-      <StepFooter label={t('Fortsett', 'Continue')} onPress={proceed} />
+      <StepFooter label={t('Fortsett', 'Continue')} onPress={proceed} disabled={write.isPending} />
     </View>
   );
 }

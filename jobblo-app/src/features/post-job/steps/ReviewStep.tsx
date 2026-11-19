@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
-  Image,
   Modal,
   Pressable,
   ScrollView,
@@ -22,6 +22,7 @@ import {
   Zap,
 } from 'lucide-react-native';
 import { TC, tc } from '../../../theme/colors';
+import { LoadingImage } from '../../../components/ui/LoadingImage';
 import { HAST_ENABLED } from '../../../config/features';
 import { useCreateJobMutation, useUpdateJobMutation } from '../../../hooks/useCreateJob';
 import { createUrgentPayment, getUrgentStatus } from '../../../services/createJob.service';
@@ -29,7 +30,7 @@ import { runStripeCheckout } from '../../../utils/safepayCheckoutSession';
 import { validateCreateJobStep } from '../../../utils/createJobValidation';
 import { norwegianPhone } from '../../../utils/phone';
 import { useProfile } from '../../../hooks/useProfile';
-import { DURATION_OPTIONS, EQUIPMENT_OPTIONS, questionsFor } from '../details';
+import { DURATION_OPTIONS, EQUIPMENT_OPTIONS, questionsFor, pickedOptions } from '../details';
 import { editChanges, type PostJobStep } from '../flow';
 import { totalPrice } from '../price';
 import { usePostJobStore } from '../store';
@@ -142,9 +143,7 @@ export function ReviewStep({ onSaved }: { onSaved: () => void }) {
   };
 
   const category = values.categories[0] ?? '';
-  const detailTags = questionsFor(category)
-    .map((q) => answers[q.key])
-    .filter(Boolean) as string[];
+  const detailTags = questionsFor(category).flatMap((q) => pickedOptions(q, answers[q.key]));
   const duration =
     DURATION_OPTIONS.find((d) => d.value === values.durationValue && d.unit === values.durationUnit)
       ?.label ??
@@ -319,7 +318,7 @@ export function ReviewStep({ onSaved }: { onSaved: () => void }) {
             scrollEnabled={photos.length > 3}
           >
             {photos.map((p, i) => (
-              <Image
+              <LoadingImage
                 key={p.uri}
                 source={{ uri: p.uri }}
                 style={{ width: 88, height: 88, borderRadius: 10 }}
@@ -520,8 +519,14 @@ export function ReviewStep({ onSaved }: { onSaved: () => void }) {
           disabled={Boolean(problems.length) || saving || paying}
           accessibilityRole="button"
           accessibilityState={{ disabled: Boolean(problems.length) || saving || paying }}
-          className={`h-12 flex-1 items-center justify-center rounded-full bg-brand ${problems.length || saving || paying ? 'opacity-50' : ''}`}
+          className={`h-12 flex-1 flex-row items-center justify-center gap-2 rounded-full bg-brand ${
+            problems.length ? 'opacity-50' : saving || paying ? 'opacity-80' : ''
+          }`}
         >
+          {/* Uploading photos can take a few seconds: a spinner shows the tap was taken. */}
+          {saving || paying ? (
+            <ActivityIndicator testID="publish-spinner" size="small" color="#FFFFFF" />
+          ) : null}
           <Text className="text-[0.9375rem] font-semibold text-white">
             {editId
               ? saving
@@ -567,7 +572,7 @@ export function ReviewStep({ onSaved }: { onSaved: () => void }) {
             {photos.length ? (
               <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
                 {photos.map((p) => (
-                  <Image
+                  <LoadingImage
                     key={p.uri}
                     source={{ uri: p.uri }}
                     style={{ width, height: Math.round(width * 0.72) }}

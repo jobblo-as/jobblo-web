@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Image, Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { ArrowLeft, ArrowRight, Camera, ImagePlus, Star, Trash2, X } from 'lucide-react-native';
+import { LoadingImage } from '../../../components/ui/LoadingImage';
 import { BottomSheet } from '../../../components/ui/BottomSheet';
 import { TC, tc } from '../../../theme/colors';
 import { MAX_PHOTOS } from '../flow';
@@ -63,7 +64,7 @@ export function PhotoGridStep() {
               style={{ width: tile, height: tile }}
               className="overflow-hidden rounded-xl bg-surface-2"
             >
-              <Image
+              <LoadingImage
                 source={{ uri: photo.uri }}
                 style={{ width: tile, height: tile }}
                 resizeMode="cover"

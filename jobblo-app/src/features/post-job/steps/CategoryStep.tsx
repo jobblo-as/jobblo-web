@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Check, Sparkles } from 'lucide-react-native';
 import { TC, tc } from '../../../theme/colors';
 import { BottomSheet } from '../../../components/ui/BottomSheet';
+import { Skeleton } from '../../../components/ui/Skeleton';
 import { SearchInput } from '../../../components/ui/SearchInput';
 import { useCategories } from '../../../hooks/useCategories';
 import { suggestCategories } from '../../../services/ai.service';
@@ -102,13 +103,42 @@ export function CategoryStep() {
         ) : null}
 
         {suggestionsQuery.isFetching ? (
-          <View className="mt-6 flex-row items-center gap-3">
-            <ActivityIndicator color={TC.brandText} />
-            <Text className="text-[0.9375rem] text-muted">
-              {photos.length
-                ? t('AI ser på bildene…', 'AI is looking at the photos…')
-                : t('AI leser beskrivelsen…', 'AI is reading the description…')}
+          // While the AI works: what it is doing, and the suggestion rows taking shape below.
+          <View
+            className="mt-6"
+            accessibilityRole="progressbar"
+            accessibilityLabel={t('Finner kategori', 'Finding a category')}
+          >
+            <View className="flex-row items-center gap-3 rounded-2xl bg-tint px-4 py-3.5">
+              <View className="h-9 w-9 items-center justify-center rounded-full bg-surface">
+                <Sparkles size={18} color={TC.brandText} />
+              </View>
+              <View className="flex-1">
+                <Text className="text-[0.9375rem] font-semibold text-brand-text">
+                  {photos.length
+                    ? t('AI ser på bildene…', 'AI is looking at the photos…')
+                    : t('AI leser beskrivelsen…', 'AI is reading the description…')}
+                </Text>
+                <Text className="mt-0.5 text-[0.8125rem] text-muted">
+                  {t('Forslagene kommer om et øyeblikk.', 'Suggestions in a moment.')}
+                </Text>
+              </View>
+              <ActivityIndicator color={TC.brandText} />
+            </View>
+            <Text className="mb-2 mt-6 text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-muted">
+              {t('Forslag', 'Suggestions')}
             </Text>
+            <View className="gap-2">
+              {['w-3/5', 'w-2/5', 'w-1/2'].map((width) => (
+                <View
+                  key={width}
+                  className="h-14 flex-row items-center gap-3 rounded-xl border border-line bg-surface px-4"
+                >
+                  <Skeleton className="h-5 w-5 rounded-full" />
+                  <Skeleton className={`h-4 ${width} rounded-md`} />
+                </View>
+              ))}
+            </View>
           </View>
         ) : null}
 
@@ -182,7 +212,13 @@ export function CategoryStep() {
           showClear
         />
         <View className="mt-3">
-          {categoriesQuery.isLoading ? <ActivityIndicator color={TC.brandText} /> : null}
+          {categoriesQuery.isLoading
+            ? ['w-2/5', 'w-1/2', 'w-1/3', 'w-3/5', 'w-2/5', 'w-1/2'].map((width, index) => (
+                <View key={index} className="h-12 justify-center px-2">
+                  <Skeleton className={`h-4 ${width} rounded-md`} />
+                </View>
+              ))
+            : null}
           {filtered.map((name) => (
             <Pressable
               key={name}
