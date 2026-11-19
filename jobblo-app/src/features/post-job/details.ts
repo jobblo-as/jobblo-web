@@ -11,6 +11,33 @@ export interface DetailQuestion {
   key: string;
   label: string;
   options: string[];
+  /** Several options may be picked ("Utvendig vask" and "Vask og polering"). */
+  multi?: boolean;
+}
+
+/** How several picked options are kept in one answer string. No multi option contains it. */
+export const ANSWER_SEPARATOR = ', ';
+
+/** The options picked in an answer, in the question's own order. */
+export function pickedOptions(question: DetailQuestion, answer: string | undefined): string[] {
+  if (!answer) return [];
+  if (!question.multi) return [answer];
+  const parts = answer.split(ANSWER_SEPARATOR);
+  return question.options.filter((option) => parts.includes(option));
+}
+
+/** Tap on an option: a multi question toggles it, a single one takes it. */
+export function toggleAnswer(
+  question: DetailQuestion,
+  answer: string | undefined,
+  option: string
+): string {
+  if (!question.multi) return option;
+  const picked = pickedOptions(question, answer);
+  const next = picked.includes(option)
+    ? picked.filter((p) => p !== option)
+    : question.options.filter((o) => o === option || picked.includes(o));
+  return next.join(ANSWER_SEPARATOR);
 }
 
 const CATEGORY_QUESTIONS: Record<string, DetailQuestion[]> = {
@@ -175,7 +202,10 @@ const norm = (s: string) =>
 
 /** Questions for a category name (accent- and case-insensitive); none for unknown categories. */
 export function questionsFor(category: string): DetailQuestion[] {
-  return CATEGORY_QUESTIONS[norm(category)] ?? [];
+  // "What needs doing" can be several things at once (client request); the rest is one answer.
+  return (CATEGORY_QUESTIONS[norm(category)] ?? []).map((q) =>
+    q.key === 'what' ? { ...q, multi: true } : q
+  );
 }
 
 /** "Hvor lang tid tror du det tar?" → the job's duration. */
