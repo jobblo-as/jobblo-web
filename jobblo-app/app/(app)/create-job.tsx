@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useMyJobs } from '../../src/hooks/useMyJobs';
@@ -57,6 +57,17 @@ export default function CreateJobScreen() {
   const job = editId ? ownerJobs.data?.find((item) => item._id === editId) : undefined;
   const editable = job && job.capabilities?.canEdit !== false;
 
+  // This tab stays mounted, so its list can predate the job (posted a moment ago, or on the
+  // web). Before saying "not found", fetch the list once more for this editId.
+  const refetchedFor = useRef('');
+  const { isSuccess: listLoaded, refetch: refetchOwnerJobs } = ownerJobs;
+  useEffect(() => {
+    if (!editId || job || !listLoaded || refetchedFor.current === editId) return;
+    refetchedFor.current = editId;
+    void refetchOwnerJobs();
+  }, [editId, job, listLoaded, refetchOwnerJobs]);
+  const checkingAgain = !job && (refetchedFor.current !== editId || ownerJobs.isFetching);
+
   useEffect(() => {
     if (job && editable && loadedId !== job._id)
       startEdit(job._id, jobToValues(job), job.images || []);
@@ -73,7 +84,8 @@ export default function CreateJobScreen() {
       {child}
     </SafeAreaView>
   );
-  if (ownerJobs.isLoading) return screen(<CreateJobSkeleton />);
+  if (ownerJobs.isLoading || (ownerJobs.isSuccess && checkingAgain))
+    return screen(<CreateJobSkeleton />);
   if (ownerJobs.isError) {
     return screen(
       <ErrorState

@@ -155,6 +155,21 @@ export function buildJobFormData(
   return formData;
 }
 
+/**
+ * Uploads end after UPLOAD_DEADLINE_MS whatever happens. The axios timeout alone did not:
+ * on a phone it can wait on a stalled upload, and the save button stayed on "Lagrer…".
+ */
+export const UPLOAD_DEADLINE_MS = 120_000;
+async function withUploadDeadline<T>(send: (signal: AbortSignal) => Promise<T>): Promise<T> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), UPLOAD_DEADLINE_MS);
+  try {
+    return await send(controller.signal);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 const storedPhoto = (image: CreateJobImage) => /^https:\/\//i.test(image.uri);
 
 /**
@@ -181,12 +196,15 @@ export async function createJob(
     formData.append('draftId', draftId);
   }
 
-  const response = await apiClient.post<CreateServiceResponse>('/services', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-    // Image uploads outlast the 15 s default on mobile data; a timeout here made users
-    // publish again while the first request had already succeeded.
-    timeout: 90_000,
-  });
+  const response = await withUploadDeadline((signal) =>
+    apiClient.post<CreateServiceResponse>('/services', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      // Image uploads outlast the 15 s default on mobile data; a timeout here made users
+      // publish again while the first request had already succeeded.
+      timeout: 90_000,
+      signal,
+    })
+  );
   if (!response.data?._id) throw new Error('Oppdraget ble opprettet uten gyldig ID');
   return response.data;
 }
@@ -221,15 +239,18 @@ export async function updateJob(
   imagesToDelete: string[]
 ): Promise<CreateServiceResponse> {
   if (!serviceId.trim()) throw new Error('Mangler gyldig annonse-ID');
-  const response = await apiClient.put<CreateServiceResponse>(
-    `/services/${serviceId.trim()}`,
-    buildJobFormData(values, images, imagesToDelete),
-    {
-      headers: { 'Content-Type': 'multipart/form-data' },
-      // Image uploads outlast the 15 s default on mobile data; a timeout here made users
-      // publish again while the first request had already succeeded.
-      timeout: 90_000,
-    }
+  const response = await withUploadDeadline((signal) =>
+    apiClient.put<CreateServiceResponse>(
+      `/services/${serviceId.trim()}`,
+      buildJobFormData(values, images, imagesToDelete),
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        // Image uploads outlast the 15 s default on mobile data; a timeout here made users
+        // publish again while the first request had already succeeded.
+        timeout: 90_000,
+        signal,
+      }
+    )
   );
   return response.data;
 }
