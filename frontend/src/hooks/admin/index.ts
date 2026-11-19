@@ -59,13 +59,19 @@ export const useCreateAdminUser = () => {
 export const useChangeUserRole = () => {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, role }: { id: string; role: string }) => adminApi.changeUserRole(id, role),
+    mutationFn: ({ id, role, stepUpToken }: { id: string; role: string; stepUpToken?: string }) =>
+      adminApi.changeUserRole(id, role, stepUpToken),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: adminKeys.all });
       toast.success('Rolle oppdatert.');
     },
-    onError: (e: { response?: { data?: { error?: string } } }) =>
-      toast.error(e?.response?.data?.error || 'Kunne ikke endre rolle.'),
+    onError: (e: { response?: { data?: { error?: string; message?: string; code?: string } } }) => {
+      // An expired step-up token is asked for again by StepUpProvider, not shown as an error.
+      if (e?.response?.data?.code === 'STEP_UP_REQUIRED') return;
+      toast.error(
+        e?.response?.data?.message || e?.response?.data?.error || 'Kunne ikke endre rolle.'
+      );
+    },
   });
 };
 

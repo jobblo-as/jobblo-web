@@ -43,10 +43,17 @@ export const createAdminUser = async (payload: {
   return res.data.data.user;
 };
 
-export const changeUserRole = async (id: string, role: string): Promise<AdminUser> => {
-  const res = await mainLink.put<ApiResponse<{ user: AdminUser }>>(`/api/admin/users/${id}/role`, {
-    role,
-  });
+/** Granting superAdmin needs `stepUpToken` (emailed one-time code, see StepUpProvider). */
+export const changeUserRole = async (
+  id: string,
+  role: string,
+  stepUpToken?: string
+): Promise<AdminUser> => {
+  const res = await mainLink.put<ApiResponse<{ user: AdminUser }>>(
+    `/api/admin/users/${id}/role`,
+    { role },
+    stepUpToken ? { headers: { 'X-Step-Up-Token': stepUpToken } } : undefined
+  );
   return res.data.data.user;
 };
 

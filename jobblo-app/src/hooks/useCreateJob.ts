@@ -6,6 +6,7 @@ import {
   type CreateJobImage,
 } from '../services/createJob.service';
 import { queryKeys } from '../queryKeys';
+import { prepareUploadPhotos } from '../utils/uploadPhotos';
 
 export function useCreateJobMutation() {
   const queryClient = useQueryClient();
@@ -18,9 +19,11 @@ export function useCreateJobMutation() {
       values: CreateJobFormValues;
       images: CreateJobImage[];
       draftId?: string | null;
-    }) => createJob(values, images, draftId),
+    }) => prepareUploadPhotos(images).then((ready) => createJob(values, ready, draftId)),
     onSuccess: async () => {
       await Promise.all([
+        // "Rediger" right after publishing looks the job up in this list.
+        queryClient.invalidateQueries({ queryKey: queryKeys.jobs.mine }),
         queryClient.invalidateQueries({ queryKey: queryKeys.jobs.list() }),
         queryClient.invalidateQueries({ queryKey: queryKeys.jobs.infinite() }),
         queryClient.invalidateQueries({ queryKey: queryKeys.applicants.overview }),
@@ -42,9 +45,14 @@ export function useUpdateJobMutation() {
       values: CreateJobFormValues;
       images: CreateJobImage[];
       imagesToDelete: string[];
-    }) => updateJob(serviceId, values, images, imagesToDelete),
-    onSuccess: async (_result, variables) => {
-      await Promise.all([
+    }) =>
+      prepareUploadPhotos(images).then((ready) =>
+        updateJob(serviceId, values, ready, imagesToDelete)
+      ),
+    // Not awaited: the save is done once the server answered. Awaiting every refetch kept
+    // the button on "Lagrer…" for as long as the slowest list took to reload.
+    onSuccess: (_result, variables) => {
+      void Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.jobs.mine }),
         queryClient.invalidateQueries({ queryKey: queryKeys.jobs.detail(variables.serviceId) }),
         queryClient.invalidateQueries({ queryKey: queryKeys.jobs.list() }),

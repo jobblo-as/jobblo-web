@@ -11,8 +11,8 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import Constants from 'expo-constants';
-import * as Application from 'expo-application';
 import { appVersionLabel } from '../../../src/utils/appVersion';
+import { nativeBuildVersion } from '../../../src/utils/nativeBuildVersion';
 import {
   BadgeCheck,
   Check,
@@ -131,7 +131,7 @@ export default function ProfileScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [logoutVisible, setLogoutVisible] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const version = appVersionLabel(Constants.expoConfig?.version, Application.nativeBuildVersion);
+  const version = appVersionLabel(Constants.expoConfig?.version, nativeBuildVersion());
   const updateProfile = useUpdateProfile();
   const cardRef = useRef<React.ComponentRef<typeof View>>(null);
   const [anchor, setAnchor] = useState<PopoverAnchor | null>(null);

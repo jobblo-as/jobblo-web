@@ -3,7 +3,13 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { Check, ChevronRight, PartyPopper } from 'lucide-react-native';
 import { TC, tc } from '../../../theme/colors';
 import { BottomSheet } from '../../../components/ui/BottomSheet';
-import { DURATION_OPTIONS, EQUIPMENT_OPTIONS, questionsFor } from '../details';
+import {
+  DURATION_OPTIONS,
+  EQUIPMENT_OPTIONS,
+  pickedOptions,
+  questionsFor,
+  toggleAnswer,
+} from '../details';
 import { usePostJobStore } from '../store';
 import { StepFooter } from '../StepFooter';
 import { t } from '../i18n';
@@ -14,6 +20,9 @@ interface Row {
   value: string;
   options: string[];
   onPick: (option: string) => void;
+  /** Several options may be picked; the sheet stays open until "Ferdig". */
+  multi?: boolean;
+  isPicked?: (option: string) => boolean;
 }
 
 /**
@@ -38,7 +47,9 @@ export function DetailsStep() {
       label: q.label,
       value: answers[q.key] ?? '',
       options: q.options,
-      onPick: (o: string) => setAnswer(q.key, o),
+      multi: q.multi,
+      isPicked: (o: string) => pickedOptions(q, answers[q.key]).includes(o),
+      onPick: (o: string) => setAnswer(q.key, toggleAnswer(q, answers[q.key], o)),
     })),
     {
       key: 'duration',
@@ -131,23 +142,48 @@ export function DetailsStep() {
         onClose={() => setOpen(null)}
         title={current?.label ?? ''}
       >
+        {current?.multi ? (
+          <Text className="mb-1 px-2 text-[0.8125rem] text-muted">
+            {t('Velg én eller flere', 'Choose one or more')}
+          </Text>
+        ) : null}
         {current
-          ? current.options.map((option) => (
-              <Pressable
-                key={option}
-                onPress={() => {
-                  current.onPick(option);
-                  setOpen(null);
-                }}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: option === current.value }}
-                className="h-14 flex-row items-center justify-between rounded-lg px-2 active:bg-surface-2"
-              >
-                <Text className="text-[1.0625rem] text-ink">{option}</Text>
-                {option === current.value ? <Check size={18} color={TC.brandText} /> : null}
-              </Pressable>
-            ))
+          ? current.options.map((option) => {
+              const picked = current.isPicked ? current.isPicked(option) : option === current.value;
+              return (
+                <Pressable
+                  key={option}
+                  onPress={() => {
+                    current.onPick(option);
+                    if (!current.multi) setOpen(null);
+                  }}
+                  accessibilityRole={current.multi ? 'checkbox' : 'radio'}
+                  accessibilityState={current.multi ? { checked: picked } : { selected: picked }}
+                  className="h-14 flex-row items-center justify-between rounded-lg px-2 active:bg-surface-2"
+                >
+                  <Text className="flex-1 text-[1.0625rem] text-ink">{option}</Text>
+                  {current.multi ? (
+                    <View
+                      className={`h-6 w-6 items-center justify-center rounded-md border-2 ${picked ? 'border-brand bg-brand' : 'border-line-strong'}`}
+                    >
+                      {picked ? <Check size={15} color="#FFFFFF" strokeWidth={3} /> : null}
+                    </View>
+                  ) : picked ? (
+                    <Check size={18} color={TC.brandText} />
+                  ) : null}
+                </Pressable>
+              );
+            })
           : null}
+        {current?.multi ? (
+          <Pressable
+            onPress={() => setOpen(null)}
+            accessibilityRole="button"
+            className="mt-3 h-12 items-center justify-center rounded-full bg-brand"
+          >
+            <Text className="text-[0.9375rem] font-semibold text-white">{t('Ferdig', 'Done')}</Text>
+          </Pressable>
+        ) : null}
       </BottomSheet>
     </View>
   );

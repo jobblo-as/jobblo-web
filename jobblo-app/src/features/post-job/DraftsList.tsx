@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Pressable, Text, View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FileText, Trash2 } from 'lucide-react-native';
 import { TC, tc } from '../../theme/colors';
@@ -7,6 +7,7 @@ import { deleteJobDraft, getJobDraft, listJobDrafts } from '../../services/jobDr
 import { fromDraftData } from './draft';
 import { DRAFTS_KEY } from './draftSync';
 import { usePostJobStore } from './store';
+import { useAuthStore } from '../../store/authStore';
 import { DATE_LOCALE, t } from './i18n';
 
 /** "Dine utkast" (as on the web): server drafts, newest first. Tapping one continues it. */
@@ -14,7 +15,12 @@ export function DraftsList({ suggested }: { suggested: 'private' | 'business' })
   const queryClient = useQueryClient();
   const openDraft = usePostJobStore((s) => s.openDraft);
   const [opening, setOpening] = useState<string | null>(null);
-  const { data: drafts = [] } = useQuery({ queryKey: DRAFTS_KEY, queryFn: listJobDrafts });
+  const userId = useAuthStore((s) => (s.user as { _id?: string } | null)?._id ?? 'none');
+  // Per user (DRAFTS_KEY is the prefix every invalidation uses).
+  const { data: drafts = [] } = useQuery({
+    queryKey: [...DRAFTS_KEY, userId],
+    queryFn: listJobDrafts,
+  });
   const remove = useMutation({
     mutationFn: deleteJobDraft,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: DRAFTS_KEY }),
@@ -27,6 +33,10 @@ export function DraftsList({ suggested }: { suggested: 'private' | 'business' })
     setOpening(id);
     try {
       const draft = fromDraftData(await getJobDraft(id));
+      // Start the photo downloads now, so they are (nearly) there when the page shows them.
+      draft.photos
+        .filter((photo) => /^https:\/\//i.test(photo.uri))
+        .forEach((photo) => void Image.prefetch(photo.uri).catch(() => undefined));
       openDraft(id, {
         ...draft,
         values: { ...draft.values, customerType: draft.values.customerType || suggested },

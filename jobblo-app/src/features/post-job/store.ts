@@ -59,6 +59,8 @@ interface PostJobState {
   /** false when already on the first screen. */
   back: () => boolean;
   reset: () => void;
+  /** Signed out or another account signed in: nothing of the previous user's listing stays. */
+  clearForSignOut: () => void;
   /** Opens a published job on the summary screen, its photos as remote URLs. */
   startEdit: (id: string, values: CreateJobFormValues, images: string[]) => void;
   /** A new listing put aside by "Rediger"; back once the edit is saved or cancelled (reset). */
@@ -132,6 +134,7 @@ export const usePostJobStore = create<PostJobState>((set, get) => ({
         ? { ...s.stash, stash: null }
         : { ...fresh(), stash: s.editId ? null : s.stash }
     ),
+  clearForSignOut: () => set({ ...fresh(), stash: null }),
   startEdit: (editId, values, images) =>
     set((s) => ({
       ...fresh(),

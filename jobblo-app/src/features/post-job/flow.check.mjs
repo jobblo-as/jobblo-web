@@ -84,7 +84,36 @@ assert.match(priceProblem({ ...base, price: '500', durationValue: '' }), /tid|ta
 assert.equal(priceProblem({ ...base, paymentType: 'Anbud', price: '8000' }), '');
 
 // Details: category names match with Norwegian letters and any case; the AI prompt has the answers.
-const { questionsFor, describeForAi } = await import('./details.ts');
+const { questionsFor, describeForAi, toggleAnswer, pickedOptions, ANSWER_SEPARATOR } =
+  await import('./details.ts');
+
+// Several options on "what needs doing" (client request); one answer on the other questions.
+const car = questionsFor('Bil & pleie');
+const what = car.find((q) => q.key === 'what');
+const size = car.find((q) => q.key === 'size');
+assert.equal(what.multi, true);
+assert.equal(size.multi, undefined);
+let picked = toggleAnswer(what, '', 'Vask og polering');
+picked = toggleAnswer(what, picked, 'Utvendig vask');
+assert.equal(picked, 'Utvendig vask, Vask og polering'); // the question's order, not tap order
+assert.deepEqual(pickedOptions(what, picked), ['Utvendig vask', 'Vask og polering']);
+assert.equal(toggleAnswer(what, picked, 'Utvendig vask'), 'Vask og polering'); // tap again: off
+assert.equal(toggleAnswer(size, 'SUV', 'Varebil'), 'Varebil'); // single: replaces
+assert.deepEqual(pickedOptions(what, 'Utvendig vask'), ['Utvendig vask']); // an old one-answer draft
+// No multi option may contain the separator, or splitting would cut it in two.
+for (const cat of [
+  'Maling',
+  'Rengjøring',
+  'Flytting',
+  'Hagearbeid',
+  'Rørlegger',
+  'Montering',
+  'Transport',
+  'Bil & pleie',
+  'Oppussing',
+])
+  for (const q of questionsFor(cat).filter((x) => x.multi))
+    for (const o of q.options) assert.ok(!o.includes(ANSWER_SEPARATOR), `${cat}: ${o}`);
 assert.ok(questionsFor('Rengjøring').length > 0);
 assert.ok(questionsFor('RØRLEGGER').length > 0);
 assert.deepEqual(questionsFor('Ukjent kategori'), []);
@@ -260,4 +289,24 @@ assert.deepEqual(
   ]),
   ['new:0', 'https://blob.test/a.jpg', 'new:1']
 );
+
+// Sign-out / account switch: nothing of the previous user's listing stays, stash included.
+store.getState().reset();
+store.getState().openDraft('d-old', back);
+store.getState().startEdit('job3', job, []); // the draft is put aside in the stash
+store.getState().clearForSignOut();
+assert.equal(store.getState().draftId, null);
+assert.equal(store.getState().editId, null);
+assert.equal(store.getState().stash, null);
+assert.equal(store.getState().values.title, '');
+store.getState().reset(); // and reset() cannot bring the old listing back
+assert.equal(store.getState().draftId, null);
+assert.equal(store.getState().values.title, '');
+
+// authStore clears it on logout and on an account switch (static check: the lazy require).
+const { readFileSync } = await import('node:fs');
+const auth = readFileSync(new URL('../../store/authStore.ts', import.meta.url), 'utf8');
+assert.match(auth, /forgetDraftsForSignOut\(\)/);
+const draftsList = readFileSync(new URL('./DraftsList.tsx', import.meta.url), 'utf8');
+assert.match(draftsList, /queryKey: \[\.\.\.DRAFTS_KEY, userId\]/);
 console.log('post-job flow: ok');

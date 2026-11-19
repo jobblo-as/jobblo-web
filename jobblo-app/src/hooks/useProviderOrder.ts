@@ -10,6 +10,7 @@ import {
   updateProviderChecklist,
   uploadProviderEvidence,
 } from '../services/providerWork.service';
+import { prepareUploadPhotos } from '../utils/uploadPhotos';
 import type { ProviderOrderResponse } from '../types/ProviderOrder';
 
 export function useProviderOrder(orderId: string) {
@@ -70,7 +71,11 @@ export function useProviderEvidenceMutation(orderId: string) {
       evidenceType: 'before' | 'after';
       files: Array<{ uri: string; name: string; type: string }>;
       completionNote?: string;
-    }) => uploadProviderEvidence(orderId, input.evidenceType, input.files, input.completionNote),
+    }) =>
+      // Photos go up as JPEGs of at most 2048 px (utils/uploadPhotos); PDFs as they are.
+      prepareUploadPhotos(input.files).then((files) =>
+        uploadProviderEvidence(orderId, input.evidenceType, files, input.completionNote)
+      ),
     onSuccess: () => invalidateProviderOrderQueries(queryClient, orderId),
     onError: () => invalidateProviderOrderQueries(queryClient, orderId),
   });

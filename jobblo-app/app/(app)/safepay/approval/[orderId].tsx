@@ -94,18 +94,30 @@ function Stars({
   value,
   onChange,
   label,
+  size = 26,
 }: {
   value: number;
   onChange: (value: number) => void;
   label?: string;
+  size?: number;
 }) {
   return (
     <View>
       {label ? <Text className="mb-2 text-[0.8125rem] font-medium text-muted">{label}</Text> : null}
       <View className="flex-row gap-1">
         {[1, 2, 3, 4, 5].map((star) => (
-          <Pressable key={star} onPress={() => onChange(star)}>
-            <Star size={26} color={TC.brandText} fill={star <= value ? TC.brandText : 'none'} />
+          <Pressable
+            key={star}
+            onPress={() => onChange(star)}
+            hitSlop={4}
+            accessibilityRole="button"
+            accessibilityLabel={`${label ?? 'Vurdering'}: ${star} av 5`}
+          >
+            <Star
+              size={size}
+              color={star <= value ? '#D6A23C' : tc('#9B9E96', 'subtle')}
+              fill={star <= value ? '#D6A23C' : 'none'}
+            />
           </Pressable>
         ))}
       </View>
@@ -188,6 +200,18 @@ export default function SafePayApprovalScreen() {
     order.status === 'ready_for_review' &&
     order.paymentStatus === 'paid' &&
     !activeDispute;
+  const providerName = `${order.providerId?.name ?? ''} ${order.providerId?.lastName ?? ''}`.trim();
+  const providerInitials = providerName
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase();
+  // "melder jobben som ferdig" read as a sentence without a subject: lead with who it is.
+  const statusLine = /^[a-zæøå]/.test(status.title)
+    ? `${order.providerId?.name ?? 'Oppdragstakeren'} ${status.title}`
+    : status.title;
   const beforeImages = order.beforeImages ?? [];
   const afterImages = order.afterImages ?? [];
   const hasAnyEvidence =
@@ -197,7 +221,7 @@ export default function SafePayApprovalScreen() {
     return (
       <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 justify-center bg-page px-4">
         <View className="rounded-3xl bg-surface p-8">
-          <Text className="text-center text-lg font-semibold">Ikke tilgang</Text>
+          <Text className="text-center text-lg font-semibold text-ink">Ikke tilgang</Text>
           <Text className="mt-2 text-center text-sm text-muted">
             Kun oppdragsgiver kan godkjenne en jobb og frigi betalingen.
           </Text>
@@ -377,30 +401,28 @@ export default function SafePayApprovalScreen() {
           serviceId={order.serviceId?._id}
         />
         <View className="mb-4 rounded-2xl bg-surface p-5">
-          <Text className="font-semibold">Jobbstatus</Text>
-          <View className="mt-3 rounded-xl bg-tint p-4">
-            <Text className="font-bold text-brand-text">{status.title}</Text>
-            <Text className="mt-1 text-[0.8125rem] text-muted">
-              {order.serviceId?.title ?? 'Oppdrag'}
-            </Text>
-          </View>
-        </View>
-        <View className="mb-4 rounded-2xl bg-surface p-5">
           <View className="flex-row items-center gap-3">
             <View className="h-12 w-12 items-center justify-center rounded-full bg-tint">
-              <Text className="font-bold text-brand-text">
-                {order.providerId?.name?.[0] ?? '?'}
-              </Text>
+              <Text className="font-bold text-brand-text">{providerInitials || '?'}</Text>
             </View>
-            <View>
-              <Text className="text-[0.8125rem] uppercase text-muted">Oppdragstaker</Text>
-              <Text className="font-bold">
-                {order.providerId?.name} {order.providerId?.lastName}
+            <View className="min-w-0 flex-1">
+              <Text className="text-[0.75rem] font-medium text-muted">Oppdragstaker</Text>
+              <Text className="text-[1rem] font-bold text-ink" numberOfLines={1}>
+                {providerName || 'Oppdragstaker'}
               </Text>
               <Text className="text-[0.8125rem] text-muted">
                 {order.providerId?.averageRating
-                  ? `${order.providerId.averageRating.toFixed(1)} av 5 stjerner`
+                  ? `★ ${order.providerId.averageRating.toFixed(1)} av 5`
                   : 'Ingen vurderinger enda'}
+              </Text>
+            </View>
+          </View>
+          <View className="mt-4 flex-row items-start gap-3 rounded-xl bg-tint p-4">
+            <CheckCircle2 size={18} color={TC.brandText} />
+            <View className="min-w-0 flex-1">
+              <Text className="font-bold text-brand-text">{statusLine}</Text>
+              <Text className="mt-0.5 text-[0.8125rem] text-muted" numberOfLines={2}>
+                {order.serviceId?.title ?? 'Oppdrag'}
               </Text>
             </View>
           </View>
@@ -409,7 +431,7 @@ export default function SafePayApprovalScreen() {
         <View className="mb-4 rounded-2xl bg-surface p-5">
           <View className="flex-row items-center gap-2">
             <Camera size={17} color={TC.brandText} />
-            <Text className="font-semibold">Arbeidsbevis</Text>
+            <Text className="font-semibold text-ink">Arbeidsbevis</Text>
           </View>
           {hasAnyEvidence ? (
             <View className="mt-4 gap-4">
@@ -491,7 +513,7 @@ export default function SafePayApprovalScreen() {
               ) : null}
             </View>
           ) : (
-            <View className="mt-4 rounded-xl border border-dashed border-[#D6D9D2] bg-surface-2 p-6">
+            <View className="mt-4 rounded-xl border border-dashed border-line-strong bg-surface-2 p-6">
               <Text className="text-center text-[0.9375rem] font-semibold text-ink">
                 Ingen arbeidsbevis lastet opp
               </Text>
@@ -506,7 +528,7 @@ export default function SafePayApprovalScreen() {
 
         {order.checklist?.length ? (
           <View className="mb-4 rounded-2xl bg-surface p-5">
-            <Text className="mb-3 font-semibold">Sjekkliste</Text>
+            <Text className="mb-3 font-semibold text-ink">Sjekkliste</Text>
             {order.checklist.map((item) => (
               <Pressable
                 key={item.id}
@@ -531,13 +553,13 @@ export default function SafePayApprovalScreen() {
                 }
                 className={[
                   'mb-2 flex-row items-center gap-3 rounded-xl p-3',
-                  canEditChecklist ? 'bg-surface-2' : 'bg-[#F2F4EE] opacity-80',
+                  canEditChecklist ? 'bg-surface-2' : 'bg-surface-2 opacity-60',
                 ].join(' ')}
               >
                 <View
                   className={[
                     'h-5 w-5 rounded border',
-                    item.checked ? 'border-brand-text bg-brand' : 'border-[#9B9E96] bg-surface',
+                    item.checked ? 'border-brand-text bg-brand' : 'border-line-strong bg-surface',
                   ].join(' ')}
                 >
                   {item.checked ? <Check size={14} color="#FFFFFF" /> : null}
@@ -550,22 +572,35 @@ export default function SafePayApprovalScreen() {
 
         {!completed ? (
           <View className="mb-4 rounded-2xl bg-surface p-5">
-            <Text className="mb-2 font-semibold">Vurdering</Text>
-            <Stars
-              value={ratings.overall}
-              onChange={(value) => setRatings((current) => ({ ...current, overall: value }))}
-              label="Helhetlig opplevelse"
-            />
+            <Text className="font-semibold text-ink">Vurdering</Text>
+            <Text className="mt-0.5 text-[0.8125rem] text-muted">
+              Hjelper andre å velge riktig oppdragstaker.
+            </Text>
+            <View className="mt-4 items-center rounded-xl bg-surface-2 py-4">
+              <Text className="mb-2 text-[0.8125rem] font-medium text-muted">
+                Helhetlig opplevelse
+              </Text>
+              <Stars
+                value={ratings.overall}
+                onChange={(value) => setRatings((current) => ({ ...current, overall: value }))}
+                size={34}
+              />
+            </View>
 
-            <View className="mt-4 space-y-4">
-              {OPTIONAL_RATINGS.map((story) => (
-                <View key={story.key} className="rounded-xl bg-surface-2 p-3">
+            <Text className="mb-1 mt-4 text-[0.75rem] font-medium text-muted">Valgfritt</Text>
+            <View className="rounded-xl border border-line">
+              {OPTIONAL_RATINGS.map((story, index) => (
+                <View
+                  key={story.key}
+                  className={`flex-row items-center justify-between px-3 py-2.5 ${index ? 'border-t border-line' : ''}`}
+                >
+                  <Text className="text-[0.875rem] text-ink">{story.label}</Text>
                   <Stars
                     value={ratings[story.key]}
                     onChange={(value) =>
                       setRatings((current) => ({ ...current, [story.key]: value }))
                     }
-                    label={story.label}
+                    size={20}
                   />
                 </View>
               ))}
@@ -574,23 +609,33 @@ export default function SafePayApprovalScreen() {
             <TextInput
               value={comment}
               onChangeText={(value) => setComment(value.slice(0, 1000))}
-              placeholder="Kommentar"
+              placeholder="Fortell hvordan det gikk (valgfritt)"
+              placeholderTextColor={TC.placeholder}
               multiline
-              className="mt-4 min-h-[80px] rounded-xl border border-line p-3"
+              className="mt-4 min-h-[88px] rounded-xl border border-line bg-surface p-3 text-[0.875rem] text-ink"
+              style={{ textAlignVertical: 'top' }}
             />
             <Text className="mt-1 text-right text-[0.8125rem] text-muted">
               {comment.length}/1000
             </Text>
-            <Button label="Velg egne bilder" onPress={() => void choosePhotos()} small />
-            {photos.length ? (
+            <View className="mt-2 flex-row flex-wrap gap-2">
               <Button
-                label="Last opp bilder"
-                onPress={uploadPhotos}
-                disabled={photoMutation.isPending}
+                label="Legg til bilder"
+                onPress={() => void choosePhotos()}
                 small
                 variant="secondary"
+                icon={<Camera size={15} color={TC.ink} />}
               />
-            ) : null}
+              {photos.length ? (
+                <Button
+                  label="Last opp bilder"
+                  onPress={uploadPhotos}
+                  disabled={photoMutation.isPending}
+                  loading={photoMutation.isPending}
+                  small
+                />
+              ) : null}
+            </View>
             <View className="mt-4 flex-row items-center justify-between rounded-xl bg-surface-2 p-3">
               <Text className="text-sm font-medium text-ink">Anbefal denne arbeidstaker</Text>
               <Switch value={recommendWorker} onValueChange={setRecommendWorker} />

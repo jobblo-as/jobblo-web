@@ -51,10 +51,23 @@ export function saveDraft() {
       }
     } catch (error) {
       // Deleted elsewhere (the web): the next edit starts a new one. Anything else: next edit.
-      if ((error as { response?: { status?: number } })?.response?.status === 404)
+      if (
+        mine === session &&
+        (error as { response?: { status?: number } })?.response?.status === 404
+      )
         usePostJobStore.getState().setDraftId(null);
     }
   });
+}
+
+/**
+ * Sign-out / account switch: forget the listing being written. A save already in flight
+ * finishes for the old account but no longer touches the store (it then holds the new
+ * user's state); nothing is deleted, the draft stays in the old account's "Dine utkast".
+ */
+export function forgetDraftsForSignOut() {
+  session += 1;
+  usePostJobStore.getState().clearForSignOut();
 }
 
 /** Published or thrown away: its server draft goes too (best effort, after any save). */

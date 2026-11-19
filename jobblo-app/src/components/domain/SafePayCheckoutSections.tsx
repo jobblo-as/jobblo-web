@@ -26,6 +26,10 @@ function initials(name: string) {
     .toUpperCase();
 }
 
+/**
+ * One side of the agreement as a row: avatar, role, name, rating, contact. Side by side the two
+ * boxes were too narrow on a phone ("OPPDRAGSGI / VER" broke mid-word, uneven heights).
+ */
 function Party({
   role,
   party,
@@ -41,26 +45,28 @@ function Party({
 }) {
   const name = nameOf(party);
   return (
-    <View className="min-w-0 flex-1 rounded-2xl bg-surface-2 p-4">
-      <View className="mx-auto h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-tint">
+    <View className="flex-row items-start gap-3 rounded-2xl bg-surface-2 p-3.5">
+      <View className="h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-tint">
         {party?.avatarUrl ? (
           <Image source={{ uri: party.avatarUrl }} className="h-full w-full" />
         ) : (
           <Text className="text-[0.9375rem] font-semibold text-brand-text">{initials(name)}</Text>
         )}
       </View>
-      <Text className="mt-2 text-center text-[0.8125rem] font-semibold uppercase tracking-[0.12em] text-muted">
-        {role}
-      </Text>
-      <Text className="mt-1 text-center text-[0.875rem] font-semibold text-ink" numberOfLines={2}>
-        {name}
-      </Text>
-      {rating !== undefined ? (
-        <Text className="mt-1 text-center text-[0.8125rem] text-muted">
-          {rating > 0 ? `★ ${rating}` : 'Ingen vurderinger ennå'}
+      <View className="min-w-0 flex-1">
+        <Text className="text-[0.75rem] font-medium text-muted">{role}</Text>
+        <Text className="mt-0.5 text-[0.9375rem] font-semibold text-ink" numberOfLines={1}>
+          {name}
         </Text>
-      ) : null}
-      <PartyContact phone={phone} email={email} />
+        {rating !== undefined ? (
+          <Text className="mt-0.5 text-[0.8125rem] text-muted">
+            {rating > 0 ? `★ ${rating}` : 'Ingen vurderinger ennå'}
+          </Text>
+        ) : null}
+        <View className="items-start">
+          <PartyContact phone={phone} email={email} />
+        </View>
+      </View>
     </View>
   );
 }
@@ -72,27 +78,28 @@ export function SafePayPartiesCard({ order }: { order: SafePayOrder }) {
         <Users size={16} color={TC.brandText} />
         <Text className="text-[0.9375rem] font-semibold text-ink">Avtale mellom</Text>
       </View>
-      <View className="flex-row items-center gap-2">
-        <Party
-          role="Oppdragsgiver"
-          party={order.customerId}
-          phone={order.serviceId?.contactPhone || order.customerId?.phone}
-          email={order.serviceId?.contactEmail || order.customerId?.email}
-        />
-        <View className="w-12 items-center gap-1">
-          <ShieldCheck size={18} color={TC.brandText} />
-          <Text className="text-center text-[0.8125rem] font-bold uppercase tracking-[0.12em] text-brand-text">
-            SafePay
-          </Text>
+      <Party
+        role="Oppdragsgiver"
+        party={order.customerId}
+        phone={order.serviceId?.contactPhone || order.customerId?.phone}
+        email={order.serviceId?.contactEmail || order.customerId?.email}
+      />
+      {/* SafePay sits between the two parties: the money goes through it, not person to person. */}
+      <View className="items-center py-1.5">
+        <View className="h-2.5 w-px bg-line-strong" />
+        <View className="flex-row items-center gap-1.5 rounded-full bg-tint px-3 py-1">
+          <ShieldCheck size={14} color={TC.brandText} />
+          <Text className="text-[0.75rem] font-semibold text-brand-text">Trygt via SafePay</Text>
         </View>
-        <Party
-          role="Oppdragstaker"
-          party={order.providerId}
-          rating={order.providerId?.averageRating}
-          phone={order.providerId?.phone}
-          email={order.providerId?.email}
-        />
+        <View className="h-2.5 w-px bg-line-strong" />
       </View>
+      <Party
+        role="Oppdragstaker"
+        party={order.providerId}
+        rating={order.providerId?.averageRating}
+        phone={order.providerId?.phone}
+        email={order.providerId?.email}
+      />
     </View>
   );
 }

@@ -87,6 +87,7 @@ function WorkerAvatar({ avatarUrl, initials }: { avatarUrl?: string; initials: s
           source={{ uri: avatarUrl }}
           className="h-full w-full"
           resizeMode="cover"
+          resizeMethod="resize"
           onError={() => setImageFailed(true)}
         />
       ) : (
@@ -305,7 +306,11 @@ export default function HomeScreen() {
             className="h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-line bg-tint"
           >
             {avatarUrl ? (
-              <Image source={{ uri: avatarUrl }} style={{ width: 44, height: 44 }} />
+              <Image
+                source={{ uri: avatarUrl }}
+                style={{ width: 44, height: 44 }}
+                resizeMethod="resize"
+              />
             ) : (
               <Text className="text-[0.9375rem] font-semibold text-brand-text">{initials}</Text>
             )}

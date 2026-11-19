@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, TouchableOpacity } from 'react-native';
+import { ActivityIndicator, Text, TouchableOpacity } from 'react-native';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost';
 
@@ -11,6 +11,8 @@ interface ButtonProps {
   icon?: React.ReactNode;
   fullWidth?: boolean;
   small?: boolean;
+  /** A spinner in place of the icon while the action runs (the button is disabled too). */
+  loading?: boolean;
 }
 
 export function Button({
@@ -21,6 +23,7 @@ export function Button({
   icon,
   fullWidth = false,
   small = false,
+  loading = false,
 }: ButtonProps) {
   const variantClass =
     variant === 'primary'
@@ -35,17 +38,22 @@ export function Button({
   return (
     <TouchableOpacity
       onPress={onPress}
-      disabled={disabled}
+      disabled={disabled || loading}
       activeOpacity={0.85}
       className={[
-        'flex-row items-center justify-center rounded-full',
+        // gap: the icon sat glued to the label ("✓Velg og start SafePay").
+        'flex-row items-center justify-center gap-2 rounded-full',
         variantClass,
         fullWidth ? 'w-full' : '',
         small ? 'px-3 py-2' : 'px-4 py-3',
-        disabled ? 'opacity-60' : '',
+        disabled && !loading ? 'opacity-60' : loading ? 'opacity-80' : '',
       ].join(' ')}
     >
-      {icon ? <React.Fragment>{icon}</React.Fragment> : null}
+      {loading ? (
+        <ActivityIndicator size="small" color={variant === 'primary' ? '#FFFFFF' : undefined} />
+      ) : icon ? (
+        <React.Fragment>{icon}</React.Fragment>
+      ) : null}
       <Text className={['text-[0.875rem] font-semibold', labelClass].join(' ')}>{label}</Text>
     </TouchableOpacity>
   );

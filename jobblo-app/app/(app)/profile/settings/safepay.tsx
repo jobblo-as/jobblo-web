@@ -249,7 +249,7 @@ function Transaction({ transaction }: { transaction: SafePayHistoryTransaction }
         accessibilityRole="button"
         accessibilityState={{ expanded }}
         accessibilityLabel={`${transaction.serviceTitle}, ${amountSign}${money(amount)}, ${state.label}`}
-        className="p-4 active:bg-[#FAFAF7] dark:bg-surface-2"
+        className="p-4 active:bg-surface-2"
       >
         <View className="flex-row items-start gap-3">
           <View
@@ -571,7 +571,7 @@ function RefundSteps({
             {step.date ? <Text className="text-[0.8125rem] text-muted">{step.date}</Text> : null}
             {step.note ? (
               <Text
-                className={`text-[0.8125rem] ${step.state === 'failed' ? 'text-[#8C3932]' : step.state === 'current' ? 'text-[#8A641F]' : 'text-muted'}`}
+                className={`text-[0.8125rem] ${step.state === 'failed' ? 'text-danger' : step.state === 'current' ? 'text-warn' : 'text-muted'}`}
               >
                 {step.note}
               </Text>
@@ -617,8 +617,7 @@ function Notice({
 }) {
   const box =
     tone === 'error' ? 'bg-danger-tint' : tone === 'warn' ? 'bg-warn-tint' : 'bg-surface-2';
-  const text =
-    tone === 'error' ? 'text-[#8C3932]' : tone === 'warn' ? 'text-[#6B5425]' : 'text-muted';
+  const text = tone === 'error' ? 'text-danger' : tone === 'warn' ? 'text-warn' : 'text-muted';
   return (
     <View className={`mt-2 rounded-xl px-3 py-2.5 ${box}`}>
       <Text className={`text-[0.8125rem] leading-5 ${text}`}>{children}</Text>

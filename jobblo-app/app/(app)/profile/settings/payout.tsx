@@ -1,6 +1,15 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Alert, Linking, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import {
+  Alert,
+  BackHandler,
+  Linking,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as WebBrowser from 'expo-web-browser';
 import { createURL } from 'expo-linking';
@@ -15,7 +24,7 @@ import {
   RefreshCw,
   ShieldCheck,
 } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import {
   useConnectStatus,
   useCreateAccountLinkMutation,
@@ -127,6 +136,29 @@ function dateLabel(value?: string | null) {
 
 export default function PayoutSettingsScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
+  // Opened from a job or an order ("Fullfør Stripe Connect"), not from Innstillinger.
+  const { from } = useLocalSearchParams<{ from?: string }>();
+  const fromElsewhere = from === 'job' || from === 'order';
+
+  // Back to that job or order (the tab history), and leave the profile stack on Min Jobblo so
+  // the Profil tab does not reopen Utbetalinger later.
+  const leaveToCaller = useCallback(() => {
+    navigation.getParent()?.goBack();
+    navigation.dispatch({ type: 'POP_TO_TOP' });
+  }, [navigation]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!fromElsewhere) return undefined;
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+        leaveToCaller();
+        return true;
+      });
+      return () => sub.remove();
+    }, [fromElsewhere, leaveToCaller])
+  );
+
   const [platformSetupRequired, setPlatformSetupRequired] = useState(false);
   const [refreshError, setRefreshError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -302,6 +334,8 @@ export default function PayoutSettingsScreen() {
         <ScreenHeader
           title="Utbetalinger"
           subtitle="Administrer Stripe Connect-kontoen din og se status for utbetalinger."
+          backLabel={fromElsewhere ? (from === 'job' ? 'oppdraget' : 'bestillingen') : undefined}
+          onBack={fromElsewhere ? leaveToCaller : undefined}
         />
 
         {status.mode === 'test' ? (
@@ -317,7 +351,7 @@ export default function PayoutSettingsScreen() {
           <View
             accessibilityRole="alert"
             accessibilityLiveRegion="polite"
-            className="mb-4 flex-row items-center gap-2 rounded-xl border border-[#D1E7D9] bg-[#F2F9F4] px-4 py-3"
+            className="mb-4 flex-row items-center gap-2 rounded-xl border border-[#D1E7D9] bg-[#F2F9F4] dark:border-line dark:bg-tint px-4 py-3"
           >
             <CheckCircle2 size={16} color={TC.brandText} />
             <Text className="flex-1 text-[0.8125rem] font-medium text-[#173A24] dark:text-brand-text">
@@ -367,13 +401,13 @@ export default function PayoutSettingsScreen() {
             <View
               className={[
                 'mt-0.5 h-10 w-10 items-center justify-center rounded-xl',
-                ready ? 'bg-[#EAF1E9]' : 'bg-surface-2',
+                ready ? 'bg-tint' : 'bg-surface-2',
               ].join(' ')}
             >
               <StateIcon size={20} color={ready ? TC.brandText : tc('#63665F', 'muted')} />
             </View>
             <View className="ml-3.5 flex-1">
-              <Text className="text-[0.75rem] font-semibold uppercase tracking-[0.12em] text-[#85887F]">
+              <Text className="text-[0.75rem] font-semibold uppercase tracking-[0.12em] text-subtle">
                 Stripe Connect
               </Text>
               <Text className="mt-1 text-lg font-semibold text-ink">{copy.title}</Text>
@@ -383,7 +417,7 @@ export default function PayoutSettingsScreen() {
               <View
                 className={[
                   'mt-3 flex-row items-center gap-1.5 self-start rounded-full px-2.5 py-1',
-                  ready ? 'bg-[#EAF1E9]' : 'bg-surface-2',
+                  ready ? 'bg-tint' : 'bg-surface-2',
                 ].join(' ')}
               >
                 {ready ? (
@@ -448,10 +482,10 @@ export default function PayoutSettingsScreen() {
           <View className="mb-2 flex-row items-start justify-between gap-3">
             <View>
               <Text className="text-[0.9375rem] font-semibold text-ink">Kontoinformasjon</Text>
-              <Text className="mt-1 text-[0.75rem] text-[#85887F]">Status hentet fra Stripe</Text>
+              <Text className="mt-1 text-[0.75rem] text-subtle">Status hentet fra Stripe</Text>
             </View>
             {dateLabel(status.lastRefreshed) ? (
-              <Text className="text-[0.75rem] text-[#85887F]">
+              <Text className="text-[0.75rem] text-subtle">
                 Oppdatert {dateLabel(status.lastRefreshed)}
               </Text>
             ) : null}
@@ -459,7 +493,7 @@ export default function PayoutSettingsScreen() {
           {detailRows.map(([label, value]) => (
             <View
               key={label}
-              className="min-h-12 flex-row items-center justify-between gap-4 border-t border-[#F0F1EC] py-3"
+              className="min-h-12 flex-row items-center justify-between gap-4 border-t border-line-soft py-3"
             >
               <Text className="flex-1 text-[0.8125rem] text-muted">{label}</Text>
               <Text
@@ -475,7 +509,7 @@ export default function PayoutSettingsScreen() {
             </View>
           ))}
           {status.accountId ? (
-            <View className="min-h-12 flex-row items-center justify-between gap-4 border-t border-[#F0F1EC] py-3">
+            <View className="min-h-12 flex-row items-center justify-between gap-4 border-t border-line-soft py-3">
               <Text className="text-[0.8125rem] text-muted">Stripe-konto</Text>
               <View className="flex-row items-center gap-1">
                 <Text className="font-mono text-[0.75rem] text-[#30332F] dark:text-ink">
@@ -494,7 +528,7 @@ export default function PayoutSettingsScreen() {
             </View>
           ) : null}
           {dateLabel(status.connectedAt) ? (
-            <View className="min-h-12 flex-row items-center justify-between gap-4 border-t border-[#F0F1EC] py-3">
+            <View className="min-h-12 flex-row items-center justify-between gap-4 border-t border-line-soft py-3">
               <Text className="text-[0.8125rem] text-muted">Tilkoblet siden</Text>
               <Text className="text-[0.8125rem] font-medium text-[#30332F] dark:text-ink">
                 {dateLabel(status.connectedAt)}
@@ -519,7 +553,7 @@ export default function PayoutSettingsScreen() {
                 Fire steg fra kundebetaling til bankutbetaling.
               </Text>
             </View>
-            <Info size={17} color="#85887F" />
+            <Info size={17} color={tc('#85887F', 'subtle')} />
           </View>
           {PROCESS_STEPS.map((step, index) => (
             <View key={step.title} className="mt-4 flex-row gap-3">
@@ -534,7 +568,7 @@ export default function PayoutSettingsScreen() {
               </View>
             </View>
           ))}
-          <Text className="mt-5 border-t border-[#F0F1EC] pt-4 text-[0.75rem] leading-5 text-muted">
+          <Text className="mt-5 border-t border-line-soft pt-4 text-[0.75rem] leading-5 text-muted">
             En overføring til Stripe Connect betyr ikke at beløpet allerede er utbetalt til
             bankkontoen. Bankutbetaling følger Stripes utbetalingsplan.
           </Text>

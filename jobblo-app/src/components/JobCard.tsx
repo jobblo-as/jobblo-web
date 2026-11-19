@@ -79,6 +79,9 @@ export const JobCard: React.FC<JobCardProps> = ({
           source={imageSource}
           style={{ width: '100%', height: '100%', aspectRatio: JOB_PHOTO_RATIO }}
           resizeMode="cover"
+          // Android: decode at the card's size. A 2048 px upload shown in a ~170 px card was
+          // decoded in full (~12 MB a photo), and eight of them made Hjem stutter.
+          resizeMethod="resize"
           onError={() => setImageFailed(true)}
         />
 
@@ -108,10 +111,10 @@ export const JobCard: React.FC<JobCardProps> = ({
           </View>
         )}
 
-        {/* Favourite, FINN style: a white outline heart straight on the photo (no circle,
-            no shadow). Only when onSavePress is given. */}
+        {/* Favourite: a white heart in a dark round chip, readable on any photo (a bare white
+            outline vanished on light photos). Only when onSavePress is given. */}
         {onSavePress && (
-          <View className="absolute right-0 top-0" pointerEvents="box-none">
+          <View className="absolute right-2 top-2" pointerEvents="box-none">
             <Pressable
               onPress={() => {
                 if (!isAuthenticated) {
@@ -121,17 +124,17 @@ export const JobCard: React.FC<JobCardProps> = ({
                 onSavePress(job._id);
               }}
               hitSlop={8}
-              className="h-10 w-10 items-center justify-center active:opacity-70"
+              className="h-9 w-9 items-center justify-center rounded-full bg-black/55 active:opacity-70"
               accessibilityRole="button"
               accessibilityLabel={isSaved ? 'Fjern fra lagrede lister' : 'Lagre i liste'}
             >
               {savedLoading ? (
-                <View className="h-5 w-5" />
+                <View className="h-[18px] w-[18px]" />
               ) : (
                 <Heart
-                  size={24}
-                  color="#FFFFFF"
-                  strokeWidth={2}
+                  size={18}
+                  color={isSaved ? '#E5484D' : '#FFFFFF'}
+                  strokeWidth={2.25}
                   fill={isSaved ? '#E5484D' : 'none'}
                 />
               )}

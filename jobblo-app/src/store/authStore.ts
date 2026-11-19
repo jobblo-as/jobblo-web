@@ -21,6 +21,13 @@ async function clearAuthenticatedSession(previousUser: AuthUser) {
   await queryClient.cancelQueries();
   queryClient.removeQueries();
   destroyChatSocket();
+  // The half-written "Legg ut" listing lives in memory, not in the query cache: without this
+  // the next account saw it, and autosave PUT the old account's draft (404).
+  // Lazy require: post-job → createJob.service → api/client → authStore would be a cycle.
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  (
+    require('../features/post-job/draftSync') as typeof import('../features/post-job/draftSync')
+  ).forgetDraftsForSignOut();
 }
 
 type AuthState = {

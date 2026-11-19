@@ -70,6 +70,12 @@
 - [ ] Sign-out ke dauraan aaya push tap login ke baad resume hota hai ya nahi — verify.
 - [ ] `expo-doctor`: 10 Expo packages SDK 58 ke latest patch se peeche (`npx expo install --check`, phir device test).
 - [ ] TestFlight client review (23 Okt 2026) ke P0/P1 items ka status device par confirm.
+- [ ] Branch `fix/job-page-profile-ui` (2026-11-18) device par test: job/profile back flow, left-edge swipe back, photo viewer swipe-to-close, ek tap camera, location sheet, 320pt phone.
+- [ ] Backend `package-lock.json` npm audit fix (mongoose 8.24.10, fast-xml-parser) commit + deploy; `orderController`/`browseController` fixes production par deploy.
+- [ ] Job par 100-request cap wala bug (bug 4) fix + test.
+- [ ] `SearchFilterSheet` location bhi naya `useLocationPermission` sheet use kare.
+- [ ] Hast (39 kr) iOS par: band karein (naya build) ya aise hi rakhein — App Store 3.1.1 risk, faisla.
+- [ ] Android ki responsive screen recordings dobara (pichli blank aayi).
 
 ## P2 — baad me
 
