@@ -6,19 +6,23 @@ import { JobCardSkeleton } from '../Loading/JobCardSkeleton';
 import type { Jobs } from '../../types/Jobs';
 
 interface RelatedJobsProps {
-  coordinates?: [number, number];
-  categories?: string[];
   currentJobId?: string;
+  /** The signed-in user: their own jobs are left out. */
+  viewerId?: string | null;
+  /** Jobs the user has a pending or accepted application on: left out. */
+  appliedJobIds?: ReadonlySet<string>;
 }
 
-const RelatedJobs: React.FC<RelatedJobsProps> = ({ coordinates, categories, currentJobId }) => {
+const RelatedJobs: React.FC<RelatedJobsProps> = ({ currentJobId, viewerId, appliedJobIds }) => {
   const navigate = useNavigate();
 
-  const { data: recommendedJobs = [], isLoading: isRecommendedLoading } = useRecommendedJobsQuery(
-    coordinates,
-    categories,
-    currentJobId || ''
-  );
+  const {
+    data: recommendedJobs = [],
+    isLoading: isRecommendedLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useRecommendedJobsQuery(currentJobId || '', viewerId, appliedJobIds);
 
   if (isRecommendedLoading) {
     return (
@@ -30,7 +34,8 @@ const RelatedJobs: React.FC<RelatedJobsProps> = ({ coordinates, categories, curr
     );
   }
 
-  if (recommendedJobs.length === 0) {
+  // A first page made only of the viewer's own or applied-to jobs still has more behind it.
+  if (recommendedJobs.length === 0 && !hasNextPage) {
     return (
       <div className="py-10 px-4">
         <div className="flex flex-col items-center justify-center p-10 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl">
@@ -53,10 +58,25 @@ const RelatedJobs: React.FC<RelatedJobsProps> = ({ coordinates, categories, curr
   }
 
   return (
-    <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-5 lg:grid-cols-4">
-      {recommendedJobs.map((job: Jobs) => (
-        <JobCard key={job._id} job={job} />
-      ))}
+    <div>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-5 lg:grid-cols-4">
+        {recommendedJobs.map((job: Jobs) => (
+          <JobCard key={job._id} job={job} />
+        ))}
+        {isFetchingNextPage && [1, 2, 3, 4].map((i) => <JobCardSkeleton key={`more-${i}`} />)}
+      </div>
+      {hasNextPage && (
+        <div className="mt-8 flex justify-center">
+          <button
+            type="button"
+            onClick={() => void fetchNextPage()}
+            disabled={isFetchingNextPage}
+            className="rounded-full border border-[#D4D6CF] px-6 py-2.5 text-[0.9375rem] font-semibold text-[#0B0B0B] transition-colors hover:bg-[#F3F4EF] disabled:opacity-60"
+          >
+            {isFetchingNextPage ? 'Laster…' : 'Vis flere oppdrag'}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

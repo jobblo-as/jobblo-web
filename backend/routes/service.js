@@ -178,6 +178,16 @@ router.get('/nearby', cacheJson('services', 30), serviceController.getNearbyServ
 
 /**
  * @swagger
+ * /api/services/{id}/similar:
+ *   get:
+ *     summary: Open jobs like this one ("Lignende oppdrag"), same category, most alike title first
+ *     tags: [Tjenester]
+ */
+// Same answer for every caller, so cached per URL; any Service write clears it.
+router.get('/:id/similar', cacheJson('services', 30), serviceController.getSimilarServices);
+
+/**
+ * @swagger
  * /api/services/{id}/location:
  *   put:
  *     summary: Update service location

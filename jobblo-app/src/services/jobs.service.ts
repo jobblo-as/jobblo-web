@@ -91,6 +91,21 @@ export const jobsService = {
   },
 
   /**
+   * "Lignende oppdrag": same category, the most alike title first (iPhone 17 → 17 Pro → 18 …).
+   * Maps to GET /api/services/:id/similar?page=&limit= (the list endpoint's paged shape).
+   */
+  async getSimilarJobs(jobId: string, page = 1, limit = 12): Promise<JobsResponse> {
+    const response = await apiClient.get<Partial<JobsResponse>>(`/services/${jobId}/similar`, {
+      params: { page, limit },
+    });
+    const data = Array.isArray(response.data?.data) ? response.data.data : [];
+    return {
+      data,
+      pagination: response.data?.pagination ?? { total: data.length, totalPages: 1, page, limit },
+    };
+  },
+
+  /**
    * Fetch the listings posted by the authenticated user.
    *
    * Maps to GET /api/services/my-posted. Ownership comes from the token on the

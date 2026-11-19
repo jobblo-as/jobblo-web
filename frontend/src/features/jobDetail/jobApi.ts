@@ -1,15 +1,23 @@
 import mainLink from '../../api/mainURLs';
+import type { Jobs } from '../../types/Jobs';
 
 export const getJobDetail = async (id: string) => {
   const response = await mainLink.get(`/api/services/${id}`);
   return response.data;
 };
 
-export const getNearbyJobs = async (lat: number, lng: number, radius: number = 50000) => {
-  const { data } = await mainLink.get(`/api/services/nearby`, {
-    params: { lat, lng, radius },
-  });
-  return data;
+/** "Lignende oppdrag": same category, the most alike title first; paged (12 a page). */
+export const getSimilarJobs = async (
+  id: string,
+  page = 1,
+  limit = 12
+): Promise<{ data: Jobs[]; pagination: { page: number; totalPages: number; total: number } }> => {
+  const { data } = await mainLink.get(`/api/services/${id}/similar`, { params: { page, limit } });
+  const jobs: Jobs[] = Array.isArray(data?.data) ? data.data : [];
+  return {
+    data: jobs,
+    pagination: data?.pagination ?? { page, totalPages: 1, total: jobs.length },
+  };
 };
 
 export const createChat = async (payload: { providerId: string; serviceId: string }) => {

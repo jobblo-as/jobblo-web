@@ -1,6 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { getJobDetail, createChat, createStripeSession, getNearbyJobs } from './jobApi';
-import { fetchJobs } from '../jobsList/jobListingAPI';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { getJobDetail, createChat, createStripeSession, getSimilarJobs } from './jobApi';
 import { createJobRequest, getMyJobRequests } from '../../api/orderAPI';
 import type { Jobs } from '../../types/Jobs';
 import { useUserStore } from '../../stores/userStore';
@@ -44,66 +43,39 @@ export const useCreateJobRequestMutation = () => {
 // used it, and the endpoint it called let either party drive an order into a terminal
 // state without settling the money. Order status changes go through the SafePay flow.
 
+/**
+ * "Lignende oppdrag", page by page: the server picks the same category, the most alike title
+ * first, and leaves out full and closed jobs. The list is the same for everyone, so the
+ * viewer's own jobs and the ones they applied to are dropped here (and a job that moved between
+ * two pages is shown once).
+ */
 export const useRecommendedJobsQuery = (
-  coordinates: [number, number] | undefined,
-  categories: string[] | undefined,
-  currentJobId: string
+  currentJobId: string,
+  viewerId?: string | null,
+  appliedJobIds?: ReadonlySet<string>
 ) => {
-  return useQuery({
-    queryKey: ['recommendedJobs', coordinates, categories, currentJobId],
-    queryFn: async () => {
-      let jobs: Jobs[] = [];
-
-      // 1. Try nearby jobs if coordinates exist
-      if (coordinates && coordinates.length === 2) {
-        const [longitude, latitude] = coordinates;
-        try {
-          const nearbyData = await getNearbyJobs(latitude, longitude, 50000);
-          if (Array.isArray(nearbyData)) {
-            jobs = nearbyData;
-          }
-        } catch (error) {
-          console.error('Error fetching nearby jobs:', error);
-        }
-      }
-
-      // 2. If no nearby jobs or no coordinates, try by category
-      if (jobs.length < 7 && categories && categories.length > 0) {
-        try {
-          const categoryData = await fetchJobs({
-            categories: categories,
-            limit: 12, // Get more to filter out current job
-          });
-          if (categoryData && Array.isArray(categoryData.data)) {
-            // Merge and avoid duplicates
-            const categoryJobs = categoryData.data.filter(
-              (cj) => !jobs.some((nj) => nj._id === cj._id)
-            );
-            jobs = [...jobs, ...categoryJobs];
-          }
-        } catch (error) {
-          console.error('Error fetching category jobs:', error);
-        }
-      }
-
-      // 3. If still not enough, just get any latest jobs
-      if (jobs.length < 7) {
-        try {
-          const latestData = await fetchJobs({ limit: 12 });
-          if (latestData && Array.isArray(latestData.data)) {
-            const latestJobs = latestData.data.filter((lj) => !jobs.some((j) => j._id === lj._id));
-            jobs = [...jobs, ...latestJobs];
-          }
-        } catch (error) {
-          console.error('Error fetching latest jobs:', error);
-        }
-      }
-
-      // Filter current job and take only first 6
-      return jobs.filter((job: Jobs) => job._id !== currentJobId).slice(0, 6);
+  return useInfiniteQuery({
+    queryKey: ['recommendedJobs', currentJobId],
+    queryFn: ({ pageParam }) => getSimilarJobs(currentJobId, pageParam),
+    initialPageParam: 1,
+    getNextPageParam: (last) =>
+      last.pagination.page < last.pagination.totalPages ? last.pagination.page + 1 : undefined,
+    enabled: Boolean(currentJobId),
+    staleTime: 60_000,
+    select: (data) => {
+      const seen = new Set<string>();
+      return data.pages
+        .flatMap((page) => page.data)
+        .filter((job: Jobs) => {
+          if (seen.has(job._id)) return false;
+          seen.add(job._id);
+          // Typed as an id, but the list populates the seller.
+          const seller = job.userId as unknown as string | { _id?: string } | null;
+          const owner = seller && typeof seller === 'object' ? seller._id : seller;
+          if (viewerId && String(owner) === viewerId) return false;
+          return !appliedJobIds?.has(job._id);
+        });
     },
-    staleTime: 1000 * 60 * 60 * 5, // 5 hours
-    gcTime: 1000 * 60 * 60 * 5,
   });
 };
 
