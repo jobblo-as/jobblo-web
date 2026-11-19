@@ -160,6 +160,10 @@ async function scalingSignals() {
   };
 }
 
+// Hit/miss counters are in memory and restart from zero on every deploy. Below this many
+// requests the hit rate is mostly cold-start misses, so it is not judged yet.
+const CACHE_MIN_SAMPLE = 500;
+
 /** Pure: the Redis / API workers / response cache / background jobs nodes. Unit-tested. */
 function scalingNodes({ workers, redis, queues, queueMode }) {
   const t = workers?.totals;
@@ -224,13 +228,22 @@ function scalingNodes({ workers, redis, queues, queueMode }) {
       name: 'Response cache',
       group: 'core',
       status:
-        hits + misses < 50 ? 'unknown' : hits / (hits + misses) < 0.5 ? 'degraded' : 'healthy',
+        hits + misses < CACHE_MIN_SAMPLE
+          ? 'unknown'
+          : hits / (hits + misses) < 0.5
+            ? 'degraded'
+            : 'healthy',
       metrics: {
         Store: redis.ok ? 'Redis (shared) + 1 s in-process' : 'in-process only',
         'Hit rate (all workers)':
           hits + misses
             ? `${Math.round((hits / (hits + misses)) * 1000) / 10}% of ${hits + misses}`
             : 'no traffic yet',
+        ...(hits + misses < CACHE_MIN_SAMPLE
+          ? {
+              Note: `Warming up: judged after ${CACHE_MIN_SAMPLE} requests (counters reset on restart).`,
+            }
+          : {}),
         ...Object.fromEntries(
           cacheRows
             .slice(0, 5)
