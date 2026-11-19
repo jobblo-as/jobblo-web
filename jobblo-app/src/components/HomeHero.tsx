@@ -140,6 +140,8 @@ export function HomeHero({ eyebrow, categories, onPost, onNearby }: HomeHeroProp
                 source={service.src}
                 style={{ width: '100%', height: '100%' }}
                 resizeMode="cover"
+                // Android: 900 px photos in a 92 px circle, decoded at the circle's size.
+                resizeMethod="resize"
               />
             </Animated.View>
           ))}
