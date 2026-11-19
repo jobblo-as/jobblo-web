@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { registerHooks } from 'node:module';
 
 const stubs = {
-  'react-native': 'export const Platform = { OS: "android" };',
+  'react-native': 'export const Platform = globalThis.__platform;',
   'expo-constants': 'export default globalThis.__constants;',
   '@react-native-async-storage/async-storage': 'export default globalThis.__storage;',
   '../api/client': 'export default globalThis.__api;',
@@ -20,6 +20,7 @@ registerHooks({
       : next(url, context),
 });
 
+globalThis.__platform = { OS: 'android' };
 globalThis.__constants = { appOwnership: null, executionEnvironment: 'bare', deviceId: 'd1' };
 const data = new Map();
 globalThis.__storage = {
@@ -37,9 +38,16 @@ globalThis.__api = {
   },
 };
 let nativePresent = true; // false = a native build older than the JS (Expo SDK 58)
+// Native modules the real expo-notifications ships per platform: the topic module is Android-only.
+const ANDROID_ONLY = new Set(['ExpoTopicSubscriptionModule']);
 globalThis.require = (name) =>
   name === 'expo-modules-core'
-    ? { requireOptionalNativeModule: () => (nativePresent ? {} : null) }
+    ? {
+        requireOptionalNativeModule: (mod) =>
+          !nativePresent || (globalThis.__platform.OS === 'ios' && ANDROID_ONLY.has(mod))
+            ? null
+            : {},
+      }
     : {
         setNotificationHandler() {},
         setNotificationChannelAsync: async () => {},
@@ -48,6 +56,7 @@ globalThis.require = (name) =>
           tokenRequests += 1;
           return { data: 'fcm-token-123' };
         },
+        getExpoPushTokenAsync: async () => ({ data: 'ExponentPushToken[abcdefghijkl]' }),
         addPushTokenListener: () => ({ remove() {} }),
       };
 const push = await import('./pushNotifications.service.ts');
@@ -87,6 +96,23 @@ assert.equal(
   true,
   'opt-out cleared by enabling'
 );
+// iOS: no topic module exists there, and push must still register (it was off in every iOS build).
+globalThis.__platform.OS = 'ios';
+const posted = [];
+globalThis.__api.post = async (url, body) => void posted.push({ url, body });
+const ios = await push.registerPushNotifications({ automatic: true });
+assert.equal(ios.registered, true, 'iOS registers without the Android-only topic module');
+assert.deepEqual(posted.at(-1), {
+  url: '/push-tokens',
+  body: { token: 'ExponentPushToken[abcdefghijkl]', platform: 'ios', deviceId: 'd1' },
+});
+assert.equal(
+  await push.getPushPermission(),
+  'granted',
+  'settings switch is not "unavailable" on iOS'
+);
+globalThis.__platform.OS = 'android';
+
 // A native build older than the JS: push switches off without throwing (it was a red error).
 nativePresent = false;
 const warnings = [];

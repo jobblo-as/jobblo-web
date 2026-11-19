@@ -84,7 +84,7 @@ describe('dependency map scaling nodes', () => {
     worstLoopP99Ms: 20,
     restarts: 0,
     passwordBusy: 0,
-    cache: { services: { hits: 95, misses: 5, hitRate: 95 } },
+    cache: { services: { hits: 950, misses: 50, hitRate: 95 } },
     ...over,
   });
   const healthyRedis = {
@@ -171,5 +171,29 @@ describe('dependency map scaling nodes', () => {
     expect(n.cache.metrics.Store).toBe('in-process only');
     expect(n.cache.status).toBe('unknown'); // no traffic yet
     expect(n.queues.status).toBe('unknown');
+  });
+
+  test('cache hit rate is only judged after enough requests since restart', () => {
+    const cacheNode = (hits, misses) =>
+      byId(
+        scalingNodes({
+          workers: {
+            configured: '1',
+            totals: totals({ workers: 1, cache: { services: { hits, misses, hitRate: null } } }),
+          },
+          redis: healthyRedis,
+          queueMode: 'redis',
+          queues: {},
+        })
+      ).cache;
+    // Fresh deploy: 7 of 60 hit (the case seen on the server) is warm-up, not a problem.
+    const warming = cacheNode(7, 53);
+    expect(warming.status).toBe('unknown');
+    expect(warming.metrics.Note).toMatch(/Warming up/);
+    // Enough traffic and still mostly misses: a real problem.
+    const cold = cacheNode(60, 540);
+    expect(cold.status).toBe('degraded');
+    expect(cold.metrics.Note).toBeUndefined();
+    expect(cacheNode(400, 200).status).toBe('healthy');
   });
 });

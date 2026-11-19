@@ -1129,12 +1129,23 @@ const JobListingDetailPage = () => {
             <h2 className="text-[clamp(1.25rem,2.4vw,1.625rem)] font-bold tracking-[-0.03em] text-[#0B0B0B]">
               Lignende oppdrag
             </h2>
-            <p className="mt-1 text-[0.875rem] text-[#63665F]">Basert på sted og kategori</p>
+            <p className="mt-1 text-[0.875rem] text-[#63665F]">Samme kategori, mest like først</p>
           </div>
           <RelatedJobs
-            coordinates={job?.location?.coordinates}
-            categories={job?.categories}
             currentJobId={job?._id}
+            viewerId={currentUser?._id ?? null}
+            appliedJobIds={
+              new Set(
+                (jobRequests ?? [])
+                  .filter(
+                    (req) =>
+                      req.customerId?._id === currentUser?._id &&
+                      (req.status === 'pending' || req.status === 'accepted')
+                  )
+                  .map((req) => req.serviceId?._id)
+                  .filter(Boolean)
+              )
+            }
           />
         </div>
       </div>

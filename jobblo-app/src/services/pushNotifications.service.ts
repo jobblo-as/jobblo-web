@@ -20,10 +20,12 @@ function loadNotifications(): NotificationModule | null {
   // A native build made before the Expo SDK 58 upgrade lacks expo-notifications' newer native
   // module, and importing the JS package then throws during module init (a red error on every
   // start). Check first and switch push off with one clear warning: rebuild the app to fix.
+  // ExpoTopicSubscriptionModule is Android-only (expo-notifications has no iOS version), so the
+  // check runs on Android alone; on iOS it switched push off in every build.
   if (isExpoGo()) return null;
   const { requireOptionalNativeModule } =
     require('expo-modules-core') as typeof import('expo-modules-core');
-  if (Platform.OS !== 'web' && !requireOptionalNativeModule('ExpoTopicSubscriptionModule')) {
+  if (Platform.OS === 'android' && !requireOptionalNativeModule('ExpoTopicSubscriptionModule')) {
     if (!staleBuildWarned) {
       staleBuildWarned = true;
       console.warn(

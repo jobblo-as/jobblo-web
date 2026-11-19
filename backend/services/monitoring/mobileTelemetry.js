@@ -34,21 +34,31 @@ function fingerprint(name, message, stack) {
     .slice(0, 16);
 }
 
+/**
+ * The iOS build number from the request's User-Agent ("Jobblo/15 CFNetwork/… Darwin/…"; iOS puts
+ * CFBundleVersion there). Builds made before the app sent its real build number send none.
+ */
+function iosBuildFromUserAgent(userAgent) {
+  const m = /^[^\s/]+\/(\d{1,9})\s+CFNetwork\//.exec(String(userAgent || ''));
+  return m ? m[1] : null;
+}
+
 /** Pure: validate one batch into documents. Unit-tested. */
-function normalize(body, userId = null, now = Date.now()) {
+function normalize(body, userId = null, now = Date.now(), userAgent = '') {
   const ctx = body && typeof body === 'object' ? body : {};
   const installId = id(ctx.installId);
   const sessionId = id(ctx.sessionId);
   if (!installId || !sessionId) return { error: 'installId and sessionId are required.' };
   const events = Array.isArray(ctx.events) ? ctx.events.slice(0, MAX_BATCH) : [];
+  const platform = PLATFORMS.includes(ctx.platform) ? ctx.platform : null;
   const base = {
     installId,
     sessionId,
     userId: userId && mongoose.isValidObjectId(userId) ? userId : null,
-    platform: PLATFORMS.includes(ctx.platform) ? ctx.platform : null,
+    platform,
     osVersion: str(ctx.osVersion, 40),
     appVersion: str(ctx.appVersion, 40),
-    build: str(ctx.build, 40),
+    build: str(ctx.build, 40) || (platform === 'ios' ? iosBuildFromUserAgent(userAgent) : null),
     device: str(ctx.device, 80),
   };
   const docs = [];
@@ -83,10 +93,63 @@ function normalize(body, userId = null, now = Date.now()) {
 }
 
 async function ingest(req, res) {
-  const { docs, error } = normalize(req.body, req.userId || req.user?._id || null);
+  const { docs, error } = normalize(
+    req.body,
+    req.userId || req.user?._id || null,
+    Date.now(),
+    req.get('user-agent')
+  );
   if (error) return res.status(400).json({ success: false, message: error });
   if (docs.length) await require('../../models/MobileEvent').insertMany(docs, { ordered: false });
   return res.status(202).json({ success: true, accepted: docs.length });
 }
 
-module.exports = { normalize, fingerprint, ingest, MAX_BATCH };
+/**
+ * The app version on each phone (install) these users used, newest phone first: one row per
+ * user + install with its latest event. Telemetry is kept 30 days.
+ * ponytail: the newest `scan` events are grouped; a user active only before those is missed
+ * (a per-user latest-install collection is the upgrade).
+ */
+function appInstallsOf(userIds, { limit = 10, scan = 5000 } = {}) {
+  const ids = userIds.filter(Boolean);
+  if (!ids.length) return Promise.resolve([]);
+  return require('../../models/MobileEvent').aggregate([
+    { $match: { userId: { $in: ids } } },
+    { $sort: { at: -1 } },
+    { $limit: scan },
+    {
+      $group: {
+        _id: { userId: '$userId', installId: '$installId' },
+        lastSeen: { $first: '$at' },
+        platform: { $first: '$platform' },
+        appVersion: { $first: '$appVersion' },
+        build: { $first: '$build' },
+        device: { $first: '$device' },
+        osVersion: { $first: '$osVersion' },
+      },
+    },
+    { $sort: { lastSeen: -1 } },
+    { $limit: limit },
+    {
+      $project: {
+        _id: '$_id.installId',
+        userId: '$_id.userId',
+        lastSeen: 1,
+        platform: 1,
+        appVersion: 1,
+        build: 1,
+        device: 1,
+        osVersion: 1,
+      },
+    },
+  ]);
+}
+
+module.exports = {
+  normalize,
+  fingerprint,
+  ingest,
+  iosBuildFromUserAgent,
+  appInstallsOf,
+  MAX_BATCH,
+};

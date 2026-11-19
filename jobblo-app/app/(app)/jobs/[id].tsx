@@ -53,6 +53,8 @@ import { ApplyModal } from '../../../src/components/domain/ApplyModal';
 import { SaveToListSheet } from '../../../src/components/domain/SaveToListSheet';
 import { ReportJobSheet } from '../../../src/components/domain/ReportJobSheet';
 import { JobAreaMap } from '../../../src/components/domain/JobAreaMap';
+import { SimilarJobs } from '../../../src/components/domain/SimilarJobs';
+import { appliedJobIdsOf } from '../../../src/utils/similarJobs';
 import { ImageViewer } from '../../../src/components/ui/ImageViewer';
 import { categoryImage } from '../../../src/utils/categoryImage';
 import { applyBlockReason } from '../../../src/utils/applyBlock';
@@ -796,6 +798,14 @@ function JobDetailsScreen() {
             Jobblo{job.categories?.[0] ? ` / ${job.categories[0]}` : ''} / {area}
           </Text>
         </Section>
+
+        {id ? (
+          <SimilarJobs
+            jobId={id}
+            viewerId={currentUserId || null}
+            appliedJobIds={appliedJobIdsOf(requestsQuery.data, currentUserId || null)}
+          />
+        ) : null}
       </ScrollView>
 
       {/* Like Hjem: once the photo has scrolled away, the page colour sits behind the status bar so

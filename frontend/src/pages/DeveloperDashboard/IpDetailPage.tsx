@@ -9,7 +9,7 @@ import {
   Tablet,
   type LucideIcon,
 } from 'lucide-react';
-import { ago, num } from '@/lib/devFormat';
+import { ago, appLabel, num } from '@/lib/devFormat';
 import {
   useDevBlocks,
   useDevIpActivity,
@@ -155,6 +155,16 @@ const accountColumns: Column<IpAccount>[] = [
   },
   { key: 'email', header: 'E-mail', cell: (a) => <span className="font-mono">{a.email}</span> },
   { key: 'role', header: 'Role', cell: (a) => a.role || '—' },
+  {
+    key: 'app',
+    header: 'App version',
+    cell: (a) =>
+      a.app ? (
+        <span title={`Newest phone, seen ${ago(a.app.lastSeen)}`}>{appLabel(a.app)}</span>
+      ) : (
+        <span className="text-muted-foreground">—</span>
+      ),
+  },
   { key: 'sessions', header: 'Open sessions', align: 'right', cell: (a) => num(a.sessions) },
   { key: 'last', header: 'Last seen', cell: (a) => when(a.lastSeen) },
 ];

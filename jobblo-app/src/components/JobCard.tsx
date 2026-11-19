@@ -65,10 +65,12 @@ export const JobCard: React.FC<JobCardProps> = ({
   const location = job.location?.city || job.location?.address || 'Norge';
 
   return (
+    // No flex-1: every list cell sizes itself from this card's content. With flex-1 (basis 0)
+    // RN 0.88 gave the card 0 height there, so cards overlapped and FlatList stopped rendering.
     <TouchableOpacity
       onPress={handlePress}
       activeOpacity={0.7}
-      className="flex-1 focus-visible:outline-none"
+      className="focus-visible:outline-none"
     >
       {/* Photo container — square, rounded 2xl, brand bg */}
       <View

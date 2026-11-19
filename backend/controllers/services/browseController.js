@@ -15,6 +15,7 @@ const { firstView } = require('../../utils/firstView');
 const { parsePagination } = require('../../utils/pagination');
 const { serverError } = require('../../utils/serverError');
 const { queryString } = require('../../utils/devQuery');
+const { rankByTitle } = require('../../utils/similarTitles');
 
 /** A public listing as served by getServiceById, cached for 30 s (cleared on any Service write). */
 const detailKey = (id) => `services:detail:${id}`;
@@ -259,6 +260,97 @@ exports.getAllServices = async (req, res) => {
         limit: safeLimit,
         totalPages: Math.ceil(total / safeLimit),
       },
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// ------------------- Similar Services ("Lignende oppdrag") -------------------
+
+// ponytail: the newest this many same-category jobs are ranked in memory, so an older look-alike
+// past them is missed (a text index scored in Mongo is the upgrade).
+const SIMILAR_SCAN = 500;
+
+/**
+ * Ids of the open listings in these categories whose applicant limit is reached ("Fulltegnet":
+ * nobody can apply). Left out in the query itself, so every page holds a full page.
+ */
+async function fullListingIds(categories) {
+  const limited = await Service.find({
+    status: { $in: PUBLIC_SERVICE_STATUSES },
+    categories: { $in: categories },
+    maxApplicants: { $gt: 0 },
+  })
+    .select('_id maxApplicants')
+    .lean();
+  if (!limited.length) return [];
+  const counts = await JobRequest.aggregate([
+    {
+      $match: {
+        serviceId: { $in: limited.map((s) => s._id) },
+        status: { $in: ['pending', 'accepted'] },
+      },
+    },
+    { $group: { _id: '$serviceId', n: { $sum: 1 } } },
+  ]);
+  const byId = new Map(counts.map((c) => [String(c._id), c.n]));
+  return limited.filter((s) => (byId.get(String(s._id)) || 0) >= s.maxApplicants).map((s) => s._id);
+}
+
+/**
+ * GET /api/services/:id/similar?page=&limit= — "Lignende oppdrag": open jobs in the same category,
+ * the most alike title first (utils/similarTitles: "iPhone 17" → iPhone 17, 17 Pro, 17 Pro Max,
+ * iPhone 18, 16, 15 …), newest first inside a step. Never another category, the job itself,
+ * non-public jobs or full ones. Paged (default 12) in the list endpoint's `{ data, pagination }`
+ * shape. Same answer for every caller (cached per URL), so the client drops the viewer's own
+ * jobs and applied-to ones.
+ * ponytail: "Fulltegnet" is counted when the 30 s cache fills, like the detail page.
+ */
+exports.getSimilarServices = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!isValidId(id)) return res.status(400).json({ error: 'Invalid service ID' });
+    const { page, limit, skip } = parsePagination(req.query, { defaultLimit: 12, maxLimit: 50 });
+    const empty = { data: [], pagination: { total: 0, page, limit, totalPages: 0 } };
+
+    const base = await Service.findById(id).select('status categories title').lean();
+    // 404 for a non-public job too, as the detail endpoint does: it must not confirm one exists.
+    if (!base || !PUBLIC_SERVICE_STATUSES.includes(base.status))
+      return res.status(404).json({ error: 'Service not found' });
+    const categories = (base.categories || []).filter((c) => typeof c === 'string' && c);
+    if (!categories.length) return res.json(empty);
+
+    const candidates = await Service.find({
+      status: { $in: PUBLIC_SERVICE_STATUSES },
+      categories: { $in: categories },
+      _id: { $nin: [base._id, ...(await fullListingIds(categories))] },
+    })
+      .select('_id title createdAt')
+      .sort({ createdAt: -1 })
+      .limit(SIMILAR_SCAN)
+      .lean();
+    const ranked = rankByTitle(base.title, candidates);
+    const pageIds = ranked.slice(skip, skip + limit).map((s) => s._id);
+
+    const docs = pageIds.length
+      ? await Service.find({ _id: { $in: pageIds } })
+          .select(LIST_EXCLUDE)
+          .populate({ path: 'userId', select: LIST_SELLER, match: { isDeleted: { $ne: true } } })
+          .lean()
+      : [];
+    // $in does not keep order: put the page back in its ranked order.
+    const order = new Map(pageIds.map((pid, i) => [String(pid), i]));
+    docs.sort((a, b) => order.get(String(a._id)) - order.get(String(b._id)));
+
+    const total = ranked.length;
+    res.json({
+      data: withSeller(
+        docs.filter((s) => s.userId), // a deleted seller's job: no card
+        LIST_SELLER
+      ),
+      pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
     });
   } catch (err) {
     console.error(err);

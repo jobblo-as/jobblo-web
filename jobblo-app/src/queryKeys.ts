@@ -73,6 +73,12 @@ export const queryKeys = {
     detail: (jobId: string) => ['jobs', 'detail', jobId] as const,
 
     /**
+     * "Lignende oppdrag" under a job (GET /api/services/:id/similar). Under 'jobs', so a tap on
+     * one opens its detail page from this cache without a spinner.
+     */
+    similar: (jobId: string) => ['jobs', 'similar', jobId] as const,
+
+    /**
      * Query key for the listings the authenticated user has posted.
      * Used by useMyJobs (GET /api/services/my-posted) on the Mine annonser screen.
      */

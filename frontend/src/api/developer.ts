@@ -186,6 +186,18 @@ export interface IpAccount {
   email: string | null;
   sessions: number;
   lastSeen: string;
+  /** The account's newest phone and its app version (mobile telemetry, 30 days). */
+  app?: AppInstall | null;
+}
+/** One phone (app install) and the app version it last ran. */
+export interface AppInstall {
+  _id: string;
+  lastSeen: string;
+  platform: string | null;
+  appVersion: string | null;
+  build: string | null;
+  device: string | null;
+  osVersion: string | null;
 }
 export interface IpSession {
   _id: string;
@@ -2331,6 +2343,8 @@ export interface UserDiag {
   }[];
   tickets: { _id: string; subject: string; status: string; orderId?: string; createdAt: string }[];
   roleChanges: { _id: string; description: string; createdAt: string; adminId?: NamedRef }[];
+  /** One row per phone (app install), newest first; from mobile telemetry (30 days). */
+  appInstalls?: AppInstall[];
   timeline: TimelineEvent[];
 }
 
