@@ -17,7 +17,6 @@ import { useAuthStore } from '../../../src/store/authStore';
 import { useSafePayCheckout, useSafePaySessionStatus } from '../../../src/hooks/useSafePayCheckout';
 import { ErrorState } from '../../../src/components/ui/ErrorState';
 import { Skeleton } from '../../../src/components/ui/Skeleton';
-import { useTabBarSpace } from '../../../src/components/GlassTabBar';
 import { providerOrderRoute } from '../../../src/utils/orderRoute';
 import { isValidOrderId, isValidSessionId } from '../../../src/utils/safepayCheckoutSession';
 import { reconcileSafePayPayment } from '../../../src/services/safepay.service';
@@ -296,7 +295,9 @@ function SuccessSkeleton() {
 
 export default function SafePaySuccessScreen() {
   const router = useRouter();
-  const bottomSpace = useTabBarSpace();
+  // The tab layout already ends this screen above the tab bar (sceneStyle paddingBottom);
+  // adding the tab bar space here as well left a tab-bar-high empty band at the bottom.
+  const bottomSpace = 24;
   const params = useLocalSearchParams<{
     session_id?: string | string[];
     orderId?: string | string[];
@@ -525,7 +526,7 @@ export default function SafePaySuccessScreen() {
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingTop: 24,
-          paddingBottom: bottomSpace + 16,
+          paddingBottom: bottomSpace + 8,
         }}
       >
         <View className="items-center">

@@ -868,7 +868,15 @@ function JobDetailsScreen() {
                   ? 'ready'
                   : 'required'
           }
-          onGoToPayout={() => router.push('/profile/settings/payout')}
+          onGoToPayout={() => {
+            // The dialog is a native Modal above every screen: close it, or it stays over Utbetalinger.
+            setIsApplyModalOpen(false);
+            // withAnchor: Min Jobblo stays under Utbetalinger in the profile stack.
+            router.push(
+              { pathname: '/profile/settings/payout', params: { from: 'job' } },
+              { withAnchor: true }
+            );
+          }}
         />
       ) : null}
 
