@@ -89,8 +89,8 @@ describe('favourites and lists only hold public listings (or your own)', () => {
   });
 });
 
-describe('admin panel cannot mint a superAdmin', () => {
-  it('createUser and changeUserRole refuse role superAdmin', async () => {
+describe('admin panel cannot mint a superAdmin without step-up', () => {
+  it('createUser refuses superAdmin; changeUserRole refuses it without step-up', async () => {
     const admin = { _id: new mongoose.Types.ObjectId() };
     const r1 = res();
     await usersAdmin.createUser(
@@ -110,7 +110,8 @@ describe('admin panel cannot mint a superAdmin', () => {
       r2,
       jest.fn()
     );
-    expect(r2.status).toHaveBeenCalledWith(400);
+    // Granting it needs the route's step-up guard (adminGrantSuperAdmin.test.js).
+    expect(r2.status).toHaveBeenCalledWith(401);
     expect(User.findByIdAndUpdate).not.toHaveBeenCalled();
   });
 });

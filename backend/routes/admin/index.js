@@ -73,7 +73,11 @@ router.get(
   '/users/:id/overview',
   require('../../controllers/admin/userOverviewController').getUserOverview
 );
-router.put('/users/:id/role', usersAdminController.changeUserRole);
+router.put(
+  '/users/:id/role',
+  usersAdminController.requireStepUpForSuperAdmin,
+  usersAdminController.changeUserRole
+);
 router.post('/users/:id/mfa/reset', require('../../controllers/mfaController').resetForUser);
 router.put('/users/:id/status', usersAdminController.updateUserStatus);
 router.put('/users/:id/verify', usersAdminController.verifyUser);

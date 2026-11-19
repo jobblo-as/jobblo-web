@@ -38,6 +38,8 @@ import {
 import type { AdminUser } from '../../types/admin';
 import type { ColumnDef } from '../../components/admin/AdminDataTable';
 import { useUserStore } from '../../stores/userStore';
+import { StepUpProvider } from '../../components/developer/StepUp';
+import { useStepUp } from '../../features/developer/stepUp';
 
 // Role options — create form. The API refuses superAdmin (no step-up in the panel).
 const ROLE_OPTIONS = [
@@ -53,7 +55,7 @@ const ROLE_FILTER_OPTIONS = [
   { label: 'Super Admin', value: 'superAdmin' },
   { label: 'Utvikler', value: 'developer' },
 ];
-// Role change: superAdmin is listed (so an existing one displays) but cannot be picked.
+// Role change: every role. Super Admin asks for an emailed one-time code first (step-up).
 const CHANGE_ROLE_OPTIONS = ROLE_FILTER_OPTIONS;
 const STATUS_OPTIONS = [
   { label: 'Aktiv', value: 'active' },
@@ -61,7 +63,17 @@ const STATUS_OPTIONS = [
   { label: 'Verifisert', value: 'verified' },
 ];
 
+/** Step-up (emailed code) is only needed to grant Super Admin. */
 export default function UsersPage() {
+  return (
+    <StepUpProvider>
+      <UsersPageContent />
+    </StepUpProvider>
+  );
+}
+
+function UsersPageContent() {
+  const withStepUp = useStepUp();
   const currentUser = useUserStore((s) => s.user);
 
   // Query state
@@ -209,7 +221,7 @@ export default function UsersPage() {
                 </SelectTrigger>
                 <SelectContent align="end">
                   {CHANGE_ROLE_OPTIONS.map((r) => (
-                    <SelectItem key={r.value} value={r.value} disabled={r.value === 'superAdmin'}>
+                    <SelectItem key={r.value} value={r.value}>
                       {r.label}
                     </SelectItem>
                   ))}
@@ -416,14 +428,32 @@ export default function UsersPage() {
 
       <AdminConfirmDialog
         title="Endre brukerrolle?"
-        description={`Vil du endre rollen til "${roleTarget?.user.name}" til "${roleTarget?.newRole}"?`}
-        confirmText="Ja, endre rolle"
+        description={
+          roleTarget?.newRole === 'superAdmin'
+            ? `"${roleTarget.user.name}" får full tilgang til hele admin-panelet, også brukere, betalinger og roller. Du må bekrefte med en engangskode på e-post.`
+            : `Vil du endre rollen til "${roleTarget?.user.name}" til "${roleTarget?.newRole}"?`
+        }
+        confirmText={
+          roleTarget?.newRole === 'superAdmin' ? 'Ja, gjør til Super Admin' : 'Ja, endre rolle'
+        }
         cancelText="Avbryt"
+        variant={roleTarget?.newRole === 'superAdmin' ? 'destructive' : undefined}
         isOpen={!!roleTarget}
         onOpenChange={(open) => !open && setRoleTarget(null)}
         onConfirm={async () => {
           if (!roleTarget) return;
-          await roleMutation.mutateAsync({ id: roleTarget.user._id, role: roleTarget.newRole });
+          const { user, newRole } = roleTarget;
+          try {
+            if (newRole === 'superAdmin') {
+              await withStepUp((stepUpToken) =>
+                roleMutation.mutateAsync({ id: user._id, role: newRole, stepUpToken })
+              );
+            } else {
+              await roleMutation.mutateAsync({ id: user._id, role: newRole });
+            }
+          } catch {
+            // Cancelled code dialog, or the error toast already shown by the mutation.
+          }
           setRoleTarget(null);
         }}
       />

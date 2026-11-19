@@ -13,8 +13,11 @@ const { queryString } = require('../../utils/devQuery');
 
 // Allowed role values — canonical set (used for filtering).
 const ALL_ROLES = ['user', 'provider', 'company', 'superAdmin', 'developer'];
-// What an admin may hand out: superAdmin is never granted through the panel (no step-up here).
+// What a new account may be created with: never superAdmin.
 const ASSIGNABLE_ROLES = ALL_ROLES.filter((r) => r !== 'superAdmin');
+// What an existing account may be changed to. superAdmin only behind step-up (an emailed
+// one-time code), enforced on the route by requireStepUpForSuperAdmin.
+const CHANGEABLE_ROLES = ALL_ROLES;
 
 // Fields never returned in user lists or details
 const SENSITIVE_SELECT = '-password -passwordResetToken -passwordResetExpires';
@@ -143,8 +146,22 @@ const getUserById = asyncHandler(async (req, res) => {
 });
 
 /**
+ * Granting superAdmin needs a fresh step-up token (X-Step-Up-Token, from the same emailed
+ * code flow as the developer dashboard, bound to this admin and login session). Every other
+ * role change goes through as before.
+ */
+const requireStepUpForSuperAdmin = (req, res, next) => {
+  if (req.body?.role !== 'superAdmin') return next();
+  return require('../../services/developer/stepUp').requireStepUp(req, res, () => {
+    req.stepUpVerified = true;
+    next();
+  });
+};
+
+/**
  * PUT /api/admin/users/:id/role
- * Change a user's role. Cannot assign superAdmin. Cannot demote self.
+ * Change a user's role. superAdmin only with step-up (requireStepUpForSuperAdmin), never to an
+ * inactive account. Cannot change own role.
  * Cannot remove the last superAdmin.
  */
 const changeUserRole = asyncHandler(async (req, res) => {
@@ -152,12 +169,17 @@ const changeUserRole = asyncHandler(async (req, res) => {
   if (!id) return sendError(res, 'Ugyldig bruker-ID.', 400);
 
   const { role } = req.body;
-  if (!role || !ASSIGNABLE_ROLES.includes(role)) {
+  if (typeof role !== 'string' || !CHANGEABLE_ROLES.includes(role)) {
     return sendError(
       res,
-      `Ugyldig rolle. Tilgjengelige roller: ${ASSIGNABLE_ROLES.join(', ')}.`,
+      `Ugyldig rolle. Tilgjengelige roller: ${CHANGEABLE_ROLES.join(', ')}.`,
       400
     );
+  }
+
+  // Second lock: the controller itself never grants superAdmin unless the guard ran.
+  if (role === 'superAdmin' && req.stepUpVerified !== true) {
+    return sendError(res, 'Bekreft med engangskode først.', 401);
   }
 
   // Prevent demoting self
@@ -165,9 +187,14 @@ const changeUserRole = asyncHandler(async (req, res) => {
     return sendError(res, 'Du kan ikke endre din egen rolle.', 403);
   }
 
-  const targetUser = await User.findById(id).select('role name email isDeleted').lean();
+  const targetUser = await User.findById(id)
+    .select('role name email isDeleted accountStatus')
+    .lean();
   if (!targetUser || targetUser.isDeleted) {
     return sendError(res, 'Bruker ikke funnet.', 404);
+  }
+  if (role === 'superAdmin' && targetUser.accountStatus === 'inactive') {
+    return sendError(res, 'En deaktivert konto kan ikke bli superadmin.', 400);
   }
 
   const prevRole = targetUser.role;
@@ -403,6 +430,7 @@ const revokeUserSessions = asyncHandler(async (req, res) => {
 
 module.exports = {
   getUsers,
+  requireStepUpForSuperAdmin,
   createUser,
   getUserById,
   changeUserRole,
