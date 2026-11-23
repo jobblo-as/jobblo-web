@@ -3,14 +3,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { saveServiceForm } from '../../features/services/api';
 import { useUserStore } from '../../stores/userStore';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { FileText, Trash2 } from 'lucide-react';
+import { ArrowRight, Calculator, FileText, Trash2 } from 'lucide-react';
 import { deleteJobDraft, listJobDrafts } from '../../api/jobDraftsAPI';
 import toast from 'react-hot-toast';
 import { DRAFT_DELETED_EVENT } from '../../hooks/useCreateJobForm';
 import { useJobDetailQuery } from '../../features/jobDetail/hook.ts';
 import { Spinner } from '../../components/Ui/Spinner';
 import { BackLink } from '../../components/Ui/BackLink';
-import { MICRO_LABEL } from '../../theme/brand';
+import { ICON_PLATE, MICRO_LABEL } from '../../theme/brand';
 
 export default function LeggUtOppdrag() {
   const { id } = useParams();
@@ -128,6 +128,31 @@ export default function LeggUtOppdrag() {
               : 'Tre korte steg. Du kan forhåndsvise underveis, og utkastet lagres automatisk.'}
           </p>
         </header>
+
+        {!isEditMode && (
+          // The renovation planner turns a plan into one draft per area, which land in the list below.
+          <Link
+            to="/oppussingskalkulator"
+            className="group mb-6 flex items-center gap-3 rounded-2xl border border-[#E6E7E1] bg-white p-4 transition-colors hover:border-[#2E6641]/45 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15"
+          >
+            <span className={ICON_PLATE}>
+              <Calculator size={18} aria-hidden="true" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[0.9375rem] font-semibold text-[#0B0B0B]">
+                Skal du pusse opp?
+              </span>
+              <span className="block text-[0.8125rem] leading-relaxed text-[#63665F]">
+                Få et prisanslag per rom i oppussingskalkulatoren, og gjør planen om til oppdrag.
+              </span>
+            </span>
+            <ArrowRight
+              size={18}
+              aria-hidden="true"
+              className="shrink-0 text-[#9B9E96] transition-transform group-hover:translate-x-0.5 group-hover:text-[#2E6641]"
+            />
+          </Link>
+        )}
 
         {!isEditMode && <DraftsList />}
       </div>

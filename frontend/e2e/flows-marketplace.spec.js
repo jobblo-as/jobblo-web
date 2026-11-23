@@ -254,7 +254,8 @@ test('saving a listing, then browsing favourite lists', async ({ page }) => {
     calls.some((c) => c.method === 'POST' && c.pathname === `/api/favorites/${SERVICE._id}`)
   ).toBe(true);
   await page.goto('/favorites');
-  await page.getByText('Oppussing').first().click();
+  // Exact: the footer's "Oppussingskalkulator" link also contains the list's name.
+  await page.getByText('Oppussing', { exact: true }).first().click();
   await expect(page).toHaveURL(/\/favorites\/list\/list-1$/);
   await expect(page.getByText(SERVICE.title).first()).toBeVisible();
   expect(errors).toEqual([]);

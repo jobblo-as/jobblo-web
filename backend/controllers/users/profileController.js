@@ -562,6 +562,13 @@ exports.deleteUser = async (req, res) => {
       console.error('Favorite cascade delete on user delete failed:', favoriteErr.message);
     }
 
+    // Saved renovation plans are personal (home size, budget); they go with the account.
+    try {
+      await require('../../models/RenovationPlan').deleteMany({ user: id });
+    } catch (planErr) {
+      console.error('Renovation plan delete on user delete failed:', planErr.message);
+    }
+
     // Cancel (don't delete) Orders involving this user to preserve audit trail.
     // Delete only completed/cancelled/disputed orders that no longer need audit context.
     try {

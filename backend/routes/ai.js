@@ -3,7 +3,13 @@ const router = express.Router();
 const aiController = require('../controllers/aiController');
 const { authenticate } = require('../middleware/auth');
 const imageUpload = require('../middleware/multer');
-const { checkFileTypes, IMAGE_TYPES } = require('../middleware/upload');
+const multer = require('multer');
+const {
+  checkFileTypes,
+  IMAGE_TYPES,
+  DOCUMENT_TYPES,
+  MULTIPART_LIMITS,
+} = require('../middleware/upload');
 const { makeLimiter } = require('../middleware/rateLimiter');
 const { ipKeyGenerator } = require('express-rate-limit');
 
@@ -177,6 +183,37 @@ router.post(
   checkFileTypes(IMAGE_TYPES),
   capAiInput,
   aiController.generateFullJobListing
+);
+
+// Renovation planner: facts (m², rooms, bathrooms, year, standard) from a home listing: pasted
+// text (JSON or multipart "text"), up to 5 photos ("images") and/or the prospectus PDF
+// ("prospectus"). Prospectuses are larger than job photos, hence their own 15 MB cap.
+const renovationFields = multer({
+  storage: multer.memoryStorage(),
+  limits: { ...MULTIPART_LIMITS, fileSize: 15 * 1024 * 1024, files: 6 },
+}).fields([
+  { name: 'images', maxCount: 5 },
+  { name: 'prospectus', maxCount: 1 },
+]);
+// The shared error handler says "maks 8 MB"; this route's limit is its own.
+const renovationUpload = (req, res, next) =>
+  renovationFields(req, res, (err) => {
+    if (err?.code === 'LIMIT_FILE_SIZE')
+      return res.status(413).json({ success: false, error: 'Filen er for stor. Maks 15 MB.' });
+    if (err?.code === 'LIMIT_UNEXPECTED_FILE' || err?.code === 'LIMIT_FILE_COUNT')
+      return res
+        .status(400)
+        .json({ success: false, error: 'Maks 5 bilder og ett prospekt (PDF).' });
+    return next(err);
+  });
+router.post(
+  '/renovation-facts',
+  authenticate,
+  aiLimiter,
+  renovationUpload,
+  checkFileTypes(DOCUMENT_TYPES),
+  capAiInput,
+  aiController.renovationFacts
 );
 
 module.exports = router;

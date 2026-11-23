@@ -161,6 +161,12 @@ export const queryKeys = {
   support: {
     mine: ['support', 'mine'] as const,
   },
+  renovation: {
+    /** GET /api/renovation/catalogue: areas, qualities and scopes (public, rarely changes). */
+    catalogue: ['renovation', 'catalogue'] as const,
+    /** "Mine planer" (GET /api/renovation/plans); private, so logout's removeQueries clears it. */
+    plans: ['renovation', 'plans'] as const,
+  },
   notifications: {
     all: ['notifications'] as const,
     list: (type?: string) => ['notifications', 'list', type ?? 'all'] as const,

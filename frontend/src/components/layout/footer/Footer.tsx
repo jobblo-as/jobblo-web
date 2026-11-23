@@ -28,6 +28,7 @@ const COLUMNS: { title: string; links: { name: string; to: string }[] }[] = [
     links: [
       { name: 'Finn oppdrag', to: '/search/job/all' },
       { name: 'Legg ut oppdrag', to: '/publish-job' },
+      { name: 'Oppussingskalkulator', to: '/oppussingskalkulator' },
       { name: 'Oppdragstakere', to: '/oppdragstakere' },
       { name: 'Medlemskap', to: '/membership' },
     ],

@@ -607,5 +607,151 @@
   "realPricesNote": {
     "no": "Basert på {n} fullførte lignende oppdrag.",
     "en": "Based on {n} completed similar jobs."
+  },
+  "renovation": {
+    "_about": "Renovation planner (Jobblo-Renovation-planner.pdf). NOK incl. VAT, starting values to be adjusted with real data. Each area has a surface and a full scope. range: [low, high] kr per unit; unit: bathroom (times the number of bathrooms) | home (once) | m2 (home m² times floorShare) | window (rooms times unitsPerRoom, at least 1). Quality picks a slice of the range (qualityBands, 0 = low end, 1 = high end, premium goes above). labourShare: the part of the price that is labour; the rest is materials. weeks: rough duration. certified: trades that must be done by a certified professional; any certified trade, or quote: true, makes the job Anbud (request quotes).",
+    "disclaimer": {
+      "no": "Estimatet er veiledende og basert på typiske priser. Endelig pris avtales med den som utfører jobben.",
+      "en": "The estimate is indicative and based on typical prices. The final price is agreed with whoever does the job."
+    },
+    "roundTo": 1000,
+    "qualities": ["budget", "standard", "good", "premium"],
+    "qualityBands": {
+      "budget": [0, 0.3],
+      "standard": [0.25, 0.55],
+      "good": [0.5, 0.8],
+      "premium": [0.8, 1.15]
+    },
+    "defaults": {
+      "sizeM2": 70,
+      "rooms": 3,
+      "bathrooms": 1
+    },
+    "areas": [
+      {
+        "key": "bathroom",
+        "no": "Bad",
+        "en": "Bathroom",
+        "unit": "bathroom",
+        "quote": true,
+        "surface": {
+          "range": [20000, 60000],
+          "labourShare": 0.5,
+          "weeks": [1, 2],
+          "certified": ["Rørlegger"],
+          "includes": "Nye fliser eller maling, nye armaturer, servant og toalett. Ingen ombygging."
+        },
+        "full": {
+          "range": [150000, 350000],
+          "labourShare": 0.6,
+          "weeks": [3, 6],
+          "certified": ["Våtromsfagperson", "Rørlegger", "Elektriker"],
+          "includes": "Rive og bygge opp på nytt, med ny membran, rør og elektrisk."
+        }
+      },
+      {
+        "key": "kitchen",
+        "no": "Kjøkken",
+        "en": "Kitchen",
+        "unit": "home",
+        "surface": {
+          "range": [20000, 80000],
+          "labourShare": 0.35,
+          "weeks": [1, 2],
+          "certified": [],
+          "includes": "Nye fronter, benkeplate og maling. Samme plassering."
+        },
+        "full": {
+          "range": [60000, 300000],
+          "labourShare": 0.4,
+          "weeks": [2, 5],
+          "certified": ["Rørlegger", "Elektriker"],
+          "includes": "Nytt kjøkken, rør og elektrisk, eventuelt ny planløsning."
+        }
+      },
+      {
+        "key": "rooms",
+        "no": "Stue / soverom",
+        "en": "Living room / bedrooms",
+        "unit": "m2",
+        "floorShare": 0.7,
+        "surface": {
+          "range": [800, 2000],
+          "labourShare": 0.6,
+          "weeks": [1, 3],
+          "certified": [],
+          "includes": "Maling, nytt gulv og lister."
+        },
+        "full": {
+          "range": [2500, 6000],
+          "labourShare": 0.6,
+          "weeks": [3, 8],
+          "certified": ["Elektriker"],
+          "includes": "Rive til reisverk, ny isolasjon, plater, elektrisk og gulv."
+        }
+      },
+      {
+        "key": "hallway",
+        "no": "Gang",
+        "en": "Hallway",
+        "unit": "home",
+        "surface": {
+          "range": [8000, 25000],
+          "labourShare": 0.6,
+          "weeks": [1, 1],
+          "certified": [],
+          "includes": "Maling, nytt gulv og lister."
+        },
+        "full": {
+          "range": [25000, 70000],
+          "labourShare": 0.6,
+          "weeks": [1, 3],
+          "certified": ["Elektriker"],
+          "includes": "Nye vegger og tak, elektrisk, gulv og garderobe."
+        }
+      },
+      {
+        "key": "windows",
+        "no": "Vinduer / dører",
+        "en": "Windows / doors",
+        "unit": "window",
+        "unitsPerRoom": 2,
+        "surface": {
+          "range": [1500, 4000],
+          "labourShare": 0.7,
+          "weeks": [1, 2],
+          "certified": [],
+          "includes": "Maling, justering og nye tetningslister."
+        },
+        "full": {
+          "range": [9000, 20000],
+          "labourShare": 0.35,
+          "weeks": [1, 3],
+          "certified": [],
+          "includes": "Nye vinduer og dører, montert og innfelt."
+        }
+      },
+      {
+        "key": "exterior",
+        "no": "Fasade / tak",
+        "en": "Exterior / roof",
+        "unit": "m2",
+        "floorShare": 1,
+        "surface": {
+          "range": [150, 400],
+          "labourShare": 0.7,
+          "weeks": [1, 3],
+          "certified": [],
+          "includes": "Vask og maling av fasade, små reparasjoner på tak."
+        },
+        "full": {
+          "range": [1500, 3500],
+          "labourShare": 0.55,
+          "weeks": [4, 10],
+          "certified": [],
+          "includes": "Ny kledning og nytt tak."
+        }
+      }
+    ]
   }
 }

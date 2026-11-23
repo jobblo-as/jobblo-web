@@ -28,6 +28,7 @@ jest.mock('../controllers/aiController', () => {
     generateFullJobListing: ok,
     suggestCategories: ok,
     photoHint: ok,
+    renovationFacts: ok,
   };
 });
 jest.mock('../routes/api', () => {
