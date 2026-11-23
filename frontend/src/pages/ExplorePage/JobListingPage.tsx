@@ -19,6 +19,7 @@ import { SortMenu } from '../../components/SortMenu';
 import { useJobs } from '../../features/jobsList/hooks';
 import { useCategories } from '../../features/categories/hooks';
 import { useDashboardStats } from '../../features/explore/hooks';
+import { MIN_ACTIVE_JOBS_FOR_STATS } from '../../constants/stats';
 import { useTopUsers } from '../../features/profile/hooks';
 import { useUserStore } from '../../stores/userStore';
 import { JobCard } from '../../components/component/jobCard/JobCard';
@@ -312,9 +313,11 @@ export default function JobListingPage() {
 
   // Only the figures the API actually returned. A tile with nothing behind it is left out
   // rather than filled with a plausible-looking number.
+  // Job and user counts stay hidden until there is enough activity for them to help.
+  const showCounts = (statsData?.activeJobs ?? 0) >= MIN_ACTIVE_JOBS_FOR_STATS;
   const stats = [
-    { value: statsData?.activeJobs, label: 'Aktive oppdrag' },
-    { value: statsData?.totalUsers, label: 'Brukere' },
+    { value: showCounts ? statsData?.activeJobs : undefined, label: 'Aktive oppdrag' },
+    { value: showCounts ? statsData?.totalUsers : undefined, label: 'Brukere' },
     {
       value: statsData?.averageRating ? statsData.averageRating.toFixed(1) : undefined,
       label: 'Snittrating',

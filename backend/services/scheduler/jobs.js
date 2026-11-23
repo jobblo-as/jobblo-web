@@ -527,6 +527,49 @@ async function expireUrgentMarks(now = new Date()) {
   return { expired: res.modifiedCount || 0 };
 }
 
+/**
+ * "Add photos" reminder (Abdi, "Jobs without photos" task 2): an open job posted without a
+ * photo 24–48 hours ago gets one notification to its owner, pointing at the job. Jobs with
+ * photos get more and better answers. The window (not "older than 24 h") keeps the first run
+ * after a deploy from reminding every old job at once. A compare-and-set on
+ * photoReminderSentAt makes it once per job, also when two servers run the scheduler.
+ */
+async function remindJobsWithoutPhotos(now = new Date()) {
+  const Service = require('../../models/Service');
+  const HOUR = 60 * 60 * 1000;
+  const noPhotos = { $or: [{ images: { $exists: false } }, { images: { $size: 0 } }] };
+  const candidates = await Service.find({
+    status: 'open',
+    createdAt: { $lte: new Date(now - 24 * HOUR), $gte: new Date(now - 48 * HOUR) },
+    photoReminderSentAt: null,
+    ...noPhotos,
+  })
+    .select('_id userId title')
+    .limit(200)
+    .lean();
+
+  let reminded = 0;
+  for (const job of candidates) {
+    const claimed = await Service.findOneAndUpdate(
+      { _id: job._id, photoReminderSentAt: null, ...noPhotos },
+      { $set: { photoReminderSentAt: now } }
+    );
+    if (!claimed || !job.userId) continue;
+
+    const title = String(job.title || 'oppdraget').slice(0, 80);
+    await notify({
+      userId: job.userId,
+      type: 'job_update',
+      title: 'Legg til bilder',
+      content: `Legg til bilder i «${title}». Oppdrag med bilder får flere og mer presise svar.`,
+      serviceId: job._id,
+      data: { type: 'job_photos', serviceId: String(job._id) },
+    });
+    reminded += 1;
+  }
+  return { reminded };
+}
+
 /** Prepaid Hast never used for a job: refund it (services/urgentPurchase). */
 async function refundUnusedUrgent() {
   return require('../urgentPurchase').refundUnusedPurchases();
@@ -550,5 +593,6 @@ module.exports = {
   recordSafePayConnectReadiness,
   expireUrgentMarks,
   refundUnusedUrgent,
+  remindJobsWithoutPhotos,
   config,
 };

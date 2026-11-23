@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useCategories } from '../../features/categories/hooks';
 import { Search, Info, Check, Sparkles, X, Plus, AlertCircle } from 'lucide-react';
 import type { CategoryType } from '../../features/categories/types';
+import { DescriptionHelp } from './DescriptionHelp';
 
 interface BasicInformationProps {
   title: string;
@@ -212,6 +213,13 @@ export const BasicInformation: React.FC<BasicInformationProps> = ({
             <AlertCircle size={14} /> {errors.description}
           </p>
         )}
+
+        <DescriptionHelp
+          title={title}
+          description={description}
+          category={categories}
+          onChange={(next) => setDescription(next.slice(0, maxDescriptionLength))}
+        />
 
         {/*
           The model's pricing rationale. It used to be appended to the success toast, which

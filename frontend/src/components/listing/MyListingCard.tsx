@@ -1,5 +1,6 @@
 import { MapPin, Users, Zap } from 'lucide-react';
-import { jobImage } from '../../assets/images/categories';
+import { jobPhoto } from '../../assets/images/categories';
+import { JobTextCover } from '../component/jobCard/JobTextCover';
 import type { Service } from '../../features/services/types';
 import { ListingStatusBadge } from './ListingStatusBadge';
 import { ListingOwnerActions } from './ListingOwnerActions';
@@ -61,13 +62,18 @@ export const MyListingCard = ({ service, onOpen, onDelete, isDeleting }: MyListi
           and a portrait photo per row makes the page twice as long for no extra
           information. */}
       <div className="relative aspect-16/10 overflow-hidden bg-[#EAF1E9]">
-        <img
-          src={jobImage(service)}
-          alt=""
-          loading="lazy"
-          decoding="async"
-          className="size-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
-        />
+        {jobPhoto(service) ? (
+          <img
+            src={jobPhoto(service)}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="size-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+          />
+        ) : (
+          // No stock photo, as on the public cards: the category's colour and icon.
+          <JobTextCover job={service} showText={false} />
+        )}
 
         {service.urgent && (
           <span className="absolute bottom-2.5 left-2.5 inline-flex h-6.5 items-center gap-1 rounded-full bg-[#122A1C] px-2.5 text-[0.6875rem] font-semibold text-white shadow-sm">

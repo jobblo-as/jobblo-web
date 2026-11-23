@@ -181,6 +181,7 @@ export default function AppLayout() {
         <Tabs.Screen name="provider" />
         <Tabs.Screen name="safepay" />
         <Tabs.Screen name="disputes" />
+        <Tabs.Screen name="renovation" />
       </Tabs>
       {/* Swipe from the left edge = back, where the native stack has nothing to pop. */}
       <EdgeSwipeBack />

@@ -206,6 +206,7 @@ async function unreadCount(userId) {
  * @param {string} [input.senderId] who caused it, for the avatar
  * @param {string} [input.orderId]
  * @param {string} [input.requestId]
+ * @param {string} [input.serviceId]  the job, when it is neither an order nor a request
  * @param {string} [input.event]    companion socket event to emit alongside
  * @param {object} [input.payload]  its payload
  * @returns {Promise<object|null>} the populated notification, or null if it could not be
@@ -219,6 +220,7 @@ async function notify(input = {}) {
     senderId,
     orderId,
     requestId,
+    serviceId,
     event,
     payload,
     title,
@@ -248,6 +250,7 @@ async function notify(input = {}) {
       senderId: senderId || null,
       orderId: orderId || null,
       requestId: requestId || null,
+      serviceId: serviceId || null,
     });
 
     const populated = await Notification.findById(created._id).populate(POPULATE);

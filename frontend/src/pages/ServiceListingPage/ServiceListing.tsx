@@ -19,6 +19,9 @@ import { ConfigProvider, Slider } from 'antd';
 import { AntdTheme } from '../../theme/AntdTheme';
 import { JobCard } from '../../components/component/jobCard/JobCard';
 import { SortMenu } from '../../components/SortMenu';
+import { ViewToggle } from '../../components/component/jobCard/ViewToggle';
+import { JobListRow } from '../../components/component/jobCard/JobListRow';
+import { useListingView } from '../../components/component/jobCard/listingView';
 import { JobCardSkeleton } from '../../components/Loading/JobCardSkeleton';
 import { CARD, GREEN, LINE, PILL_PRIMARY, PILL_SECONDARY } from '../../theme/brand';
 import { JobsEmptyState } from '../../components/JobsEmptyState';
@@ -84,6 +87,8 @@ const PRICE_PRESETS: Array<[string, number, number]> = [
 
 const ServiceListing = () => {
   const { categoryName } = useParams();
+  // Grid or list (the toggle beside "Nyeste først"); remembered in this browser.
+  const [view, setView] = useListingView();
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const locationState = location.state as { lat?: number; lng?: number } | null;
@@ -1133,6 +1138,7 @@ const ServiceListing = () => {
             </form>
 
             <SortMenu options={sortOptions} value={selectedSort.value} onChange={setSelectedSort} />
+            <ViewToggle value={view} onChange={setView} className="hidden sm:flex" />
           </div>
         </div>
       </div>
@@ -1162,15 +1168,20 @@ const ServiceListing = () => {
 
           {/* ── Results ──────────────────────────────────────────────────── */}
           <main className="min-w-0 flex-1">
-            <div className="mb-5">
-              <h1 className="text-[clamp(1.5rem,3.6vw,2.25rem)] font-bold leading-tight tracking-[-0.04em] text-[#0B0B0B]">
-                {headingText}
-              </h1>
-              <p className="mt-1.5 text-[0.875rem] text-[#63665F]">
-                {isLoading
-                  ? 'Henter oppdrag…'
-                  : `${jobs.length}${hasNextPage ? '+' : ''} oppdrag funnet`}
-              </p>
+            <div className="mb-5 flex items-end justify-between gap-3">
+              <div className="min-w-0">
+                <h1 className="text-[clamp(1.5rem,3.6vw,2.25rem)] font-bold leading-tight tracking-[-0.04em] text-[#0B0B0B]">
+                  {headingText}
+                </h1>
+                <p className="mt-1.5 text-[0.875rem] text-[#63665F]">
+                  {isLoading
+                    ? 'Henter oppdrag…'
+                    : `${jobs.length}${hasNextPage ? '+' : ''} oppdrag funnet`}
+                </p>
+              </div>
+              {/* On a phone the toggle sits here: beside the search field it squeezed the
+                  field to nothing. From sm it is in the bar next to "Nyeste først". */}
+              <ViewToggle value={view} onChange={setView} className="flex sm:hidden" />
             </div>
 
             {/* Active filters, each removable on its own */}
@@ -1247,17 +1258,23 @@ const ServiceListing = () => {
               />
             ) : (
               <>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-5 md:grid-cols-4">
+                <div
+                  className={
+                    view === 'list'
+                      ? 'flex flex-col gap-3'
+                      : 'grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 sm:gap-x-5 md:grid-cols-4'
+                  }
+                >
                   {jobs.map((job, index) => {
-                    if (jobs.length === index + 1) {
-                      return (
-                        <div ref={lastJobElementRef} key={job._id}>
-                          <JobCard job={job} />
-                        </div>
-                      );
-                    } else {
-                      return <JobCard key={job._id} job={job} />;
-                    }
+                    const item = view === 'list' ? <JobListRow job={job} /> : <JobCard job={job} />;
+                    // The last one carries the infinite-scroll observer, in either view.
+                    return jobs.length === index + 1 ? (
+                      <div ref={lastJobElementRef} key={job._id}>
+                        {item}
+                      </div>
+                    ) : (
+                      <div key={job._id}>{item}</div>
+                    );
                   })}
                 </div>
 

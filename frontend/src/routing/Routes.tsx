@@ -117,6 +117,12 @@ const SuccessPage = lazy(() => import('../components/subscription/success.tsx'))
 const ServiceListingPage = lazy(() => import('../pages/ServiceListingPage/ServiceListing.tsx'));
 const UpcomingFeatures = lazy(() => import('../pages/UpcomingFeaturesPage/UpcomingFeatures.tsx'));
 const MembershipPage = lazy(() => import('../pages/MembershipPage/MembershipPage.tsx'));
+const RenovationPlannerPage = lazy(
+  () => import('../pages/RenovationPlannerPage/RenovationPlannerPage.tsx')
+);
+const SharedRenovationPlanPage = lazy(
+  () => import('../pages/RenovationPlannerPage/SharedRenovationPlanPage.tsx')
+);
 const NotFoundPage = lazy(() => import('../pages/NotFoundPage/NotFoundPage.tsx'));
 const FavoritesPage = lazy(() =>
   import('../pages/FavoritesPage/FavoritesPage.tsx').then((m) => ({
@@ -440,6 +446,12 @@ export const routes: RouteObject[] = [
       { path: 'sale-subscription-terms', element: withSuspense(SaleSubscriptionTermsPage) },
       { path: 'cookies', element: withSuspense(CookiePolicyPage) },
       { path: 'about', element: withSuspense(AboutPage) },
+      // Public: people plan a renovation before they have an account.
+      { path: 'oppussingskalkulator', element: withSuspense(RenovationPlannerPage) },
+      {
+        path: 'oppussingskalkulator/delt/:shareId',
+        element: withSuspense(SharedRenovationPlanPage),
+      },
       { path: 'user-term', element: withSuspense(JobbloUserTerm) },
       {
         path: 'membership',

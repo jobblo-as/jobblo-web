@@ -43,10 +43,11 @@ export function cameraHint(photoCount: number): string {
       'Maks antall bilder. Trykk «Ferdig» for å gå videre.',
       'Maximum number of photos. Tap “Done” to continue.'
     );
+  // Before the first photo: why photos help ("Jobs without photos" task 2), then what to take.
   if (photoCount === 0)
     return t(
-      'Ta et bilde av hele området som skal fikses – forfra!',
-      'Take a photo of the whole area that needs work – from the front!'
+      'Oppdrag med bilder får flere og mer presise svar. Ta et bilde av hele området – forfra!',
+      'Jobs with photos get more and more precise answers. Take a photo of the whole area – from the front!'
     );
   if (photoCount === 1)
     return t(

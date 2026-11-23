@@ -2,7 +2,7 @@
   "expo": {
     "name": "Jobblo",
     "slug": "jobblo-app",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -13,7 +13,14 @@
       "usesAppleSignIn": true,
       "config": {
         "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "CFBundleDevelopmentRegion": "nb",
+        "CFBundleLocalizations": ["nb"]
       }
+    },
+    "locales": {
+      "nb": "./locales/nb.json"
     },
     "android": {
       "package": "com.jobblo.app",

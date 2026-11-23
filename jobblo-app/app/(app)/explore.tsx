@@ -7,6 +7,8 @@ import { useCategories } from '../../src/hooks/useCategories';
 import { useLocationTree } from '../../src/hooks/useLocationTree';
 import { useSearchFilters } from '../../src/hooks/useSearchFilters';
 import { JobCard } from '../../src/components/JobCard';
+import { JobListRow } from '../../src/components/JobListRow';
+import { useListingView } from '../../src/store/listingViewStore';
 import { Button } from '../../src/components/ui/Button';
 import { JobsEmptyState } from '../../src/components/domain/JobsEmptyState';
 import { SearchHeader } from '../../src/components/search/SearchHeader';
@@ -23,6 +25,9 @@ import { TC } from '../../src/theme/colors';
  */
 export default function ExploreScreen() {
   const tabBarSpace = useTabBarSpace();
+  // Grid or list (the toggle beside "Nyeste først"); remembered on this device.
+  const view = useListingView((s) => s.view);
+  const setView = useListingView((s) => s.setView);
   const router = useRouter();
   const params = useLocalSearchParams<{
     search?: string | string[];
@@ -302,19 +307,29 @@ export default function ExploreScreen() {
           isLoading={isLoading}
           sortValue={filters.sortValue}
           onSortChange={filters.setSortValue}
+          view={view}
+          onViewChange={setView}
         />
       </View>
 
       <FlatList
         data={allJobs}
         keyExtractor={(job) => job._id}
-        numColumns={2}
-        columnWrapperStyle={{ paddingHorizontal: 16 }}
-        renderItem={({ item }) => (
-          <View className="w-1/2 px-1.5 pb-4">
-            <JobCard job={item} compact onSavePress={(id) => setSaveSheetServiceId(id)} />
-          </View>
-        )}
+        // FlatList cannot change numColumns in place: a new key builds it again on toggle.
+        key={view}
+        numColumns={view === 'list' ? 1 : 2}
+        columnWrapperStyle={view === 'list' ? undefined : { paddingHorizontal: 16 }}
+        renderItem={({ item }) =>
+          view === 'list' ? (
+            <View className="px-4 pb-3">
+              <JobListRow job={item} />
+            </View>
+          ) : (
+            <View className="w-1/2 px-1.5 pb-4">
+              <JobCard job={item} compact onSavePress={(id) => setSaveSheetServiceId(id)} />
+            </View>
+          )
+        }
         // An element, not the function: a new function each render remounted the header,
         // which dropped the search field's focus while typing.
         ListHeaderComponent={renderHeader()}

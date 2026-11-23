@@ -41,6 +41,7 @@ const ROUTES = [
   ['/api/jobbloShop', './shop'],
   ['/api/lists', './lists'],
   ['/api/ai', './ai'],
+  ['/api/renovation', './renovation'],
   ['/api/explore', './explore'],
   ['/api/applicants', './applicant'],
   ['/api/safepay', './safepay'],

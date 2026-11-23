@@ -62,6 +62,14 @@ const notificationSchema = new mongoose.Schema(
       default: null,
     },
 
+    // The job a notification is about when it is neither an order nor a request (e.g. the
+    // "add photos" reminder): the tray opens that job.
+    serviceId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Service',
+      default: null,
+    },
+
     readBy: [
       {
         type: mongoose.Schema.Types.ObjectId,

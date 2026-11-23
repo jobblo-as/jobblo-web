@@ -35,6 +35,7 @@ import { editChanges, type PostJobStep } from '../flow';
 import { totalPrice } from '../price';
 import { usePostJobStore } from '../store';
 import { discardDraft } from '../draftSync';
+import { PhotoTips } from '../PhotoTips';
 import { DATE_LOCALE, t } from '../i18n';
 
 /** English for the shared (Norwegian) validator's messages, by field. */
@@ -334,6 +335,15 @@ export function ReviewStep({ onSaved }: { onSaved: () => void }) {
             </View>
           </ScrollView>
         </Pressable>
+
+        {photos.length === 0 ? (
+          <PhotoTips
+            title={values.title}
+            description={values.description}
+            category={values.categories[0] ?? ''}
+            onAddPhotos={() => goTo('photos')}
+          />
+        ) : null}
 
         <View className="mt-4 overflow-hidden rounded-xl bg-surface">
           {rows.map((row, i) => (

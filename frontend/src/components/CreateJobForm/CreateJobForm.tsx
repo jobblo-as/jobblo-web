@@ -4,6 +4,7 @@ import { createUrgentPayment, getUrgentStatus } from '../../api/stripeAPI';
 import { errorBody } from '../../utils/getErrorMessage';
 import { Image, Sparkles, Loader2, AlertCircle, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { ImageUpload } from './ImageUpload';
+import { PhotoTips } from './PhotoTips';
 import { BasicInformation } from './BasicInformation';
 import { TimeAndPlace } from './TimeAndPlace';
 import { PaymentInformation } from './PaymentInformation';
@@ -282,6 +283,12 @@ export default function CreateJobForm({
                       : handleExistingImageRemove(item.url)
                   }
                   onMove={moveImage}
+                />
+                <PhotoTips
+                  title={title}
+                  description={description}
+                  category={Array.isArray(categories) ? (categories[0] ?? '') : categories || ''}
+                  hasPhotos={imageItems.length > 0}
                 />
                 {errors?.images && (
                   <p className="mt-4 flex items-center gap-1.5 text-[0.8125rem] font-medium text-[#B4453A]">

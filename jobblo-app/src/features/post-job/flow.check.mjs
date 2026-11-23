@@ -309,4 +309,21 @@ const auth = readFileSync(new URL('../../store/authStore.ts', import.meta.url), 
 assert.match(auth, /forgetDraftsForSignOut\(\)/);
 const draftsList = readFileSync(new URL('./DraftsList.tsx', import.meta.url), 'utf8');
 assert.match(draftsList, /queryKey: \[\.\.\.DRAFTS_KEY, userId\]/);
+// Task 3: the short-description rule (same numbers as the backend and web) and the answers
+// added to the description as lines.
+const { isShortDescription, appendAnswers } = await import('./descriptionRules.ts');
+assert.equal(isShortDescription('Noen som er flinke med speilglass?'), true);
+assert.equal(isShortDescription('speilglass '.repeat(11)), true); // > 80 chars, 11 words
+assert.equal(isShortDescription('ord '.repeat(12)), true); // 12 words, < 80 chars
+assert.equal(isShortDescription('ord '.repeat(20) + 'x'.repeat(10)), false);
+assert.equal(
+  appendAnswers('Speil?', [
+    { label: 'Størrelse', answer: ' 120 x 80 cm ' },
+    { label: 'Når', answer: '  ' },
+    { label: 'Hvor', answer: 'Badet' },
+  ]),
+  'Speil?\n\nStørrelse: 120 x 80 cm\nHvor: Badet'
+);
+assert.equal(appendAnswers('Speil?', [{ label: 'Når', answer: '' }]), 'Speil?');
+
 console.log('post-job flow: ok');

@@ -126,3 +126,30 @@ export async function getPhotoHint(
     quality: response.data.quality ?? 'ok',
   };
 }
+
+/** While posting: 1–3 short lines on what to photograph for this job ("Jobs without photos"). */
+export async function getPhotoSuggestions(job: {
+  title: string;
+  description: string;
+  category?: string;
+}): Promise<string[]> {
+  const response = await apiClient.post<{ success: boolean; suggestions?: string[] }>(
+    '/ai/photo-suggestions',
+    job,
+    { timeout: 20_000 }
+  );
+  return response.data.suggestions ?? [];
+}
+
+/** While posting: follow-up questions when the description is very short (task 3). */
+export async function getDescriptionQuestions(job: {
+  title: string;
+  description: string;
+  category?: string;
+}): Promise<{ label: string; question: string }[]> {
+  const response = await apiClient.post<{
+    success: boolean;
+    questions?: { label: string; question: string }[];
+  }>('/ai/description-questions', job, { timeout: 20_000 });
+  return response.data.questions ?? [];
+}

@@ -45,14 +45,17 @@ function jobToValues(job: MyJob): CreateJobFormValues {
 
 /**
  * "Legg ut" tab: the FINN-style post-job flow. `?editId=` ("Rediger" on the job page and in
- * Mine annonser) opens the same flow on its summary, filled with the published job.
+ * Mine annonser) opens the same flow on its summary, filled with the published job; with
+ * `&step=photos` ("Legg til bilder" on a job without photos) it opens at the camera instead.
  */
 export default function CreateJobScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ editId?: string | string[] }>();
+  const params = useLocalSearchParams<{ editId?: string | string[]; step?: string }>();
   const editId = (Array.isArray(params.editId) ? params.editId[0] : params.editId) || '';
   const loadedId = usePostJobStore((s) => s.editId);
   const startEdit = usePostJobStore((s) => s.startEdit);
+  const goTo = usePostJobStore((s) => s.goTo);
+  const toPhotos = params.step === 'photos';
   const ownerJobs = useMyJobs();
   const job = editId ? ownerJobs.data?.find((item) => item._id === editId) : undefined;
   const editable = job && job.capabilities?.canEdit !== false;
@@ -69,9 +72,11 @@ export default function CreateJobScreen() {
   const checkingAgain = !job && (refetchedFor.current !== editId || ownerJobs.isFetching);
 
   useEffect(() => {
-    if (job && editable && loadedId !== job._id)
+    if (job && editable && loadedId !== job._id) {
       startEdit(job._id, jobToValues(job), job.images || []);
-  }, [job, editable, loadedId, startEdit]);
+      if (toPhotos) goTo('photos');
+    }
+  }, [job, editable, loadedId, startEdit, toPhotos, goTo]);
 
   if (!editId || loadedId === editId) return <PostJobFlow />;
 
