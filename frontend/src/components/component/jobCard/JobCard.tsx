@@ -6,7 +6,8 @@ import { useUserStore } from '../../../stores/userStore.ts';
 import AddToListModal from '../../Explore/jobs/AddToListModal';
 import { useFavoriteLists } from '../../../features/favoriteLists/hooks';
 import { useServiceActions } from '../../../features/services/hooks';
-import { jobImage } from '../../../assets/images/categories';
+import { jobPhoto } from '../../../assets/images/categories';
+import { JobTextCover } from './JobTextCover';
 import { ListingOwnerActions } from '../../listing/ListingOwnerActions';
 
 /**
@@ -77,6 +78,8 @@ export const JobCard = ({ job, isOwner, showDescription = false }: JobCardProps)
     typeof job?.price === 'number' ? job.price.toLocaleString('nb-NO') : job?.price || '0';
   const place = job?.location?.city || job?.location?.address || 'Norge';
   const isClosed = job.status === 'closed';
+  // No stock photo on a card: without the poster's own photo the frame is a text card.
+  const photo = jobPhoto(job);
 
   return (
     // The card holds its own buttons (save, edit, delete), so it cannot itself be a
@@ -98,15 +101,19 @@ export const JobCard = ({ job, isOwner, showDescription = false }: JobCardProps)
       {/* One ratio at every breakpoint, so a row of cards has one baseline and the grid
           never goes ragged when a photo arrives in an unexpected shape. */}
       <div className="relative aspect-4/5 overflow-hidden rounded-2xl bg-[#EAF1E9] transition-[border-radius] duration-200 group-focus-visible:ring-4 group-focus-visible:ring-[#2E6641]/25">
-        <img
-          src={jobImage(job)}
-          alt=""
-          loading="lazy"
-          decoding="async"
-          className={`size-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${
-            isClosed ? 'opacity-55' : ''
-          }`}
-        />
+        {photo ? (
+          <img
+            src={photo}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className={`size-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04] motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${
+              isClosed ? 'opacity-55' : ''
+            }`}
+          />
+        ) : (
+          <JobTextCover job={job} dimmed={isClosed} />
+        )}
 
         {/* Promoted / urgent, bottom left over the photo. Both use the brand's own greens
             rather than the amber and coral they used to, which appeared nowhere else. */}
@@ -172,11 +179,13 @@ export const JobCard = ({ job, isOwner, showDescription = false }: JobCardProps)
 
       <AddToListModal job={job} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
 
+      {/* The title under the frame on every card, text card too: the price lines of a row
+          stay level, and the title reads the same way on every card. */}
       <h3 className="mt-3 line-clamp-2 text-[0.9375rem] font-semibold leading-snug tracking-[-0.02em] text-[#0B0B0B]">
         {job?.title || 'Uten tittel'}
       </h3>
 
-      {showDescription && job.description && (
+      {photo && showDescription && job.description && (
         <p className="mt-1 line-clamp-2 text-[0.8125rem] leading-relaxed text-[#63665F]">
           {job.description}
         </p>

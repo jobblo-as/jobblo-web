@@ -4,7 +4,8 @@ import { MapPin, ShieldCheck } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useJobs } from '../../hooks/useJobs';
 import { TC, tc } from '../../theme/colors';
-import { jobImageSource } from '../../utils/categoryImage';
+import { jobPhotoUrl } from '../../utils/categoryImage';
+import { JobTextCover } from '../JobTextCover';
 
 export function Jobs() {
   const router = useRouter();
@@ -89,7 +90,7 @@ export function Jobs() {
       ) : (
         <View style={{ gap: 14 }}>
           {jobs.slice(0, 6).map((job, index) => {
-            const imageSource = jobImageSource(job, index);
+            const photoUrl = jobPhotoUrl(job);
             const location = job.location?.city || job.location?.address || 'Norge';
             const price =
               typeof job.price === 'number'
@@ -111,11 +112,24 @@ export function Jobs() {
                   gap: 14,
                 }}
               >
-                <Image
-                  source={imageSource}
-                  style={{ width: '100%', height: 200, borderRadius: 18, backgroundColor: TC.tint }}
-                  resizeMode="cover"
-                />
+                {photoUrl ? (
+                  <Image
+                    source={{ uri: photoUrl }}
+                    style={{
+                      width: '100%',
+                      height: 200,
+                      borderRadius: 18,
+                      backgroundColor: TC.tint,
+                    }}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  // No stock photo: the title and description are printed below, so the frame
+                  // shows the category's colour and icon.
+                  <View style={{ height: 200, borderRadius: 18, overflow: 'hidden' }}>
+                    <JobTextCover job={job} showText={false} />
+                  </View>
+                )}
 
                 <View
                   style={{

@@ -98,3 +98,20 @@ export const generateFullJobListing = async (
   images.slice(0, 3).forEach((file) => form.append('images', file));
   return (await mainLink.post('/api/ai/generate-full-listing', form, { signal })).data;
 };
+
+/** While posting: 1–3 short lines on what to photograph for this job. */
+export const getPhotoSuggestions = async (job: {
+  title: string;
+  description: string;
+  category?: string;
+}): Promise<string[]> => (await mainLink.post('/api/ai/photo-suggestions', job)).data.suggestions;
+
+/** While posting: follow-up questions when the description is very short. */
+export const getDescriptionQuestions = async (job: {
+  title: string;
+  description: string;
+  category?: string;
+}): Promise<{ short: boolean; questions: { label: string; question: string }[] }> => {
+  const { data } = await mainLink.post('/api/ai/description-questions', job);
+  return { short: Boolean(data.short), questions: data.questions ?? [] };
+};

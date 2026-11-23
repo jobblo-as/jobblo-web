@@ -29,6 +29,7 @@ import {
   ChevronRight,
   CheckCircle2,
   ShieldCheck,
+  ImagePlus,
   X,
 } from 'lucide-react';
 import { BackLink } from '../../components/Ui/BackLink';
@@ -55,7 +56,7 @@ import {
 import { useConfigByKey, usePlans } from '../../features/plans/hooks';
 import { errorBody } from '../../utils/getErrorMessage';
 import { equipmentLabel, formatDuration } from '../../types/Jobs';
-import { jobImage } from '../../assets/images/categories';
+import { JobTextCover } from '../../components/component/jobCard/JobTextCover';
 
 const DEFAULT_SHARE_IMAGE = `${SITE_URL}/assets/share-image.png`;
 
@@ -711,14 +712,21 @@ const JobListingDetailPage = () => {
                     )}
                   </>
                 ) : (
-                  // The category photo the cards in search and "Lignende oppdrag" already show
-                  // for this job; here it said "Ingen bilde". Labelled so it is not taken for
-                  // a picture of the job itself.
+                  // No stock photo (it could be taken for the actual job): the category's
+                  // colour and icon, as on the job cards.
                   <>
-                    <img src={jobImage(job)} alt="" className="size-full object-cover" />
-                    <span className="absolute bottom-3 right-3 rounded-full bg-[#0B0B0B]/60 px-2.5 py-1 text-[0.6875rem] font-semibold text-white backdrop-blur-sm">
-                      Illustrasjonsbilde
-                    </span>
+                    <JobTextCover job={job} showText={false} />
+                    {/* The owner of a job without photos gets the way to add them right here
+                        (also where the "add photos" reminder lands). */}
+                    {isOwnJob && !isServiceClosed && (
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/Publish-job/${job._id}`)}
+                        className="absolute bottom-4 left-1/2 z-10 inline-flex -translate-x-1/2 items-center gap-2 rounded-full bg-[#2E6641] px-5 py-2.5 text-[0.875rem] font-semibold text-white shadow-sm transition hover:bg-[#255335] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/25"
+                      >
+                        <ImagePlus size={16} /> Legg til bilder
+                      </button>
+                    )}
                   </>
                 )}
 

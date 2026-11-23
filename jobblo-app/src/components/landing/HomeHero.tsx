@@ -15,6 +15,7 @@ import { useCategories } from '../../hooks/useCategories';
 import apiClient from '../../api/client';
 import { TC, tc } from '../../theme/colors';
 import { SERVICE_SHOWCASE, categoryPhoto } from '../../utils/categoryImage';
+import { MIN_ACTIVE_JOBS_FOR_STATS } from '../../constants/stats';
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -114,19 +115,22 @@ export function HomeHero() {
           >
             Norges lokale jobbplattform
           </Text>
-          {stats ? (
-            <Text
-              style={{
-                color: tc('#63665F', 'muted'),
-                fontSize: 13,
-                fontWeight: '700',
-                letterSpacing: 1.5,
-                textTransform: 'uppercase',
-              }}
-            >
-              {stats.jobs ?? 0} aktive oppdrag · {stats.users ?? 0} brukere
-            </Text>
-          ) : null}
+          {/* Small numbers make the platform look empty to a new visitor, so the counts show
+              only from MIN_ACTIVE_JOBS_FOR_STATS active jobs; until then, the SafePay promise
+              (same rule as the web hero). */}
+          <Text
+            style={{
+              color: tc('#63665F', 'muted'),
+              fontSize: 13,
+              fontWeight: '700',
+              letterSpacing: 1.5,
+              textTransform: 'uppercase',
+            }}
+          >
+            {stats && (stats.jobs ?? 0) >= MIN_ACTIVE_JOBS_FOR_STATS
+              ? `${stats.jobs} aktive oppdrag · ${stats.users ?? 0} brukere`
+              : 'Trygg betaling med SafePay'}
+          </Text>
         </View>
 
         <Text

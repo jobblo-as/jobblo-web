@@ -9,6 +9,7 @@ import { DURATION_OPTIONS, EQUIPMENT_OPTIONS, describeForAi } from '../details';
 import { photosForText } from '../flow';
 import { usePostJobStore } from '../store';
 import { useAiConsent } from '../aiConsent';
+import { DescriptionHelp } from '../DescriptionHelp';
 import { StepFooter } from '../StepFooter';
 import { LANG, t } from '../i18n';
 
@@ -295,6 +296,17 @@ export function TextStep() {
             {values.description.length}/{DESCRIPTION_MAX}
           </Text>
         </View>
+        {/* Follow-up questions for a very short description: AI, so only with the helper on. */}
+        {aiOn && !drafting ? (
+          <DescriptionHelp
+            title={values.title}
+            description={values.description}
+            category={values.categories[0] ?? ''}
+            onChange={(description) =>
+              update({ description: description.slice(0, DESCRIPTION_MAX) })
+            }
+          />
+        ) : null}
       </ScrollView>
 
       <StepFooter label={t('Fortsett', 'Continue')} onPress={proceed} disabled={write.isPending} />

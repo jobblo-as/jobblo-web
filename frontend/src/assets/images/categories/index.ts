@@ -149,3 +149,37 @@ export const jobImage = (job: { images?: string[]; categories?: string[] }, inde
   // ["House Service", "Cleaning"] should still find the cleaning photo.
   job.categories?.map((name) => BY_CATEGORY[normalise(name)]).find(Boolean) ||
   CATEGORY_FALLBACKS[index % CATEGORY_FALLBACKS.length];
+
+/**
+ * The job's own uploaded photo, or nothing. Job cards use this instead of `jobImage`: a
+ * stock photo on a card can be read as a picture of the actual job, so a job without a
+ * photo gets a text card (`JobTextCover`) instead.
+ */
+export const jobPhoto = (job: { images?: string[] }): string | undefined =>
+  job.images?.find(isRealPhoto);
+
+export type CategoryTint = { bg: string; fg: string };
+
+const DEFAULT_TINT: CategoryTint = { bg: '#EFF0EA', fg: '#2E6641' };
+
+/** Keyed by category photo, so every alias in `BY_CATEGORY` gets the same colour for free. */
+const TINT_BY_PHOTO = new Map<string, CategoryTint>([
+  [maling, { bg: '#FBF0DC', fg: '#9A6213' }],
+  [rengjoring, { bg: '#E4F1F8', fg: '#2B6A8A' }],
+  [hagearbeid, { bg: '#E3F1DE', fg: '#3B7632' }],
+  [flytting, { bg: '#E7ECF8', fg: '#3A5896' }],
+  [rorlegger, { bg: '#DDF0EF', fg: '#22706F' }],
+  [montering, { bg: '#F3EEDD', fg: '#76662A' }],
+  [oppussing, { bg: '#F7E8DE', fg: '#94522D' }],
+  [transport, { bg: '#ECE7F6', fg: '#5B488A' }],
+  [bilPleie, { bg: '#E9EDF0', fg: '#475561' }],
+]);
+
+/** A light background and a matching icon colour for the job's first known category. */
+export const categoryTint = (categories: string[] = []): CategoryTint => {
+  const photo = categories.map((name) => BY_CATEGORY[normalise(name)]).find(Boolean);
+  return (photo && TINT_BY_PHOTO.get(photo)) || DEFAULT_TINT;
+};
+
+/** Case- and accent-insensitive category name match ("Rengjøring" === "rengjoring"). */
+export const sameCategory = (a: string, b: string) => normalise(a) === normalise(b);

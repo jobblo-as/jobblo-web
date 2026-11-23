@@ -91,6 +91,12 @@ export function useOpenNotification() {
       return;
     }
 
+    // About a job itself (the "add photos" reminder): open that job.
+    if (notification.serviceId) {
+      go(`/job-listing/${notification.serviceId}`);
+      return;
+    }
+
     if (notification.senderId?._id) {
       go(`/profile/${notification.senderId._id}`);
       return;

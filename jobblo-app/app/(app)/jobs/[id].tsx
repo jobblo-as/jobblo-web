@@ -30,6 +30,7 @@ import {
   BadgeCheck,
   ChevronRight,
   Flag,
+  ImagePlus,
   MapPin,
   MessageCircle,
   ShieldCheck,
@@ -56,7 +57,7 @@ import { JobAreaMap } from '../../../src/components/domain/JobAreaMap';
 import { SimilarJobs } from '../../../src/components/domain/SimilarJobs';
 import { appliedJobIdsOf } from '../../../src/utils/similarJobs';
 import { ImageViewer } from '../../../src/components/ui/ImageViewer';
-import { categoryImage } from '../../../src/utils/categoryImage';
+import { JobTextCover } from '../../../src/components/JobTextCover';
 import { applyBlockReason } from '../../../src/utils/applyBlock';
 import { serviceStatusLabel } from '../../../src/components/domain/ServiceStatusBadge';
 import { MEMBERSHIP_ENABLED } from '../../../src/config/features';
@@ -466,11 +467,11 @@ function JobDetailsScreen() {
               )}
             />
           ) : (
-            <Image
-              source={categoryImage(job.categories)}
-              style={{ width, height: photoHeight }}
-              resizeMode="cover"
-            />
+            // No stock photo (it could be taken for the actual job): the category's colour
+            // and icon. The title and description follow right below.
+            <View style={{ width, height: photoHeight }}>
+              <JobTextCover job={job} showText={false} />
+            </View>
           )}
 
           <View pointerEvents="none" className="absolute bottom-3 left-3 flex-row flex-wrap gap-2">
@@ -578,6 +579,25 @@ function JobDetailsScreen() {
                   Rediger oppdraget
                 </Text>
               </TouchableOpacity>
+              {/* A job posted without photos: the way to add them (also where the "add
+                  photos" reminder lands). Opens the same edit flow, at the photos. */}
+              {imageList.length === 0 ? (
+                <TouchableOpacity
+                  onPress={() =>
+                    router.push({
+                      pathname: '/(app)/create-job',
+                      params: { editId: id ?? '', step: 'photos' },
+                    })
+                  }
+                  className="h-12 flex-row items-center justify-center gap-2 rounded-lg bg-surface-2"
+                  activeOpacity={0.9}
+                >
+                  <ImagePlus size={18} color={TC.brandText} />
+                  <Text className="text-[1.0625rem] font-semibold text-brand-text">
+                    Legg til bilder
+                  </Text>
+                </TouchableOpacity>
+              ) : null}
             </>
           ) : (
             <TouchableOpacity

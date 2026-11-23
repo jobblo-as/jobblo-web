@@ -163,6 +163,12 @@ export default function RootLayout() {
         const serviceId = data.serviceId || data.jobId;
         if (!serviceId) return;
         router.push({ pathname: '/(app)/job-applicants/[serviceId]', params: { serviceId } });
+      } else if (data.type === 'job_photos') {
+        // "Legg til bilder" reminder, a day after posting without photos: the job, where the
+        // owner has the add-photos button.
+        const serviceId = data.serviceId || data.jobId;
+        if (!serviceId) return;
+        router.push({ pathname: '/(app)/jobs/[id]', params: { id: serviceId } });
       } else if (data.type === 'application_status') {
         router.push('/(app)/my-applications');
       } else if (data.type === 'support_ticket') {

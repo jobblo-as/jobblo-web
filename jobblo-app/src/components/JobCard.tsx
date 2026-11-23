@@ -5,7 +5,8 @@ import { Heart, MapPin, Zap } from 'lucide-react-native';
 import type { Job } from '../types/Jobs';
 import { useIsServiceSaved } from '../hooks/useFavoriteLists';
 import { useAuthStore } from '../store/authStore';
-import { categoryImage } from '../utils/categoryImage';
+import { jobPhotoUrl } from '../utils/categoryImage';
+import { JobTextCover } from './JobTextCover';
 import { TC, tc } from '../theme/colors';
 
 interface JobCardProps {
@@ -51,14 +52,30 @@ export const JobCard: React.FC<JobCardProps> = ({
     router.push({ pathname: '/(app)/jobs/[id]', params: { id: job._id } });
   };
 
-  // The job's own photo, or its category photo when it has none or the URL fails to load
-  // (a broken upload used to leave an empty white frame in the feed).
-  const imageUrl = job.images?.[0];
+  // The job's own photo. Without one (or when the URL fails to load) the frame is a text
+  // card in the category's colour: no stock photo, which could be taken for the actual job.
+  const imageUrl = jobPhotoUrl(job);
   const [imageFailed, setImageFailed] = useState(false);
-  const imageSource =
-    imageUrl && !imageFailed
-      ? { uri: imageUrl }
-      : categoryImage(job.categories, job._id.charCodeAt(job._id.length - 1) || 0);
+  const hasPhoto = Boolean(imageUrl) && !imageFailed;
+
+  const badges =
+    job.promoted || job.urgent ? (
+      <>
+        {job.urgent && (
+          // The job page's badge, exactly (jobs/[id].tsx). The pale coral (#E8A8A0)
+          // with white text was hard to read and used nowhere else.
+          <View className="flex-row items-center gap-1 rounded-full bg-brand-deep px-2.5 py-1.5">
+            <Zap size={12} color="#FFFFFF" fill="#FFFFFF" />
+            <Text className="text-[0.8125rem] font-semibold text-white">Haster</Text>
+          </View>
+        )}
+        {job.promoted && (
+          <View className="bg-brand px-2.5 py-1 rounded-full">
+            <Text className="text-[0.8125rem] font-semibold text-white">Sponset</Text>
+          </View>
+        )}
+      </>
+    ) : null;
 
   // Format price as Norwegian locale
   const priceFormatted = job.price ? job.price.toLocaleString('nb-NO') : 'Variabelt';
@@ -70,6 +87,8 @@ export const JobCard: React.FC<JobCardProps> = ({
     <TouchableOpacity
       onPress={handlePress}
       activeOpacity={0.7}
+      accessibilityRole="link"
+      accessibilityLabel={job.title}
       className="focus-visible:outline-none"
     >
       {/* Photo container — square, rounded 2xl, brand bg */}
@@ -77,34 +96,22 @@ export const JobCard: React.FC<JobCardProps> = ({
         className="relative overflow-hidden rounded-2xl bg-tint"
         style={{ aspectRatio: JOB_PHOTO_RATIO, minHeight: 110 }}
       >
-        <Image
-          source={imageSource}
-          style={{ width: '100%', height: '100%', aspectRatio: JOB_PHOTO_RATIO }}
-          resizeMode="cover"
-          // Android: decode at the card's size. A 2048 px upload shown in a ~170 px card was
-          // decoded in full (~12 MB a photo), and eight of them made Hjem stutter.
-          resizeMethod="resize"
-          onError={() => setImageFailed(true)}
-        />
-
-        {/* Status badges overlay — top left */}
-        {(job.promoted || job.urgent) && (
-          <View className="absolute top-3 left-3 flex gap-2">
-            {job.urgent && (
-              // The job page's badge, exactly (jobs/[id].tsx). The pale coral (#E8A8A0)
-              // with white text was hard to read and used nowhere else.
-              <View className="flex-row items-center gap-1 rounded-full bg-brand-deep px-2.5 py-1.5">
-                <Zap size={12} color="#FFFFFF" fill="#FFFFFF" />
-                <Text className="text-[0.8125rem] font-semibold text-white">Haster</Text>
-              </View>
-            )}
-            {job.promoted && (
-              <View className="bg-brand px-2.5 py-1 rounded-full">
-                <Text className="text-[0.8125rem] font-semibold text-white">Sponset</Text>
-              </View>
-            )}
-          </View>
+        {hasPhoto ? (
+          <Image
+            source={{ uri: imageUrl }}
+            style={{ width: '100%', height: '100%', aspectRatio: JOB_PHOTO_RATIO }}
+            resizeMode="cover"
+            // Android: decode at the card's size. A 2048 px upload shown in a ~170 px card was
+            // decoded in full (~12 MB a photo), and eight of them made Hjem stutter.
+            resizeMethod="resize"
+            onError={() => setImageFailed(true)}
+          />
+        ) : (
+          <JobTextCover job={job} compact={compact} badges={badges} />
         )}
+
+        {/* Status badges overlay — top left (a text card shows them beside its icon) */}
+        {hasPhoto && badges && <View className="absolute top-3 left-3 flex gap-2">{badges}</View>}
 
         {/* Status overlay — closed jobs get a grey overlay */}
         {job.status === 'closed' && (
@@ -147,7 +154,7 @@ export const JobCard: React.FC<JobCardProps> = ({
 
       {/* Text content below photo — sits directly on page, no card bg */}
       <View className="mt-2.5">
-        {/* Title — 2 line clamp */}
+        {/* Title — 2 line clamp, on every card (text card too), so a row's lines stay level. */}
         <Text className="text-[0.875rem] font-semibold text-ink leading-tight" numberOfLines={2}>
           {job.title}
         </Text>

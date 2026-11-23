@@ -216,4 +216,22 @@ router.post(
   aiController.renovationFacts
 );
 
+// While posting: which photos would help a provider (1–3 short lines). Text only, cheap.
+router.post(
+  '/photo-suggestions',
+  authenticate,
+  aiLimiter,
+  capAiInput,
+  aiController.photoSuggestions
+);
+
+// While posting: follow-up questions for a very short description (no AI call otherwise).
+router.post(
+  '/description-questions',
+  authenticate,
+  aiLimiter,
+  capAiInput,
+  aiController.descriptionQuestions
+);
+
 module.exports = router;

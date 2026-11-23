@@ -61,6 +61,13 @@ const SCHEDULE = [
     delayMs: 2 * MINUTE,
   },
   {
+    // One 'add photos' reminder per open job posted without a photo, 24-48 h after posting.
+    name: 'remindJobsWithoutPhotos',
+    fn: jobs.remindJobsWithoutPhotos,
+    everyMs: HOUR,
+    delayMs: 6 * MINUTE,
+  },
+  {
     name: 'recordSafePayConnectReadiness',
     fn: jobs.recordSafePayConnectReadiness,
     everyMs: SAFEPAY_CHECK_MS,

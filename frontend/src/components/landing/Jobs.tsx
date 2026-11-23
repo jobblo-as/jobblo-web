@@ -2,7 +2,8 @@ import { useNavigate } from 'react-router-dom';
 import { MapPin, ShieldCheck } from 'lucide-react';
 import { useJobs } from '../../features/jobsList/hooks';
 import { dateFormatter } from '../../utils/dateFormatter';
-import { jobImage } from '../../assets/images/categories';
+import { jobPhoto } from '../../assets/images/categories';
+import { JobTextCover } from '../component/jobCard/JobTextCover';
 import {
   CARD,
   CARD_INTERACTIVE,
@@ -60,7 +61,7 @@ export function Jobs() {
                 </div>
               </div>
             ))
-          : jobs.slice(0, 6).map((job, i) => (
+          : jobs.slice(0, 6).map((job) => (
               <button
                 key={job._id}
                 type="button"
@@ -68,13 +69,18 @@ export function Jobs() {
                 className={`${CARD_INTERACTIVE} flex cursor-pointer flex-col gap-5 p-4 pb-6 text-left focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#2E6641]/15`}
               >
                 <div className="h-47.5 overflow-hidden rounded-2xl bg-[#EAF1E9]">
-                  <img
-                    src={jobImage(job, i)}
-                    alt=""
-                    loading="lazy"
-                    decoding="async"
-                    className="size-full object-cover"
-                  />
+                  {jobPhoto(job) ? (
+                    <img
+                      src={jobPhoto(job)}
+                      alt=""
+                      loading="lazy"
+                      decoding="async"
+                      className="size-full object-cover"
+                    />
+                  ) : (
+                    // Title and description are printed below, so the frame shows the category.
+                    <JobTextCover job={job} showText={false} />
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between gap-3 px-2">

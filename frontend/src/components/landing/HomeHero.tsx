@@ -6,6 +6,7 @@ import { useCategories } from '../../features/categories/hooks';
 import { getPublicStats } from '../../api/publicAPI';
 import { CHIP, CONTAINER, DISPLAY, MICRO_LABEL, TEXT_LINK } from '../../theme/brand';
 import { SERVICE_SHOWCASE, categoryPhoto } from '../../assets/images/categories';
+import { MIN_ACTIVE_JOBS_FOR_STATS } from '../../constants/stats';
 
 /**
  * The hero: one sentence that finishes itself, and one field that runs the search.
@@ -129,9 +130,14 @@ export function HomeHero() {
         <div className="mb-10 hidden flex-wrap items-baseline gap-x-4 gap-y-2 sm:mb-14 sm:flex">
           <span className={`${MICRO_LABEL} shrink-0`}>Norges lokale jobbplattform</span>
           <span aria-hidden="true" className="hidden h-px flex-1 bg-[#E6E7E1] sm:block" />
-          {stats && (
+          {stats && stats.jobs >= MIN_ACTIVE_JOBS_FOR_STATS ? (
             <span className={`${MICRO_LABEL} shrink-0`}>
               {stats.jobs} aktive oppdrag · {stats.users} brukere
+            </span>
+          ) : (
+            <span className={`${MICRO_LABEL} inline-flex shrink-0 items-center gap-1.5`}>
+              <ShieldCheck size={12} strokeWidth={2.2} aria-hidden="true" />
+              Trygg betaling med SafePay
             </span>
           )}
         </div>

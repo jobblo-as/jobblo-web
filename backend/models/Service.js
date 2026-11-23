@@ -76,6 +76,9 @@ const serviceSchema = new mongoose.Schema(
     jobType: { type: String, default: '' },
     // When a paid «Haster» mark (Hast) runs out; the scheduler's expireUrgentMarks clears it.
     urgentUntil: { type: Date, default: null },
+    // Set when the "add photos" reminder went out (scheduler remindJobsWithoutPhotos), so a
+    // job is reminded once at most.
+    photoReminderSentAt: { type: Date, default: null },
     promoted: { type: Boolean, default: false },
     status: {
       type: String,
