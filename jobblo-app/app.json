@@ -13,7 +13,14 @@
       "usesAppleSignIn": true,
       "config": {
         "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "CFBundleDevelopmentRegion": "nb",
+        "CFBundleLocalizations": ["nb"]
       }
+    },
+    "locales": {
+      "nb": "./locales/nb.json"
     },
     "android": {
       "package": "com.jobblo.app",
