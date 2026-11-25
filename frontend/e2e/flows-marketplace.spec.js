@@ -500,7 +500,7 @@ test('AI price: the PDF range and text are shown, and the job type is published 
 
   await expect(
     page.getByText(
-      /Typisk pris for lignende oppdrag: 5\s000–12\s000 kr\. Prisen er et anslag basert på jobbtype, størrelse og vanlige timepriser\./
+      /Anslått pris: 5\s000–12\s000 kr\. Prisen er et anslag basert på jobbtype, størrelse og vanlige timepriser\./
     )
   ).toBeVisible();
   await shot(page, 'pdf-2-typisk-pris-notat');
@@ -550,7 +550,7 @@ test('AI price: bathroom (Anbud, no table price) offers no price at all', async 
   await shot(page, 'pdf-3-bad-ingen-pris');
   await dialog.getByRole('button', { name: /Bruk valgte/ }).click();
   await expect(page.getByText(/Krever sertifisert fagperson – be om anbud\./)).toBeVisible();
-  await expect(page.getByText(/Typisk pris/)).toHaveCount(0);
+  await expect(page.getByText(/Anslått pris/)).toHaveCount(0);
   await shot(page, 'pdf-4-bad-anbud-notat');
   expect(errors).toEqual([]);
 });

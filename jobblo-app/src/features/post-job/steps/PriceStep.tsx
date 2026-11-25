@@ -145,7 +145,8 @@ export function PriceStep() {
               {market
                 ? `${t('Pris basert på', 'Price based on')} ${stats!.count} ${t('lignende oppdrag', 'similar jobs')}${stats!.scope === 'county' ? t(' i fylket', ' in your county') : ''}`
                 : !timepris && ai?.priceMin && ai?.priceMax
-                  ? `${t('Typisk pris for lignende oppdrag', 'Typical price for similar jobs')}: ${ai.priceMin.toLocaleString('nb-NO')}–${kr(ai.priceMax)}`
+                  ? // An AI estimate from the pricing rules, not prices of real jobs.
+                    `${t('Anslått pris', 'Estimated price')}: ${ai.priceMin.toLocaleString('nb-NO')}–${kr(ai.priceMax)}`
                   : t('AI-estimat – ikke en markedspris', 'AI estimate – not a market price')}
             </Text>
             <View className="mt-2 flex-row flex-wrap justify-center gap-2">

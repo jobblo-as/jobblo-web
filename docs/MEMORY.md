@@ -88,3 +88,4 @@
 - Redis 8.10.2 portable: `C:\Users\GLB\redis` (`start-redis.cmd`; AOF+RDB, 512mb, noeviction). Logon par auto-start nahi.
 - Local DB `jobblo-dev`; API :5001; web :5173; e2e backend :5017 + Vite :5176/:5177.
 - Backend jest kabhi machine slow ho to app.js wali suites 5s timeout par fail — `--testTimeout=60000` se confirm.
+- 2026-11-25: AI price for painting a few walls: "male 2-3 vegger" was priced as 3 rooms (11 400-25 500 kr) because the model put walls in quantities.rooms. Added job type "Male noen vegger" (per wall 800-1 500, min 1 000; paint added once) to jobblo-pricing-config.json (not in the AI pricing PDF yet: numbers to confirm with Abdi), a walls quantity in the schema/prompt, and a guard in aiSmartFill: user words name walls and no room -> walls job, rooms 0. The AI estimate is labelled "Anslått pris", not "Typisk pris for lignende oppdrag" (it is not market data). Tests: aiPricingRules.

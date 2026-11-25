@@ -181,6 +181,17 @@
       ],
       "jobTypes": [
         {
+          "name": "Male noen vegger",
+          "en": "Paint a few walls, not a whole room (per wall 800–1 500)",
+          "hours": [2, 5],
+          "range": [1500, 4000],
+          "perUnit": {
+            "per": "wall",
+            "price": [800, 1500],
+            "unitMinimum": 1000
+          }
+        },
+        {
           "name": "Male ett rom (vegger)",
           "en": "Paint one room, walls (~12 m² floor)",
           "hours": [6, 8],
@@ -235,7 +246,7 @@
         }
       ],
       "askIfUnsure": [
-        "How many rooms or m²?",
+        "How many walls, rooms or m²?",
         "Ceiling and trim included?",
         "Changing colour (light to dark needs more coats)?",
         "Is paint provided?",
