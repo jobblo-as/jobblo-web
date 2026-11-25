@@ -187,6 +187,57 @@ describe('AI pricing rules (jobblo-pricing-config.json)', () => {
     expect(range({}, 'Flytting')).toEqual([1200, 1800]);
   });
 
+  it('a few walls are walls, not rooms ("male 2-3 vegger" was 11 400–25 500 kr)', () => {
+    const paint = (raw, userText) => {
+      const c = fill(raw, { categoryName: 'Maling', userText });
+      return { range: [c.priceMin, c.priceMax], jobType: c.jobType };
+    };
+    // The model's mistake from the report: three rooms for "2-3 vegger".
+    const misread = { jobType: 'Male ett rom (vegger)', quantities: { rooms: 3 } };
+    // 3 walls × 800–1 500 + paint once 800–1 500.
+    expect(paint(misread, 'Trenger hjelp til å male 2-3 vegger')).toEqual({
+      range: [3200, 6000],
+      jobType: 'Male noen vegger',
+    });
+    expect(paint(misread, 'Paint 2-3 walls in light grey').range).toEqual([3200, 6000]);
+    // The model got it right: 2 walls.
+    expect(
+      paint({ jobType: 'Male noen vegger', quantities: { walls: 2 } }, 'male to vegger').range
+    ).toEqual([2400, 4500]);
+    // One wall: never below the category minimum of 1 000 for the labour.
+    expect(
+      paint({ jobType: 'Male noen vegger', quantities: { walls: 1 } }, 'male en vegg').range
+    ).toEqual([1800, 3000]);
+    // Paint they already have: labour only.
+    expect(
+      paint(
+        { jobType: 'Male noen vegger', quantities: { walls: 3 }, customerSuppliesMaterials: true },
+        'male 3 vegger, har maling'
+      ).range
+    ).toEqual([2400, 4500]);
+  });
+
+  it('walls in named rooms, and whole rooms, still price per room', () => {
+    const paint = (raw, userText) => {
+      const c = fill(raw, { categoryName: 'Maling', userText });
+      return [c.priceMin, c.priceMax];
+    };
+    const rooms = (n) => ({ jobType: 'Male ett rom (vegger)', quantities: { rooms: n } });
+    expect(paint(rooms(2), 'Male veggene i stua og soverommet')).toEqual([7600, 17000]);
+    expect(paint(rooms(3), 'Male 3 rom')).toEqual([11400, 25500]);
+    expect(paint(rooms(3), 'Paint 3 rooms')).toEqual([11400, 25500]);
+    // From the eval set: rooms named, "walls only" means no ceiling, not a few walls.
+    expect(paint(rooms(2), 'Need help painting two bedrooms. Walls only.')).toEqual([7600, 17000]);
+    expect(paint(rooms(2), 'Trenger hjelp til å male to soverom. Kun vegger.')).toEqual([
+      7600, 17000,
+    ]);
+    expect(paint(rooms(1), 'Male veggene i stuen')).toEqual([3800, 8500]);
+  });
+
+  it('the prompt and the schema know walls', () => {
+    expect(buildSchema('gpt-4o-mini').schema.properties.quantities.required).toContain('walls');
+  });
+
   it('"ikke i helgen" does not add the weekend rate', () => {
     const c = fill(
       { jobType: 'Vanlig vask' },

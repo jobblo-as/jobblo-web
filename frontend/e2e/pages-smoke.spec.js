@@ -21,7 +21,6 @@ const anon = [
   `/jobs/${JOB}`,
   `/job-listing/${JOB}`,
   `/profile/${ID}`,
-  '/team',
   '/support',
   '/delete-account',
   '/sale-subscription-terms',
@@ -303,6 +302,14 @@ test.describe('redirects and guards', () => {
 test('an unknown URL shows the 404 page', async ({ page }) => {
   const errors = await visit(page, '/this-page-does-not-exist', null);
   await expect(page.getByRole('heading', { name: 'Siden finnes ikke' })).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('/team is gone: the 404 page, and no "Teamet" link in the footer', async ({ page }) => {
+  const errors = await visit(page, '/team', null);
+  await expect(page.getByRole('heading', { name: 'Siden finnes ikke' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Teamet' })).toHaveCount(0);
+  await expect(page.locator('a[href="/team"]')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 

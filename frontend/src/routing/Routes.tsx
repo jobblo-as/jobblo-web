@@ -83,7 +83,6 @@ const ListDetailPage = lazy(() =>
     default: m.ListDetailPage,
   }))
 );
-const TeamPage = lazy(() => import('../pages/TeamPage/TeamPage.tsx'));
 const SupportPage = lazy(() => import('../pages/SupportPage/SupportPage.tsx'));
 const DeleteAccountRequestPage = lazy(
   () => import('../pages/DeleteAccountRequestPage/DeleteAccountRequestPage.tsx')
@@ -432,7 +431,6 @@ export const routes: RouteObject[] = [
         element: <ProtectedRoute>{withSuspense(SuccessPage)}</ProtectedRoute>,
       },
       { path: 'coins', element: <ProtectedRoute>{withSuspense(CoinsPage)}</ProtectedRoute> },
-      { path: 'team', element: withSuspense(TeamPage) },
       { path: 'support', element: withSuspense(SupportPage) },
       { path: 'delete-account', element: withSuspense(DeleteAccountRequestPage) },
       {

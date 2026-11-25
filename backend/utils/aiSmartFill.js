@@ -118,8 +118,36 @@ function weekendOnly(fromDate, toDate) {
 }
 
 // Upper bounds a real job stays under: a misread "1e9 rooms" must not price at 150 million kr.
-const QUANTITY_MAX = { m2: 5000, pieces: 500, meters: 2000, rooms: 50, km: 3000, people: 20 };
-const PER_UNIT_KEY = { m2: 'm2', piece: 'pieces', m: 'meters', room: 'rooms' };
+const QUANTITY_MAX = {
+  m2: 5000,
+  pieces: 500,
+  meters: 2000,
+  rooms: 50,
+  walls: 100,
+  km: 3000,
+  people: 20,
+};
+const PER_UNIT_KEY = { m2: 'm2', piece: 'pieces', m: 'meters', room: 'rooms', wall: 'walls' };
+
+// The user's own words for "wall" and for a room. "2-3 vegger" is a few walls, not 3 rooms.
+const WALL_WORDS = ['vegg', 'wall'];
+// Prefixes catch the forms (stuen, soverommene, bedrooms); short words that start other words
+// ("husk", "gang" as "time") are matched whole.
+const ROOM_PREFIXES = [
+  'rom',
+  'room',
+  'soverom',
+  'bedroom',
+  'stue',
+  'stua',
+  'kjøkken',
+  'kitchen',
+  'leilighet',
+  'apartment',
+  'house',
+];
+const ROOM_WORDS = ['hus', 'huset', 'gangen', 'hallen', 'badet'];
+const namesRoom = (w) => ROOM_WORDS.includes(w) || ROOM_PREFIXES.some((k) => w.startsWith(k));
 
 /** The quantities the model read from the user's text: positive numbers, else 0. */
 function _quantities(raw) {
@@ -153,7 +181,26 @@ function applyPricingRules(cleaned, raw, rules, ctx) {
     return p === n || p.startsWith(`${n} (`);
   };
   const findJobType = (picked) => rules.jobTypes.find((j) => sameName(picked, j.name)) || null;
-  const jobType = findJobType(raw && raw.jobType);
+  let jobType = findJobType(raw && raw.jobType);
+  const q = _quantities(raw);
+
+  // "Male 2-3 vegger" was priced as three rooms (3 × room + 3 × paint = 11 400–25 500 kr):
+  // the model put the walls in `rooms`. When the user's own words name walls and no room,
+  // the count is walls and the job is the few-walls job.
+  // ponytail: word lists, not understanding; "veggen i stua" names a room and keeps rooms.
+  const ownWords = String(ctx.userText || '')
+    .toLowerCase()
+    .split(/[^a-z0-9æøåé]+/);
+  const wallJob = rules.jobTypes.find((j) => j.perUnit && j.perUnit.per === 'wall');
+  if (
+    wallJob &&
+    ownWords.some((w) => WALL_WORDS.some((k) => w.startsWith(k))) &&
+    !ownWords.some(namesRoom)
+  ) {
+    if (!q.walls && q.rooms) q.walls = Math.min(q.rooms, QUANTITY_MAX.walls);
+    q.rooms = 0;
+    if (!jobType || (jobType.perUnit && jobType.perUnit.per === 'room')) jobType = wallJob;
+  }
   const alternatives = jobType
     ? [
         ...new Set(
@@ -163,7 +210,6 @@ function applyPricingRules(cleaned, raw, rules, ctx) {
         ),
       ]
     : [];
-  const q = _quantities(raw);
   // Extras (call-out fee, paint, waste removal): "always" ones by rule, materials unless the
   // model read that the customer supplies them, "ifAsked" ones when the model listed them.
   const listed = Array.isArray(raw && raw.extras) ? raw.extras : [];

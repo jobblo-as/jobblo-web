@@ -459,7 +459,8 @@ export const useCreateJobForm = (
           jobType: d.jobType,
           pricingReasoning:
             d.priceRange && !d.priceHidden
-              ? `Typisk pris for lignende oppdrag: ${d.priceRange.min.toLocaleString('nb-NO')}–${d.priceRange.max.toLocaleString('nb-NO')} kr. ${d.pricingReasoning || ''}`.trim()
+              ? // An AI estimate from the pricing rules, not prices of real jobs.
+                `Anslått pris: ${d.priceRange.min.toLocaleString('nb-NO')}–${d.priceRange.max.toLocaleString('nb-NO')} kr. ${d.pricingReasoning || ''}`.trim()
               : d.pricingReasoning,
         });
         setShowSmartFillInput(false);
